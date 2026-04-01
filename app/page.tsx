@@ -877,21 +877,22 @@ export default function Home() {
         <div className="sw">
           <div className="sim-grid">
             <div>
-              <div className="sec-eye">Financiamento · Não-Residentes · 10 Países</div>
+              <div className="sec-eye">Comprar em Portugal · Crédito para Estrangeiros · 10 Países</div>
               <h2 className="sec-h2">
-                <span className="text-reveal"><span className="text-reveal-inner">Critérios</span></span>
-                <span className="text-reveal"><span className="text-reveal-inner"><em>Por País</em></span></span>
+                <span className="text-reveal"><span className="text-reveal-inner">Crédito</span></span>
+                <span className="text-reveal"><span className="text-reveal-inner"><em>em Portugal</em></span></span>
               </h2>
               <p className="fade-in" style={{fontSize:'.83rem',lineHeight:'1.78',color:'var(--ink2)',margin:'20px 0 28px',maxWidth:'420px'}}>
-                LTV, DSTI, prazo máximo e spread típico por banco português — adaptados ao seu país de origem.
+                Condições reais dos bancos portugueses para compradores estrangeiros.
+                Seleccione o seu país e veja exactamente quanto pode financiar em Portugal.
               </p>
               <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:'11px'}}>
                 {[
-                  '🇫🇷 🇩🇪 🇧🇷 — LTV 75–80% (equiparado residente)',
-                  '🇬🇧 🇦🇪 🇸🇦 — LTV 65–70% + Islamic finance disponível',
-                  '🇺🇸 🇨🇦 🇦🇺 — LTV 65–70% (FATCA / documentação reforçada)',
-                  '🇨🇳 — LTV 60% + orientação sobre controlo de capitais',
-                  'DSTI máximo por perfil bancário PT',
+                  '🇫🇷 🇩🇪 🇧🇷 — Bancos PT financiam até 80% (estatuto UE/CPLP)',
+                  '🇬🇧 🇦🇪 🇸🇦 — Bancos PT financiam até 70% + Islamic finance',
+                  '🇺🇸 🇨🇦 🇦🇺 — Bancos PT financiam até 65–70%',
+                  '🇨🇳 — Bancos PT financiam até 60% + apoio em transferências',
+                  'Prestação mensal estimada + entrada mínima necessária',
                 ].map(t=>(
                   <div key={t} style={{display:'flex',alignItems:'center',gap:'11px',fontSize:'.78rem',color:'var(--ink2)'}}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>{t}
@@ -900,7 +901,7 @@ export default function Home() {
               </div>
             </div>
             <div className="sim-widget fade-in" id="fnr-widget">
-              <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.3rem',color:'var(--g)',marginBottom:'24px',letterSpacing:'.02em'}}>Simular Financiamento</h3>
+              <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.3rem',color:'var(--g)',marginBottom:'24px',letterSpacing:'.02em'}}>Crédito Habitação em Portugal</h3>
 
               <div className="avm-row full">
                 <div>
@@ -957,7 +958,7 @@ export default function Home() {
                   fetch('/api/financing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
                     .then(r=>r.json())
                     .then(res=>{
-                      btn.textContent='Simular Financiamento'
+                      btn.textContent='Calcular Crédito em Portugal'
                       btn.disabled=false
                       const out=document.getElementById('fnr-output')
                       if(!out)return
@@ -991,10 +992,10 @@ export default function Home() {
                         <div style="font-size:.7rem;color:rgba(201,169,110,.35);border-top:1px solid rgba(201,169,110,.1);padding-top:8px">Bancos recomendados: ${res.bancos_recomendados.join(' · ')}</div>
                       `
                     })
-                    .catch(()=>{btn.textContent='Simular Financiamento';btn.disabled=false})
+                    .catch(()=>{btn.textContent='Calcular Crédito em Portugal';btn.disabled=false})
                 }}
               >
-                Simular Financiamento
+                Calcular Crédito em Portugal
               </button>
               <div id="fnr-output" style={{marginTop:'16px'}}/>
             </div>
