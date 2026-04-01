@@ -31,15 +31,7 @@ export default function Home() {
   const loaderRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Auth check - use localStorage with 8h expiry
-    const stored = localStorage.getItem('ag_auth')
-    if (stored) {
-      try {
-        const d = JSON.parse(stored)
-        if (d.v === '1' && Date.now() < d.exp) { setIsAgent(true); return }
-        else localStorage.removeItem('ag_auth')
-      } catch { localStorage.removeItem('ag_auth') }
-    }
+    // Token in URL always takes priority (magic link flow)
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
     if (token) {
@@ -57,6 +49,16 @@ export default function Home() {
           }
         })
         .catch(() => {})
+      return
+    }
+    // No token — check localStorage session
+    const stored = localStorage.getItem('ag_auth')
+    if (stored) {
+      try {
+        const d = JSON.parse(stored)
+        if (d.v === '1' && Date.now() < d.exp) { setIsAgent(true); return }
+        else localStorage.removeItem('ag_auth')
+      } catch { localStorage.removeItem('ag_auth') }
     }
   }, [])
 

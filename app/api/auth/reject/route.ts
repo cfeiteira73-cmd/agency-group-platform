@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
+
+const FROM = 'Agency Group <geral@agencygroup.pt>'
 
 function verifyToken(token: string, secret: string): Record<string, unknown> | null {
   const dotIdx = token.lastIndexOf('.')
@@ -33,6 +35,7 @@ function page(title: string, body: string, color: string) {
 
 export async function GET(req: NextRequest) {
   const SECRET = process.env.AUTH_SECRET!
+  const resend = new Resend(process.env.RESEND_API_KEY)
   const token = req.nextUrl.searchParams.get('token')
   if (!token) return page('Erro', 'Token em falta.', '#7f1d1d')
 
@@ -42,15 +45,8 @@ export async function GET(req: NextRequest) {
 
   const email = data.email as string
 
-  const transport = nodemailer.createTransport({
-    host: 'smtp.serviciodecorreo.es',
-    port: 465,
-    secure: true,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  })
-
-  await transport.sendMail({
-    from: `"Agency Group" <${process.env.SMTP_USER}>`,
+  await resend.emails.send({
+    from: FROM,
     to: email,
     subject: 'Pedido Não Aprovado · Agency Group',
     html: `

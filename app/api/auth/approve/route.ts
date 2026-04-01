@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
 const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://agencygroup.pt'
+const FROM = 'Agency Group <geral@agencygroup.pt>'
 
 function verifyToken(token: string, secret: string): Record<string, unknown> | null {
   const dotIdx = token.lastIndexOf('.')
@@ -41,6 +42,7 @@ function page(title: string, body: string, color: string) {
 
 export async function GET(req: NextRequest) {
   const SECRET = process.env.AUTH_SECRET!
+  const resend = new Resend(process.env.RESEND_API_KEY)
   const token = req.nextUrl.searchParams.get('token')
   if (!token) return page('Erro', 'Token em falta.', '#7f1d1d')
 
@@ -52,16 +54,8 @@ export async function GET(req: NextRequest) {
   const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
   const magicLink = `${BASE_URL}?token=${magicToken}`
 
-  const transport = nodemailer.createTransport({
-    host: 'smtp.serviciodecorreo.es',
-    port: 465,
-    secure: true,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  })
-
-  // Envia email ao agente (caso admin ≠ agente)
-  await transport.sendMail({
-    from: `"Agency Group" <${process.env.SMTP_USER}>`,
+  await resend.emails.send({
+    from: FROM,
     to: email,
     subject: 'Acesso Aprovado · Área de Agentes · Agency Group',
     html: `

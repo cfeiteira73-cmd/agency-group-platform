@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
 const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://agencygroup.pt'
+const ADMIN_EMAIL = 'geral@agencygroup.pt'
+const FROM = 'Agency Group <geral@agencygroup.pt>'
 
 function makeToken(payload: object, secret: string): string {
   const p = Buffer.from(JSON.stringify(payload)).toString('base64url')
@@ -10,22 +12,9 @@ function makeToken(payload: object, secret: string): string {
   return `${p}.${sig}`
 }
 
-function getTransport() {
-  return nodemailer.createTransport({
-    host: 'smtp.serviciodecorreo.es',
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  })
-}
-
-const ADMIN_EMAIL = 'geral@agencygroup.pt'
-
 export async function POST(req: NextRequest) {
   const SECRET = process.env.AUTH_SECRET!
+  const resend = new Resend(process.env.RESEND_API_KEY)
   const ALLOWED = [ADMIN_EMAIL]
 
   try {
@@ -34,14 +23,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email inválido' }, { status: 400 })
     }
 
-    const transport = getTransport()
-
     // Pre-approved agents: skip admin approval, send magic link directly
     if (ALLOWED.includes(email.toLowerCase())) {
       const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
       const magicLink = `${BASE_URL}?token=${magicToken}`
-      await transport.sendMail({
-        from: `"Agency Group" <${process.env.SMTP_USER}>`,
+      await resend.emails.send({
+        from: FROM,
         to: email,
         subject: 'Acesso · Área de Agentes · Agency Group',
         html: `
@@ -82,8 +69,8 @@ export async function POST(req: NextRequest) {
     const now = new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })
 
     // Email para o admin
-    await transport.sendMail({
-      from: `"Agency Group" <${process.env.SMTP_USER}>`,
+    await resend.emails.send({
+      from: FROM,
       to: ADMIN_EMAIL,
       subject: `Pedido de Acesso Agentes · ${email}`,
       html: `
@@ -124,8 +111,8 @@ export async function POST(req: NextRequest) {
     })
 
     // Confirmação para o agente
-    await transport.sendMail({
-      from: `"Agency Group" <${process.env.SMTP_USER}>`,
+    await resend.emails.send({
+      from: FROM,
       to: email,
       subject: 'Pedido Recebido · Agency Group',
       html: `
