@@ -100,13 +100,29 @@ export async function middleware(req: NextRequest) {
     return new NextResponse('Forbidden', { status: 403 })
   }
 
-  // 2. Portal protection — requires valid magic-link token
+  // 2. Portal protection — token in URL or valid session cookie
   if (path.startsWith('/portal')) {
-    const token  = req.nextUrl.searchParams.get('token')
-    const secret = process.env.AUTH_SECRET
-    if (!secret || !token || !(await verifyToken(token, secret))) {
+    const urlToken    = req.nextUrl.searchParams.get('token')
+    const cookieToken = req.cookies.get('ag_portal')?.value
+    const secret      = process.env.AUTH_SECRET
+    const activeToken = urlToken || cookieToken
+
+    if (!secret || !activeToken || !(await verifyToken(activeToken, secret))) {
       return NextResponse.redirect(new URL('/', req.url))
     }
+
+    const res = NextResponse.next()
+    if (urlToken) {
+      // Persist token as cookie so next page loads don't need the URL param
+      res.cookies.set('ag_portal', urlToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 8 * 60 * 60,
+        path: '/',
+      })
+    }
+    return res
   }
 
   // 3. Rate limiting

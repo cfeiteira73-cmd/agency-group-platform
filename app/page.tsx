@@ -43,7 +43,7 @@ export default function Home() {
             sessionStorage.removeItem('ag_pending_email')
             localStorage.setItem('ag_auth', JSON.stringify({ v: '1', exp: Date.now() + 8 * 60 * 60 * 1000, email }))
             setIsAgent(true)
-            window.location.href = '/portal'
+            window.location.href = `/portal?token=${encodeURIComponent(token)}`
           } else {
             alert('Link inválido ou expirado. Pede um novo.')
           }
