@@ -13,6 +13,8 @@ const NAV = [
   { id:'juridico', label:'Consultor Jurídico IA', icon:'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', group:'FERRAMENTAS IA' },
   { id:'credito', label:'Simulador Crédito', icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', group:'ANÁLISE' },
   { id:'nhr', label:'NHR / IFICI', icon:'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064', group:'ANÁLISE' },
+  { id:'maisvalias', label:'Mais-Valias', icon:'M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z', group:'ANÁLISE' },
+  { id:'financiamento', label:'Crédito Estrangeiros', icon:'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064', group:'ANÁLISE' },
   { id:'portfolio', label:'Portfolio Análise', icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', group:'ANÁLISE' },
   { id:'documentos', label:'Documentação', icon:'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', group:'MAIS' },
   { id:'imoveis', label:'Imóveis', icon:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 22V12h6v10', group:'MAIS' },
@@ -90,7 +92,7 @@ const PERSONAS = [
 
 const SECTION_NAMES: Record<string,string> = {
   dashboard:'Dashboard', crm:'CRM Clientes', avm:'Avaliação AVM', radar:'Deal Radar 16D',
-  credito:'Simulador de Crédito', nhr:'NHR / IFICI Calculator',
+  credito:'Simulador de Crédito', nhr:'NHR / IFICI Calculator', maisvalias:'Mais-Valias PT 2026', financiamento:'Crédito para Estrangeiros',
   portfolio:'Portfolio Análise', pipeline:'Pipeline CPCV',
   marketing:'Marketing AI Suite', homestaging:'Home Staging IA', documentos:'Documentação Legal',
   juridico:'Consultor Jurídico IA', imoveis:'Imóveis',
@@ -3224,6 +3226,251 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                 </div>
               )
             })()}
+
+            {/* ── MAIS-VALIAS ── */}
+            {section==='maisvalias' && (
+              <div style={{maxWidth:'900px'}}>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'8px'}}>CIRS 2026 · Coeficientes AT · Isenções automáticas</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.8rem',color:'#0e0e0d',marginBottom:'24px'}}>Simulador <em style={{color:'#1c4a35'}}>Mais-Valias</em></div>
+                <div style={{display:'flex',gap:'20px',alignItems:'flex-start',flexWrap:'wrap'}}>
+                  <div className="p-card" style={{flex:'1',minWidth:'280px',display:'flex',flexDirection:'column',gap:'10px'}}>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
+                      <div>
+                        <label className="p-label">Preço Compra (€)</label>
+                        <input className="p-inp" type="number" id="pvMvCompra" placeholder="ex: 250000"/>
+                      </div>
+                      <div>
+                        <label className="p-label">Ano Compra</label>
+                        <select className="p-sel" id="pvMvAno">
+                          {Array.from({length:27},(_,i)=>2000+i).reverse().map(y=>(
+                            <option key={y} value={y}>{y}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="p-label">Preço Venda (€)</label>
+                      <input className="p-inp" type="number" id="pvMvVenda" placeholder="ex: 420000"/>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
+                      <div>
+                        <label className="p-label">Despesas Compra (€)</label>
+                        <input className="p-inp" type="number" id="pvMvDespAq" placeholder="IMT+IS+Notário"/>
+                      </div>
+                      <div>
+                        <label className="p-label">Despesas Venda (€)</label>
+                        <input className="p-inp" type="number" id="pvMvDespVd" placeholder="Comissão+Notário"/>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="p-label">Obras c/ Factura — últimos 12 anos (€)</label>
+                      <input className="p-inp" type="number" id="pvMvObras" placeholder="ex: 30000"/>
+                    </div>
+                    <div>
+                      <label className="p-label">Rendimento Anual Colectável (€)</label>
+                      <input className="p-inp" type="number" id="pvMvRendimento" placeholder="ex: 40000"/>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                      <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'.75rem',color:'rgba(14,14,13,.6)'}}>
+                        <input type="checkbox" id="pvMvResidente" defaultChecked style={{accentColor:'#1c4a35'}}/>Residente Fiscal PT
+                      </label>
+                      <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'.75rem',color:'rgba(14,14,13,.6)'}}>
+                        <input type="checkbox" id="pvMvHpp" defaultChecked style={{accentColor:'#1c4a35'}}/>Habitação Própria Permanente
+                      </label>
+                      <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'.75rem',color:'rgba(14,14,13,.6)'}}>
+                        <input type="checkbox" id="pvMvReinvest" style={{accentColor:'#1c4a35'}}/>Reinveste em nova HPP
+                      </label>
+                    </div>
+                    <button className="p-btn" onClick={()=>{
+                      const g=(id:string)=>(document.getElementById(id) as HTMLInputElement)?.value
+                      const gb=(id:string)=>(document.getElementById(id) as HTMLInputElement)?.checked
+                      const payload={
+                        preco_aquisicao:parseFloat(g('pvMvCompra')||'0'),
+                        preco_venda:parseFloat(g('pvMvVenda')||'0'),
+                        ano_aquisicao:parseInt(g('pvMvAno')||'2010'),
+                        despesas_aquisicao:parseFloat(g('pvMvDespAq')||'0'),
+                        despesas_venda:parseFloat(g('pvMvDespVd')||'0'),
+                        obras:parseFloat(g('pvMvObras')||'0'),
+                        rendimento_anual:parseFloat(g('pvMvRendimento')||'40000'),
+                        residente:gb('pvMvResidente'),
+                        habitacao_propria:gb('pvMvHpp'),
+                        reinvestimento:gb('pvMvReinvest'),
+                      }
+                      const btn=document.getElementById('pvMvBtn') as HTMLButtonElement
+                      btn.textContent='A calcular...'
+                      btn.disabled=true
+                      fetch('/api/mais-valias',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+                        .then(r=>r.json())
+                        .then(res=>{
+                          btn.textContent='▶ Calcular Mais-Valias'
+                          btn.disabled=false
+                          const out=document.getElementById('pvMvOutput')
+                          if(!out)return
+                          if(res.error){out.innerHTML=`<div style="color:#e05252;padding:12px;border:1px solid rgba(224,82,82,.2);border-radius:6px;font-size:.78rem">${res.error}</div>`;return}
+                          const eur=(n:number)=>'€ '+Math.abs(n).toLocaleString('pt-PT')
+                          const isLoss=res.prejuizo>0
+                          out.innerHTML=`
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+                              <div class="mtg-g"><div class="mtg-gl">Mais-Valia Bruta</div><div class="mtg-gv" style="color:${isLoss?'#e05252':'#1c4a35'}">${isLoss?'-':'+'}${eur(isLoss?res.prejuizo:res.ganho_bruto)}</div></div>
+                              <div class="mtg-g"><div class="mtg-gl">Imposto Estimado</div><div class="mtg-gv" style="color:#e05252">-${eur(res.imposto_estimado)}</div></div>
+                              <div class="mtg-g"><div class="mtg-gl">Taxa Efectiva</div><div class="mtg-gv">${res.taxa_efetiva?.toFixed(1)}%</div></div>
+                              <div class="mtg-g"><div class="mtg-gl">Líquido Final</div><div class="mtg-gv" style="color:#1c4a35">${eur(res.liquido_apos_imposto)}</div></div>
+                              ${res.poupanca_reinvestimento>0?`<div class="mtg-g" style="grid-column:1/-1"><div class="mtg-gl">Poupança c/ Reinvestimento</div><div class="mtg-gv" style="color:#22c55e">+${eur(res.poupanca_reinvestimento)}</div></div>`:''}
+                            </div>
+                            <div style="font-size:.7rem;color:rgba(14,14,13,.4);border-top:1px solid rgba(14,14,13,.08);padding-top:10px;line-height:1.6">${res.mensagem}</div>
+                            <details style="margin-top:12px">
+                              <summary style="font-size:.73rem;color:#1c4a35;cursor:pointer">Ver breakdown detalhado</summary>
+                              <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+                                ${(res.breakdown||[]).map((b:{label:string,valor:number,tipo:string})=>`
+                                  <div style="display:flex;justify-content:space-between;font-size:.73rem;padding:5px 8px;border-radius:3px;background:rgba(14,14,13,.02)">
+                                    <span style="color:rgba(14,14,13,.55)">${b.label}</span>
+                                    <span style="color:${b.tipo==='positivo'?'#22c55e':b.tipo==='negativo'||b.tipo==='imposto'?'#e05252':b.tipo==='resultado'?'#1c4a35':'rgba(14,14,13,.6)'}">${b.valor>=0?'+':''}${eur(b.valor)}</span>
+                                  </div>`).join('')}
+                              </div>
+                            </details>
+                          `
+                        })
+                        .catch(()=>{
+                          const btn2=document.getElementById('pvMvBtn') as HTMLButtonElement
+                          if(btn2){btn2.textContent='▶ Calcular Mais-Valias';btn2.disabled=false}
+                        })
+                    }} id="pvMvBtn">▶ Calcular Mais-Valias</button>
+                    <div id="pvMvOutput" style={{marginTop:'4px'}}/>
+                  </div>
+                  <div style={{flex:'1',minWidth:'220px',display:'flex',flexDirection:'column',gap:'8px'}}>
+                    <div className="p-card" style={{padding:'14px'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.28)',marginBottom:'8px'}}>Referência Legal</div>
+                      {[
+                        'Coeficientes AT 2026 (Art. 47º CIRS)',
+                        'Isenção HPP + reinvestimento (Art. 10º/5)',
+                        'Taxa 28% não-residentes (Art. 72º CIRS)',
+                        '50% englobamento residentes (Art. 43º)',
+                        'Dedução obras c/ factura (Art. 51º)',
+                      ].map(t=>(
+                        <div key={t} style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'.73rem',color:'rgba(14,14,13,.5)',padding:'4px 0',borderBottom:'1px solid rgba(14,14,13,.04)'}}>
+                          <div style={{width:'5px',height:'5px',background:'#1c4a35',borderRadius:'50%',flexShrink:0}}/>
+                          {t}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── FINANCIAMENTO NÃO-RESIDENTES ── */}
+            {section==='financiamento' && (
+              <div style={{maxWidth:'900px'}}>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'8px'}}>10 Países · LTV · Spreads · Islamic Finance</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.8rem',color:'#0e0e0d',marginBottom:'24px'}}>Crédito <em style={{color:'#1c4a35'}}>para Estrangeiros</em></div>
+                <div style={{display:'flex',gap:'20px',alignItems:'flex-start',flexWrap:'wrap'}}>
+                  <div className="p-card" style={{flex:'1',minWidth:'280px',display:'flex',flexDirection:'column',gap:'10px'}} id="pvFnrWidget">
+                    <div>
+                      <label className="p-label">País de Residência</label>
+                      <select className="p-sel" id="pvFnrPais">
+                        <option value="FR">🇫🇷 França</option>
+                        <option value="DE">🇩🇪 Alemanha</option>
+                        <option value="GB">🇬🇧 Reino Unido</option>
+                        <option value="US">🇺🇸 Estados Unidos</option>
+                        <option value="CN">🇨🇳 China</option>
+                        <option value="AE">🇦🇪 Emirados Árabes</option>
+                        <option value="BR">🇧🇷 Brasil</option>
+                        <option value="SA">🇸🇦 Arábia Saudita</option>
+                        <option value="CA">🇨🇦 Canadá</option>
+                        <option value="AU">🇦🇺 Austrália</option>
+                        <option value="OTHER">🌍 Outro país</option>
+                      </select>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
+                      <div>
+                        <label className="p-label">Valor do Imóvel (€)</label>
+                        <input className="p-inp" type="number" id="pvFnrMontante" placeholder="ex: 500000"/>
+                      </div>
+                      <div>
+                        <label className="p-label">Prazo (anos)</label>
+                        <select className="p-sel" id="pvFnrPrazo">
+                          {[10,15,20,25,30].map(y=><option key={y} value={y}>{y} anos</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="p-label">Rendimento Anual Bruto (€) — opcional</label>
+                      <input className="p-inp" type="number" id="pvFnrRendimento" placeholder="ex: 80000"/>
+                    </div>
+                    <button className="p-btn" onClick={()=>{
+                      const g=(id:string)=>(document.getElementById(id) as HTMLInputElement|HTMLSelectElement)?.value
+                      const payload={
+                        country_code:g('pvFnrPais'),
+                        montante:parseFloat(g('pvFnrMontante')||'0'),
+                        prazo:parseInt(g('pvFnrPrazo')||'25'),
+                        rendimento_anual:parseFloat(g('pvFnrRendimento')||'0')||undefined,
+                      }
+                      const btn=document.getElementById('pvFnrBtn') as HTMLButtonElement
+                      btn.textContent='A calcular...'
+                      btn.disabled=true
+                      fetch('/api/financing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+                        .then(r=>r.json())
+                        .then(res=>{
+                          btn.textContent='▶ Calcular Crédito'
+                          btn.disabled=false
+                          const out=document.getElementById('pvFnrOutput')
+                          if(!out)return
+                          if(res.error){out.innerHTML=`<div style="color:#e05252;padding:12px;border:1px solid rgba(224,82,82,.2);border-radius:6px;font-size:.78rem">${res.error}</div>`;return}
+                          const eur=(n:number)=>'€ '+Math.round(n).toLocaleString('pt-PT')
+                          const f=res.financiamento
+                          const p=res.prestacoes
+                          const diff=res.country.difficulty
+                          const diffColor=diff==='Fácil'?'#22c55e':diff==='Moderado'?'#c6a868':diff==='Difícil'?'#e09552':'#e05252'
+                          out.innerHTML=`
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                              <span style="font-size:1.4rem">${res.country.flag}</span>
+                              <span style="font-size:.72rem;color:${diffColor};border:1px solid ${diffColor};padding:2px 10px;border-radius:20px">${diff}</span>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+                              <div class="mtg-g"><div class="mtg-gl">LTV Máximo</div><div class="mtg-gv" style="color:#1c4a35">${f.ltv_max_pct}%</div></div>
+                              <div class="mtg-g"><div class="mtg-gl">Entrada Mínima</div><div class="mtg-gv">${eur(f.entrada_minima)}</div></div>
+                              <div class="mtg-g"><div class="mtg-gl">Capital Máximo</div><div class="mtg-gv">${eur(f.capital_maximo)}</div></div>
+                              <div class="mtg-g"><div class="mtg-gl">Spread Típico</div><div class="mtg-gv">${f.spread_tipico_pct}%</div></div>
+                              <div class="mtg-g"><div class="mtg-gl">Prestação/mês</div><div class="mtg-gv" style="color:#1c4a35">${eur(p.cenario_tipico)}</div></div>
+                              <div class="mtg-g"><div class="mtg-gl">Prazo Máximo</div><div class="mtg-gv">${f.prazo_max_anos} anos</div></div>
+                            </div>
+                            ${res.acessibilidade?`<div style="padding:8px;background:rgba(${res.acessibilidade.dsti_ok?'34,197,94':'224,82,82'},.07);border-radius:5px;font-size:.73rem;color:rgba(14,14,13,.6);margin-bottom:10px">${res.acessibilidade.nota}</div>`:''}
+                            <details style="margin-bottom:10px">
+                              <summary style="font-size:.72rem;color:#1c4a35;cursor:pointer">Documentação necessária</summary>
+                              <div style="margin-top:6px;display:flex;flex-direction:column;gap:5px">
+                                ${res.notas.map((n:string)=>`<div style="font-size:.72rem;color:rgba(14,14,13,.5);display:flex;gap:7px"><span style="color:#1c4a35;flex-shrink:0">›</span>${n}</div>`).join('')}
+                                ${res.islamic_finance?`<div style="font-size:.72rem;color:#c6a868;background:rgba(198,168,104,.08);padding:5px 8px;border-radius:3px;margin-top:3px">☽ Islamic Finance disponível</div>`:''}
+                              </div>
+                            </details>
+                            <div style="font-size:.68rem;color:rgba(14,14,13,.3);border-top:1px solid rgba(14,14,13,.06);padding-top:7px">Bancos: ${res.bancos_recomendados.join(' · ')}</div>
+                          `
+                        })
+                        .catch(()=>{
+                          const btn2=document.getElementById('pvFnrBtn') as HTMLButtonElement
+                          if(btn2){btn2.textContent='▶ Calcular Crédito';btn2.disabled=false}
+                        })
+                    }} id="pvFnrBtn">▶ Calcular Crédito</button>
+                    <div id="pvFnrOutput" style={{marginTop:'4px'}}/>
+                  </div>
+                  <div style={{flex:'1',minWidth:'220px',display:'flex',flexDirection:'column',gap:'8px'}}>
+                    <div className="p-card" style={{padding:'14px'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.28)',marginBottom:'8px'}}>LTV por Origem</div>
+                      {[
+                        {flag:'🇫🇷🇩🇪🇧🇷',label:'França · Alemanha · Brasil',ltv:'até 80%'},
+                        {flag:'🇬🇧🇦🇪🇸🇦',label:'UK · Emirados · Arábia Saudita',ltv:'até 70%'},
+                        {flag:'🇺🇸🇨🇦🇦🇺',label:'EUA · Canadá · Austrália',ltv:'65–70%'},
+                        {flag:'🇨🇳',label:'China',ltv:'até 60%'},
+                      ].map(r=>(
+                        <div key={r.label} style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:'.73rem',padding:'5px 0',borderBottom:'1px solid rgba(14,14,13,.04)'}}>
+                          <div style={{color:'rgba(14,14,13,.5)'}}>{r.flag} {r.label}</div>
+                          <div style={{color:'#1c4a35',fontWeight:600}}>{r.ltv}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ── PORTFOLIO ── */}
             {section==='portfolio' && (
