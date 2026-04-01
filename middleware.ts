@@ -1,20 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac } from 'crypto'
 
-// Module-level rate limit store (per Vercel Edge worker process)
-// Provides effective protection for boutique real estate agency traffic levels
+// Rate limit store (por processo Edge worker)
 const store = new Map<string, { count: number; reset: number }>()
 
+// Limites por rota
 const LIMITS: Record<string, { max: number; window: number }> = {
-  '/api/radar':    { max: 20,  window: 3_600_000 }, // 20 req/hour - AI calls
-  '/api/avm':      { max: 100, window: 3_600_000 }, // 100 req/hour
-  '/api/mortgage': { max: 200, window: 3_600_000 }, // 200 req/hour
-  '/api/nhr':      { max: 200, window: 3_600_000 }, // 200 req/hour
-  '/api/portfolio':{ max: 30,  window: 3_600_000 }, // 30 req/hour - AI calls
-  '/api/learn':    { max: 10,  window: 3_600_000 }, // 10 req/hour
+  '/api/radar':      { max: 20,  window: 3_600_000 },
+  '/api/avm':        { max: 100, window: 3_600_000 },
+  '/api/mortgage':   { max: 200, window: 3_600_000 },
+  '/api/nhr':        { max: 200, window: 3_600_000 },
+  '/api/portfolio':  { max: 30,  window: 3_600_000 },
+  '/api/learn':      { max: 10,  window: 3_600_000 },
+  '/api/chat':       { max: 60,  window: 3_600_000 }, // Sofia AI — protege custos Anthropic
+  '/api/juridico':   { max: 30,  window: 3_600_000 }, // Juridico AI — protege custos
+  '/api/content':    { max: 20,  window: 3_600_000 }, // Content gen — operação pesada
+  '/api/homestaging':{ max: 20,  window: 3_600_000 }, // Stability AI — protege custos
+}
+
+// Bots e scrapers conhecidos a bloquear (User-Agent blacklist)
+const BOT_PATTERNS = [
+  /scrapy/i, /python-requests/i, /go-http-client/i, /curl\/[0-9]/i,
+  /wget/i, /libwww/i, /zgrab/i, /masscan/i, /sqlmap/i, /nikto/i,
+  /nmap/i, /dirbuster/i, /nuclei/i, /httpx/i,
+]
+
+// Verifica token magic-link para proteger o portal
+function verifyToken(token: string, secret: string): boolean {
+  try {
+    const dotIdx = token.lastIndexOf('.')
+    if (dotIdx === -1) return false
+    const payload = token.slice(0, dotIdx)
+    const sig = token.slice(dotIdx + 1)
+    const expected = createHmac('sha256', secret).update(payload).digest('hex')
+    if (sig !== expected) return false
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString())
+    return data.type === 'magic' && Date.now() < data.exp
+  } catch {
+    return false
+  }
 }
 
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
+  const ua = req.headers.get('user-agent') || ''
+
+  // 1. BLOQUEIO DE BOTS MALICIOSOS
+  if (BOT_PATTERNS.some(p => p.test(ua))) {
+    return new NextResponse('Forbidden', { status: 403 })
+  }
+
+  // 2. PROTECÇÃO DO PORTAL — obriga a token válido
+  if (path.startsWith('/portal')) {
+    const token = req.nextUrl.searchParams.get('token')
+    const secret = process.env.AUTH_SECRET
+    if (!secret || !token || !verifyToken(token, secret)) {
+      // Sem token válido → redireciona para homepage
+      return NextResponse.redirect(new URL('/', req.url))
+    }
+  }
+
+  // 3. RATE LIMITING nas APIs
   const entry = Object.entries(LIMITS).find(([k]) => path.startsWith(k))
   if (!entry) return NextResponse.next()
 
@@ -30,7 +76,6 @@ export function middleware(req: NextRequest) {
     rec = { count: 0, reset: now + win }
     store.set(key, rec)
   }
-
   rec.count++
 
   const res = NextResponse.next()
@@ -58,11 +103,16 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/api/radar',
+    '/portal/:path*',
+    '/api/radar/:path*',
     '/api/avm',
     '/api/mortgage',
     '/api/nhr',
     '/api/portfolio',
     '/api/learn',
+    '/api/chat',
+    '/api/juridico',
+    '/api/content',
+    '/api/homestaging',
   ],
 }
