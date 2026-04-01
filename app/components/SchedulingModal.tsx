@@ -40,6 +40,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
   const [visitType, setVisitType] = useState('presencial')
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
+  const [email, setEmail] = useState('')
   const [success, setSuccess] = useState(false)
 
   const days = getNext14Days()
@@ -55,7 +56,18 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
   function handleConfirm() {
     const dayLabel = selectedDayObj ? `${selectedDayObj.dayName} ${selectedDayObj.dayNum} ${selectedDayObj.month}` : ''
     const msg = `Olá, quero agendar uma visita ao imóvel ${propertyRef} — ${propertyName} (${propertyPreco}).\n\nData: ${dayLabel}\nHora: ${selectedTime}\nTipo: ${visitType === 'presencial' ? 'Visita Presencial' : 'Tour Virtual'}\nNome: ${nome}\nContacto: ${telefone}`
+    // Open WhatsApp
     window.open(`https://wa.me/351919948986?text=${encodeURIComponent(msg)}`, '_blank')
+    // Fire email confirmation (fire-and-forget)
+    fetch('/api/booking', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome, telefone, email: email || undefined,
+        propertyRef, propertyName, propertyPreco,
+        date: dayLabel, time: selectedTime, visitType,
+      }),
+    }).catch(() => {})
     setSuccess(true)
   }
 
@@ -165,6 +177,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                 <input placeholder="O seu nome completo" value={nome} onChange={e => setNome(e.target.value)} style={inputStyle} />
                 <input placeholder="WhatsApp / Telefone" value={telefone} onChange={e => setTelefone(e.target.value)} style={inputStyle} />
+                <input placeholder="Email (para confirmação — opcional)" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} type="email" />
               </div>
               <button
                 onClick={handleConfirm}

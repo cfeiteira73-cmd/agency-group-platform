@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type CurrencyCode = 'EUR' | 'GBP' | 'USD' | 'CHF' | 'AED' | 'BRL'
+export type CurrencyCode = 'EUR' | 'GBP' | 'USD' | 'CHF' | 'AED' | 'BRL' | 'CNY'
 
 interface CurrencyInfo {
   code: CurrencyCode
@@ -31,6 +31,7 @@ const CURRENCIES: CurrencyInfo[] = [
   { code: 'CHF', name: 'Franc',         flag: '🇨🇭', symbol: 'Fr' },
   { code: 'AED', name: 'Dirham',        flag: '🇦🇪', symbol: 'د.إ' },
   { code: 'BRL', name: 'Real',          flag: '🇧🇷', symbol: 'R$' },
+  { code: 'CNY', name: '人民币',         flag: '🇨🇳', symbol: '¥'  },
 ]
 
 const DEFAULT_RATES: Record<CurrencyCode, number> = {
@@ -40,6 +41,18 @@ const DEFAULT_RATES: Record<CurrencyCode, number> = {
   CHF: 0.97,
   AED: 4.00,
   BRL: 5.60,
+  CNY: 7.85,
+}
+
+function inferCurrencyFromPath(): CurrencyCode | null {
+  if (typeof window === 'undefined') return null
+  const path = window.location.pathname
+  if (path.startsWith('/ar')) return 'AED'
+  if (path.startsWith('/zh')) return 'CNY'
+  if (path.startsWith('/en')) return 'USD'
+  if (path.startsWith('/de') || path.startsWith('/fr')) return 'EUR'
+  if (path.startsWith('/br')) return 'BRL'
+  return null
 }
 
 const CACHE_KEY = 'ag_fx_rates'
@@ -63,12 +76,15 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [rates, setRates] = useState<Record<CurrencyCode, number>>(DEFAULT_RATES)
   const [loading, setLoading] = useState(false)
 
-  // Load persisted currency preference
+  // Load persisted currency preference, fall back to path-inferred
   useEffect(() => {
     try {
       const saved = localStorage.getItem('ag_currency') as CurrencyCode | null
       if (saved && CURRENCIES.find(c => c.code === saved)) {
         setCurrencyState(saved)
+      } else {
+        const inferred = inferCurrencyFromPath()
+        if (inferred) setCurrencyState(inferred)
       }
     } catch {}
   }, [])
@@ -101,6 +117,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
           CHF: r.CHF ?? DEFAULT_RATES.CHF,
           AED: r.AED ?? DEFAULT_RATES.AED,
           BRL: r.BRL ?? DEFAULT_RATES.BRL,
+          CNY: r.CNY ?? DEFAULT_RATES.CNY,
         }
         setRates(fetched)
         try {

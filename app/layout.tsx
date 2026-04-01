@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import ChatWidget from './components/ChatWidget'
 import { CurrencyProvider } from './components/CurrencyWidget'
+import PWAInstallBanner from './components/PWAInstallBanner'
 
 export const viewport = {
   themeColor: '#1c4a35',
@@ -307,6 +308,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CurrencyProvider>
         {children}
         <ChatWidget />
+        <PWAInstallBanner />
         <script dangerouslySetInnerHTML={{ __html: `
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

@@ -868,6 +868,167 @@ export default function Home() {
         </div>
       </section>
 
+      {/* MAIS-VALIAS SIMULATOR */}
+      <section className="simulador-section" id="mais-valias" style={{background:'#040d06'}}>
+        <div className="sw">
+          <div className="sim-grid">
+            <div>
+              <div className="sec-eye">Simulador · Mais-Valias · Portugal 2026</div>
+              <h2 className="sec-h2">
+                <span className="text-reveal"><span className="text-reveal-inner">Calcular</span></span>
+                <span className="text-reveal"><span className="text-reveal-inner"><em>Mais-Valias</em></span></span>
+              </h2>
+              <p className="fade-in" style={{fontSize:'.83rem',lineHeight:'1.78',color:'var(--ink2)',margin:'20px 0 28px',maxWidth:'420px'}}>
+                Cálculo rigoroso segundo o CIRS. Coeficientes AT 2026. Isenções automáticas
+                para habitação própria e reinvestimento.
+              </p>
+              <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:'11px'}}>
+                {[
+                  'Coeficientes desvalorização AT (Art. 47º CIRS)',
+                  'Isenção HPP + reinvestimento (Art. 10º/5 CIRS)',
+                  'Taxa liberatória 28% não-residentes (Art. 72º CIRS)',
+                  '50% englobamento IRS residentes (Art. 43º CIRS)',
+                  'Breakdown completo de dedução linha a linha',
+                ].map(t=>(
+                  <div key={t} style={{display:'flex',alignItems:'center',gap:'11px',fontSize:'.78rem',color:'var(--ink2)'}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>{t}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="sim-widget fade-in" id="mv-widget">
+              <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.3rem',color:'var(--g)',marginBottom:'24px',letterSpacing:'.02em'}}>Simulador Mais-Valias</h3>
+
+              <div className="avm-row">
+                <div>
+                  <label className="avm-lbl">Preço Compra (€)</label>
+                  <input className="avm-inp" type="number" id="mvCompra" placeholder="ex: 250000" min="0"/>
+                </div>
+                <div>
+                  <label className="avm-lbl">Ano Compra</label>
+                  <select className="avm-sel" id="mvAno">
+                    {Array.from({length:27},(_,i)=>2000+i).reverse().map(y=>(
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="avm-row full">
+                <div>
+                  <label className="avm-lbl">Preço Venda (€)</label>
+                  <input className="avm-inp" type="number" id="mvVenda" placeholder="ex: 420000" min="0"/>
+                </div>
+              </div>
+
+              <div className="avm-row">
+                <div>
+                  <label className="avm-lbl">Despesas Compra (IMT+IS+Notário)</label>
+                  <input className="avm-inp" type="number" id="mvDespAq" placeholder="ex: 15000" min="0"/>
+                </div>
+                <div>
+                  <label className="avm-lbl">Despesas Venda (Comissão+Notário)</label>
+                  <input className="avm-inp" type="number" id="mvDespVd" placeholder="ex: 21000" min="0"/>
+                </div>
+              </div>
+
+              <div className="avm-row full">
+                <div>
+                  <label className="avm-lbl">Obras com Factura (últimos 12 anos)</label>
+                  <input className="avm-inp" type="number" id="mvObras" placeholder="ex: 30000" min="0"/>
+                </div>
+              </div>
+
+              <div className="avm-row">
+                <div>
+                  <label className="avm-lbl">Rendimento Anual Colectável (€)</label>
+                  <input className="avm-inp" type="number" id="mvRendimento" placeholder="ex: 40000" min="0"/>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:'8px',justifyContent:'flex-end',paddingBottom:'2px'}}>
+                  <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'.78rem',color:'var(--ink2)'}}>
+                    <input type="checkbox" id="mvResidente" defaultChecked style={{accentColor:'var(--gold)',width:'14px',height:'14px'}}/>
+                    Residente Fiscal PT
+                  </label>
+                  <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'.78rem',color:'var(--ink2)'}}>
+                    <input type="checkbox" id="mvHpp" defaultChecked style={{accentColor:'var(--gold)',width:'14px',height:'14px'}}/>
+                    Habitação Própria Permanente
+                  </label>
+                  <label style={{display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',fontSize:'.78rem',color:'var(--ink2)'}}>
+                    <input type="checkbox" id="mvReinvest" style={{accentColor:'var(--gold)',width:'14px',height:'14px'}}/>
+                    Reinveste em nova HPP
+                  </label>
+                </div>
+              </div>
+
+              <button
+                className="avm-btn"
+                onClick={()=>{
+                  const g = (id:string)=>(document.getElementById(id) as HTMLInputElement)?.value
+                  const gb = (id:string)=>(document.getElementById(id) as HTMLInputElement)?.checked
+                  const payload = {
+                    preco_aquisicao: parseFloat(g('mvCompra')||'0'),
+                    preco_venda: parseFloat(g('mvVenda')||'0'),
+                    ano_aquisicao: parseInt(g('mvAno')||'2010'),
+                    despesas_aquisicao: parseFloat(g('mvDespAq')||'0'),
+                    despesas_venda: parseFloat(g('mvDespVd')||'0'),
+                    obras: parseFloat(g('mvObras')||'0'),
+                    rendimento_anual: parseFloat(g('mvRendimento')||'40000'),
+                    residente: gb('mvResidente'),
+                    habitacao_propria: gb('mvHpp'),
+                    reinvestimento: gb('mvReinvest'),
+                  }
+                  const btn = document.querySelector('#mv-widget .avm-btn') as HTMLButtonElement
+                  btn.textContent='A calcular...'
+                  btn.disabled=true
+                  fetch('/api/mais-valias',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+                    .then(r=>r.json())
+                    .then(res=>{
+                      btn.textContent='Calcular Mais-Valias'
+                      btn.disabled=false
+                      const out=document.getElementById('mv-output')
+                      if(!out)return
+                      if(res.error){out.innerHTML=`<div style="color:#e05252;padding:14px;border:1px solid rgba(224,82,82,.2);border-radius:8px;font-size:.8rem">${res.error}</div>`;return}
+                      const pct=(n:number)=>n.toFixed(1)+'%'
+                      const eur=(n:number)=>'€ '+Math.abs(n).toLocaleString('pt-PT')
+                      const isLoss = res.prejuizo > 0
+                      out.innerHTML=`
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+                          <div class="mtg-g"><div class="mtg-gl">Mais-Valia Bruta</div><div class="mtg-gv" style="color:${isLoss?'#e05252':'var(--gold)'}">${isLoss?'-':'+'}${eur(isLoss?res.prejuizo:res.ganho_bruto)}</div></div>
+                          <div class="mtg-g"><div class="mtg-gl">Imposto Estimado</div><div class="mtg-gv" style="color:#e05252">-${eur(res.imposto_estimado)}</div></div>
+                          <div class="mtg-g"><div class="mtg-gl">Taxa Efectiva</div><div class="mtg-gv">${pct(res.taxa_efetiva)}</div></div>
+                          <div class="mtg-g"><div class="mtg-gl">Líquido Final</div><div class="mtg-gv" style="color:var(--gold)">${eur(res.liquido_apos_imposto)}</div></div>
+                          ${res.poupanca_reinvestimento>0?`<div class="mtg-g" style="grid-column:1/-1"><div class="mtg-gl">Poupança Fiscal c/ Reinvestimento</div><div class="mtg-gv" style="color:#5ed47a">+${eur(res.poupanca_reinvestimento)}</div></div>`:''}
+                        </div>
+                        <div style="font-size:.72rem;color:rgba(198,168,104,.45);border-top:1px solid rgba(198,168,104,.1);padding-top:10px;line-height:1.6">${res.mensagem}</div>
+                        <details style="margin-top:14px">
+                          <summary style="font-size:.75rem;color:var(--gold);cursor:pointer;letterSpacing:'.06em'">Ver breakdown detalhado</summary>
+                          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+                            ${(res.breakdown||[]).map((b:{label:string,valor:number,tipo:string})=>`
+                              <div style="display:flex;justify-content:space-between;font-size:.75rem;padding:6px 10px;border-radius:4px;background:rgba(255,255,255,.03)">
+                                <span style="color:rgba(200,210,200,.65)">${b.label}</span>
+                                <span style="color:${b.tipo==='positivo'?'#5ed47a':b.tipo==='negativo'||b.tipo==='imposto'?'#e05252':b.tipo==='resultado'?'var(--gold)':'var(--ink2)'}">
+                                  ${b.valor>=0?'+':''}${eur(b.valor)}
+                                </span>
+                              </div>`).join('')}
+                          </div>
+                        </details>
+                      `
+                    })
+                    .catch(()=>{
+                      btn.textContent='Calcular Mais-Valias'
+                      btn.disabled=false
+                    })
+                }}
+              >
+                Calcular Mais-Valias
+              </button>
+
+              <div id="mv-output" style={{marginTop:'18px'}}/>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* NHR — removido da página pública, disponível no Portal */}
 
       {/* FERRAMENTAS EXCLUSIVAS — 4 cards */}

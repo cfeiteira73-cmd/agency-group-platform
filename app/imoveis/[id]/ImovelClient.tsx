@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PROPERTIES, ZONE_YIELDS, formatPriceFull } from '../data'
@@ -80,6 +80,23 @@ export default function ImovelClient({ id }: { id: string }) {
   const [floorplanOpen, setFloorplanOpen] = useState(false)
   // Touch swipe support
   const touchStartX = useRef<number | null>(null)
+
+  // Property view tracking — fire once per property per session (debounced 5s)
+  useEffect(() => {
+    const key = `ag_viewed_${id}`
+    const lastSeen = parseInt(localStorage.getItem(key) || '0')
+    const SESSION_TTL = 24 * 60 * 60 * 1000 // 24h
+    if (Date.now() - lastSeen < SESSION_TTL) return
+    const timer = setTimeout(() => {
+      localStorage.setItem(key, String(Date.now()))
+      fetch('/api/track-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property_id: id }),
+      }).catch(() => {})
+    }, 5000)
+    return () => clearTimeout(timer)
+  }, [id])
 
   // Generate gallery frames: use real photos when available, fallback to gradients
   const galleryFrames = useMemo(() => {

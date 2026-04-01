@@ -16,6 +16,9 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/juridico':   { max: 30,  window: 3_600_000 }, // Juridico AI — protege custos
   '/api/content':    { max: 20,  window: 3_600_000 }, // Content gen — operação pesada
   '/api/homestaging':{ max: 20,  window: 3_600_000 }, // Stability AI — protege custos
+  '/api/booking':    { max: 30,  window: 3_600_000 }, // Booking confirmations
+  '/api/track-view': { max: 200, window: 3_600_000 }, // View tracking
+  '/api/mais-valias':{ max: 100, window: 3_600_000 }, // Mais-valias simulator
 }
 
 // Bots e scrapers conhecidos a bloquear (User-Agent blacklist)
@@ -114,5 +117,8 @@ export const config = {
     '/api/juridico',
     '/api/content',
     '/api/homestaging',
+    '/api/booking',
+    '/api/track-view',
+    '/api/mais-valias',
   ],
 }

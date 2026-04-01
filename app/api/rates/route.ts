@@ -24,7 +24,7 @@ const FALLBACK: RatesData = {
   euribor_6m:  EURIBOR_6M_CONFIRMED,
   euribor_12m: EURIBOR_12M_CONFIRMED,
   euribor_3m:  EURIBOR_3M_CONFIRMED,
-  fx:          { EUR: 1, GBP: 0.86, USD: 1.09, CHF: 0.97, AED: 4.00, BRL: 5.60 },
+  fx:          { EUR: 1, GBP: 0.86, USD: 1.09, CHF: 0.97, AED: 4.00, BRL: 5.60, CNY: 7.85 },
   updated_at:  new Date().toISOString(),
   next_update: new Date(Date.now() + 4 * 3600_000).toISOString(),
   sources:     ['env-fallback'],
@@ -83,7 +83,7 @@ async function fetchECBEuribor(months: '3M' | '6M' | '12M'): Promise<number> {
 // AED está indexado ao USD à taxa fixa 3.6725 desde 1997 (peg oficial UAE)
 
 async function fetchFrankfurterFX(): Promise<Record<string, number>> {
-  const res = await fetch('https://api.frankfurter.app/latest?from=EUR&to=GBP,USD,CHF,BRL', {
+  const res = await fetch('https://api.frankfurter.app/latest?from=EUR&to=GBP,USD,CHF,BRL,CNY', {
     headers: { 'User-Agent': 'AgencyGroupBot/1.0' },
     signal: AbortSignal.timeout(6000),
     cache: 'no-store',
@@ -111,7 +111,7 @@ async function fetchExchangeRateApiFX(): Promise<Record<string, number>> {
   const r = json.rates
   const usd = r.USD as number
   const aed = r.AED ?? (usd ? parseFloat((usd * 3.6725).toFixed(4)) : FALLBACK.fx.AED)
-  return { EUR: 1, GBP: r.GBP, USD: usd, CHF: r.CHF, AED: aed, BRL: r.BRL }
+  return { EUR: 1, GBP: r.GBP, USD: usd, CHF: r.CHF, AED: aed, BRL: r.BRL, CNY: r.CNY ?? 7.85 }
 }
 
 // ─── GET handler ──────────────────────────────────────────────────────────────
