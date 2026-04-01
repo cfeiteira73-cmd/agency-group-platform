@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "home": "Home",
+    "properties": "Properties",
+    "zones": "Zones",
+    "valuation": "Valuation",
+    "credit": "Mortgage",
+    "contact": "Contact",
+    "blog": "Blog"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Portugal · Luxury Real Estate · AMI 22506",
+      "title": "Find your exceptional property in Portugal",
+      "subtitle": "Lisbon · Cascais · Comporta · Porto · Algarve · Madeira",
+      "cta_primary": "View Portfolio",
+      "cta_secondary": "Property Valuation"
+    },
+    "stats": {
+      "transactions": "transactions in 2025",
+      "median_price": "median price/m² 2026",
+      "growth": "annual growth",
+      "luxury_rank": "Top 5 Global Luxury"
+    },
+    "zones": {
+      "title": "Prime Zones",
+      "subtitle": "8 premium markets, exclusive Agency Group analysis"
+    },
+    "avm": {
+      "title": "Automated Valuation",
+      "subtitle": "60+ variables · 47 zones · ±8% accuracy",
+      "button": "Get Valuation"
+    },
+    "contact": {
+      "title": "Contact Us",
+      "whatsapp": "WhatsApp Direct",
+      "email": "Email"
+    }
+  },
+  "property": {
+    "price": "Price",
+    "area": "Area",
+    "rooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "floor": "Floor",
+    "ground_floor": "Ground Floor",
+    "pool": "Pool",
+    "garage": "Garage",
+    "garden": "Garden",
+    "terrace": "Terrace",
+    "sea_view": "Sea View",
+    "energy": "Energy Rating",
+    "tour": "Virtual 3D Tour",
+    "see_property": "View Property",
+    "contact_agent": "Contact Agent",
+    "schedule_visit": "Schedule Visit",
+    "make_offer": "Make Offer",
+    "similar": "Similar Properties",
+    "investment": {
+      "title": "Investment Analysis",
+      "equity": "Own Capital (40%)",
+      "mortgage": "Monthly Mortgage",
+      "gross_yield": "Gross Yield",
+      "net_yield": "Net Yield",
+      "gross_rent": "Gross Monthly Rent",
+      "cash_flow": "Monthly Cash Flow",
+      "irr": "5-Year IRR",
+      "coc": "Cash-on-Cash"
+    }
+  },
+  "filters": {
+    "all_zones": "All Zones",
+    "all_types": "All Types",
+    "price": "Price",
+    "rooms": "Bedrooms",
+    "pool": "Pool",
+    "garage": "Garage",
+    "sea_view": "Sea View",
+    "off_market": "Off-Market",
+    "clear": "Clear",
+    "sort": "Sort",
+    "recent": "Recent",
+    "price_asc": "Price ↑",
+    "price_desc": "Price ↓",
+    "area_asc": "Area ↑",
+    "area_desc": "Area ↓",
+    "grid_view": "Grid view",
+    "map_view": "Map view"
+  },
+  "compare": {
+    "title": "Compare",
+    "compare": "Compare",
+    "clear": "Clear",
+    "max_items": "Maximum 3 properties",
+    "ask_agent": "Ask Agent for Help",
+    "comparison": "Property Comparison",
+    "selected": "properties selected"
+  },
+  "favorites": {
+    "add": "Add to favorites",
+    "remove": "Remove from favorites",
+    "title": "Favorites",
+    "saved": "saved properties",
+    "send_list": "Send List to Agent"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "commission": "5% commission (50% CPCV + 50% completion)",
+    "rights": "All rights reserved"
+  }
+}

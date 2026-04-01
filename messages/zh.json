@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "home": "首页",
+    "properties": "房产",
+    "zones": "区域",
+    "valuation": "估价",
+    "credit": "贷款",
+    "contact": "联系",
+    "blog": "博客"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "葡萄牙 · 豪华房产 · AMI 22506",
+      "title": "在葡萄牙寻找您的理想豪宅",
+      "subtitle": "里斯本 · 卡斯凯什 · 孔波尔塔 · 波尔图 · 阿尔加维 · 马德拉",
+      "cta_primary": "查看房产组合",
+      "cta_secondary": "房产估价"
+    },
+    "stats": {
+      "transactions": "2025年交易量",
+      "median_price": "2026年中位价/m²",
+      "growth": "年度增长",
+      "luxury_rank": "全球豪宅前5名"
+    },
+    "zones": {
+      "title": "顶级区域",
+      "subtitle": "8个高端市场，Agency Group独家分析"
+    },
+    "avm": {
+      "title": "自动估价",
+      "subtitle": "60+变量 · 47个区域 · 精度±8%",
+      "button": "立即估价"
+    },
+    "contact": {
+      "title": "联系我们",
+      "whatsapp": "WhatsApp直达",
+      "email": "邮件"
+    }
+  },
+  "property": {
+    "price": "价格",
+    "area": "面积",
+    "rooms": "卧室",
+    "bathrooms": "浴室",
+    "floor": "楼层",
+    "ground_floor": "一楼",
+    "pool": "泳池",
+    "garage": "车库",
+    "garden": "花园",
+    "terrace": "露台",
+    "sea_view": "海景",
+    "energy": "能效等级",
+    "tour": "3D虚拟参观",
+    "see_property": "查看房产",
+    "contact_agent": "联系顾问",
+    "schedule_visit": "预约看房",
+    "make_offer": "提交报价",
+    "similar": "类似房产",
+    "investment": {
+      "title": "投资分析",
+      "equity": "自有资金(40%)",
+      "mortgage": "月供",
+      "gross_yield": "毛租金收益率",
+      "net_yield": "净租金收益率",
+      "gross_rent": "月租金(毛)",
+      "cash_flow": "月现金流",
+      "irr": "5年内部收益率",
+      "coc": "现金回报率"
+    }
+  },
+  "filters": {
+    "all_zones": "所有区域",
+    "all_types": "所有类型",
+    "price": "价格",
+    "rooms": "卧室",
+    "pool": "泳池",
+    "garage": "车库",
+    "sea_view": "海景",
+    "off_market": "私下出售",
+    "clear": "清除",
+    "sort": "排序",
+    "recent": "最新",
+    "price_asc": "价格↑",
+    "price_desc": "价格↓",
+    "area_asc": "面积↑",
+    "area_desc": "面积↓",
+    "grid_view": "网格视图",
+    "map_view": "地图视图"
+  },
+  "compare": {
+    "title": "比较",
+    "compare": "比较",
+    "clear": "清除",
+    "max_items": "最多3套房产",
+    "ask_agent": "向顾问寻求帮助",
+    "comparison": "房产比较",
+    "selected": "套已选择"
+  },
+  "favorites": {
+    "add": "添加到收藏",
+    "remove": "从收藏中移除",
+    "title": "收藏夹",
+    "saved": "已收藏房产",
+    "send_list": "将列表发送给顾问"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "commission": "佣金5%(CPCV 50% + 公证50%)",
+    "rights": "版权所有"
+  }
+}

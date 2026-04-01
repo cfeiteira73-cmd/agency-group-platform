@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "home": "Início",
+    "properties": "Imóveis",
+    "zones": "Zonas",
+    "valuation": "Avaliação",
+    "credit": "Crédito",
+    "contact": "Contacto",
+    "blog": "Blog"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Portugal · Imóveis de Luxo · AMI 22506",
+      "title": "Encontre o seu imóvel de excelência em Portugal",
+      "subtitle": "Lisboa · Cascais · Comporta · Porto · Algarve · Madeira",
+      "cta_primary": "Ver Portfólio",
+      "cta_secondary": "Avaliar Imóvel"
+    },
+    "stats": {
+      "transactions": "transacções em 2025",
+      "median_price": "preço mediano/m² 2026",
+      "growth": "crescimento anual",
+      "luxury_rank": "Top 5 Luxo Mundial"
+    },
+    "zones": {
+      "title": "As Melhores Zonas",
+      "subtitle": "8 mercados premium, análise exclusiva Agency Group"
+    },
+    "avm": {
+      "title": "Avaliação Automática",
+      "subtitle": "60+ variáveis · 47 zonas · Precisão ±8%",
+      "button": "Avaliar Agora"
+    },
+    "contact": {
+      "title": "Fale Connosco",
+      "whatsapp": "WhatsApp Directo",
+      "email": "Email"
+    }
+  },
+  "property": {
+    "price": "Preço",
+    "area": "Área",
+    "rooms": "Quartos",
+    "bathrooms": "WC",
+    "floor": "Andar",
+    "ground_floor": "R/C",
+    "pool": "Piscina",
+    "garage": "Garagem",
+    "garden": "Jardim",
+    "terrace": "Terraço",
+    "sea_view": "Vista Mar",
+    "energy": "Eficiência Energética",
+    "tour": "Tour Virtual 3D",
+    "see_property": "Ver Imóvel",
+    "contact_agent": "Contactar Consultor",
+    "schedule_visit": "Agendar Visita",
+    "make_offer": "Fazer Proposta",
+    "similar": "Imóveis Similares",
+    "investment": {
+      "title": "Análise de Investimento",
+      "equity": "Capital Próprio (40%)",
+      "mortgage": "Prestação Mensal",
+      "gross_yield": "Yield Bruto",
+      "net_yield": "Yield Líquido",
+      "gross_rent": "Renda Mensal Bruta",
+      "cash_flow": "Cash Flow Mensal",
+      "irr": "TIR 5 Anos",
+      "coc": "Cash-on-Cash"
+    }
+  },
+  "filters": {
+    "all_zones": "Todas as Zonas",
+    "all_types": "Todos os Tipos",
+    "price": "Preço",
+    "rooms": "Quartos",
+    "pool": "Piscina",
+    "garage": "Garagem",
+    "sea_view": "Vista Mar",
+    "off_market": "Off-Market",
+    "clear": "Limpar",
+    "sort": "Ordenar",
+    "recent": "Recente",
+    "price_asc": "Preço ↑",
+    "price_desc": "Preço ↓",
+    "area_asc": "Área ↑",
+    "area_desc": "Área ↓",
+    "grid_view": "Vista em grelha",
+    "map_view": "Vista em mapa"
+  },
+  "compare": {
+    "title": "Comparar",
+    "compare": "Comparar",
+    "clear": "Limpar",
+    "max_items": "Máximo 3 imóveis",
+    "ask_agent": "Pedir Ajuda ao Consultor",
+    "comparison": "Comparação de Imóveis",
+    "selected": "imóveis selecionados"
+  },
+  "favorites": {
+    "add": "Adicionar aos favoritos",
+    "remove": "Remover dos favoritos",
+    "title": "Favoritos",
+    "saved": "imóveis guardados",
+    "send_list": "Enviar Lista ao Consultor"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "commission": "Comissão 5% (CPCV 50% + Escritura 50%)",
+    "rights": "Todos os direitos reservados"
+  }
+}

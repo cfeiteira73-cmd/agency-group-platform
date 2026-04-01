@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes">
+<title>Relatório AVM | Agency Group</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>:root{--v:#1c4a35;--v2:#2a6b4e;--v3:#163a28;--d:#c9a96e;--d2:#e2c99a;--d3:#8b6914;--cr:#f4f0e6;--cr2:#ece7d9;--cr3:#e0dace;--cr4:#d4cfc0;--bk:#0a0a0a;--gy:#6b6b6b;--gy2:#999;--wh:#fff;--err:#c53030}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html{-webkit-text-size-adjust:100%}
+body{font-family:'Jost',sans-serif;background:var(--cr);color:var(--bk);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+.hdr{background:var(--v3);border-bottom:1px solid rgba(201,169,110,.22);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:300;letter-spacing:.28em;color:var(--d);text-transform:uppercase}.logo span{color:var(--d2)}
+.ami{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.45);letter-spacing:.12em;margin-top:2px}
+.bdg{background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.28);color:var(--d2);font-family:'DM Mono',monospace;font-size:10px;padding:5px 14px;border-radius:20px}
+.hero{background:var(--v);padding:24px 24px 20px}
+.hl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.55);letter-spacing:.15em;text-transform:uppercase}
+.ht{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:#fff;margin:5px 0 3px}
+.hs{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,.45)}
+.gb{height:2px;background:var(--d)}
+.main{padding:20px 24px;max-width:880px;margin:0 auto;padding-bottom:90px}
+.card{background:var(--wh);border:0.5px solid var(--cr3);border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(10,10,10,.07)}
+.ct{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:8px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+@media(max-width:560px){.g2,.g3{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gy);display:flex;align-items:center;gap:5px}
+.rq{width:5px;height:5px;background:var(--d);border-radius:50%;display:inline-block}
+.f input,.f select,.f textarea{font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--bk);background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:10px 12px;width:100%;transition:all .2s;-webkit-appearance:none}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--d);background:var(--wh);box-shadow:0 0 0 3px rgba(201,169,110,.12)}
+.f textarea{resize:vertical;min-height:72px;line-height:1.6}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b6b' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.f input.af{border-color:#4f46e5;background:rgba(79,70,229,.07)}
+.hn{font-family:'DM Mono',monospace;font-size:10px;color:var(--gy2);margin-top:2px}
+.rg{display:flex;flex-wrap:wrap;gap:8px}
+.rg label{display:flex;align-items:center;gap:8px;background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:10px 14px;cursor:pointer;transition:all .2s;font-size:13px;font-weight:300;flex:1;min-width:100px}
+.rg input[type=radio]{accent-color:var(--v);width:16px;height:16px}
+.rg label:has(input:checked){background:rgba(28,74,53,.07);border-color:var(--v);color:var(--v)}
+.cg{display:flex;flex-wrap:wrap;gap:8px}
+.cg label{display:flex;align-items:center;gap:8px;background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:9px 13px;cursor:pointer;font-size:12px;font-weight:300}
+.cg input{accent-color:var(--v);width:15px;height:15px}
+.cg label:has(input:checked){background:rgba(28,74,53,.07);border-color:var(--v)}
+.ntc{background:#f0ede4;border-left:3px solid var(--v);padding:12px 16px;font-size:11px;font-weight:300;color:#444;line-height:1.75;margin-bottom:18px}
+.abl{background:var(--v);border-radius:10px;padding:18px 22px;margin-bottom:14px}
+.al{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.5);letter-spacing:.12em;text-transform:uppercase}
+.av{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--d);margin-top:4px}
+.as{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.35);margin-top:3px}
+.do{display:none;background:var(--wh);border-radius:14px;box-shadow:0 8px 40px rgba(10,10,10,.12);overflow:hidden;margin-top:20px}
+.do.vis{display:block}
+.dh{background:var(--v);padding:28px 36px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.dl{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:.28em;color:var(--d);text-transform:uppercase}
+.dl span{color:var(--d2)}.da{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.45);letter-spacing:.1em;margin-top:5px}
+.dr{text-align:right}.drl{font-family:'DM Mono',monospace;font-size:9px;color:var(--d);letter-spacing:.15em;text-transform:uppercase}
+.drt{font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;margin-top:4px;line-height:1.3}
+.drf{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.3);margin-top:5px}
+.gl{height:2px;background:var(--d)}
+.db{padding:28px 36px}
+.ds{margin-bottom:20px}
+.dt{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:6px;margin-bottom:12px}
+.df{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dfl{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.dfv{font-size:13px;font-weight:300;color:var(--bk);border-bottom:0.5px solid #ccc9bc;padding-bottom:6px;min-height:24px}
+.dfv.g{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--d)}
+.dfv.o{color:var(--v);font-weight:500}
+.cl{font-size:12px;font-weight:300;color:#333;line-height:1.85;margin-bottom:9px}
+.cl .n{font-family:'DM Mono',monospace;font-size:10px;color:var(--v);margin-right:6px}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:8px}
+.sl{border-top:1px solid #aaa;padding-top:8px;margin-bottom:6px}
+.sn{font-size:13px;font-weight:400}
+.sr{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:3px}
+.sd{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:12px}
+.dft{background:var(--cr2);border-top:0.5px solid var(--cr3);padding:14px 36px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.dfi{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy);line-height:1.8}
+.dfu{font-family:'DM Mono',monospace;font-size:9px;color:var(--d)}
+.dac{display:flex;gap:10px;padding:14px 20px;background:var(--cr2);border-top:0.5px solid var(--cr3);flex-wrap:wrap}
+.dab{font-family:'Jost',sans-serif;font-size:12px;padding:10px 18px;border-radius:6px;cursor:pointer;border:0.5px solid var(--cr3);background:var(--wh);color:var(--bk);transition:all .2s}
+.dab:hover{border-color:var(--v);color:var(--v)}.dab.p{background:var(--v);color:var(--cr);border-color:var(--v)}.dab.w{background:#25D366;color:#fff;border-color:#25D366}
+.nb{position:fixed;bottom:0;left:0;right:0;background:var(--wh);border-top:0.5px solid var(--cr3);padding:12px 24px;display:flex;gap:10px;z-index:150;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.btn{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:12px 20px;border-radius:6px;cursor:pointer;border:none;flex:1;min-height:44px;transition:all .2s}
+.bv{background:var(--v);color:var(--cr)}.bv:hover{background:var(--v2)}
+.bd{background:var(--d);color:var(--v3)}.bd:hover{opacity:.88}
+.bb{background:var(--cr2);color:var(--gy);flex:.6}.bb:hover{background:var(--cr3)}
+@media(max-width:480px){.main{padding:14px 16px}.db{padding:20px}.dh{padding:20px}.sg{grid-template-columns:1fr;gap:20px}}
+@media print{.hdr,.hero,.gb,.nb,.dac,.card,.ntc{display:none!important}.do{display:block!important;box-shadow:none;border-radius:0}.main{padding:0}.dh,.gl,.abl{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+</head>
+<body>
+<header class="hdr"><div><div class="logo">Agency<span> Group</span></div><div class="ami">AMI 22506 · Sistema Documental</div></div><div class="bdg">Deal Radar</div></header>
+<div class="hero"><div class="hl">Deal Radar</div><div class="ht">Relatório AVM</div><div class="hs">Triple Engine: Hedónico 45% · Comparáveis 30% · DCF 25% — INE Q3 2025</div></div>
+<div class="gb"></div>
+<div style="background:var(--v3);border-bottom:1px solid rgba(201,169,110,.18);padding:10px 24px">
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button style="background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.22);color:var(--d2);font-family:'Jost',sans-serif;font-size:11px;padding:7px 14px;border-radius:20px;cursor:pointer" onclick="document.getElementById('ia-p').style.display=document.getElementById('ia-p').style.display==='block'?'none':'block';document.getElementById('ia-i').style.display='none'">✦ Colar Texto</button>
+  <button style="background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.22);color:var(--d2);font-family:'Jost',sans-serif;font-size:11px;padding:7px 14px;border-radius:20px;cursor:pointer" onclick="document.getElementById('ia-i').style.display=document.getElementById('ia-i').style.display==='block'?'none':'block';document.getElementById('ia-p').style.display='none'">✦ Fotografar</button>
+</div>
+<div id="ia-p" style="display:none;margin-top:10px;background:rgba(0,0,0,.22);border:1px solid rgba(201,169,110,.18);border-radius:8px;padding:14px">
+  <textarea id="ptxt" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(201,169,110,.3);color:var(--cr);font-family:'Jost',sans-serif;font-size:13px;padding:11px;border-radius:6px;resize:none;min-height:80px" placeholder="Cola texto para preenchimento automático..."></textarea>
+  <button id="pb" onclick="prText()" style="width:100%;background:var(--d);border:none;color:var(--v3);font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:11px;border-radius:6px;cursor:pointer;margin-top:10px">✦ Extrair e Preencher</button>
+  <div id="pmsg" style="display:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--d2);background:rgba(28,74,53,.25);border:1px solid rgba(28,74,53,.4);border-radius:6px;padding:9px;margin-top:8px"></div>
+</div>
+<div id="ia-i" style="display:none;margin-top:10px;background:rgba(0,0,0,.22);border:1px solid rgba(201,169,110,.18);border-radius:8px;padding:14px">
+  <div style="border:1.5px dashed rgba(201,169,110,.35);border-radius:8px;padding:18px;text-align:center;cursor:pointer" onclick="document.getElementById('imgIn').click()">
+    <input type="file" id="imgIn" accept="image/*" capture="environment" onchange="prImg(this,EP,FIELDS)" style="display:none">
+    <div style="font-size:24px;margin-bottom:4px">📷</div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.4)">Tocar para fotografar</div>
+  </div>
+  <div id="imsg" style="display:none;font-family:'DM Mono',monospace;font-size:11px;color:var(--d2);background:rgba(28,74,53,.25);border:1px solid rgba(28,74,53,.4);border-radius:6px;padding:9px;margin-top:8px"></div>
+</div>
+</div>
+<main class="main"><div class="ntc">Sistema de avaliação automática Deal Radar. Não substitui avaliação certificada CMVM. Erro mediano: ±12–18%.</div>
+<div class="card"><div class="ct">Imóvel</div><div class="g2">
+  <div class="f"><label>Morada <span class="rq"></span></label><input id="morada" oninput="sv()" placeholder="Morada completa"></div>
+  <div class="f"><label>Tipo / Tipologia</label><input id="tipo" oninput="sv()" placeholder="Ex: Apartamento T3"></div>
+  <div class="f"><label>Área ABP (m²) <span class="rq"></span></label><input id="abp" type="number" oninput="calc();sv()"></div>
+  <div class="f"><label>Ano Construção</label><input id="ano" type="number" oninput="calc();sv()"></div>
+  <div class="f"><label>Artigo Matricial</label><input id="artm" oninput="sv()"></div>
+  <div class="f"><label>Estado</label><select id="est" onchange="calc();sv()"><option value="1">Selecionar</option><option value="1.12">Novo/Excelente</option><option value="1.04">Muito Bom</option><option value="1.0">Bom</option><option value="0.92">Razoável</option><option value="0.78">A Necessitar Obras</option></select></div>
+</div></div>
+<div class="card"><div class="ct">Parâmetros de Mercado</div><div class="g2">
+  <div class="f"><label>Zona <span class="rq"></span></label><select id="zona" onchange="setRef();calc()"><option value="">Selecionar</option>
+    <option value="6800">Lisboa Centro (6.800€/m²)</option><option value="5000">Lisboa Periferia (5.000€/m²)</option>
+    <option value="6000">Cascais (6.000€/m²)</option><option value="4500">Cascais Periferia (4.500€/m²)</option>
+    <option value="5200">Oeiras (5.200€/m²)</option><option value="4000">Oeiras Periferia (4.000€/m²)</option>
+    <option value="3800">Sintra (3.800€/m²)</option><option value="4500">Porto Centro (4.500€/m²)</option>
+    <option value="5500">Comporta (5.500€/m²)</option><option value="4200">Algarve Premium (4.200€/m²)</option>
+    <option value="3800">Funchal (3.800€/m²)</option></select></div>
+  <div class="f"><label>€/m² Ref.</label><input id="refm2" type="number" oninput="calc();sv()"></div>
+  <div class="f"><label>Calibrador INE</label><input id="calib" type="number" value="0.854" step="0.001" oninput="calc();sv()"><span class="hn">Lisboa=0.854 · Cascais=0.893 · Oeiras=0.858 · Porto=0.861</span></div>
+  <div class="f"><label>Comparável 1 (€/m²)</label><input id="c1" type="number" oninput="calc();sv()"></div>
+  <div class="f"><label>Comparável 2 (€/m²)</label><input id="c2" type="number" oninput="calc();sv()"></div>
+  <div class="f"><label>Comparável 3 (€/m²)</label><input id="c3" type="number" oninput="calc();sv()"></div>
+</div></div>
+<div id="res" style="display:none">
+  <div class="abl" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div><div class="al">Valor de Mercado Estimado</div><div class="av" id="avmv">—</div><div class="as">Hedónico 45% · Comparáveis 30% · DCF 25%</div></div>
+    <div style="text-align:right"><div class="al">Intervalo ±12–18%</div><div class="av" style="font-size:18px" id="avmr">—</div><div class="as">Calibrado INE Q3 2025</div></div>
+  </div>
+  <div class="card"><div class="ct">Decomposição Triple Engine</div><div id="brkd"></div></div>
+  <div class="card"><div class="ct">Posicionamento</div><div class="g2">
+    <div class="f"><label>Preço de Listagem Recomendado</label><input id="plist" type="number" oninput="sv()"></div>
+    <div class="f"><label>Preço de Liquidez (90 dias)</label><input id="pliq" type="number" oninput="sv()"></div>
+    <div class="f"><label>Buyer Fit</label><select id="bfit" onchange="sv()"><option>Família nacional</option><option>Investidor nacional</option><option>Comprador estrangeiro</option><option>Golden Visa / NHR</option></select></div>
+    <div class="f"><label>Tempo de Absorção</label><input id="tabs" oninput="sv()" placeholder="Ex: 45–90 dias"></div>
+  </div></div>
+</div>
+<div class="card"><div class="ct">Notas</div><div class="f"><textarea id="notas" placeholder="Observações, riscos, upside..." style="min-height:90px" oninput="sv()"></textarea></div></div>
+<div class="do" id="docOut">
+  <div class="dh"><div><div class="dl">Agency<span> Group</span></div><div class="da">AMI 22506 · Deal Radar · NIPC 516.833.960</div></div>
+  <div class="dr"><div class="drl">Avaliação Automática</div><div class="drt">Relatório AVM<br>Triple Engine</div><div class="drf" id="docRef">AVM-2026-___</div></div></div>
+  <div class="gl"></div><div class="db" id="docBody"></div>
+  <div class="dft"><div class="dfi">Agency Group · AMI 22506 · Deal Radar AVM · geral@agencygroup.pt</div><div class="dfu">agencygroup.pt/cmi</div></div>
+  <div class="dac"><button class="dab p" onclick="window.print()">🖨 Imprimir</button><button class="dab" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('docBody').innerText)">📋 Copiar</button></div>
+</div>
+<div class="nb"><button class="bv btn" onclick="gen()">✦ Gerar Relatório AVM</button></div></main>
+<script>
+function tog(id){['ia-p','ia-i'].forEach(p=>{const el=document.getElementById(p);if(el)el.style.display=(p===id&&el.style.display==='none')?'block':'none';});}
+async function callAI(sys,uc,isImg){const msg=isImg?[{role:'user',content:[{type:'image',source:{type:'base64',media_type:uc.t,data:uc.d}},{type:'text',text:sys}]}]:[{role:'user',content:sys+'\n\n'+uc}];const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:msg})});const d=await r.json();return d.content?.[0]?.text||'';}
+function fill(data,fields){Object.entries(fields).forEach(([k,id])=>{if(data[k]){const el=document.getElementById(id);if(el){el.value=data[k];el.classList.add('af');}}});}
+async function prImg(input,ep,fields){if(!input.files[0])return;const reader=new FileReader();reader.onload=async e=>{const b64=e.target.result.split(',')[1];const mt=input.files[0].type||'image/jpeg';try{const raw=await callAI(ep,{t:mt,d:b64},true);const d=JSON.parse(raw.replace(/```json|```/g,'').trim());fill(d,fields);const n=Object.values(d).filter(v=>v).length;const m=document.getElementById('imsg');if(m){m.textContent='✓ '+n+' campos extraídos';m.style.display='block';}}catch(e){}};reader.readAsDataURL(input.files[0]);}
+function fmt(n){return n>0?n.toLocaleString('pt-PT',{style:'currency',currency:'EUR',minimumFractionDigits:0}):'—';}
+
+const EP='Extrai dados imóvel. JSON apenas: {"morada":"","tipo":"","abp":"","ano":"","refm2":"","notas":""}';
+const FIELDS={morada:'morada',tipo:'tipo',abp:'abp',ano:'ano',notas:'notas'};
+async function prText(){const t=document.getElementById('ptxt')?.value?.trim();if(!t)return;const pb=document.getElementById('pb');if(pb){pb.disabled=true;pb.textContent='⏳';}try{const raw=await callAI(EP,t,false);const d=JSON.parse(raw.replace(/```json|```/g,'').trim());fill(d,FIELDS);calc();const n=Object.values(d).filter(v=>v).length;const m=document.getElementById('pmsg');if(m){m.textContent='✓ '+n+' campos';m.style.display='block';}}catch(e){}if(pb){pb.disabled=false;pb.textContent='✦ Extrair';}}
+function setRef(){const v=document.getElementById('zona').value;if(v)document.getElementById('refm2').value=v;}
+function calc(){
+  const abp=parseFloat(document.getElementById('abp').value)||0;
+  const rm=parseFloat(document.getElementById('refm2').value)||0;
+  const cb=parseFloat(document.getElementById('calib').value)||0.854;
+  const est=parseFloat(document.getElementById('est').value)||1.0;
+  const c1=parseFloat(document.getElementById('c1').value)||0;
+  const c2=parseFloat(document.getElementById('c2').value)||0;
+  const c3=parseFloat(document.getElementById('c3').value)||0;
+  const ano=parseInt(document.getElementById('ano').value)||2000;
+  if(!abp||!rm){document.getElementById('res').style.display='none';return;}
+  const idade=2026-ano;
+  const ci=idade<10?1.05:idade<20?1.0:idade<30?0.96:idade<40?0.92:0.87;
+  const hm=rm*cb*est*ci;const hed=hm*abp;
+  const cs=[c1,c2,c3].filter(v=>v>0);
+  const comp=cs.length>0?cs.reduce((a,b)=>a+b,0)/cs.length*abp:hed;
+  const dcf=hed*0.97;
+  const avm=hed*0.45+comp*0.30+dcf*0.25;
+  document.getElementById('avmv').textContent=fmt(avm);
+  document.getElementById('avmr').textContent=fmt(avm*0.85)+' – '+fmt(avm*1.15);
+  document.getElementById('brkd').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">'+
+    ['Hedónico (45%)',fmt(hed),Math.round(hm).toLocaleString('pt-PT')+'€/m²',cs.length+' comp.',
+    'Comparáveis (30%)',fmt(comp),'DCF (25%)',fmt(dcf),'Coef. idade: '+ci].slice(0,9).reduce((a,v,i)=>
+      i%3===0?a+`<div style="background:var(--cr);border-radius:8px;padding:12px;text-align:center">`:
+      i%3===1?a+`<div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--v)">${v}</div>`:
+      a+`<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:3px">${v}</div></div>`,'')
+    +'</div>';
+  document.getElementById('res').style.display='block';
+  if(!document.getElementById('plist').value)document.getElementById('plist').value=Math.round(avm/1000)*1000;
+  if(!document.getElementById('pliq').value)document.getElementById('pliq').value=Math.round(avm*0.93/1000)*1000;
+  sv();
+}
+function sv(){const flds=['morada','tipo','abp','artm','ano','zona','refm2','calib','c1','c2','c3','plist','pliq','bfit','tabs','notas'];const d={};flds.forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.value;});d.est=document.getElementById('est')?.value||'1';localStorage.setItem('ag_avm',JSON.stringify(d));}
+function ld(){try{const d=JSON.parse(localStorage.getItem('ag_avm')||'{}');Object.entries(d).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v;});calc();}catch(e){}}
+function gen(){
+  const g=id=>document.getElementById(id)?.value||'—';
+  const avmv=document.getElementById('avmv')?.textContent||'—';
+  const avmr=document.getElementById('avmr')?.textContent||'—';
+  const dt=new Date().toLocaleDateString('pt-PT');
+  document.getElementById('docBody').innerHTML=`
+  <div class="ds"><div class="dt">Imóvel Avaliado</div>
+    <div class="df">
+      <div><div class="dfl">Morada</div><div class="dfv o">${g('morada')}</div></div>
+      <div><div class="dfl">Tipo</div><div class="dfv">${g('tipo')}</div></div>
+      <div><div class="dfl">Área ABP</div><div class="dfv">${g('abp')?g('abp')+'m²':'—'}</div></div>
+      <div><div class="dfl">Artigo Matricial</div><div class="dfv">${g('artm')}</div></div>
+      <div><div class="dfl">Ano Construção</div><div class="dfv">${g('ano')}</div></div>
+      <div><div class="dfl">Estado</div><div class="dfv">${document.getElementById('est')?.options[document.getElementById('est')?.selectedIndex]?.text||'—'}</div></div>
+    </div>
+  </div>
+  <div style="background:var(--v);padding:22px 24px;margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div><div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.5);letter-spacing:.12em;text-transform:uppercase">Valor de Mercado Estimado</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--d);margin-top:4px">${avmv}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.35);margin-top:3px">Triple Engine · Calibrado INE Q3 2025</div></div>
+      <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.5)">Intervalo ±12–18%</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--d);margin-top:4px">${avmr}</div></div>
+    </div>
+  </div>
+  <div class="ds"><div class="dt">Posicionamento</div>
+    <div class="df">
+      <div><div class="dfl">Preço Listagem</div><div class="dfv o">${fmt(parseInt(g('plist'))||0)}</div></div>
+      <div><div class="dfl">Preço Liquidez 90d</div><div class="dfv">${fmt(parseInt(g('pliq'))||0)}</div></div>
+      <div><div class="dfl">Buyer Fit</div><div class="dfv">${g('bfit')}</div></div>
+      <div><div class="dfl">Tempo Absorção</div><div class="dfv">${g('tabs')}</div></div>
+    </div>
+  </div>
+  ${g('notas')!=='—'?`<div class="ds"><div class="dt">Notas de Mercado</div><div class="cl">${g('notas')}</div></div>`:''}
+  <div class="ds"><div class="dt">Disclaimer Legal</div>
+    <div class="cl">Relatório gerado automaticamente pelo sistema AVM Deal Radar da Agency Group, com base em dados INE Q3 2025. Não constitui avaliação certificada CMVM. Erro mediano estimado: ±12–18%. Data: ${dt}.</div>
+  </div>
+  <div class="ds"><div class="dt">Assinatura</div>
+    <div class="sg"><div><div class="sl"></div><div class="sn">Carlos Feiteira</div><div class="sr">Mediador AMI 22506 · Deal Radar</div><div class="sd">Data: ${dt}</div></div></div>
+  </div>`;
+  document.getElementById('docOut').classList.add('vis');
+  document.getElementById('docOut').scrollIntoView({behavior:'smooth'});
+}
+window.addEventListener('load',ld);
+</script>
+</body>
+</html>

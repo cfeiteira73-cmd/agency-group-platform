@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes">
+<title>Guia IMT 2026 — Cálculo Completo | Agency Group AMI 22506</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>:root{--v:#1c4a35;--v2:#2a6b4e;--v3:#163a28;--d:#c9a96e;--d2:#e2c99a;--d3:#8b6914;--cr:#f4f0e6;--cr2:#ece7d9;--cr3:#e0dace;--bk:#0a0a0a;--gy:#6b6b6b;--gy2:#999;--wh:#fff;--er:#c53030}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html{-webkit-text-size-adjust:100%}
+body{font-family:'Jost',sans-serif;background:var(--cr);color:var(--bk);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+.hdr{background:var(--v3);border-bottom:1px solid rgba(201,169,110,.22);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:300;letter-spacing:.28em;color:var(--d);text-transform:uppercase}.logo span{color:var(--d2)}
+.ami{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.45);letter-spacing:.12em;margin-top:2px}
+.bdg{background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.28);color:var(--d2);font-family:'DM Mono',monospace;font-size:10px;padding:5px 14px;border-radius:20px}
+.hero{background:var(--v);padding:24px 24px 20px}.hl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.55);letter-spacing:.15em;text-transform:uppercase}
+.ht{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:#fff;margin:5px 0 3px}.hs{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,.45)}
+.gb{height:2px;background:var(--d)}
+.main{padding:20px 24px;max-width:880px;margin:0 auto;padding-bottom:90px}
+.card{background:var(--wh);border:0.5px solid var(--cr3);border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(10,10,10,.07)}
+.ct{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:8px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}.g1{display:grid;grid-template-columns:1fr;gap:13px}
+@media(max-width:560px){.g2,.g3{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gy);display:flex;align-items:center;gap:5px}
+.rq{width:5px;height:5px;background:var(--d);border-radius:50%;display:inline-block}
+.f input,.f select,.f textarea{font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--bk);background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:10px 12px;width:100%;transition:all .2s;-webkit-appearance:none}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--d);background:var(--wh);box-shadow:0 0 0 3px rgba(201,169,110,.12)}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b6b' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.hn{font-family:'DM Mono',monospace;font-size:10px;color:var(--gy2);margin-top:2px}
+.ntc{background:#f0ede4;border-left:3px solid var(--v);padding:12px 16px;font-size:11px;font-weight:300;color:#444;line-height:1.75;margin-bottom:18px}
+.ntc-warn{background:#fffbeb;border-left:3px solid #f59e0b;padding:12px 16px;font-size:11px;font-weight:300;color:#92400e;line-height:1.75;margin-bottom:18px}
+.ntc-ok{background:#f0faf4;border-left:3px solid var(--v);padding:12px 16px;font-size:11px;font-weight:300;color:#1a5c35;line-height:1.75;margin-bottom:18px}
+.abi{background:var(--v);border-radius:10px;padding:18px 22px;margin-bottom:14px}
+.abi-r{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.abl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.5);letter-spacing:.12em;text-transform:uppercase}
+.abv{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--d);margin-top:4px}
+.abs{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.35);margin-top:3px}
+.nb{position:fixed;bottom:0;left:0;right:0;background:var(--wh);border-top:0.5px solid var(--cr3);padding:12px 24px;display:flex;gap:10px;z-index:150;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.btn{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:12px 20px;border-radius:6px;cursor:pointer;border:none;flex:1;min-height:44px;transition:all .2s}
+.bv{background:var(--v);color:var(--cr)}.bv:hover{background:var(--v2)}
+.bd{background:var(--d);color:var(--v3)}.bd:hover{opacity:.88}
+.bb{background:var(--cr2);color:var(--gy);flex:.6}.bb:hover{background:var(--cr3)}
+/* Tabela escalões */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--v);border-bottom:1.5px solid var(--v);padding:8px 10px;text-align:left;background:rgba(28,74,53,.05)}
+.tbl td{padding:9px 10px;border-bottom:0.5px solid var(--cr2);font-weight:300;font-size:12px}
+.tbl tr:hover td{background:rgba(201,169,110,.06)}
+.tbl td.hi{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--d);font-weight:400}
+.tbl td.ok{color:var(--v);font-weight:500}
+/* Resultado calculadora */
+.res-box{background:var(--v);border-radius:12px;padding:22px 24px;margin-top:16px;display:none}
+.res-box.vis{display:block}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid rgba(201,169,110,.2)}
+.res-row:last-child{border-bottom:none;padding-top:14px;margin-top:4px}
+.res-lbl{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,.6);letter-spacing:.1em;text-transform:uppercase}
+.res-val{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--d)}
+.res-total{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--d2)}
+.res-sub{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.4);margin-top:3px}
+.isenção-badge{display:inline-block;background:rgba(28,200,100,.2);border:1px solid rgba(28,200,100,.4);color:#1a7a3a;font-family:'DM Mono',monospace;font-size:10px;padding:4px 12px;border-radius:20px;margin-top:8px}
+.tag-tip{display:inline-block;background:rgba(201,169,110,.15);color:var(--d3);font-family:'DM Mono',monospace;font-size:9px;padding:3px 9px;border-radius:10px;margin:2px}
+@media print{.hdr,.hero,.gb,.nb,.card:not(.print-show){display:none!important}.main{padding:0}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div><div class="logo">Agency<span> Group</span></div><div class="ami">AMI 22506 · Sistema Documental</div></div>
+  <div class="bdg">IMT 2026</div>
+</header>
+<div class="hero"><div class="hl">ESCRITURA · FISCALIDADE</div><div class="ht">Guia IMT 2026 — Cálculo Completo</div><div class="hs">Tabelas actualizadas OE 2026 · Isenções HPP · IMT Jovem · Imposto do Selo · Custas Notariais</div></div>
+<div class="gb"></div>
+
+<main class="main">
+
+<div class="ntc">
+  <strong>Legislação aplicável:</strong> Lei n.º 73-A/2025 de 30 de Dezembro (OE 2026) · CIMT — Código do IMT (D.L. 223/2003) · Ofício Circulado AT n.º 40129/2026 · Valores em vigor a partir de 1 de Janeiro de 2026.
+</div>
+
+<!-- CALCULADORA -->
+<div class="card">
+  <div class="ct">✦ Calculadora IMT 2026</div>
+  <div class="g2">
+    <div class="f">
+      <label><span class="rq"></span> Valor de Aquisição (€)</label>
+      <input type="number" id="val" placeholder="Ex: 450000" oninput="calcIMT()">
+      <div class="hn">Valor de escritura ou VPT (o maior dos dois)</div>
+    </div>
+    <div class="f">
+      <label><span class="rq"></span> Tipo de Transmissão</label>
+      <select id="tipo" onchange="calcIMT()">
+        <option value="hpp">Habitação Própria Permanente (HPP)</option>
+        <option value="hpp_jovem">HPP — Jovem ≤35 anos (1.ª Habitação)</option>
+        <option value="habitacao">Habitação Secundária / Arrendamento</option>
+        <option value="comercial">Prédio Urbano — Fins Comerciais</option>
+        <option value="rustico">Prédio Rústico</option>
+        <option value="outro">Outros (taxa geral 6,5%)</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Localização</label>
+      <select id="local" onchange="calcIMT()">
+        <option value="cont">Continente</option>
+        <option value="mad">Madeira / Açores (+25% isenção)</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Incluir Imposto do Selo (0,8%)</label>
+      <select id="incIS" onchange="calcIMT()">
+        <option value="sim">Sim — incluir no total</option>
+        <option value="nao">Não</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="res-box" id="resBox">
+    <div class="res-row">
+      <div><div class="res-lbl">Valor de Aquisição</div></div>
+      <div class="res-val" id="rVal">—</div>
+    </div>
+    <div class="res-row">
+      <div><div class="res-lbl">IMT Calculado</div><div class="res-sub" id="rTaxa"></div></div>
+      <div class="res-val" id="rIMT">—</div>
+    </div>
+    <div class="res-row" id="rISrow">
+      <div><div class="res-lbl">Imposto do Selo (0,8%)</div></div>
+      <div class="res-val" id="rIS">—</div>
+    </div>
+    <div class="res-row" id="rNotRow">
+      <div><div class="res-lbl">Custas Notariais + Registo (est.)</div><div class="res-sub">Escritura + Registo Predial + Ap. 2</div></div>
+      <div class="res-val" id="rNot">~€ 1.200</div>
+    </div>
+    <div class="res-row">
+      <div><div class="res-lbl">Total Estimado Custos de Transacção</div></div>
+      <div class="res-total" id="rTotal">—</div>
+    </div>
+    <div id="rIsenMsg"></div>
+  </div>
+</div>
+
+<!-- TABELAS HPP CONTINENTE -->
+<div class="card">
+  <div class="ct">Tabela IMT — Habitação Própria Permanente · Continente (2026)</div>
+  <div class="ntc">Aplica-se quando o adquirente afecta o imóvel a habitação própria e permanente. O sujeito passivo deve fazer prova dessa afectação no prazo de 6 meses após a escritura (AT).</div>
+  <div style="overflow-x:auto">
+  <table class="tbl">
+    <thead><tr><th>Escalão — Valor de Aquisição</th><th>Taxa Marginal</th><th>Parcela a Abater</th></tr></thead>
+    <tbody>
+      <tr><td>Até € 106.346</td><td class="ok">Isento</td><td>—</td></tr>
+      <tr><td>€ 106.346 — € 148.603</td><td>2%</td><td>€ 2.126,92</td></tr>
+      <tr><td>€ 148.603 — € 195.308</td><td>5%</td><td>€ 6.585,00</td></tr>
+      <tr><td>€ 195.308 — € 309.688</td><td>7%</td><td>€ 10.492,04</td></tr>
+      <tr><td>€ 309.688 — € 548.135</td><td>8%</td><td>€ 13.587,72</td></tr>
+      <tr><td>€ 548.135 — € 1.150.853</td><td>6%</td><td>—</td></tr>
+      <tr><td>Acima de € 1.150.853</td><td class="hi">7,5%</td><td>—</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="hn" style="margin-top:10px">Fórmula: IMT = Valor × Taxa − Parcela a Abater. Entre € 548.135 e € 1.150.853 aplica-se taxa única de 6% sobre o valor total (sem parcela).</div>
+</div>
+
+<!-- TABELA HABITAÇÃO SECUNDÁRIA -->
+<div class="card">
+  <div class="ct">Tabela IMT — Habitação Secundária / Outros Fins · Continente (2026)</div>
+  <div style="overflow-x:auto">
+  <table class="tbl">
+    <thead><tr><th>Escalão — Valor de Aquisição</th><th>Taxa Marginal</th><th>Parcela a Abater</th></tr></thead>
+    <tbody>
+      <tr><td>Até € 106.346</td><td>1%</td><td>—</td></tr>
+      <tr><td>€ 106.346 — € 148.603</td><td>2%</td><td>€ 1.063,46</td></tr>
+      <tr><td>€ 148.603 — € 195.308</td><td>5%</td><td>€ 5.521,54</td></tr>
+      <tr><td>€ 195.308 — € 309.688</td><td>7%</td><td>€ 9.427,58</td></tr>
+      <tr><td>€ 309.688 — € 548.135</td><td>8%</td><td>€ 12.524,26</td></tr>
+      <tr><td>€ 548.135 — € 1.150.853</td><td>6%</td><td>—</td></tr>
+      <tr><td>Acima de € 1.150.853</td><td class="hi">7,5%</td><td>—</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- IMT JOVEM -->
+<div class="card">
+  <div class="ct">✦ IMT Jovem — Isenção para Jovens ≤ 35 Anos (Lei OE 2026)</div>
+  <div class="ntc-ok">
+    <strong>Isenção total de IMT + Imposto do Selo</strong> na aquisição da 1.ª habitação própria permanente por jovens com idade não superior a 35 anos, nos termos do Art.º 11.º-A do CIMT aditado pela Lei n.º 56/2023 e actualizado pelo OE 2026.
+  </div>
+  <div class="g2" style="margin-bottom:16px">
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Isenção Total (IMT + IS)</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--v)">Até € 330.539</div>
+      <div style="font-size:11px;color:var(--gy);margin-top:4px">IMT = 0 · IS = 0</div>
+    </div>
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Isenção Parcial</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--d3)">€ 330.539 — € 660.982</div>
+      <div style="font-size:11px;color:var(--gy);margin-top:4px">IMT a 8% apenas sobre o excedente acima de € 330.539</div>
+    </div>
+  </div>
+  <div style="overflow-x:auto">
+  <table class="tbl">
+    <thead><tr><th>Condição</th><th>Requisito</th></tr></thead>
+    <tbody>
+      <tr><td>Idade</td><td>≤ 35 anos à data da escritura</td></tr>
+      <tr><td>1.ª Habitação</td><td>Não ter sido proprietário de habitação própria nos últimos 3 anos</td></tr>
+      <tr><td>Tipo de imóvel</td><td>Habitação própria e permanente no Continente ou R.A.</td></tr>
+      <tr><td>Rendimentos</td><td>Declaração IRS entregue de forma autónoma (não dependente fiscal)</td></tr>
+      <tr><td>Afectação</td><td>Habitar no imóvel no prazo de 6 meses após escritura</td></tr>
+      <tr><td>Restrição pós-aquisição</td><td>Não pode arrendar nem afectar a AL nos 6 anos seguintes</td></tr>
+      <tr><td>Valor máximo</td><td>Sem isenção acima de € 660.982</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="ntc-warn" style="margin-top:14px">
+    <strong>⚠ Atenção:</strong> O benefício cessa e há lugar a liquidação do IMT + IS em falta se o imóvel for arrendado, afecto a AL ou não for ocupado pelo adquirente nos 6 meses seguintes. A AT pode verificar a efectiva afectação a HPP.
+  </div>
+</div>
+
+<!-- OUTRAS TAXAS -->
+<div class="card">
+  <div class="ct">Outras Situações — Taxas Específicas</div>
+  <div style="overflow-x:auto">
+  <table class="tbl">
+    <thead><tr><th>Tipo de Transmissão</th><th>Taxa</th><th>Observação</th></tr></thead>
+    <tbody>
+      <tr><td>Prédio Rústico</td><td>5%</td><td>Sobre valor de aquisição</td></tr>
+      <tr><td>Outros Prédios Urbanos (Comercial, Industrial, Serviços)</td><td>6,5%</td><td>Sobre valor de aquisição</td></tr>
+      <tr><td>Entidades residentes em off-shore</td><td class="hi">10%</td><td>Países lista OCDE (Portaria 150/2004)</td></tr>
+      <tr><td>Prédios omissos na matriz</td><td>Valor declarado × taxa</td><td>Valor mínimo = VPT determinado</td></tr>
+      <tr><td>Herança / Partilha (entre cônjuges e descendentes)</td><td class="ok">Isento</td><td>Art.º 8.º CIMT</td></tr>
+      <tr><td>Regiões Autónomas (Madeira / Açores)</td><td>Tabela HPP + 25%</td><td>Limites isenção aumentados 25%</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- IMPOSTO DO SELO -->
+<div class="card">
+  <div class="ct">Imposto do Selo — Aquisição de Imóveis</div>
+  <div class="g2">
+    <div class="abi">
+      <div class="abi-r">
+        <div><div class="abl">Taxa IS — Aquisição</div><div class="abv">0,8%</div><div class="abs">Sobre o valor de aquisição (ou VPT se superior)</div></div>
+      </div>
+    </div>
+    <div class="abi" style="background:var(--v2)">
+      <div class="abi-r">
+        <div><div class="abl">IS — Hipoteca / Mútuo</div><div class="abv">0,6%</div><div class="abs">Sobre o capital mutuado (prazo &gt; 5 anos)</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="ntc" style="margin-top:0">
+    <strong>Base de cálculo:</strong> O IS incide sobre o <em>maior</em> dos seguintes valores: (a) preço declarado na escritura; (b) VPT (Valor Patrimonial Tributário) do imóvel. Em caso de isenção IMT Jovem, a isenção abrange também o IS sobre a aquisição.
+  </div>
+</div>
+
+<!-- CUSTAS NOTARIAIS -->
+<div class="card">
+  <div class="ct">Custas Notariais e de Registo Predial — Estimativas 2026</div>
+  <div style="overflow-x:auto">
+  <table class="tbl">
+    <thead><tr><th>Componente</th><th>Estimativa</th><th>Notas</th></tr></thead>
+    <tbody>
+      <tr><td>Escritura de Compra e Venda (Cartório Notarial)</td><td>€ 450 — € 700</td><td>Conforme cartório e complexidade</td></tr>
+      <tr><td>Registo Predial — Ap. 2 (Aquisição)</td><td>€ 225 — € 350</td><td>Conservatória competente por localização</td></tr>
+      <tr><td>Registo de Hipoteca (se financiamento bancário)</td><td>€ 225 — € 350</td><td>Obrigatório para crédito habitação</td></tr>
+      <tr><td>Certidão Permanente Actualizada</td><td>€ 20 — € 30</td><td>Válida 6 meses; pode ser solicitada online</td></tr>
+      <tr><td>Certidão de Teor / Cópia</td><td>€ 15 — € 25</td><td>Para documentação adicional</td></tr>
+      <tr><td><strong>Total Estimado (sem hipoteca)</strong></td><td><strong>€ 700 — € 1.100</strong></td><td>Compra a pronto pagamento</td></tr>
+      <tr><td><strong>Total Estimado (com hipoteca)</strong></td><td><strong>€ 1.000 — € 1.600</strong></td><td>Inclui registo de hipoteca</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="hn" style="margin-top:10px">Desde 2022 é possível realizar escrituras em Balcão Casa (Conservatórias do Registo Predial), com tarifas geralmente inferiores às dos cartórios privados.</div>
+</div>
+
+<!-- CUSTOS TOTAIS TÍPICOS -->
+<div class="card">
+  <div class="ct">Simulação de Custos Totais por Faixa de Valor</div>
+  <div style="overflow-x:auto">
+  <table class="tbl">
+    <thead><tr><th>Valor de Aquisição</th><th>IMT (HPP)</th><th>IS (0,8%)</th><th>Notarial/Reg.</th><th>Total Estimado</th></tr></thead>
+    <tbody>
+      <tr><td>€ 150.000</td><td>€ 915</td><td>€ 1.200</td><td>~€ 800</td><td>~€ 2.915</td></tr>
+      <tr><td>€ 250.000</td><td>€ 7.008</td><td>€ 2.000</td><td>~€ 1.000</td><td>~€ 10.008</td></tr>
+      <tr><td>€ 350.000</td><td>€ 14.412</td><td>€ 2.800</td><td>~€ 1.100</td><td>~€ 18.312</td></tr>
+      <tr><td>€ 500.000</td><td>€ 26.413</td><td>€ 4.000</td><td>~€ 1.200</td><td>~€ 31.613</td></tr>
+      <tr><td>€ 750.000</td><td>€ 45.000</td><td>€ 6.000</td><td>~€ 1.300</td><td>~€ 52.300</td></tr>
+      <tr><td>€ 1.000.000</td><td>€ 60.000</td><td>€ 8.000</td><td>~€ 1.500</td><td>~€ 69.500</td></tr>
+      <tr><td>€ 1.500.000</td><td>€ 112.500</td><td>€ 12.000</td><td>~€ 1.800</td><td>~€ 126.300</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="hn" style="margin-top:10px">Valores para HPP Continente. IMT Jovem: isenção total até € 330.539 — economia até ~€ 18.068 em IS + IMT.</div>
+</div>
+
+<!-- ISENÇÕES ESPECIAIS -->
+<div class="card">
+  <div class="ct">Isenções e Benefícios Fiscais — IMT</div>
+  <div style="overflow-x:auto">
+  <table class="tbl">
+    <thead><tr><th>Isenção / Benefício</th><th>Base Legal</th><th>Condição</th></tr></thead>
+    <tbody>
+      <tr><td>HPP Jovem ≤35 anos (1.ª hab.)</td><td>Art.º 11.º-A CIMT / OE 2026</td><td class="ok">Isento até € 330.539</td></tr>
+      <tr><td>Reabilitação Urbana (ARU)</td><td>Art.º 45.º EBF</td><td>Imóvel em Área de Reabilitação Urbana + obras certificadas</td></tr>
+      <tr><td>Fundos de Investimento Imobiliário</td><td>Art.º 49.º EBF</td><td>FII regulados CMVM</td></tr>
+      <tr><td>Cooperativas de Habitação</td><td>Art.º 8.º CIMT</td><td>Para habitação dos associados</td></tr>
+      <tr><td>Herança — cônjuge, descendentes, ascendentes</td><td>Art.º 8.º CIMT</td><td>Partilha hereditária directa</td></tr>
+      <tr><td>Permuta de imóveis</td><td>Art.º 2.º n.º3 CIMT</td><td>IMT incide só sobre a diferença (torna)</td></tr>
+      <tr><td>Estado / Autarquias</td><td>Art.º 6.º CIMT</td><td>Transmissões entre entidades públicas</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- CHECKLIST PRÉ-ESCRITURA -->
+<div class="card">
+  <div class="ct">Checklist Pagamento IMT — Antes da Escritura</div>
+  <div class="ntc-warn">O IMT e o Imposto do Selo devem ser liquidados <strong>antes da escritura</strong>. O comprovativo de pagamento é exigido pelo notário. Sem pagamento, a escritura não pode ser lavrada.</div>
+  <div id="chk-imt"></div>
+  <div class="g2" style="margin-top:14px">
+    <div class="f">
+      <label>Data da Escritura Prevista</label>
+      <input type="date" id="dt_escritura">
+    </div>
+    <div class="f">
+      <label>Data Limite Pagamento IMT</label>
+      <input type="text" id="dt_limite" readonly placeholder="(calculado)" style="background:var(--cr2)">
+      <div class="hn">O IMT deve ser pago até 1 dia útil antes da escritura</div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTAS FINAIS -->
+<div class="card">
+  <div class="ct">Notas Importantes — Conformidade Legal</div>
+  <div class="ntc" style="margin-bottom:10px">
+    <strong>1. VPT vs. Valor Declarado:</strong> A base de incidência do IMT é o <em>maior</em> entre o preço declarado e o VPT do imóvel. Se o VPT for superior ao preço de compra, o IMT é calculado sobre o VPT.
+  </div>
+  <div class="ntc" style="margin-bottom:10px">
+    <strong>2. Prazo de pagamento:</strong> O IMT deve ser liquidado e pago antes do acto de escritura. Pode ser pago via Portal das Finanças (AT) ou nos serviços de finanças competentes.
+  </div>
+  <div class="ntc" style="margin-bottom:10px">
+    <strong>3. Comprovativo obrigatório:</strong> O notário exige o comprovativo de pagamento de IMT e IS para lavrar a escritura. Este documento deve ser apresentado no dia da escritura.
+  </div>
+  <div class="ntc" style="margin-bottom:0">
+    <strong>4. Responsabilidade fiscal:</strong> A informação aqui prestada é meramente indicativa. Para situações específicas (imóveis com benefícios, off-shore, partilhas), recomenda-se consulta com advogado ou solicitador.
+  </div>
+</div>
+
+</main>
+
+<div class="nb">
+  <button class="btn bb" onclick="window.print()">⎙ Imprimir</button>
+  <button class="btn bv" onclick="copyCalc()">✦ Copiar Simulação</button>
+  <button class="btn bd" onclick="shareWA()">WhatsApp</button>
+</div>
+
+<script>
+// Tabelas IMT 2026 actualizadas
+const TABS = {
+  hpp: [
+    [106346,   0,       0],
+    [148603,   0.02,    2126.92],
+    [195308,   0.05,    6585.00],
+    [309688,   0.07,    10492.04],
+    [548135,   0.08,    13587.72],
+    [1150853,  0.06,    0],       // taxa única sem parcela
+    [Infinity, 0.075,   0]        // taxa única sem parcela
+  ],
+  hpp_jovem: [
+    [330539,   0,       0],       // isenção total
+    [660982,   0.08,    26443.12],// 8% só sobre excedente — simplificado
+    [Infinity, -1,      0]        // sem isenção acima de 660982
+  ],
+  habitacao: [
+    [106346,   0.01,    0],
+    [148603,   0.02,    1063.46],
+    [195308,   0.05,    5521.54],
+    [309688,   0.07,    9427.58],
+    [548135,   0.08,    12524.26],
+    [1150853,  0.06,    0],
+    [Infinity, 0.075,   0]
+  ],
+  comercial: [[Infinity, 0.065, 0]],
+  rustico:   [[Infinity, 0.05,  0]],
+  outro:     [[Infinity, 0.065, 0]]
+};
+
+function calcIMT() {
+  const val   = parseFloat(document.getElementById('val').value) || 0;
+  const tipo  = document.getElementById('tipo').value;
+  const incIS = document.getElementById('incIS').value === 'sim';
+  const box   = document.getElementById('resBox');
+  if (val <= 0) { box.classList.remove('vis'); return; }
+
+  let imt = 0, taxa = 0, descricao = '';
+  const tab = TABS[tipo];
+
+  if (tipo === 'hpp_jovem') {
+    if (val <= 330539) {
+      imt = 0; taxa = 0; descricao = 'Isenção total IMT Jovem ≤ € 330.539';
+    } else if (val <= 660982) {
+      imt = (val - 330539) * 0.08;
+      taxa = 0.08;
+      descricao = 'Isenção parcial — 8% sobre excedente de € 330.539';
+    } else {
+      // sem isenção, aplica tabela HPP normal
+      const r = calcTabela(val, TABS.hpp);
+      imt = r.imt; taxa = r.taxa;
+      descricao = `Taxa ${(taxa*100).toFixed(1)}% (sem isenção acima de € 660.982)`;
+    }
+  } else {
+    const r = calcTabela(val, tab);
+    imt = r.imt; taxa = r.taxa;
+    descricao = tab.length === 1 ? `Taxa única ${(taxa*100).toFixed(1)}%` : `Escalão ${(taxa*100).toFixed(1)}%`;
+  }
+
+  const is     = incIS ? val * 0.008 : 0;
+  const not    = 1200;
+  const total  = imt + is + not;
+
+  box.classList.add('vis');
+  document.getElementById('rVal').textContent  = fmt(val);
+  document.getElementById('rIMT').textContent  = fmt(imt);
+  document.getElementById('rTaxa').textContent = descricao;
+  document.getElementById('rIS').textContent   = incIS ? fmt(is) : '—';
+  document.getElementById('rISrow').style.opacity = incIS ? '1' : '.4';
+  document.getElementById('rTotal').textContent = fmt(total);
+
+  // Badge isenção
+  const msg = document.getElementById('rIsenMsg');
+  if (tipo === 'hpp_jovem' && val <= 330539) {
+    msg.innerHTML = '<div class="isenção-badge">✓ Isenção Total IMT + IS</div>';
+  } else if (tipo === 'hpp' && val <= 106346) {
+    msg.innerHTML = '<div class="isenção-badge">✓ Isento de IMT — HPP até € 106.346</div>';
+  } else { msg.innerHTML = ''; }
+}
+
+function calcTabela(val, tab) {
+  let imt = 0, taxa = 0;
+  for (const [lim, t, parc] of tab) {
+    if (val <= lim) {
+      taxa = t; imt = Math.max(0, val * t - parc); break;
+    }
+  }
+  return { imt, taxa };
+}
+
+function fmt(n) { return n.toLocaleString('pt-PT',{style:'currency',currency:'EUR',minimumFractionDigits:0}); }
+
+// Checklist IMT
+const items = [
+  'Obter o VPT actualizado do imóvel (Portal das Finanças)',
+  'Confirmar se VPT > preço escritura (base de cálculo é o maior)',
+  'Verificar elegibilidade IMT Jovem (idade, 1.ª habitação, IRS autónomo)',
+  'Confirmar se imóvel está em ARU (Área de Reabilitação Urbana)',
+  'Calcular IMT e IS (usar calculadora acima)',
+  'Liquidar IMT no Portal das Finanças (e-finanças.pt) ou Serviço de Finanças',
+  'Guardar comprovativo de pagamento (PDF)',
+  'Liquidar Imposto do Selo sobre a aquisição (0,8%)',
+  'Se financiamento bancário: confirmar IS sobre hipoteca (0,6%)',
+  'Apresentar comprovativos ao notário no dia da escritura',
+];
+const chkDiv = document.getElementById('chk-imt');
+if(chkDiv){chkDiv.innerHTML=items.map((it,i)=>`<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--cr2);cursor:pointer;font-size:12px;font-weight:300"><input type="checkbox" id="ci${i}" style="margin-top:3px;accent-color:var(--v);width:16px;height:16px;flex-shrink:0"><span>${it}</span></label>`).join('');}
+
+// Data escritura
+document.getElementById('dt_escritura')?.addEventListener('change',function(){
+  const d = new Date(this.value);
+  d.setDate(d.getDate()-1);
+  // skip fim de semana
+  while([0,6].includes(d.getDay())) d.setDate(d.getDate()-1);
+  document.getElementById('dt_limite').value = d.toLocaleDateString('pt-PT');
+});
+
+function copyCalc(){
+  const val = document.getElementById('val').value;
+  const imt = document.getElementById('rIMT').textContent;
+  const tot = document.getElementById('rTotal').textContent;
+  if(!val){alert('Insere primeiro o valor de aquisição.');return;}
+  const txt = `IMT 2026 — Agency Group\nValor: ${document.getElementById('rVal').textContent}\nIMT: ${imt}\nTotal custos transacção: ${tot}\nFonte: Tabelas OE 2026 · AMI 22506`;
+  navigator.clipboard?.writeText(txt).then(()=>alert('Simulação copiada!')).catch(()=>alert('Usa Ctrl+C para copiar.'));
+}
+
+function shareWA(){
+  const val = document.getElementById('rVal').textContent;
+  const imt = document.getElementById('rIMT').textContent;
+  const tot = document.getElementById('rTotal').textContent;
+  if(val==='—'){alert('Calcular primeiro.');return;}
+  const txt = `IMT 2026 — Simulação Agency Group\n\nValor aquisição: ${val}\nIMT estimado: ${imt}\nTotal custos: ${tot}\n\nTabelas actualizadas OE 2026 | AMI 22506\nwww.agencygroup.pt`;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "properties": "Immobilien",
+    "zones": "Zonen",
+    "valuation": "Bewertung",
+    "credit": "Kredit",
+    "contact": "Kontakt",
+    "blog": "Blog"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Portugal · Luxusimmobilien · AMI 22506",
+      "title": "Finden Sie Ihre Traumimmobilie in Portugal",
+      "subtitle": "Lissabon · Cascais · Comporta · Porto · Algarve · Madeira",
+      "cta_primary": "Portfolio ansehen",
+      "cta_secondary": "Immobilie bewerten"
+    },
+    "stats": {
+      "transactions": "Transaktionen 2025",
+      "median_price": "Medianpreis/m² 2026",
+      "growth": "jährliches Wachstum",
+      "luxury_rank": "Top 5 Weltluxus"
+    },
+    "zones": {
+      "title": "Beste Zonen",
+      "subtitle": "8 Premium-Märkte, exklusive Agency Group Analyse"
+    },
+    "avm": {
+      "title": "Automatische Bewertung",
+      "subtitle": "60+ Variablen · 47 Zonen · ±8% Genauigkeit",
+      "button": "Jetzt bewerten"
+    },
+    "contact": {
+      "title": "Kontaktieren Sie uns",
+      "whatsapp": "WhatsApp Direkt",
+      "email": "E-Mail"
+    }
+  },
+  "property": {
+    "price": "Preis",
+    "area": "Fläche",
+    "rooms": "Schlafzimmer",
+    "bathrooms": "Bäder",
+    "floor": "Etage",
+    "ground_floor": "EG",
+    "pool": "Pool",
+    "garage": "Garage",
+    "garden": "Garten",
+    "terrace": "Terrasse",
+    "sea_view": "Meerblick",
+    "energy": "Energieausweis",
+    "tour": "Virtueller 3D-Rundgang",
+    "see_property": "Immobilie ansehen",
+    "contact_agent": "Makler kontaktieren",
+    "schedule_visit": "Besichtigung planen",
+    "make_offer": "Angebot machen",
+    "similar": "Ähnliche Immobilien",
+    "investment": {
+      "title": "Investitionsanalyse",
+      "equity": "Eigenkapital (40%)",
+      "mortgage": "Monatliche Rate",
+      "gross_yield": "Bruttorendite",
+      "net_yield": "Nettorendite",
+      "gross_rent": "Bruttomiete/Monat",
+      "cash_flow": "Monatlicher Cashflow",
+      "irr": "IRR 5 Jahre",
+      "coc": "Cash-on-Cash"
+    }
+  },
+  "filters": {
+    "all_zones": "Alle Zonen",
+    "all_types": "Alle Typen",
+    "price": "Preis",
+    "rooms": "Schlafzimmer",
+    "pool": "Pool",
+    "garage": "Garage",
+    "sea_view": "Meerblick",
+    "off_market": "Off-Market",
+    "clear": "Löschen",
+    "sort": "Sortieren",
+    "recent": "Neueste",
+    "price_asc": "Preis ↑",
+    "price_desc": "Preis ↓",
+    "area_asc": "Fläche ↑",
+    "area_desc": "Fläche ↓",
+    "grid_view": "Rasteransicht",
+    "map_view": "Kartenansicht"
+  },
+  "compare": {
+    "title": "Vergleichen",
+    "compare": "Vergleichen",
+    "clear": "Löschen",
+    "max_items": "Maximal 3 Immobilien",
+    "ask_agent": "Makler um Hilfe bitten",
+    "comparison": "Immobilienvergleich",
+    "selected": "Immobilien ausgewählt"
+  },
+  "favorites": {
+    "add": "Zu Favoriten hinzufügen",
+    "remove": "Aus Favoriten entfernen",
+    "title": "Favoriten",
+    "saved": "gespeicherte Immobilien",
+    "send_list": "Liste an Makler senden"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "commission": "Provision 5% (CPCV 50% + Beurkundung 50%)",
+    "rights": "Alle Rechte vorbehalten"
+  }
+}

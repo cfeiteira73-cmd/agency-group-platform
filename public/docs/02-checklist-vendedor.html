@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes">
+<title>Checklist Documentos Vendedor | Agency Group</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--v:#1c4a35;--v2:#2a6b4e;--v3:#163a28;--d:#c9a96e;--d2:#e2c99a;--d3:#8b6914;--cr:#f4f0e6;--cr2:#ece7d9;--cr3:#e0dace;--cr4:#d4cfc0;--bk:#0a0a0a;--gy:#6b6b6b;--gy2:#999;--wh:#fff;--err:#c53030}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Jost',sans-serif;background:var(--cr);color:var(--bk);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+.hdr{background:var(--v3);border-bottom:1px solid rgba(201,169,110,0.22);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:300;letter-spacing:.28em;color:var(--d);text-transform:uppercase}
+.logo span{color:var(--d2)}.ami{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.45);letter-spacing:.12em;margin-top:2px}
+.doc-badge{background:rgba(201,169,110,0.12);border:1px solid rgba(201,169,110,0.28);color:var(--d2);font-family:'DM Mono',monospace;font-size:10px;padding:5px 14px;border-radius:20px}
+.hero{background:var(--v);padding:24px 24px 20px}
+.hero-lbl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.55);letter-spacing:.15em;text-transform:uppercase}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--wh);margin:5px 0 3px}
+.hero-sub{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,0.45)}
+.gold-bar{height:2px;background:var(--d)}
+.main{padding:20px 24px;max-width:880px;margin:0 auto;padding-bottom:90px}
+.sec-h{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--v);margin-bottom:4px}
+.sec-s{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+.card{background:var(--wh);border:0.5px solid var(--cr3);border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(10,10,10,0.07)}
+.ct{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.ct-count{font-size:10px;color:var(--gy2)}
+/* CHECKLIST ITEM */
+.ci{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:0.5px solid var(--cr2);cursor:pointer;transition:background .15s;border-radius:4px;padding:11px 8px}
+.ci:last-child{border-bottom:none}
+.ci:hover{background:var(--cr)}
+.ci-cb{width:22px;height:22px;min-width:22px;border:1.5px solid var(--cr4);border-radius:5px;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px}
+.ci.done .ci-cb{background:var(--v);border-color:var(--v)}
+.ci.done .ci-cb::after{content:'✓';color:var(--cr);font-size:13px}
+.ci.na .ci-cb{background:var(--cr3);border-color:var(--cr4)}
+.ci.na .ci-cb::after{content:'N/A';color:var(--gy);font-size:8px;font-family:'DM Mono',monospace}
+.ci-body{flex:1}
+.ci-name{font-size:13px;font-weight:400;transition:color .2s}
+.ci.done .ci-name{color:var(--v);text-decoration:line-through;text-decoration-color:rgba(28,74,53,0.3)}
+.ci.na .ci-name{color:var(--gy2)}
+.ci-desc{font-size:11px;font-weight:300;color:var(--gy2);margin-top:3px;line-height:1.5}
+.ci-badges{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+.cbadge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;border:1px solid}
+.cb-obg{background:rgba(197,48,48,0.07);color:var(--err);border-color:rgba(197,48,48,0.2)}
+.cb-rec{background:rgba(28,74,53,0.07);color:var(--v);border-color:rgba(28,74,53,0.2)}
+.cb-opt{background:var(--cr2);color:var(--gy);border-color:var(--cr4)}
+.cb-fin{background:rgba(201,169,110,0.1);color:var(--d3);border-color:rgba(201,169,110,0.3)}
+.ci-actions{display:flex;gap:6px;margin-top:8px}
+.ci-btn{font-family:'DM Mono',monospace;font-size:9px;padding:4px 10px;border-radius:20px;cursor:pointer;border:0.5px solid;background:transparent;letter-spacing:.05em}
+.btn-ok{border-color:var(--v);color:var(--v)}.btn-ok:hover{background:var(--v);color:var(--cr)}
+.btn-na{border-color:var(--cr4);color:var(--gy)}.btn-na:hover{background:var(--cr3)}
+/* PROGRESS SUMMARY */
+.prog-sum{background:var(--v);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.ps-item{text-align:center}
+.ps-val{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--d)}
+.ps-lbl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.5);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.ps-bar{flex:1;min-width:150px}
+.ps-bar-bg{background:rgba(201,169,110,0.15);border-radius:4px;height:8px;overflow:hidden}
+.ps-bar-fill{height:100%;background:var(--d);border-radius:4px;transition:width .5s}
+/* INPUT NOTES */
+.f{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.f label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gy)}
+.f input,.f textarea{font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--bk);background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:10px 12px;width:100%;transition:all .2s}
+.f input:focus,.f textarea:focus{outline:none;border-color:var(--d);background:var(--wh)}
+/* DOC OUT */
+.doc-out{display:none;background:var(--wh);border-radius:14px;box-shadow:0 8px 40px rgba(10,10,10,0.12);overflow:hidden;margin-top:20px}
+.doc-out.vis{display:block}
+.dh{background:var(--v);padding:28px 36px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.dh-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:.28em;color:var(--d);text-transform:uppercase}
+.dh-logo span{color:var(--d2)}.dh-ami{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.45);letter-spacing:.1em;margin-top:5px}
+.dh-type{text-align:right}.dh-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--d);letter-spacing:.15em;text-transform:uppercase}
+.dh-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--wh);margin-top:4px;line-height:1.3}
+.gold-line{height:2px;background:var(--d)}
+.db{padding:28px 36px}
+.ds{margin-bottom:20px}
+.ds-t{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:6px;margin-bottom:12px}
+.df-footer{background:var(--cr2);border-top:0.5px solid var(--cr3);padding:14px 36px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.dff-info{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy);line-height:1.8}
+.dff-url{font-family:'DM Mono',monospace;font-size:9px;color:var(--d)}
+.doc-actions{display:flex;gap:10px;padding:14px 20px;background:var(--cr2);border-top:0.5px solid var(--cr3);flex-wrap:wrap}
+.dab{font-family:'Jost',sans-serif;font-size:12px;padding:10px 18px;border-radius:6px;cursor:pointer;border:0.5px solid var(--cr3);background:var(--wh);color:var(--bk);transition:all .2s}
+.dab:hover{border-color:var(--v);color:var(--v)}.dab.primary{background:var(--v);color:var(--cr);border-color:var(--v)}.dab.wa{background:#25D366;color:#fff;border-color:#25D366}
+.out-ci{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--cr2);font-size:12px;font-weight:300}
+.out-ci:last-child{border-bottom:none}
+.out-ck{font-family:'DM Mono',monospace;font-size:11px;color:var(--v);min-width:18px}
+.out-ck.miss{color:var(--err)}
+.nb{position:fixed;bottom:0;left:0;right:0;background:var(--wh);border-top:0.5px solid var(--cr3);padding:12px 24px;display:flex;gap:10px;z-index:150;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.btn{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:12px 20px;border-radius:6px;cursor:pointer;border:none;flex:1;min-height:44px}
+.btn-v{background:var(--v);color:var(--cr)}.btn-v:hover{background:var(--v2)}
+.btn-d{background:var(--d);color:var(--v3)}.btn-d:hover{opacity:.88}
+@media(max-width:480px){.main{padding:14px 16px}.db{padding:20px}.dh{padding:20px}}
+@media print{.hdr,.hero,.nb,.doc-actions{display:none!important}.doc-out{display:block!important;box-shadow:none;border-radius:0}.main{padding:0}.dh,.gold-line{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div><div class="logo">Agency<span> Group</span></div><div class="ami">AMI 22506 · Sistema Documental</div></div>
+  <div class="doc-badge">Checklist Vendedor</div>
+</header>
+<div class="hero"><div class="hero-lbl">Angariação Imobiliária</div><div class="hero-title">Checklist de Documentos</div><div class="hero-sub">Todos os documentos necessários para angariação e venda</div></div>
+<div class="gold-bar"></div>
+<main class="main">
+  <div class="f" style="margin-bottom:16px">
+    <label>Imóvel / Referência</label>
+    <input id="refImovel" type="text" placeholder="Ex: T3 Cascais · Rua da Liberdade 10" oninput="sv()">
+  </div>
+  <div class="f" style="margin-bottom:20px">
+    <label>Proprietário</label>
+    <input id="refProp" type="text" placeholder="Nome do proprietário" oninput="sv()">
+  </div>
+  <div class="prog-sum" id="progSum">
+    <div class="ps-item"><div class="ps-val" id="psOk">0</div><div class="ps-lbl">Entregues</div></div>
+    <div class="ps-bar"><div class="ps-bar-bg"><div class="ps-bar-fill" id="psFill" style="width:0%"></div></div><div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,0.5);margin-top:5px" id="psPct">0% completo</div></div>
+    <div class="ps-item"><div class="ps-val" id="psMiss">0</div><div class="ps-lbl">Em falta</div></div>
+  </div>
+  <div id="checkCards"></div>
+  <div class="doc-out" id="docOut">
+    <div class="dh"><div><div class="dh-logo">Agency<span> Group</span></div><div class="dh-ami">AMI 22506 · NIPC 516.833.960</div></div><div class="dh-type"><div class="dh-lbl">Controlo Documental</div><div class="dh-title">Checklist de Documentos<br>do Vendedor</div></div></div>
+    <div class="gold-line"></div>
+    <div class="db" id="docBody"></div>
+    <div class="df-footer"><div class="dff-info">Agency Group · AMI 22506 · geral@agencygroup.pt · +351 919 948 986</div><div class="dff-url">agencygroup.pt</div></div>
+    <div class="doc-actions"><button class="dab primary" onclick="window.print()">🖨 Imprimir / PDF</button><button class="dab wa" onclick="sendWA()">📱 Enviar WhatsApp</button></div>
+  </div>
+</main>
+<div class="nb"><button class="btn btn-v" onclick="genDoc()">✦ Gerar Relatório</button><button class="btn btn-d" onclick="resetAll()">↺ Reiniciar</button></div>
+<script>
+const DOCS=[
+  {cat:'Proprietário — Identificação',items:[
+    {id:'cc_prop',name:'Cartão de Cidadão ou Passaporte',desc:'Todos os titulares do imóvel — frente e verso válidos',badges:['obg'],where:'Proprietário'},
+    {id:'nif_prop',name:'NIF — Cartão de Contribuinte',desc:'Número de Identificação Fiscal de todos os titulares',badges:['obg'],where:'Portal AT'},
+    {id:'cert_casamento',name:'Certidão de Casamento (se casado)',desc:'Obrigatória se o imóvel tiver cônjuge. Prazo de validade: 6 meses',badges:['obg_cond'],where:'Conservatória do Registo Civil'},
+    {id:'cert_obito',name:'Certidão de Óbito (se herança)',desc:'Necessária se o proprietário for herdeiro de imóvel',badges:['obg_cond'],where:'Conservatória do Registo Civil'},
+    {id:'habilitacao_herd',name:'Habilitação de Herdeiros',desc:'Documento que identifica os herdeiros legítimos',badges:['obg_cond'],where:'Notário'},
+  ]},
+  {cat:'Imóvel — Documentação Fiscal',items:[
+    {id:'caderneta_pred',name:'Caderneta Predial Urbana',desc:'AT Portal — artigo matricial, VPT, área, proprietário. Prazo: 12 meses',badges:['obg'],where:'Portal AT / Finanças'},
+    {id:'ult_imi',name:'Comprovativo de Pagamento de IMI',desc:'Confirmação que não há dívidas de IMI pendentes',badges:['obg'],where:'Portal AT'},
+    {id:'nif_imovel',name:'Declaração de Não Existência de Dívidas AT',desc:'Certidão de não dívida à Autoridade Tributária',badges:['rec'],where:'Portal AT'},
+  ]},
+  {cat:'Imóvel — Documentação Registral',items:[
+    {id:'cert_perm',name:'Certidão Permanente (CRP)',desc:'Descrição completa, inscrições, ónus, hipotecas. Prazo: 6 meses. Obter em predial.pt',badges:['obg'],where:'predial.pt'},
+    {id:'cert_perp',name:'Certidão Matricial / Caderneta Predial',desc:'Identificação matricial actualizada',badges:['obg'],where:'Portal AT'},
+    {id:'planta',name:'Planta do Imóvel / Arquitectura',desc:'Planta aprovada pela Câmara Municipal',badges:['rec'],where:'Câmara Municipal'},
+  ]},
+  {cat:'Imóvel — Licenças e Certificados',items:[
+    {id:'lic_hab',name:'Licença de Utilização / Habitação',desc:'Emitida pela Câmara Municipal. Imóveis anteriores a 1951 dispensam',badges:['obg'],where:'Câmara Municipal'},
+    {id:'cert_ener',name:'Certificado Energético SCE',desc:'Classe A+ a F. Obrigatório para venda e arrendamento. Validade: 10 anos',badges:['obg'],where:'Portal SCE adene.pt'},
+    {id:'fth',name:'Ficha Técnica de Habitação (FTH)',desc:'Obrigatória para imóveis construídos ou renovados após Março 2004',badges:['obg_cond'],where:'Câmara Municipal'},
+    {id:'boletim_insp',name:'Boletim de Inspecção da Instalação de Gás',desc:'Obrigatório em caso de gás canalizado',badges:['obg_cond'],where:'Empresa inspectora credenciada DGEG'},
+    {id:'insp_elect',name:'Declaração de Conformidade Eléctrica',desc:'Para instalações eléctricas alteradas após 2006',badges:['rec'],where:'Electricista certificado DGEG'},
+  ]},
+  {cat:'Condomínio (se aplicável)',items:[
+    {id:'atas_cond',name:'Últimas 3 Actas da Assembleia de Condóminos',desc:'Revelar obras, conflitos, dívidas, decisões pendentes',badges:['rec'],where:'Administração do Condomínio'},
+    {id:'decl_div_condo',name:'Declaração de Não Dívida ao Condomínio',desc:'Confirmar que não há quotas em atraso ou dívidas',badges:['rec'],where:'Administrador do Condomínio'},
+    {id:'reg_condo',name:'Regulamento do Condomínio',desc:'Regras, regimento, direitos e obrigações dos condóminos',badges:['opt'],where:'Administração do Condomínio'},
+    {id:'tit_constitutivo',name:'Título Constitutivo da Propriedade Horizontal',desc:'Escritura de constituição em propriedade horizontal',badges:['opt'],where:'Conservatória / Notário'},
+  ]},
+  {cat:'Documentação Complementar',items:[
+    {id:'iban_prop',name:'NIB / IBAN para Recepção de Fundos',desc:'Conta bancária para receber o sinal e remanescente',badges:['obg'],where:'Proprietário'},
+    {id:'decl_imovel_proprios',name:'Comprovativo de Forma de Aquisição do Imóvel',desc:'Escritura de compra, herança, doação ou permuta',badges:['rec'],where:'Notário / Arquivo'},
+    {id:'obras_existentes',name:'Licença de Obras (se realizadas)',desc:'Projecto e licença de obras aprovados, se existirem',badges:['obg_cond'],where:'Câmara Municipal'},
+    {id:'cond_especiais',name:'Documentação de Servidões ou Direitos Reais',desc:'Ex: servidões de passagem, direito de superfície, usufruto',badges:['obg_cond'],where:'Certidão Predial / Notário'},
+  ]},
+  {cat:'Para Financiamento Bancário do Comprador',items:[
+    {id:'avaliacao_banco',name:'Relatório de Avaliação Bancária',desc:'Normalmente solicitado pelo banco após CPCV — preparar acesso ao imóvel',badges:['fin'],where:'Banco do comprador'},
+    {id:'vistoria_tecnica',name:'Vistoria Técnica',desc:'Relatório de engenheiro/arquitecto se solicitado pelo banco',badges:['fin'],where:'Técnico credenciado'},
+  ]},
+];
+
+const badgeMap={obg:{cls:'cb-obg',lbl:'Obrigatório'},obg_cond:{cls:'cb-obg',lbl:'Obrig. se aplicável'},rec:{cls:'cb-rec',lbl:'Recomendado'},opt:{cls:'cb-opt',lbl:'Opcional'},fin:{cls:'cb-fin',lbl:'Para Financiamento'}};
+let state={};
+
+function buildCards(){
+  const wrap=document.getElementById('checkCards');
+  DOCS.forEach(cat=>{
+    const card=document.createElement('div');card.className='card';
+    const total=cat.items.length;
+    card.innerHTML=`<div class="ct">${cat.cat}<span class="ct-count" id="cnt_${cat.cat.replace(/\s/g,'_')}">0/${total}</span></div>`;
+    cat.items.forEach(item=>{
+      state[item.id]='pend';
+      const div=document.createElement('div');div.className='ci';div.id='ci_'+item.id;
+      div.innerHTML=`<div class="ci-cb" id="cb_${item.id}"></div>
+        <div class="ci-body">
+          <div class="ci-name">${item.name}</div>
+          <div class="ci-desc">${item.desc} <span style="color:var(--d3)">→ ${item.where}</span></div>
+          <div class="ci-badges">${item.badges.map(b=>`<span class="cbadge ${badgeMap[b]?.cls||''}">${badgeMap[b]?.lbl||b}</span>`).join('')}</div>
+          <div class="ci-actions">
+            <button class="ci-btn btn-ok" onclick="mark('${item.id}','done')">✓ Entregue</button>
+            <button class="ci-btn btn-na" onclick="mark('${item.id}','na')">N/A</button>
+            <button class="ci-btn" style="border-color:var(--err);color:var(--err)" onclick="mark('${item.id}','pend')">↩ Pendente</button>
+          </div>
+        </div>`;
+      card.appendChild(div);
+    });
+    wrap.appendChild(card);
+  });
+  updProg();
+}
+
+function mark(id,st){
+  state[id]=st;
+  const ci=document.getElementById('ci_'+id);
+  ci.className='ci'+(st==='done'?' done':st==='na'?' na':'');
+  updProg();sv();
+}
+
+function updProg(){
+  let done=0,na=0,total=0;
+  DOCS.forEach(cat=>{
+    let catDone=0;
+    cat.items.forEach(item=>{
+      total++;
+      if(state[item.id]==='done'){done++;catDone++;}
+      else if(state[item.id]==='na'){na++;catDone++;}
+    });
+    const el=document.getElementById('cnt_'+cat.cat.replace(/\s/g,'_'));
+    if(el)el.textContent=catDone+'/'+cat.items.length;
+  });
+  const pct=total>0?Math.round((done+na)/total*100):0;
+  document.getElementById('psOk').textContent=done;
+  document.getElementById('psMiss').textContent=total-done-na;
+  document.getElementById('psFill').style.width=pct+'%';
+  document.getElementById('psPct').textContent=pct+'% completo';
+}
+
+function sv(){
+  const data={state:JSON.stringify(state),refImovel:document.getElementById('refImovel').value,refProp:document.getElementById('refProp').value};
+  localStorage.setItem('ag_cl',JSON.stringify(data));
+}
+function ld(){
+  try{
+    const data=JSON.parse(localStorage.getItem('ag_cl')||'{}');
+    if(data.refImovel)document.getElementById('refImovel').value=data.refImovel;
+    if(data.refProp)document.getElementById('refProp').value=data.refProp;
+    if(data.state){const s=JSON.parse(data.state);Object.entries(s).forEach(([id,st])=>{if(st!=='pend')mark(id,st);});}
+  }catch(e){}
+}
+function resetAll(){if(confirm('Reiniciar checklist?')){localStorage.removeItem('ag_cl');location.reload();}}
+
+function genDoc(){
+  const ref=document.getElementById('refImovel').value||'___';
+  const prop=document.getElementById('refProp').value||'___';
+  const dt=new Date().toLocaleDateString('pt-PT');
+  let html=`<div class="ds"><div class="ds-t">Dados da Angariação</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+      <div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-bottom:3px">IMÓVEL</div>${ref}</div>
+      <div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-bottom:3px">PROPRIETÁRIO</div>${prop}</div>
+      <div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-bottom:3px">DATA</div>${dt}</div>
+      <div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-bottom:3px">AGENTE</div>Carlos Feiteira · AMI 22506</div>
+    </div>
+  </div>`;
+  DOCS.forEach(cat=>{
+    html+=`<div class="ds"><div class="ds-t">${cat.cat}</div>`;
+    cat.items.forEach(item=>{
+      const st=state[item.id];
+      const icon=st==='done'?'✓':st==='na'?'—':'✗';
+      const color=st==='done'?'var(--v)':st==='na'?'var(--gy)':'var(--err)';
+      html+=`<div class="out-ci"><span class="out-ck ${st!=='done'&&st!=='na'?'miss':''}" style="color:${color}">${icon}</span><div><div style="font-size:13px;font-weight:${st==='done'?'400':'300'};color:${st==='done'?'var(--v)':st==='na'?'var(--gy2)':'var(--bk)'}">${item.name}</div><div style="font-size:11px;color:var(--gy2)">${item.where}</div></div></div>`;
+    });
+    html+='</div>';
+  });
+  const missing=[];
+  DOCS.forEach(cat=>cat.items.forEach(item=>{if(state[item.id]==='pend'&&(item.badges.includes('obg')||item.badges.includes('obg_cond')))missing.push(item.name);}));
+  if(missing.length)html+=`<div style="background:rgba(197,48,48,0.07);border:1px solid rgba(197,48,48,0.2);border-radius:8px;padding:14px;margin-top:14px"><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--err);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">Documentos Obrigatórios Em Falta</div>${missing.map(m=>`<div style="font-size:12px;font-weight:300;padding:4px 0;border-bottom:0.5px solid rgba(197,48,48,0.15)">✗ ${m}</div>`).join('')}</div>`;
+  html+=`<div class="ds" style="margin-top:20px"><div class="ds-t">Assinaturas</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:8px">
+      <div><div style="border-top:1px solid #aaa;padding-top:8px;margin-bottom:6px"></div><div style="font-size:13px">Carlos Feiteira</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:3px">Mediador AMI 22506</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:12px">Data: ___/___/______</div></div>
+      <div><div style="border-top:1px solid #aaa;padding-top:8px;margin-bottom:6px"></div><div style="font-size:13px">${prop}</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:3px">Proprietário</div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:12px">Data: ___/___/______</div></div>
+    </div>
+  </div>`;
+  document.getElementById('docBody').innerHTML=html;
+  document.getElementById('docOut').classList.add('vis');
+  document.getElementById('docOut').scrollIntoView({behavior:'smooth'});
+}
+
+function sendWA(){
+  const missing=[];
+  DOCS.forEach(cat=>cat.items.forEach(item=>{if(state[item.id]==='pend')missing.push(item.name);}));
+  const prop=document.getElementById('refProp').value||'___';
+  const msg=`*Checklist de Documentos — Agency Group AMI 22506*%0A%0A${missing.length?'*Documentos ainda em falta:*%0A'+missing.map(m=>'• '+encodeURIComponent(m)).join('%0A'):'✓ Todos os documentos entregues!'}%0A%0ACom os melhores cumprimentos,%0ACarlos Feiteira · Agency Group · +351 919 948 986`;
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+window.addEventListener('load',()=>{buildCards();ld();});
+</script>
+</body>
+</html>

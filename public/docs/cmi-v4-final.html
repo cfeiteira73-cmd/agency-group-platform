@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="theme-color" content="#1c4a35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CMI Agency Group">
+<title>CMI — Agency Group · AMI 22506</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --verde:#1c4a35;--verde2:#2a6b4e;--verde3:#163a28;
+  --dourado:#c9a96e;--dourado2:#e2c99a;--dourado3:#8b6914;
+  --cream:#f4f0e6;--cream2:#ece7d9;--cream3:#e0dace;
+  --black:#0a0a0a;--gray:#6b6b6b;--gray2:#999;--gray3:#ccc;
+  --white:#ffffff;
+  --border:rgba(201,169,110,0.22);--border2:rgba(201,169,110,0.45);
+  --ia:#4f46e5;--ia2:rgba(79,70,229,0.1);
+  --ok:#1c4a35;--ok2:rgba(28,74,53,0.1);
+  --err:#c53030;--err2:rgba(197,48,48,0.08);
+  --r:10px;--rs:6px;--rm:14px;
+  --sh:0 2px 12px rgba(10,10,10,0.08);--shm:0 8px 32px rgba(10,10,10,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--black);min-height:100vh;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+
+/* HEADER */
+.hdr{background:var(--verde3);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{display:flex;flex-direction:column}
+.logo-main{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.28em;color:var(--dourado);text-transform:uppercase}
+.logo-sub{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.5);letter-spacing:0.12em;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.ami-badge{background:rgba(201,169,110,0.12);border:1px solid var(--border);color:var(--dourado2);font-family:'DM Mono',monospace;font-size:10px;padding:5px 12px;border-radius:20px}
+.btn-install{background:transparent;border:1px solid var(--border2);color:var(--dourado);font-family:'Jost',sans-serif;font-size:11px;padding:6px 14px;border-radius:20px;cursor:pointer;display:none;font-weight:400}
+.btn-install.vis{display:block}
+
+/* PROGRESS */
+.prog-wrap{background:var(--verde);padding:10px 20px;display:flex;align-items:center;gap:6px}
+.prog-bar{flex:1;height:2px;background:rgba(201,169,110,0.18);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--dourado);border-radius:2px;transition:width .4s ease}
+.prog-label{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.55);letter-spacing:0.1em;text-transform:uppercase;min-width:80px;text-align:right}
+
+/* IA BAR */
+.ia-bar{background:linear-gradient(135deg,var(--verde3),#1a2e45);border-bottom:1px solid var(--border);padding:10px 20px}
+.ia-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.ia-tab{background:rgba(201,169,110,0.08);border:1px solid var(--border);color:var(--dourado2);font-family:'Jost',sans-serif;font-size:11px;font-weight:400;padding:7px 14px;border-radius:20px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.ia-tab:hover,.ia-tab.act{background:var(--dourado);border-color:var(--dourado);color:var(--verde3)}
+.ia-panel{display:none;margin-top:12px;padding:14px;background:rgba(0,0,0,0.2);border-radius:var(--r);border:1px solid var(--border)}
+.ia-panel.vis{display:block}
+.ia-textarea{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--cream);font-family:'Jost',sans-serif;font-size:13px;padding:12px;border-radius:var(--rs);resize:none;min-height:90px;line-height:1.6}
+.ia-textarea::placeholder{color:rgba(201,169,110,0.35)}
+.ia-textarea:focus{outline:none;border-color:var(--dourado)}
+.ia-btn{background:var(--dourado);border:none;color:var(--verde3);font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:10px 20px;border-radius:var(--rs);cursor:pointer;margin-top:10px;width:100%;transition:opacity .2s}
+.ia-btn:hover{opacity:.88}
+.ia-btn:disabled{opacity:.45;cursor:wait}
+.ia-hint{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,0.4);margin-bottom:8px;line-height:1.6}
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:var(--dourado);background:rgba(201,169,110,0.05)}
+.upload-zone input{display:none}
+.upload-icon{font-size:28px;margin-bottom:8px}
+.upload-txt{font-size:12px;color:var(--dourado2);line-height:1.6}
+.ia-result{margin-top:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--dourado2);background:rgba(28,74,53,0.2);border:1px solid rgba(28,74,53,0.4);border-radius:var(--rs);padding:10px;display:none}
+.ia-result.vis{display:block}
+
+/* MAIN */
+.main{padding:20px;max-width:860px;margin:0 auto;padding-bottom:100px}
+
+/* STEP NAV */
+.steps-nav{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.sn{background:var(--white);border:1px solid var(--cream3);color:var(--gray);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:8px 14px;border-radius:20px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.sn:hover{border-color:var(--dourado);color:var(--dourado3)}
+.sn.act{background:var(--verde);border-color:var(--verde);color:var(--cream)}
+.sn.done{border-color:var(--dourado3);color:var(--dourado3)}
+
+/* SECTION */
+.sec{display:none;animation:fadeIn .3s ease}
+.sec.vis{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--verde);letter-spacing:0.03em;margin-bottom:6px}
+.sec-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--gray2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:22px}
+
+/* CARD */
+.card{background:var(--white);border:0.5px solid var(--cream3);border-radius:var(--rm);padding:20px;margin-bottom:14px;box-shadow:var(--sh)}
+.card-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--verde);border-bottom:1px solid var(--cream2);padding-bottom:8px;margin-bottom:16px}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g1{display:grid;grid-template-columns:1fr;gap:14px}
+@media(max-width:560px){.g2,.g3{grid-template-columns:1fr}}
+
+/* FIELD */
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);display:flex;align-items:center;gap:5px}
+.req-dot{width:5px;height:5px;background:var(--dourado);border-radius:50%;display:inline-block}
+.fld input,.fld select,.fld textarea{font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--black);background:var(--cream);border:0.5px solid var(--cream3);border-radius:var(--rs);padding:10px 12px;width:100%;transition:all .2s;-webkit-appearance:none}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--dourado);background:var(--white);box-shadow:0 0 0 3px rgba(201,169,110,0.12)}
+.fld textarea{resize:vertical;min-height:70px;line-height:1.6}
+.fld select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b6b' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.fld input.ai-filled,.fld select.ai-filled,.fld textarea.ai-filled{border-color:var(--ia);background:var(--ia2)}
+.fld.has-err input,.fld.has-err select{border-color:var(--err)}
+.err-msg{font-size:11px;color:var(--err);display:none}
+.fld.has-err .err-msg{display:block}
+.hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--gray2);margin-top:2px}
+
+/* COMISSÃO CALC */
+.calc-box{background:var(--verde);border-radius:var(--r);padding:16px 20px;margin-top:10px}
+.calc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.calc-label{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,0.55);letter-spacing:0.1em;text-transform:uppercase}
+.calc-val{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--dourado);font-weight:400}
+.calc-total{border-top:1px solid rgba(201,169,110,0.2);padding-top:10px;margin-top:6px}
+.calc-total .calc-val{font-size:24px}
+
+/* RADIO GROUP */
+.radio-grp{display:flex;flex-wrap:wrap;gap:8px}
+.radio-grp label{display:flex;align-items:center;gap:8px;background:var(--cream);border:0.5px solid var(--cream3);border-radius:var(--rs);padding:10px 14px;cursor:pointer;transition:all .2s;font-size:13px;font-weight:300;flex:1;min-width:120px}
+.radio-grp input[type=radio]{accent-color:var(--verde);width:16px;height:16px;flex-shrink:0}
+.radio-grp label:has(input:checked){background:rgba(28,74,53,0.07);border-color:var(--verde);color:var(--verde)}
+
+/* CLAUSULAS */
+.clausula{background:var(--cream);border-radius:var(--rs);padding:14px 16px;margin-bottom:10px;border-left:3px solid var(--dourado)}
+.cl-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--dourado3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px}
+.cl-title{font-size:13px;font-weight:500;color:var(--verde);margin-bottom:6px}
+.cl-body{font-size:12px;font-weight:300;color:#333;line-height:1.8}
+.cl-body em{font-style:italic;color:var(--verde);font-weight:400}
+
+/* SUMMARY */
+.sum-item{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:0.5px solid var(--cream2);gap:12px}
+.sum-item:last-child{border-bottom:none}
+.sum-key{font-family:'DM Mono',monospace;font-size:10px;color:var(--gray2);letter-spacing:0.08em;text-transform:uppercase;flex-shrink:0;min-width:140px}
+.sum-val{font-size:13px;font-weight:300;color:var(--black);text-align:right}
+.sum-val.missing{color:var(--err);font-style:italic}
+.sum-val.ok{color:var(--verde)}
+
+/* ALERT */
+.alert{border-radius:var(--r);padding:12px 16px;margin-bottom:14px;font-size:13px;font-weight:300;line-height:1.6;display:flex;gap:10px;align-items:flex-start}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.alert.warn{background:#fffbeb;border:1px solid #f6d860;color:#854d0e}
+.alert.info{background:var(--ia2);border:1px solid rgba(79,70,229,0.2);color:#3730a3}
+.alert.ok{background:var(--ok2);border:1px solid rgba(28,74,53,0.25);color:var(--verde)}
+
+/* NAV BOTTOM */
+.nav-bottom{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:0.5px solid var(--cream3);padding:12px 20px;display:flex;gap:10px;z-index:150;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.btn{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:12px 20px;border-radius:var(--rs);cursor:pointer;transition:all .2s;border:none;flex:1;min-height:44px}
+.btn-back{background:var(--cream2);color:var(--gray);flex:0.6}
+.btn-back:hover{background:var(--cream3)}
+.btn-next{background:var(--verde);color:var(--cream)}
+.btn-next:hover{background:var(--verde2)}
+.btn-gen{background:var(--dourado);color:var(--verde3)}
+.btn-gen:hover{opacity:.88}
+.btn-wa{background:#25D366;color:#fff}
+.btn-email{background:var(--verde);color:var(--cream);flex:0.7}
+
+/* LOADING */
+.loading{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center}
+.loading.vis{display:flex}
+.spinner{width:36px;height:36px;border:2.5px solid var(--cream3);border-top-color:var(--verde);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-family:'DM Mono',monospace;font-size:11px;color:var(--gray2);letter-spacing:0.1em}
+
+/* REVIEW CHECK */
+.check-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--rs);margin-bottom:6px;font-size:13px;font-weight:300}
+.check-item.ok{background:var(--ok2);color:var(--verde)}
+.check-item.miss{background:var(--err2);color:var(--err)}
+.check-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ok .check-dot{background:var(--verde)}
+.miss .check-dot{background:var(--err)}
+
+/* DOCUMENT OUTPUT */
+.doc-output{display:none;background:var(--white);border-radius:var(--rm);box-shadow:var(--shm);overflow:hidden;margin-top:20px}
+.doc-output.vis{display:block}
+.doc-hdr{background:var(--verde);padding:28px 36px;display:flex;align-items:flex-start;justify-content:space-between}
+.doc-logo-ag{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.28em;color:var(--dourado);text-transform:uppercase}
+.doc-logo-gr{color:var(--dourado2)}
+.doc-ami{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.45);letter-spacing:0.1em;margin-top:5px}
+.doc-type{text-align:right}
+.doc-type-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--dourado);letter-spacing:0.15em;text-transform:uppercase}
+.doc-type-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--white);margin-top:4px;line-height:1.3}
+.doc-ref{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);margin-top:5px}
+.gold-line{height:2px;background:var(--dourado)}
+.doc-body-out{padding:28px 36px}
+.doc-section{margin-bottom:22px}
+.doc-sec-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--verde);border-bottom:1px solid var(--cream2);padding-bottom:6px;margin-bottom:14px}
+.doc-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.doc-fields{grid-template-columns:1fr}}
+.doc-field-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--gray2);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px}
+.doc-field-val{font-size:13px;font-weight:300;color:var(--black);border-bottom:0.5px solid #ccc9bc;padding-bottom:6px;min-height:24px}
+.doc-field-val.gold{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--dourado)}
+.cl-out{font-size:12px;font-weight:300;color:#333;line-height:1.85;margin-bottom:10px}
+.cl-out .n{font-family:'DM Mono',monospace;font-size:10px;color:var(--verde);margin-right:6px}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:8px}
+@media(max-width:500px){.sig-grid{grid-template-columns:1fr;gap:20px}}
+.sig-line{border-top:1px solid #aaa;padding-top:8px;margin-bottom:6px}
+.sig-name{font-size:13px;font-weight:400}
+.sig-role{font-family:'DM Mono',monospace;font-size:9px;color:var(--gray2);margin-top:3px}
+.sig-date{font-family:'DM Mono',monospace;font-size:9px;color:var(--gray2);margin-top:12px}
+.doc-footer-out{background:var(--cream2);border-top:0.5px solid var(--cream3);padding:14px 36px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.doc-finfo{font-family:'DM Mono',monospace;font-size:9px;color:var(--gray);line-height:1.75}
+.doc-furl{font-family:'DM Mono',monospace;font-size:9px;color:var(--dourado)}
+.amount-block{background:var(--verde);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.ab-label{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.5);letter-spacing:0.12em;text-transform:uppercase}
+.ab-val{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--dourado);margin-top:4px}
+.ab-sub{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.35);margin-top:3px}
+.notice-out{background:#f0ede4;border-left:3px solid var(--verde);padding:12px 16px;font-size:11px;font-weight:300;color:#444;line-height:1.75;margin-bottom:18px}
+
+/* DOC ACTIONS */
+.doc-actions{display:flex;gap:10px;padding:16px 20px;background:var(--cream2);border-top:0.5px solid var(--cream3);flex-wrap:wrap}
+.doc-action-btn{font-family:'Jost',sans-serif;font-size:12px;font-weight:400;padding:10px 18px;border-radius:var(--rs);cursor:pointer;border:0.5px solid var(--cream3);background:var(--white);color:var(--black);transition:all .2s;display:flex;align-items:center;gap:7px}
+.doc-action-btn:hover{border-color:var(--verde);color:var(--verde)}
+.doc-action-btn.primary{background:var(--verde);color:var(--cream);border-color:var(--verde)}
+.doc-action-btn.wa{background:#25D366;color:#fff;border-color:#25D366}
+
+/* RESPONSIVE */
+@media(max-width:480px){
+  .hdr{padding:12px 16px}
+  .logo-main{font-size:18px;letter-spacing:0.22em}
+  .main{padding:14px;padding-bottom:90px}
+  .card{padding:16px}
+  .ia-bar{padding:10px 16px}
+  .doc-hdr{padding:20px 20px}
+  .doc-body-out{padding:20px 20px}
+  .doc-footer-out{padding:12px 20px}
+  .doc-actions{padding:12px 16px}
+}
+@media print{
+  .hdr,.prog-wrap,.ia-bar,.steps-nav,.nav-bottom,.doc-actions,.card,.alert,.sn{display:none!important}
+  .doc-output{display:block!important;box-shadow:none;border-radius:0}
+  .main{padding:0;max-width:100%}
+  body{background:white}
+  .doc-hdr,.gold-line,.amount-block{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="logo">
+    <div class="logo-main">Agency Group</div>
+    <div class="logo-sub">AMI 22506 · Sistema Documental</div>
+  </div>
+  <div class="hdr-right">
+    <span class="ami-badge">CMI</span>
+    <button class="btn-install" id="btnInstall" onclick="installApp()">+ Instalar App</button>
+  </div>
+</header>
+
+<!-- PROGRESS -->
+<div class="prog-wrap">
+  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  <div class="prog-label" id="progLabel">Passo 1 de 5</div>
+</div>
+
+<!-- IA BAR -->
+<div class="ia-bar">
+  <div class="ia-tabs">
+    <button class="ia-tab" onclick="toggleIA('paste')">✦ Colar Texto / WhatsApp</button>
+    <button class="ia-tab" onclick="toggleIA('image')">✦ Foto / Documento</button>
+    <button class="ia-tab" onclick="toggleIA('voice')">✦ Ditado de Voz</button>
+  </div>
+  <div class="ia-panel" id="ia-paste">
+    <div class="ia-hint">Cola qualquer texto — mensagem WhatsApp, email, SMS, dados do proprietário. A IA extrai e preenche os campos automaticamente.</div>
+    <textarea class="ia-textarea" id="pasteText" placeholder="Cola aqui o texto com os dados do proprietário, imóvel ou negócio..."></textarea>
+    <button class="ia-btn" id="btnPaste" onclick="processText()">✦ Extrair e Preencher</button>
+    <div class="ia-result" id="pasteResult"></div>
+  </div>
+  <div class="ia-panel" id="ia-image">
+    <div class="ia-hint">Fotografa a caderneta predial, CC, passaporte, ou qualquer documento. A IA extrai os dados relevantes.</div>
+    <div class="upload-zone" onclick="document.getElementById('imgInput').click()">
+      <input type="file" id="imgInput" accept="image/*" capture="environment" onchange="processImage(this)">
+      <div class="upload-icon">📷</div>
+      <div class="upload-txt">Tocar para fotografar ou escolher imagem<br><span style="font-size:10px;opacity:.6">Caderneta predial · CC · Passaporte · Escritura</span></div>
+    </div>
+    <div class="ia-result" id="imageResult"></div>
+  </div>
+  <div class="ia-panel" id="ia-voice">
+    <div class="ia-hint">Dita os dados em voz alta. Ex: "João Silva, NIF 123456789, morada Rua das Flores 10, Lisboa, preço 450 mil euros"</div>
+    <button class="ia-btn" id="btnVoice" onclick="toggleVoice()">🎙 Iniciar Gravação</button>
+    <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(201,169,110,0.5)" id="voiceStatus"></div>
+    <div class="ia-result" id="voiceResult"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- STEP NAV -->
+  <div class="steps-nav">
+    <button class="sn act" onclick="goStep(0)" id="sn0">1 · Imóvel</button>
+    <button class="sn" onclick="goStep(1)" id="sn1">2 · Proprietário</button>
+    <button class="sn" onclick="goStep(2)" id="sn2">3 · Negócio</button>
+    <button class="sn" onclick="goStep(3)" id="sn3">4 · Agente</button>
+    <button class="sn" onclick="goStep(4)" id="sn4">5 · Revisão</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading" id="aiLoading">
+    <div class="spinner"></div>
+    <p>A processar com IA...</p>
+  </div>
+
+  <!-- ===== PASSO 1: IMÓVEL ===== -->
+  <div class="sec vis" id="sec0">
+    <div class="sec-title">Identificação do Imóvel</div>
+    <div class="sec-sub">Dados registrais e localização</div>
+
+    <div class="card">
+      <div class="card-title">Localização</div>
+      <div class="g1" style="gap:12px">
+        <div class="fld">
+          <label>Morada Completa <span class="req-dot"></span></label>
+          <input type="text" id="morada" placeholder="Rua, número, andar, fração" oninput="save()">
+        </div>
+        <div class="g2">
+          <div class="fld">
+            <label>Freguesia <span class="req-dot"></span></label>
+            <input type="text" id="freguesia" placeholder="Freguesia" oninput="save()">
+          </div>
+          <div class="fld">
+            <label>Concelho <span class="req-dot"></span></label>
+            <input type="text" id="concelho" placeholder="Concelho" oninput="save()">
+          </div>
+        </div>
+        <div class="g2">
+          <div class="fld">
+            <label>Código Postal</label>
+            <input type="text" id="codpostal" placeholder="0000-000" oninput="save()">
+          </div>
+          <div class="fld">
+            <label>Distrito</label>
+            <input type="text" id="distrito" placeholder="Distrito" oninput="save()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Registo Predial</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Conservatória do Registo Predial</label>
+          <input type="text" id="conservatoria" placeholder="Ex: Cascais" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Nº de Descrição (CRP)</label>
+          <input type="text" id="crp" placeholder="Nº ficha" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Artigo Matricial <span class="req-dot"></span></label>
+          <input type="text" id="artMatric" placeholder="Ex: U-1234" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Licença de Habitação</label>
+          <input type="text" id="licHab" placeholder="Nº licença" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Certificado Energético</label>
+          <select id="certEner" onchange="save()">
+            <option value="">Selecionar</option>
+            <option>A+</option><option>A</option><option>B</option><option>B-</option>
+            <option>C</option><option>D</option><option>E</option><option>F</option>
+            <option>Isento</option><option>Pendente</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Número SCE (certificado)</label>
+          <input type="text" id="numSCE" placeholder="SCE-..." oninput="save()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Tipo de Imóvel</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Tipo <span class="req-dot"></span></label>
+          <select id="tipoImovel" onchange="save()">
+            <option value="">Selecionar</option>
+            <option>Apartamento</option><option>Moradia</option><option>Moradia em Banda</option>
+            <option>Moradia Geminada</option><option>Terreno</option><option>Loja/Espaço Comercial</option>
+            <option>Escritório</option><option>Armazém</option><option>Prédio de Rendimento</option>
+            <option>Quinta</option><option>Outro</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Tipologia</label>
+          <select id="tipologia" onchange="save()">
+            <option value="">Selecionar</option>
+            <option>T0</option><option>T1</option><option>T2</option><option>T3</option>
+            <option>T4</option><option>T5</option><option>T6+</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Área Bruta Privativa (m²)</label>
+          <input type="number" id="areaBruta" placeholder="m²" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Área Terreno / Dependente (m²)</label>
+          <input type="number" id="areaTerreno" placeholder="m²" oninput="save()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Ónus e Encargos</div>
+      <div class="fld">
+        <label>Ónus / Encargos / Hipotecas</label>
+        <textarea id="onus" placeholder="Descrever ou escrever 'Livre de ónus e encargos'" oninput="save()"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PASSO 2: PROPRIETÁRIO ===== -->
+  <div class="sec" id="sec1">
+    <div class="sec-title">Dados do Proprietário</div>
+    <div class="sec-sub">Segundo outorgante</div>
+
+    <div class="card">
+      <div class="card-title">Identificação</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Nome Completo <span class="req-dot"></span></label>
+          <input type="text" id="nomeProprietario" placeholder="Nome completo" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>NIF <span class="req-dot"></span></label>
+          <input type="text" id="nifProprietario" placeholder="000 000 000" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Nº CC / BI / Passaporte</label>
+          <input type="text" id="ccProprietario" placeholder="Nº documento" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Validade do Documento</label>
+          <input type="date" id="validadeCC" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Nacionalidade</label>
+          <input type="text" id="nacionalidade" placeholder="Portuguesa" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Estado Civil</label>
+          <select id="estadoCivil" onchange="toggleConjuge()">
+            <option value="">Selecionar</option>
+            <option>Solteiro(a)</option>
+            <option>Casado(a)</option>
+            <option>Divorciado(a)</option>
+            <option>Viúvo(a)</option>
+            <option>União de Facto</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="cardConjuge" style="display:none">
+      <div class="card-title">Cônjuge / Unido de Facto</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Nome do Cônjuge</label>
+          <input type="text" id="nomeConjuge" placeholder="Nome completo" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>NIF do Cônjuge</label>
+          <input type="text" id="nifConjuge" placeholder="000 000 000" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Regime de Casamento</label>
+          <select id="regimeCasamento" onchange="save()">
+            <option value="">Selecionar</option>
+            <option>Comunhão de Adquiridos</option>
+            <option>Comunhão Geral de Bens</option>
+            <option>Separação de Bens</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Contactos e Morada</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Morada Completa <span class="req-dot"></span></label>
+          <input type="text" id="moradaProprietario" placeholder="Morada fiscal" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Código Postal</label>
+          <input type="text" id="cpProprietario" placeholder="0000-000" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Telemóvel <span class="req-dot"></span></label>
+          <input type="tel" id="telProprietario" placeholder="+351 9xx xxx xxx" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Email</label>
+          <input type="email" id="emailProprietario" placeholder="email@..." oninput="save()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PASSO 3: NEGÓCIO ===== -->
+  <div class="sec" id="sec2">
+    <div class="sec-title">Condições do Negócio</div>
+    <div class="sec-sub">Tipo, preço e comissão</div>
+
+    <div class="card">
+      <div class="card-title">Tipo de Negócio</div>
+      <div class="radio-grp">
+        <label><input type="radio" name="tipoNeg" value="venda" onchange="save()" checked> Venda</label>
+        <label><input type="radio" name="tipoNeg" value="arrendamento" onchange="save()"> Arrendamento</label>
+        <label><input type="radio" name="tipoNeg" value="compra" onchange="save()"> Compra</label>
+        <label><input type="radio" name="tipoNeg" value="permuta" onchange="save()"> Permuta</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Preço e Comissão</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Preço de Venda / Valor <span class="req-dot"></span></label>
+          <input type="number" id="preco" placeholder="€" oninput="calcComissao();save()">
+        </div>
+        <div class="fld">
+          <label>Preço Mínimo Aceitável</label>
+          <input type="number" id="precoMin" placeholder="€" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Comissão (%)</label>
+          <input type="number" id="comissao" value="5" step="0.1" oninput="calcComissao();save()">
+          <span class="hint">Padrão Agency Group: 5%</span>
+        </div>
+        <div class="fld">
+          <label>Comissão Partilhada c/ Parceiro</label>
+          <select id="partilha" onchange="save()">
+            <option value="nao">Não — exclusivo Agency Group</option>
+            <option value="sim">Sim — 50/50 com outra agência</option>
+          </select>
+        </div>
+      </div>
+      <div class="calc-box" id="calcBox">
+        <div class="calc-row"><span class="calc-label">Preço de venda</span><span class="calc-val" id="cvPreco">—</span></div>
+        <div class="calc-row"><span class="calc-label">Comissão base (<span id="cvPct">5</span>%)</span><span class="calc-val" id="cvComissao">—</span></div>
+        <div class="calc-row"><span class="calc-label">IVA (23%)</span><span class="calc-val" id="cvIVA">—</span></div>
+        <div class="calc-total">
+          <div class="calc-row"><span class="calc-label" style="color:var(--dourado2)">Total c/ IVA</span><span class="calc-val" id="cvTotal" style="font-size:28px">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Regime e Prazo</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Regime de Mediação</label>
+          <div class="radio-grp">
+            <label><input type="radio" name="regime" value="exclusivo" checked onchange="save()"> Exclusivo</label>
+            <label><input type="radio" name="regime" value="nao-exclusivo" onchange="save()"> Não Exclusivo</label>
+          </div>
+        </div>
+        <div class="fld">
+          <label>Vigência do Contrato</label>
+          <select id="vigencia" onchange="save()">
+            <option value="3 meses">3 meses</option>
+            <option value="6 meses" selected>6 meses</option>
+            <option value="9 meses">9 meses</option>
+            <option value="12 meses">12 meses</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Data de Início</label>
+          <input type="date" id="dataInicio" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Renovação Automática</label>
+          <select id="renovacao" onchange="save()">
+            <option value="sim">Sim — renovação automática</option>
+            <option value="nao">Não renova automaticamente</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Condições de Pagamento da Comissão</div>
+      <div class="fld">
+        <label>Momento de Pagamento</label>
+        <div class="radio-grp">
+          <label><input type="radio" name="pgComissao" value="escritura" checked onchange="save()"> Na Escritura</label>
+          <label><input type="radio" name="pgComissao" value="cpcv" onchange="save()"> No CPCV</label>
+          <label><input type="radio" name="pgComissao" value="50-50" onchange="save()"> 50% CPCV + 50% Escritura</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PASSO 4: AGENTE ===== -->
+  <div class="sec" id="sec3">
+    <div class="sec-title">Agente e Formalização</div>
+    <div class="sec-sub">Dados do angariador e foro</div>
+
+    <div class="card">
+      <div class="card-title">Angariador Responsável</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Nome do Agente <span class="req-dot"></span></label>
+          <input type="text" id="nomeAgente" value="Carlos Feiteira" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Código Agente</label>
+          <input type="text" id="codAgente" placeholder="AGT-00" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Número de Contrato</label>
+          <input type="text" id="numContrato" placeholder="AG-2026-___" oninput="save()">
+        </div>
+        <div class="fld">
+          <label>Local de Celebração</label>
+          <input type="text" id="localCeleb" placeholder="Lisboa" oninput="save()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Foro e Resolução de Litígios</div>
+      <div class="g2">
+        <div class="fld">
+          <label>Tribunal Competente</label>
+          <select id="tribunal" onchange="save()">
+            <option>Lisboa</option><option>Cascais</option><option>Sintra</option>
+            <option>Oeiras</option><option>Porto</option><option>Funchal</option>
+            <option>Faro</option><option>Setúbal</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Centro RAL</label>
+          <select id="centroRAL" onchange="save()">
+            <option value="nao-aderente">Não aderente a centro RAL</option>
+            <option value="caccl">CACCL — Centro de Arbitragem de Lisboa</option>
+            <option value="cniadr">CNIADR</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">RGPD — Consentimento</div>
+      <div class="fld">
+        <label style="flex-direction:row;align-items:flex-start;gap:10px;font-size:12px;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="rgpdCheck" style="margin-top:3px;accent-color:var(--verde)" onchange="save()">
+          O(a) segundo outorgante autoriza o tratamento dos seus dados pessoais pela Agency Group — Mediação Imobiliária, Lda (NIPC 516.833.960), para fins de execução do presente contrato, nos termos do RGPD (Regulamento UE 2016/679) e da Lei 58/2019. Tem direito de acesso, rectificação, apagamento e portabilidade dos dados, mediante pedido para <strong>geral@agencygroup.pt</strong>.
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Observações Adicionais</div>
+      <div class="fld">
+        <textarea id="observacoes" placeholder="Condições especiais, acordos adicionais, notas do agente..." style="min-height:100px" oninput="save()"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PASSO 5: REVISÃO ===== -->
+  <div class="sec" id="sec4">
+    <div class="sec-title">Revisão e Geração</div>
+    <div class="sec-sub">Verificar campos e gerar documento</div>
+
+    <div id="checkList"></div>
+    <div id="alertMissing"></div>
+
+    <div class="card">
+      <div class="card-title">Resumo do Contrato</div>
+      <div id="summaryTable"></div>
+    </div>
+
+    <!-- DOCUMENT OUTPUT -->
+    <div class="doc-output" id="docOutput">
+      <div class="doc-hdr">
+        <div>
+          <div class="doc-logo-ag">Agency<span class="doc-logo-gr"> Group</span></div>
+          <div class="doc-ami">AMI 22506 · Mediação Imobiliária · NIPC 516.833.960</div>
+        </div>
+        <div class="doc-type">
+          <div class="doc-type-label">Documento Contratual</div>
+          <div class="doc-type-title">Contrato de<br>Mediação Imobiliária</div>
+          <div class="doc-ref" id="docRef">CMI-MED-2026-___</div>
+        </div>
+      </div>
+      <div class="gold-line"></div>
+      <div class="doc-body-out" id="docBodyOut"></div>
+      <div class="doc-footer-out">
+        <div class="doc-finfo">Agency Group — Mediação Imobiliária, Lda · NIPC 516.833.960 · AMI 22506<br>Amoreiras Square, Lisboa · geral@agencygroup.pt · +351 919 948 986</div>
+        <div class="doc-furl">agencygroup.pt/cmi</div>
+      </div>
+      <div class="doc-actions" id="docActions"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- NAV BOTTOM -->
+<div class="nav-bottom" id="navBottom">
+  <button class="btn btn-back" id="btnBack" onclick="prevStep()">← Voltar</button>
+  <button class="btn btn-next" id="btnNext" onclick="nextStep()">Continuar →</button>
+</div>
+
+<script>
+const API_KEY = null; // Injected by server — do not add here
+let currentStep = 0;
+let recognition = null;
+let isRecording = false;
+let deferredPrompt = null;
+
+// PWA install
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('btnInstall').classList.add('vis');
+});
+function installApp(){
+  if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.waitForUserChoice();}
+}
+
+// ── STEP NAVIGATION ──
+function goStep(n){
+  document.getElementById('sec'+currentStep).classList.remove('vis');
+  document.getElementById('sn'+currentStep).classList.remove('act');
+  currentStep = n;
+  document.getElementById('sec'+currentStep).classList.add('vis');
+  document.getElementById('sn'+currentStep).classList.add('act');
+  document.getElementById('sn'+currentStep).classList.add('done');
+  updateProgress();
+  updateNavButtons();
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(n===4) buildReview();
+}
+function nextStep(){ if(currentStep<4) goStep(currentStep+1); }
+function prevStep(){ if(currentStep>0) goStep(currentStep-1); }
+function updateProgress(){
+  const pct = ((currentStep+1)/5)*100;
+  document.getElementById('progFill').style.width = pct+'%';
+  document.getElementById('progLabel').textContent = 'Passo '+(currentStep+1)+' de 5';
+}
+function updateNavButtons(){
+  const back = document.getElementById('btnBack');
+  const next = document.getElementById('btnNext');
+  back.style.display = currentStep===0 ? 'none' : '';
+  if(currentStep===4){
+    next.textContent = '✦ Gerar CMI';
+    next.className = 'btn btn-gen';
+    next.onclick = generateDoc;
+  } else {
+    next.textContent = 'Continuar →';
+    next.className = 'btn btn-next';
+    next.onclick = nextStep;
+  }
+}
+
+// ── IA PANELS ──
+function toggleIA(id){
+  ['paste','image','voice'].forEach(p=>{
+    const panel = document.getElementById('ia-'+p);
+    const tabs = document.querySelectorAll('.ia-tab');
+    if(p===id){
+      panel.classList.toggle('vis');
+    } else {
+      panel.classList.remove('vis');
+    }
+  });
+}
+
+// ── AI API CALL ──
+async function callAI(systemPrompt, userContent, isImage=false){
+  const messages = isImage ? [{
+    role:'user',
+    content:[
+      {type:'image',source:{type:'base64',media_type:userContent.type,data:userContent.data}},
+      {type:'text',text:systemPrompt}
+    ]
+  }] : [{role:'user',content:systemPrompt+'\n\nTexto:\n'+userContent}];
+
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      messages
+    })
+  });
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+const EXTRACT_PROMPT = `Analisa o conteúdo fornecido e extrai dados imobiliários portugueses. Responde APENAS com JSON válido, sem texto adicional, no formato:
+{"morada":"","freguesia":"","concelho":"","codpostal":"","artMatric":"","crp":"","conservatoria":"","licHab":"","certEner":"","tipoImovel":"","tipologia":"","areaBruta":"","nomeProprietario":"","nifProprietario":"","ccProprietario":"","telProprietario":"","emailProprietario":"","moradaProprietario":"","preco":"","comissao":"5","notas":""}
+Preenche só os campos que encontrares. Valores numéricos sem símbolos (€,%). Se não encontrares um campo deixa "".`;
+
+async function processText(){
+  const txt = document.getElementById('pasteText').value.trim();
+  if(!txt){alert('Cola um texto primeiro.');return;}
+  const btn = document.getElementById('btnPaste');
+  btn.disabled = true; btn.textContent = '⏳ A processar...';
+  document.getElementById('aiLoading').classList.add('vis');
+  try{
+    const raw = await callAI(EXTRACT_PROMPT, txt);
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const data = JSON.parse(clean);
+    fillFields(data);
+    const filled = Object.values(data).filter(v=>v).length;
+    document.getElementById('pasteResult').textContent = '✓ '+filled+' campos preenchidos';
+    document.getElementById('pasteResult').classList.add('vis');
+  }catch(e){
+    document.getElementById('pasteResult').textContent = '⚠ Erro ao processar. Verifica a API key.';
+    document.getElementById('pasteResult').classList.add('vis');
+  }
+  btn.disabled=false; btn.textContent='✦ Extrair e Preencher';
+  document.getElementById('aiLoading').classList.remove('vis');
+}
+
+async function processImage(input){
+  const file = input.files[0];
+  if(!file) return;
+  document.getElementById('aiLoading').classList.add('vis');
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const b64 = e.target.result.split(',')[1];
+    const mtype = file.type || 'image/jpeg';
+    try{
+      const raw = await callAI(EXTRACT_PROMPT, {type:mtype,data:b64}, true);
+      const clean = raw.replace(/```json|```/g,'').trim();
+      const data = JSON.parse(clean);
+      fillFields(data);
+      const filled = Object.values(data).filter(v=>v).length;
+      document.getElementById('imageResult').textContent = '✓ '+filled+' campos extraídos da imagem';
+      document.getElementById('imageResult').classList.add('vis');
+    }catch(e){
+      document.getElementById('imageResult').textContent = '⚠ Não foi possível extrair dados. Tenta novamente.';
+      document.getElementById('imageResult').classList.add('vis');
+    }
+    document.getElementById('aiLoading').classList.remove('vis');
+  };
+  reader.readAsDataURL(file);
+}
+
+function fillFields(data){
+  const map = {
+    morada:'morada',freguesia:'freguesia',concelho:'concelho',codpostal:'codpostal',
+    artMatric:'artMatric',crp:'crp',conservatoria:'conservatoria',licHab:'licHab',
+    certEner:'certEner',tipoImovel:'tipoImovel',tipologia:'tipologia',areaBruta:'areaBruta',
+    nomeProprietario:'nomeProprietario',nifProprietario:'nifProprietario',
+    ccProprietario:'ccProprietario',telProprietario:'telProprietario',
+    emailProprietario:'emailProprietario',moradaProprietario:'moradaProprietario',
+    preco:'preco',comissao:'comissao'
+  };
+  Object.entries(map).forEach(([k,id])=>{
+    if(data[k]){
+      const el = document.getElementById(id);
+      if(el){el.value=data[k];el.classList.add('ai-filled');}
+    }
+  });
+  calcComissao(); save();
+}
+
+// VOICE
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){
+    alert('O teu browser não suporta ditado. Usa Chrome ou Safari.');return;
+  }
+  if(isRecording){
+    recognition.stop(); isRecording=false;
+    document.getElementById('btnVoice').textContent='🎙 Iniciar Gravação';
+    return;
+  }
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang='pt-PT'; recognition.continuous=true; recognition.interimResults=true;
+  recognition.onresult = e => {
+    const txt = Array.from(e.results).map(r=>r[0].transcript).join(' ');
+    document.getElementById('voiceStatus').textContent = txt;
+  };
+  recognition.onend = async () => {
+    const txt = document.getElementById('voiceStatus').textContent;
+    if(txt){
+      document.getElementById('aiLoading').classList.add('vis');
+      try{
+        const raw = await callAI(EXTRACT_PROMPT, txt);
+        const clean = raw.replace(/```json|```/g,'').trim();
+        const data = JSON.parse(clean);
+        fillFields(data);
+        document.getElementById('voiceResult').textContent='✓ Dados do ditado preenchidos';
+        document.getElementById('voiceResult').classList.add('vis');
+      }catch(e){}
+      document.getElementById('aiLoading').classList.remove('vis');
+    }
+    isRecording=false;
+    document.getElementById('btnVoice').textContent='🎙 Iniciar Gravação';
+  };
+  recognition.start(); isRecording=true;
+  document.getElementById('btnVoice').textContent='⏹ Parar Gravação';
+}
+
+// CALCULO COMISSÃO
+function calcComissao(){
+  const preco = parseFloat(document.getElementById('preco').value)||0;
+  const pct = parseFloat(document.getElementById('comissao').value)||5;
+  const base = preco * pct/100;
+  const iva = base * 0.23;
+  const total = base + iva;
+  const fmt = n => n>0 ? n.toLocaleString('pt-PT',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
+  document.getElementById('cvPreco').textContent = fmt(preco);
+  document.getElementById('cvPct').textContent = pct;
+  document.getElementById('cvComissao').textContent = fmt(base);
+  document.getElementById('cvIVA').textContent = fmt(iva);
+  document.getElementById('cvTotal').textContent = fmt(total);
+}
+
+// ESTADO CIVIL
+function toggleConjuge(){
+  const v = document.getElementById('estadoCivil').value;
+  document.getElementById('cardConjuge').style.display = (v==='Casado(a)'||v==='União de Facto') ? '' : 'none';
+  save();
+}
+
+// SAVE STATE
+function save(){
+  const fields = ['morada','freguesia','concelho','codpostal','distrito','conservatoria','crp',
+    'artMatric','licHab','certEner','numSCE','tipoImovel','tipologia','areaBruta','areaTerreno','onus',
+    'nomeProprietario','nifProprietario','ccProprietario','validadeCC','nacionalidade','estadoCivil',
+    'nomeConjuge','nifConjuge','regimeCasamento','moradaProprietario','cpProprietario',
+    'telProprietario','emailProprietario','preco','precoMin','comissao','partilha','vigencia',
+    'dataInicio','renovacao','nomeAgente','codAgente','numContrato','localCeleb','tribunal',
+    'centroRAL','observacoes'];
+  const data = {};
+  fields.forEach(id=>{const el=document.getElementById(id);if(el)data[id]=el.value;});
+  data.tipoNeg = document.querySelector('input[name=tipoNeg]:checked')?.value||'venda';
+  data.regime = document.querySelector('input[name=regime]:checked')?.value||'exclusivo';
+  data.pgComissao = document.querySelector('input[name=pgComissao]:checked')?.value||'escritura';
+  data.rgpd = document.getElementById('rgpdCheck').checked;
+  localStorage.setItem('ag_cmi', JSON.stringify(data));
+}
+
+function load(){
+  try{
+    const data = JSON.parse(localStorage.getItem('ag_cmi')||'{}');
+    Object.entries(data).forEach(([id,val])=>{
+      const el = document.getElementById(id);
+      if(el) el.value = val;
+    });
+    if(data.tipoNeg) document.querySelector(`input[name=tipoNeg][value="${data.tipoNeg}"]`).checked=true;
+    if(data.regime) document.querySelector(`input[name=regime][value="${data.regime}"]`).checked=true;
+    if(data.pgComissao) document.querySelector(`input[name=pgComissao][value="${data.pgComissao}"]`).checked=true;
+    if(data.rgpd) document.getElementById('rgpdCheck').checked=true;
+    if(data.estadoCivil) toggleConjuge();
+    calcComissao();
+  }catch(e){}
+}
+
+// REVIEW
+function buildReview(){
+  const required = [
+    ['morada','Morada do imóvel'],['artMatric','Artigo matricial'],
+    ['nomeProprietario','Nome do proprietário'],['nifProprietario','NIF do proprietário'],
+    ['telProprietario','Telemóvel do proprietário'],['preco','Preço'],
+    ['nomeAgente','Nome do agente']
+  ];
+  let html = '';
+  let missing = [];
+  required.forEach(([id,label])=>{
+    const val = document.getElementById(id)?.value?.trim();
+    if(val){
+      html+=`<div class="check-item ok"><div class="check-dot"></div>${label}: <strong>${val}</strong></div>`;
+    } else {
+      html+=`<div class="check-item miss"><div class="check-dot"></div>${label}: <em>em falta</em></div>`;
+      missing.push(label);
+    }
+  });
+  document.getElementById('checkList').innerHTML=html;
+  if(missing.length){
+    document.getElementById('alertMissing').innerHTML=`<div class="alert warn"><span class="alert-icon">⚠</span><div><strong>${missing.length} campo(s) obrigatório(s) em falta:</strong><br>${missing.join(' · ')}</div></div>`;
+  } else {
+    document.getElementById('alertMissing').innerHTML=`<div class="alert ok"><span class="alert-icon">✓</span><div>Todos os campos obrigatórios preenchidos. Pronto para gerar.</div></div>`;
+  }
+  buildSummary();
+}
+
+function buildSummary(){
+  const g = id => document.getElementById(id)?.value||'';
+  const gv = name => document.querySelector(`input[name=${name}]:checked`)?.value||'';
+  const preco = parseFloat(g('preco'))||0;
+  const pct = parseFloat(g('comissao'))||5;
+  const comTotal = preco*(pct/100)*1.23;
+  const fmt = n => n>0?n.toLocaleString('pt-PT',{style:'currency',currency:'EUR'}):'-';
+  const rows = [
+    ['Imóvel',g('tipoImovel')||'-'],
+    ['Tipologia',g('tipologia')||'-'],
+    ['Morada',g('morada')||'-'],
+    ['Artigo Matricial',g('artMatric')||'-'],
+    ['Proprietário',g('nomeProprietario')||'-'],
+    ['NIF',g('nifProprietario')||'-'],
+    ['Telemóvel',g('telProprietario')||'-'],
+    ['Tipo Negócio',gv('tipoNeg')],
+    ['Preço',fmt(preco)],
+    ['Comissão c/IVA',fmt(comTotal)],
+    ['Regime',gv('regime')],
+    ['Vigência',g('vigencia')],
+    ['Agente',g('nomeAgente')||'-'],
+  ];
+  document.getElementById('summaryTable').innerHTML = rows.map(([k,v])=>
+    `<div class="sum-item"><span class="sum-key">${k}</span><span class="sum-val ${v==='-'?'missing':''}">${v}</span></div>`
+  ).join('');
+}
+
+// GENERATE DOCUMENT
+function generateDoc(){
+  const g = id => document.getElementById(id)?.value?.trim()||'';
+  const gv = name => document.querySelector(`input[name=${name}]:checked`)?.value||'';
+  const preco = parseFloat(g('preco'))||0;
+  const pct = parseFloat(g('comissao'))||5;
+  const comBase = preco*pct/100;
+  const comIVA = comBase*0.23;
+  const comTotal = comBase+comIVA;
+  const fmt = n => n>0?n.toLocaleString('pt-PT',{style:'currency',currency:'EUR',minimumFractionDigits:0}):'—';
+  const nc = g('numContrato')||'AG-2026-___';
+  document.getElementById('docRef').textContent = nc;
+  const dt = new Date().toLocaleDateString('pt-PT');
+
+  let body = `
+  <div class="notice-out">O presente contrato é celebrado ao abrigo da Lei n.º 15/2013, de 8 de fevereiro, que regula o acesso e exercício da atividade de mediação imobiliária em Portugal.</div>
+
+  <div class="doc-section">
+    <div class="doc-sec-title">Primeiro Outorgante — Empresa Mediadora</div>
+    <div class="doc-fields">
+      <div><div class="doc-field-label">Denominação</div><div class="doc-field-val">Agency Group — Mediação Imobiliária, Lda</div></div>
+      <div><div class="doc-field-label">Licença AMI</div><div class="doc-field-val">22506</div></div>
+      <div><div class="doc-field-label">NIPC</div><div class="doc-field-val">516.833.960</div></div>
+      <div><div class="doc-field-label">Sede</div><div class="doc-field-val">Amoreiras Square, Lisboa</div></div>
+    </div>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-sec-title">Segundo Outorgante — Proprietário</div>
+    <div class="doc-fields">
+      <div><div class="doc-field-label">Nome</div><div class="doc-field-val">${g('nomeProprietario')||'_______________________'}</div></div>
+      <div><div class="doc-field-label">NIF</div><div class="doc-field-val">${g('nifProprietario')||'___________'}</div></div>
+      <div><div class="doc-field-label">CC / Passaporte</div><div class="doc-field-val">${g('ccProprietario')||'___________'}</div></div>
+      <div><div class="doc-field-label">Estado Civil</div><div class="doc-field-val">${g('estadoCivil')||'___________'}</div></div>
+      <div><div class="doc-field-label">Morada</div><div class="doc-field-val">${g('moradaProprietario')||'_______________________'}</div></div>
+      <div><div class="doc-field-label">Contacto</div><div class="doc-field-val">${g('telProprietario')||'___________'}</div></div>
+    </div>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-sec-title">Objeto do Contrato</div>
+    <div class="doc-fields">
+      <div><div class="doc-field-label">Tipo de Imóvel</div><div class="doc-field-val">${g('tipoImovel')} ${g('tipologia')}</div></div>
+      <div><div class="doc-field-label">Artigo Matricial</div><div class="doc-field-val">${g('artMatric')||'___________'}</div></div>
+      <div><div class="doc-field-label">Morada</div><div class="doc-field-val">${g('morada')||'_______________________'}</div></div>
+      <div><div class="doc-field-label">Conservatória</div><div class="doc-field-val">${g('conservatoria')||'___________'}</div></div>
+    </div>
+  </div>`;
+
+  body += `
+  <div class="amount-block">
+    <div><div class="ab-label">Preço de Venda</div><div class="ab-val">${fmt(preco)}</div></div>
+    <div style="text-align:right"><div class="ab-label">Comissão Total c/ IVA (${pct}% + 23%)</div><div class="ab-val" style="font-size:20px">${fmt(comTotal)}</div><div class="ab-sub">Base ${fmt(comBase)} + IVA ${fmt(comIVA)}</div></div>
+  </div>`;
+
+  const vigencia = g('vigencia');
+  const regime = gv('regime');
+  const pgCom = gv('pgComissao');
+  const tipoNeg = gv('tipoNeg');
+  const tribunal = g('tribunal')||'Lisboa';
+  const ral = g('centroRAL');
+  const agente = g('nomeAgente')||'Carlos Feiteira';
+  const local = g('localCeleb')||'Lisboa';
+
+  body += `
+  <div class="doc-section">
+    <div class="doc-sec-title">Cláusulas Contratuais</div>
+
+    <div class="cl-out"><span class="n">1.ª</span><strong>Objeto.</strong> O segundo outorgante contrata a Agency Group — Mediação Imobiliária, Lda (AMI 22506) para promover a ${tipoNeg} do imóvel identificado, sito em <em>${g('morada')||'___'}</em>, artigo matricial <em>${g('artMatric')||'___'}</em>, em regime de mediação <em>${regime}</em>, pelo prazo de <em>${vigencia}</em>.</div>
+
+    <div class="cl-out"><span class="n">2.ª</span><strong>Preço.</strong> O preço da ${tipoNeg} é de <em>${fmt(preco)}</em>. Qualquer alteração ao preço acordado deverá ser formalizada por escrito, mediante aditamento ao presente contrato, nos termos do n.º 2 do artigo 19.º da Lei 15/2013.</div>
+
+    <div class="cl-out"><span class="n">3.ª</span><strong>Obrigações da Mediadora.</strong> A mediadora obriga-se a: (a) promover o imóvel pelos meios adequados; (b) identificar potenciais interessados; (c) realizar visitas e apresentações; (d) acompanhar o processo negocial até à conclusão; (e) prestar esclarecimentos sobre documentação necessária.</div>
+
+    <div class="cl-out"><span class="n">4.ª</span><strong>Obrigações do Proprietário.</strong> O segundo outorgante obriga-se a: (a) fornecer toda a documentação relativa ao imóvel; (b) manter o imóvel em condições de visita; (c) comunicar por escrito qualquer alteração relevante; (d) não celebrar negócio por qualquer outro meio que frustre o direito à remuneração da mediadora${regime==='exclusivo'?'; (e) não angariação por outra mediadora durante a vigência do contrato':''  }.</div>
+
+    <div class="cl-out"><span class="n">5.ª</span><strong>Remuneração.</strong> n.º 1 — A remuneração da mediadora é de <em>${pct}% sobre o preço de venda efectivo</em>, acrescida de IVA à taxa legal em vigor (23%), perfazendo um total efectivo de <em>${(pct*1.23).toFixed(2)}%</em>. n.º 2 — Calculada sobre o preço acordado de <em>${fmt(preco)}</em>, a remuneração é de <em>${fmt(comBase)}</em>, acrescida de IVA de <em>${fmt(comIVA)}</em>, totalizando <em>${fmt(comTotal)}</em>. n.º 3 — A remuneração é devida ${pgCom==='escritura'?'na celebração da escritura pública definitiva':pgCom==='cpcv'?'na celebração do CPCV':'em 50% na celebração do CPCV e 50% na escritura pública'}. n.º 4 — A remuneração é igualmente devida se o negócio não se realizar por facto imputável ao segundo outorgante, nos termos do n.º 3 do artigo 19.º da Lei 15/2013.</div>
+
+    <div class="cl-out"><span class="n">6.ª</span><strong>Prazo e Renovação.</strong> O presente contrato tem a duração de <em>${vigencia}</em>, com início em <em>${g('dataInicio')||dt}</em>. ${g('renovacao')==='sim'?'Renova-se automaticamente por iguais períodos, salvo comunicação escrita com 15 dias de antecedência.':'Não é renovado automaticamente, cessando na data de termo sem necessidade de comunicação.'}</div>
+
+    <div class="cl-out"><span class="n">7.ª</span><strong>Seguro de Responsabilidade Civil.</strong> A Agency Group — Mediação Imobiliária, Lda encontra-se coberta por apólice de seguro de responsabilidade civil profissional, conforme exigido pelo artigo 22.º da Lei 15/2013, subscrita junto da Companhia de Seguros Tranquilidade, S.A.</div>
+
+    <div class="cl-out"><span class="n">8.ª</span><strong>Certificação Energética.</strong> ${g('certEner')?`O imóvel dispõe de Certificado Energético de classe <em>${g('certEner')}</em>${g('numSCE')?', SCE nº <em>'+g('numSCE')+'</em>':''}, emitido nos termos do D.L. 118/2013, de 20 de agosto.`:'O segundo outorgante compromete-se a providenciar Certificado Energético válido antes da celebração do contrato definitivo, nos termos do D.L. 118/2013, de 20 de agosto.'}</div>
+
+    <div class="cl-out"><span class="n">9.ª</span><strong>Branqueamento de Capitais e Financiamento do Terrorismo.</strong> n.º 1 — A mediadora está obrigada ao cumprimento da Lei 83/2017, de 18 de agosto (branqueamento e financiamento do terrorismo). n.º 2 — O segundo outorgante declara que os fundos utilizados têm origem lícita. n.º 3 — A mediadora reserva-se o direito de solicitar documentação comprovativa da origem de fundos sempre que legalmente exigido. n.º 4 — A recusa de prestação de informações constitui fundamento de rescisão do contrato.</div>
+
+    <div class="cl-out"><span class="n">10.ª</span><strong>Ónus e Encargos.</strong> O segundo outorgante declara que o imóvel se encontra: <em>${g('onus')||'livre de quaisquer ónus, encargos, hipotecas ou limitações ao direito de propriedade'}</em>. Obriga-se a comunicar imediatamente qualquer alteração a este estado.</div>
+
+    <div class="cl-out"><span class="n">11.ª</span><strong>Rescisão.</strong> O presente contrato pode ser rescindido por qualquer das partes mediante comunicação escrita com 15 dias de antecedência, sem prejuízo da remuneração devida nos termos da cláusula 5.ª, se aplicável. A rescisão por iniciativa da mediadora não dá direito a qualquer indemnização.</div>
+
+    <div class="cl-out"><span class="n">12.ª</span><strong>Resolução Alternativa de Litígios.</strong> ${ral==='nao-aderente'?'A Agency Group não é, nesta data, aderente a qualquer Centro de Arbitragem de Conflitos de Consumo, pelo que, nos termos do artigo 18.º da Lei 144/2015, fica ressalvado o recurso a qualquer meio de RAL legalmente previsto.':ral==='caccl'?'Para resolução de litígios de consumo é competente o CACCL — Centro de Arbitragem de Conflitos de Consumo de Lisboa (www.centroarbitragemlisboa.pt).':'O recurso a meio de resolução alternativa de litígios é facultativo para o segundo outorgante.'}</div>
+
+    <div class="cl-out"><span class="n">13.ª</span><strong>Limite Numerário.</strong> As partes reconhecem os limites estabelecidos para pagamentos em numerário pela Lei 92/2017, de 22 de agosto: transacções superiores a €3.000 entre particulares e €1.000 com intervenção de profissionais devem ser efectuadas por meio de pagamento rastreável. A violação destes limites constitui contra-ordenação.</div>
+
+    <div class="cl-out"><span class="n">14.ª</span><strong>Protecção de Dados (RGPD).</strong> n.º 1 — O Responsável pelo Tratamento é a Agency Group — Mediação Imobiliária, Lda (NIPC 516.833.960), contacto: geral@agencygroup.pt. n.º 2 — Os dados pessoais são tratados para execução do presente contrato (art. 6.º/1/b do RGPD). n.º 3 — Os dados não são cedidos a terceiros sem consentimento, salvo obrigação legal. n.º 4 — O período de conservação é de 10 anos após cessação do contrato. n.º 5 — O segundo outorgante tem direito de acesso, rectificação, apagamento, portabilidade e oposição, mediante pedido escrito. n.º 6 — Tem direito a apresentar reclamação à CNPD (www.cnpd.pt). n.º 7 — O segundo outorgante ${document.getElementById('rgpdCheck').checked?'<em>prestou o seu consentimento expresso</em> ao tratamento dos seus dados pessoais para os fins indicados.':'declara ter sido informado sobre o tratamento dos seus dados pessoais.'}</div>
+
+    <div class="cl-out"><span class="n">15.ª</span><strong>Lei e Foro.</strong> O presente contrato rege-se pela legislação portuguesa, designadamente pela Lei n.º 15/2013, de 8 de fevereiro, e pelo Código Civil. Para dirimir qualquer litígio emergente, as partes elegem o Tribunal da Comarca de <em>${tribunal}</em>, com expressa renúncia a qualquer outro.</div>
+
+    ${g('observacoes')?`<div class="cl-out"><span class="n">16.ª</span><strong>Disposições Adicionais.</strong> ${g('observacoes')}</div>`:''}
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-sec-title">Declaração de Recepção</div>
+    <div class="cl-out">O segundo outorgante declara ter recebido um exemplar do presente contrato, ter lido e compreendido todas as suas cláusulas, e concordar expressamente com o seu conteúdo.</div>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-sec-title">Assinaturas — ${local}, ${g('dataInicio')||dt}</div>
+    <div class="sig-grid">
+      <div>
+        <div class="sig-line"></div>
+        <div class="sig-name">${agente}</div>
+        <div class="sig-role">Agency Group · Mediador AMI 22506</div>
+        <div class="sig-date">Data: ___/___/______</div>
+      </div>
+      <div>
+        <div class="sig-line"></div>
+        <div class="sig-name">${g('nomeProprietario')||'_______________________'}</div>
+        <div class="sig-role">Segundo Outorgante</div>
+        <div class="sig-date">Data: ___/___/______</div>
+      </div>
+    </div>
+  </div>`;
+
+  document.getElementById('docBodyOut').innerHTML = body;
+
+  // ACTIONS
+  const tel = g('telProprietario').replace(/\s/g,'');
+  const missing = [];
+  if(!g('nomeProprietario')) missing.push('Nome do proprietário');
+  if(!g('nifProprietario')) missing.push('NIF');
+  if(!g('ccProprietario')) missing.push('CC/Passaporte');
+  if(!g('conservatoria')) missing.push('Conservatória');
+  if(!g('crp')) missing.push('Nº CRP');
+  const waMissing = missing.length>0 ? `%0A%0A*Dados em falta:*%0A${missing.map(m=>'• '+m).join('%0A')}` : '';
+  const waMsg = `*Contrato de Mediação — Agency Group*%0A%0ABom dia!%0AComo combinámos, segue o resumo do contrato de mediação para o imóvel em *${encodeURIComponent(g('morada')||'___')}*.%0A%0A*Preço:* ${encodeURIComponent(fmt(preco))}%0A*Comissão:* ${encodeURIComponent(fmt(comTotal))} (${pct}% + IVA)%0A*Vigência:* ${encodeURIComponent(vigencia)}${waMissing}%0A%0APara qualquer dúvida estou à disposição.%0A%0ACom os melhores cumprimentos,%0A${encodeURIComponent(agente)}%0AAgency Group · AMI 22506%0A+351 919 948 986`;
+
+  document.getElementById('docActions').innerHTML = `
+    <button class="doc-action-btn primary" onclick="window.print()">🖨 Imprimir / PDF</button>
+    ${tel?`<button class="doc-action-btn wa" onclick="window.open('https://wa.me/351${tel.replace(/^(\+351|351)/,'')}?text=${waMsg}','_blank')">📱 Enviar WhatsApp</button>`:''}
+    ${g('emailProprietario')?`<button class="doc-action-btn" onclick="sendEmail('${g('emailProprietario')}','${agente}','${g('morada')}')" >✉ Enviar Email</button>`:''}
+    <button class="doc-action-btn" onclick="copyDoc()">📋 Copiar Texto</button>
+  `;
+
+  document.getElementById('docOutput').classList.add('vis');
+  document.getElementById('docOutput').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function sendEmail(email, agente, morada){
+  const subject = encodeURIComponent('Contrato de Mediação — Agency Group AMI 22506');
+  const body = encodeURIComponent(`Exmo./Exma. Sr./Sra.,\n\nConforme conversámos, junto enviamos o Contrato de Mediação Imobiliária relativo ao imóvel em ${morada}.\n\nPor favor confirme a receção e os dados preenchidos. Estamos ao seu dispor para qualquer esclarecimento.\n\nCom os melhores cumprimentos,\n${agente}\nAgency Group · AMI 22506\n+351 919 948 986\ngeral@agencygroup.pt`);
+  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
+function copyDoc(){
+  const txt = document.getElementById('docBodyOut').innerText;
+  navigator.clipboard.writeText(txt).then(()=>alert('Texto copiado!')).catch(()=>alert('Usa Ctrl+A + Ctrl+C para copiar.'));
+}
+
+// INIT
+window.addEventListener('load', ()=>{
+  load();
+  calcComissao();
+  updateNavButtons();
+  updateProgress();
+  const today = new Date().toISOString().split('T')[0];
+  if(!document.getElementById('dataInicio').value)
+    document.getElementById('dataInicio').value = today;
+});
+</script>
+</body>
+</html>

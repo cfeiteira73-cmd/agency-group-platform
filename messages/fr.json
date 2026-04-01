@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "properties": "Propriétés",
+    "zones": "Zones",
+    "valuation": "Évaluation",
+    "credit": "Crédit",
+    "contact": "Contact",
+    "blog": "Blog"
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Portugal · Immobilier de Luxe · AMI 22506",
+      "title": "Trouvez votre propriété d'exception au Portugal",
+      "subtitle": "Lisbonne · Cascais · Comporta · Porto · Algarve · Madère",
+      "cta_primary": "Voir le Portfolio",
+      "cta_secondary": "Évaluer un Bien"
+    },
+    "stats": {
+      "transactions": "transactions en 2025",
+      "median_price": "prix médian/m² 2026",
+      "growth": "croissance annuelle",
+      "luxury_rank": "Top 5 Luxe Mondial"
+    },
+    "zones": {
+      "title": "Les Meilleures Zones",
+      "subtitle": "8 marchés premium, analyse exclusive Agency Group"
+    },
+    "avm": {
+      "title": "Évaluation Automatique",
+      "subtitle": "60+ variables · 47 zones · Précision ±8%",
+      "button": "Évaluer Maintenant"
+    },
+    "contact": {
+      "title": "Contactez-nous",
+      "whatsapp": "WhatsApp Direct",
+      "email": "Email"
+    }
+  },
+  "property": {
+    "price": "Prix",
+    "area": "Surface",
+    "rooms": "Chambres",
+    "bathrooms": "SDB",
+    "floor": "Étage",
+    "ground_floor": "RDC",
+    "pool": "Piscine",
+    "garage": "Garage",
+    "garden": "Jardin",
+    "terrace": "Terrasse",
+    "sea_view": "Vue Mer",
+    "energy": "Classe Énergétique",
+    "tour": "Visite Virtuelle 3D",
+    "see_property": "Voir le Bien",
+    "contact_agent": "Contacter l'Agent",
+    "schedule_visit": "Planifier une Visite",
+    "make_offer": "Faire une Offre",
+    "similar": "Biens Similaires",
+    "investment": {
+      "title": "Analyse d'Investissement",
+      "equity": "Apport Personnel (40%)",
+      "mortgage": "Mensualité",
+      "gross_yield": "Rendement Brut",
+      "net_yield": "Rendement Net",
+      "gross_rent": "Loyer Mensuel Brut",
+      "cash_flow": "Cash Flow Mensuel",
+      "irr": "TRI 5 Ans",
+      "coc": "Cash-on-Cash"
+    }
+  },
+  "filters": {
+    "all_zones": "Toutes les Zones",
+    "all_types": "Tous les Types",
+    "price": "Prix",
+    "rooms": "Chambres",
+    "pool": "Piscine",
+    "garage": "Garage",
+    "sea_view": "Vue Mer",
+    "off_market": "Hors Marché",
+    "clear": "Effacer",
+    "sort": "Trier",
+    "recent": "Récent",
+    "price_asc": "Prix ↑",
+    "price_desc": "Prix ↓",
+    "area_asc": "Surface ↑",
+    "area_desc": "Surface ↓",
+    "grid_view": "Vue grille",
+    "map_view": "Vue carte"
+  },
+  "compare": {
+    "title": "Comparer",
+    "compare": "Comparer",
+    "clear": "Effacer",
+    "max_items": "Maximum 3 propriétés",
+    "ask_agent": "Demander de l'Aide",
+    "comparison": "Comparaison de Biens",
+    "selected": "biens sélectionnés"
+  },
+  "favorites": {
+    "add": "Ajouter aux favoris",
+    "remove": "Retirer des favoris",
+    "title": "Favoris",
+    "saved": "biens sauvegardés",
+    "send_list": "Envoyer la Liste à l'Agent"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "commission": "Commission 5% (CPCV 50% + Acte 50%)",
+    "rights": "Tous droits réservés"
+  }
+}

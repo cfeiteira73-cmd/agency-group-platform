@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes">
+<title>Ficha de Identificação do Imóvel | Agency Group</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--v:#1c4a35;--v2:#2a6b4e;--v3:#163a28;--d:#c9a96e;--d2:#e2c99a;--d3:#8b6914;--cr:#f4f0e6;--cr2:#ece7d9;--cr3:#e0dace;--cr4:#d4cfc0;--bk:#0a0a0a;--gy:#6b6b6b;--gy2:#999;--wh:#fff;--err:#c53030;--ok:#1c4a35}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Jost',sans-serif;background:var(--cr);color:var(--bk);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;padding:0 0 80px}
+/* HEADER */
+.hdr{background:var(--v3);border-bottom:1px solid rgba(201,169,110,0.22);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:300;letter-spacing:0.28em;color:var(--d);text-transform:uppercase}
+.logo span{color:var(--d2)}
+.ami{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.45);letter-spacing:0.12em;margin-top:2px}
+.doc-badge{background:rgba(201,169,110,0.12);border:1px solid rgba(201,169,110,0.28);color:var(--d2);font-family:'DM Mono',monospace;font-size:10px;padding:5px 14px;border-radius:20px}
+/* HERO */
+.doc-hero{background:var(--v);padding:28px 24px 22px}
+.doc-hero-label{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.55);letter-spacing:0.15em;text-transform:uppercase}
+.doc-hero-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--wh);margin:6px 0 3px;letter-spacing:0.03em}
+.doc-hero-sub{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,0.45);letter-spacing:0.1em}
+.gold-bar{height:2px;background:var(--d)}
+/* IA BAR */
+.ia-bar{background:var(--v3);border-bottom:1px solid rgba(201,169,110,0.18);padding:10px 24px}
+.ia-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.ia-tab{background:rgba(201,169,110,0.08);border:1px solid rgba(201,169,110,0.22);color:var(--d2);font-family:'Jost',sans-serif;font-size:11px;padding:7px 14px;border-radius:20px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.ia-tab.act,.ia-tab:hover{background:var(--d);border-color:var(--d);color:var(--v3)}
+.ia-panel{display:none;margin-top:10px;background:rgba(0,0,0,0.22);border:1px solid rgba(201,169,110,0.18);border-radius:8px;padding:14px}
+.ia-panel.vis{display:block}
+.ia-ta{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(201,169,110,0.3);color:var(--cr);font-family:'Jost',sans-serif;font-size:13px;padding:11px;border-radius:6px;resize:none;min-height:80px;line-height:1.6}
+.ia-ta::placeholder{color:rgba(201,169,110,0.3)}
+.ia-ta:focus{outline:none;border-color:var(--d)}
+.ia-btn{width:100%;background:var(--d);border:none;color:var(--v3);font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:11px;border-radius:6px;cursor:pointer;margin-top:10px;transition:opacity .2s}
+.ia-btn:hover{opacity:.88}.ia-btn:disabled{opacity:.45;cursor:wait}
+.ia-hint{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,0.4);margin-bottom:8px;line-height:1.6}
+.ia-msg{font-family:'DM Mono',monospace;font-size:11px;color:var(--d2);background:rgba(28,74,53,0.25);border:1px solid rgba(28,74,53,0.4);border-radius:6px;padding:9px;display:none;margin-top:8px}
+.ia-msg.vis{display:block}
+.upload-zone{border:1.5px dashed rgba(201,169,110,0.35);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:var(--d);background:rgba(201,169,110,0.05)}
+.upload-zone input{display:none}
+/* MAIN */
+.main{padding:20px 24px;max-width:880px;margin:0 auto;padding-bottom:90px}
+/* PROGRESS */
+.pg-wrap{background:var(--v);padding:9px 24px;display:flex;align-items:center;gap:8px}
+.pg-bar{flex:1;height:2px;background:rgba(201,169,110,0.15);border-radius:2px}
+.pg-fill{height:100%;background:var(--d);border-radius:2px;transition:width .4s}
+.pg-lbl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.5);min-width:70px;text-align:right;letter-spacing:.08em}
+/* STEP NAV */
+.snav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.sn{background:var(--wh);border:1px solid var(--cr3);color:var(--gy);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;border-radius:20px;cursor:pointer;transition:all .2s}
+.sn:hover{border-color:var(--d);color:var(--d3)}
+.sn.act{background:var(--v);border-color:var(--v);color:var(--cr)}
+.sn.done{border-color:var(--d3);color:var(--d3)}
+/* SEC */
+.sec{display:none;animation:fi .3s ease}
+.sec.vis{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sec-h{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:400;color:var(--v);margin-bottom:4px}
+.sec-s{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+/* CARD */
+.card{background:var(--wh);border:0.5px solid var(--cr3);border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(10,10,10,0.07)}
+.ct{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:8px;margin-bottom:16px}
+/* GRID */
+.g1{display:grid;grid-template-columns:1fr;gap:13px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:13px}
+@media(max-width:580px){.g2,.g3,.g4{grid-template-columns:1fr}}
+/* FIELD */
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gy);display:flex;align-items:center;gap:5px}
+.req{width:5px;height:5px;background:var(--d);border-radius:50%;display:inline-block}
+.f input,.f select,.f textarea{font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--bk);background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:10px 12px;width:100%;transition:all .2s;-webkit-appearance:none}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--d);background:var(--wh);box-shadow:0 0 0 3px rgba(201,169,110,0.12)}
+.f textarea{resize:vertical;min-height:72px;line-height:1.6}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b6b' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.f input.af,.f select.af,.f textarea.af{border-color:var(--ia);background:rgba(79,70,229,0.07)}
+.hint{font-family:'DM Mono',monospace;font-size:10px;color:var(--gy2);margin-top:2px}
+/* RADIO */
+.rg{display:flex;flex-wrap:wrap;gap:8px}
+.rg label{display:flex;align-items:center;gap:8px;background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:10px 14px;cursor:pointer;transition:all .2s;font-size:13px;font-weight:300;flex:1;min-width:110px}
+.rg input[type=radio]{accent-color:var(--v);width:16px;height:16px}
+.rg label:has(input:checked){background:rgba(28,74,53,0.07);border-color:var(--v);color:var(--v)}
+/* CHECK */
+.cg{display:flex;flex-wrap:wrap;gap:8px}
+.cg label{display:flex;align-items:center;gap:8px;background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:9px 13px;cursor:pointer;transition:all .2s;font-size:12px;font-weight:300}
+.cg input[type=checkbox]{accent-color:var(--v);width:15px;height:15px}
+.cg label:has(input:checked){background:rgba(28,74,53,0.07);border-color:var(--v)}
+/* PHOTO */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.photo-slot{background:var(--cr2);border:1px dashed var(--cr4);border-radius:8px;aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:border-color .2s}
+.photo-slot:hover{border-color:var(--d)}
+.photo-slot input{display:none}
+.photo-slot img{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;border-radius:7px}
+.photo-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);letter-spacing:.08em;margin-top:6px}
+.photo-icon{font-size:22px}
+/* BADGE */
+.badge{display:inline-block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;padding:3px 10px;border-radius:20px}
+.badge-ok{background:rgba(28,74,53,0.1);color:var(--v);border:1px solid rgba(28,74,53,0.25)}
+.badge-warn{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.badge-err{background:rgba(197,48,48,0.08);color:var(--err);border:1px solid rgba(197,48,48,0.2)}
+/* LOADING */
+.load{display:none;align-items:center;justify-content:center;gap:12px;padding:30px;flex-direction:column}
+.load.vis{display:flex}
+.spin{width:32px;height:32px;border:2.5px solid var(--cr3);border-top-color:var(--v);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.load p{font-family:'DM Mono',monospace;font-size:11px;color:var(--gy2);letter-spacing:.08em}
+/* RATING */
+.rating-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--cr2)}
+.rating-row:last-child{border-bottom:none}
+.rating-lbl{font-size:12px;font-weight:300;flex:1}
+.stars{display:flex;gap:3px}
+.star{font-size:18px;cursor:pointer;color:var(--cr3);transition:color .15s;-webkit-user-select:none}
+.star.on{color:#f59e0b}
+/* AVM BOX */
+.avm-box{background:var(--v);border-radius:10px;padding:18px 22px;margin-bottom:14px}
+.avm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:500px){.avm-grid{grid-template-columns:1fr}}
+.avm-item{}
+.avm-lbl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+.avm-val{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--d);font-weight:400}
+.avm-sub{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.35);margin-top:3px}
+/* REVIEW */
+.rv-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;margin-bottom:6px;font-size:13px;font-weight:300}
+.rv-ok{background:rgba(28,74,53,0.08);color:var(--v)}
+.rv-miss{background:rgba(197,48,48,0.07);color:var(--err)}
+.rv-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.rv-ok .rv-dot{background:var(--v)}.rv-miss .rv-dot{background:var(--err)}
+/* ALERT */
+.alert{border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:13px;font-weight:300;line-height:1.65;display:flex;gap:10px}
+.alert-ok{background:rgba(28,74,53,0.07);border:1px solid rgba(28,74,53,0.2);color:var(--v)}
+.alert-warn{background:#fffbeb;border:1px solid #f6d860;color:#854d0e}
+/* DOC OUTPUT */
+.doc-out{display:none;background:var(--wh);border-radius:14px;box-shadow:0 8px 40px rgba(10,10,10,0.12);overflow:hidden;margin-top:20px}
+.doc-out.vis{display:block}
+.dh{background:var(--v);padding:28px 36px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.dh-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:.28em;color:var(--d);text-transform:uppercase}
+.dh-logo span{color:var(--d2)}
+.dh-ami{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.45);letter-spacing:.1em;margin-top:5px}
+.dh-type{text-align:right}
+.dh-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--d);letter-spacing:.15em;text-transform:uppercase}
+.dh-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--wh);margin-top:4px;line-height:1.3}
+.dh-ref{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);margin-top:5px}
+.gold-line{height:2px;background:var(--d)}
+.db{padding:28px 36px}
+.ds{margin-bottom:22px}
+.ds-t{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:6px;margin-bottom:14px}
+.df{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.df{grid-template-columns:1fr}}
+.df-l{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.df-v{font-size:13px;font-weight:300;color:var(--bk);border-bottom:0.5px solid #ccc9bc;padding-bottom:6px;min-height:24px}
+.df-v.gold{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--d)}
+.df-v.ok{color:var(--v);font-weight:500}
+.df3{grid-template-columns:1fr 1fr 1fr}
+.df1{grid-template-columns:1fr}
+.cl{font-size:12px;font-weight:300;color:#333;line-height:1.85;margin-bottom:9px}
+.cl .n{font-family:'DM Mono',monospace;font-size:10px;color:var(--v);margin-right:6px}
+.notice{background:#f0ede4;border-left:3px solid var(--v);padding:12px 16px;font-size:11px;font-weight:300;color:#444;line-height:1.75;margin-bottom:18px}
+.sig-g{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:8px}
+@media(max-width:500px){.sig-g{grid-template-columns:1fr;gap:20px}}
+.sig-l{border-top:1px solid #aaa;padding-top:8px;margin-bottom:6px}
+.sig-n{font-size:13px;font-weight:400}
+.sig-r{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:3px}
+.sig-d{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:12px}
+.amount-blk{background:var(--v);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px}
+.ab-l{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.5);letter-spacing:.12em;text-transform:uppercase}
+.ab-v{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--d);margin-top:4px}
+.ab-s{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,0.35);margin-top:3px}
+.photo-grid-out{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.photo-grid-out img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:0.5px solid var(--cr3)}
+.photo-placeholder{background:var(--cr2);width:100%;aspect-ratio:4/3;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2)}
+/* DOC FOOTER */
+.df-footer{background:var(--cr2);border-top:0.5px solid var(--cr3);padding:14px 36px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.dff-info{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy);line-height:1.8}
+.dff-url{font-family:'DM Mono',monospace;font-size:9px;color:var(--d)}
+/* DOC ACTIONS */
+.doc-actions{display:flex;gap:10px;padding:14px 20px;background:var(--cr2);border-top:0.5px solid var(--cr3);flex-wrap:wrap}
+.dab{font-family:'Jost',sans-serif;font-size:12px;padding:10px 18px;border-radius:6px;cursor:pointer;border:0.5px solid var(--cr3);background:var(--wh);color:var(--bk);transition:all .2s;display:flex;align-items:center;gap:7px}
+.dab:hover{border-color:var(--v);color:var(--v)}
+.dab.primary{background:var(--v);color:var(--cr);border-color:var(--v)}
+.dab.wa{background:#25D366;color:#fff;border-color:#25D366}
+/* NAV BOTTOM */
+.nb{position:fixed;bottom:0;left:0;right:0;background:var(--wh);border-top:0.5px solid var(--cr3);padding:12px 24px;display:flex;gap:10px;z-index:150;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.btn{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:12px 20px;border-radius:6px;cursor:pointer;border:none;flex:1;min-height:44px;transition:all .2s}
+.btn-bk{background:var(--cr2);color:var(--gy);flex:.6}.btn-bk:hover{background:var(--cr3)}
+.btn-nx{background:var(--v);color:var(--cr)}.btn-nx:hover{background:var(--v2)}
+.btn-gn{background:var(--d);color:var(--v3)}.btn-gn:hover{opacity:.88}
+@media(max-width:480px){.main{padding:14px 16px}.hdr{padding:12px 16px}.db{padding:20px 20px}.dh{padding:20px 20px}.df-footer{padding:12px 20px}}
+@media print{.hdr,.pg-wrap,.ia-bar,.snav,.nb,.doc-actions,.card,.alert,.load{display:none!important}.doc-out{display:block!important;box-shadow:none;border-radius:0}.main{padding:0}.body{background:#fff}.dh,.gold-line,.amount-blk{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div><div class="logo">Agency<span> Group</span></div><div class="ami">AMI 22506 · Sistema Documental</div></div>
+  <div class="doc-badge">Ficha Imóvel</div>
+</header>
+<div class="pg-wrap"><div class="pg-bar"><div class="pg-fill" id="pgf" style="width:0%"></div></div><div class="pg-lbl" id="pgl">1 / 6</div></div>
+<div class="ia-bar">
+  <div class="ia-tabs">
+    <button class="ia-tab" onclick="tog('ia-paste')">✦ Colar Texto</button>
+    <button class="ia-tab" onclick="tog('ia-img')">✦ Fotografar Documento</button>
+    <button class="ia-tab" onclick="tog('ia-voice')">✦ Ditado</button>
+  </div>
+  <div class="ia-panel" id="ia-paste">
+    <div class="ia-hint">Cola caderneta predial, certidão, email ou qualquer texto com dados do imóvel.</div>
+    <textarea class="ia-ta" id="ptxt" placeholder="Cola aqui..."></textarea>
+    <button class="ia-btn" id="pb" onclick="prText()">✦ Extrair e Preencher</button>
+    <div class="ia-msg" id="pmsg"></div>
+  </div>
+  <div class="ia-panel" id="ia-img">
+    <div class="ia-hint">Fotografa a caderneta predial, certidão permanente ou qualquer documento do imóvel.</div>
+    <div class="upload-zone" onclick="document.getElementById('imgIn').click()">
+      <input type="file" id="imgIn" accept="image/*" capture="environment" onchange="prImg(this)">
+      <div style="font-size:26px">📷</div>
+      <div class="ia-hint" style="margin:6px 0 0;text-align:center">Caderneta predial · Certidão CRP · Licença</div>
+    </div>
+    <div class="ia-msg" id="imsg"></div>
+  </div>
+  <div class="ia-panel" id="ia-voice">
+    <div class="ia-hint">Ex: "Apartamento T3 em Cascais, Rua da Liberdade 10, artigo matricial U-1234, 120 metros quadrados, ano 1998"</div>
+    <button class="ia-btn" id="vb" onclick="togVoice()">🎙 Iniciar Gravação</button>
+    <div id="vtxt" style="margin-top:8px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(201,169,110,0.45)"></div>
+    <div class="ia-msg" id="vmsg"></div>
+  </div>
+</div>
+<div class="load" id="aiLoad"><div class="spin"></div><p>IA a processar...</p></div>
+<main class="main">
+  <div class="snav">
+    <button class="sn act" onclick="gs(0)" id="sn0">1 · Localização</button>
+    <button class="sn" onclick="gs(1)" id="sn1">2 · Registo</button>
+    <button class="sn" onclick="gs(2)" id="sn2">3 · Características</button>
+    <button class="sn" onclick="gs(3)" id="sn3">4 · Estado / Condição</button>
+    <button class="sn" onclick="gs(4)" id="sn4">5 · Fotos</button>
+    <button class="sn" onclick="gs(5)" id="sn5">6 · Revisão</button>
+  </div>
+
+  <!-- 1. LOCALIZAÇÃO -->
+  <div class="sec vis" id="sec0">
+    <div class="sec-h">Localização</div>
+    <div class="sec-s">Endereço e dados geográficos</div>
+    <div class="card">
+      <div class="ct">Morada Completa</div>
+      <div class="g1">
+        <div class="f"><label>Rua / Avenida <span class="req"></span></label><input id="rua" type="text" placeholder="Ex: Rua das Flores, 25, 3.º Esq." oninput="sv()"></div>
+        <div class="g2">
+          <div class="f"><label>Código Postal <span class="req"></span></label><input id="cp" type="text" placeholder="0000-000" oninput="sv()"></div>
+          <div class="f"><label>Localidade</label><input id="loc" type="text" placeholder="Cidade / Vila" oninput="sv()"></div>
+        </div>
+        <div class="g3">
+          <div class="f"><label>Freguesia <span class="req"></span></label><input id="freg" type="text" oninput="sv()"></div>
+          <div class="f"><label>Concelho <span class="req"></span></label><input id="conc" type="text" oninput="sv()"></div>
+          <div class="f"><label>Distrito</label><input id="dist" type="text" oninput="sv()"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Coordenadas e Referência</div>
+      <div class="g2">
+        <div class="f"><label>Latitude</label><input id="lat" type="text" placeholder="38.7169" oninput="sv()"></div>
+        <div class="f"><label>Longitude</label><input id="lng" type="text" placeholder="-9.1395" oninput="sv()"></div>
+      </div>
+      <div style="margin-top:12px">
+        <button style="background:var(--cr2);border:0.5px solid var(--cr3);font-family:'DM Mono',monospace;font-size:10px;color:var(--v);padding:9px 16px;border-radius:6px;cursor:pointer" onclick="getGPS()">📍 Obter GPS Automático</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. REGISTO -->
+  <div class="sec" id="sec1">
+    <div class="sec-h">Registo Predial</div>
+    <div class="sec-s">Dados matriciais e conservatória</div>
+    <div class="card">
+      <div class="ct">Identificação Legal</div>
+      <div class="g2">
+        <div class="f"><label>Artigo Matricial <span class="req"></span></label><input id="artm" type="text" placeholder="Ex: U-1234 ou 1234" oninput="sv()"></div>
+        <div class="f"><label>Secção (se ap.)</label><input id="sec_mat" type="text" placeholder="Secção" oninput="sv()"></div>
+        <div class="f"><label>Fração Autónoma</label><input id="frac" type="text" placeholder="Ex: A, B, 3.ºEsq." oninput="sv()"></div>
+        <div class="f"><label>Valor Patrimonial Tributário (€)</label><input id="vpt" type="number" placeholder="VPT" oninput="sv()"></div>
+        <div class="f"><label>Conservatória do RP <span class="req"></span></label><input id="cons" type="text" placeholder="Ex: Cascais" oninput="sv()"></div>
+        <div class="f"><label>Nº Descrição (CRP)</label><input id="crp" type="text" placeholder="Nº ficha predial" oninput="sv()"></div>
+        <div class="f"><label>Nº Certidão Permanente</label><input id="cperm" type="text" placeholder="CP-..." oninput="sv()"></div>
+        <div class="f"><label>Validade Certidão</label><input id="vcperm" type="date" oninput="sv()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Licenças e Certificados</div>
+      <div class="g2">
+        <div class="f"><label>Licença de Utilização / Habitação</label><input id="licu" type="text" placeholder="Nº da licença" oninput="sv()"></div>
+        <div class="f"><label>Entidade Emissora (CM)</label><input id="cmlic" type="text" placeholder="Câmara Municipal de..." oninput="sv()"></div>
+        <div class="f"><label>Certificado Energético (classe)</label>
+          <select id="ce" onchange="sv()"><option value="">Selecionar</option>
+          <option>A+</option><option>A</option><option>B</option><option>B-</option>
+          <option>C</option><option>D</option><option>E</option><option>F</option>
+          <option>Isento</option><option>Pendente</option></select>
+        </div>
+        <div class="f"><label>Nº SCE</label><input id="sce" type="text" placeholder="SCE-..." oninput="sv()"></div>
+        <div class="f"><label>Validade SCE</label><input id="vsce" type="date" oninput="sv()"></div>
+        <div class="f"><label>Ficha Técnica Habitação</label>
+          <select id="fth" onchange="sv()"><option value="">Selecionar</option>
+          <option>Sim — disponível</option><option>Não — dispensada (ant. 2004)</option><option>Não — a obter</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Ónus, Encargos e Hipotecas</div>
+      <div class="f">
+        <label>Situação</label>
+        <div class="rg" style="margin-bottom:10px">
+          <label><input type="radio" name="onus" value="livre" onchange="togOnus()" checked> Livre de ónus</label>
+          <label><input type="radio" name="onus" value="hipoteca" onchange="togOnus()"> Com hipoteca</label>
+          <label><input type="radio" name="onus" value="penhora" onchange="togOnus()"> Com penhora</label>
+          <label><input type="radio" name="onus" value="outro" onchange="togOnus()"> Outro ónus</label>
+        </div>
+      </div>
+      <div id="onus-det" style="display:none">
+        <div class="f"><label>Descrição do Ónus / Hipoteca</label><textarea id="onus_desc" placeholder="Banco credor, valor em dívida, data de constituição..." oninput="sv()"></textarea></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. CARACTERÍSTICAS -->
+  <div class="sec" id="sec2">
+    <div class="sec-h">Características Técnicas</div>
+    <div class="sec-s">Dados CIMI e especificações do imóvel</div>
+    <div class="card">
+      <div class="ct">Tipologia e Classificação</div>
+      <div class="g3">
+        <div class="f"><label>Tipo <span class="req"></span></label>
+          <select id="tipo" onchange="sv()"><option value="">Selecionar</option>
+          <option>Apartamento</option><option>Moradia Isolada</option><option>Moradia em Banda</option>
+          <option>Moradia Geminada</option><option>Terreno</option><option>Loja / Comércio</option>
+          <option>Escritório</option><option>Armazém</option><option>Prédio</option>
+          <option>Quinta</option><option>Outro</option></select>
+        </div>
+        <div class="f"><label>Tipologia <span class="req"></span></label>
+          <select id="tip" onchange="sv()"><option value="">Selecionar</option>
+          <option>T0</option><option>T1</option><option>T2</option><option>T3</option>
+          <option>T4</option><option>T5</option><option>T6+</option></select>
+        </div>
+        <div class="f"><label>Piso / Andar</label><input id="piso" type="text" placeholder="Ex: 3.º" oninput="sv()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Áreas (CIMI)</div>
+      <div class="g4">
+        <div class="f"><label>Área Bruta Privativa (m²) <span class="req"></span></label><input id="abp" type="number" placeholder="m²" oninput="sv()"></div>
+        <div class="f"><label>Área Bruta Dependente (m²)</label><input id="abd" type="number" placeholder="m²" oninput="sv()"></div>
+        <div class="f"><label>Área do Terreno (m²)</label><input id="at" type="number" placeholder="m²" oninput="sv()"></div>
+        <div class="f"><label>Área Total (m²)</label><input id="atot" type="number" placeholder="calc. auto" id="atot" oninput="sv()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Divisões e Distribuição</div>
+      <div class="g4">
+        <div class="f"><label>Quartos</label><input id="qt" type="number" min="0" max="20" oninput="sv()"></div>
+        <div class="f"><label>WC / Casa de Banho</label><input id="wc" type="number" min="0" max="20" oninput="sv()"></div>
+        <div class="f"><label>Sala(s)</label><input id="sala" type="number" min="0" max="20" oninput="sv()"></div>
+        <div class="f"><label>Cozinha</label><input id="coz" type="number" min="0" max="5" oninput="sv()"></div>
+        <div class="f"><label>Garagem / Lugar</label><input id="gar" type="number" min="0" max="20" oninput="sv()"></div>
+        <div class="f"><label>Arrecadação</label><input id="arrec" type="number" min="0" max="10" oninput="sv()"></div>
+        <div class="f"><label>Terraço / Varanda (m²)</label><input id="terr" type="number" oninput="sv()"></div>
+        <div class="f"><label>Logradouro / Jardim (m²)</label><input id="jard" type="number" oninput="sv()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Construção</div>
+      <div class="g3">
+        <div class="f"><label>Ano de Construção</label><input id="anoconst" type="number" placeholder="Ex: 1995" oninput="sv()"></div>
+        <div class="f"><label>Ano de Última Remodelação</label><input id="anoremod" type="number" placeholder="Ex: 2020" oninput="sv()"></div>
+        <div class="f"><label>Estado de Conservação</label>
+          <select id="estcons" onchange="sv()"><option value="">Selecionar</option>
+          <option>Novo / Em construção</option><option>Excelente</option><option>Muito bom</option>
+          <option>Bom</option><option>Razoável</option><option>A necessitar obras</option>
+          <option>Para demolir / Ruína</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Equipamentos e Características</div>
+      <div class="cg">
+        <label><input type="checkbox" id="ck_ac" onchange="sv()"> Ar Condicionado</label>
+        <label><input type="checkbox" id="ck_aq" onchange="sv()"> Aquecimento Central</label>
+        <label><input type="checkbox" id="ck_lp" onchange="sv()"> Lareira / Salamandra</label>
+        <label><input type="checkbox" id="ck_pis" onchange="sv()"> Piscina</label>
+        <label><input type="checkbox" id="ck_el" onchange="sv()"> Elevador</label>
+        <label><input type="checkbox" id="ck_vig" onchange="sv()"> Videovigilância</label>
+        <label><input type="checkbox" id="ck_por" onchange="sv()"> Portaria / Segurança</label>
+        <label><input type="checkbox" id="ck_cond" onchange="sv()"> Condomínio Fechado</label>
+        <label><input type="checkbox" id="ck_vista" onchange="sv()"> Vista Mar / Rio / Cidade</label>
+        <label><input type="checkbox" id="ck_coz_eq" onchange="sv()"> Cozinha Equipada</label>
+        <label><input type="checkbox" id="ck_dom" onchange="sv()"> Domótica</label>
+        <label><input type="checkbox" id="ck_solar" onchange="sv()"> Painéis Solares</label>
+        <label><input type="checkbox" id="ck_gen" onchange="sv()"> Gerador</label>
+        <label><input type="checkbox" id="ck_al" onchange="sv()"> AL — Alojamento Local</label>
+      </div>
+      <div class="f" style="margin-top:12px"><label>Outros equipamentos / notas</label><textarea id="equip_outro" placeholder="Especificar..." oninput="sv()"></textarea></div>
+    </div>
+  </div>
+
+  <!-- 4. ESTADO / CONDIÇÃO -->
+  <div class="sec" id="sec3">
+    <div class="sec-h">Estado e Condição</div>
+    <div class="sec-s">Avaliação técnica do imóvel</div>
+    <div class="card">
+      <div class="ct">Avaliação por Componente (1–5 ⭐)</div>
+      <div id="ratingGrid"></div>
+    </div>
+    <div class="card">
+      <div class="ct">Obras Necessárias</div>
+      <div class="f">
+        <label>Descrição de obras necessárias ou intervenções previstas</label>
+        <textarea id="obras" placeholder="Ex: Substituição de canalização, renovação de casa de banho principal, pintura exterior..." style="min-height:90px" oninput="sv()"></textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Condomínio (se aplicável)</div>
+      <div class="g2">
+        <div class="f"><label>Valor Mensal de Condomínio (€)</label><input id="condo_val" type="number" placeholder="€/mês" oninput="sv()"></div>
+        <div class="f"><label>Fundo de Reserva</label><select id="fundo_res" onchange="sv()"><option value="">Selecionar</option><option>Sim — constituído</option><option>Não</option><option>Desconhecido</option></select></div>
+        <div class="f"><label>Obras em Curso no Edifício</label><textarea id="obras_condo" placeholder="Descrever se existirem" oninput="sv()" style="min-height:60px"></textarea></div>
+        <div class="f"><label>Dívidas ao Condomínio</label><select id="div_condo" onchange="sv()"><option value="">Selecionar</option><option>Sem dívidas</option><option>Com dívidas — valor a indicar</option></select></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Notas do Agente</div>
+      <div class="f"><label>Observações gerais, pontos fortes, pontos a melhorar</label><textarea id="notas" placeholder="Impressão do agente em visita..." style="min-height:100px" oninput="sv()"></textarea></div>
+    </div>
+  </div>
+
+  <!-- 5. FOTOS -->
+  <div class="sec" id="sec4">
+    <div class="sec-h">Fotografia do Imóvel</div>
+    <div class="sec-s">Até 12 fotografias para a ficha</div>
+    <div class="card">
+      <div class="ct">Fotos de Campo</div>
+      <div class="photo-grid" id="photoGrid"></div>
+    </div>
+    <div class="card">
+      <div class="ct">Orientação Solar e Vistas</div>
+      <div class="g2">
+        <div class="f"><label>Orientação Principal</label>
+          <select id="orient" onchange="sv()"><option value="">Selecionar</option>
+          <option>Norte</option><option>Sul</option><option>Este</option><option>Oeste</option>
+          <option>Nordeste</option><option>Noroeste</option><option>Sudeste</option><option>Sudoeste</option></select>
+        </div>
+        <div class="f"><label>Tipo de Vista</label>
+          <select id="vista" onchange="sv()"><option value="">Selecionar</option>
+          <option>Mar</option><option>Rio</option><option>Serra / Natureza</option>
+          <option>Cidade / Panorâmica</option><option>Jardim</option><option>Pátio interior</option><option>Sem vista especial</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. REVISÃO -->
+  <div class="sec" id="sec5">
+    <div class="sec-h">Revisão e Gerar Ficha</div>
+    <div class="sec-s">Verificar dados e gerar documento final</div>
+    <div id="chkList"></div>
+    <div id="alertDiv"></div>
+    <div class="card"><div class="ct">Resumo</div><div id="sumDiv"></div></div>
+    <div class="doc-out" id="docOut">
+      <div class="dh">
+        <div><div class="dh-logo">Agency<span> Group</span></div><div class="dh-ami">AMI 22506 · Mediação Imobiliária · NIPC 516.833.960</div></div>
+        <div class="dh-type"><div class="dh-lbl">Ficha Técnica</div><div class="dh-title">Ficha de Identificação<br>do Imóvel</div><div class="dh-ref" id="docRef">FI-2026-___</div></div>
+      </div>
+      <div class="gold-line"></div>
+      <div class="db" id="docBody"></div>
+      <div class="df-footer"><div class="dff-info">Agency Group — Mediação Imobiliária, Lda · NIPC 516.833.960 · AMI 22506<br>Amoreiras Square, Lisboa · geral@agencygroup.pt · +351 919 948 986</div><div class="dff-url">agencygroup.pt/ficha-imovel</div></div>
+      <div class="doc-actions" id="docAct"></div>
+    </div>
+  </div>
+</main>
+<div class="nb" id="nb">
+  <button class="btn btn-bk" id="bbk" onclick="pp()">← Voltar</button>
+  <button class="btn btn-nx" id="bnx" onclick="np()">Continuar →</button>
+</div>
+<script>
+const STEPS=6;let cur=0;
+let photos=[];
+const ratings=['Estrutura / Paredes','Canalização / Água','Electricidade','Carpintaria / Portas','Pavimentos','Cozinha','Casas de Banho','Exterior / Fachada'];
+let ratingVals={};
+
+// INIT RATINGS
+function initRatings(){
+  const g=document.getElementById('ratingGrid');
+  ratings.forEach((r,i)=>{
+    ratingVals[r]=0;
+    const row=document.createElement('div');
+    row.className='rating-row';
+    row.innerHTML=`<div class="rating-lbl">${r}</div><div class="stars" id="sr${i}">${[1,2,3,4,5].map(s=>`<span class="star" data-r="${r}" data-v="${s}" onclick="setStar('${r}',${s},${i})">★</span>`).join('')}</div>`;
+    g.appendChild(row);
+  });
+}
+function setStar(r,v,i){
+  ratingVals[r]=v;
+  const stars=document.getElementById('sr'+i).querySelectorAll('.star');
+  stars.forEach((s,j)=>s.classList.toggle('on',j<v));
+  sv();
+}
+
+// INIT PHOTOS
+function initPhotos(){
+  const g=document.getElementById('photoGrid');
+  const labels=['Principal','Sala','Cozinha','Quarto Principal','Casa de Banho','Exterior','Vista','Garagem','Arrecadação','Detalhe 1','Detalhe 2','Planta'];
+  for(let i=0;i<12;i++){
+    const slot=document.createElement('div');
+    slot.className='photo-slot';
+    slot.innerHTML=`<input type="file" id="ph${i}" accept="image/*" capture="environment" onchange="addPhoto(${i},this)"><div class="photo-icon">+</div><div class="photo-lbl">${labels[i]||'Foto '+(i+1)}</div>`;
+    slot.onclick=()=>document.getElementById('ph'+i).click();
+    g.appendChild(slot);
+    photos[i]=null;
+  }
+}
+function addPhoto(i,input){
+  if(!input.files[0])return;
+  const url=URL.createObjectURL(input.files[0]);
+  photos[i]=url;
+  const slot=document.getElementById('photoGrid').children[i];
+  slot.innerHTML=`<img src="${url}" alt="foto"><input type="file" id="ph${i}" accept="image/*" capture="environment" onchange="addPhoto(${i},this)" style="display:none">`;
+  sv();
+}
+
+// NAV
+function gs(n){
+  document.getElementById('sec'+cur).classList.remove('vis');
+  document.getElementById('sn'+cur).classList.remove('act');
+  cur=n;
+  document.getElementById('sec'+cur).classList.add('vis');
+  document.getElementById('sn'+cur).classList.add('act');
+  document.getElementById('sn'+cur).classList.add('done');
+  document.getElementById('pgf').style.width=((cur+1)/STEPS*100)+'%';
+  document.getElementById('pgl').textContent=(cur+1)+' / '+STEPS;
+  const bk=document.getElementById('bbk'),nx=document.getElementById('bnx');
+  bk.style.display=cur===0?'none':'';
+  if(cur===STEPS-1){nx.textContent='✦ Gerar Ficha';nx.className='btn btn-gn';nx.onclick=genDoc;}
+  else{nx.textContent='Continuar →';nx.className='btn btn-nx';nx.onclick=np;}
+  if(cur===STEPS-1)buildReview();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function np(){if(cur<STEPS-1)gs(cur+1);}
+function pp(){if(cur>0)gs(cur-1);}
+
+// ONUS
+function togOnus(){
+  const v=document.querySelector('input[name=onus]:checked').value;
+  document.getElementById('onus-det').style.display=v==='livre'?'none':'';
+}
+
+// GPS
+function getGPS(){
+  if(!navigator.geolocation){alert('GPS não disponível');return;}
+  navigator.geolocation.getCurrentPosition(p=>{
+    document.getElementById('lat').value=p.coords.latitude.toFixed(6);
+    document.getElementById('lng').value=p.coords.longitude.toFixed(6);
+    sv();
+  },e=>alert('Erro ao obter localização'));
+}
+
+// IA PANELS
+function tog(id){['ia-paste','ia-img','ia-voice'].forEach(p=>document.getElementById(p).classList.remove('vis'));document.getElementById(id).classList.toggle('vis');}
+
+const EP='Analisa o conteúdo e extrai dados de imóvel português. Responde APENAS em JSON válido sem texto extra:\n{"rua":"","cp":"","loc":"","freg":"","conc":"","artm":"","crp":"","cperm":"","cons":"","licu":"","ce":"","sce":"","tipo":"","tip":"","piso":"","abp":"","abd":"","at":"","qt":"","wc":"","sala":"","anoconst":"","anoremod":"","estcons":"","vpt":"","notas":""}';
+
+async function callAI(sys,uc,isImg=false){
+  const msg=isImg?[{role:'user',content:[{type:'image',source:{type:'base64',media_type:uc.t,data:uc.d}},{type:'text',text:sys}]}]:[{role:'user',content:sys+'\n\nTexto:\n'+uc}];
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:msg})});
+  const d=await r.json();return d.content?.[0]?.text||'';
+}
+function fill(data){
+  const m={rua:'rua',cp:'cp',loc:'loc',freg:'freg',conc:'conc',artm:'artm',crp:'crp',cperm:'cperm',cons:'cons',licu:'licu',ce:'ce',sce:'sce',tipo:'tipo',tip:'tip',piso:'piso',abp:'abp',abd:'abd',at:'at',qt:'qt',wc:'wc',sala:'sala',anoconst:'anoconst',anoremod:'anoremod',estcons:'estcons',vpt:'vpt',notas:'notas'};
+  Object.entries(m).forEach(([k,id])=>{if(data[k]){const el=document.getElementById(id);if(el){el.value=data[k];el.classList.add('af');}}});
+  sv();
+}
+async function prText(){
+  const t=document.getElementById('ptxt').value.trim();if(!t){return;}
+  document.getElementById('pb').disabled=true;document.getElementById('pb').textContent='⏳';
+  document.getElementById('aiLoad').classList.add('vis');
+  try{const raw=await callAI(EP,t);const d=JSON.parse(raw.replace(/```json|```/g,'').trim());fill(d);const n=Object.values(d).filter(v=>v).length;document.getElementById('pmsg').textContent='✓ '+n+' campos preenchidos';document.getElementById('pmsg').classList.add('vis');}
+  catch(e){document.getElementById('pmsg').textContent='⚠ Erro — verifica a chave API';document.getElementById('pmsg').classList.add('vis');}
+  document.getElementById('pb').disabled=false;document.getElementById('pb').textContent='✦ Extrair e Preencher';document.getElementById('aiLoad').classList.remove('vis');
+}
+async function prImg(input){
+  if(!input.files[0])return;
+  document.getElementById('aiLoad').classList.add('vis');
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const b64=e.target.result.split(',')[1];const mt=input.files[0].type||'image/jpeg';
+    try{const raw=await callAI(EP,{t:mt,d:b64},true);const d=JSON.parse(raw.replace(/```json|```/g,'').trim());fill(d);const n=Object.values(d).filter(v=>v).length;document.getElementById('imsg').textContent='✓ '+n+' campos extraídos';document.getElementById('imsg').classList.add('vis');}
+    catch(e){document.getElementById('imsg').textContent='⚠ Não foi possível extrair';document.getElementById('imsg').classList.add('vis');}
+    document.getElementById('aiLoad').classList.remove('vis');
+  };reader.readAsDataURL(input.files[0]);
+}
+let rec=null,isRec=false;
+function togVoice(){
+  if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){alert('Usa Chrome ou Safari');return;}
+  if(isRec){rec.stop();isRec=false;document.getElementById('vb').textContent='🎙 Iniciar Gravação';return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new SR();rec.lang='pt-PT';rec.continuous=true;rec.interimResults=true;
+  rec.onresult=e=>{document.getElementById('vtxt').textContent=Array.from(e.results).map(r=>r[0].transcript).join(' ');};
+  rec.onend=async()=>{const t=document.getElementById('vtxt').textContent;if(t){document.getElementById('aiLoad').classList.add('vis');try{const raw=await callAI(EP,t);const d=JSON.parse(raw.replace(/```json|```/g,'').trim());fill(d);document.getElementById('vmsg').textContent='✓ Dados preenchidos';document.getElementById('vmsg').classList.add('vis');}catch(e){}document.getElementById('aiLoad').classList.remove('vis');}isRec=false;document.getElementById('vb').textContent='🎙 Iniciar Gravação';};
+  rec.start();isRec=true;document.getElementById('vb').textContent='⏹ Parar Gravação';
+}
+
+// SAVE
+function sv(){
+  const flds=['rua','cp','loc','freg','conc','dist','lat','lng','artm','sec_mat','frac','vpt','cons','crp','cperm','vcperm','licu','cmlic','ce','sce','vsce','fth','onus_desc','tipo','tip','piso','abp','abd','at','atot','qt','wc','sala','coz','gar','arrec','terr','jard','anoconst','anoremod','estcons','equip_outro','obras','condo_val','fundo_res','obras_condo','div_condo','notas','orient','vista'];
+  const data={};flds.forEach(id=>{const el=document.getElementById(id);if(el)data[id]=el.value;});
+  data.onus=document.querySelector('input[name=onus]:checked')?.value||'livre';
+  data.ratings=JSON.stringify(ratingVals);
+  ['ck_ac','ck_aq','ck_lp','ck_pis','ck_el','ck_vig','ck_por','ck_cond','ck_vista','ck_coz_eq','ck_dom','ck_solar','ck_gen','ck_al'].forEach(id=>{const el=document.getElementById(id);if(el)data[id]=el.checked;});
+  localStorage.setItem('ag_fi',JSON.stringify(data));
+}
+function ld(){
+  try{
+    const data=JSON.parse(localStorage.getItem('ag_fi')||'{}');
+    Object.entries(data).forEach(([id,val])=>{
+      if(typeof val==='boolean'){const el=document.getElementById(id);if(el)el.checked=val;}
+      else{const el=document.getElementById(id);if(el)el.value=val;}
+    });
+    if(data.onus) {const r=document.querySelector(`input[name=onus][value="${data.onus}"]`);if(r){r.checked=true;togOnus();}}
+    if(data.ratings){const rv=JSON.parse(data.ratings);Object.entries(rv).forEach(([r,v])=>{ratingVals[r]=v;const i=ratings.indexOf(r);if(i>=0){const stars=document.getElementById('sr'+i)?.querySelectorAll('.star');if(stars)stars.forEach((s,j)=>s.classList.toggle('on',j<v));}});}
+  }catch(e){}
+}
+
+// REVIEW
+function buildReview(){
+  const req=[['rua','Morada'],['artm','Artigo Matricial'],['cons','Conservatória'],['freg','Freguesia'],['tipo','Tipo de imóvel'],['abp','Área Bruta Privativa']];
+  let html='',miss=[];
+  req.forEach(([id,lbl])=>{const v=document.getElementById(id)?.value?.trim();if(v){html+=`<div class="rv-item rv-ok"><div class="rv-dot"></div>${lbl}: <strong>${v}</strong></div>`;}else{html+=`<div class="rv-item rv-miss"><div class="rv-dot"></div>${lbl}: <em>em falta</em></div>`;miss.push(lbl);}});
+  document.getElementById('chkList').innerHTML=html;
+  document.getElementById('alertDiv').innerHTML=miss.length?`<div class="alert alert-warn">⚠ <strong>${miss.length} campo(s) em falta:</strong> ${miss.join(' · ')}</div>`:`<div class="alert alert-ok">✓ Todos os campos obrigatórios preenchidos.</div>`;
+  const g=id=>document.getElementById(id)?.value||'—';
+  const rows=[['Tipo',g('tipo')+' '+g('tip')],['Morada',g('rua')],['Área ABP',g('abp')?g('abp')+'m²':'—'],['Artigo Matricial',g('artm')],['Certif. Energético',g('ce')||'—'],['Estado',g('estcons')||'—']];
+  document.getElementById('sumDiv').innerHTML=rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--cr2);font-size:13px"><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gy2)">${k}</span><span style="font-weight:300">${v}</span></div>`).join('');
+}
+
+// GENERATE
+function genDoc(){
+  const g=id=>document.getElementById(id)?.value?.trim()||'';
+  const ck=id=>document.getElementById(id)?.checked?'Sim':'Não';
+  const feats=[];
+  const ekMap={'ck_ac':'Ar Condicionado','ck_aq':'Aquecimento Central','ck_lp':'Lareira','ck_pis':'Piscina','ck_el':'Elevador','ck_vig':'Videovigilância','ck_por':'Portaria','ck_cond':'Condomínio Fechado','ck_vista':'Vista Premium','ck_coz_eq':'Cozinha Equipada','ck_dom':'Domótica','ck_solar':'Painéis Solares','ck_gen':'Gerador','ck_al':'AL'};
+  Object.entries(ekMap).forEach(([id,lbl])=>{if(document.getElementById(id)?.checked)feats.push(lbl);});
+  const rateHTML=Object.entries(ratingVals).filter(([,v])=>v>0).map(([r,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--cr2);font-size:12px"><span style="font-weight:300">${r}</span><span style="color:#f59e0b">${'★'.repeat(v)}${'☆'.repeat(5-v)}</span></div>`).join('');
+  const photoHTML=photos.filter(Boolean).map(p=>`<img src="${p}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:0.5px solid var(--cr3)">`).join('');
+  document.getElementById('docBody').innerHTML=`
+  <div class="ds"><div class="ds-t">Identificação do Imóvel</div>
+    <div class="df">
+      <div><div class="df-l">Designação</div><div class="df-v ok">${g('tipo')} ${g('tip')} — ${g('rua')||'___'}</div></div>
+      <div><div class="df-l">Localização</div><div class="df-v">${g('freg')}, ${g('conc')}</div></div>
+      <div><div class="df-l">Código Postal</div><div class="df-v">${g('cp')||'___'}</div></div>
+      <div><div class="df-l">Piso / Andar</div><div class="df-v">${g('piso')||'___'}</div></div>
+    </div>
+  </div>
+  <div class="ds"><div class="ds-t">Registo Predial</div>
+    <div class="df">
+      <div><div class="df-l">Artigo Matricial</div><div class="df-v">${g('artm')||'___'}</div></div>
+      <div><div class="df-l">Fração Autónoma</div><div class="df-v">${g('frac')||'___'}</div></div>
+      <div><div class="df-l">Conservatória</div><div class="df-v">${g('cons')||'___'}</div></div>
+      <div><div class="df-l">Nº Descrição CRP</div><div class="df-v">${g('crp')||'___'}</div></div>
+      <div><div class="df-l">Certidão Permanente</div><div class="df-v">${g('cperm')||'___'}</div></div>
+      <div><div class="df-l">VPT</div><div class="df-v">${g('vpt')?parseInt(g('vpt')).toLocaleString('pt-PT',{style:'currency',currency:'EUR',minimumFractionDigits:0})+'€':'___'}</div></div>
+      <div><div class="df-l">Licença Utilização</div><div class="df-v">${g('licu')||'___'}</div></div>
+      <div><div class="df-l">Certif. Energético</div><div class="df-v ok">${g('ce')||'___'}${g('sce')?' · SCE '+g('sce'):''}</div></div>
+    </div>
+  </div>
+  <div class="ds"><div class="ds-t">Características Técnicas (CIMI)</div>
+    <div class="df df3">
+      <div><div class="df-l">Tipologia</div><div class="df-v ok">${g('tipo')} ${g('tip')}</div></div>
+      <div><div class="df-l">Área Bruta Privativa</div><div class="df-v">${g('abp')?g('abp')+'m²':'___'}</div></div>
+      <div><div class="df-l">Área Bruta Dependente</div><div class="df-v">${g('abd')?g('abd')+'m²':'___'}</div></div>
+      <div><div class="df-l">Área Terreno</div><div class="df-v">${g('at')?g('at')+'m²':'___'}</div></div>
+      <div><div class="df-l">Quartos</div><div class="df-v">${g('qt')||'___'}</div></div>
+      <div><div class="df-l">WC</div><div class="df-v">${g('wc')||'___'}</div></div>
+      <div><div class="df-l">Salas</div><div class="df-v">${g('sala')||'___'}</div></div>
+      <div><div class="df-l">Garagens</div><div class="df-v">${g('gar')||'___'}</div></div>
+      <div><div class="df-l">Ano Construção</div><div class="df-v">${g('anoconst')||'___'}</div></div>
+      <div><div class="df-l">Último Remod.</div><div class="df-v">${g('anoremod')||'___'}</div></div>
+      <div><div class="df-l">Estado Conservação</div><div class="df-v">${g('estcons')||'___'}</div></div>
+      <div><div class="df-l">Orientação</div><div class="df-v">${g('orient')||'___'}</div></div>
+    </div>
+  </div>
+  ${feats.length?`<div class="ds"><div class="ds-t">Características e Equipamentos</div><div style="display:flex;flex-wrap:wrap;gap:7px">${feats.map(f=>`<span style="background:rgba(28,74,53,0.08);color:var(--v);font-family:'DM Mono',monospace;font-size:9px;padding:4px 10px;border-radius:20px;border:1px solid rgba(28,74,53,0.2)">${f}</span>`).join('')}</div></div>`:''}
+  ${rateHTML?`<div class="ds"><div class="ds-t">Avaliação Técnica por Componente</div>${rateHTML}</div>`:''}
+  ${g('obras')?`<div class="ds"><div class="ds-t">Obras Necessárias</div><div class="cl">${g('obras')}</div></div>`:''}
+  ${g('notas')?`<div class="ds"><div class="ds-t">Notas do Agente</div><div class="cl">${g('notas')}</div></div>`:''}
+  ${photoHTML?`<div class="ds"><div class="ds-t">Fotografias</div><div class="photo-grid-out">${photoHTML}</div></div>`:''}
+  <div class="ds"><div class="ds-t">Declaração</div>
+    <div class="cl">O agente responsável pela angariação declara que os dados constantes na presente ficha foram verificados e correspondem à realidade do imóvel na data de preenchimento.</div>
+    <div class="sig-g" style="margin-top:20px">
+      <div><div class="sig-l"></div><div class="sig-n">Carlos Feiteira</div><div class="sig-r">Mediador AMI 22506</div><div class="sig-d">Data: ___/___/______</div></div>
+      <div><div class="sig-l"></div><div class="sig-n"></div><div class="sig-r">Proprietário</div><div class="sig-d">Data: ___/___/______</div></div>
+    </div>
+  </div>`;
+  document.getElementById('docOut').classList.add('vis');
+  document.getElementById('docAct').innerHTML=`<button class="dab primary" onclick="window.print()">🖨 Imprimir / PDF</button><button class="dab" onclick="copyTxt()">📋 Copiar</button>`;
+  document.getElementById('docOut').scrollIntoView({behavior:'smooth'});
+}
+function copyTxt(){navigator.clipboard.writeText(document.getElementById('docBody').innerText).then(()=>alert('Copiado!')).catch(()=>alert('Ctrl+A + Ctrl+C'));}
+window.addEventListener('load',()=>{initRatings();initPhotos();ld();gs(0);});
+</script>
+</body>
+</html>

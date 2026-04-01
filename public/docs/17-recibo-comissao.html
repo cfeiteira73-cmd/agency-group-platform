@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes">
+<title>Recibo de Comissão | Agency Group AMI 22506</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>:root{--v:#1c4a35;--v2:#2a6b4e;--v3:#163a28;--d:#c9a96e;--d2:#e2c99a;--d3:#8b6914;--cr:#f4f0e6;--cr2:#ece7d9;--cr3:#e0dace;--bk:#0a0a0a;--gy:#6b6b6b;--gy2:#999;--wh:#fff;--er:#c53030}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html{-webkit-text-size-adjust:100%}
+body{font-family:'Jost',sans-serif;background:var(--cr);color:var(--bk);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+.hdr{background:var(--v3);border-bottom:1px solid rgba(201,169,110,.22);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:300;letter-spacing:.28em;color:var(--d);text-transform:uppercase}.logo span{color:var(--d2)}
+.ami{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.45);letter-spacing:.12em;margin-top:2px}
+.bdg{background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.28);color:var(--d2);font-family:'DM Mono',monospace;font-size:10px;padding:5px 14px;border-radius:20px}
+.hero{background:var(--v);padding:24px 24px 20px}.hl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.55);letter-spacing:.15em;text-transform:uppercase}
+.ht{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:#fff;margin:5px 0 3px}.hs{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,.45)}
+.gb{height:2px;background:var(--d)}
+.main{padding:20px 24px;max-width:880px;margin:0 auto;padding-bottom:90px}
+.card{background:var(--wh);border:0.5px solid var(--cr3);border-radius:14px;padding:20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(10,10,10,.07)}
+.ct{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:8px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+@media(max-width:560px){.g2,.g3{grid-template-columns:1fr}}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--gy);display:flex;align-items:center;gap:5px}
+.rq{width:5px;height:5px;background:var(--d);border-radius:50%;display:inline-block}
+.f input,.f select,.f textarea{font-family:'Jost',sans-serif;font-size:13px;font-weight:300;color:var(--bk);background:var(--cr);border:0.5px solid var(--cr3);border-radius:6px;padding:10px 12px;width:100%;transition:all .2s;-webkit-appearance:none}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--d);background:var(--wh);box-shadow:0 0 0 3px rgba(201,169,110,.12)}
+.f input.af,.f select.af{border-color:#4f46e5;background:rgba(79,70,229,.07)}
+.hn{font-family:'DM Mono',monospace;font-size:10px;color:var(--gy2);margin-top:2px}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b6b' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.ntc{background:#f0ede4;border-left:3px solid var(--v);padding:12px 16px;font-size:11px;font-weight:300;color:#444;line-height:1.75;margin-bottom:18px}
+.ntc-warn{background:#fffbeb;border-left:3px solid #f59e0b;padding:12px 16px;font-size:11px;font-weight:300;color:#92400e;line-height:1.75;margin-bottom:18px}
+.abi{background:var(--v);border-radius:10px;padding:18px 22px;margin-bottom:14px}
+.abi-r{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.abl{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.5);letter-spacing:.12em;text-transform:uppercase}
+.abv{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--d);margin-top:4px}
+.abs{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.35);margin-top:3px}
+/* RECIBO OUTPUT */
+.do{display:none;background:var(--wh);border-radius:14px;box-shadow:0 8px 40px rgba(10,10,10,.12);overflow:hidden;margin-top:20px}
+.do.vis{display:block}
+.dh{background:var(--v);padding:32px 40px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.dlo{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;letter-spacing:.28em;color:var(--d);text-transform:uppercase}
+.dlo span{color:var(--d2)}.dam{font-family:'DM Mono',monospace;font-size:9px;color:rgba(201,169,110,.45);letter-spacing:.1em;margin-top:5px}
+.dtr{text-align:right}.dtl{font-family:'DM Mono',monospace;font-size:9px;color:var(--d);letter-spacing:.18em;text-transform:uppercase}
+.dtt{font-family:'Cormorant Garamond',serif;font-size:22px;color:#fff;margin-top:4px;line-height:1.3}
+.drf{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.3);margin-top:5px}
+.gl{height:2px;background:var(--d)}.db{padding:32px 40px}
+.ds{margin-bottom:22px}.dst{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--v);border-bottom:1px solid var(--cr2);padding-bottom:6px;margin-bottom:12px}
+.df{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dfl{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.dfv{font-size:13px;font-weight:300;color:var(--bk);border-bottom:0.5px solid #ccc9bc;padding-bottom:6px;min-height:24px}
+.dfv.g{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--d)}
+.dfv.ok{color:var(--v);font-weight:500}
+/* Resumo financeiro recibo */
+.tot-box{background:var(--v);border-radius:10px;padding:20px 24px;margin:18px 0}
+.tot-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:0.5px solid rgba(201,169,110,.2)}
+.tot-row:last-child{border:none;padding-top:12px;margin-top:4px}
+.tot-lbl{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,169,110,.6);letter-spacing:.1em;text-transform:uppercase}
+.tot-val{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--d)}
+.tot-grand{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--d2);font-weight:300}
+.tot-ext{font-family:'Jost',sans-serif;font-size:11px;font-style:italic;color:rgba(201,169,110,.6);margin-top:3px}
+/* Legal */
+.legal-box{background:var(--cr2);border:0.5px solid var(--cr3);border-radius:8px;padding:14px 16px;font-size:11px;font-weight:300;color:#555;line-height:1.8}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:28px}
+.sl{border-top:1px solid #aaa;padding-top:8px;margin-bottom:6px}.sn2{font-size:13px;font-weight:400}
+.sr2{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:3px}
+.sd2{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2);margin-top:12px}
+.dft{background:var(--cr2);border-top:0.5px solid var(--cr3);padding:14px 40px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.dfi{font-family:'DM Mono',monospace;font-size:9px;color:var(--gy);line-height:1.8}
+.dfu{font-family:'DM Mono',monospace;font-size:9px;color:var(--d)}
+.dac{display:flex;gap:10px;padding:14px 20px;background:var(--cr2);border-top:0.5px solid var(--cr3);flex-wrap:wrap}
+.dab{font-family:'Jost',sans-serif;font-size:12px;padding:10px 18px;border-radius:6px;cursor:pointer;border:0.5px solid var(--cr3);background:var(--wh);color:var(--bk);transition:all .2s;display:flex;align-items:center;gap:7px}
+.dab:hover{border-color:var(--v);color:var(--v)}.dab.p{background:var(--v);color:var(--cr);border-color:var(--v)}.dab.w{background:#25D366;color:#fff;border-color:#25D366}
+.nb{position:fixed;bottom:0;left:0;right:0;background:var(--wh);border-top:0.5px solid var(--cr3);padding:12px 24px;display:flex;gap:10px;z-index:150;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.btn{font-family:'Jost',sans-serif;font-size:13px;font-weight:500;padding:12px 20px;border-radius:6px;cursor:pointer;border:none;flex:1;min-height:44px;transition:all .2s}
+.bv{background:var(--v);color:var(--cr)}.bv:hover{background:var(--v2)}
+.bd{background:var(--d);color:var(--v3)}.bd:hover{opacity:.88}
+.bb{background:var(--cr2);color:var(--gy);flex:.6}.bb:hover{background:var(--cr3)}
+@media(max-width:480px){.main{padding:14px 16px}.db,.dh,.dft{padding:20px}.sg{grid-template-columns:1fr;gap:20px}}
+@media print{.hdr,.hero,.gb,.nb,.dac,.card,.ntc,.ntc-warn{display:none!important}.do{display:block!important;box-shadow:none;border-radius:0}.main{padding:0}.dh,.gl,.tot-box{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div><div class="logo">Agency<span> Group</span></div><div class="ami">AMI 22506 · Sistema Documental</div></div>
+  <div class="bdg">COMISSÃO</div>
+</header>
+<div class="hero"><div class="hl">COMISSÃO · RECIBO</div><div class="ht">Recibo de Comissão de Mediação</div><div class="hs">Agency Group — Mediação Imobiliária, Lda. · AMI 22506 · Conforme Lei n.º 15/2013 de 8 de Fevereiro</div></div>
+<div class="gb"></div>
+
+<main class="main">
+
+<div class="ntc">
+  <strong>Base legal:</strong> A comissão de mediação é devida nos termos do Art.º 19.º da Lei n.º 15/2013 de 8 de Fevereiro (RJAMI), após a conclusão do negócio visado pelo contrato de mediação. O IVA à taxa de 23% é obrigatório (Art.º 1.º e 4.º CIVA). Este documento serve de recibo e declaração de quitação.
+</div>
+
+<!-- DADOS DO NEGÓCIO -->
+<div class="card">
+  <div class="ct">Dados do Negócio</div>
+  <div class="g2">
+    <div class="f"><label><span class="rq"></span> Imóvel / Endereço</label><input type="text" id="imovel" placeholder="Rua, n.º, fracção, localidade"></div>
+    <div class="f"><label><span class="rq"></span> Artigo Matricial</label><input type="text" id="artigo" placeholder="Ex: U-1234 / Oeiras"></div>
+    <div class="f"><label><span class="rq"></span> Valor de Escritura (€)</label><input type="number" id="val_neg" placeholder="450000" oninput="calcComissao()"></div>
+    <div class="f"><label><span class="rq"></span> Data da Escritura</label><input type="date" id="dt_escritura"></div>
+    <div class="f"><label>Referência do Processo</label><input type="text" id="ref_proc" placeholder="AG-2026-001"></div>
+    <div class="f"><label>N.º CMI (Contrato Mediação)</label><input type="text" id="cmi_nr" placeholder="CMI-2026-001"></div>
+  </div>
+</div>
+
+<!-- DEVEDOR DA COMISSÃO -->
+<div class="card">
+  <div class="ct">Devedor da Comissão (Quem Paga)</div>
+  <div class="g2">
+    <div class="f"><label><span class="rq"></span> Nome / Razão Social</label><input type="text" id="dev_nome" placeholder="Nome completo ou empresa"></div>
+    <div class="f"><label><span class="rq"></span> NIF / NIPC</label><input type="text" id="dev_nif" placeholder="NIF ou NIPC do devedor"></div>
+    <div class="f"><label>Morada Fiscal</label><input type="text" id="dev_morada" placeholder="Morada completa"></div>
+    <div class="f"><label>Qualidade</label>
+      <select id="dev_qual" onchange="calcComissao()">
+        <option value="Vendedor">Vendedor (Promitente-Vendedor)</option>
+        <option value="Comprador">Comprador (Promitente-Comprador)</option>
+        <option value="Ambos">Ambos (divisão acordada)</option>
+      </select>
+    </div>
+    <div class="f"><label>Email</label><input type="email" id="dev_email" placeholder="email@exemplo.pt"></div>
+    <div class="f"><label>Telemóvel</label><input type="tel" id="dev_tel" placeholder="+351"></div>
+  </div>
+</div>
+
+<!-- CÁLCULO DA COMISSÃO -->
+<div class="card">
+  <div class="ct">Cálculo da Comissão</div>
+  <div class="g2">
+    <div class="f">
+      <label><span class="rq"></span> Taxa de Comissão (%)</label>
+      <select id="taxa_pct" onchange="calcComissao()">
+        <option value="2">2%</option>
+        <option value="3">3%</option>
+        <option value="3.5">3,5%</option>
+        <option value="4" selected>4%</option>
+        <option value="5">5%</option>
+        <option value="6">6%</option>
+        <option value="custom">Valor fixo</option>
+      </select>
+    </div>
+    <div class="f" id="custom-val-box" style="display:none">
+      <label>Valor de Comissão Acordado (€)</label>
+      <input type="number" id="val_custom" placeholder="Ex: 18000" oninput="calcComissao()">
+    </div>
+    <div class="f">
+      <label>Forma de Pagamento</label>
+      <select id="forma_pag">
+        <option value="Transferência bancária">Transferência Bancária</option>
+        <option value="Cheque bancário">Cheque Bancário</option>
+        <option value="Cheque visado">Cheque Visado</option>
+        <option value="MBWay">MBWay</option>
+      </select>
+    </div>
+    <div class="f">
+      <label>Data de Pagamento</label>
+      <input type="date" id="dt_pag">
+    </div>
+    <div class="f">
+      <label>IBAN Agency Group</label>
+      <input type="text" id="iban" value="PT50 0000 0000 0000 0000 0000 0" placeholder="IBAN para transferência">
+      <div class="hn">Preencher com IBAN real antes de emitir</div>
+    </div>
+    <div class="f">
+      <label>Fraccionamento</label>
+      <select id="frac">
+        <option value="total">Pagamento total na escritura</option>
+        <option value="50_50">50% CPCV + 50% Escritura</option>
+        <option value="cpcv">100% na assinatura do CPCV</option>
+        <option value="outro">Outro (especificar)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Cálculo display -->
+  <div class="abi" style="margin-top:16px">
+    <div class="abi-r">
+      <div>
+        <div class="abl">Base de Cálculo</div>
+        <div class="abv" id="c_base">— €</div>
+        <div class="abs" id="c_taxa">Taxa: — %</div>
+      </div>
+      <div style="text-align:right">
+        <div class="abl">Comissão s/ IVA</div>
+        <div class="abv" id="c_net" style="font-size:20px">— €</div>
+      </div>
+      <div style="text-align:right">
+        <div class="abl">IVA 23%</div>
+        <div class="abv" id="c_iva" style="font-size:20px">— €</div>
+      </div>
+      <div style="text-align:right">
+        <div class="abl">Total c/ IVA</div>
+        <div class="abv" id="c_total">— €</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DECLARAÇÃO DE QUITAÇÃO -->
+<div class="card">
+  <div class="ct">Declaração</div>
+  <div class="ntc" style="margin-bottom:14px">
+    O texto abaixo é o texto legal da declaração de quitação. Edite apenas se necessário.
+  </div>
+  <div class="f">
+    <textarea id="txt_decl" rows="5" style="font-size:12px">A Agency Group — Mediação Imobiliária, Lda., com sede em Amoreiras Square, Lisboa, NIPC 516.833.960, titular de licença AMI n.º 22506 emitida pelo IMPIC, declara ter recebido do devedor identificado neste recibo a quantia indicada, a título de comissão de mediação imobiliária devida pelo negócio identificado, nos termos do contrato de mediação celebrado, declarando-se plenamente quitada de qualquer valor relacionado com o presente negócio.</textarea>
+  </div>
+</div>
+
+<!-- DOCUMENTO OUTPUT -->
+<div class="do" id="docOut">
+  <div class="dh">
+    <div>
+      <div class="dlo">Agency<span> Group</span></div>
+      <div class="dam">Mediação Imobiliária, Lda. · AMI 22506 · NIPC 516.833.960</div>
+      <div class="dam" style="margin-top:3px">Amoreiras Square · Lisboa · geral@agencygroup.pt</div>
+    </div>
+    <div class="dtr">
+      <div class="dtl">Recibo de Comissão</div>
+      <div class="dtt">Mediação Imobiliária</div>
+      <div class="drf" id="d_ref">—</div>
+    </div>
+  </div>
+  <div class="gl"></div>
+  <div class="db">
+    <!-- IMÓVEL / NEGÓCIO -->
+    <div class="ds">
+      <div class="dst">01 · Identificação do Negócio</div>
+      <div class="df">
+        <div><div class="dfl">Imóvel</div><div class="dfv" id="d_imovel">—</div></div>
+        <div><div class="dfl">Artigo Matricial</div><div class="dfv" id="d_artigo">—</div></div>
+        <div><div class="dfl">Data da Escritura</div><div class="dfv ok" id="d_esc">—</div></div>
+        <div><div class="dfl">Ref. Processo / CMI</div><div class="dfv" id="d_ref2">—</div></div>
+      </div>
+    </div>
+    <!-- DEVEDOR -->
+    <div class="ds">
+      <div class="dst">02 · Devedor da Comissão</div>
+      <div class="df">
+        <div><div class="dfl">Nome / Razão Social</div><div class="dfv" id="d_devnome">—</div></div>
+        <div><div class="dfl">NIF / NIPC</div><div class="dfv" id="d_devnif">—</div></div>
+        <div><div class="dfl">Morada Fiscal</div><div class="dfv" id="d_devmor">—</div></div>
+        <div><div class="dfl">Qualidade</div><div class="dfv" id="d_devqual">—</div></div>
+      </div>
+    </div>
+    <!-- FINANCEIRO -->
+    <div class="ds">
+      <div class="dst">03 · Comissão Devida</div>
+      <div class="tot-box">
+        <div class="tot-row">
+          <div><div class="tot-lbl">Valor de Escritura</div></div>
+          <div class="tot-val" id="d_valesc">—</div>
+        </div>
+        <div class="tot-row">
+          <div><div class="tot-lbl">Taxa de Comissão</div></div>
+          <div class="tot-val" id="d_taxa">—</div>
+        </div>
+        <div class="tot-row">
+          <div><div class="tot-lbl">Comissão (s/ IVA)</div></div>
+          <div class="tot-val" id="d_net">—</div>
+        </div>
+        <div class="tot-row">
+          <div><div class="tot-lbl">IVA 23%</div></div>
+          <div class="tot-val" id="d_iva">—</div>
+        </div>
+        <div class="tot-row">
+          <div>
+            <div class="tot-lbl">Total a Pagar (c/ IVA)</div>
+            <div class="tot-ext" id="d_ext">—</div>
+          </div>
+          <div class="tot-grand" id="d_total">—</div>
+        </div>
+      </div>
+      <div class="df">
+        <div><div class="dfl">Forma de Pagamento</div><div class="dfv ok" id="d_fpag">—</div></div>
+        <div><div class="dfl">Data de Pagamento</div><div class="dfv" id="d_dtpag">—</div></div>
+        <div><div class="dfl">Fraccionamento</div><div class="dfv" id="d_frac">—</div></div>
+        <div><div class="dfl">IBAN (se transferência)</div><div class="dfv" id="d_iban" style="font-family:'DM Mono',monospace;font-size:11px">—</div></div>
+      </div>
+    </div>
+    <!-- DECLARAÇÃO QUITAÇÃO -->
+    <div class="ds">
+      <div class="dst">04 · Declaração de Quitação</div>
+      <div class="legal-box" id="d_decl"></div>
+    </div>
+    <!-- ASSINATURAS -->
+    <div class="sg">
+      <div>
+        <div class="sl"></div>
+        <div class="sn2">Agency Group — Mediação Imobiliária, Lda.</div>
+        <div class="sr2">Representante Autorizado · AMI 22506</div>
+        <div class="sd2">Data: _____ / _____ / _______</div>
+      </div>
+      <div>
+        <div class="sl"></div>
+        <div class="sn2" id="d_devsig">—</div>
+        <div class="sr2">Devedor · Confirma recepção e pagamento</div>
+        <div class="sd2" id="d_devnif2" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gy2)">NIF: —</div>
+      </div>
+    </div>
+  </div>
+  <div class="dft">
+    <div class="dfi">Agency Group — Mediação Imobiliária, Lda. · AMI 22506 (IMPIC) · NIPC 516.833.960<br>Amoreiras Square, Lisboa · geral@agencygroup.pt · +351 919 948 986 · www.agencygroup.pt</div>
+    <div class="dfu" id="d_rnum">—</div>
+  </div>
+  <div class="dac">
+    <button class="dab p" onclick="window.print()">⎙ Imprimir / PDF</button>
+    <button class="dab w" onclick="shareWA()">WhatsApp</button>
+    <button class="dab" onclick="document.getElementById('docOut').classList.remove('vis')">✕ Fechar</button>
+  </div>
+</div>
+
+</main>
+
+<div class="nb">
+  <button class="btn bb" onclick="loadSave()">↺ Carregar</button>
+  <button class="btn bv" onclick="doSave()">✦ Guardar</button>
+  <button class="btn bd" onclick="gerarRecibo()">Gerar Recibo</button>
+</div>
+
+<script>
+function fmt(n){return(+n||0).toLocaleString('pt-PT',{style:'currency',currency:'EUR',minimumFractionDigits:2});}
+
+function calcComissao(){
+  const val = parseFloat(document.getElementById('val_neg').value)||0;
+  const taxa_sel = document.getElementById('taxa_pct').value;
+  const custom_box = document.getElementById('custom-val-box');
+  custom_box.style.display = taxa_sel==='custom'?'flex':'none';
+  let net=0, taxa_txt='';
+  if(taxa_sel==='custom'){
+    net = parseFloat(document.getElementById('val_custom').value)||0;
+    taxa_txt = 'Valor fixo acordado';
+  } else {
+    const pct = parseFloat(taxa_sel)/100;
+    net = val * pct;
+    taxa_txt = taxa_sel+'%';
+  }
+  const iva = net*0.23;
+  const total = net+iva;
+  document.getElementById('c_base').textContent = fmt(val);
+  document.getElementById('c_taxa').textContent = 'Taxa: '+taxa_txt;
+  document.getElementById('c_net').textContent = fmt(net);
+  document.getElementById('c_iva').textContent = fmt(iva);
+  document.getElementById('c_total').textContent = fmt(total);
+}
+
+function numExtenso(n){
+  // Extenso simplificado para euros inteiros
+  const u=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','catorze','quinze','dezasseis','dezassete','dezoito','dezanove'];
+  const d=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+  const c=['','cem','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+  const milh=['','mil','dois mil','três mil','quatro mil','cinco mil','seis mil','sete mil','oito mil','nove mil'];
+  const v=Math.round(n);
+  if(v===0)return'zero';
+  if(v<20)return u[v];
+  if(v<100){const dv=Math.floor(v/10),uv=v%10;return d[dv]+(uv?' e '+u[uv]:'');}
+  if(v<1000){const cv=Math.floor(v/100),rv=v%100;if(rv===0)return v===100?'cem':c[cv];if(cv===1)return'cento e '+numExtenso(rv);return c[cv]+' e '+numExtenso(rv);}
+  if(v<10000){const mv=Math.floor(v/1000),rv=v%1000;if(rv===0)return(mv===1?'mil':numExtenso(mv)+' mil');return(mv===1?'mil':numExtenso(mv)+' mil')+' e '+numExtenso(rv);}
+  return v.toLocaleString('pt-PT')+' euros';
+}
+
+function gerarRecibo(){
+  const g=id=>document.getElementById(id)?.value?.trim()||'—';
+  const val = parseFloat(document.getElementById('val_neg').value)||0;
+  const taxa_sel = document.getElementById('taxa_pct').value;
+  let net=0, taxa_txt='';
+  if(taxa_sel==='custom'){net=parseFloat(document.getElementById('val_custom').value)||0;taxa_txt='valor fixo acordado';}
+  else{const pct=parseFloat(taxa_sel)/100;net=val*pct;taxa_txt=taxa_sel+'% sobre '+fmt(val);}
+  const iva=net*0.23, total=net+iva;
+  const ref='REC-AG-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-4);
+
+  document.getElementById('d_ref').textContent='N.º '+ref;
+  document.getElementById('d_ref2').textContent=g('ref_proc')+' · CMI: '+g('cmi_nr');
+  document.getElementById('d_rnum').textContent='N.º '+ref;
+  document.getElementById('d_imovel').textContent=g('imovel');
+  document.getElementById('d_artigo').textContent=g('artigo');
+  document.getElementById('d_esc').textContent=g('dt_escritura');
+  document.getElementById('d_devnome').textContent=g('dev_nome');
+  document.getElementById('d_devnif').textContent='NIF/NIPC '+g('dev_nif');
+  document.getElementById('d_devmor').textContent=g('dev_morada');
+  document.getElementById('d_devqual').textContent=g('dev_qual');
+  document.getElementById('d_devsig').textContent=g('dev_nome');
+  document.getElementById('d_devnif2').textContent='NIF: '+g('dev_nif');
+  document.getElementById('d_valesc').textContent=fmt(val);
+  document.getElementById('d_taxa').textContent=taxa_txt;
+  document.getElementById('d_net').textContent=fmt(net);
+  document.getElementById('d_iva').textContent=fmt(iva);
+  document.getElementById('d_total').textContent=fmt(total);
+  document.getElementById('d_ext').textContent=numExtenso(Math.round(net))+' euros (s/ IVA)';
+  document.getElementById('d_fpag').textContent=g('forma_pag');
+  document.getElementById('d_dtpag').textContent=g('dt_pag');
+  const fracMap={'total':'Pagamento total na escritura','50_50':'50% CPCV + 50% Escritura','cpcv':'100% na assinatura do CPCV','outro':'Outro'};
+  document.getElementById('d_frac').textContent=fracMap[document.getElementById('frac').value]||'—';
+  document.getElementById('d_iban').textContent=g('iban');
+  document.getElementById('d_decl').textContent=document.getElementById('txt_decl').value;
+  document.getElementById('docOut').classList.add('vis');
+  document.getElementById('docOut').scrollIntoView({behavior:'smooth'});
+}
+
+const FIELDS=['imovel','artigo','val_neg','dt_escritura','ref_proc','cmi_nr','dev_nome','dev_nif','dev_morada','dev_email','dev_tel','taxa_pct','val_custom','forma_pag','dt_pag','iban','frac','txt_decl'];
+function doSave(){const d={};FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.value;});localStorage.setItem('ag-recibo',JSON.stringify(d));alert('Guardado!');}
+function loadSave(){try{const d=JSON.parse(localStorage.getItem('ag-recibo')||'{}');FIELDS.forEach(id=>{const el=document.getElementById(id);if(el&&d[id]!==undefined)el.value=d[id];});calcComissao();}catch(e){}}
+
+function shareWA(){
+  const imovel=document.getElementById('imovel').value||'(imóvel)';
+  const devnome=document.getElementById('dev_nome').value||'—';
+  const tot=document.getElementById('c_total').textContent;
+  const txt=`Recibo de Comissão — Agency Group AMI 22506\n\nImóvel: ${imovel}\nDevedor: ${devnome}\nTotal c/ IVA: ${tot}\n\nwww.agencygroup.pt`;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+
+// Init
+document.getElementById('dt_pag').value=new Date().toISOString().split('T')[0];
+calcComissao();
+</script>
+</body>
+</html>
