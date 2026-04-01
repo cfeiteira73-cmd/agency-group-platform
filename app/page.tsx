@@ -530,7 +530,11 @@ export default function Home() {
 
       {/* NAV */}
       <nav id="mainNav">
-        <a href="/" className="logo"><span className="la">Agency</span><span className="lg">Group</span></a>
+        <a href="/" className="logo">
+          <span className="la ag-logo-text">Agency</span>
+          <span className="lg ag-logo-text">Group</span>
+          <span className="ag-logo-line" aria-hidden="true" />
+        </a>
         <ul className="nav-links">
           <li><a href="/imoveis">Imóveis</a></li>
           <li><a href="#zonas">Zonas</a></li>
@@ -863,6 +867,136 @@ export default function Home() {
                   </div>
                 )
               })()}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FINANCIAMENTO NÃO-RESIDENTES */}
+      <section className="simulador-section" id="financiamento-nr" style={{background:'#050e07'}}>
+        <div className="sw">
+          <div className="sim-grid">
+            <div>
+              <div className="sec-eye">Financiamento · Não-Residentes · 10 Países</div>
+              <h2 className="sec-h2">
+                <span className="text-reveal"><span className="text-reveal-inner">Critérios</span></span>
+                <span className="text-reveal"><span className="text-reveal-inner"><em>Por País</em></span></span>
+              </h2>
+              <p className="fade-in" style={{fontSize:'.83rem',lineHeight:'1.78',color:'var(--ink2)',margin:'20px 0 28px',maxWidth:'420px'}}>
+                LTV, DSTI, prazo máximo e spread típico por banco português — adaptados ao seu país de origem.
+              </p>
+              <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:'11px'}}>
+                {[
+                  '🇫🇷 🇩🇪 🇧🇷 — LTV 75–80% (equiparado residente)',
+                  '🇬🇧 🇦🇪 🇸🇦 — LTV 65–70% + Islamic finance disponível',
+                  '🇺🇸 🇨🇦 🇦🇺 — LTV 65–70% (FATCA / documentação reforçada)',
+                  '🇨🇳 — LTV 60% + orientação sobre controlo de capitais',
+                  'DSTI máximo por perfil bancário PT',
+                ].map(t=>(
+                  <div key={t} style={{display:'flex',alignItems:'center',gap:'11px',fontSize:'.78rem',color:'var(--ink2)'}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>{t}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="sim-widget fade-in" id="fnr-widget">
+              <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.3rem',color:'var(--g)',marginBottom:'24px',letterSpacing:'.02em'}}>Simular Financiamento</h3>
+
+              <div className="avm-row full">
+                <div>
+                  <label className="avm-lbl">País de Residência</label>
+                  <select className="avm-sel" id="fnrPais">
+                    <option value="FR">🇫🇷 França</option>
+                    <option value="DE">🇩🇪 Alemanha</option>
+                    <option value="GB">🇬🇧 Reino Unido</option>
+                    <option value="US">🇺🇸 Estados Unidos</option>
+                    <option value="CN">🇨🇳 China</option>
+                    <option value="AE">🇦🇪 Emirados Árabes</option>
+                    <option value="BR">🇧🇷 Brasil</option>
+                    <option value="SA">🇸🇦 Arábia Saudita</option>
+                    <option value="CA">🇨🇦 Canadá</option>
+                    <option value="AU">🇦🇺 Austrália</option>
+                    <option value="OTHER">🌍 Outro país</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="avm-row">
+                <div>
+                  <label className="avm-lbl">Valor do Imóvel (€)</label>
+                  <input className="avm-inp" type="number" id="fnrMontante" placeholder="ex: 500000" min="0"/>
+                </div>
+                <div>
+                  <label className="avm-lbl">Prazo Desejado (anos)</label>
+                  <select className="avm-sel" id="fnrPrazo">
+                    {[10,15,20,25,30].map(y=><option key={y} value={y}>{y} anos</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="avm-row full">
+                <div>
+                  <label className="avm-lbl">Rendimento Anual Bruto (€ equivalente)</label>
+                  <input className="avm-inp" type="number" id="fnrRendimento" placeholder="ex: 80000 (opcional)"/>
+                </div>
+              </div>
+
+              <button
+                className="avm-btn"
+                onClick={()=>{
+                  const g=(id:string)=>(document.getElementById(id) as HTMLInputElement|HTMLSelectElement)?.value
+                  const payload={
+                    country_code: g('fnrPais'),
+                    montante: parseFloat(g('fnrMontante')||'0'),
+                    prazo: parseInt(g('fnrPrazo')||'25'),
+                    rendimento_anual: parseFloat(g('fnrRendimento')||'0')||undefined,
+                  }
+                  const btn=document.querySelector('#fnr-widget .avm-btn') as HTMLButtonElement
+                  btn.textContent='A calcular...'
+                  btn.disabled=true
+                  fetch('/api/financing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+                    .then(r=>r.json())
+                    .then(res=>{
+                      btn.textContent='Simular Financiamento'
+                      btn.disabled=false
+                      const out=document.getElementById('fnr-output')
+                      if(!out)return
+                      if(res.error){out.innerHTML=`<div style="color:#e05252;padding:12px;border:1px solid rgba(224,82,82,.2);border-radius:6px;font-size:.8rem">${res.error}</div>`;return}
+                      const eur=(n:number)=>'€ '+Math.round(n).toLocaleString('pt-PT')
+                      const f=res.financiamento
+                      const p=res.prestacoes
+                      const diff=res.country.difficulty
+                      const diffColor=diff==='Fácil'?'#5ed47a':diff==='Moderado'?'#c6a868':diff==='Difícil'?'#e09552':'#e05252'
+                      out.innerHTML=`
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                          <span style="font-size:1.4rem">${res.country.flag}</span>
+                          <span style="font-size:.75rem;color:${diffColor};border:1px solid ${diffColor};padding:2px 10px;border-radius:20px;letter-spacing:.08em">${diff}</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+                          <div class="mtg-g"><div class="mtg-gl">LTV Máximo</div><div class="mtg-gv" style="color:var(--gold)">${f.ltv_max_pct}%</div></div>
+                          <div class="mtg-g"><div class="mtg-gl">Entrada Mínima</div><div class="mtg-gv">${eur(f.entrada_minima)}</div></div>
+                          <div class="mtg-g"><div class="mtg-gl">Capital Máximo</div><div class="mtg-gv">${eur(f.capital_maximo)}</div></div>
+                          <div class="mtg-g"><div class="mtg-gl">Spread Típico</div><div class="mtg-gv">${f.spread_tipico_pct}%</div></div>
+                          <div class="mtg-g"><div class="mtg-gl">Prestação Típica/mês</div><div class="mtg-gv" style="color:var(--gold)">${eur(p.cenario_tipico)}</div></div>
+                          <div class="mtg-g"><div class="mtg-gl">Prazo Máximo</div><div class="mtg-gv">${f.prazo_max_anos} anos</div></div>
+                        </div>
+                        ${res.acessibilidade ? `<div style="padding:10px;background:rgba(${res.acessibilidade.dsti_ok?'94,212,122':'224,82,82'},.07);border-radius:6px;font-size:.75rem;color:rgba(200,215,200,.8);margin-bottom:12px">${res.acessibilidade.nota}</div>` : ''}
+                        <details style="margin-bottom:12px">
+                          <summary style="font-size:.74rem;color:var(--gold);cursor:pointer">Ver notas e documentação necessária</summary>
+                          <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+                            ${res.notas.map((n:string)=>`<div style="font-size:.74rem;color:rgba(200,215,200,.65);display:flex;gap:8px"><span style="color:var(--gold);flex-shrink:0">›</span>${n}</div>`).join('')}
+                            ${res.islamic_finance?`<div style="font-size:.74rem;color:#c6a868;background:rgba(198,168,104,.08);padding:6px 10px;border-radius:4px;margin-top:4px">☽ Islamic Finance (Murabaha/Ijara) disponível neste banco</div>`:''}
+                          </div>
+                        </details>
+                        <div style="font-size:.7rem;color:rgba(201,169,110,.35);border-top:1px solid rgba(201,169,110,.1);padding-top:8px">Bancos recomendados: ${res.bancos_recomendados.join(' · ')}</div>
+                      `
+                    })
+                    .catch(()=>{btn.textContent='Simular Financiamento';btn.disabled=false})
+                }}
+              >
+                Simular Financiamento
+              </button>
+              <div id="fnr-output" style={{marginTop:'16px'}}/>
             </div>
           </div>
         </div>

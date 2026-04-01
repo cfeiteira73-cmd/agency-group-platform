@@ -515,3 +515,66 @@ footer{background:var(--ink);padding:64px 0 28px}
   .ft-top{grid-template-columns:1fr!important;gap:32px;text-align:center}
   .ft-inner,.cb-inner{padding:0 20px}
 }
+
+/* ── Animated logo ──────────────────────────────────────────────────────────── */
+@keyframes ag-logo-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes ag-line-grow {
+  0%   { transform: scaleX(0); opacity: 0; }
+  60%  { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0.6; }
+}
+.logo:hover .ag-logo-text {
+  background: linear-gradient(
+    90deg,
+    var(--g) 0%,
+    #c9a96e 40%,
+    var(--g) 60%,
+    #c9a96e 80%,
+    var(--g) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ag-logo-shimmer 1.4s linear forwards;
+}
+.ag-logo-line {
+  display: block;
+  height: 1px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: none;
+}
+.logo:hover .ag-logo-line {
+  animation: ag-line-grow 1.2s var(--ease-out) forwards;
+}
+
+/* ── Core Web Vitals: reduce layout shift & improve paint ───────────────────── */
+.sim-widget, .avm-section, .radar-box {
+  contain: layout style;
+}
+.fade-in {
+  will-change: opacity, transform;
+}
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+/* Prevent scroll-jank on heavy sections */
+.simulador-section, .market-section, .test-section {
+  contain: content;
+}
+
+/* ── Mobile padding tightening (max 480px) ──────────────────────────────────── */
+@media(max-width:480px){
+  .simulador-section,.avm-section,.radar-section,.cpcv-section{padding:56px 16px!important}
+  .market-section,.zonas-section{padding:56px 16px!important}
+  .sim-widget{padding:20px 16px!important}
+  .avm-row{grid-template-columns:1fr!important}
+  .sim-grid{gap:32px!important}
+  .sec-h2{font-size:clamp(2.2rem,9vw,3.5rem)!important}
+}
