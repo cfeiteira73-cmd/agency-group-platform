@@ -129,7 +129,7 @@ export default function Home() {
     })
 
     // SCROLL PROGRESS
-    gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ start:'top top', end:'bottom bottom', scrub:0 }})
+    gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ trigger: document.body, start:'top top', end:'bottom bottom', scrub:0 }})
 
     // NAV SOLID
     ScrollTrigger.create({
@@ -181,17 +181,23 @@ export default function Home() {
       {n:'Algarve',pm2:'€5.200',yoy:'+10%',w:.75},
       {n:'Oeiras',pm2:'€5.189',yoy:'+16%',w:.75},
     ]
-    const mktEl = document.getElementById('mktZones')!
-    ZONES_MKT.forEach(z => {
-      const d = document.createElement('div')
-      d.className = 'mkt-row'
-      d.innerHTML = `<span class="mkt-nm">${z.n}</span><div class="mkt-bar"><div class="mkt-fill" style="width:${z.w*100}%"></div></div><span class="mkt-pm2">${z.pm2}</span><span class="mkt-yoy">${z.yoy}</span>`
-      mktEl.appendChild(d)
-    })
-    gsap.to('.mkt-fill', { scaleX:1, duration:1.4, stagger:0.08, ease:'power3.out', scrollTrigger:{ trigger:'.mkt-zones', start:'top 80%', once:true }})
+    const mktEl = document.getElementById('mktZones')
+    if (mktEl) {
+      ZONES_MKT.forEach(z => {
+        const d = document.createElement('div')
+        d.className = 'mkt-row'
+        d.innerHTML = `<span class="mkt-nm">${z.n}</span><div class="mkt-bar"><div class="mkt-fill" style="width:${z.w*100}%"></div></div><span class="mkt-pm2">${z.pm2}</span><span class="mkt-yoy">${z.yoy}</span>`
+        mktEl.appendChild(d)
+      })
+      if (document.querySelector('.mkt-zones')) {
+        gsap.to('.mkt-fill', { scaleX:1, duration:1.4, stagger:0.08, ease:'power3.out', scrollTrigger:{ trigger:'.mkt-zones', start:'top 80%', once:true }})
+      }
+    }
 
     // CREDENCIAIS
-    gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.7, stagger:0.1, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
+    if (document.querySelector('.cred-grid')) {
+      gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.7, stagger:0.1, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
+    }
 
     // ESC HANDLER
     const onKey = (e:KeyboardEvent) => {
@@ -202,8 +208,10 @@ export default function Home() {
     }
     document.addEventListener('keydown', onKey)
 
-    // FONTS READY — REFRESH SCROLLTRIGGER
-    document.fonts.ready.then(() => ScrollTrigger.refresh())
+    // FONTS READY — REFRESH SCROLLTRIGGER (double-RAF to avoid recursive refresh during init)
+    document.fonts.ready.then(() => {
+      requestAnimationFrame(() => requestAnimationFrame(() => ScrollTrigger.refresh()))
+    })
 
     return () => {
       cancelAnimationFrame(rafId)
