@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 
-const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://agencygroup.pt'
+const PORTAL_URL = (process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/portal'
 
 function makeToken(email: string, secret: string): string {
   const payload = Buffer.from(
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const token = makeToken(email, SECRET)
-    const link = `${BASE_URL}?token=${token}`
+    const link = `${PORTAL_URL}?token=${token}`
 
     const { error } = await resend.emails.send({
       from: 'Agency Group <noreply@agencygroup.pt>',

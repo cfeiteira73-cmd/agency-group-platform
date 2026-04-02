@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 
-const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://agencygroup.pt'
+const PORTAL_URL = (process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/portal'
+const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt'
 const FROM = 'Agency Group <geral@agencygroup.pt>'
 
 function verifyToken(token: string, secret: string): Record<string, unknown> | null {
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
 
   const email = data.email as string
   const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
-  const magicLink = `${BASE_URL}?token=${magicToken}`
+  const magicLink = `${PORTAL_URL}?token=${magicToken}`
 
   await resend.emails.send({
     from: FROM,

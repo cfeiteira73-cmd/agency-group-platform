@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 
-const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://agencygroup.pt'
+const PORTAL_URL = (process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/portal'
+const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt'
 const ADMIN_EMAIL = 'geral@agencygroup.pt'
 const FROM = 'Agency Group <geral@agencygroup.pt>'
 
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
     // Pre-approved agents: skip admin approval, send magic link directly
     if (ALLOWED.includes(email.toLowerCase())) {
       const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
-      const magicLink = `${BASE_URL}?token=${magicToken}`
+      const magicLink = `${PORTAL_URL}?token=${magicToken}`
       await resend.emails.send({
         from: FROM,
         to: email,
