@@ -566,8 +566,18 @@ export default function Portal() {
   const [aiAnalyzing, setAiAnalyzing] = useState(false)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiDesc, setAiDesc] = useState<Record<string,unknown>|null>(null)
+  const [aiDescMeta, setAiDescMeta] = useState<Record<string,unknown>|null>(null)
+  const [aiSummary, setAiSummary] = useState<Record<string,unknown>|null>(null)
   const [publishStep, setPublishStep] = useState<1|2|3|4>(1)
+  const [descTab, setDescTab] = useState<'main'|'instagram'|'linkedin'|'whatsapp'|'email'>('main')
+  const [copiedKey, setCopiedKey] = useState<string|null>(null)
   const [showcaseImovel, setShowcaseImovel] = useState<Record<string,unknown>|null>(null)
+  // Lightbox states
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIdx, setLightboxIdx] = useState(0)
+  const [lightboxPhotos, setLightboxPhotos] = useState<{url:string; label?:string}[]>([])
+  const [showcaseCarouselIdx, setShowcaseCarouselIdx] = useState(0)
+  const [descPersona, setDescPersona] = useState('HNWI Global')
 
   function saveCrmContacts(updated: CRMContact[]) {
     setCrmContacts(updated)
@@ -663,6 +673,44 @@ export default function Portal() {
       }
     }
   }, [ready, agentEmail])
+
+  // Lightbox keyboard navigation
+  useEffect(() => {
+    if (!lightboxOpen) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') setLightboxIdx(i => Math.min(i + 1, lightboxPhotos.length - 1))
+      if (e.key === 'ArrowLeft')  setLightboxIdx(i => Math.max(i - 1, 0))
+      if (e.key === 'Escape')     { setLightboxOpen(false) }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [lightboxOpen, lightboxPhotos.length])
+
+  // Showcase carousel keyboard
+  useEffect(() => {
+    if (!showcaseImovel || lightboxOpen) return
+    const photos = (showcaseImovel.photos as string[]) || []
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') setShowcaseCarouselIdx(i => Math.min(i + 1, photos.length - 1))
+      if (e.key === 'ArrowLeft')  setShowcaseCarouselIdx(i => Math.max(i - 1, 0))
+      if (e.key === 'Escape')     setShowcaseImovel(null)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [showcaseImovel, lightboxOpen])
+
+  const openLightbox = (photos: {url:string; label?:string}[], startIdx: number) => {
+    setLightboxPhotos(photos)
+    setLightboxIdx(startIdx)
+    setLightboxOpen(true)
+  }
+
+  const copyToClipboard = (text: string, key: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 2000)
+    })
+  }
 
   // Documents search
   const [docSearch, setDocSearch] = useState('')
@@ -6521,6 +6569,7 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                                 if (d.analyses) {
                                   setAiPhotos(prev => prev.map((p, i) => ({ ...p, analysis: d.analyses.find((a: Record<string,unknown>) => a.index === i) })))
                                   setAiHeroIndex(d.heroIndex || 0)
+                                  setAiSummary(d.summary || null)
                                   setPublishStep(2)
                                 }
                               } catch(e) { console.error(e) }
@@ -6543,25 +6592,71 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                       </div>
                     )}
 
-                    {/* STEP 2: AI PHOTO ANALYSIS */}
+                    {/* STEP 2: AI PHOTO ANALYSIS — WORLD CLASS */}
                     {publishStep === 2 && (
                       <div>
                         <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'1.6rem', color:'#f4f0e6', marginBottom:'8px' }}>Análise AI das Fotografias</div>
-                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.4)', marginBottom:'28px' }}>Claude identificou cada espaço e selecionou a melhor foto principal. Pode ajustar.</div>
+                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.4)', marginBottom:'24px' }}>Claude Vision analisou cada fotografia. Clique para definir foto principal. Setas para reordenar.</div>
+
+                        {/* Quality Summary Dashboard */}
+                        {aiSummary && (
+                          <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'12px', marginBottom:'24px' }}>
+                            {[
+                              { label:'Qualidade Média', value: `${(aiSummary as Record<string,unknown>).avgQuality}/10`, color: Number((aiSummary as Record<string,unknown>).avgQuality) >= 7.5 ? '#4a9c7a' : Number((aiSummary as Record<string,unknown>).avgQuality) >= 5.5 ? '#c9a96e' : '#e87070' },
+                              { label:'Grau', value: String((aiSummary as Record<string,unknown>).qualityGrade), color: '#c9a96e' },
+                              { label:'Foto Hero', value: `${(aiSummary as Record<string,unknown>).heroQuality}/10`, color: Number((aiSummary as Record<string,unknown>).heroQuality) >= 7 ? '#4a9c7a' : '#e87070' },
+                              { label:'Precisam Melhoria', value: String((aiSummary as Record<string,unknown>).photosNeedingWork), color: Number((aiSummary as Record<string,unknown>).photosNeedingWork) > 0 ? '#e87070' : '#4a9c7a' },
+                              { label:'Candidatas Staging', value: String((aiSummary as Record<string,unknown>).stagingCandidates), color: Number((aiSummary as Record<string,unknown>).stagingCandidates) > 0 ? '#c9a96e' : 'rgba(244,240,230,.4)' },
+                            ].map(s => (
+                              <div key={s.label} style={{ background:'rgba(244,240,230,.04)', border:'1px solid rgba(201,169,110,.1)', padding:'14px', textAlign:'center' }}>
+                                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(244,240,230,.3)', marginBottom:'6px' }}>{s.label}</div>
+                                <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.3rem', color: s.color }}>{s.value}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Quality Gate Warning */}
+                        {aiSummary && Number((aiSummary as Record<string,unknown>).heroQuality) < 7 && (
+                          <div style={{ background:'rgba(232,112,112,.08)', border:'1px solid rgba(232,112,112,.3)', borderLeft:'3px solid #e87070', padding:'14px 20px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'12px' }}>
+                            <svg width="16" height="16" fill="none" stroke="#e87070" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <span style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(232,112,112,.9)' }}>
+                              Foto principal com qualidade {(aiSummary as Record<string,unknown>).heroQuality}/10 — abaixo do standard profissional (7+). Recomendamos substituir antes de publicar.
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Staging Recommendations */}
+                        {aiSummary && Number((aiSummary as Record<string,unknown>).stagingCandidates) > 0 && (
+                          <div style={{ background:'rgba(74,156,122,.06)', border:'1px solid rgba(74,156,122,.25)', borderLeft:'3px solid #4a9c7a', padding:'14px 20px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'12px' }}>
+                            <svg width="16" height="16" fill="none" stroke="#4a9c7a" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                            <span style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(74,156,122,.9)' }}>
+                              {(aiSummary as Record<string,unknown>).stagingCandidates} divisão(ões) identificadas como candidatas a virtual staging — aumenta valor percebido em 15-20%.
+                            </span>
+                          </div>
+                        )}
 
                         {/* Hero photo highlight */}
                         {aiPhotos[aiHeroIndex] && (
-                          <div style={{ marginBottom:'32px', position:'relative', borderRadius:'4px', overflow:'hidden', background:'rgba(0,0,0,.4)' }}>
-                            <img src={aiPhotos[aiHeroIndex].url} alt="" style={{ width:'100%', maxHeight:'400px', objectFit:'cover' }} />
-                            <div style={{ position:'absolute', top:'16px', left:'16px', background:'#c9a96e', color:'#0c1f15', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.14em', textTransform:'uppercase', padding:'6px 16px', fontWeight:700 }}>
-                              ★ Foto Principal Selecionada pela AI
-                            </div>
+                          <div style={{ marginBottom:'28px', position:'relative', overflow:'hidden', background:'rgba(0,0,0,.4)', cursor:'pointer' }} onClick={() => openLightbox(aiPhotos.map(p => ({ url: p.url, label: String((p.analysis as Record<string,unknown>)?.roomType || '') })), aiHeroIndex)}>
+                            <img src={aiPhotos[aiHeroIndex].url} alt="" style={{ width:'100%', maxHeight:'420px', objectFit:'cover' }} />
+                            <div style={{ position:'absolute', inset:0, background:'linear-gradient(transparent 55%, rgba(0,0,0,.75))' }} />
+                            <div style={{ position:'absolute', top:'16px', left:'16px', background:'#c9a96e', color:'#0c1f15', fontFamily:"'DM Mono',monospace", fontSize:'.36rem', letterSpacing:'.14em', textTransform:'uppercase', padding:'6px 16px', fontWeight:700 }}>★ Foto Principal · AI Selection</div>
+                            <div style={{ position:'absolute', top:'16px', right:'16px', background:'rgba(0,0,0,.5)', color:'rgba(244,240,230,.7)', fontFamily:"'DM Mono',monospace", fontSize:'.34rem', padding:'4px 10px', letterSpacing:'.08em' }}>🔍 Ver em grande</div>
                             {aiPhotos[aiHeroIndex].analysis && (
-                              <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(transparent, rgba(0,0,0,.8))', padding:'24px 16px 16px' }}>
-                                <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.1rem', color:'#f4f0e6', marginBottom:'4px' }}>{String((aiPhotos[aiHeroIndex].analysis as Record<string,unknown>)?.roomType || '')}</div>
-                                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'20px 20px 16px' }}>
+                                <div style={{ display:'flex', gap:'16px', alignItems:'center', marginBottom:'8px' }}>
+                                  <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.2rem', color:'#f4f0e6' }}>{String((aiPhotos[aiHeroIndex].analysis as Record<string,unknown>)?.roomType || '')}</div>
+                                  {['qualityScore','heroScore','lightingScore'].map(k => (
+                                    <div key={k} style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.06em', background:'rgba(0,0,0,.4)', padding:'3px 8px' }}>
+                                      <span style={{ color:'rgba(244,240,230,.35)' }}>{k==='qualityScore'?'QLD':k==='heroScore'?'HERO':'LIGHT'} </span>
+                                      <span style={{ color: Number((aiPhotos[aiHeroIndex].analysis as Record<string,unknown>)?.[k]) >= 7 ? '#4a9c7a' : '#c9a96e' }}>{String((aiPhotos[aiHeroIndex].analysis as Record<string,unknown>)?.[k])}/10</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div style={{ display:'flex', gap:'6px', flexWrap:'wrap' }}>
                                   {((aiPhotos[aiHeroIndex].analysis as Record<string,unknown>)?.highlights as string[] || []).map((h,i) => (
-                                    <span key={i} style={{ background:'rgba(201,169,110,.2)', color:'#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.08em', padding:'3px 8px' }}>{h}</span>
+                                    <span key={i} style={{ background:'rgba(201,169,110,.2)', color:'#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.06em', padding:'3px 8px' }}>{h}</span>
                                   ))}
                                 </div>
                               </div>
@@ -6569,36 +6664,64 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                           </div>
                         )}
 
-                        {/* All photos grid */}
-                        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.15em', textTransform:'uppercase', color:'rgba(244,240,230,.35)', marginBottom:'16px' }}>Todas as Fotografias · Clique numa foto para torná-la principal</div>
-                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px,1fr))', gap:'12px', marginBottom:'32px' }}>
+                        {/* Sequence + grid header */}
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', flexWrap:'wrap', gap:'12px' }}>
+                          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.36rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.35)' }}>
+                            {aiPhotos.length} Fotografias · Clique = foto principal · ↕ Reordenar
+                          </div>
+                          {aiSummary && (aiSummary as Record<string,unknown>).recommendedSequence && (
+                            <button onClick={() => {
+                              const seq = (aiSummary as Record<string,unknown>).recommendedSequence as number[]
+                              if (seq) setAiPhotos(prev => seq.map(i => prev[i]).filter(Boolean))
+                            }} style={{ background:'rgba(201,169,110,.1)', color:'#c9a96e', border:'1px solid rgba(201,169,110,.3)', padding:'6px 16px', fontFamily:"'DM Mono',monospace", fontSize:'.34rem', letterSpacing:'.1em', cursor:'pointer', textTransform:'uppercase' }}>
+                              ✦ Aplicar Sequência AI
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Photos grid */}
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(210px,1fr))', gap:'10px', marginBottom:'32px' }}>
                           {aiPhotos.map((p, i) => {
                             const a = p.analysis as Record<string,unknown> | undefined
                             const qScore = Number(a?.qualityScore || 0)
                             const hScore = Number(a?.heroScore || 0)
                             const isHero = i === aiHeroIndex
+                            const hasIssues = (a?.conditionIssues as string[] || []).length > 0
+                            const needsStaging = a?.stagingNeeded === true
+                            const luxuries = (a?.luxuryIndicators as string[] || [])
                             return (
-                              <div key={i} onClick={() => setAiHeroIndex(i)} style={{ cursor:'pointer', border: isHero ? '2px solid #c9a96e' : '2px solid transparent', borderRadius:'4px', overflow:'hidden', background:'rgba(0,0,0,.3)', transition:'border-color .2s', position:'relative' }}>
+                              <div key={i} style={{ border: isHero ? '2px solid #c9a96e' : hasIssues ? '2px solid rgba(232,112,112,.4)' : '2px solid rgba(244,240,230,.06)', overflow:'hidden', background:'rgba(0,0,0,.3)', transition:'border-color .2s', position:'relative', cursor:'pointer' }}
+                                onClick={() => setAiHeroIndex(i)}>
                                 <div style={{ position:'relative', aspectRatio:'4/3', overflow:'hidden' }}>
-                                  <img src={p.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', filter: isHero ? 'none' : 'brightness(0.8)' }} />
-                                  {isHero && <div style={{ position:'absolute', top:'8px', right:'8px', background:'#c9a96e', color:'#0c1f15', width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:700 }}>★</div>}
-                                </div>
-                                {a && (
-                                  <div style={{ padding:'10px 12px', background:'rgba(12,31,21,.9)' }}>
-                                    <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.8rem', color:'#f4f0e6', marginBottom:'6px', fontWeight:500 }}>{String(a.roomType || '')}</div>
-                                    <div style={{ display:'flex', gap:'12px' }}>
-                                      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.06em' }}>
-                                        <span style={{ color:'rgba(244,240,230,.3)' }}>QLD </span>
-                                        <span style={{ color: qScore >= 8 ? '#4a9c7a' : qScore >= 6 ? '#c9a96e' : '#e87070' }}>{qScore}/10</span>
-                                      </div>
-                                      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.06em' }}>
-                                        <span style={{ color:'rgba(244,240,230,.3)' }}>HERO </span>
-                                        <span style={{ color: hScore >= 8 ? '#4a9c7a' : hScore >= 6 ? '#c9a96e' : '#e87070' }}>{hScore}/10</span>
-                                      </div>
-                                    </div>
-                                    {(a.ambiance as string) && <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(201,169,110,.5)', marginTop:'4px' }}>{String(a.ambiance)}</div>}
+                                  <img src={p.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .3s', filter: isHero ? 'none' : 'brightness(0.78)' }}
+                                    onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1.06)'}
+                                    onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1)'}
+                                    onClick={e => { e.stopPropagation(); openLightbox(aiPhotos.map(ph => ({ url: ph.url, label: String((ph.analysis as Record<string,unknown>)?.roomType || '') })), i) }}
+                                  />
+                                  {isHero && <div style={{ position:'absolute', top:'6px', right:'6px', background:'#c9a96e', color:'#0c1f15', width:'22px', height:'22px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'11px', fontWeight:700 }}>★</div>}
+                                  {needsStaging && !isHero && <div style={{ position:'absolute', top:'6px', left:'6px', background:'rgba(74,156,122,.8)', color:'#fff', fontFamily:"'DM Mono',monospace", fontSize:'.28rem', letterSpacing:'.06em', padding:'2px 6px' }}>STAGING</div>}
+                                  {hasIssues && <div style={{ position:'absolute', bottom:'6px', right:'6px', background:'rgba(232,112,112,.8)', color:'#fff', fontFamily:"'DM Mono',monospace", fontSize:'.28rem', letterSpacing:'.06em', padding:'2px 6px' }}>⚠</div>}
+                                  {/* Reorder arrows */}
+                                  <div style={{ position:'absolute', top:'50%', left:0, right:0, transform:'translateY(-50%)', display:'flex', justifyContent:'space-between', padding:'0 4px', opacity:0, transition:'opacity .2s' }}
+                                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity='1'}
+                                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity='0'}>
+                                    {i > 0 && <button onClick={e => { e.stopPropagation(); setAiPhotos(prev => { const arr=[...prev]; [arr[i-1],arr[i]]=[arr[i],arr[i-1]]; if(aiHeroIndex===i)setAiHeroIndex(i-1); else if(aiHeroIndex===i-1)setAiHeroIndex(i); return arr }) }} style={{ background:'rgba(0,0,0,.7)', border:'none', color:'#fff', width:'28px', height:'28px', cursor:'pointer', fontSize:'14px' }}>←</button>}
+                                    {i < aiPhotos.length-1 && <button onClick={e => { e.stopPropagation(); setAiPhotos(prev => { const arr=[...prev]; [arr[i],arr[i+1]]=[arr[i+1],arr[i]]; if(aiHeroIndex===i)setAiHeroIndex(i+1); else if(aiHeroIndex===i+1)setAiHeroIndex(i); return arr }) }} style={{ background:'rgba(0,0,0,.7)', border:'none', color:'#fff', width:'28px', height:'28px', cursor:'pointer', fontSize:'14px', marginLeft:'auto' }}>→</button>}
                                   </div>
-                                )}
+                                </div>
+                                <div style={{ padding:'8px 10px', background:'rgba(12,31,21,.95)' }}>
+                                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'4px' }}>
+                                    <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.78rem', color:'#f4f0e6', fontWeight:500, lineHeight:1.2 }}>{String(a?.roomType || '—')}</div>
+                                    <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.28rem', color:'rgba(244,240,230,.25)', flexShrink:0 }}>#{i+1}</div>
+                                  </div>
+                                  <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.04em', color: qScore >= 8 ? '#4a9c7a' : qScore >= 6 ? '#c9a96e' : '#e87070' }}>Q {qScore}/10</span>
+                                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.04em', color: hScore >= 8 ? '#4a9c7a' : hScore >= 6 ? '#c9a96e' : '#e87070' }}>H {hScore}/10</span>
+                                    {(a?.lightingScore as number) > 0 && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.04em', color:'rgba(244,240,230,.35)' }}>L {String(a?.lightingScore)}/10</span>}
+                                  </div>
+                                  {luxuries.length > 0 && <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.28rem', color:'rgba(201,169,110,.5)', marginTop:'4px', textTransform:'uppercase', letterSpacing:'.06em' }}>{luxuries.slice(0,2).join(' · ')}</div>}
+                                  {hasIssues && <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.28rem', color:'rgba(232,112,112,.7)', marginTop:'3px' }}>⚠ {(a?.conditionIssues as string[]).slice(0,2).join(', ')}</div>}
+                                </div>
                               </div>
                             )
                           })}
@@ -6684,65 +6807,140 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
 
                         {/* AI Description Generator */}
                         <div style={{ background:'rgba(28,74,53,.1)', border:'1px solid rgba(28,74,53,.4)', borderLeft:'3px solid #1c4a35', padding:'24px', marginBottom:'24px' }}>
-                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px' }}>
+                          {/* Header row */}
+                          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'20px', gap:'16px', flexWrap:'wrap' }}>
                             <div>
-                              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.15em', textTransform:'uppercase', color:'#4a9c7a', marginBottom:'4px' }}>Claude AI · Neuromarketing Engine</div>
-                              <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.1rem', color:'#f4f0e6' }}>Geração de Descrição de Elite</div>
+                              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.15em', textTransform:'uppercase', color:'#4a9c7a', marginBottom:'4px' }}>Claude AI · Sotheby&apos;s-Level Copy Engine</div>
+                              <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.1rem', color:'#f4f0e6' }}>Descrição Multi-Formato com Contexto de Mercado</div>
                             </div>
-                            <button onClick={async () => {
-                              if (!newImovel.nome || !newImovel.preco) { alert('Preencha pelo menos o nome e o preço primeiro.'); return }
-                              setAiGenerating(true)
-                              try {
-                                const r = await fetch('/api/properties/generate-description', {
-                                  method:'POST',
-                                  headers:{'Content-Type':'application/json'},
-                                  body: JSON.stringify({
-                                    property: newImovel,
-                                    photoAnalyses: aiPhotos.map(p => p.analysis).filter(Boolean),
+                            <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
+                              {/* Persona selector */}
+                              <select value={descPersona} onChange={e => setDescPersona(e.target.value)} style={{ background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#c9a96e', padding:'8px 12px', fontFamily:"'DM Mono',monospace", fontSize:'.34rem', letterSpacing:'.08em', outline:'none', cursor:'pointer' }}>
+                                {['HNWI Global','Americano','Francês','Britânico','Brasileiro','Investidor PT','Médio Oriente','Alemão','Chinês'].map(p => <option key={p} value={p}>{p}</option>)}
+                              </select>
+                              <button onClick={async () => {
+                                if (!newImovel.nome || !newImovel.preco) { alert('Preencha pelo menos o nome e o preço primeiro.'); return }
+                                setAiGenerating(true)
+                                try {
+                                  const r = await fetch('/api/properties/generate-description', {
+                                    method:'POST',
+                                    headers:{'Content-Type':'application/json'},
+                                    body: JSON.stringify({
+                                      property: newImovel,
+                                      photoAnalyses: aiPhotos.map(p => p.analysis).filter(Boolean),
+                                      persona: descPersona,
+                                    })
                                   })
-                                })
-                                const d = await r.json()
-                                if (d.description) {
-                                  setAiDesc(d.description)
-                                  setNewImovel(prev => ({ ...prev, desc: d.description.descriptionMain || prev.desc }))
-                                }
-                              } catch(e) { console.error(e) }
-                              setAiGenerating(false)
-                            }} disabled={aiGenerating} style={{ background: aiGenerating ? 'rgba(74,156,122,.3)' : '#1c4a35', color:'#c9a96e', border:'1px solid rgba(201,169,110,.3)', padding:'10px 24px', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', cursor: aiGenerating ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:'8px', whiteSpace:'nowrap' as const }}>
-                              {aiGenerating ? (
-                                <>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation:'spin 1s linear infinite' }}><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity=".3"/><path d="M21 12a9 9 0 00-9-9"/></svg>
-                                  A Gerar...
-                                </>
-                              ) : '✦ Gerar com AI'}
-                            </button>
+                                  const d = await r.json()
+                                  if (d.description) {
+                                    setAiDesc(d.description)
+                                    setAiDescMeta(d.meta || null)
+                                    setNewImovel(prev => ({ ...prev, desc: d.description.descriptionMain || prev.desc }))
+                                  }
+                                } catch(e) { console.error(e) }
+                                setAiGenerating(false)
+                              }} disabled={aiGenerating} style={{ background: aiGenerating ? 'rgba(74,156,122,.3)' : '#1c4a35', color:'#c9a96e', border:'1px solid rgba(201,169,110,.3)', padding:'10px 24px', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', cursor: aiGenerating ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:'8px', whiteSpace:'nowrap' as const }}>
+                                {aiGenerating ? (
+                                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation:'spin 1s linear infinite' }}><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity=".3"/><path d="M21 12a9 9 0 00-9-9"/></svg>A Gerar...</>
+                                ) : '✦ Gerar com AI'}
+                              </button>
+                            </div>
                           </div>
+
+                          {/* Market context pill */}
+                          {aiDescMeta && (
+                            <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'16px' }}>
+                              {[
+                                { label: (aiDescMeta as Record<string,unknown>).pricePositioning as string },
+                                { label: `+${((aiDescMeta as Record<string,unknown>).zoneData as Record<string,unknown>)?.appreciation5y}% em 5 anos` },
+                                { label: `Procura: ${((aiDescMeta as Record<string,unknown>).zoneData as Record<string,unknown>)?.demandLevel}` },
+                                { label: `€${Number((aiDescMeta as Record<string,unknown>).pricePerM2).toLocaleString('pt-PT')}/m²` },
+                              ].filter(b => b.label).map((b,i) => (
+                                <span key={i} style={{ background:'rgba(201,169,110,.08)', color:'rgba(201,169,110,.7)', fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.08em', padding:'4px 10px', border:'1px solid rgba(201,169,110,.15)' }}>{b.label}</span>
+                              ))}
+                            </div>
+                          )}
 
                           {aiDesc && (
                             <div style={{ borderTop:'1px solid rgba(201,169,110,.15)', paddingTop:'20px' }}>
-                              {/* Headline */}
-                              <div style={{ marginBottom:'16px' }}>
-                                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'6px' }}>Headline Principal</div>
-                                <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.3rem', color:'#c9a96e', fontStyle:'italic' }}>{aiDesc.headline as string}</div>
+                              {/* Headline + subheadline */}
+                              <div style={{ marginBottom:'20px' }}>
+                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px' }}>
+                                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)' }}>Headline</div>
+                                  <button onClick={() => copyToClipboard(`${aiDesc.headline}\n${aiDesc.subheadline}`, 'headline')} style={{ background:'none', border:'1px solid rgba(201,169,110,.2)', color:'rgba(201,169,110,.5)', fontFamily:"'DM Mono',monospace", fontSize:'.28rem', letterSpacing:'.06em', padding:'3px 8px', cursor:'pointer' }}>{copiedKey==='headline' ? '✓ Copiado' : 'Copiar'}</button>
+                                </div>
+                                <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.4rem', color:'#c9a96e', fontStyle:'italic', marginBottom:'6px' }}>{aiDesc.headline as string}</div>
+                                <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.85rem', color:'rgba(244,240,230,.6)' }}>{aiDesc.subheadline as string}</div>
                               </div>
-                              <div style={{ marginBottom:'16px' }}>
-                                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'6px' }}>Subtítulo</div>
-                                <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.88rem', color:'rgba(244,240,230,.7)' }}>{aiDesc.subheadline as string}</div>
-                              </div>
+
                               {/* Key Features */}
                               {Array.isArray(aiDesc.keyFeatures) && (
-                                <div style={{ marginBottom:'16px' }}>
-                                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'8px' }}>Características-Chave</div>
-                                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                                <div style={{ marginBottom:'20px' }}>
+                                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'8px' }}>Features-Chave</div>
+                                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'6px' }}>
                                     {(aiDesc.keyFeatures as string[]).map((f,i) => (
-                                      <span key={i} style={{ background:'rgba(201,169,110,.1)', color:'#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.06em', padding:'4px 10px', border:'1px solid rgba(201,169,110,.2)' }}>{f}</span>
+                                      <div key={i} style={{ display:'flex', gap:'8px', padding:'6px 8px', background:'rgba(244,240,230,.03)', border:'1px solid rgba(201,169,110,.1)' }}>
+                                        <span style={{ color:'#c9a96e', flexShrink:0 }}>✦</span>
+                                        <span style={{ fontFamily:"'Jost',sans-serif", fontSize:'.78rem', color:'rgba(244,240,230,.65)' }}>{f}</span>
+                                      </div>
                                     ))}
                                   </div>
                                 </div>
                               )}
-                              <div style={{ marginBottom:'16px' }}>
-                                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'6px' }}>WhatsApp</div>
-                                <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.8rem', color:'rgba(244,240,230,.55)', background:'rgba(244,240,230,.03)', padding:'12px', borderLeft:'2px solid rgba(201,169,110,.2)', lineHeight:1.6 }}>{aiDesc.whatsappText as string}</div>
+
+                              {/* Multi-format tabs */}
+                              <div style={{ marginTop:'20px' }}>
+                                <div style={{ display:'flex', gap:'4px', marginBottom:'0', flexWrap:'wrap' }}>
+                                  {([
+                                    { id:'main', label:'📝 Descrição' },
+                                    { id:'instagram', label:'📸 Instagram' },
+                                    { id:'linkedin', label:'💼 LinkedIn' },
+                                    { id:'whatsapp', label:'💬 WhatsApp' },
+                                    { id:'email', label:'📧 Email' },
+                                  ] as const).map(t => (
+                                    <button key={t.id} onClick={() => setDescTab(t.id)} style={{ background: descTab===t.id ? 'rgba(201,169,110,.15)' : 'transparent', color: descTab===t.id ? '#c9a96e' : 'rgba(201,169,110,.4)', border:'1px solid rgba(201,169,110,.2)', borderBottom: descTab===t.id ? '1px solid rgba(28,74,53,.1)' : '1px solid rgba(201,169,110,.2)', padding:'7px 14px', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.06em', cursor:'pointer', marginBottom:'-1px' }}>
+                                      {t.label}
+                                    </button>
+                                  ))}
+                                </div>
+                                <div style={{ background:'rgba(244,240,230,.02)', border:'1px solid rgba(201,169,110,.2)', padding:'16px', position:'relative' }}>
+                                  <button onClick={() => {
+                                    const txt = descTab==='main' ? aiDesc.descriptionMain as string
+                                      : descTab==='instagram' ? `${aiDesc.instagram}\n\n${(aiDesc.instagramHashtags as string[])?.join(' ')}` as string
+                                      : descTab==='linkedin' ? aiDesc.linkedin as string
+                                      : descTab==='whatsapp' ? aiDesc.whatsapp as string
+                                      : `${aiDesc.emailSubject}\n\n${aiDesc.emailBody}` as string
+                                    copyToClipboard(txt, descTab)
+                                  }} style={{ position:'absolute', top:'10px', right:'10px', background:'rgba(201,169,110,.1)', border:'1px solid rgba(201,169,110,.2)', color:'rgba(201,169,110,.6)', fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.06em', padding:'4px 10px', cursor:'pointer' }}>
+                                    {copiedKey===descTab ? '✓ Copiado!' : '📋 Copiar'}
+                                  </button>
+
+                                  {descTab === 'main' && <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.65)', lineHeight:1.85, whiteSpace:'pre-line', paddingRight:'60px' }}>{aiDesc.descriptionMain as string}</div>}
+                                  {descTab === 'instagram' && (
+                                    <div>
+                                      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.65)', lineHeight:1.8, whiteSpace:'pre-line', marginBottom:'12px', paddingRight:'60px' }}>{aiDesc.instagram as string}</div>
+                                      <div style={{ display:'flex', flexWrap:'wrap', gap:'4px' }}>
+                                        {(aiDesc.instagramHashtags as string[] || []).map((h,i) => <span key={i} style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', color:'#4a9c7a' }}>{h}</span>)}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {descTab === 'linkedin' && <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.65)', lineHeight:1.85, whiteSpace:'pre-line', paddingRight:'60px' }}>{aiDesc.linkedin as string}</div>}
+                                  {descTab === 'whatsapp' && <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.65)', lineHeight:1.8, whiteSpace:'pre-line', paddingRight:'60px' }}>{aiDesc.whatsapp as string}</div>}
+                                  {descTab === 'email' && (
+                                    <div>
+                                      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.1em', color:'rgba(201,169,110,.5)', textTransform:'uppercase', marginBottom:'8px' }}>Subject: {aiDesc.emailSubject as string}</div>
+                                      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.65)', lineHeight:1.85, whiteSpace:'pre-line', paddingRight:'60px' }}>{aiDesc.emailBody as string}</div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Lifestyle story */}
+                                {aiDesc.lifestyleStory && (
+                                  <div style={{ marginTop:'12px', background:'rgba(12,31,21,.4)', border:'1px solid rgba(28,74,53,.3)', borderLeft:'2px solid #1c4a35', padding:'14px 16px' }}>
+                                    <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(74,156,122,.6)', marginBottom:'6px' }}>Lifestyle Story · Para Uso em Apresentações</div>
+                                    <div style={{ fontFamily:"'Cormorant',serif", fontSize:'.95rem', color:'rgba(244,240,230,.6)', fontStyle:'italic', lineHeight:1.75 }}>{aiDesc.lifestyleStory as string}</div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
@@ -6905,6 +7103,55 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
         </div>
       </div>
 
+      {/* FULLSCREEN LIGHTBOX */}
+      {lightboxOpen && lightboxPhotos.length > 0 && (
+        <div style={{ position:'fixed', inset:0, zIndex:10000, background:'rgba(0,0,0,.97)', display:'flex', flexDirection:'column', userSelect:'none' }} onClick={() => setLightboxOpen(false)}>
+          {/* Top bar */}
+          <div style={{ padding:'14px 24px', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.15em', color:'rgba(255,255,255,.3)' }}>
+              {lightboxPhotos[lightboxIdx]?.label || ''}
+            </div>
+            <div style={{ display:'flex', gap:'16px', alignItems:'center' }}>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', color:'rgba(255,255,255,.4)' }}>{lightboxIdx + 1} / {lightboxPhotos.length}</div>
+              <button onClick={() => setLightboxOpen(false)} style={{ background:'none', border:'1px solid rgba(255,255,255,.15)', color:'rgba(255,255,255,.5)', padding:'6px 16px', fontFamily:"'DM Mono',monospace", fontSize:'.34rem', letterSpacing:'.1em', cursor:'pointer' }}>✕ ESC</button>
+            </div>
+          </div>
+
+          {/* Main image */}
+          <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', minHeight:0 }} onClick={e => e.stopPropagation()}>
+            {/* Prev arrow */}
+            {lightboxIdx > 0 && (
+              <button onClick={() => setLightboxIdx(i => i-1)} style={{ position:'absolute', left:'16px', top:'50%', transform:'translateY(-50%)', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', color:'rgba(255,255,255,.7)', width:'48px', height:'80px', cursor:'pointer', fontSize:'20px', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, transition:'background .2s' }} onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,.14)'} onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,.07)'}>‹</button>
+            )}
+            <img
+              src={lightboxPhotos[lightboxIdx]?.url}
+              alt={lightboxPhotos[lightboxIdx]?.label || ''}
+              style={{ maxWidth:'calc(100% - 120px)', maxHeight:'100%', objectFit:'contain', display:'block', transition:'opacity .2s' }}
+            />
+            {/* Next arrow */}
+            {lightboxIdx < lightboxPhotos.length - 1 && (
+              <button onClick={() => setLightboxIdx(i => i+1)} style={{ position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.12)', color:'rgba(255,255,255,.7)', width:'48px', height:'80px', cursor:'pointer', fontSize:'20px', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, transition:'background .2s' }} onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,.14)'} onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,.07)'}>›</button>
+            )}
+          </div>
+
+          {/* Label below image */}
+          {lightboxPhotos[lightboxIdx]?.label && (
+            <div style={{ textAlign:'center', padding:'10px', fontFamily:"'Cormorant',serif", fontSize:'1rem', color:'rgba(255,255,255,.35)', fontStyle:'italic', flexShrink:0 }} onClick={e => e.stopPropagation()}>
+              {lightboxPhotos[lightboxIdx].label}
+            </div>
+          )}
+
+          {/* Thumbnail strip */}
+          <div style={{ display:'flex', gap:'4px', padding:'8px 16px 16px', overflowX:'auto', flexShrink:0, justifyContent:'center' }} onClick={e => e.stopPropagation()}>
+            {lightboxPhotos.map((p, i) => (
+              <div key={i} onClick={() => setLightboxIdx(i)} style={{ flexShrink:0, width:'64px', height:'44px', overflow:'hidden', cursor:'pointer', opacity: i === lightboxIdx ? 1 : 0.35, border: i === lightboxIdx ? '2px solid #c9a96e' : '2px solid transparent', transition:'opacity .2s, border .2s' }}>
+                <img src={p.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* PROPERTY SHOWCASE MODAL */}
       {showcaseImovel && (
         <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(5,14,9,.96)', backdropFilter:'blur(20px)', overflowY:'auto' }} onClick={e => { if (e.target === e.currentTarget) setShowcaseImovel(null) }}>
@@ -6915,25 +7162,67 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
               <button onClick={() => setShowcaseImovel(null)} style={{ background:'none', border:'1px solid rgba(201,169,110,.2)', color:'rgba(244,240,230,.5)', padding:'8px 20px', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', cursor:'pointer' }}>✕ Fechar</button>
             </div>
 
-            {/* Hero Photo */}
-            {(showcaseImovel.heroPhoto || (showcaseImovel.photos as string[])?.[0]) && (
-              <div style={{ position:'relative', height:'520px', overflow:'hidden' }}>
-                <img src={(showcaseImovel.heroPhoto || (showcaseImovel.photos as string[])?.[0]) as string} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(5,14,9,.2) 0%, transparent 40%, rgba(5,14,9,.8) 100%)' }} />
-                <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'48px 48px 40px' }}>
-                  {(showcaseImovel.badge as string) && <div style={{ display:'inline-block', background:'#c9a96e', color:'#0c1f15', fontFamily:"'DM Mono',monospace", fontSize:'.36rem', letterSpacing:'.14em', textTransform:'uppercase', padding:'5px 16px', marginBottom:'12px', fontWeight:700 }}>{showcaseImovel.badge as string}</div>}
-                  <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'clamp(2rem,4vw,3rem)', color:'#f4f0e6', lineHeight:1.1, marginBottom:'8px', fontStyle:'italic' }}>
-                    {((showcaseImovel.aiDescription as Record<string,unknown>)?.headline as string) || (showcaseImovel.nome as string)}
+            {/* Hero Carousel */}
+            {(() => {
+              const photos = (showcaseImovel.photos as string[]) || []
+              const hero = (showcaseImovel.heroPhoto as string) || photos[0]
+              const allPhotos = hero && !photos.includes(hero) ? [hero, ...photos] : photos.length > 0 ? photos : hero ? [hero] : []
+              const currentPhoto = allPhotos[showcaseCarouselIdx] || hero
+              if (!currentPhoto) return null
+              const analyses = (showcaseImovel.photoAnalyses as Record<string,unknown>[]) || []
+              const currentAnalysis = analyses[showcaseCarouselIdx]
+              return (
+                <div style={{ position:'relative' }}>
+                  {/* Main hero */}
+                  <div style={{ position:'relative', height:'clamp(380px,55vw,580px)', overflow:'hidden', cursor:'pointer' }} onClick={() => openLightbox(allPhotos.map((u,i) => ({ url: u, label: String(analyses[i]?.roomType || '') })), showcaseCarouselIdx)}>
+                    <img src={currentPhoto} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', transition:'opacity .3s' }} />
+                    <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(5,14,9,.15) 0%, transparent 35%, rgba(5,14,9,.75) 100%)' }} />
+                    {/* Expand hint */}
+                    <div style={{ position:'absolute', top:'20px', right:'20px', background:'rgba(0,0,0,.45)', backdropFilter:'blur(4px)', color:'rgba(255,255,255,.6)', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.1em', padding:'5px 12px', display:'flex', alignItems:'center', gap:'6px' }}>
+                      <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                      {allPhotos.length} fotos
+                    </div>
+                    {/* Nav arrows */}
+                    {showcaseCarouselIdx > 0 && <button onClick={e => { e.stopPropagation(); setShowcaseCarouselIdx(i => i-1) }} style={{ position:'absolute', left:'16px', top:'50%', transform:'translateY(-50%)', background:'rgba(0,0,0,.4)', backdropFilter:'blur(4px)', border:'1px solid rgba(255,255,255,.1)', color:'rgba(255,255,255,.8)', width:'44px', height:'44px', cursor:'pointer', fontSize:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>}
+                    {showcaseCarouselIdx < allPhotos.length - 1 && <button onClick={e => { e.stopPropagation(); setShowcaseCarouselIdx(i => i+1) }} style={{ position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', background:'rgba(0,0,0,.4)', backdropFilter:'blur(4px)', border:'1px solid rgba(255,255,255,.1)', color:'rgba(255,255,255,.8)', width:'44px', height:'44px', cursor:'pointer', fontSize:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>}
+                    {/* Overlay content */}
+                    <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'40px 48px 36px' }}>
+                      {(showcaseImovel.badge as string) && <div style={{ display:'inline-block', background:'#c9a96e', color:'#0c1f15', fontFamily:"'DM Mono',monospace", fontSize:'.34rem', letterSpacing:'.14em', textTransform:'uppercase', padding:'5px 14px', marginBottom:'12px', fontWeight:700 }}>{showcaseImovel.badge as string}</div>}
+                      <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'clamp(1.8rem,4vw,2.8rem)', color:'#f4f0e6', lineHeight:1.1, marginBottom:'8px', fontStyle:'italic' }}>
+                        {((showcaseImovel.aiDescription as Record<string,unknown>)?.headline as string) || (showcaseImovel.nome as string)}
+                      </div>
+                      {(showcaseImovel.aiDescription as Record<string,unknown>)?.subheadline && (
+                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.88rem', color:'rgba(244,240,230,.6)', maxWidth:'560px' }}>{(showcaseImovel.aiDescription as Record<string,unknown>).subheadline as string}</div>
+                      )}
+                      <div style={{ display:'flex', gap:'16px', alignItems:'center', marginTop:'12px', flexWrap:'wrap' }}>
+                        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.36rem', color:'rgba(201,169,110,.6)', letterSpacing:'.1em' }}>{showcaseImovel.bairro as string}{showcaseImovel.bairro ? ' · ' : ''}{showcaseImovel.zona as string}</div>
+                        {currentAnalysis?.roomType && <div style={{ background:'rgba(201,169,110,.15)', color:'#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.08em', padding:'3px 8px' }}>{String(currentAnalysis.roomType)}</div>}
+                      </div>
+                    </div>
+                    {/* Dot indicators */}
+                    {allPhotos.length > 1 && (
+                      <div style={{ position:'absolute', bottom:'14px', right:'20px', display:'flex', gap:'4px' }}>
+                        {allPhotos.slice(0, 12).map((_,i) => (
+                          <div key={i} onClick={e => { e.stopPropagation(); setShowcaseCarouselIdx(i) }} style={{ width: i===showcaseCarouselIdx ? '20px' : '6px', height:'6px', borderRadius:'3px', background: i===showcaseCarouselIdx ? '#c9a96e' : 'rgba(255,255,255,.3)', cursor:'pointer', transition:'all .25s' }} />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {(showcaseImovel.aiDescription as Record<string,unknown>)?.subheadline && (
-                    <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.9rem', color:'rgba(244,240,230,.65)', maxWidth:'600px' }}>{(showcaseImovel.aiDescription as Record<string,unknown>).subheadline as string}</div>
+                  {/* Thumbnail strip */}
+                  {allPhotos.length > 1 && (
+                    <div style={{ display:'flex', gap:'3px', background:'rgba(0,0,0,.6)' }}>
+                      {allPhotos.slice(0,10).map((p,i) => (
+                        <div key={i} onClick={() => setShowcaseCarouselIdx(i)} style={{ flex:1, height:'56px', overflow:'hidden', cursor:'pointer', opacity: i===showcaseCarouselIdx ? 1 : 0.45, border: i===showcaseCarouselIdx ? '2px solid #c9a96e' : '2px solid transparent', transition:'opacity .2s, border .2s', position:'relative' }}>
+                          <img src={p} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                          {analyses[i]?.roomType && <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'rgba(0,0,0,.6)', fontFamily:"'DM Mono',monospace", fontSize:'.25rem', letterSpacing:'.04em', color:'rgba(255,255,255,.5)', padding:'2px 4px', textTransform:'uppercase', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{String(analyses[i].roomType)}</div>}
+                        </div>
+                      ))}
+                      {allPhotos.length > 10 && <div style={{ flex:1, height:'56px', background:'rgba(201,169,110,.1)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'DM Mono',monospace", fontSize:'.3rem', color:'rgba(201,169,110,.6)', cursor:'pointer' }} onClick={() => openLightbox(allPhotos.map((u,i)=>({url:u,label:String(analyses[i]?.roomType||'')})),0)}>+{allPhotos.length-10}</div>}
+                    </div>
                   )}
-                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)', letterSpacing:'.12em', marginTop:'12px' }}>
-                    {showcaseImovel.bairro as string}{showcaseImovel.bairro ? ' · ' : ''}{showcaseImovel.zona as string} · AMI 22506
-                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             <div style={{ padding:'0 48px' }}>
               {/* Price + Stats */}
@@ -6962,17 +7251,23 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
               {(showcaseImovel.photos as string[])?.length > 1 && (
                 <div style={{ padding:'40px 0', borderBottom:'1px solid rgba(201,169,110,.1)' }}>
                   <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'20px' }}>Galeria · {(showcaseImovel.photos as string[]).length} Fotografias</div>
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px,1fr))', gap:'8px' }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px,1fr))', gap:'6px' }}>
                     {(showcaseImovel.photos as string[]).map((photo, i) => {
                       const analysis = (showcaseImovel.photoAnalyses as Record<string,unknown>[])?.[i]
+                      const qScore = Number(analysis?.qualityScore || 0)
+                      const luxuries = (analysis?.luxuryIndicators as string[] || [])
                       return (
-                        <div key={i} style={{ position:'relative', aspectRatio:'4/3', overflow:'hidden', cursor:'pointer', border: i === 0 ? '2px solid rgba(201,169,110,.3)' : '2px solid transparent' }}>
-                          <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .4s' }} onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1.05)'} onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1)'} />
+                        <div key={i} onClick={() => openLightbox((showcaseImovel.photos as string[]).map((u,j) => ({ url: u, label: String((showcaseImovel.photoAnalyses as Record<string,unknown>[])?.[j]?.roomType || '') })), i)}
+                          style={{ position:'relative', aspectRatio:'4/3', overflow:'hidden', cursor:'pointer', border: i === showcaseCarouselIdx ? '2px solid #c9a96e' : '2px solid transparent', transition:'border-color .2s' }}>
+                          <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .35s' }} onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1.07)'} onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1)'} />
+                          <div style={{ position:'absolute', inset:0, background:'linear-gradient(transparent 55%, rgba(5,14,9,.8))' }} />
                           {analysis && (
-                            <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(transparent, rgba(5,14,9,.85))', padding:'20px 10px 8px' }}>
-                              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.08em', textTransform:'uppercase', color:'rgba(201,169,110,.7)' }}>{analysis.roomType as string}</div>
+                            <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'14px 10px 8px' }}>
+                              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.28rem', letterSpacing:'.08em', textTransform:'uppercase', color:'rgba(201,169,110,.75)', marginBottom:'3px' }}>{analysis.roomType as string}</div>
+                              {luxuries.length > 0 && <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.24rem', color:'rgba(255,255,255,.35)', letterSpacing:'.04em' }}>{luxuries.slice(0,2).join(' · ')}</div>}
                             </div>
                           )}
+                          {qScore >= 8 && <div style={{ position:'absolute', top:'6px', right:'6px', background:'rgba(74,156,122,.8)', color:'#fff', fontFamily:"'DM Mono',monospace", fontSize:'.25rem', padding:'2px 5px' }}>★ {qScore}</div>}
                         </div>
                       )
                     })}
