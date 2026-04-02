@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     if (ALLOWED.includes(email.toLowerCase())) {
       const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
       const magicLink = `${PORTAL_URL}?token=${magicToken}`
-      await resend.emails.send({
+      const { data: magicData, error: magicErr } = await resend.emails.send({
         from: FROM,
         to: email,
         subject: 'Acesso · Área de Agentes · Agency Group',
@@ -58,6 +58,11 @@ export async function POST(req: NextRequest) {
           </body></html>
         `,
       })
+      if (magicErr) {
+        console.error('Resend magic link error:', magicErr)
+        return NextResponse.json({ error: 'Falha ao enviar email. Tenta novamente.' }, { status: 500 })
+      }
+      console.log('Magic link sent ok, id:', magicData?.id)
       return NextResponse.json({ ok: true })
     }
 
@@ -70,7 +75,7 @@ export async function POST(req: NextRequest) {
     const now = new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })
 
     // Email para o admin
-    const { error: adminErr } = await resend.emails.send({
+    const { data: adminData, error: adminErr } = await resend.emails.send({
       from: FROM,
       to: ADMIN_EMAIL,
       subject: `Pedido de Acesso Agentes · ${email}`,
@@ -111,9 +116,10 @@ export async function POST(req: NextRequest) {
       `,
     })
     if (adminErr) {
-      console.error('Resend admin email error:', adminErr)
+      console.error('Resend admin email error:', JSON.stringify(adminErr))
       return NextResponse.json({ error: 'Falha ao enviar email de aprovação. Tenta novamente.' }, { status: 500 })
     }
+    console.log('Admin approval email sent ok, resend_id:', adminData?.id)
 
     // Confirmação para o agente
     await resend.emails.send({
