@@ -5,6 +5,7 @@ export const runtime = 'edge'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY ?? '',
+  dangerouslyAllowBrowser: true, // required for Next.js Edge Runtime
 })
 
 const SYSTEM_PROMPT = `You are Sofia, the digital specialist consultant of Agency Group — Portugal's leading luxury real estate agency (AMI 22506).
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
       : ''
 
     const stream = await client.messages.stream({
-      model: 'claude-opus-4-5',
+      model: 'claude-opus-4-6',
       max_tokens: 600,
       system: SYSTEM_PROMPT + langHint,
       messages: validMessages,

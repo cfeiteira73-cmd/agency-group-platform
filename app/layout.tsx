@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import Script from 'next/script'
 import ChatWidget from './components/ChatWidget'
 import { CurrencyProvider } from './components/CurrencyWidget'
 import PWAInstallBanner from './components/PWAInstallBanner'
@@ -369,13 +370,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaAggregateRatingExpanded) }}
         />
 
-        {/* Vercel Analytics — no package needed */}
-        <script src="/_vercel/insights/script.js" defer />
-
-        {/* Vercel Speed Insights — no package needed */}
-        <script src="/_vercel/speed-insights/script.js" defer />
       </head>
       <body>
+        {/* Vercel Analytics */}
+        <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />
+        {/* Vercel Speed Insights */}
+        <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
         <CurrencyProvider>
         {children}
         <ChatWidget />
