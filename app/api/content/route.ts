@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 // Rate limiting
 const rateMap = new Map<string, { count: number; reset: number }>()
@@ -285,6 +284,7 @@ function generatePostingSchedule(): Record<string, { day: string; time: string; 
 }
 
 export async function POST(req: NextRequest) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
   if (!checkRate(ip)) return NextResponse.json({ success: false, error: 'Limite de pedidos atingido. Tenta em 1 hora.' }, { status: 429 })
 
