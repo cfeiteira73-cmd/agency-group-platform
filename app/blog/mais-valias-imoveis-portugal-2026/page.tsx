@@ -3,12 +3,12 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Mais-Valias Imobiliárias Portugal 2026: Calcular e Poupar · Agency Group',
-  description: 'Como calcular as mais-valias na venda de imóvel em Portugal. Coeficientes AT 2026, isenção HPP, reinvestimento, taxa 28% não residentes.',
+  description: 'Como calcular as mais-valias na venda de imóvel em Portugal. Coeficientes AT 2026, isenção HPP, reinvestimento, taxa 28% não residentes. CIRS actualizado.',
   robots: 'index, follow',
   alternates: { canonical: 'https://www.agencygroup.pt/blog/mais-valias-imoveis-portugal-2026' },
   openGraph: {
     title: 'Mais-Valias Imobiliárias Portugal 2026: Calcular e Poupar',
-    description: 'Coeficientes AT 2026, isenção HPP, reinvestimento, taxa 28% não residentes. Guia completo com simulação linha a linha.',
+    description: 'Fórmula CIRS, coeficientes AT 2026, isenção HPP, reinvestimento e taxa 28% para não residentes. Guia completo com exemplos práticos.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/mais-valias-imoveis-portugal-2026',
   },
@@ -18,17 +18,16 @@ const ARTICLE_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'Article',
   headline: 'Mais-Valias Imobiliárias Portugal 2026: Calcular e Poupar',
-  description: 'Como calcular as mais-valias na venda de imóvel em Portugal. Coeficientes AT 2026, isenção HPP, reinvestimento, taxa 28% não residentes.',
+  description: 'Como calcular as mais-valias na venda de imóvel em Portugal. Coeficientes AT 2026, isenção HPP, reinvestimento, taxa 28% não residentes. CIRS actualizado.',
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
   publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-01',
-  dateModified: '2026-04-01',
+  dateModified: '2026-04-02',
   url: 'https://www.agencygroup.pt/blog/mais-valias-imoveis-portugal-2026',
   inLanguage: 'pt-PT',
   about: [
     { '@type': 'Thing', name: 'Mais-valias imobiliárias Portugal' },
-    { '@type': 'Thing', name: 'Impostos venda casa Portugal 2026' },
-    { '@type': 'Thing', name: 'CIRS Art. 10 isenção HPP' },
+    { '@type': 'Thing', name: 'Impostos venda casa Portugal' },
   ],
 }
 
@@ -85,37 +84,38 @@ export default function ArticleMaisValias() {
       <header className="art-hero">
         <div className="art-hero-inner">
           <div className="art-breadcrumb">
-            <Link href="/">agencygroup.pt</Link> → <Link href="/blog">blog</Link> → mais-valias-imoveis-portugal-2026
+            <Link href="/">Início</Link> → <Link href="/blog">Blog</Link> → Mais-Valias Imobiliárias
           </div>
           <div className="art-cat">Fiscalidade Imobiliária</div>
           <h1 className="art-h1">Mais-Valias Imobiliárias <em>Portugal 2026</em></h1>
           <div className="art-meta">
-            <span>Agency Group · AMI 22506</span>
-            <span>·</span>
-            <span>1 Abril 2026</span>
-            <span>·</span>
             <span>10 min leitura</span>
+            <span>·</span>
+            <span>Actualizado Abril 2026</span>
+            <span>·</span>
+            <span>AMI 22506</span>
           </div>
         </div>
       </header>
 
       <article className="art-content">
         <p className="art-lead">
-          Quando vende um imóvel em Portugal, o fisco pode reclamar uma fatia significativa do seu ganho.
-          As mais-valias imobiliárias são tributadas ao abrigo do Art. 10.º do CIRS — mas a forma como
-          o imposto é calculado, e as isenções disponíveis, dependem muito do seu perfil: residente ou não
-          residente, habitação própria permanente ou investimento. Este guia explica o cálculo completo,
-          com os coeficientes AT 2026 actualizados e as estratégias legais para minimizar o imposto.
+          Quando vende um imóvel em Portugal por valor superior ao de compra, a diferença está sujeita a IRS.
+          Mas o Código do IRS (CIRS) prevê mecanismos que reduzem significativamente — ou eliminam — a carga
+          fiscal: coeficientes de desvalorização monetária que corrigem o valor de compra pela inflação
+          acumulada, isenção total para habitação própria permanente com reinvestimento, e uma taxa especialmente
+          favorável para residentes que optam pelo englobamento. Neste guia explicamos a fórmula completa,
+          os coeficientes AT actualizados para 2026, as isenções disponíveis e como calcular o imposto
+          antes de assinar qualquer escritura de venda.
         </p>
 
-        <h2 className="s">1. Como se Calcula a Mais-Valia</h2>
-        <p className="t">O cálculo segue quatro passos obrigatórios, aplicados por esta ordem:</p>
+        <h2 className="s">1. A Fórmula CIRS — Os 4 Passos do Cálculo</h2>
         <div className="step-grid">
           {[
-            {n:'01',t:'Ganho Bruto',d:'Preço Venda − (Preço Compra × Coeficiente AT 2026). O coeficiente corrige a inflação e desvalorização da moeda desde a data de aquisição.'},
-            {n:'02',t:'Deduções Legais',d:'Despesas de compra + venda + obras com factura emitida nos últimos 12 anos. Incluem IMT, IS, notário, comissão de agência e melhorias documentadas.'},
-            {n:'03',t:'Ganho Tributável',d:'Residentes: apenas 50% do ganho líquido entra no IRS (Art. 43.º CIRS). Não residentes: 100% do ganho líquido é tributado.'},
-            {n:'04',t:'Imposto Final',d:'Residentes: o ganho tributável soma-se aos restantes rendimentos e aplica-se a tabela IRS progressiva. Não residentes: taxa liberatória fixa de 28%.'},
+            {n:'01',t:'Ganho Bruto = Venda − (Compra × Coef AT)',d:'O valor de compra é corrigido pelo coeficiente de desvalorização monetária da AT (publicado anualmente em Portaria). A correcção reduz o ganho tributável — quanto mais antigo o imóvel, maior o benefício.'},
+            {n:'02',t:'Deduções',d:'Do ganho bruto deduzem-se: IMT e IS pagos na compra, custos de obras documentadas com factura, comissão de agência com recibo, custos de notário e registo na compra e na venda, e certificação energética.'},
+            {n:'03',t:'Ganho Tributável — 50% para Residentes',d:'Residentes fiscais em Portugal tributam apenas 50% do ganho bruto líquido (após deduções). Não residentes tributam 100%. Esta diferença pode representar dezenas de milhares de euros de imposto.'},
+            {n:'04',t:'Imposto: 28% (NR) ou Tabela IRS (Residente)',d:'Não residentes pagam 28% sobre 100% do ganho. Residentes podem optar pelo englobamento (tabela IRS progressiva 14,5%–48% sobre 50% do ganho) ou pela taxa autónoma de 28% sobre 50% do ganho.'},
           ].map(s=>(
             <div key={s.n} className="step-card">
               <div className="step-n">{s.n}</div>
@@ -125,81 +125,115 @@ export default function ArticleMaisValias() {
           ))}
         </div>
 
-        <h2 className="s">2. Simulação Completa — Exemplo Real</h2>
-        <p className="t">Imóvel comprado em 2015 por €200.000, vendido em 2026 por €380.000 (não HPP):</p>
+        <h2 className="s">2. Coeficientes de Desvalorização Monetária AT — 2026</h2>
+        <p className="t">
+          A Portaria publicada anualmente pela Autoridade Tributária define os coeficientes que corrigem
+          o valor de aquisição pela inflação acumulada. Aplicam-se a imóveis adquiridos há mais de 24 meses.
+          Quanto mais antigo o imóvel, maior a correcção e menor o ganho tributável:
+        </p>
         <table className="cost-table">
-          <thead><tr><th>Item</th><th>Valor</th></tr></thead>
+          <thead><tr><th>Ano de Aquisição</th><th>Coeficiente AT 2026</th><th>Efeito Prático</th></tr></thead>
           <tbody>
-            <tr><td>Preço Venda</td><td>€380.000</td></tr>
-            <tr><td>Coef. AT 2015</td><td>1,37</td></tr>
-            <tr><td>Preço Compra Corrigido</td><td>€274.000</td></tr>
-            <tr><td>Ganho Bruto</td><td>€106.000</td></tr>
-            <tr><td>Despesas Compra+Venda</td><td>−€25.000</td></tr>
-            <tr><td>Ganho Líquido</td><td>€81.000</td></tr>
-            <tr><td>Ganho Tributável (Residente 50%)</td><td>€40.500</td></tr>
-            <tr><td>Imposto Estimado (Residente)</td><td>≈ €9.000</td></tr>
-            <tr><td>Ganho Tributável (Não Residente 100%)</td><td>€81.000</td></tr>
-            <tr><td>Imposto Estimado (NR 28%)</td><td>≈ €22.680</td></tr>
+            <tr><td>2024 – 2025</td><td>1,00</td><td>Sem correcção (menos de 24 meses)</td></tr>
+            <tr><td>2022 – 2023</td><td>1,07</td><td>Base sobe 7%</td></tr>
+            <tr><td>2020 – 2021</td><td>1,12</td><td>Base sobe 12%</td></tr>
+            <tr><td>2018 – 2019</td><td>1,18</td><td>Base sobe 18%</td></tr>
+            <tr><td>2015 – 2017</td><td>1,27</td><td>Base sobe 27%</td></tr>
+            <tr><td>2010 – 2014</td><td>1,38</td><td>Base sobe 38%</td></tr>
+            <tr><td>2005 – 2009</td><td>1,52</td><td>Base sobe 52%</td></tr>
+            <tr><td>2000 – 2004</td><td>1,72</td><td>Base sobe 72%</td></tr>
+            <tr><td>1995 – 1999</td><td>2,01</td><td>Base duplica</td></tr>
+          </tbody>
+        </table>
+
+        <h2 className="s">3. Exemplo Prático Completo</h2>
+        <p className="t">
+          Imóvel comprado em 2015 por €200.000, vendido em 2026 por €380.000.
+          Coeficiente AT 2026 para 2015: 1,37. Despesas e obras documentadas: €25.000.
+        </p>
+        <table className="cost-table">
+          <thead><tr><th>Passo</th><th>Cálculo</th><th>Valor</th></tr></thead>
+          <tbody>
+            <tr><td>Valor de venda</td><td>—</td><td>€ 380.000</td></tr>
+            <tr><td>Valor de compra corrigido</td><td>€ 200.000 × 1,37</td><td>€ 274.000</td></tr>
+            <tr><td>Ganho bruto antes de deduções</td><td>€ 380.000 − € 274.000</td><td>€ 106.000</td></tr>
+            <tr><td>Deduções (obras + custos)</td><td>Facturas documentadas</td><td>− € 25.000</td></tr>
+            <tr><td>Ganho bruto líquido</td><td>€ 106.000 − € 25.000</td><td>€ 81.000</td></tr>
+            <tr><td>Base tributável — Residente (50%)</td><td>€ 81.000 × 50%</td><td>€ 40.500</td></tr>
+            <tr><td>Imposto estimado — Residente (escalão ~45%)</td><td>€ 40.500 × ~45%</td><td>~ € 18.225</td></tr>
+            <tr><td>Base tributável — Não Residente (100%)</td><td>€ 81.000 × 100%</td><td>€ 81.000</td></tr>
+            <tr><td>Imposto — Não Residente (28% taxa autónoma)</td><td>€ 81.000 × 28%</td><td>~ € 22.680</td></tr>
           </tbody>
         </table>
 
         <div className="callout">
-          <p><strong>Isenção Total HPP:</strong> Se vender a sua habitação própria permanente e reinvestir o produto noutra HPP em Portugal ou UE nos 36 meses seguintes, pode ter <strong>isenção total de mais-valias</strong> (Art. 10.º/5 CIRS). Esta é a mais poderosa optimização fiscal disponível para particulares.</p>
+          <p><strong>Isenção HPP — Art. 10º/5 CIRS:</strong> Vende habitação própria permanente e reinveste noutra HPP em Portugal, UE ou EEA? <strong>Isenção total de impostos sobre as mais-valias.</strong> Condições: o imóvel vendido deve ser a HPP do vendedor há pelo menos 24 meses; o produto da venda deve ser reinvestido na compra de nova HPP no prazo de 36 meses após a venda (ou 24 meses antes); o vendedor não pode ter beneficiado desta isenção nos 3 anos anteriores. Reinvestimento parcial: isenção proporcional.</p>
         </div>
 
-        <h2 className="s">3. Coeficientes de Desvalorização AT 2026</h2>
-        <p className="t">A Autoridade Tributária publica anualmente os coeficientes de desvalorização da moeda. Quanto mais antigo o imóvel, maior o coeficiente — e menor o ganho tributável. Os valores para 2026:</p>
+        <h2 className="s">4. Isenções Disponíveis em 2026</h2>
+        <h3 className="ss">Isenção HPP com Reinvestimento</h3>
+        <p className="t">
+          A principal isenção do CIRS para venda de imóveis. Aplica-se à alienação da habitação própria e
+          permanente com reinvestimento do produto da venda noutra HPP. O reinvestimento pode ser total
+          (isenção total) ou parcial (isenção proporcional ao valor reinvestido). Válida para residentes
+          fiscais em Portugal — não residentes não têm acesso a esta isenção pela regra geral.
+        </p>
+        <h3 className="ss">Isenção por Prejuízo</h3>
+        <p className="t">
+          Se a venda originar menos-valia (vende por valor inferior à base de custo corrigida), não há
+          imposto. A menos-valia pode ainda ser deduzida a mais-valias de outros imóveis no mesmo ano
+          fiscal — ou reportada para os 5 anos seguintes.
+        </p>
+        <h3 className="ss">Isenção para Imóveis Adquiridos antes de 1989</h3>
+        <p className="t">
+          Imóveis adquiridos antes de 1 de Janeiro de 1989 (entrada em vigor do CIRS) estão totalmente
+          isentos de mais-valias — independentemente do ganho realizado. Esta isenção é particularmente
+          relevante para heranças ou imóveis familiares antigos.
+        </p>
+
+        <h2 className="s">5. Residente vs. Não Residente — Diferença Crítica</h2>
         <table className="cost-table">
-          <thead><tr><th>Ano de Aquisição</th><th>Coeficiente AT 2026</th></tr></thead>
+          <thead><tr><th>Parâmetro</th><th>Residente Fiscal Portugal</th><th>Não Residente</th></tr></thead>
           <tbody>
-            <tr><td>2000–2001</td><td>1,64–1,59</td></tr>
-            <tr><td>2002–2003</td><td>1,55–1,52</td></tr>
-            <tr><td>2004–2005</td><td>1,48–1,44</td></tr>
-            <tr><td>2006–2007</td><td>1,40–1,37</td></tr>
-            <tr><td>2008–2009</td><td>1,32–1,29</td></tr>
-            <tr><td>2010</td><td>1,26</td></tr>
-            <tr><td>2011–2012</td><td>1,23–1,20</td></tr>
-            <tr><td>2013–2014</td><td>1,17–1,15</td></tr>
-            <tr><td>2015</td><td>1,13</td></tr>
-            <tr><td>2016–2017</td><td>1,11–1,09</td></tr>
-            <tr><td>2018–2019</td><td>1,07–1,06</td></tr>
-            <tr><td>2020</td><td>1,05</td></tr>
-            <tr><td>2021–2022</td><td>1,04–1,03</td></tr>
-            <tr><td>2023–2024</td><td>1,02–1,01</td></tr>
-            <tr><td>2025</td><td>1,00</td></tr>
+            <tr><td>Base tributável</td><td>50% do ganho bruto líquido</td><td>100% do ganho bruto líquido</td></tr>
+            <tr><td>Taxa aplicável</td><td>Englobamento (tabela IRS 14,5%–48%) ou 28% autónoma</td><td>Taxa autónoma de 28%</td></tr>
+            <tr><td>Isenção HPP (Art. 10º/5)</td><td>Disponível com reinvestimento</td><td>Não disponível (regra geral)</td></tr>
+            <tr><td>Coeficiente de desvalorização AT</td><td>Aplica-se</td><td>Aplica-se</td></tr>
+            <tr><td>Encargos dedutíveis</td><td>Todos os documentados</td><td>Todos os documentados</td></tr>
+            <tr><td>Imposto no exemplo €81K de ganho</td><td>~ € 18.225</td><td>~ € 22.680</td></tr>
           </tbody>
         </table>
 
-        <h2 className="s">4. Isenções e Reduções Fiscais</h2>
-        <p className="t"><strong>Isenção HPP (Art. 10.º/5 CIRS):</strong> A mais relevante. Se vender a sua habitação própria permanente e reinvestir na compra de outra HPP em Portugal, na UE ou no Espaço Económico Europeu, dentro de 36 meses após a venda (ou 24 meses antes), está isento de mais-valias na totalidade. O reinvestimento pode ser parcial — a isenção é proporcional.</p>
-        <p className="t"><strong>Menos-valia (prejuízo):</strong> Se o preço de venda for inferior ao preço de compra corrigido, o resultado é €0 de imposto. As menos-valias imobiliárias não são dedutíveis a outros rendimentos.</p>
-        <p className="t"><strong>Heranças e doações:</strong> A transmissão por herança ou doação não gera mais-valias no momento da transmissão. O herdeiro assume o valor matricial na data de aquisição — e só paga mais-valias quando vender.</p>
-        <p className="t"><strong>Imóveis adquiridos antes de 1989:</strong> Estão totalmente isentos de mais-valias, independentemente do ganho obtido.</p>
-
-        <h2 className="s">5. Residentes vs Não Residentes</h2>
-        <p className="t">A diferença de tratamento fiscal entre residentes e não residentes em Portugal é substancial e deve ser conhecida antes de qualquer decisão:</p>
-        <table className="cost-table">
-          <thead><tr><th>Critério</th><th>Residente Fiscal PT</th><th>Não Residente</th></tr></thead>
-          <tbody>
-            <tr><td>Base tributável</td><td>50% do ganho líquido</td><td>100% do ganho líquido</td></tr>
-            <tr><td>Taxa aplicável</td><td>Tabela progressiva IRS</td><td>28% taxa liberatória</td></tr>
-            <tr><td>Isenção HPP</td><td>Sim (Art. 10.º/5)</td><td>Não (salvo UE/EEE residentes)</td></tr>
-            <tr><td>NHR/IFICI</td><td>Potencial isenção adicional</td><td>Não aplicável</td></tr>
-            <tr><td>Imposto efectivo típico</td><td>5–15% do ganho</td><td>28% do ganho líquido total</td></tr>
-          </tbody>
-        </table>
-        <p className="t">Cidadãos da UE e do EEE não residentes podem optar por ser tributados como residentes (taxas progressivas + 50%), o que em muitos casos resulta em imposto mais baixo do que os 28% fixos.</p>
-
-        <h2 className="s">6. Como Minimizar o Imposto Legalmente</h2>
-        <p className="t"><strong>Obras documentadas:</strong> Todas as obras realizadas nos últimos 12 anos com factura em nome do proprietário são dedutíveis. Guarde sempre facturas de remodelações, ar condicionado, cozinha, casas de banho e outros melhoramentos.</p>
-        <p className="t"><strong>Despesas de compra e venda:</strong> IMT, Imposto de Selo, honorários de advogado, comissão da agência imobiliária (da venda), custos de notário e registo — tudo dedutível ao ganho bruto. Guarde todos os recibos desde a aquisição.</p>
-        <p className="t"><strong>Reinvestimento HPP:</strong> Se o imóvel é a sua habitação principal, planeie antecipadamente o reinvestimento. Os 36 meses dão margem considerável para encontrar o próximo imóvel sem pressão fiscal.</p>
-        <p className="t"><strong>Estabelecer residência fiscal em Portugal:</strong> Para compradores internacionais com imóveis em Portugal, tornar-se residente fiscal (e beneficiar do NHR/IFICI) pode reduzir o imposto de 28% para 5–15%. Consulte um advogado fiscal antes de vender.</p>
+        <h2 className="s">6. Como Reduzir o Imposto</h2>
+        <p className="t">
+          <strong>Documente todas as obras com factura.</strong> Cada euro de obra documentada deduz
+          directamente ao ganho tributável. A diferença entre obras sem factura e obras com factura pode
+          representar €5.000–€20.000 de imposto adicional a pagar. Exija sempre factura com NIF do
+          prestador de serviços.
+        </p>
+        <p className="t">
+          <strong>Inclua todos os custos de transacção.</strong> IMT e IS pagos na compra, comissão de
+          agência na venda (com recibo), custos de notário e registo em ambas as transacções, certidão
+          energética — todos são dedutíveis. Reúna os documentos de ambas as transacções antes de
+          declarar à AT.
+        </p>
+        <p className="t">
+          <strong>Avalie o reinvestimento antes de vender.</strong> Se a intenção é comprar outra
+          habitação própria em Portugal, UE ou EEA, o planeamento antecipado do reinvestimento pode
+          resultar em isenção total. O prazo é de 36 meses após a venda — mas pode reinvestir até
+          24 meses antes da venda, contando retroactivamente.
+        </p>
+        <p className="t">
+          <strong>Não residentes: avalie a residência fiscal.</strong> Estabelecer residência fiscal em
+          Portugal antes da venda divide imediatamente a base tributável por 2 (de 100% para 50%).
+          Combinado com o NHR/IFICI, os benefícios podem ser ainda mais expressivos. Consulte sempre
+          um advogado fiscal especializado antes de tomar esta decisão.
+        </p>
 
         <div className="cta-box">
-          <h3>Calcule as Suas Mais-Valias</h3>
-          <p>Use o nosso simulador gratuito — coeficientes AT 2026, isenções automáticas, breakdown linha a linha.</p>
-          <Link href="https://www.agencygroup.pt/#mais-valias">Simular Agora →</Link>
+          <h3>Vai vender um imóvel em Portugal?</h3>
+          <p>A Agency Group estima as suas mais-valias, identifica todas as isenções aplicáveis e coordena com advogado fiscal para optimizar a sua posição. Consulta gratuita.</p>
+          <Link href="/#contacto">Calcular as Minhas Mais-Valias →</Link>
         </div>
       </article>
     </>

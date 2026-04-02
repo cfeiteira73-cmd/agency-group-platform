@@ -559,6 +559,16 @@ export default function Portal() {
   const [showAddImovel, setShowAddImovel] = useState(false)
   const [imovelSaved, setImovelSaved] = useState(false)
 
+  // AI Photo Publisher states
+  interface AiPhoto { url: string; b64: string; analysis?: Record<string,unknown> }
+  const [aiPhotos, setAiPhotos] = useState<AiPhoto[]>([])
+  const [aiHeroIndex, setAiHeroIndex] = useState(0)
+  const [aiAnalyzing, setAiAnalyzing] = useState(false)
+  const [aiGenerating, setAiGenerating] = useState(false)
+  const [aiDesc, setAiDesc] = useState<Record<string,unknown>|null>(null)
+  const [publishStep, setPublishStep] = useState<1|2|3|4>(1)
+  const [showcaseImovel, setShowcaseImovel] = useState<Record<string,unknown>|null>(null)
+
   function saveCrmContacts(updated: CRMContact[]) {
     setCrmContacts(updated)
     if (agentEmail) localStorage.setItem(`ag_crm_${agentEmail}`, JSON.stringify(updated))
@@ -1235,6 +1245,7 @@ ${dealsHtml}
         .port-card.top{border-color:#c9a96e}
         @keyframes jdot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-4px);opacity:1}}
         @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+        @keyframes spin{to{transform:rotate(360deg)}}
         .mkt-input-tab{padding:8px 16px;font-family:'DM Mono',monospace;font-size:.46rem;letter-spacing:.14em;text-transform:uppercase;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:rgba(14,14,13,.4);transition:all .2s}
         .mkt-input-tab.active{color:#1c4a35;border-bottom-color:#1c4a35}
         .crm-contact-row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(14,14,13,.06);transition:background .15s}
@@ -6381,8 +6392,24 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                           return matchSearch && matchZona
                         })
                         .map(p => (
-                          <div key={p.id} style={{ background:'rgba(244,240,230,.04)', border:'1px solid rgba(201,169,110,.12)', padding:'20px', position:'relative' }}>
-                            {p.badge && <div style={{ position:'absolute', top:'12px', right:'12px', background: p.badge==='Off-Market' ? '#c9a96e' : p.badge==='Exclusivo' ? '#1c4a35' : 'rgba(201,169,110,.2)', color: p.badge==='Off-Market' ? '#0c1f15' : '#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.35rem', letterSpacing:'.1em', padding:'4px 10px', textTransform:'uppercase' }}>{p.badge}</div>}
+                          <div key={p.id} style={{ background:'rgba(244,240,230,.04)', border:'1px solid rgba(201,169,110,.12)', position:'relative', overflow:'hidden' }}>
+                            {/* Hero photo */}
+                            {((p as Record<string,unknown>).heroPhoto || ((p as Record<string,unknown>).photos as string[])?.[0]) ? (
+                              <div onClick={() => setShowcaseImovel(p as Record<string,unknown>)} style={{ position:'relative', height:'180px', overflow:'hidden', cursor:'pointer' }}>
+                                <img src={((p as Record<string,unknown>).heroPhoto || ((p as Record<string,unknown>).photos as string[])?.[0]) as string} alt={p.nome} style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .4s' }} onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1.05)'} onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1)'} />
+                                <div style={{ position:'absolute', inset:0, background:'linear-gradient(transparent 50%, rgba(12,31,21,.7))' }} />
+                                <div style={{ position:'absolute', top:'10px', right:'10px', background:'rgba(12,31,21,.7)', backdropFilter:'blur(4px)', color:'rgba(244,240,230,.6)', fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.08em', padding:'3px 8px' }}>
+                                  {((p as Record<string,unknown>).photos as string[])?.length || 1} fotos
+                                </div>
+                                {p.badge && <div style={{ position:'absolute', top:'10px', left:'10px', background: p.badge==='Off-Market' ? '#c9a96e' : p.badge==='Exclusivo' ? '#1c4a35' : 'rgba(201,169,110,.2)', color: p.badge==='Off-Market' ? '#0c1f15' : '#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.1em', padding:'4px 10px', textTransform:'uppercase' }}>{p.badge}</div>}
+                              </div>
+                            ) : (
+                              <div onClick={() => setShowcaseImovel(p as Record<string,unknown>)} style={{ height:'140px', background:'rgba(12,31,21,.4)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+                                <svg width="32" height="32" fill="none" stroke="rgba(201,169,110,.2)" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                {p.badge && <div style={{ position:'absolute', top:'10px', right:'10px', background: p.badge==='Off-Market' ? '#c9a96e' : p.badge==='Exclusivo' ? '#1c4a35' : 'rgba(201,169,110,.2)', color: p.badge==='Off-Market' ? '#0c1f15' : '#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.1em', padding:'4px 10px', textTransform:'uppercase' }}>{p.badge}</div>}
+                              </div>
+                            )}
+                            <div style={{ padding:'20px' }}>
                             <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.3)', letterSpacing:'.1em', marginBottom:'6px' }}>{p.ref}</div>
                             <div style={{ fontFamily:"'Cormorant',serif", fontWeight:400, fontSize:'1.15rem', color:'#f4f0e6', marginBottom:'4px', paddingRight:'80px' }}>{p.nome}</div>
                             <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)', marginBottom:'16px' }}>{p.bairro} · {p.zona}</div>
@@ -6395,8 +6422,10 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                               {p.garagem && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)' }}>Garagem</span>}
                             </div>
                             <div style={{ display:'flex', gap:'8px' }}>
+                              <button onClick={() => setShowcaseImovel(p as Record<string,unknown>)} style={{ flex:1, background:'rgba(201,169,110,.1)', color:'#c9a96e', border:'1px solid rgba(201,169,110,.2)', padding:'8px', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', cursor:'pointer' }}>Showcase ↗</button>
                               <a href={`/imoveis/${p.id}`} target='_blank' rel='noopener' style={{ flex:1, background:'rgba(201,169,110,.1)', color:'#c9a96e', border:'1px solid rgba(201,169,110,.2)', padding:'8px', textAlign:'center', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', textDecoration:'none', display:'block' }}>Ver Página →</a>
                               <button onClick={() => { const updated = imoveisList.map(im => im.id===p.id ? {...im, status: im.status==='Ativo'?'Vendido':'Ativo'} : im); saveImoveis(updated) }} style={{ background: p.status==='Ativo'?'rgba(44,122,86,.2)':'rgba(201,169,110,.08)', color: p.status==='Ativo'?'#2d7a56':'rgba(244,240,230,.4)', border:`1px solid ${p.status==='Ativo'?'rgba(44,122,86,.4)':'rgba(244,240,230,.1)'}`, padding:'8px 12px', fontFamily:"'DM Mono',monospace", fontSize:'.35rem', cursor:'pointer', letterSpacing:'.08em' }}>{p.status==='Ativo'?'Ativo':'Vendido'}</button>
+                            </div>
                             </div>
                           </div>
                         ))}
@@ -6404,91 +6433,414 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                   </div>
                 )}
 
-                {/* ADICIONAR TAB */}
+                {/* ADICIONAR TAB — AI PUBLISHER */}
                 {imoveisTab === 'adicionar' && (
-                  <div style={{ maxWidth:'800px' }}>
-                    <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'1.6rem', color:'#f4f0e6', marginBottom:'32px' }}>Adicionar Novo Imóvel</div>
-                    {imovelSaved && <div style={{ background:'rgba(44,122,86,.15)', border:'1px solid rgba(44,122,86,.4)', color:'#2d7a56', padding:'16px', fontFamily:"'Jost',sans-serif", marginBottom:'24px', borderRadius:'4px' }}>Imóvel guardado com sucesso!</div>}
-
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
+                  <div style={{ maxWidth:'900px' }}>
+                    {/* Stepper */}
+                    <div style={{ display:'flex', gap:'0', marginBottom:'40px', position:'relative' }}>
+                      <div style={{ position:'absolute', top:'16px', left:'12%', right:'12%', height:'2px', background:'rgba(201,169,110,.15)', zIndex:0 }} />
                       {[
-                        { label:'Nome do Imóvel', key:'nome', placeholder:'Villa Quinta da Marinha' },
-                        { label:'Bairro', key:'bairro', placeholder:'Príncipe Real' },
-                      ].map(f => (
-                        <div key={f.key}>
-                          <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>{f.label}</label>
-                          <input value={(newImovel as Record<string,unknown>)[f.key] as string} onChange={e => setNewImovel(prev => ({...prev, [f.key]: e.target.value}))} placeholder={f.placeholder} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }} />
+                        { n:1, label:'Fotos' },
+                        { n:2, label:'AI Análise' },
+                        { n:3, label:'Detalhes' },
+                        { n:4, label:'Publicar' },
+                      ].map(s => (
+                        <div key={s.n} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', cursor: s.n < publishStep ? 'pointer' : 'default', position:'relative', zIndex:1 }} onClick={() => s.n < publishStep && setPublishStep(s.n as 1|2|3|4)}>
+                          <div style={{ width:'32px', height:'32px', borderRadius:'50%', background: publishStep >= s.n ? '#c9a96e' : 'rgba(201,169,110,.1)', border: publishStep >= s.n ? 'none' : '1px solid rgba(201,169,110,.3)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'DM Mono',monospace", fontSize:'.45rem', color: publishStep >= s.n ? '#0c1f15' : 'rgba(201,169,110,.4)', fontWeight:700, transition:'all .3s' }}>{s.n}</div>
+                          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.35rem', letterSpacing:'.12em', textTransform:'uppercase', color: publishStep >= s.n ? '#c9a96e' : 'rgba(201,169,110,.3)' }}>{s.label}</div>
                         </div>
                       ))}
                     </div>
 
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'16px', marginBottom:'16px' }}>
-                      <div>
-                        <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Zona</label>
-                        <select value={newImovel.zona} onChange={e => setNewImovel(p => ({...p, zona:e.target.value}))} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }}>
-                          {['Lisboa','Cascais','Comporta','Porto','Algarve','Madeira','Sintra','Ericeira'].map(z => <option key={z} value={z}>{z}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Tipo</label>
-                        <select value={newImovel.tipo} onChange={e => setNewImovel(p => ({...p, tipo:e.target.value}))} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }}>
-                          {['Apartamento','Moradia','Villa','Herdade','Quinta','Terreno'].map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Badge</label>
-                        <select value={newImovel.badge} onChange={e => setNewImovel(p => ({...p, badge:e.target.value}))} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }}>
-                          <option value=''>Nenhum</option>
-                          {['Destaque','Novo','Exclusivo','Off-Market'].map(b => <option key={b} value={b}>{b}</option>)}
-                        </select>
-                      </div>
-                    </div>
+                    {imovelSaved && <div style={{ background:'rgba(44,122,86,.15)', border:'1px solid rgba(44,122,86,.4)', color:'#2d7a56', padding:'16px', fontFamily:"'Jost',sans-serif", marginBottom:'24px', borderRadius:'4px', display:'flex', alignItems:'center', gap:'12px' }}>
+                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                      Imóvel publicado com sucesso!
+                    </div>}
 
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'16px', marginBottom:'16px' }}>
-                      {[
-                        { label:'Preço (€)', key:'preco', placeholder:'1500000' },
-                        { label:'Área (m²)', key:'area', placeholder:'200' },
-                        { label:'Quartos', key:'quartos', placeholder:'3' },
-                      ].map(f => (
-                        <div key={f.key}>
-                          <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>{f.label}</label>
-                          <input type='number' value={(newImovel as Record<string,unknown>)[f.key] as number} onChange={e => setNewImovel(prev => ({...prev, [f.key]: Number(e.target.value)}))} placeholder={f.placeholder} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }} />
-                        </div>
-                      ))}
-                    </div>
+                    {/* STEP 1: UPLOAD PHOTOS */}
+                    {publishStep === 1 && (
+                      <div>
+                        <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'1.6rem', color:'#f4f0e6', marginBottom:'8px' }}>Upload de Fotografias</div>
+                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.4)', marginBottom:'28px' }}>A AI vai analisar cada foto, identificar o espaço e escolher a melhor foto principal automaticamente.</div>
 
-                    <div style={{ marginBottom:'16px' }}>
-                      <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Descrição</label>
-                      <textarea value={newImovel.desc} onChange={e => setNewImovel(p => ({...p, desc:e.target.value}))} rows={4} placeholder='Descrição detalhada do imóvel...' style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', resize:'vertical', boxSizing:'border-box' as const }} />
-                    </div>
-
-                    <div style={{ display:'flex', gap:'20px', marginBottom:'24px', flexWrap:'wrap' }}>
-                      {[{k:'piscina',l:'Piscina'},{k:'garagem',l:'Garagem'},{k:'jardim',l:'Jardim'},{k:'terraco',l:'Terraço'},{k:'condominio',l:'Condomínio'}].map(f => (
-                        <label key={f.k} style={{ display:'flex', alignItems:'center', gap:'8px', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', color:'rgba(244,240,230,.7)' }}>
-                          <input type='checkbox' checked={(newImovel as Record<string,unknown>)[f.k] as boolean} onChange={e => setNewImovel(p => ({...p, [f.k]:e.target.checked}))} />
-                          {f.l}
+                        {/* Drop zone */}
+                        <label htmlFor="photo-upload" style={{ display:'block', border:'2px dashed rgba(201,169,110,.3)', borderRadius:'4px', padding:'48px', textAlign:'center', cursor:'pointer', marginBottom:'24px', transition:'border-color .2s', background:'rgba(201,169,110,.02)' }}
+                          onDragOver={e => { e.preventDefault(); (e.currentTarget as HTMLElement).style.borderColor='#c9a96e' }}
+                          onDragLeave={e => { (e.currentTarget as HTMLElement).style.borderColor='rgba(201,169,110,.3)' }}
+                          onDrop={e => {
+                            e.preventDefault();
+                            (e.currentTarget as HTMLElement).style.borderColor='rgba(201,169,110,.3)'
+                            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+                            files.forEach(file => {
+                              const reader = new FileReader()
+                              reader.onload = ev => {
+                                const dataUrl = ev.target?.result as string
+                                setAiPhotos(prev => [...prev, { url: dataUrl, b64: dataUrl }])
+                              }
+                              reader.readAsDataURL(file)
+                            })
+                          }}>
+                          <input id="photo-upload" type="file" multiple accept="image/*" style={{ display:'none' }} onChange={e => {
+                            const files = Array.from(e.target.files || [])
+                            files.forEach(file => {
+                              const reader = new FileReader()
+                              reader.onload = ev => {
+                                const dataUrl = ev.target?.result as string
+                                setAiPhotos(prev => [...prev, { url: dataUrl, b64: dataUrl }])
+                              }
+                              reader.readAsDataURL(file)
+                            })
+                          }} />
+                          <svg width="40" height="40" fill="none" stroke="rgba(201,169,110,.4)" viewBox="0 0 24 24" style={{ margin:'0 auto 16px' }}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                          <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.2rem', color:'rgba(244,240,230,.6)', marginBottom:'8px' }}>Arraste as fotos aqui</div>
+                          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', color:'rgba(201,169,110,.5)', textTransform:'uppercase' }}>ou clique para selecionar · JPG, PNG, WebP · Múltiplas fotos</div>
                         </label>
-                      ))}
-                    </div>
 
-                    <button
-                      onClick={() => {
-                        if (!newImovel.nome || !newImovel.preco) return
-                        const imovel = {
-                          ...newImovel,
-                          id: newImovel.nome.replace(/\s+/g,'-').toLowerCase() + '-' + Date.now(),
-                          ref: newImovel.nome.replace(/\s+/g,'-').toLowerCase() + '-' + Date.now(),
-                          casasBanho: newImovel.casasBanho || 0,
-                        }
-                        saveImoveis([...imoveisList, imovel])
-                        setImovelSaved(true)
-                        setTimeout(() => { setImovelSaved(false); setImoveisTab('lista') }, 2000)
-                        setNewImovel({ nome:'', zona:'Lisboa', bairro:'', tipo:'Apartamento', preco:0, area:0, quartos:0, casasBanho:0, andar:'', energia:'A', vista:'', piscina:false, garagem:false, jardim:false, terraco:false, condominio:false, badge:'', status:'Ativo', desc:'', features:'', tourUrl:'' })
-                      }}
-                      style={{ background:'#c9a96e', color:'#0c1f15', border:'none', padding:'14px 40px', fontFamily:"'DM Mono',monospace", fontSize:'.44rem', letterSpacing:'.15em', textTransform:'uppercase', cursor:'pointer', fontWeight:600 }}
-                    >
-                      Guardar Imóvel
-                    </button>
+                        {/* Photo previews */}
+                        {aiPhotos.length > 0 && (
+                          <div>
+                            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', marginBottom:'16px' }}>{aiPhotos.length} foto{aiPhotos.length>1?'s':''} selecionada{aiPhotos.length>1?'s':''}</div>
+                            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px,1fr))', gap:'8px', marginBottom:'24px' }}>
+                              {aiPhotos.map((p, i) => (
+                                <div key={i} style={{ position:'relative', aspectRatio:'4/3', overflow:'hidden', background:'rgba(0,0,0,.3)' }}>
+                                  <img src={p.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                                  <button onClick={() => setAiPhotos(prev => prev.filter((_,idx) => idx !== i))} style={{ position:'absolute', top:'4px', right:'4px', background:'rgba(0,0,0,.7)', border:'none', color:'#fff', width:'20px', height:'20px', borderRadius:'50%', cursor:'pointer', fontSize:'12px', display:'flex', alignItems:'center', justifyContent:'center', padding:0 }}>×</button>
+                                </div>
+                              ))}
+                            </div>
+
+                            <button onClick={async () => {
+                              setAiAnalyzing(true)
+                              try {
+                                const r = await fetch('/api/properties/analyze-photos', {
+                                  method:'POST',
+                                  headers:{'Content-Type':'application/json'},
+                                  body: JSON.stringify({ photos: aiPhotos.map(p => p.b64) })
+                                })
+                                const d = await r.json()
+                                if (d.analyses) {
+                                  setAiPhotos(prev => prev.map((p, i) => ({ ...p, analysis: d.analyses.find((a: Record<string,unknown>) => a.index === i) })))
+                                  setAiHeroIndex(d.heroIndex || 0)
+                                  setPublishStep(2)
+                                }
+                              } catch(e) { console.error(e) }
+                              setAiAnalyzing(false)
+                            }} disabled={aiAnalyzing} style={{ background: aiAnalyzing ? 'rgba(201,169,110,.3)' : '#c9a96e', color:'#0c1f15', border:'none', padding:'14px 40px', fontFamily:"'DM Mono',monospace", fontSize:'.44rem', letterSpacing:'.15em', textTransform:'uppercase', cursor: aiAnalyzing ? 'not-allowed' : 'pointer', fontWeight:600, display:'flex', alignItems:'center', gap:'12px' }}>
+                              {aiAnalyzing ? (
+                                <>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation:'spin 1s linear infinite' }}><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity=".3"/><path d="M21 12a9 9 0 00-9-9"/></svg>
+                                  A Analisar com Claude AI...
+                                </>
+                              ) : (
+                                <>
+                                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                                  Analisar Fotos com Claude AI
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* STEP 2: AI PHOTO ANALYSIS */}
+                    {publishStep === 2 && (
+                      <div>
+                        <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'1.6rem', color:'#f4f0e6', marginBottom:'8px' }}>Análise AI das Fotografias</div>
+                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.4)', marginBottom:'28px' }}>Claude identificou cada espaço e selecionou a melhor foto principal. Pode ajustar.</div>
+
+                        {/* Hero photo highlight */}
+                        {aiPhotos[aiHeroIndex] && (
+                          <div style={{ marginBottom:'32px', position:'relative', borderRadius:'4px', overflow:'hidden', background:'rgba(0,0,0,.4)' }}>
+                            <img src={aiPhotos[aiHeroIndex].url} alt="" style={{ width:'100%', maxHeight:'400px', objectFit:'cover' }} />
+                            <div style={{ position:'absolute', top:'16px', left:'16px', background:'#c9a96e', color:'#0c1f15', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.14em', textTransform:'uppercase', padding:'6px 16px', fontWeight:700 }}>
+                              ★ Foto Principal Selecionada pela AI
+                            </div>
+                            {aiPhotos[aiHeroIndex].analysis && (
+                              <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(transparent, rgba(0,0,0,.8))', padding:'24px 16px 16px' }}>
+                                <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.1rem', color:'#f4f0e6', marginBottom:'4px' }}>{String((aiPhotos[aiHeroIndex].analysis as Record<string,unknown>)?.roomType || '')}</div>
+                                <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                                  {((aiPhotos[aiHeroIndex].analysis as Record<string,unknown>)?.highlights as string[] || []).map((h,i) => (
+                                    <span key={i} style={{ background:'rgba(201,169,110,.2)', color:'#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.08em', padding:'3px 8px' }}>{h}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* All photos grid */}
+                        <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.15em', textTransform:'uppercase', color:'rgba(244,240,230,.35)', marginBottom:'16px' }}>Todas as Fotografias · Clique numa foto para torná-la principal</div>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px,1fr))', gap:'12px', marginBottom:'32px' }}>
+                          {aiPhotos.map((p, i) => {
+                            const a = p.analysis as Record<string,unknown> | undefined
+                            const qScore = Number(a?.qualityScore || 0)
+                            const hScore = Number(a?.heroScore || 0)
+                            const isHero = i === aiHeroIndex
+                            return (
+                              <div key={i} onClick={() => setAiHeroIndex(i)} style={{ cursor:'pointer', border: isHero ? '2px solid #c9a96e' : '2px solid transparent', borderRadius:'4px', overflow:'hidden', background:'rgba(0,0,0,.3)', transition:'border-color .2s', position:'relative' }}>
+                                <div style={{ position:'relative', aspectRatio:'4/3', overflow:'hidden' }}>
+                                  <img src={p.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', filter: isHero ? 'none' : 'brightness(0.8)' }} />
+                                  {isHero && <div style={{ position:'absolute', top:'8px', right:'8px', background:'#c9a96e', color:'#0c1f15', width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:700 }}>★</div>}
+                                </div>
+                                {a && (
+                                  <div style={{ padding:'10px 12px', background:'rgba(12,31,21,.9)' }}>
+                                    <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.8rem', color:'#f4f0e6', marginBottom:'6px', fontWeight:500 }}>{String(a.roomType || '')}</div>
+                                    <div style={{ display:'flex', gap:'12px' }}>
+                                      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.06em' }}>
+                                        <span style={{ color:'rgba(244,240,230,.3)' }}>QLD </span>
+                                        <span style={{ color: qScore >= 8 ? '#4a9c7a' : qScore >= 6 ? '#c9a96e' : '#e87070' }}>{qScore}/10</span>
+                                      </div>
+                                      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.06em' }}>
+                                        <span style={{ color:'rgba(244,240,230,.3)' }}>HERO </span>
+                                        <span style={{ color: hScore >= 8 ? '#4a9c7a' : hScore >= 6 ? '#c9a96e' : '#e87070' }}>{hScore}/10</span>
+                                      </div>
+                                    </div>
+                                    {(a.ambiance as string) && <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(201,169,110,.5)', marginTop:'4px' }}>{String(a.ambiance)}</div>}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        <button onClick={() => setPublishStep(3)} style={{ background:'#c9a96e', color:'#0c1f15', border:'none', padding:'14px 40px', fontFamily:"'DM Mono',monospace", fontSize:'.44rem', letterSpacing:'.15em', textTransform:'uppercase', cursor:'pointer', fontWeight:600 }}>
+                          Continuar → Detalhes do Imóvel
+                        </button>
+                      </div>
+                    )}
+
+                    {/* STEP 3: PROPERTY DETAILS + AI DESCRIPTION */}
+                    {publishStep === 3 && (
+                      <div>
+                        <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'1.6rem', color:'#f4f0e6', marginBottom:'8px' }}>Detalhes + Descrição AI</div>
+                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.4)', marginBottom:'28px' }}>Preencha os dados do imóvel. A AI gera a descrição com neuromarketing de elite.</div>
+
+                        {/* Form */}
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
+                          {[
+                            { label:'Nome do Imóvel', key:'nome', placeholder:'Villa Quinta da Marinha' },
+                            { label:'Bairro / Localização', key:'bairro', placeholder:'Príncipe Real' },
+                          ].map(f => (
+                            <div key={f.key}>
+                              <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>{f.label}</label>
+                              <input value={(newImovel as Record<string,unknown>)[f.key] as string} onChange={e => setNewImovel(prev => ({...prev, [f.key]: e.target.value}))} placeholder={f.placeholder} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }} />
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'16px', marginBottom:'16px' }}>
+                          <div>
+                            <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Zona</label>
+                            <select value={newImovel.zona} onChange={e => setNewImovel(p => ({...p, zona:e.target.value}))} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }}>
+                              {['Lisboa','Cascais','Comporta','Porto','Algarve','Madeira','Sintra','Ericeira'].map(z => <option key={z} value={z}>{z}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Tipo</label>
+                            <select value={newImovel.tipo} onChange={e => setNewImovel(p => ({...p, tipo:e.target.value}))} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }}>
+                              {['Apartamento','Moradia','Villa','Herdade','Quinta','Terreno'].map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Badge</label>
+                            <select value={newImovel.badge} onChange={e => setNewImovel(p => ({...p, badge:e.target.value}))} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }}>
+                              <option value=''>Nenhum</option>
+                              {['Destaque','Novo','Exclusivo','Off-Market'].map(b => <option key={b} value={b}>{b}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr', gap:'16px', marginBottom:'16px' }}>
+                          {[
+                            { label:'Preço (€)', key:'preco', placeholder:'1500000' },
+                            { label:'Área (m²)', key:'area', placeholder:'200' },
+                            { label:'Quartos', key:'quartos', placeholder:'3' },
+                            { label:'Casas de Banho', key:'casasBanho', placeholder:'2' },
+                            { label:'Andar', key:'andar', placeholder:'4º' },
+                          ].map(f => (
+                            <div key={f.key}>
+                              <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>{f.label}</label>
+                              <input type={f.key==='andar'?'text':'number'} value={(newImovel as Record<string,unknown>)[f.key] as string|number} onChange={e => setNewImovel(prev => ({...prev, [f.key]: f.key==='andar' ? e.target.value : Number(e.target.value)}))} placeholder={f.placeholder} style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }} />
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px', marginBottom:'16px' }}>
+                          <div>
+                            <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Vista</label>
+                            <input value={newImovel.vista} onChange={e => setNewImovel(p => ({...p, vista:e.target.value}))} placeholder='Mar, Rio, Serra, Cidade...' style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }} />
+                          </div>
+                          <div>
+                            <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>URL Tour Virtual</label>
+                            <input value={newImovel.tourUrl} onChange={e => setNewImovel(p => ({...p, tourUrl:e.target.value}))} placeholder='https://...' style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', boxSizing:'border-box' as const }} />
+                          </div>
+                        </div>
+                        <div style={{ display:'flex', gap:'20px', marginBottom:'24px', flexWrap:'wrap' }}>
+                          {[{k:'piscina',l:'Piscina'},{k:'garagem',l:'Garagem'},{k:'jardim',l:'Jardim'},{k:'terraco',l:'Terraço'},{k:'condominio',l:'Condomínio'}].map(f => (
+                            <label key={f.k} style={{ display:'flex', alignItems:'center', gap:'8px', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', color:'rgba(244,240,230,.7)' }}>
+                              <input type='checkbox' checked={(newImovel as Record<string,unknown>)[f.k] as boolean} onChange={e => setNewImovel(p => ({...p, [f.k]:e.target.checked}))} />
+                              {f.l}
+                            </label>
+                          ))}
+                        </div>
+
+                        {/* AI Description Generator */}
+                        <div style={{ background:'rgba(28,74,53,.1)', border:'1px solid rgba(28,74,53,.4)', borderLeft:'3px solid #1c4a35', padding:'24px', marginBottom:'24px' }}>
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'16px' }}>
+                            <div>
+                              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.15em', textTransform:'uppercase', color:'#4a9c7a', marginBottom:'4px' }}>Claude AI · Neuromarketing Engine</div>
+                              <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.1rem', color:'#f4f0e6' }}>Geração de Descrição de Elite</div>
+                            </div>
+                            <button onClick={async () => {
+                              if (!newImovel.nome || !newImovel.preco) { alert('Preencha pelo menos o nome e o preço primeiro.'); return }
+                              setAiGenerating(true)
+                              try {
+                                const r = await fetch('/api/properties/generate-description', {
+                                  method:'POST',
+                                  headers:{'Content-Type':'application/json'},
+                                  body: JSON.stringify({
+                                    property: newImovel,
+                                    photoAnalyses: aiPhotos.map(p => p.analysis).filter(Boolean),
+                                  })
+                                })
+                                const d = await r.json()
+                                if (d.description) {
+                                  setAiDesc(d.description)
+                                  setNewImovel(prev => ({ ...prev, desc: d.description.descriptionMain || prev.desc }))
+                                }
+                              } catch(e) { console.error(e) }
+                              setAiGenerating(false)
+                            }} disabled={aiGenerating} style={{ background: aiGenerating ? 'rgba(74,156,122,.3)' : '#1c4a35', color:'#c9a96e', border:'1px solid rgba(201,169,110,.3)', padding:'10px 24px', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', cursor: aiGenerating ? 'not-allowed' : 'pointer', display:'flex', alignItems:'center', gap:'8px', whiteSpace:'nowrap' as const }}>
+                              {aiGenerating ? (
+                                <>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation:'spin 1s linear infinite' }}><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity=".3"/><path d="M21 12a9 9 0 00-9-9"/></svg>
+                                  A Gerar...
+                                </>
+                              ) : '✦ Gerar com AI'}
+                            </button>
+                          </div>
+
+                          {aiDesc && (
+                            <div style={{ borderTop:'1px solid rgba(201,169,110,.15)', paddingTop:'20px' }}>
+                              {/* Headline */}
+                              <div style={{ marginBottom:'16px' }}>
+                                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'6px' }}>Headline Principal</div>
+                                <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.3rem', color:'#c9a96e', fontStyle:'italic' }}>{aiDesc.headline as string}</div>
+                              </div>
+                              <div style={{ marginBottom:'16px' }}>
+                                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'6px' }}>Subtítulo</div>
+                                <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.88rem', color:'rgba(244,240,230,.7)' }}>{aiDesc.subheadline as string}</div>
+                              </div>
+                              {/* Key Features */}
+                              {Array.isArray(aiDesc.keyFeatures) && (
+                                <div style={{ marginBottom:'16px' }}>
+                                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'8px' }}>Características-Chave</div>
+                                  <div style={{ display:'flex', flexWrap:'wrap', gap:'6px' }}>
+                                    {(aiDesc.keyFeatures as string[]).map((f,i) => (
+                                      <span key={i} style={{ background:'rgba(201,169,110,.1)', color:'#c9a96e', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.06em', padding:'4px 10px', border:'1px solid rgba(201,169,110,.2)' }}>{f}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              <div style={{ marginBottom:'16px' }}>
+                                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'6px' }}>WhatsApp</div>
+                                <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.8rem', color:'rgba(244,240,230,.55)', background:'rgba(244,240,230,.03)', padding:'12px', borderLeft:'2px solid rgba(201,169,110,.2)', lineHeight:1.6 }}>{aiDesc.whatsappText as string}</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Manual description textarea */}
+                        <div style={{ marginBottom:'24px' }}>
+                          <label style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(244,240,230,.4)', display:'block', marginBottom:'8px' }}>Descrição Completa {aiDesc ? '(gerada pela AI — editável)' : ''}</label>
+                          <textarea value={newImovel.desc} onChange={e => setNewImovel(p => ({...p, desc:e.target.value}))} rows={8} placeholder='A AI irá gerar a descrição, ou escreva manualmente...' style={{ width:'100%', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', resize:'vertical', boxSizing:'border-box' as const, lineHeight:1.7 }} />
+                        </div>
+
+                        <button onClick={() => setPublishStep(4)} style={{ background:'#c9a96e', color:'#0c1f15', border:'none', padding:'14px 40px', fontFamily:"'DM Mono',monospace", fontSize:'.44rem', letterSpacing:'.15em', textTransform:'uppercase', cursor:'pointer', fontWeight:600 }}>
+                          Continuar → Preview &amp; Publicar
+                        </button>
+                      </div>
+                    )}
+
+                    {/* STEP 4: PREVIEW + PUBLISH */}
+                    {publishStep === 4 && (
+                      <div>
+                        <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'1.6rem', color:'#f4f0e6', marginBottom:'8px' }}>Preview &amp; Publicar</div>
+                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.82rem', color:'rgba(244,240,230,.4)', marginBottom:'28px' }}>Verifique como ficará o imóvel e publique.</div>
+
+                        {/* Mini showcase preview */}
+                        <div style={{ border:'1px solid rgba(201,169,110,.2)', marginBottom:'32px', overflow:'hidden' }}>
+                          {/* Hero */}
+                          {aiPhotos[aiHeroIndex] && (
+                            <div style={{ position:'relative', height:'300px', overflow:'hidden' }}>
+                              <img src={aiPhotos[aiHeroIndex].url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                              <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 50%, rgba(12,31,21,.9))' }} />
+                              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'24px' }}>
+                                {newImovel.badge && <div style={{ display:'inline-block', background:'#c9a96e', color:'#0c1f15', fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.1em', textTransform:'uppercase', padding:'4px 12px', marginBottom:'8px' }}>{newImovel.badge}</div>}
+                                <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.6rem', color:'#f4f0e6', fontStyle:'italic' }}>{aiDesc?.headline as string || newImovel.nome}</div>
+                                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.5)', letterSpacing:'.1em', marginTop:'4px' }}>{newImovel.bairro} · {newImovel.zona}</div>
+                              </div>
+                            </div>
+                          )}
+                          {/* Details row */}
+                          <div style={{ padding:'20px 24px', background:'rgba(12,31,21,.6)', display:'flex', gap:'32px', flexWrap:'wrap', alignItems:'center', justifyContent:'space-between' }}>
+                            <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.8rem', color:'#c9a96e' }}>€{Number(newImovel.preco).toLocaleString('pt-PT')}</div>
+                            <div style={{ display:'flex', gap:'24px' }}>
+                              {newImovel.area > 0 && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.5)' }}>{newImovel.area}m²</span>}
+                              {newImovel.quartos > 0 && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.5)' }}>T{newImovel.quartos}</span>}
+                              {newImovel.piscina && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)' }}>Piscina</span>}
+                              {newImovel.jardim && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)' }}>Jardim</span>}
+                              {newImovel.terraco && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)' }}>Terraço</span>}
+                            </div>
+                          </div>
+                          {/* Photo strip */}
+                          {aiPhotos.length > 1 && (
+                            <div style={{ display:'flex', gap:'4px', padding:'4px', background:'rgba(0,0,0,.3)', overflowX:'auto' }}>
+                              {aiPhotos.slice(0,8).map((p,i) => (
+                                <div key={i} style={{ flexShrink:0, width:'80px', height:'56px', overflow:'hidden', opacity: i === aiHeroIndex ? 1 : 0.6, border: i === aiHeroIndex ? '2px solid #c9a96e' : '2px solid transparent' }}>
+                                  <img src={p.url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {/* Description preview */}
+                          {newImovel.desc && (
+                            <div style={{ padding:'24px', background:'rgba(244,240,230,.02)' }}>
+                              <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.85rem', color:'rgba(244,240,230,.6)', lineHeight:1.8, whiteSpace:'pre-line' }}>{newImovel.desc.slice(0,400)}{newImovel.desc.length>400?'…':''}</div>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            if (!newImovel.nome || !newImovel.preco) return
+                            const photos = aiPhotos.map(p => p.url)
+                            const imovel = {
+                              ...newImovel,
+                              id: newImovel.nome.replace(/\s+/g,'-').toLowerCase() + '-' + Date.now(),
+                              ref: 'AG-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-4),
+                              casasBanho: newImovel.casasBanho || 0,
+                              photos,
+                              heroPhoto: photos[aiHeroIndex] || '',
+                              photoAnalyses: aiPhotos.map(p => p.analysis),
+                              aiDescription: aiDesc,
+                              grad: 'from-emerald-900 to-stone-800',
+                              lat: 0, lng: 0,
+                              lifestyle: [],
+                              features: newImovel.features ? newImovel.features.split(',').map((f:string) => f.trim()) : [],
+                            }
+                            saveImoveis([...imoveisList, imovel])
+                            setImovelSaved(true)
+                            setAiPhotos([])
+                            setAiDesc(null)
+                            setPublishStep(1)
+                            setNewImovel({ nome:'', zona:'Lisboa', bairro:'', tipo:'Apartamento', preco:0, area:0, quartos:0, casasBanho:0, andar:'', energia:'A', vista:'', piscina:false, garagem:false, jardim:false, terraco:false, condominio:false, badge:'', status:'Ativo', desc:'', features:'', tourUrl:'' })
+                            setTimeout(() => { setImovelSaved(false); setImoveisTab('lista') }, 2000)
+                          }}
+                          style={{ background:'#c9a96e', color:'#0c1f15', border:'none', padding:'16px 48px', fontFamily:"'DM Mono',monospace", fontSize:'.48rem', letterSpacing:'.15em', textTransform:'uppercase', cursor:'pointer', fontWeight:700 }}
+                        >
+                          ✦ Publicar Imóvel
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -6552,6 +6904,152 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
           </main>
         </div>
       </div>
+
+      {/* PROPERTY SHOWCASE MODAL */}
+      {showcaseImovel && (
+        <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(5,14,9,.96)', backdropFilter:'blur(20px)', overflowY:'auto' }} onClick={e => { if (e.target === e.currentTarget) setShowcaseImovel(null) }}>
+          <div style={{ maxWidth:'1100px', margin:'0 auto', padding:'0 0 80px' }}>
+            {/* Close */}
+            <div style={{ position:'sticky', top:0, zIndex:10, padding:'20px 32px', display:'flex', justifyContent:'space-between', alignItems:'center', background:'rgba(5,14,9,.9)', backdropFilter:'blur(16px)', borderBottom:'1px solid rgba(201,169,110,.1)' }}>
+              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.2em', textTransform:'uppercase', color:'rgba(201,169,110,.5)' }}>Agency Group · Showcase</div>
+              <button onClick={() => setShowcaseImovel(null)} style={{ background:'none', border:'1px solid rgba(201,169,110,.2)', color:'rgba(244,240,230,.5)', padding:'8px 20px', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', cursor:'pointer' }}>✕ Fechar</button>
+            </div>
+
+            {/* Hero Photo */}
+            {(showcaseImovel.heroPhoto || (showcaseImovel.photos as string[])?.[0]) && (
+              <div style={{ position:'relative', height:'520px', overflow:'hidden' }}>
+                <img src={(showcaseImovel.heroPhoto || (showcaseImovel.photos as string[])?.[0]) as string} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(5,14,9,.2) 0%, transparent 40%, rgba(5,14,9,.8) 100%)' }} />
+                <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'48px 48px 40px' }}>
+                  {(showcaseImovel.badge as string) && <div style={{ display:'inline-block', background:'#c9a96e', color:'#0c1f15', fontFamily:"'DM Mono',monospace", fontSize:'.36rem', letterSpacing:'.14em', textTransform:'uppercase', padding:'5px 16px', marginBottom:'12px', fontWeight:700 }}>{showcaseImovel.badge as string}</div>}
+                  <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'clamp(2rem,4vw,3rem)', color:'#f4f0e6', lineHeight:1.1, marginBottom:'8px', fontStyle:'italic' }}>
+                    {((showcaseImovel.aiDescription as Record<string,unknown>)?.headline as string) || (showcaseImovel.nome as string)}
+                  </div>
+                  {(showcaseImovel.aiDescription as Record<string,unknown>)?.subheadline && (
+                    <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.9rem', color:'rgba(244,240,230,.65)', maxWidth:'600px' }}>{(showcaseImovel.aiDescription as Record<string,unknown>).subheadline as string}</div>
+                  )}
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)', letterSpacing:'.12em', marginTop:'12px' }}>
+                    {showcaseImovel.bairro as string}{showcaseImovel.bairro ? ' · ' : ''}{showcaseImovel.zona as string} · AMI 22506
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ padding:'0 48px' }}>
+              {/* Price + Stats */}
+              <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:'48px', alignItems:'start', padding:'40px 0', borderBottom:'1px solid rgba(201,169,110,.1)' }}>
+                <div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.15em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'8px' }}>Preço Pedido</div>
+                  <div style={{ fontFamily:"'Cormorant',serif", fontSize:'2.8rem', color:'#c9a96e', fontWeight:300 }}>€{Number(showcaseImovel.preco).toLocaleString('pt-PT')}</div>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.36rem', color:'rgba(244,240,230,.3)', marginTop:'4px' }}>€{Math.round(Number(showcaseImovel.preco)/Number(showcaseImovel.area)).toLocaleString('pt-PT')}/m²</div>
+                </div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'16px' }}>
+                  {[
+                    { label:'Área', value: `${showcaseImovel.area}m²` },
+                    { label:'Tipologia', value: `T${showcaseImovel.quartos}` },
+                    { label:'Casas Banho', value: String(showcaseImovel.casasBanho || '—') },
+                    { label:'Tipo', value: showcaseImovel.tipo as string },
+                  ].map(s => (
+                    <div key={s.label} style={{ background:'rgba(244,240,230,.03)', border:'1px solid rgba(201,169,110,.1)', padding:'16px' }}>
+                      <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.32rem', letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(201,169,110,.35)', marginBottom:'8px' }}>{s.label}</div>
+                      <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.3rem', color:'#f4f0e6' }}>{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Photo Gallery */}
+              {(showcaseImovel.photos as string[])?.length > 1 && (
+                <div style={{ padding:'40px 0', borderBottom:'1px solid rgba(201,169,110,.1)' }}>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'20px' }}>Galeria · {(showcaseImovel.photos as string[]).length} Fotografias</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px,1fr))', gap:'8px' }}>
+                    {(showcaseImovel.photos as string[]).map((photo, i) => {
+                      const analysis = (showcaseImovel.photoAnalyses as Record<string,unknown>[])?.[i]
+                      return (
+                        <div key={i} style={{ position:'relative', aspectRatio:'4/3', overflow:'hidden', cursor:'pointer', border: i === 0 ? '2px solid rgba(201,169,110,.3)' : '2px solid transparent' }}>
+                          <img src={photo} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', transition:'transform .4s' }} onMouseEnter={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1.05)'} onMouseLeave={e => (e.currentTarget as HTMLImageElement).style.transform='scale(1)'} />
+                          {analysis && (
+                            <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(transparent, rgba(5,14,9,.85))', padding:'20px 10px 8px' }}>
+                              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.3rem', letterSpacing:'.08em', textTransform:'uppercase', color:'rgba(201,169,110,.7)' }}>{analysis.roomType as string}</div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {(showcaseImovel.desc as string) && (
+                <div style={{ padding:'40px 0', borderBottom:'1px solid rgba(201,169,110,.1)' }}>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'24px' }}>Descrição</div>
+                  {(showcaseImovel.aiDescription as Record<string,unknown>)?.headline && (
+                    <div style={{ fontFamily:"'Cormorant',serif", fontStyle:'italic', fontSize:'1.5rem', color:'#c9a96e', marginBottom:'12px' }}>{(showcaseImovel.aiDescription as Record<string,unknown>).headline as string}</div>
+                  )}
+                  <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.88rem', lineHeight:1.9, color:'rgba(244,240,230,.65)', whiteSpace:'pre-line', columnCount:1 }}>{showcaseImovel.desc as string}</div>
+                </div>
+              )}
+
+              {/* Key Features */}
+              {(showcaseImovel.aiDescription as Record<string,unknown>)?.keyFeatures && (
+                <div style={{ padding:'40px 0', borderBottom:'1px solid rgba(201,169,110,.1)' }}>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'20px' }}>Características de Destaque</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px,1fr))', gap:'12px' }}>
+                    {((showcaseImovel.aiDescription as Record<string,unknown>).keyFeatures as string[]).map((f, i) => (
+                      <div key={i} style={{ display:'flex', gap:'12px', alignItems:'flex-start', padding:'14px 16px', background:'rgba(244,240,230,.03)', border:'1px solid rgba(201,169,110,.1)' }}>
+                        <div style={{ color:'#c9a96e', flexShrink:0, marginTop:'2px' }}>✦</div>
+                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.83rem', color:'rgba(244,240,230,.65)', lineHeight:1.5 }}>{f}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Amenities */}
+              <div style={{ padding:'40px 0', borderBottom:'1px solid rgba(201,169,110,.1)' }}>
+                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'20px' }}>Comodidades</div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:'10px' }}>
+                  {[
+                    showcaseImovel.piscina && '🏊 Piscina',
+                    showcaseImovel.jardim && '🌿 Jardim',
+                    showcaseImovel.terraco && '🌅 Terraço',
+                    showcaseImovel.garagem && '🚗 Garagem',
+                    showcaseImovel.condominio && '🏢 Condomínio Fechado',
+                    showcaseImovel.vista && `👁 Vista ${showcaseImovel.vista}`,
+                    showcaseImovel.energia && `⚡ Classe Energética ${showcaseImovel.energia}`,
+                    showcaseImovel.tourUrl && '🔮 Tour Virtual 3D',
+                  ].filter(Boolean).map((a, i) => (
+                    <div key={i} style={{ background:'rgba(28,74,53,.15)', border:'1px solid rgba(28,74,53,.3)', color:'rgba(244,240,230,.75)', fontFamily:"'Jost',sans-serif", fontSize:'.82rem', padding:'8px 16px' }}>{a as string}</div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Investment angle */}
+              {(showcaseImovel.aiDescription as Record<string,unknown>)?.investmentAngle && (
+                <div style={{ padding:'40px 0', borderBottom:'1px solid rgba(201,169,110,.1)' }}>
+                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(201,169,110,.4)', marginBottom:'16px' }}>Ângulo de Investimento</div>
+                  <div style={{ background:'rgba(201,169,110,.05)', border:'1px solid rgba(201,169,110,.15)', borderLeft:'3px solid #c9a96e', padding:'20px 24px' }}>
+                    <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'.85rem', color:'rgba(244,240,230,.65)', lineHeight:1.8 }}>{(showcaseImovel.aiDescription as Record<string,unknown>).investmentAngle as string}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* CTA */}
+              <div style={{ padding:'40px 0', textAlign:'center' }}>
+                <div style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'1.6rem', color:'#f4f0e6', marginBottom:'8px', fontStyle:'italic' }}>
+                  {((showcaseImovel.aiDescription as Record<string,unknown>)?.ctaText as string) || 'Agende uma visita privada'}
+                </div>
+                <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.35)', marginBottom:'32px', letterSpacing:'.1em' }}>Agency Group · AMI 22506 · Comissão 5%</div>
+                <div style={{ display:'flex', gap:'16px', justifyContent:'center', flexWrap:'wrap' }}>
+                  <a href="tel:+351919191919" style={{ background:'#c9a96e', color:'#0c1f15', fontFamily:"'DM Mono',monospace", fontSize:'.44rem', letterSpacing:'.15em', textTransform:'uppercase', padding:'14px 36px', textDecoration:'none', fontWeight:700 }}>Ligar Agora</a>
+                  <a href={`/imoveis/${showcaseImovel.id as string}`} target='_blank' rel='noopener' style={{ background:'transparent', color:'#c9a96e', border:'1px solid rgba(201,169,110,.4)', fontFamily:"'DM Mono',monospace", fontSize:'.44rem', letterSpacing:'.15em', textTransform:'uppercase', padding:'14px 36px', textDecoration:'none' }}>Ver Página Completa</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

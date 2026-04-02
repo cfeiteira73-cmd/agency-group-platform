@@ -3,12 +3,12 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Crédito Habitação para Estrangeiros em Portugal 2026 · Agency Group',
-  description: 'O que os bancos portugueses financiam a não residentes. LTV por país (60-80%), documentos, spread, Islamic Finance. Guia completo 2026.',
+  description: 'O que os bancos portugueses financiam a não residentes. LTV por país, spread, documentos, Islamic Finance. Guia completo 2026.',
   robots: 'index, follow',
   alternates: { canonical: 'https://www.agencygroup.pt/blog/credito-habitacao-estrangeiros-portugal' },
   openGraph: {
     title: 'Crédito Habitação para Estrangeiros em Portugal 2026',
-    description: 'O que os bancos portugueses financiam a não residentes. LTV por país (60-80%), documentos, spread, Islamic Finance. Guia completo 2026.',
+    description: 'LTV por país, spread, documentos, Islamic Finance e exemplos reais. Guia completo do mortgage para não residentes em Portugal.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/credito-habitacao-estrangeiros-portugal',
   },
@@ -18,21 +18,20 @@ const ARTICLE_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'Article',
   headline: 'Crédito Habitação para Estrangeiros em Portugal 2026',
-  description: 'O que os bancos portugueses financiam a não residentes. LTV por país (60-80%), documentos, spread, Islamic Finance. Guia completo 2026.',
+  description: 'O que os bancos portugueses financiam a não residentes. LTV por país, spread, documentos, Islamic Finance. Guia completo 2026.',
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
   publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-03-25',
-  dateModified: '2026-03-25',
+  dateModified: '2026-04-02',
   url: 'https://www.agencygroup.pt/blog/credito-habitacao-estrangeiros-portugal',
   inLanguage: 'pt-PT',
   about: [
     { '@type': 'Thing', name: 'Crédito habitação estrangeiros Portugal' },
     { '@type': 'Thing', name: 'Mortgage Portugal non-resident' },
-    { '@type': 'Thing', name: 'Financiamento imobiliário Portugal 2026' },
   ],
 }
 
-export default function ArticleCreditoHabitacao() {
+export default function ArticleCreditoEstrangeiros() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ARTICLE_SCHEMA)}}/>
@@ -85,37 +84,43 @@ export default function ArticleCreditoHabitacao() {
       <header className="art-hero">
         <div className="art-hero-inner">
           <div className="art-breadcrumb">
-            <Link href="/">agencygroup.pt</Link> → <Link href="/blog">blog</Link> → credito-habitacao-estrangeiros-portugal
+            <Link href="/">Início</Link> → <Link href="/blog">Blog</Link> → Crédito Estrangeiros
           </div>
-          <div className="art-cat">Financiamento Internacional</div>
-          <h1 className="art-h1">Crédito Habitação para <em>Estrangeiros</em> em Portugal 2026</h1>
+          <div className="art-cat">Financiamento</div>
+          <h1 className="art-h1">Crédito Habitação para <em>Estrangeiros</em><br/>em Portugal 2026</h1>
           <div className="art-meta">
-            <span>Agency Group · AMI 22506</span>
-            <span>·</span>
-            <span>25 Março 2026</span>
-            <span>·</span>
             <span>10 min leitura</span>
+            <span>·</span>
+            <span>Actualizado Abril 2026</span>
+            <span>·</span>
+            <span>AMI 22506</span>
           </div>
         </div>
       </header>
 
       <article className="art-content">
         <p className="art-lead">
-          Portugal é um dos mercados mais abertos da Europa para compradores internacionais — e os bancos
-          portugueses financiam não residentes. Mas as condições variam significativamente consoante a
-          nacionalidade, o país de residência fiscal e a origem do rendimento. LTV entre 60% e 80%,
-          spreads de 0,85% a 1,8%, Islamic Finance disponível para o Médio Oriente. Este guia cobre
-          tudo o que precisa saber para obter aprovação de crédito habitação em Portugal como estrangeiro.
+          Portugal aceita compradores internacionais — mas os bancos portugueses não financiam todos da mesma
+          forma. A sua nacionalidade, o seu país de residência fiscal e a fonte do seu rendimento determinam
+          o LTV (Loan-to-Value) que consegue, a taxa de juro praticada e os documentos exigidos. Este guia
+          desmonta a realidade do crédito habitação para não residentes em 2026, com dados reais de
+          Millennium BCP, Santander, BPI e Caixa Geral de Depósitos — e inclui a opção de Islamic Finance
+          para compradores do Médio Oriente que necessitem de financiamento conforme a Sharia.
         </p>
 
-        <h2 className="s">1. LTV por País de Origem</h2>
-        <p className="t">Os bancos portugueses segmentam os compradores internacionais por perfil de risco. A sua origem determina o máximo que consegue financiar:</p>
+        <h2 className="s">1. LTV por País de Origem — A Realidade 2026</h2>
+        <p className="t">
+          O Banco de Portugal impõe um DSTI máximo de 40–50% e LTV máximo de 90% para residentes em Portugal.
+          Para não residentes, cada banco aplica critérios próprios com base no risco percepcionado da
+          jurisdição de origem, na facilidade de verificação de rendimentos e na existência de acordos
+          fiscais bilaterais com Portugal. Os quatro perfis principais:
+        </p>
         <div className="step-grid">
           {[
-            {n:'🇫🇷🇩🇪🇧🇷',t:'UE / CPLP',d:'LTV até 80% · Spread 0,85–1,25% · Processo mais simples. Inclui franceses, alemães, espanhóis, italianos, brasileiros e demais cidadãos CPLP.'},
-            {n:'🇬🇧🇺🇸🇨🇦🇦🇺',t:'Anglo-Saxónico',d:'LTV até 70% · Spread 1,0–1,5% · Prova de rendimentos UK/US obrigatória. Documentação adicional pós-Brexit para britânicos.'},
-            {n:'🇦🇪🇸🇦',t:'Médio Oriente',d:'LTV até 70% · Islamic Finance disponível · Estruturas Murabaha/Ijara compatíveis com Sharia. A Agency Group tem parcerias com especialistas nesta área.'},
-            {n:'🇨🇳',t:'China',d:'LTV até 60% · Spread 1,25–1,8% · Apoio em transferências internacionais necessário. Documentação SAFE requerida pelos bancos portugueses.'},
+            {n:'80%',t:'UE / CPLP',d:'Cidadãos da União Europeia, Brasil e PALOP (Angola, Moçambique, Cabo Verde) beneficiam do LTV mais favorável. Acordos fiscais robustos, SEPA e facilidade de verificação de rendimentos. Spread típico: 0,95%–1,55%.'},
+            {n:'70%',t:'UK / EUA / Canadá / Austrália',d:'Pós-Brexit e convenções fiscais bilaterais permitem LTV até 70%. Exige comprovativo de rendimentos apostilado (IRS, T4, SA302). Por vezes exige reconhecimento notarial adicional. Spread típico: 1,10%–1,75%.'},
+            {n:'70%',t:'Emirados / Arábia Saudita',d:'LTV até 70% com comprovativo formal de rendimento e historial bancário de 6 meses. Islamic Finance disponível via estrutura Murabaha/Ijara para compras conformes à Sharia. Spread típico: 1,20%–1,90%.'},
+            {n:'60%',t:'China',d:'LTV mais conservador dado o risco cambial percepcionado. Exige documentação SAFE (State Administration of Foreign Exchange) e historial bancário alargado de 12 meses. Spread típico: 1,30%–2,00%.'},
           ].map(s=>(
             <div key={s.n} className="step-card">
               <div className="step-n">{s.n}</div>
@@ -125,51 +130,110 @@ export default function ArticleCreditoHabitacao() {
           ))}
         </div>
 
-        <h2 className="s">2. Simulação — Imóvel €500K, Comprador Americano (LTV 70%)</h2>
+        <h2 className="s">2. Exemplo Prático — Imóvel €500.000</h2>
+        <p className="t">
+          Comparação da entrada necessária e prestação estimada a 25 anos para um imóvel de €500.000
+          em Lisboa, por perfil de comprador não residente. Valores calculados com Euribor 6M Março 2026
+          (2,95%) + spread médio do intervalo indicado:
+        </p>
         <table className="cost-table">
-          <thead><tr><th>Item</th><th>Valor</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Perfil / País</th>
+              <th>LTV</th>
+              <th>Entrada + Custos (6%)</th>
+              <th>Montante Financiado</th>
+              <th>Prestação Mensal Est.</th>
+              <th>Spread Range</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td>Valor do Imóvel</td><td>€500.000</td></tr>
-            <tr><td>LTV Máximo</td><td>70%</td></tr>
-            <tr><td>Capital Financiado</td><td>€350.000</td></tr>
-            <tr><td>Entrada Necessária</td><td>€150.000</td></tr>
-            <tr><td>Spread Típico</td><td>1,25%</td></tr>
-            <tr><td>Euribor 6M (Mar 2026)</td><td>2,95%</td></tr>
-            <tr><td>TAN</td><td>≈ 4,20%</td></tr>
-            <tr><td>Prazo</td><td>25 anos</td></tr>
-            <tr><td>Prestação Estimada</td><td>≈ €1.880/mês</td></tr>
-            <tr><td>IMT + IS + Custos</td><td>≈ €35.000</td></tr>
-            <tr><td>Custo Total Aquisição</td><td>≈ €535.000</td></tr>
+            <tr><td>Francês / Alemão (UE)</td><td>80%</td><td>~ € 130.000</td><td>€ 400.000</td><td>~ € 2.120 / mês</td><td>0,95%–1,55%</td></tr>
+            <tr><td>Britânico / Americano</td><td>70%</td><td>~ € 180.000</td><td>€ 350.000</td><td>~ € 1.855 / mês</td><td>1,10%–1,75%</td></tr>
+            <tr><td>Emirados / Saudita</td><td>70%</td><td>~ € 180.000</td><td>€ 350.000</td><td>~ € 1.900 / mês</td><td>1,20%–1,90%</td></tr>
+            <tr><td>Chinês</td><td>60%</td><td>~ € 230.000</td><td>€ 300.000</td><td>~ € 1.620 / mês</td><td>1,30%–2,00%</td></tr>
+            <tr><td>Capital mínimo necessário (entrada + custos)</td><td>—</td><td>€ 130.000 – € 230.000</td><td>—</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+
+        <h2 className="s">3. Documentos Necessários</h2>
+        <h3 className="ss">Identificação e Residência</h3>
+        <p className="t">
+          Passaporte válido · NIF português · Comprovativo de morada no país de origem (últimos 3 meses) ·
+          Autorização de residência em Portugal (se aplicável) · NIF do cônjuge (se casados em regime de
+          comunhão de adquiridos).
+        </p>
+        <h3 className="ss">Rendimento e Capacidade Financeira</h3>
+        <p className="t">
+          Últimas 3 declarações de imposto (IRS, Tax Return, IRPF ou equivalente — apostiladas e traduzidas
+          para PT ou EN) · Últimos 3 recibos de vencimento ou extracto de pensão ·
+          Extractos bancários dos últimos 6 meses da conta principal ·
+          Declaração do empregador em papel timbrado com assinatura e carimbo ·
+          Capital próprio demonstrado em conta bancária portuguesa cobrindo a entrada mais os custos de
+          aquisição (IMT, IS, notário — tipicamente 6–8% do preço do imóvel).
+        </p>
+        <h3 className="ss">Documentação do Imóvel</h3>
+        <p className="t">
+          Certidão permanente do registo predial (predial online) · Caderneta predial actualizada ·
+          Licença de utilização · Declaração de não existência de dívidas ao condomínio ·
+          Avaliação bancária (realizada pelo banco — custo €250–€500, pago pelo requerente do crédito).
+        </p>
+
+        <h2 className="s">4. Os Quatro Principais Bancos — Perfil 2026</h2>
+        <table className="cost-table">
+          <thead><tr><th>Banco</th><th>Pontos Fortes para Não Residentes</th><th>Spread Indicativo</th></tr></thead>
+          <tbody>
+            <tr><td>Millennium BCP</td><td>O mais activo com não residentes. Balcões internacionais em França, Suíça e Luxemburgo. Processo digitalizado para europeus.</td><td>0,95%–1,60%</td></tr>
+            <tr><td>Santander Portugal</td><td>Forte com ibero-americanos e britânicos. Aceita rendimento em GBP e USD. Exige domiciliação de salário na conta.</td><td>1,00%–1,75%</td></tr>
+            <tr><td>BPI (CaixaBank)</td><td>Grupo CaixaBank facilita processo para espanhóis e franceses. Bom para quem tem activos na Europa Continental.</td><td>0,90%–1,55%</td></tr>
+            <tr><td>Caixa Geral de Depósitos</td><td>Banco público — mais conservador, mas tem processo dedicado para clientes PALOP e brasileiros com vínculos históricos.</td><td>1,05%–1,70%</td></tr>
           </tbody>
         </table>
 
         <div className="callout">
-          <p><strong>Islamic Finance:</strong> Para compradores do Médio Oriente, os bancos portugueses oferecem estruturas <strong>Murabaha</strong> e <strong>Ijara</strong> compatíveis com a Sharia. A Agency Group tem parcerias com especialistas nesta área.</p>
+          <p><strong>Islamic Finance disponível em Portugal.</strong> Compradores muçulmanos que necessitem de financiamento conforme a Sharia têm acesso a estruturas de <strong>Murabaha</strong> (o banco compra o imóvel e revende ao comprador com margem fixa, sem juros) e <strong>Ijara</strong> (arrendamento com opção de compra). Intermediadas por bancos islâmicos internacionais em parceria com notários e estruturas legais portuguesas. Totalmente legal e válido em Portugal. Processo demora 60–90 dias adicionais, mas elimina qualquer componente de juro — o retorno do banco é uma margem comercial transparente.</p>
         </div>
 
-        <h2 className="s">3. Documentos Necessários</h2>
-        <p className="t">Passaporte válido · NIF português · Últimos 3 recibos de vencimento ou declaração fiscal · Extractos bancários 6 meses · Contrato de trabalho ou prova de rendimentos · Se aplicável: declaração de IR do país de origem (apostilada e traduzida) · Comprovativo de capital próprio em conta bancária portuguesa.</p>
+        <h2 className="s">5. Condições Gerais — Abril 2026</h2>
+        <table className="cost-table">
+          <thead><tr><th>Parâmetro</th><th>Residente em Portugal</th><th>Não Residente</th></tr></thead>
+          <tbody>
+            <tr><td>LTV máximo</td><td>90%</td><td>60%–80% (por país)</td></tr>
+            <tr><td>Prazo máximo</td><td>40 anos</td><td>30 anos</td></tr>
+            <tr><td>Euribor 6M (Março 2026)</td><td colSpan={2}>2,95%</td></tr>
+            <tr><td>Spread típico</td><td>0,90%–1,50%</td><td>1,00%–2,00%</td></tr>
+            <tr><td>DSTI máximo (Banco de Portugal)</td><td>40%–50%</td><td>40%–50% sobre rendimento líquido</td></tr>
+            <tr><td>Prazo médio de aprovação</td><td>15–30 dias úteis</td><td>45–90 dias úteis</td></tr>
+          </tbody>
+        </table>
 
-        <h2 className="s">4. Bancos que Financiam Não Residentes</h2>
-        <p className="t"><strong>Millennium BCP</strong> — o mais flexível para compradores internacionais. Tem balcões em França, Suíça e Luxemburgo e processo digital para europeus. Primeiro banco a contactar para perfis UE e CPLP.</p>
-        <p className="t"><strong>Santander Portugal</strong> — forte em clientes europeus e ibero-americanos. Aceita rendimento em GBP e USD. Exige conta Santander com domiciliação de ordenado.</p>
-        <p className="t"><strong>BPI</strong> — parceiro preferencial para clientes com ligação ao grupo CaixaBank (Espanha). Bom processo para franceses, espanhóis e perfis de Europa Continental.</p>
-        <p className="t"><strong>Caixa Geral de Depósitos</strong> — banco público, mais conservador com não residentes em geral, mas tem processo dedicado para habitação própria e clientes dos países de língua portuguesa.</p>
-
-        <h2 className="s">5. Prazo e Processo</h2>
-        <p className="t">O processo de aprovação de crédito para não residentes tem tipicamente quatro fases: <strong>Proposta inicial</strong> (análise preliminar, 1 semana) → <strong>Avaliação bancária</strong> do imóvel (2–3 semanas) → <strong>Aprovação formal</strong> (1–2 semanas) → <strong>Escritura</strong>. Total: 45 a 90 dias desde a proposta ao vendedor.</p>
-        <p className="t">É fundamental ter o NIF português e conta bancária aberta em Portugal antes de avançar com o processo de crédito. Estes passos podem ser feitos em paralelo com a procura do imóvel.</p>
-
-        <h2 className="s">6. Dicas para Aprovação</h2>
-        <p className="t"><strong>Rendimentos documentados:</strong> Os bancos exigem prova formal de rendimento. Fontes informais, freelancing não declarado ou rendimentos de países com acordos fiscais limitados complicam o processo — e reduzem o LTV aprovado.</p>
-        <p className="t"><strong>DSTI máximo 40–50%:</strong> O Banco de Portugal impõe que a prestação mensal não ultrapasse 35–40% do rendimento líquido. Calcule antecipadamente se os seus rendimentos suportam a prestação desejada.</p>
-        <p className="t"><strong>Evitar dívidas no país de origem:</strong> Créditos automóvel, crédito pessoal ou hipotecas noutros países reduzem o DSTI disponível em Portugal e podem inviabilizar a aprovação.</p>
-        <p className="t"><strong>Conta bancária portuguesa aberta antes:</strong> Abrir conta em Portugal antes de submeter o pedido de crédito acelera o processo e demonstra organização financeira. O Millennium BCP tem processo digital para abertura remota.</p>
+        <h2 className="s">6. Dicas para Maximizar a Aprovação</h2>
+        <p className="t">
+          <strong>Abra conta bancária portuguesa com antecedência.</strong> Ter conta activa há 6+ meses
+          antes de pedir o crédito demonstra estabilidade e facilita a análise de risco. Transfira
+          regularmente ao longo desse período o montante previsto para a entrada, criando historial.
+        </p>
+        <p className="t">
+          <strong>Pré-aprovação antes de assinar o CPCV.</strong> Nunca assine um contrato-promessa sem
+          pré-aprovação bancária confirmada por escrito. A condição suspensiva de financiamento deve
+          constar explicitamente do CPCV — caso contrário, arrisca perder o sinal se o banco recusar.
+        </p>
+        <p className="t">
+          <strong>Documentação apostilada com antecedência.</strong> Tax returns, extractos de pensão e
+          declarações de empregador exigem apostila e tradução juramentada — processo que pode demorar
+          2–6 semanas consoante o país. Comece antes de identificar o imóvel específico.
+        </p>
+        <p className="t">
+          <strong>Considere um intermediário de crédito especializado.</strong> Um broker com experiência
+          em não residentes apresenta o processo a vários bancos em simultâneo, conhece os critérios
+          específicos de cada instituição e aumenta a probabilidade de aprovação — sem custo para o
+          comprador, pois a comissão é paga pelo banco aprovador.
+        </p>
 
         <div className="cta-box">
-          <h3>Calcule o Seu Crédito em Portugal</h3>
-          <p>Ferramenta gratuita — LTV, prestação e documentação necessária para o seu país de origem.</p>
-          <Link href="https://www.agencygroup.pt">Calcular Agora →</Link>
+          <h3>Quer saber exactamente o que consegue financiar?</h3>
+          <p>A Agency Group trabalha com todos os principais bancos portugueses e intermediários de crédito especializados em não residentes. Simulação personalizada — resultado em 48 horas.</p>
+          <Link href="/#credito">Simular Crédito Habitação →</Link>
         </div>
       </article>
     </>
