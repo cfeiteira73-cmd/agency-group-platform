@@ -3,7 +3,6 @@ import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 
 const PORTAL_URL = (process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/portal'
-const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt'
 const FROM = 'Agency Group <geral@agencygroup.pt>'
 
 function verifyToken(token: string, secret: string): Record<string, unknown> | null {
