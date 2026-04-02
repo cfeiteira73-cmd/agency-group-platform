@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Script from 'next/script'
-import ChatWidget from './components/ChatWidget'
 import { CurrencyProvider } from './components/CurrencyWidget'
 import PWAInstallBanner from './components/PWAInstallBanner'
 
@@ -378,7 +377,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
         <CurrencyProvider>
         {children}
-        <ChatWidget />
         <PWAInstallBanner />
         <script dangerouslySetInnerHTML={{ __html: `
   if ('serviceWorker' in navigator) {
