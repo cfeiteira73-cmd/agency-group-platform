@@ -41,7 +41,7 @@ export default function Home() {
           if (d.ok) {
             const email = d.email || sessionStorage.getItem('ag_pending_email') || ''
             sessionStorage.removeItem('ag_pending_email')
-            localStorage.setItem('ag_auth', JSON.stringify({ v: '1', exp: Date.now() + 8 * 60 * 60 * 1000, email }))
+            localStorage.setItem('ag_auth', JSON.stringify({ v: '1', exp: Date.now() + 8 * 60 * 60 * 1000, email, token }))
             setIsAgent(true)
             window.location.href = `/portal?token=${encodeURIComponent(token)}`
           } else {
@@ -59,6 +59,12 @@ export default function Home() {
         if (d.v === '1' && Date.now() < d.exp) { setIsAgent(true); return }
         else localStorage.removeItem('ag_auth')
       } catch { localStorage.removeItem('ag_auth') }
+    }
+
+    // Redirected from /portal (session expired or no cookie) → open login modal
+    if (params.get('acesso') === 'required') {
+      setTimeout(() => setAgModal(true), 600)
+      window.history.replaceState({}, '', '/')
     }
   }, [])
 
@@ -551,7 +557,7 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <CurrencySelector />
           {isAgent
-            ? <a href="/portal" className="nav-cta">Portal →</a>
+            ? <a href={(() => { try { const d = JSON.parse(localStorage.getItem('ag_auth')||'{}'); return d.token ? `/portal?token=${encodeURIComponent(d.token)}` : '/portal' } catch { return '/portal' } })()} className="nav-cta">Portal →</a>
             : <a href="#" className="nav-cta" onClick={e=>{e.preventDefault();setAgModal(true)}}>Área Agentes</a>
           }
         </div>
@@ -911,7 +917,7 @@ export default function Home() {
                       </div>
                     ))}
                   </div>
-                  <a href="/portal" style={{display:'block',padding:'14px 24px',background:color==='var(--gold)'?'var(--gold)':color==='var(--gm)'?'var(--gm)':'var(--g)',color:color==='var(--gold)'?'var(--ink)':'var(--cr)',fontFamily:"'DM Mono',monospace",fontSize:'.53rem',letterSpacing:'.16em',textTransform:'uppercase',textDecoration:'none',textAlign:'center',fontWeight:600}}>
+                  <a href={(() => { try { const d = JSON.parse(localStorage.getItem('ag_auth')||'{}'); return d.token ? `/portal?token=${encodeURIComponent(d.token)}` : '/portal' } catch { return '/portal' } })()} style={{display:'block',padding:'14px 24px',background:color==='var(--gold)'?'var(--gold)':color==='var(--gm)'?'var(--gm)':'var(--g)',color:color==='var(--gold)'?'var(--ink)':'var(--cr)',fontFamily:"'DM Mono',monospace",fontSize:'.53rem',letterSpacing:'.16em',textTransform:'uppercase',textDecoration:'none',textAlign:'center',fontWeight:600}}>
                     {cta as string} →
                   </a>
                 </div>

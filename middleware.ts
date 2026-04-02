@@ -108,15 +108,18 @@ export async function middleware(req: NextRequest) {
     const activeToken = urlToken || cookieToken
 
     if (!secret || !activeToken || !(await verifyToken(activeToken, secret))) {
-      return NextResponse.redirect(new URL('/', req.url))
+      // Redirect to homepage with flag so it auto-opens the login modal
+      const redirectUrl = new URL('/', req.url)
+      redirectUrl.searchParams.set('acesso', 'required')
+      return NextResponse.redirect(redirectUrl)
     }
 
     const res = NextResponse.next()
     if (urlToken) {
-      // Persist token as cookie so next page loads don't need the URL param
+      // Persist token as cookie — secure only in production (localhost is HTTP)
       res.cookies.set('ag_portal', urlToken, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 8 * 60 * 60,
         path: '/',
