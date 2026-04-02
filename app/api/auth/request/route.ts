@@ -5,7 +5,7 @@ import { Resend } from 'resend'
 const PORTAL_URL = (process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/portal'
 const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt'
 const ADMIN_EMAIL = 'geral@agencygroup.pt'
-const FROM = 'Agency Group <geral@agencygroup.pt>'
+const FROM = 'Agency Group <noreply@agencygroup.pt>'
 
 function makeToken(payload: object, secret: string): string {
   const p = Buffer.from(JSON.stringify(payload)).toString('base64url')
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     const now = new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })
 
     // Email para o admin
-    await resend.emails.send({
+    const { error: adminErr } = await resend.emails.send({
       from: FROM,
       to: ADMIN_EMAIL,
       subject: `Pedido de Acesso Agentes · ${email}`,
@@ -110,6 +110,10 @@ export async function POST(req: NextRequest) {
         </body></html>
       `,
     })
+    if (adminErr) {
+      console.error('Resend admin email error:', adminErr)
+      return NextResponse.json({ error: 'Falha ao enviar email de aprovação. Tenta novamente.' }, { status: 500 })
+    }
 
     // Confirmação para o agente
     await resend.emails.send({

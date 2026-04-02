@@ -3,7 +3,7 @@ import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 
 const PORTAL_URL = (process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/portal'
-const FROM = 'Agency Group <geral@agencygroup.pt>'
+const FROM = 'Agency Group <noreply@agencygroup.pt>'
 
 function verifyToken(token: string, secret: string): Record<string, unknown> | null {
   const dotIdx = token.lastIndexOf('.')
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
   const magicLink = `${PORTAL_URL}?token=${magicToken}`
 
-  await resend.emails.send({
+  const { error: sendErr } = await resend.emails.send({
     from: FROM,
     to: email,
     subject: 'Acesso Aprovado · Área de Agentes · Agency Group',
@@ -84,6 +84,7 @@ export async function GET(req: NextRequest) {
       </body></html>
     `,
   })
+  if (sendErr) console.error('Resend approve email error:', sendErr)
 
   // Redireciona diretamente para o site com o token — autentica imediatamente
   return NextResponse.redirect(magicLink, { status: 302 })
