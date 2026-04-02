@@ -27,6 +27,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/relatorio-2026`,  lastModified: now, changeFrequency: 'monthly', priority: 0.65 },
     { url: `${BASE}/reports`,         lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
     { url: `${BASE}/portal`,          lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
+    // ── Static blog articles ────────────────────────────────────────────────
+    { url: `${BASE}/blog/comprar-casa-portugal-2026`,         lastModified: new Date('2026-03-30'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/blog/imt-impostos-portugal-2026`,         lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/blog/visto-d7-portugal-2026`,             lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/blog/credito-habitacao-estrangeiros-portugal`, lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/blog/mais-valias-imoveis-portugal-2026`,  lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
   ]
 
   // ── Zone pages ───────────────────────────────────────────────────────────────
