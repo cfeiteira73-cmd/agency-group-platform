@@ -33,6 +33,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/blog/visto-d7-portugal-2026`,             lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
     { url: `${BASE}/blog/credito-habitacao-estrangeiros-portugal`, lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
     { url: `${BASE}/blog/mais-valias-imoveis-portugal-2026`,  lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/blog/buying-property-portugal-2026`,     lastModified: new Date('2026-04-02'), changeFrequency: 'monthly' as const, priority: 0.78 },
+    { url: `${BASE}/blog/taxes-imt-portugal-2026`,           lastModified: new Date('2026-04-02'), changeFrequency: 'monthly' as const, priority: 0.78 },
+    { url: `${BASE}/blog/capital-gains-property-portugal-2026`, lastModified: new Date('2026-04-02'), changeFrequency: 'monthly' as const, priority: 0.78 },
   ]
 
   // ── Zone pages ───────────────────────────────────────────────────────────────
