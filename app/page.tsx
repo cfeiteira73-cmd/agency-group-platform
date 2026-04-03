@@ -479,6 +479,52 @@ export default function Home() {
     setAgEmailVal('')
   }
 
+  function IMTQuickCalc() {
+    const [v, setV] = useState('')
+    const [tipo, setTipo] = useState<'hpp'|'second'>('hpp')
+    const [result, setResult] = useState<{imt:number;is:number;total:number;isento:boolean}|null>(null)
+    const calc = async () => {
+      if(!v||Number(v)<=0) return
+      try {
+        const r = await fetch('/api/imt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({valor:Number(v),tipo,comprador:'singular'})})
+        const d = await r.json()
+        if(d.success) setResult(d)
+      } catch {}
+    }
+    const fmt = (n:number) => `€${Math.round(n).toLocaleString('pt-PT')}`
+    return (
+      <div>
+        <div style={{marginBottom:'14px'}}>
+          <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'6px'}}>Valor do Imóvel (€)</label>
+          <input type="number" value={v} onChange={e=>{setV(e.target.value);setResult(null)}} placeholder="Ex: 750000" style={{width:'100%',padding:'10px 14px',border:'1px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d'}} onKeyDown={e=>e.key==='Enter'&&calc()} />
+        </div>
+        <div style={{marginBottom:'16px'}}>
+          <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'6px'}}>Tipo</label>
+          <div style={{display:'flex',gap:'8px'}}>
+            {([['hpp','🏠 HPP'],['second','🏖 2ª Hab']] as const).map(([t,l])=>(
+              <button key={t} onClick={()=>{setTipo(t);setResult(null)}} style={{flex:1,padding:'8px',background:tipo===t?'#1c4a35':'rgba(14,14,13,.04)',color:tipo===t?'#f4f0e6':'rgba(14,14,13,.6)',border:`1px solid ${tipo===t?'#1c4a35':'rgba(14,14,13,.12)'}`,fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer',transition:'all .15s'}}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <button onClick={calc} style={{width:'100%',padding:'11px',background:'#c9a96e',color:'#0c1f15',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',fontWeight:700}}>Calcular →</button>
+        {result && (
+          <div style={{marginTop:'16px',padding:'16px',background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.12)'}}>
+            {result.isento&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#4a9c7a',marginBottom:'8px'}}>✅ ISENTO DE IMT (HPP)</div>}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+              {[{l:'IMT',v:result.imt},{l:'IS (0,8%)',v:result.is},{l:'Registo + Notário',v:750},{l:'Total Custos',v:result.total}].map(m=>(
+                <div key={m.l} style={{textAlign:'center',padding:'10px',background:'#fff',border:'1px solid rgba(14,14,13,.07)'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'3px'}}>{m.l}</div>
+                  <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',fontWeight:600,color:m.l==='Total Custos'?'#1c4a35':m.v===0?'#4a9c7a':'#0e0e0d'}}>{m.v===0?'€0':fmt(m.v)}</div>
+                </div>
+              ))}
+            </div>
+            <a href="/portal" style={{display:'block',marginTop:'10px',textAlign:'center',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#1c4a35',textDecoration:'none',padding:'6px',border:'1px solid rgba(28,74,53,.2)'}}>Ver análise completa + PDF →</a>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   function requireAgent() {
     document.getElementById('agentes')?.scrollIntoView({behavior:'smooth'})
     setTimeout(()=>document.getElementById('agEmail')?.focus(), 600)
@@ -719,6 +765,65 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── MARKET STATS TICKER ── */}
+      <div style={{background:'#0c1f15',borderTop:'1px solid rgba(201,169,110,.1)',borderBottom:'1px solid rgba(201,169,110,.1)',overflow:'hidden',padding:'0',position:'relative'}}>
+        <div style={{display:'flex',alignItems:'center',animation:'tickerScroll 40s linear infinite',whiteSpace:'nowrap',gap:'0'}}>
+          {[
+            {label:'Mercado PT 2026',value:'+17.6%',desc:'Valorização média'},
+            {label:'Transacções',value:'169.812',desc:'Vendas totais'},
+            {label:'Preço Mediana',value:'€3.076/m²',desc:'Portugal'},
+            {label:'Lisboa Prime',value:'€7.500/m²',desc:'Chiado · Príncipe Real'},
+            {label:'Cascais',value:'€6.638/m²',desc:'Quinta da Marinha'},
+            {label:'Comporta',value:'€11.000/m²',desc:'Zona mais valorizada'},
+            {label:'Algarve',value:'€5.200/m²',desc:'+10% YoY'},
+            {label:'Madeira',value:'€3.760/m²',desc:'+44% tendência'},
+            {label:'Top 5 Mundial',value:'Lisboa',desc:'Savills Luxury 2026'},
+            {label:'Compradores int.',value:'44%',desc:'Mercados prime'},
+            {label:'NHR/IFICI',value:'10 anos',desc:'Isenção fiscal'},
+            {label:'IMT HPP isenção',value:'€97K',desc:'Limiar 2026'},
+            // repeat for smooth loop
+            {label:'Mercado PT 2026',value:'+17.6%',desc:'Valorização média'},
+            {label:'Transacções',value:'169.812',desc:'Vendas totais'},
+            {label:'Lisboa Prime',value:'€7.500/m²',desc:'Chiado · Príncipe Real'},
+            {label:'Comporta',value:'€11.000/m²',desc:'Zona mais valorizada'},
+          ].map((s,i)=>(
+            <div key={i} style={{display:'inline-flex',alignItems:'center',gap:'20px',padding:'10px 32px',borderRight:'1px solid rgba(201,169,110,.1)',flexShrink:0}}>
+              <div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(201,169,110,.5)',letterSpacing:'.1em',textTransform:'uppercase'}}>{s.label}</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',fontWeight:600,color:'#c9a96e',lineHeight:1}}>{s.value}</div>
+              </div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.25)',letterSpacing:'.06em'}}>{s.desc}</div>
+            </div>
+          ))}
+        </div>
+        <style>{`@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
+      </div>
+
+      {/* ── IMT CALCULATOR SECTION ── */}
+      <section style={{background:'#f4f0e6',padding:'72px 0',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
+        <div className="sw">
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'64px',alignItems:'start'}}>
+            <div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'12px'}}>Calculadora Gratuita · 2026</div>
+              <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2rem,4vw,3rem)',color:'#0e0e0d',lineHeight:1.1,marginBottom:'16px'}}>IMT + IS +<br/><em style={{fontStyle:'italic',color:'#1c4a35'}}>Custos Totais</em></h2>
+              <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.88rem',lineHeight:1.8,color:'rgba(14,14,13,.55)',marginBottom:'28px',maxWidth:'380px'}}>A calculadora mais completa de Portugal para compradores nacionais e internacionais. Tabelas IMT 2026 actualizadas. Isenções HPP. Custos notariais e registo.</p>
+              <div style={{display:'flex',flexDirection:'column',gap:'10px',marginBottom:'32px'}}>
+                {['Tabelas IMT 2026 — actualizadas','Isenção HPP até €97.064','IS 0,8% · Registo · Notário · Advogado','Comparação HPP vs 2ª Habitação vs Investimento','Export PDF profissional para clientes'].map(f=>(
+                  <div key={f} style={{display:'flex',alignItems:'center',gap:'10px',fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(14,14,13,.6)'}}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1c4a35" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>{f}
+                  </div>
+                ))}
+              </div>
+              <a href="/portal" style={{display:'inline-block',background:'#1c4a35',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.14em',textTransform:'uppercase',padding:'14px 32px',textDecoration:'none'}}>Abrir Calculadora Completa →</a>
+            </div>
+            <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'28px',boxShadow:'0 8px 40px rgba(14,14,13,.06)'}}>
+              <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:400,fontSize:'1.2rem',color:'#0e0e0d',marginBottom:'20px'}}>Simulação Rápida</h3>
+              <IMTQuickCalc />
+            </div>
           </div>
         </div>
       </section>
