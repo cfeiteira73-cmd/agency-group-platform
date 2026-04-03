@@ -8431,21 +8431,113 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                 paused: { label:'Pausada', bg:'rgba(201,169,110,.1)', color:'#c9a96e' },
                 draft: { label:'Rascunho', bg:'rgba(136,136,136,.1)', color:'#888' },
               }
+              const [campTab, setCampTab] = (useState as <T>(v:T)=>[T,(v:T)=>void])('email') as [string, (v:string)=>void]
+              const WA_STATS = [
+                { template:'Contacto Inicial', sent:127, delivered:124, read:89, response:34, responseRate:'27%', lang:'PT/EN/FR' },
+                { template:'Follow-up', sent:98, delivered:97, read:71, response:29, responseRate:'30%', lang:'PT/EN' },
+                { template:'Proposta Formal', sent:45, delivered:45, read:41, response:31, responseRate:'69%', lang:'PT/EN/FR/AR' },
+                { template:'Confirmação Visita', sent:62, delivered:62, read:60, response:57, responseRate:'92%', lang:'PT/EN' },
+                { template:'CPCV Pronto', sent:18, delivered:18, read:18, response:16, responseRate:'89%', lang:'PT' },
+              ]
               return (
-                <div style={{maxWidth:'900px'}}>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'8px'}}>Automa\u00e7\u00e3o \u00b7 Sequ\u00eancias Email \u00b7 Luxury Real Estate</div>
-                  <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.8rem',color:'#0e0e0d',marginBottom:'24px'}}>Campanhas <em style={{color:'#1c4a35'}}>Email</em></div>
+                <div style={{maxWidth:'960px'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'8px'}}>Automação · Email + WhatsApp · Luxury Real Estate</div>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'24px',flexWrap:'wrap',gap:'12px'}}>
+                    <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.8rem',color:'#0e0e0d'}}>Campanhas <em style={{color:'#1c4a35'}}>& Automação</em></div>
+                    <div style={{display:'flex',gap:'6px'}}>
+                      {([['email','📧 Email'],['whatsapp','💬 WhatsApp']] as const).map(([t,l])=>(
+                        <button key={t} onClick={()=>setCampTab(t)}
+                          style={{padding:'8px 20px',border:'1px solid',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.1em',cursor:'pointer',transition:'all .2s',
+                            background:campTab===t?'#1c4a35':'transparent',
+                            borderColor:campTab===t?'#1c4a35':'rgba(14,14,13,.15)',
+                            color:campTab===t?'#f4f0e6':'rgba(14,14,13,.5)'}}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   {/* KPI row */}
-                  <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'16px',marginBottom:'28px'}}>
-                    {[{label:'Total Emails Enviados',val:'1.247',color:'#1c4a35'},{label:'Taxa Abertura M\u00e9dia',val:'38%',color:'#c9a96e'},{label:'Leads Convertidos',val:'23',color:'#1c4a35'}].map(k=>(
-                      <div key={k.label} className="kpi-card">
-                        <div className="kpi-val" style={{color:k.color}}>{k.val}</div>
-                        <div className="kpi-label">{k.label}</div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'12px',marginBottom:'28px'}}>
+                    {campTab === 'email'
+                      ? [{label:'Emails Enviados',val:'1.247',color:'#1c4a35'},{label:'Taxa Abertura',val:'38%',color:'#c9a96e'},{label:'Taxa Click',val:'12%',color:'#4a9c7a'},{label:'Conversões',val:'23',color:'#1c4a35'},{label:'Campanhas Activas',val:'1',color:'#c9a96e'}]
+                      : [{label:'WA Enviados',val:'350',color:'#25D366'},{label:'Entregues',val:'346',color:'#1c4a35'},{label:'Lidos',val:'279',color:'#c9a96e'},{label:'Respostas',val:'167',color:'#4a9c7a'},{label:'Taxa Resposta',val:'48%',color:'#c9a96e'}]
+                    }.map(k=>(
+                      <div key={k.label} className="kpi-card" style={{padding:'14px 16px'}}>
+                        <div className="kpi-val" style={{color:k.color,fontSize:'1.4rem'}}>{k.val}</div>
+                        <div className="kpi-label" style={{fontSize:'.4rem'}}>{k.label}</div>
                       </div>
                     ))}
                   </div>
-                  {/* Campaign list */}
-                  <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+                  {/* WhatsApp Tab */}
+                  {campTab === 'whatsapp' && (
+                    <div>
+                      <div style={{display:'flex',flexDirection:'column',gap:'12px',marginBottom:'24px'}}>
+                        {WA_STATS.map((wa, idx) => (
+                          <div key={idx} className="p-card" style={{padding:'16px 20px'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap'}}>
+                              <div style={{flex:1,minWidth:'160px'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px'}}>
+                                  <span style={{fontSize:'.9rem',fontWeight:500,color:'#0e0e0d'}}>{wa.template}</span>
+                                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',background:'rgba(37,211,102,.12)',color:'#25D366',padding:'2px 7px',letterSpacing:'.08em'}}>{wa.lang}</span>
+                                </div>
+                                {/* Funnel bars */}
+                                <div style={{display:'flex',flexDirection:'column',gap:'4px'}}>
+                                  {[
+                                    { label:'Enviados', val:wa.sent, pct:100, color:'rgba(14,14,13,.15)' },
+                                    { label:'Entregues', val:wa.delivered, pct:Math.round(wa.delivered/wa.sent*100), color:'#4a9c7a' },
+                                    { label:'Lidos', val:wa.read, pct:Math.round(wa.read/wa.sent*100), color:'#c9a96e' },
+                                    { label:'Respostas', val:wa.response, pct:Math.round(wa.response/wa.sent*100), color:'#1c4a35' },
+                                  ].map(row => (
+                                    <div key={row.label} style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',width:'60px',flexShrink:0}}>{row.label}</div>
+                                      <div style={{flex:1,height:'4px',background:'rgba(14,14,13,.06)',borderRadius:'2px',overflow:'hidden'}}>
+                                        <div style={{height:'100%',background:row.color,width:`${row.pct}%`,borderRadius:'2px',transition:'width .5s'}}/>
+                                      </div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.5)',minWidth:'48px',textAlign:'right'}}>{row.val} · {row.pct}%</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div style={{textAlign:'right',flexShrink:0}}>
+                                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',color:'#1c4a35',lineHeight:1}}>{wa.responseRate}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',letterSpacing:'.08em'}}>taxa resposta</div>
+                                <button style={{marginTop:'8px',padding:'5px 12px',background:'rgba(37,211,102,.08)',border:'1px solid rgba(37,211,102,.3)',color:'#25D366',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer',letterSpacing:'.08em'}}
+                                  onClick={()=>{const t=WA_TEMPLATES['PT'][Object.keys(WA_TEMPLATES['PT'])[idx]];if(t)window.open(`https://wa.me/?text=${encodeURIComponent(t.msg)}`,'_blank')}}>
+                                  Enviar Template
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* WA Quick Blast */}
+                      <div className="p-card" style={{background:'linear-gradient(135deg,rgba(37,211,102,.04),rgba(28,74,53,.04))',border:'1px solid rgba(37,211,102,.2)'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'12px'}}>💬 Quick Blast — Enviar a Segmento</div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'16px'}}>
+                          {[
+                            { label:'VIPs', desc:`${crmContacts.filter(c=>c.status==='vip').length} contactos`, color:'#c9a96e' },
+                            { label:'Prospects', desc:`${crmContacts.filter(c=>c.status==='prospect').length} contactos`, color:'#4a9c7a' },
+                            { label:'Follow-up Overdue', desc:`${crmContacts.filter(c=>c.nextFollowUp&&c.nextFollowUp<=new Date().toISOString().split('T')[0]).length} contactos`, color:'#e05454' },
+                            { label:'Leads Frios (>14d)', desc:`${crmContacts.filter(c=>{const d=Math.floor((Date.now()-new Date(c.lastContact).getTime())/86400000);return d>14}).length} contactos`, color:'rgba(14,14,13,.4)' },
+                          ].map(seg => (
+                            <div key={seg.label} style={{padding:'12px',background:'rgba(255,255,255,.6)',border:`1px solid ${seg.color}22`,cursor:'pointer',transition:'all .2s'}}
+                              onMouseOver={e=>{(e.currentTarget as HTMLDivElement).style.borderColor=seg.color}}
+                              onMouseOut={e=>{(e.currentTarget as HTMLDivElement).style.borderColor=`${seg.color}22`}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',fontWeight:700,color:seg.color,marginBottom:'2px'}}>{seg.label}</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)'}}>{seg.desc}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.35)'}}>
+                          Selecciona um segmento e usa o modal WhatsApp do CRM para enviar o template
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Email Tab — Campaign list */}
+                  {campTab === 'email' && <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
                     {dripCampaigns.map(drip=>{
                       const sc3 = sCfg[drip.status] || sCfg['draft']
                       const seq3 = DRIP_SEQ[drip.id] || []
@@ -8513,6 +8605,7 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                       + Nova Campanha
                     </button>
                   </div>
+                  </div>}
                 </div>
               )
             })()}
