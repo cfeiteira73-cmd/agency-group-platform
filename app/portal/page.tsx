@@ -7072,6 +7072,53 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                           )}
                           {crmProfileTab === 'timeline' && (
                             <div>
+                              {/* Activity Heatmap — GitHub-style 12-week grid */}
+                              {(() => {
+                                const acts = activeContact.activities || []
+                                const today2 = new Date()
+                                // Build 12 weeks × 7 days grid
+                                const weeks = 12
+                                const totalDays = weeks * 7
+                                // Map dates to activity counts
+                                const countMap: Record<string,number> = {}
+                                acts.forEach(a => { countMap[a.date] = (countMap[a.date]||0)+1 })
+                                // Generate cells from 84 days ago to today
+                                const cells: {date:string;count:number}[] = []
+                                for (let i = totalDays-1; i >= 0; i--) {
+                                  const d = new Date(today2); d.setDate(d.getDate()-i)
+                                  const ds = d.toISOString().split('T')[0]
+                                  cells.push({date:ds, count:countMap[ds]||0})
+                                }
+                                const maxActs = Math.max(1,...Object.values(countMap))
+                                const getColor = (n:number) => {
+                                  if (n===0) return 'rgba(14,14,13,.06)'
+                                  const pct = n/maxActs
+                                  if (pct>=.75) return '#1c4a35'
+                                  if (pct>=.5) return '#2d7a56'
+                                  if (pct>=.25) return '#4a9c7a'
+                                  return '#7abfa3'
+                                }
+                                return (
+                                  <div style={{background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.08)',padding:'14px',marginBottom:'16px'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.35)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'10px'}}>Actividade — 12 semanas</div>
+                                    <div style={{display:'grid',gridTemplateColumns:`repeat(${weeks},1fr)`,gap:'2px'}}>
+                                      {Array.from({length:weeks},(_,wi)=>(
+                                        <div key={wi} style={{display:'flex',flexDirection:'column',gap:'2px'}}>
+                                          {cells.slice(wi*7,wi*7+7).map(cell=>(
+                                            <div key={cell.date} title={`${cell.date}: ${cell.count} actividade${cell.count!==1?'s':''}`} style={{width:'100%',aspectRatio:'1',background:getColor(cell.count),borderRadius:'2px',cursor:'default'}}/>
+                                          ))}
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div style={{display:'flex',alignItems:'center',gap:'6px',marginTop:'8px'}}>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)'}}>Menos</div>
+                                      {['rgba(14,14,13,.06)','#7abfa3','#4a9c7a','#2d7a56','#1c4a35'].map(c=><div key={c} style={{width:'10px',height:'10px',background:c,borderRadius:'1px'}}/>)}
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)'}}>Mais</div>
+                                      <div style={{marginLeft:'auto',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.45)'}}>{acts.length} total · {Object.keys(countMap).length} dias activos</div>
+                                    </div>
+                                  </div>
+                                )
+                              })()}
                               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
                                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.35)'}}>Timeline de Actividades</div>
                                 <button onClick={()=>setShowAddActivity(a=>!a)}
@@ -8175,6 +8222,27 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                               <a href={`/imoveis/${p.id}`} target='_blank' rel='noopener' style={{ flex:1, background:'rgba(201,169,110,.1)', color:'#c9a96e', border:'1px solid rgba(201,169,110,.2)', padding:'8px', textAlign:'center', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', textDecoration:'none', display:'block' }}>Ver Página →</a>
                               <button onClick={() => { const updated = imoveisList.map(im => im.id===p.id ? {...im, status: im.status==='Ativo'?'Vendido':'Ativo'} : im); saveImoveis(updated) }} style={{ background: p.status==='Ativo'?'rgba(44,122,86,.2)':'rgba(201,169,110,.08)', color: p.status==='Ativo'?'#2d7a56':'rgba(244,240,230,.4)', border:`1px solid ${p.status==='Ativo'?'rgba(44,122,86,.4)':'rgba(244,240,230,.1)'}`, padding:'8px 12px', fontFamily:"'DM Mono',monospace", fontSize:'.35rem', cursor:'pointer', letterSpacing:'.08em' }}>{p.status==='Ativo'?'Ativo':'Vendido'}</button>
                             </div>
+                            {/* Price reduction tip for stale properties */}
+                            {(() => {
+                              const ld = (p as Record<string,unknown>).listingDate as string|undefined
+                              const days = ld ? Math.floor((Date.now() - new Date(ld).getTime()) / 86400000) : 0
+                              if (days < 60) return null
+                              const pctSug = days > 90 ? 8 : days > 75 ? 5 : 3
+                              const newPrice = Math.round(p.preco * (1 - pctSug/100) / 1000) * 1000
+                              return (
+                                <div style={{marginTop:'10px',padding:'10px 12px',background:'rgba(249,115,22,.06)',border:'1px solid rgba(249,115,22,.18)',display:'flex',alignItems:'flex-start',gap:'8px'}}>
+                                  <div style={{fontSize:'.75rem',flexShrink:0,marginTop:'1px'}}>💡</div>
+                                  <div style={{flex:1}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.35rem',color:'#f97316',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:'3px'}}>Sugestão Estratégica</div>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(244,240,230,.65)',lineHeight:1.4}}>{days}d mercado — redução de <strong style={{color:'#f97316'}}>{pctSug}%</strong> sugerida. Novo preço: <strong style={{color:'#c9a96e'}}>€{newPrice.toLocaleString('pt-PT')}</strong></div>
+                                  </div>
+                                  <button style={{flexShrink:0,background:'rgba(249,115,22,.12)',border:'1px solid rgba(249,115,22,.25)',color:'#f97316',padding:'4px 8px',fontFamily:"'DM Mono',monospace",fontSize:'.34rem',cursor:'pointer',letterSpacing:'.06em'}}
+                                    onClick={()=>{ const updated = imoveisList.map(im => im.id===p.id ? {...im,preco:newPrice}:im); saveImoveis(updated) }}>
+                                    Aplicar
+                                  </button>
+                                </div>
+                              )
+                            })()}
                             </div>
                           </div>
                         ))}
