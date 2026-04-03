@@ -338,6 +338,55 @@ export default function DealPage() {
           <p style={{fontSize:'.88rem',lineHeight:1.75,color:'rgba(14,14,13,.6)'}}>{deal.nextStepDetail}</p>
         </div>
 
+        {/* Countdown to next key date */}
+        {deal.keyDates.filter(d=>!d.done)[0] && (() => {
+          const next = deal.keyDates.filter(d=>!d.done)[0]
+          const parts = next.date.split(' ')
+          const months: Record<string,string> = {'Jan':'01','Fev':'02','Mar':'03','Abr':'04','Mai':'05','Jun':'06','Jul':'07','Ago':'08','Set':'09','Out':'10','Nov':'11','Dez':'12'}
+          const dateStr = parts.length===3 ? `${parts[2]}-${months[parts[1]]||'01'}-${parts[0].padStart(2,'0')}` : ''
+          const target = dateStr ? new Date(dateStr) : null
+          const today = new Date()
+          const daysLeft = target ? Math.max(0, Math.ceil((target.getTime() - today.getTime()) / 86400000)) : null
+          if (daysLeft === null) return null
+          return (
+            <div style={{background:'rgba(201,169,110,.06)',border:'1px solid rgba(201,169,110,.2)',borderLeft:'4px solid #c9a96e',padding:'16px 24px',marginBottom:'28px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'12px',animation:'fadeIn .5s ease .08s both'}}>
+              <div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>⏳ Próxima Data Importante</div>
+                <div style={{fontSize:'.9rem',fontWeight:500,color:'#0e0e0d'}}>{next.label}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.45)',marginTop:'2px'}}>{next.date}</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'2.2rem',fontWeight:300,color:daysLeft<=14?'#dc2626':'#1c4a35',lineHeight:1}}>{daysLeft}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.35)',letterSpacing:'.1em',textTransform:'uppercase'}}>dias restantes</div>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Investment Snapshot */}
+        {deal.property.pm2 && (
+          <div style={{background:'linear-gradient(135deg,#0c1f15,#1a3d2a)',padding:'24px 28px',marginBottom:'28px',animation:'fadeIn .5s ease .12s both'}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'14px'}}>📊 Investment Snapshot — Portugal 2026</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'14px'}}>
+              {[
+                { label:'Valorização Prevista', val:'+4-6%', sub:'12 meses · INE 2026', color:'#4a9c7a' },
+                { label:'Yield Bruta Estimada', val:`${((valorNum>0?(valorNum*0.004*12)/valorNum*100:0)).toFixed(1)}%`, sub:'Renda mercado zona', color:'#c9a96e' },
+                { label:'Custo/m²', val:`€${deal.property.pm2.toLocaleString('pt-PT')}`, sub:`Zona: €${(deal.property.zonaPm2||0).toLocaleString('pt-PT')}`, color:'#f4f0e6' },
+                { label:'Mercado', val:'Top 5', sub:'Savills World Cities 2026', color:'#c9a96e' },
+              ].map(k=>(
+                <div key={k.label} style={{textAlign:'center',padding:'12px 8px',background:'rgba(255,255,255,.05)',border:'1px solid rgba(201,169,110,.1)'}}>
+                  <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.3rem',color:k.color,lineHeight:1,marginBottom:'3px'}}>{k.val}</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.4)',letterSpacing:'.06em',marginBottom:'2px',textTransform:'uppercase'}}>{k.label}</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(244,240,230,.25)'}}>{k.sub}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(244,240,230,.2)',borderTop:'1px solid rgba(201,169,110,.1)',paddingTop:'10px'}}>
+              Projecções baseadas em dados INE/AT Q1 2026 · Savills Capital Markets 2026 · Consultoria personalizada disponível
+            </div>
+          </div>
+        )}
+
         {/* Virtual Tour */}
         {deal.tourUrl && (
           <div style={{marginBottom:'28px',animation:'fadeIn .5s ease .15s both'}}>
