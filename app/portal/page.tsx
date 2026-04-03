@@ -1997,6 +1997,95 @@ ${dealsHtml}
                       <span style={{color:'#1c4a35',cursor:'pointer'}} onClick={()=>setSection('crm')}>Ver CRM →</span>
                     </div>
                   </div>
+                {/* Row 5: Match de Oportunidades IA */}
+                {(() => {
+                  // Cross-reference imoveisList with crmContacts to find buyer-property matches
+                  interface MatchPair { contact: typeof crmContacts[0]; property: typeof imoveisList[0]; score: number; reasons: string[] }
+                  const matches: MatchPair[] = []
+                  for (const contact of crmContacts) {
+                    if (contact.status === 'lead' || contact.status === 'prospect' || contact.status === 'vip') {
+                      for (const prop of imoveisList) {
+                        const reasons: string[] = []
+                        let score = 0
+                        // Budget match
+                        const preco = Number(prop.preco) || 0
+                        if (preco >= (contact.budgetMin * 0.85) && preco <= (contact.budgetMax * 1.15)) { score += 40; reasons.push('Budget alinhado') }
+                        // Zone match
+                        const zonaMatch = contact.zonas.some(z => String(prop.zona).toLowerCase().includes(z.toLowerCase().split('—')[0].trim()) || z.toLowerCase().includes(String(prop.zona).toLowerCase().split('—')[0].trim()))
+                        if (zonaMatch) { score += 30; reasons.push('Zona preferida') }
+                        // Type match
+                        const tipoMatch = contact.tipos.some(t => String(prop.tipo).toLowerCase().includes(t.toLowerCase()) || t.toLowerCase().includes(String(prop.tipo).toLowerCase()))
+                        if (tipoMatch) { score += 20; reasons.push('Tipologia correcta') }
+                        // Premium badge bonus
+                        if (prop.badge === 'Off-Market' || prop.badge === 'Exclusivo') { score += 10; reasons.push('Exclusivo') }
+                        if (score >= 60) matches.push({ contact, property: prop, score, reasons })
+                      }
+                    }
+                  }
+                  matches.sort((a, b) => b.score - a.score)
+                  const topMatches = matches.slice(0, 6)
+
+                  if (topMatches.length === 0) return null
+
+                  return (
+                    <div style={{marginBottom:'28px'}}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
+                        <div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.2em',textTransform:'uppercase',color:'#c9a96e',marginBottom:'4px'}}>✦ Matchmaking IA</div>
+                          <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.2rem',color:'#0e0e0d'}}>Oportunidades de <em style={{color:'#1c4a35'}}>Match</em> — {topMatches.length} detectadas</div>
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+                          <div style={{width:'6px',height:'6px',borderRadius:'50%',background:'#c9a96e',animation:'pulse 2s ease-in-out infinite'}}/>
+                          <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.35)',letterSpacing:'.1em'}}>AUTO-MATCH</span>
+                        </div>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px'}}>
+                        {topMatches.map((m, idx) => (
+                          <div key={idx}
+                            style={{background:'#fff',border:'1px solid rgba(201,169,110,.2)',borderLeft:'3px solid #c9a96e',padding:'14px 16px',cursor:'pointer',transition:'all .2s'}}
+                            onClick={()=>{setActiveCrmId(m.contact.id);setSection('crm')}}
+                            onMouseOver={e=>{(e.currentTarget as HTMLDivElement).style.borderColor='#c9a96e';(e.currentTarget as HTMLDivElement).style.boxShadow='0 4px 16px rgba(201,169,110,.12)'}}
+                            onMouseOut={e=>{(e.currentTarget as HTMLDivElement).style.borderColor='rgba(201,169,110,.2)';(e.currentTarget as HTMLDivElement).style.boxShadow='none'}}>
+                            {/* Score */}
+                            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px'}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.35)'}}>Match Score</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',fontWeight:700,color:m.score>=90?'#10b981':m.score>=70?'#f59e0b':'#c9a96e'}}>{m.score}%</div>
+                            </div>
+                            {/* Score bar */}
+                            <div style={{height:'3px',background:'rgba(14,14,13,.06)',borderRadius:'2px',marginBottom:'10px',overflow:'hidden'}}>
+                              <div style={{height:'100%',background:m.score>=90?'#10b981':m.score>=70?'#f59e0b':'#c9a96e',width:`${m.score}%`,borderRadius:'2px'}}/>
+                            </div>
+                            {/* Contact */}
+                            <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'6px'}}>
+                              <div style={{width:'24px',height:'24px',borderRadius:'50%',background:'rgba(201,169,110,.15)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',fontWeight:700,color:'#c9a96e',flexShrink:0}}>
+                                {m.contact.name.split(' ').map(n=>n[0]).slice(0,2).join('')}
+                              </div>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontSize:'.78rem',fontWeight:500,color:'#0e0e0d',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{m.contact.name}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)'}}>€{((m.contact.budgetMin||0)/1e6).toFixed(1)}M–€{((m.contact.budgetMax||0)/1e6).toFixed(1)}M</div>
+                              </div>
+                            </div>
+                            {/* Property */}
+                            <div style={{padding:'6px 8px',background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.08)',marginBottom:'8px'}}>
+                              <div style={{fontSize:'.76rem',color:'#1c4a35',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{String(m.property.nome)}</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',marginTop:'2px'}}>{String(m.property.zona)} · €{(Number(m.property.preco)/1e6).toFixed(2)}M · {m.property.area}m²</div>
+                            </div>
+                            {/* Reasons */}
+                            <div style={{display:'flex',gap:'4px',flexWrap:'wrap'}}>
+                              {m.reasons.map((r, i) => (
+                                <span key={i} style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',background:'rgba(201,169,110,.08)',color:'#c9a96e',padding:'2px 6px',letterSpacing:'.06em'}}>{r}</span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{textAlign:'right',marginTop:'8px'}}>
+                        <button onClick={()=>setSection('crm')} style={{background:'none',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'#1c4a35',cursor:'pointer',letterSpacing:'.1em'}}>Ver todos no CRM →</button>
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 </div>
               </div>
             )}
