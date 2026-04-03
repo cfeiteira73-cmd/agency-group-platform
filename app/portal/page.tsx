@@ -631,6 +631,7 @@ export default function Portal() {
   const [emailDraftPurpose, setEmailDraftPurpose] = useState('Follow-up geral')
   const [fabOpen, setFabOpen] = useState(false)
   const [cmdkOpen, setCmdkOpen] = useState(false)
+  const [showNotifPanel, setShowNotifPanel] = useState(false)
   const [cmdkQuery, setCmdkQuery] = useState('')
 
   // Sofia Avatar IA
@@ -1673,16 +1674,74 @@ ${dealsHtml}
               {/* Notification Bell */}
               {(() => {
                 const today = new Date().toISOString().split('T')[0]
-                const followUps = crmContacts.filter(c => c.nextFollowUp && c.nextFollowUp <= today)
-                const hasNew = followUps.length > 0
+                const todayTs = Date.now()
+                const overdueFU = crmContacts.filter(c => c.nextFollowUp && c.nextFollowUp <= today)
+                const stalePropsN = imoveisList.filter(p => {
+                  const ld = (p as Record<string,unknown>).listingDate as string|undefined
+                  return ld ? Math.floor((todayTs - new Date(ld).getTime()) / 86400000) > 60 : false
+                })
+                const totalAlerts = overdueFU.length + stalePropsN.length
                 return (
-                  <button
-                    onClick={()=>{setSection('crm')}}
-                    title={`${followUps.length} follow-up${followUps.length!==1?'s':''} pendente${followUps.length!==1?'s':''}`}
-                    style={{position:'relative',background:'none',border:`1px solid ${darkMode?'rgba(244,240,230,.1)':'rgba(14,14,13,.1)'}`,borderRadius:'8px',padding:'6px 10px',cursor:'pointer',color:darkMode?'rgba(244,240,230,.6)':'rgba(14,14,13,.5)',transition:'all .2s',display:'flex',alignItems:'center'}}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="18" height="18"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                    {hasNew && <span style={{position:'absolute',top:'3px',right:'3px',width:'8px',height:'8px',borderRadius:'50%',background:'#c9a96e',border:`2px solid ${darkMode?'#0c1f15':'#fff'}`}}/>}
-                  </button>
+                  <div style={{position:'relative'}}>
+                    <button
+                      onClick={()=>setShowNotifPanel(n=>!n)}
+                      style={{position:'relative',background:showNotifPanel?'rgba(201,169,110,.12)':'none',border:`1px solid ${showNotifPanel?'rgba(201,169,110,.3)':darkMode?'rgba(244,240,230,.1)':'rgba(14,14,13,.1)'}`,borderRadius:'8px',padding:'6px 10px',cursor:'pointer',color:darkMode?'rgba(244,240,230,.6)':'rgba(14,14,13,.5)',transition:'all .2s',display:'flex',alignItems:'center'}}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="18" height="18"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                      {totalAlerts > 0 && <span style={{position:'absolute',top:'2px',right:'2px',minWidth:'14px',height:'14px',borderRadius:'7px',background:'#e05454',border:`2px solid ${darkMode?'#0c1f15':'#fff'}`,fontFamily:"'DM Mono',monospace",fontSize:'.28rem',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',padding:'0 2px'}}>{totalAlerts}</span>}
+                    </button>
+                    {showNotifPanel && (
+                      <div style={{position:'absolute',top:'calc(100% + 8px)',right:0,width:'320px',background:darkMode?'#0f2117':'#fff',border:`1px solid ${darkMode?'rgba(201,169,110,.15)':'rgba(14,14,13,.12)'}`,boxShadow:'0 16px 48px rgba(0,0,0,.25)',zIndex:300,overflow:'hidden'}}>
+                        <div style={{padding:'12px 16px',borderBottom:`1px solid ${darkMode?'rgba(244,240,230,.06)':'rgba(14,14,13,.08)'}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.12em',textTransform:'uppercase',color:darkMode?'rgba(244,240,230,.4)':'rgba(14,14,13,.4)'}}>Central de Alertas</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:totalAlerts>0?'#e05454':'#10b981'}}>{totalAlerts} alerta{totalAlerts!==1?'s':''}</div>
+                        </div>
+                        <div style={{maxHeight:'380px',overflowY:'auto'}}>
+                          {overdueFU.length > 0 && (
+                            <div style={{padding:'10px 16px',borderBottom:`1px solid ${darkMode?'rgba(244,240,230,.04)':'rgba(14,14,13,.06)'}`}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'#e05454',letterSpacing:'.1em',marginBottom:'6px',textTransform:'uppercase'}}>📅 Follow-up Atrasado ({overdueFU.length})</div>
+                              {overdueFU.map(c => (
+                                <div key={c.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 0',cursor:'pointer',borderBottom:`1px solid ${darkMode?'rgba(244,240,230,.03)':'rgba(14,14,13,.04)'}`}} onClick={()=>{setActiveCrmId(c.id);setCrmProfileTab('overview');setSection('crm');setShowNotifPanel(false)}}>
+                                  <div>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:darkMode?'rgba(244,240,230,.8)':'rgba(14,14,13,.8)',fontWeight:500}}>{c.name}</div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:darkMode?'rgba(244,240,230,.3)':'rgba(14,14,13,.4)'}}>{c.nextFollowUp}</div>
+                                  </div>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'#e05454',background:'rgba(224,84,84,.08)',padding:'2px 7px',flexShrink:0}}>ATRASADO</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {stalePropsN.length > 0 && (
+                            <div style={{padding:'10px 16px'}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'#f97316',letterSpacing:'.1em',marginBottom:'6px',textTransform:'uppercase'}}>🏠 Imóvel Stale &gt;60d ({stalePropsN.length})</div>
+                              {stalePropsN.map(p => {
+                                const ld = (p as Record<string,unknown>).listingDate as string
+                                const days = Math.floor((todayTs - new Date(ld).getTime()) / 86400000)
+                                return (
+                                  <div key={p.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 0',cursor:'pointer',borderBottom:`1px solid ${darkMode?'rgba(244,240,230,.03)':'rgba(14,14,13,.04)'}`}} onClick={()=>{setSection('imoveis');setShowNotifPanel(false)}}>
+                                    <div>
+                                      <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:darkMode?'rgba(244,240,230,.8)':'rgba(14,14,13,.8)',fontWeight:500}}>{p.nome}</div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:darkMode?'rgba(244,240,230,.3)':'rgba(14,14,13,.4)'}}>{p.zona} · €{(p.preco/1e6).toFixed(1)}M</div>
+                                    </div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'#f97316',background:'rgba(249,115,22,.08)',padding:'2px 7px',flexShrink:0}}>{days}d</div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                          {totalAlerts === 0 && (
+                            <div style={{padding:'32px',textAlign:'center' as const}}>
+                              <div style={{fontSize:'1.8rem',marginBottom:'8px'}}>✅</div>
+                              <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.85rem',color:darkMode?'rgba(244,240,230,.4)':'rgba(14,14,13,.4)'}}>Tudo em dia — sem alertas activos</div>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{padding:'10px 16px',borderTop:`1px solid ${darkMode?'rgba(244,240,230,.06)':'rgba(14,14,13,.08)'}`,display:'flex',gap:'8px'}}>
+                          <button style={{flex:1,padding:'7px',background:darkMode?'rgba(28,74,53,.2)':'rgba(28,74,53,.06)',border:'1px solid rgba(28,74,53,.2)',color:'#1c4a35',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.08em'}} onClick={()=>{setSection('crm');setShowNotifPanel(false)}}>Ver CRM →</button>
+                          <button style={{flex:1,padding:'7px',background:'rgba(14,14,13,.04)',border:`1px solid ${darkMode?'rgba(244,240,230,.08)':'rgba(14,14,13,.1)'}`,color:darkMode?'rgba(244,240,230,.4)':'rgba(14,14,13,.4)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer'}} onClick={()=>setShowNotifPanel(false)}>Fechar</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )
               })()}
               <button
