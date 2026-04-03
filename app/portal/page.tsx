@@ -624,6 +624,9 @@ export default function Portal() {
   ])
   const [expandedDrip, setExpandedDrip] = useState<string|null>(null)
   const [campTab, setCampTab] = useState<'email'|'whatsapp'>('email')
+  const [emailDraftLoading, setEmailDraftLoading] = useState(false)
+  const [emailDraft, setEmailDraft] = useState<Record<string,string>|null>(null)
+  const [emailDraftPurpose, setEmailDraftPurpose] = useState('Follow-up geral')
   const [fabOpen, setFabOpen] = useState(false)
   const [cmdkOpen, setCmdkOpen] = useState(false)
   const [cmdkQuery, setCmdkQuery] = useState('')
@@ -6740,6 +6743,18 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                                     onClick={()=>{setIpProperty(activeContact.id?String(activeContact.id):'');setSection('investorpitch')}}>
                                     📑 Investor Pitch
                                   </button>
+                                  <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'rgba(28,74,53,.06)',color:'#1c4a35',border:'1px solid rgba(28,74,53,.2)'}}
+                                    disabled={emailDraftLoading}
+                                    onClick={async()=>{
+                                      setEmailDraftLoading(true); setEmailDraft(null)
+                                      try {
+                                        const res = await fetch('/api/crm/email-draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:activeContact,purpose:emailDraftPurpose,agentName:agentName})})
+                                        const d = await res.json()
+                                        if (d.draft) setEmailDraft(d.draft)
+                                      } catch{} finally{setEmailDraftLoading(false)}
+                                    }}>
+                                    {emailDraftLoading?'✦ A gerar...':'✉ Draft Email IA'}
+                                  </button>
                                   <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'rgba(224,84,84,.08)',color:'#e05454',border:'1px solid rgba(224,84,84,.2)'}}
                                     onClick={()=>{if(confirm(`Eliminar ${activeContact.name}?`)){saveCrmContacts(crmContacts.filter(c=>c.id!==activeContact.id));setActiveCrmId(null)}}}>
                                     🗑 Eliminar
@@ -6805,6 +6820,48 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                                     {crmNextStep.messageTemplate&&<button className="p-btn p-btn-gold" style={{padding:'6px 14px',fontSize:'.42rem'}} onClick={()=>window.open(`https://wa.me/${activeContact.phone?.replace(/\D/g,'')}?text=${encodeURIComponent(String(crmNextStep.messageTemplate||''))}`)}>💬 Enviar WA</button>}
                                     <button style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,240,230,.12)',color:'rgba(244,240,230,.6)',padding:'6px 14px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.08em',cursor:'pointer'}} onClick={()=>setCrmNextStep(null)}>✕ Fechar</button>
                                     {crmNextStep.riskFlag&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#e05454',background:'rgba(224,84,84,.08)',border:'1px solid rgba(224,84,84,.2)',padding:'4px 8px',display:'flex',alignItems:'center'}}>⚠ {String(crmNextStep.riskFlag)}</div>}
+                                  </div>
+                                </div>
+                              )}
+                              {/* Email Draft IA Result */}
+                              {emailDraft && (
+                                <div style={{gridColumn:'1/-1',background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.18)',padding:'18px',marginTop:'14px',animation:'fadeIn .3s ease'}}>
+                                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+                                    <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(28,74,53,.5)'}}>✉ Draft Email IA</div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(201,169,110,.8)',background:'rgba(201,169,110,.1)',padding:'2px 7px',border:'1px solid rgba(201,169,110,.2)'}}>Claude Opus</div>
+                                    </div>
+                                    <button onClick={()=>setEmailDraft(null)} style={{background:'none',border:'none',color:'rgba(14,14,13,.3)',cursor:'pointer',fontSize:'.85rem',lineHeight:1,padding:'2px 4px',fontFamily:"'DM Mono',monospace"}}>✕</button>
+                                  </div>
+                                  {/* Subject line */}
+                                  <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.05rem',fontWeight:700,color:'#1c4a35',marginBottom:'14px',lineHeight:1.3}}>{emailDraft.subject}</div>
+                                  {/* Email body */}
+                                  <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'16px 18px',borderRadius:'1px',marginBottom:'12px'}}>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(14,14,13,.75)',lineHeight:1.75,whiteSpace:'pre-wrap'}}>
+                                      {emailDraft.greeting}{'\n\n'}{emailDraft.body}{'\n\n'}{emailDraft.cta}{'\n\n'}{emailDraft.signature}
+                                    </div>
+                                  </div>
+                                  {/* CTA highlight */}
+                                  <div style={{background:'rgba(201,169,110,.06)',border:'1px solid rgba(201,169,110,.2)',padding:'8px 12px',marginBottom:'12px',display:'flex',alignItems:'center',gap:'8px'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',flexShrink:0}}>CTA</div>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'#1c4a35',fontWeight:500}}>{emailDraft.cta}</div>
+                                  </div>
+                                  {/* Actions */}
+                                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                                    <button className="p-btn p-btn-gold" style={{padding:'7px 16px',fontSize:'.42rem'}}
+                                      onClick={()=>navigator.clipboard.writeText(`${emailDraft.subject}\n\n${emailDraft.greeting}\n\n${emailDraft.body}\n\n${emailDraft.cta}\n\n${emailDraft.signature}`)}>
+                                      📋 Copiar Email
+                                    </button>
+                                    {activeContact.email && (
+                                      <button className="p-btn" style={{padding:'7px 16px',fontSize:'.42rem',background:'rgba(28,74,53,.08)',color:'#1c4a35',border:'1px solid rgba(28,74,53,.2)'}}
+                                        onClick={()=>window.open(`mailto:${activeContact.email}?subject=${encodeURIComponent(emailDraft.subject)}&body=${encodeURIComponent(emailDraft.greeting+'\n\n'+emailDraft.body+'\n\n'+emailDraft.cta+'\n\n'+emailDraft.signature)}`)}>
+                                        ✉ Abrir no Mail
+                                      </button>
+                                    )}
+                                    <button className="p-btn" style={{padding:'7px 16px',fontSize:'.42rem',background:'rgba(28,74,53,.08)',color:'#1c4a35',border:'1px solid rgba(28,74,53,.2)'}}
+                                      onClick={()=>{setEmailDraft(null);setEmailDraftLoading(false)}}>
+                                      ✕ Fechar
+                                    </button>
                                   </div>
                                 </div>
                               )}
