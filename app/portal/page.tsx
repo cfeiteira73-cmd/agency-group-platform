@@ -510,6 +510,8 @@ export default function Portal() {
     { id:3, ref:'AG-2026-003', imovel:'Herdade Comporta · Grândola', valor:'€ 6.500.000', fase:'Proposta Aceite', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k=>[k,CHECKLISTS[k].map(()=>false)])) },
   ])
   const [activeDeal, setActiveDeal] = useState<number|null>(null)
+  const [dealRiskLoading, setDealRiskLoading] = useState(false)
+  const [dealRiskAnalysis, setDealRiskAnalysis] = useState<Record<string,unknown>|null>(null)
   const [newDeal, setNewDeal] = useState({ imovel:'', valor:'' })
   const [showNewDeal, setShowNewDeal] = useState(false)
 
@@ -5086,14 +5088,71 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                             <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.35)'}}>{deal.ref}</span>
                           </div>
                         </div>
-                        {/* Progress bar */}
-                        <div style={{textAlign:'right'}}>
-                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>{STAGE_PCT[fase]||10}% concluído</div>
-                          <div style={{width:'120px',height:'3px',background:'rgba(14,14,13,.08)',borderRadius:'2px',overflow:'hidden'}}>
-                            <div style={{height:'100%',width:`${STAGE_PCT[fase]||10}%`,background:STAGE_COLOR[fase]||'#888',borderRadius:'2px'}}/>
+                        {/* Progress bar + Risk Button */}
+                        <div style={{display:'flex',alignItems:'center',gap:'12px',flexWrap:'wrap'}}>
+                          <button style={{padding:'7px 14px',background:dealRiskAnalysis?'rgba(224,84,84,.08)':'rgba(28,74,53,.06)',border:`1px solid ${dealRiskAnalysis?'rgba(224,84,84,.25)':'rgba(28,74,53,.18)'}`,color:dealRiskAnalysis?'#e05454':'#1c4a35',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.08em',cursor:'pointer',transition:'all .15s',whiteSpace:'nowrap' as const}}
+                            disabled={dealRiskLoading}
+                            onClick={async()=>{
+                              if (dealRiskAnalysis) { setDealRiskAnalysis(null); return }
+                              setDealRiskLoading(true)
+                              try {
+                                const res = await fetch('/api/deal/risk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deal})})
+                                const d = await res.json()
+                                if (d.analysis) setDealRiskAnalysis(d.analysis)
+                              } catch{} finally{setDealRiskLoading(false)}
+                            }}>
+                            {dealRiskLoading ? '✦ A analisar...' : dealRiskAnalysis ? '⚠ Fechar' : '⚠ Risco IA'}
+                          </button>
+                          <div style={{textAlign:'right'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>{STAGE_PCT[fase]||10}% concluído</div>
+                            <div style={{width:'120px',height:'3px',background:'rgba(14,14,13,.08)',borderRadius:'2px',overflow:'hidden'}}>
+                              <div style={{height:'100%',width:`${STAGE_PCT[fase]||10}%`,background:STAGE_COLOR[fase]||'#888',borderRadius:'2px'}}/>
+                            </div>
                           </div>
                         </div>
                       </div>
+                      {/* Risk Analysis Panel */}
+                      {dealRiskAnalysis && (() => {
+                        const lvl = String(dealRiskAnalysis.riskLevel)
+                        const lvlColor = lvl==='CRITICAL'?'#e05454':lvl==='HIGH'?'#f97316':lvl==='MEDIUM'?'#f59e0b':'#10b981'
+                        const lvlBg = lvl==='CRITICAL'?'rgba(224,84,84,.06)':lvl==='HIGH'?'rgba(249,115,22,.05)':lvl==='MEDIUM'?'rgba(245,158,11,.04)':'rgba(16,185,129,.04)'
+                        return (
+                          <div style={{padding:'16px 24px',background:lvlBg,borderBottom:'1px solid rgba(14,14,13,.08)'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px',flexWrap:'wrap' as const}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)'}}>⚠ Análise de Risco — Claude Opus</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',fontWeight:700,padding:'3px 10px',background:`${lvlColor}22`,color:lvlColor,border:`1px solid ${lvlColor}44`}}>
+                                {lvl} · {String(dealRiskAnalysis.riskScore)}/100
+                              </div>
+                            </div>
+                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px'}}>
+                              <div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>Riscos Identificados</div>
+                                {(dealRiskAnalysis.risks as {category:string;description:string;severity:string}[]).map((r,i) => (
+                                  <div key={i} style={{display:'flex',gap:'8px',alignItems:'flex-start',marginBottom:'8px'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.3rem',padding:'2px 5px',flexShrink:0,background:r.severity==='HIGH'?'rgba(224,84,84,.1)':r.severity==='MEDIUM'?'rgba(249,115,22,.1)':'rgba(14,14,13,.06)',color:r.severity==='HIGH'?'#e05454':r.severity==='MEDIUM'?'#f97316':'rgba(14,14,13,.5)',border:'1px solid currentColor'}}>{r.severity}</div>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(14,14,13,.65)',lineHeight:1.4}}><strong style={{color:'rgba(14,14,13,.8)'}}>{r.category}:</strong> {r.description}</div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>Recomendações</div>
+                                {(dealRiskAnalysis.recommendations as string[]).map((r,i) => (
+                                  <div key={i} style={{display:'flex',gap:'6px',alignItems:'flex-start',marginBottom:'6px'}}>
+                                    <span style={{color:'#1c4a35',flexShrink:0,fontWeight:700}}>→</span>
+                                    <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(14,14,13,.65)',lineHeight:1.4}}>{r}</span>
+                                  </div>
+                                ))}
+                                {dealRiskAnalysis.nextCriticalAction && (
+                                  <div style={{marginTop:'10px',padding:'8px 12px',background:'rgba(201,169,110,.08)',border:'1px solid rgba(201,169,110,.2)'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(14,14,13,.4)',letterSpacing:'.08em',marginBottom:'3px'}}>ACÇÃO CRÍTICA</div>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'#1c4a35',fontWeight:500}}>{String(dealRiskAnalysis.nextCriticalAction)}</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })()}
 
                       {/* Tabs */}
                       <div style={{display:'flex',borderBottom:'1px solid rgba(14,14,13,.08)',padding:'0 24px'}}>
@@ -9389,11 +9448,13 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
           <div style={{display:'flex',flexDirection:'column',gap:'8px',alignItems:'flex-end'}}>
             {[
               { label:'⌘K Pesquisa Rápida', action:()=>{setCmdkOpen(true);setFabOpen(false)} },
+              { label:'👤 Novo Contacto CRM', action:()=>{setSection('crm');setShowAddContact(true);setFabOpen(false)} },
               { label:'+ Novo Deal', action:()=>{setSection('pipeline');setShowNewDeal(true);setFabOpen(false)} },
               { label:'✦ Investor Pitch', action:()=>{setSection('investorpitch');setFabOpen(false)} },
               { label:'🎬 Sofia Avatar', action:()=>{setSection('sofia');setFabOpen(false)} },
               { label:'⚖ Jurídico IA', action:()=>{setSection('juridico');setFabOpen(false)} },
               { label:'📊 AVM Avaliação', action:()=>{setSection('avm');setFabOpen(false)} },
+              { label:'📈 Dashboard', action:()=>{setSection('dashboard');setFabOpen(false)} },
             ].map(item=>(
               <button key={item.label} onClick={item.action}
                 style={{background:'#0c1f15',color:'#f4f0e6',border:'1px solid rgba(201,169,110,.2)',padding:'9px 18px',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.08em',cursor:'pointer',boxShadow:'0 4px 16px rgba(12,31,21,.3)',transition:'all .15s',whiteSpace:'nowrap'}}
