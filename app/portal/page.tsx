@@ -21,6 +21,7 @@ const NAV = [
   { id:'documentos', label:'Documentação', icon:'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', group:'MAIS' },
   { id:'imoveis', label:'Im\u00f3veis', icon:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 22V12h6v10', group:'MAIS' },
   { id:'campanhas', label:'Campanhas Email', icon:'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', group:'MAIS' },
+  { id:'agenda', label:'Agenda Semanal', icon:'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', group:'MAIS' },
 ]
 
 const PIPELINE_STAGES = ['Angariação','Proposta Enviada','Proposta Aceite','Due Diligence','CPCV Assinado','Financiamento','Escritura Marcada','Escritura Concluída']
@@ -100,6 +101,7 @@ const SECTION_NAMES: Record<string,string> = {
   marketing:'Marketing AI Suite', homestaging:'Home Staging IA', documentos:'Documenta\u00e7\u00e3o Legal',
   juridico:'Consultor Jur\u00eddico IA', imoveis:'Im\u00f3veis', campanhas:'Campanhas Email',
   sofia:'Sofia Avatar IA',
+  agenda:'Agenda Semanal',
 }
 
 const BUYER_DEMAND = [
@@ -505,9 +507,9 @@ export default function Portal() {
   const [pipelineView, setPipelineView] = useState<'lista'|'kanban'>('lista')
   const [pipelineSearch, setPipelineSearch] = useState('')
   const [deals, setDeals] = useState([
-    { id:1, ref:'AG-2026-001', imovel:'Villa Quinta da Marinha · Cascais', valor:'€ 3.800.000', fase:'CPCV Assinado', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k=>[k,CHECKLISTS[k].map(()=>false)])) },
-    { id:2, ref:'AG-2026-002', imovel:'Penthouse Chiado · Lisboa', valor:'€ 2.100.000', fase:'Due Diligence', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k=>[k,CHECKLISTS[k].map(()=>false)])) },
-    { id:3, ref:'AG-2026-003', imovel:'Herdade Comporta · Grândola', valor:'€ 6.500.000', fase:'Proposta Aceite', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k=>[k,CHECKLISTS[k].map(()=>false)])) },
+    { id:1, ref:'AG-2026-001', imovel:'Villa Quinta da Marinha · Cascais', valor:'€ 3.800.000', fase:'CPCV Assinado', comprador:'James Whitfield', cpcvDate:'2026-04-04', escrituraDate:'2026-05-15', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k=>[k,CHECKLISTS[k].map(()=>false)])) },
+    { id:2, ref:'AG-2026-002', imovel:'Penthouse Chiado · Lisboa', valor:'€ 2.100.000', fase:'Due Diligence', comprador:'Sophie Laurent', cpcvDate:'2026-04-07', escrituraDate:'', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k=>[k,CHECKLISTS[k].map(()=>false)])) },
+    { id:3, ref:'AG-2026-003', imovel:'Herdade Comporta · Grândola', valor:'€ 6.500.000', fase:'Proposta Aceite', comprador:'Khalid Al-Rashid', cpcvDate:'', escrituraDate:'', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k=>[k,CHECKLISTS[k].map(()=>false)])) },
   ])
   const [activeDeal, setActiveDeal] = useState<number|null>(null)
   const [dealRiskLoading, setDealRiskLoading] = useState(false)
@@ -9711,6 +9713,306 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
               )
             })()}
 
+            {/* ── AGENDA SEMANAL ── */}
+            {section==='agenda' && (()=>{
+              const today = new Date('2026-04-03')
+              const todayDay = today.getDay() // 5 = Friday
+              // Get Monday of current week
+              const monday = new Date(today)
+              monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+
+              const weekDays = Array.from({length:7},(_,i)=>{
+                const d = new Date(monday)
+                d.setDate(monday.getDate() + i)
+                return d
+              })
+
+              const DAY_LABELS = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo']
+
+              type AgendaEvent = {
+                type: 'followup' | 'meeting' | 'deal' | 'task'
+                label: string
+                sub: string
+                color: string
+                icon: string
+                time?: string
+              }
+
+              // Build events per day
+              const eventsByDay: AgendaEvent[][] = weekDays.map((day, dayIdx) => {
+                const events: AgendaEvent[] = []
+                const iso = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`
+
+                // Follow-ups from CRM contacts
+                crmContacts.forEach(c => {
+                  if (!c.lastContact) return
+                  const last = new Date(c.lastContact)
+                  const diff = Math.floor((day.getTime() - last.getTime()) / 86400000)
+                  if (diff === 3 || diff === 7 || diff === 14 || diff === 30) {
+                    events.push({
+                      type:'followup',
+                      label:`Follow-up: ${c.name}`,
+                      sub:`${diff}d sem contacto · ${c.status?.toUpperCase() || 'LEAD'} · ${c.nationality || ''}`,
+                      color:'#3a7bd5',
+                      icon:'📞',
+                      time: diff <= 7 ? '09:00' : '11:00'
+                    })
+                  }
+                })
+
+                // Deal deadlines
+                deals.forEach(d => {
+                  if (d.cpcvDate === iso) {
+                    events.push({
+                      type:'deal',
+                      label:`CPCV: ${d.imovel}`,
+                      sub:`${d.comprador} · ${d.valor}`,
+                      color:'#c9a96e',
+                      icon:'📋',
+                      time:'14:00'
+                    })
+                  }
+                  if (d.escrituraDate === iso) {
+                    events.push({
+                      type:'deal',
+                      label:`✅ Escritura: ${d.imovel}`,
+                      sub:`${d.comprador} · ${d.valor}`,
+                      color:'#1c4a35',
+                      icon:'🏠',
+                      time:'15:00'
+                    })
+                  }
+                })
+
+                // Tasks from CRM contacts
+                crmContacts.forEach(c => {
+                  if (!c.tasks) return
+                  ;(c.tasks as {text:string;date:string;done:boolean}[]).forEach(t => {
+                    if (!t.done && t.date === iso) {
+                      events.push({
+                        type:'task',
+                        label: t.text,
+                        sub:`${c.name} · Tarefa pendente`,
+                        color:'#4a9c7a',
+                        icon:'✓',
+                        time:'10:00'
+                      })
+                    }
+                  })
+                })
+
+                // Default weekly patterns
+                if (dayIdx === 0) events.push({ type:'meeting', label:'Reunião de equipa AG', sub:'Pipeline review semanal · Sala principal', color:'#7c3aed', icon:'👥', time:'08:30' })
+                if (dayIdx === 4) events.push({ type:'task', label:'Relatório semanal IA', sub:'Gerar e enviar relatório de performance', color:'#4a9c7a', icon:'📊', time:'17:00' })
+                if (dayIdx === 6) events.push({ type:'task', label:'Planeamento semana seguinte', sub:'Prioridades, contactos, visitas', color:'#888', icon:'📅', time:'10:00' })
+
+                return events.sort((a,b) => (a.time||'99:99').localeCompare(b.time||'99:99'))
+              })
+
+              const totalEvents = eventsByDay.reduce((s,ev) => s + ev.length, 0)
+              const followupCount = eventsByDay.flat().filter(e=>e.type==='followup').length
+              const dealCount = eventsByDay.flat().filter(e=>e.type==='deal').length
+              const todayEvents = eventsByDay[((today.getDay()+6)%7)] || []
+
+              const TYPE_CFG: Record<string,{bg:string;border:string;dot:string;label:string}> = {
+                followup: { bg:'rgba(58,123,213,.07)', border:'rgba(58,123,213,.2)', dot:'#3a7bd5', label:'Follow-up' },
+                meeting:  { bg:'rgba(124,58,237,.07)', border:'rgba(124,58,237,.2)', dot:'#7c3aed', label:'Reunião' },
+                deal:     { bg:'rgba(201,169,110,.07)', border:'rgba(201,169,110,.25)', dot:'#c9a96e', label:'Deal' },
+                task:     { bg:'rgba(74,156,122,.07)', border:'rgba(74,156,122,.2)', dot:'#4a9c7a', label:'Tarefa' },
+              }
+
+              return (
+                <div>
+                  {/* Header */}
+                  <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:'16px',marginBottom:'32px'}}>
+                    <div>
+                      <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.6rem',color:'#0e0e0d',letterSpacing:'-.01em',marginBottom:'6px'}}>Agenda Semanal</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase'}}>
+                        {monday.toLocaleDateString('pt-PT',{day:'numeric',month:'long'})} — {weekDays[6].toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'})}
+                      </div>
+                    </div>
+                    <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+                      {[
+                        { label:'Total Esta Semana', value:totalEvents.toString(), color:'#0e0e0d' },
+                        { label:'Follow-ups', value:followupCount.toString(), color:'#3a7bd5' },
+                        { label:'Deals / Escrituras', value:dealCount.toString(), color:'#c9a96e' },
+                        { label:'Hoje', value:todayEvents.length.toString(), color:'#1c4a35' },
+                      ].map(s=>(
+                        <div key={s.label} style={{textAlign:'center',padding:'12px 18px',background:'rgba(14,14,13,.03)',border:'1px solid rgba(14,14,13,.07)'}}>
+                          <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.5rem',fontWeight:600,color:s.color,lineHeight:1}}>{s.value}</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.08em',marginTop:'4px'}}>{s.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Legend */}
+                  <div style={{display:'flex',gap:'16px',flexWrap:'wrap',marginBottom:'24px'}}>
+                    {Object.entries(TYPE_CFG).map(([k,v])=>(
+                      <div key={k} style={{display:'flex',alignItems:'center',gap:'6px'}}>
+                        <div style={{width:'8px',height:'8px',borderRadius:'50%',background:v.dot}}/>
+                        <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.5)',textTransform:'uppercase',letterSpacing:'.08em'}}>{v.label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Week grid */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'8px',marginBottom:'32px'}}>
+                    {weekDays.map((day,i)=>{
+                      const isToday = day.toDateString()===today.toDateString()
+                      const isPast = day < today && !isToday
+                      const events = eventsByDay[i]
+                      return (
+                        <div key={i} style={{border:`1px solid ${isToday?'#1c4a35':'rgba(14,14,13,.08)'}`,background:isToday?'rgba(28,74,53,.04)':isPast?'rgba(14,14,13,.01)':'#fff',minHeight:'180px',position:'relative',transition:'all .2s'}}>
+                          {/* Day header */}
+                          <div style={{padding:'10px 12px',borderBottom:`1px solid ${isToday?'rgba(28,74,53,.2)':'rgba(14,14,13,.06)'}`,background:isToday?'#1c4a35':isPast?'rgba(14,14,13,.03)':'transparent'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',textTransform:'uppercase',letterSpacing:'.1em',color:isToday?'rgba(244,240,230,.6)':isPast?'rgba(14,14,13,.3)':'rgba(14,14,13,.4)'}}>{DAY_LABELS[i]}</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:isToday?600:400,color:isToday?'#f4f0e6':isPast?'rgba(14,14,13,.3)':'#0e0e0d',lineHeight:1.1}}>{day.getDate()}</div>
+                            {isToday && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'#c9a96e',letterSpacing:'.1em',marginTop:'2px'}}>HOJE</div>}
+                          </div>
+                          {/* Events */}
+                          <div style={{padding:'8px',display:'flex',flexDirection:'column',gap:'4px'}}>
+                            {events.length===0 && (
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.2)',padding:'8px 4px',textAlign:'center'}}>—</div>
+                            )}
+                            {events.map((ev,ei)=>{
+                              const cfg = TYPE_CFG[ev.type]
+                              return (
+                                <div key={ei} style={{background:cfg.bg,border:`1px solid ${cfg.border}`,padding:'5px 7px',borderLeft:`2px solid ${cfg.dot}`,opacity:isPast?.6:1}}>
+                                  {ev.time && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:cfg.dot,marginBottom:'2px'}}>{ev.time}</div>}
+                                  <div style={{fontSize:'.72rem',fontWeight:500,color:'#0e0e0d',lineHeight:1.3,marginBottom:'1px'}}>{ev.icon} {ev.label}</div>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.33rem',color:'rgba(14,14,13,.45)',lineHeight:1.4}}>{ev.sub}</div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Today spotlight */}
+                  {todayEvents.length > 0 && (
+                    <div style={{marginBottom:'32px'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'16px'}}>▸ Hoje em Destaque</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:'12px'}}>
+                        {todayEvents.map((ev,i)=>{
+                          const cfg = TYPE_CFG[ev.type]
+                          return (
+                            <div key={i} style={{background:'#fff',border:`1px solid ${cfg.border}`,borderLeft:`3px solid ${cfg.dot}`,padding:'16px 18px',display:'flex',gap:'14px',alignItems:'flex-start'}}>
+                              <div style={{fontSize:'1.4rem',flexShrink:0}}>{ev.icon}</div>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+                                  {ev.time && <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:cfg.dot,flexShrink:0}}>{ev.time}</span>}
+                                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',padding:'2px 7px',background:cfg.bg,color:cfg.dot,border:`1px solid ${cfg.border}`,textTransform:'uppercase',letterSpacing:'.06em'}}>{cfg.label}</span>
+                                </div>
+                                <div style={{fontSize:'.88rem',fontWeight:600,color:'#0e0e0d',marginBottom:'4px'}}>{ev.label}</div>
+                                <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.55)',lineHeight:1.5}}>{ev.sub}</div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Upcoming follow-ups — next 7 days from CRM */}
+                  <div style={{marginBottom:'32px'}}>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'16px'}}>▸ Follow-ups Prioritários</div>
+                    <div style={{border:'1px solid rgba(14,14,13,.08)',overflow:'hidden'}}>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr auto auto auto auto',background:'rgba(14,14,13,.03)',borderBottom:'1px solid rgba(14,14,13,.08)',padding:'10px 16px',gap:'16px'}}>
+                        {['Contacto','Status','Budget','Última Vez','Ação'].map(h=>(
+                          <div key={h} style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.08em'}}>{h}</div>
+                        ))}
+                      </div>
+                      {crmContacts
+                        .filter(c=>c.lastContact)
+                        .map(c=>({ c, days:Math.floor((today.getTime()-new Date(c.lastContact!).getTime())/86400000) }))
+                        .filter(({days})=>days>=2 && days<=30)
+                        .sort((a,b)=>b.days-a.days)
+                        .slice(0,8)
+                        .map(({c,days},i)=>{
+                          const urgency = days>=14?'#e05454':days>=7?'#c9a96e':'#4a9c7a'
+                          return (
+                            <div key={i} style={{display:'grid',gridTemplateColumns:'1fr auto auto auto auto',padding:'12px 16px',gap:'16px',alignItems:'center',borderBottom:'1px solid rgba(14,14,13,.05)',background:i%2===0?'#fff':'rgba(14,14,13,.01)'}}>
+                              <div>
+                                <div style={{fontSize:'.85rem',fontWeight:500,color:'#0e0e0d'}}>{c.nationality && <span style={{marginRight:'6px'}}>{c.nationality.split(' ')[0]}</span>}{c.name}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',marginTop:'2px'}}>{c.email || c.phone || '—'}</div>
+                              </div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',padding:'3px 8px',background:`rgba(${c.status==='vip'?'201,169,110':c.status==='cliente'?'28,74,53':'136,136,136'},.1)`,color:c.status==='vip'?'#c9a96e':c.status==='cliente'?'#1c4a35':'#888',border:'1px solid currentColor',textTransform:'uppercase',letterSpacing:'.06em',whiteSpace:'nowrap'}}>{c.status||'lead'}</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.5)',whiteSpace:'nowrap'}}>€{((Number(c.budgetMin)||0)/1e6).toFixed(1)}M–€{((Number(c.budgetMax)||0)/1e6).toFixed(1)}M</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:urgency,whiteSpace:'nowrap',fontWeight:600}}>{days}d atrás</div>
+                              <div style={{display:'flex',gap:'6px'}}>
+                                <button style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',padding:'4px 10px',background:'rgba(58,123,213,.08)',color:'#3a7bd5',border:'1px solid rgba(58,123,213,.2)',cursor:'pointer',whiteSpace:'nowrap'}}
+                                  onClick={()=>{ setSection('crm'); setActiveCrmId(c.id); setCrmProfileTab('overview') }}>→ CRM</button>
+                                {c.phone && <a href={`https://wa.me/${c.phone.replace(/\s+/g,'')}`} target='_blank' rel='noopener' style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',padding:'4px 10px',background:'rgba(37,211,102,.08)',color:'#25d366',border:'1px solid rgba(37,211,102,.2)',textDecoration:'none',whiteSpace:'nowrap'}}>WA</a>}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      {crmContacts.filter(c=>c.lastContact&&Math.floor((today.getTime()-new Date(c.lastContact).getTime())/86400000)>=2&&Math.floor((today.getTime()-new Date(c.lastContact).getTime())/86400000)<=30).length===0 && (
+                        <div style={{padding:'24px',textAlign:'center',fontFamily:"'Jost',sans-serif",fontSize:'.85rem',color:'rgba(14,14,13,.4)'}}>Sem follow-ups pendentes esta semana.</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Deal deadlines this week */}
+                  <div style={{marginBottom:'32px'}}>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'16px'}}>▸ Deadlines de Deals Esta Semana</div>
+                    {deals.filter(d=>{
+                      const hasDeadline = d.cpcvDate || d.escrituraDate
+                      if (!hasDeadline) return false
+                      const deadlineDate = new Date(d.escrituraDate || d.cpcvDate)
+                      return deadlineDate >= weekDays[0] && deadlineDate <= weekDays[6]
+                    }).length === 0 ? (
+                      <div style={{padding:'24px',background:'rgba(28,74,53,.03)',border:'1px solid rgba(28,74,53,.1)',textAlign:'center',fontFamily:"'Jost',sans-serif",fontSize:'.85rem',color:'rgba(14,14,13,.4)'}}>
+                        Sem deadlines de deals esta semana. ✓
+                      </div>
+                    ) : (
+                      <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                        {deals.filter(d=>(d.cpcvDate||d.escrituraDate)).map((d,i)=>{
+                          const hasCPCV = d.cpcvDate && new Date(d.cpcvDate) >= weekDays[0] && new Date(d.cpcvDate) <= weekDays[6]
+                          const hasEsc = d.escrituraDate && new Date(d.escrituraDate) >= weekDays[0] && new Date(d.escrituraDate) <= weekDays[6]
+                          if (!hasCPCV && !hasEsc) return null
+                          return (
+                            <div key={i} style={{display:'flex',alignItems:'center',gap:'16px',padding:'14px 18px',background:'#fff',border:`1px solid ${hasEsc?'rgba(28,74,53,.2)':'rgba(201,169,110,.2)'}`,borderLeft:`3px solid ${hasEsc?'#1c4a35':'#c9a96e'}`}}>
+                              <div style={{fontSize:'1.2rem'}}>{hasEsc?'🏠':'📋'}</div>
+                              <div style={{flex:1}}>
+                                <div style={{fontSize:'.88rem',fontWeight:600,color:'#0e0e0d'}}>{d.imovel}</div>
+                                <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.5)',marginTop:'2px'}}>{d.comprador} · {d.valor}</div>
+                              </div>
+                              <div style={{textAlign:'right'}}>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:hasEsc?'#1c4a35':'#c9a96e',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'2px'}}>{hasEsc?'Escritura':'CPCV'}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'#0e0e0d',fontWeight:600}}>{new Date(hasEsc?d.escrituraDate!:d.cpcvDate!).toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'})}</div>
+                              </div>
+                              <button className="p-btn" style={{fontSize:'.4rem',padding:'6px 14px'}} onClick={()=>{setSection('pipeline');setActiveDeal(d.id)}}>Ver Deal →</button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick add event */}
+                  <div style={{padding:'20px 24px',border:'2px dashed rgba(14,14,13,.1)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'16px',flexWrap:'wrap'}}>
+                    <div>
+                      <div style={{fontSize:'.85rem',fontWeight:500,color:'#0e0e0d',marginBottom:'3px'}}>Adicionar Evento</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.4)'}}>Sincronize com Google Calendar ou adicione manualmente</div>
+                    </div>
+                    <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                      <button className="p-btn" style={{fontSize:'.44rem',padding:'8px 16px'}} onClick={()=>alert('Integração Google Calendar — em breve')}>
+                        📅 Sync Google Cal
+                      </button>
+                      <button className="p-btn p-btn-gold" style={{fontSize:'.44rem',padding:'8px 16px'}} onClick={()=>{
+                        const label = prompt('Descrição do evento:')
+                        if (label) alert(`Evento "${label}" adicionado — funcionalidade de persistência em breve.`)
+                      }}>+ Novo Evento</button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
           </main>
         </div>
       </div>
@@ -9801,7 +10103,7 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
           <div style={{display:'flex',flexDirection:'column',gap:'8px',alignItems:'flex-end'}}>
             {[
               { label:'⌘K Pesquisa Rápida', action:()=>{setCmdkOpen(true);setFabOpen(false)} },
-              { label:'👤 Novo Contacto CRM', action:()=>{setSection('crm');setShowAddContact(true);setFabOpen(false)} },
+              { label:'👤 Novo Contacto CRM', action:()=>{setSection('crm');setShowNewContact(true);setFabOpen(false)} },
               { label:'+ Novo Deal', action:()=>{setSection('pipeline');setShowNewDeal(true);setFabOpen(false)} },
               { label:'✦ Investor Pitch', action:()=>{setSection('investorpitch');setFabOpen(false)} },
               { label:'🎬 Sofia Avatar', action:()=>{setSection('sofia');setFabOpen(false)} },
