@@ -11,6 +11,7 @@ const NAV = [
   { id:'marketing', label:'Marketing AI', icon:'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', group:'FERRAMENTAS IA' },
   { id:'homestaging', label:'Home Staging IA', icon:'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', group:'FERRAMENTAS IA' },
   { id:'investorpitch', label:'Investor Pitch IA', icon:'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z', group:'FERRAMENTAS IA' },
+  { id:'sofia', label:'Sofia Avatar IA', icon:'M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', group:'FERRAMENTAS IA' },
   { id:'juridico', label:'Consultor Jurídico IA', icon:'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', group:'FERRAMENTAS IA' },
   { id:'credito', label:'Simulador Crédito', icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', group:'ANÁLISE' },
   { id:'nhr', label:'NHR / IFICI', icon:'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064', group:'ANÁLISE' },
@@ -98,6 +99,7 @@ const SECTION_NAMES: Record<string,string> = {
   portfolio:'Portfolio An\u00e1lise', pipeline:'Pipeline CPCV',
   marketing:'Marketing AI Suite', homestaging:'Home Staging IA', documentos:'Documenta\u00e7\u00e3o Legal',
   juridico:'Consultor Jur\u00eddico IA', imoveis:'Im\u00f3veis', campanhas:'Campanhas Email',
+  sofia:'Sofia Avatar IA',
 }
 
 const BUYER_DEMAND = [
@@ -621,6 +623,19 @@ export default function Portal() {
     { id:'d3', name:'Reactiva\u00e7\u00e3o Lead Frio', status:'draft', emails:3, days:21, openRate:'29%' },
   ])
   const [expandedDrip, setExpandedDrip] = useState<string|null>(null)
+
+  // Sofia Avatar IA
+  const sofiaVideoRef = useRef<HTMLVideoElement|null>(null)
+  const sofiaPeerRef = useRef<RTCPeerConnection|null>(null)
+  const [sofiaSessionId, setSofiaSessionId] = useState<string|null>(null)
+  const [sofiaConnected, setSofiaConnected] = useState(false)
+  const [sofiaLoading, setSofiaLoading] = useState(false)
+  const [sofiaSpeaking, setSofiaSpeaking] = useState(false)
+  const [sofiaText, setSofiaText] = useState('')
+  const [sofiaError, setSofiaError] = useState<string|null>(null)
+  const [sofiaScriptLoading, setSofiaScriptLoading] = useState(false)
+  const [sofiaPropSel, setSofiaPropSel] = useState('')
+  const [sofiaLang, setSofiaLang] = useState<'PT'|'EN'|'FR'|'AR'>('EN')
 
   // Imoveis states
   const [imoveisTab, setImoveisTab] = useState<'lista'|'adicionar'|'stats'>('lista')
@@ -1395,6 +1410,7 @@ ${dealsHtml}
         @keyframes jdot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-4px);opacity:1}}
         @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
         @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes soundBar{0%{height:4px;opacity:.5}100%{height:18px;opacity:1}}
         .mkt-input-tab{padding:8px 16px;font-family:'DM Mono',monospace;font-size:.46rem;letter-spacing:.14em;text-transform:uppercase;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:rgba(14,14,13,.4);transition:all .2s}
         .mkt-input-tab.active{color:#1c4a35;border-bottom-color:#1c4a35}
         .crm-contact-row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(14,14,13,.06);transition:background .15s}
@@ -1659,7 +1675,7 @@ ${dealsHtml}
           </header>
 
           {/* CONTENT */}
-          <main style={{flex:1,overflowY:section==='juridico'?'hidden':'auto',padding:section==='juridico'?'0':'32px',display:'flex',flexDirection:'column'}}>
+          <main style={{flex:1,overflowY:(section==='juridico'||section==='sofia')?'hidden':'auto',padding:(section==='juridico'||section==='sofia')?'0':'32px',display:'flex',flexDirection:'column'}}>
 
             {/* ── DASHBOARD ── */}
             {section==='dashboard' && (
@@ -6361,7 +6377,20 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                                   {isOverdue && <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'#e05454',background:'rgba(224,84,84,.08)',padding:'1px 5px'}}>Follow-up!</span>}
                                 </div>
                               </div>
-                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.3)',flexShrink:0}}>{c.lastContact?.slice(5)||'—'}</div>
+                              {(() => {
+                                const dSince = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : null
+                                const dColor = dSince === null ? '#9ca3af' : dSince > 14 ? '#e05454' : dSince > 7 ? '#f97316' : dSince > 3 ? '#f59e0b' : '#10b981'
+                                const dLabel = dSince === null ? '—' : dSince === 0 ? 'hoje' : `${dSince}d`
+                                const dBar = dSince === null ? 0 : Math.min(100, (dSince / 21) * 100)
+                                return (
+                                  <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'3px',flexShrink:0,minWidth:'36px'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',fontWeight:700,color:dColor}}>{dLabel}</div>
+                                    <div style={{width:'32px',height:'3px',background:'rgba(14,14,13,.08)',borderRadius:'2px',overflow:'hidden'}}>
+                                      <div style={{height:'100%',borderRadius:'2px',background:dColor,width:`${dBar}%`,transition:'width .4s'}}/>
+                                    </div>
+                                  </div>
+                                )
+                              })()}
                             </div>
                           )
                         })}
@@ -7149,6 +7178,307 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                           </div>
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* ── SOFIA AVATAR IA ── */}
+            {section==='sofia' && (() => {
+              const SOFIA_PRESETS: {label:string; icon:string; textPT:string; textEN:string; textFR:string; textAR:string}[] = [
+                { label:'Abertura', icon:'👋',
+                  textPT:'Olá! Sou a Sofia, consultora da Agency Group. Especializo-me em imobiliário de luxo em Portugal, de Lisboa ao Algarve. Estou aqui para guiá-lo em cada passo desta jornada — desde a primeira visita até à escritura. Como posso ajudá-lo hoje?',
+                  textEN:'Hello! I\'m Sofia, a consultant at Agency Group. I specialise in luxury real estate across Portugal, from Lisbon to the Algarve. I\'m here to guide you every step of the way — from first viewing to completion. How may I help you today?',
+                  textFR:'Bonjour! Je suis Sofia, consultante chez Agency Group. Je me spécialise dans l\'immobilier de luxe au Portugal. Je suis là pour vous accompagner à chaque étape. Comment puis-je vous aider aujourd\'hui?',
+                  textAR:'مرحباً! أنا سوفيا، مستشارة في Agency Group. أتخصص في العقارات الفاخرة في البرتغال. أنا هنا لإرشادك في كل خطوة. كيف يمكنني مساعدتك اليوم؟' },
+                { label:'Apresentação', icon:'🏛️',
+                  textPT:'Permita-me apresentar-lhe esta propriedade extraordinária. Uma oportunidade única no mercado de luxo português, com localização privilegiada e acabamentos de excelência. Os nossos imóveis são seleccionados com rigor para clientes que exigem o melhor.',
+                  textEN:'Allow me to present this extraordinary property. A unique opportunity in the Portuguese luxury market, with a privileged location and excellent finishes. Our properties are carefully selected for clients who demand the very best.',
+                  textFR:'Permettez-moi de vous présenter cette propriété extraordinaire. Une opportunité unique sur le marché du luxe portugais, avec un emplacement privilégié et des finitions d\'excellence.',
+                  textAR:'اسمحوا لي أن أقدم لكم هذا العقار الاستثنائي. فرصة فريدة في سوق الفخامة البرتغالي، بموقع متميز وتشطيبات راقية.' },
+                { label:'Follow-Up', icon:'📞',
+                  textPT:'Obrigada pelo seu interesse no imóvel. Queria verificar se tem alguma questão após a visita. Tenho disponibilidade para agendar uma segunda visita ou preparar uma proposta personalizada. A sua satisfação é a nossa prioridade.',
+                  textEN:'Thank you for your interest in the property. I wanted to check if you have any questions following your viewing. I\'m available to arrange a second visit or prepare a personalised proposal. Your satisfaction is our priority.',
+                  textFR:'Merci pour votre intérêt pour la propriété. Je voulais vérifier si vous avez des questions suite à votre visite. Je suis disponible pour organiser une deuxième visite.',
+                  textAR:'شكراً لاهتمامك بالعقار. أردت التحقق مما إذا كان لديك أي أسئلة بعد الزيارة. أنا متاحة لترتيب زيارة ثانية.' },
+                { label:'Investimento', icon:'📊',
+                  textPT:'Portugal posiciona-se em 2026 entre os cinco mercados imobiliários de luxo mais atractivos do mundo, segundo a Savills. Com valorização de dezassete vírgula seis por cento no último ano e compradores internacionais em crescimento, o momento de investir é agora.',
+                  textEN:'Portugal ranks among the world\'s top five most attractive luxury real estate markets in 2026, according to Savills. With seventeen point six percent appreciation over the last year and growing international demand, now is the time to invest.',
+                  textFR:'Le Portugal se positionne en 2026 parmi les cinq marchés immobiliers de luxe les plus attractifs du monde selon Savills. Avec une valorisation de dix-sept virgule six pour cent l\'année dernière, le moment d\'investir est maintenant.',
+                  textAR:'تحتل البرتغال مكانة بين أفضل خمسة أسواق عقارية فاخرة في العالم عام 2026 وفقاً لسافيلز. مع ارتفاع الأسعار بنسبة سبعة عشر فاصل ستة بالمئة العام الماضي، الوقت المناسب للاستثمار هو الآن.' },
+              ]
+
+              const activePresetText = (p: typeof SOFIA_PRESETS[0]) => {
+                if (sofiaLang === 'PT') return p.textPT
+                if (sofiaLang === 'FR') return p.textFR
+                if (sofiaLang === 'AR') return p.textAR
+                return p.textEN
+              }
+
+              const startSofia = async () => {
+                setSofiaLoading(true); setSofiaError(null)
+                try {
+                  const sessRes = await fetch('/api/heygen/session', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quality: 'high' })
+                  })
+                  const sessData = await sessRes.json()
+                  if (!sessRes.ok || sessData.error) {
+                    setSofiaError(sessData.error || 'Erro ao criar sessão HeyGen. Verifica HEYGEN_API_KEY no .env.local')
+                    return
+                  }
+                  const d = sessData.data || sessData
+                  const sessionId = d.session_id
+                  const sdpOffer = d.sdp
+                  const iceServers = d.ice_servers2 || d.ice_servers || []
+                  setSofiaSessionId(sessionId)
+
+                  const pc = new RTCPeerConnection({ iceServers })
+                  sofiaPeerRef.current = pc
+
+                  pc.ontrack = (event) => {
+                    if (sofiaVideoRef.current && event.streams[0]) {
+                      sofiaVideoRef.current.srcObject = event.streams[0]
+                      setSofiaConnected(true)
+                    }
+                  }
+
+                  await pc.setRemoteDescription(new RTCSessionDescription(sdpOffer))
+                  const answer = await pc.createAnswer()
+                  await pc.setLocalDescription(answer)
+
+                  await fetch('/api/heygen/start', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, sdp: answer })
+                  })
+
+                  pc.onicecandidate = async (evt) => {
+                    if (evt.candidate) {
+                      await fetch('/api/heygen/ice', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId, candidate: evt.candidate })
+                      })
+                    }
+                  }
+                } catch (e) {
+                  setSofiaError('Erro WebRTC: ' + String(e))
+                } finally {
+                  setSofiaLoading(false)
+                }
+              }
+
+              const stopSofia = async () => {
+                if (sofiaSessionId) {
+                  await fetch('/api/heygen/session', {
+                    method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: sofiaSessionId })
+                  })
+                }
+                sofiaPeerRef.current?.close()
+                sofiaPeerRef.current = null
+                setSofiaSessionId(null); setSofiaConnected(false)
+                if (sofiaVideoRef.current) sofiaVideoRef.current.srcObject = null
+              }
+
+              const sofiaSpeak = async (text: string) => {
+                if (!sofiaSessionId || !text.trim()) return
+                setSofiaSpeaking(true)
+                try {
+                  await fetch('/api/heygen/task', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: sofiaSessionId, text: text.trim() })
+                  })
+                } finally {
+                  setSofiaSpeaking(false)
+                }
+              }
+
+              const generateScript = async () => {
+                const prop = imoveisList.find(p => String(p.id) === sofiaPropSel)
+                if (!prop) return
+                setSofiaScriptLoading(true)
+                try {
+                  const res = await fetch('/api/sofia/script', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ property: prop, language: sofiaLang, purpose: 'Apresentação do imóvel' })
+                  })
+                  const data = await res.json()
+                  if (data.script) setSofiaText(data.script)
+                } catch { /* ignore */ }
+                finally { setSofiaScriptLoading(false) }
+              }
+
+              return (
+                <div style={{display:'flex',flexDirection:'column',gap:'0'}}>
+                  {/* Header */}
+                  <div style={{background:'linear-gradient(135deg,#0c1f15,#1a3d2a)',padding:'28px 32px',borderBottom:'1px solid rgba(201,169,110,.15)'}}>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'16px'}}>
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.22em',textTransform:'uppercase',color:'#c9a96e',marginBottom:'6px'}}>HeyGen · Streaming Avatar</div>
+                        <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2rem',color:'#f4f0e6',margin:0}}>Sofia Avatar IA</h2>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(244,240,230,.4)',marginTop:'6px',letterSpacing:'.06em'}}>Apresentações de imóveis em vídeo · 4 idiomas · WebRTC streaming</div>
+                      </div>
+                      <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                        {(['PT','EN','FR','AR'] as const).map(l => (
+                          <button key={l} onClick={()=>setSofiaLang(l)}
+                            style={{padding:'6px 14px',border:'1px solid',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',cursor:'pointer',transition:'all .2s',
+                              background:sofiaLang===l?'#c9a96e':'transparent',
+                              borderColor:sofiaLang===l?'#c9a96e':'rgba(201,169,110,.3)',
+                              color:sofiaLang===l?'#0c1f15':'rgba(201,169,110,.6)'}}>
+                            {l}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0',minHeight:'calc(100vh - 200px)'}}>
+                    {/* Left: Controls */}
+                    <div style={{padding:'28px 32px',borderRight:'1px solid rgba(14,14,13,.08)',display:'flex',flexDirection:'column',gap:'24px',overflowY:'auto'}}>
+
+                      {/* Session control */}
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'12px'}}>Sessão</div>
+                        <div style={{display:'flex',gap:'10px',alignItems:'center',flexWrap:'wrap'}}>
+                          {!sofiaConnected ? (
+                            <button onClick={startSofia} disabled={sofiaLoading}
+                              style={{padding:'12px 24px',background:sofiaLoading?'rgba(14,14,13,.06)':'linear-gradient(135deg,#0c1f15,#1c4a35)',color:sofiaLoading?'rgba(14,14,13,.3)':'#c9a96e',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.15em',textTransform:'uppercase',cursor:sofiaLoading?'not-allowed':'pointer',transition:'all .3s'}}>
+                              {sofiaLoading ? '⟳ A conectar...' : '▶ Iniciar Sofia'}
+                            </button>
+                          ) : (
+                            <>
+                              <div style={{display:'flex',alignItems:'center',gap:'8px',background:'rgba(16,185,129,.08)',border:'1px solid rgba(16,185,129,.2)',padding:'8px 16px'}}>
+                                <div style={{width:'8px',height:'8px',borderRadius:'50%',background:'#10b981',animation:'pulse 2s ease-in-out infinite'}}/>
+                                <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'#10b981',letterSpacing:'.1em'}}>LIVE</span>
+                              </div>
+                              <button onClick={stopSofia}
+                                style={{padding:'8px 18px',background:'rgba(224,84,84,.08)',border:'1px solid rgba(224,84,84,.25)',color:'#e05454',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',cursor:'pointer'}}>
+                                ■ Terminar
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        {sofiaError && (
+                          <div style={{marginTop:'12px',padding:'12px 16px',background:'rgba(224,84,84,.06)',border:'1px solid rgba(224,84,84,.2)',borderLeft:'3px solid #e05454'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'#e05454'}}>{sofiaError}</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',marginTop:'6px'}}>Verifica HEYGEN_API_KEY + HEYGEN_AVATAR_ID no .env.local</div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Property selector for script gen */}
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Imóvel para Script IA</div>
+                        <div style={{display:'flex',gap:'8px'}}>
+                          <select value={sofiaPropSel} onChange={e=>setSofiaPropSel(e.target.value)}
+                            style={{flex:1,padding:'8px 12px',border:'1px solid rgba(14,14,13,.12)',background:'#fff',fontFamily:"'DM Mono',monospace",fontSize:'.48rem',color:'#0e0e0d',outline:'none'}}>
+                            <option value=''>Seleccionar imóvel...</option>
+                            {imoveisList.map(p => (
+                              <option key={p.id as string} value={String(p.id)}>{String(p.nome)} — {String(p.zona)}</option>
+                            ))}
+                          </select>
+                          <button onClick={generateScript} disabled={!sofiaPropSel||sofiaScriptLoading}
+                            style={{padding:'8px 16px',background:'#1c4a35',color:'#c9a96e',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',cursor:!sofiaPropSel||sofiaScriptLoading?'not-allowed':'pointer',opacity:!sofiaPropSel||sofiaScriptLoading?.5:1}}>
+                            {sofiaScriptLoading?'⟳':'✦ IA'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Script presets */}
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Scripts Pré-definidos</div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
+                          {SOFIA_PRESETS.map(p => (
+                            <button key={p.label} onClick={()=>setSofiaText(activePresetText(p))}
+                              style={{padding:'12px',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.1)',textAlign:'left',cursor:'pointer',transition:'all .2s'}}
+                              onMouseOver={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor='#1c4a35'}}
+                              onMouseOut={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(14,14,13,.1)'}}>
+                              <div style={{fontSize:'1.1rem',marginBottom:'4px'}}>{p.icon}</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',fontWeight:700,color:'#0e0e0d',letterSpacing:'.08em'}}>{p.label}</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Custom text input */}
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:'8px'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(14,14,13,.35)'}}>Texto Personalizado</div>
+                        <textarea
+                          value={sofiaText}
+                          onChange={e=>setSofiaText(e.target.value)}
+                          placeholder='Escreve ou gera o texto que a Sofia irá falar...'
+                          rows={7}
+                          style={{padding:'14px',border:'1px solid rgba(14,14,13,.12)',background:'#fff',fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'#0e0e0d',outline:'none',resize:'vertical',lineHeight:1.6}}
+                          onFocus={e=>{e.currentTarget.style.borderColor='#1c4a35'}}
+                          onBlur={e=>{e.currentTarget.style.borderColor='rgba(14,14,13,.12)'}}
+                        />
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                          <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.3)'}}>{sofiaText.length} caracteres</span>
+                          <button onClick={()=>sofiaSpeak(sofiaText)} disabled={!sofiaConnected||sofiaSpeaking||!sofiaText.trim()}
+                            style={{padding:'12px 28px',background:!sofiaConnected?'rgba(14,14,13,.06)':'linear-gradient(135deg,#0c1f15,#1c4a35)',color:!sofiaConnected?'rgba(14,14,13,.3)':'#c9a96e',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.15em',textTransform:'uppercase',cursor:!sofiaConnected||sofiaSpeaking||!sofiaText.trim()?'not-allowed':'pointer',transition:'all .3s'}}>
+                            {sofiaSpeaking ? '◎ A falar...' : '▶ Falar'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Video */}
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#0c1f15',position:'relative',minHeight:'500px'}}>
+                      {sofiaConnected ? (
+                        <video
+                          ref={sofiaVideoRef}
+                          autoPlay playsInline
+                          style={{width:'100%',height:'100%',objectFit:'cover',position:'absolute',inset:0}}
+                        />
+                      ) : (
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'20px',padding:'40px'}}>
+                          {/* Avatar placeholder */}
+                          <div style={{width:'120px',height:'120px',borderRadius:'50%',background:'linear-gradient(135deg,#1c4a35,#2d6e53)',display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid rgba(201,169,110,.3)'}}>
+                            <span style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2.5rem',color:'#c9a96e'}}>S</span>
+                          </div>
+                          <div style={{textAlign:'center'}}>
+                            <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.6rem',color:'#f4f0e6',marginBottom:'6px'}}>Sofia</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(244,240,230,.3)',letterSpacing:'.12em',textTransform:'uppercase'}}>Agency Group · AI Consultant</div>
+                          </div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(244,240,230,.35)',textAlign:'center',lineHeight:1.8,maxWidth:'280px'}}>
+                            {sofiaLoading ? 'A estabelecer ligação WebRTC...' : 'Inicia a sessão para activar a apresentação em vídeo em tempo real'}
+                          </div>
+                          {!sofiaError && (
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(201,169,110,.4)',textAlign:'center',marginTop:'8px',letterSpacing:'.08em'}}>
+                              Powered by HeyGen Streaming API · WebRTC
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {sofiaSpeaking && (
+                        <div style={{position:'absolute',bottom:'20px',left:'50%',transform:'translateX(-50%)',background:'rgba(12,31,21,.9)',border:'1px solid rgba(201,169,110,.3)',padding:'8px 20px',display:'flex',alignItems:'center',gap:'8px'}}>
+                          <div style={{display:'flex',gap:'3px',alignItems:'center'}}>
+                            {[0,1,2,3].map(i => (
+                              <div key={i} style={{width:'3px',background:'#c9a96e',borderRadius:'2px',animation:`soundBar 0.8s ease-in-out ${i*0.15}s infinite alternate`,height:'12px'}}/>
+                            ))}
+                          </div>
+                          <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'#c9a96e',letterSpacing:'.1em'}}>SOFIA A FALAR</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Setup instructions */}
+                  <div style={{padding:'20px 32px',background:'rgba(12,31,21,.04)',borderTop:'1px solid rgba(14,14,13,.06)'}}>
+                    <div style={{display:'flex',gap:'32px',flexWrap:'wrap',alignItems:'flex-start'}}>
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',marginBottom:'6px'}}>Configuração necessária</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.5)',lineHeight:1.8}}>
+                          HEYGEN_API_KEY=hg_xxx · HEYGEN_AVATAR_ID=seu-avatar-id · HEYGEN_VOICE_ID=sua-voz-id
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',marginBottom:'6px'}}>Capacidades</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.5)',lineHeight:1.8}}>
+                          PT · EN · FR · AR · Streaming real-time · Scripts IA · Presets por persona
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
