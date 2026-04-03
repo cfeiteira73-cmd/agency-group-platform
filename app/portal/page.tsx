@@ -602,6 +602,9 @@ export default function Portal() {
   const [voiceActive, setVoiceActive] = useState(false)
   const [voiceText, setVoiceText] = useState('')
   const [showNewContact, setShowNewContact] = useState(false)
+  const [smartImportText, setSmartImportText] = useState('')
+  const [smartImportLoading, setSmartImportLoading] = useState(false)
+  const [showSmartImport, setShowSmartImport] = useState(false)
   const [newContact, setNewContact] = useState({ name:'', email:'', phone:'', nationality:'', budgetMin:'', budgetMax:'', tipos:'', zonas:'', origin:'Website', notes:'' })
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [crmView, setCrmView] = useState<'list'|'kanban'>('list')
@@ -6748,7 +6751,53 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                   {showNewContact && (
                     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.5)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}>
                       <div style={{background:'#f4f0e6',padding:'32px',maxWidth:'520px',width:'100%',maxHeight:'90vh',overflowY:'auto'}}>
-                        <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.5rem',color:'#0e0e0d',marginBottom:'20px'}}>Novo <em style={{color:'#1c4a35'}}>Contacto</em></div>
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px',flexWrap:'wrap',gap:'8px'}}>
+                          <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.5rem',color:'#0e0e0d'}}>Novo <em style={{color:'#1c4a35'}}>Contacto</em></div>
+                          <button style={{padding:'6px 14px',background:showSmartImport?'rgba(28,74,53,.12)':'rgba(28,74,53,.06)',border:`1px solid rgba(28,74,53,.2)`,color:'#1c4a35',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.08em',cursor:'pointer'}}
+                            onClick={()=>setShowSmartImport(s=>!s)}>
+                            {showSmartImport ? '× Fechar' : '✦ Import Inteligente IA'}
+                          </button>
+                        </div>
+                        {/* Smart Import */}
+                        {showSmartImport && (
+                          <div style={{background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.15)',padding:'14px',marginBottom:'14px'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(28,74,53,.6)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>✦ Colar email, WA, LinkedIn ou texto livre — Claude extrai automaticamente</div>
+                            <textarea style={{width:'100%',minHeight:'80px',border:'1px solid rgba(28,74,53,.15)',background:'#fff',color:'#0e0e0d',fontFamily:"'Jost',sans-serif",fontSize:'.8rem',padding:'8px',resize:'vertical',outline:'none',boxSizing:'border-box'}}
+                              value={smartImportText}
+                              onChange={e=>setSmartImportText(e.target.value)}
+                              placeholder="Cole aqui o email, mensagem WhatsApp, perfil LinkedIn ou qualquer texto com informação do cliente..."/>
+                            <button style={{marginTop:'8px',padding:'8px 18px',background:'#1c4a35',color:'#c9a96e',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',cursor:'pointer',transition:'all .15s'}}
+                              disabled={smartImportLoading || !smartImportText.trim()}
+                              onClick={async()=>{
+                                setSmartImportLoading(true)
+                                try {
+                                  const res = await fetch('/api/crm/extract-contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:smartImportText})})
+                                  const d = await res.json()
+                                  if (d.contact) {
+                                    const c = d.contact
+                                    setNewContact(p=>({
+                                      ...p,
+                                      name: c.name || p.name,
+                                      email: c.email || p.email,
+                                      phone: c.phone || p.phone,
+                                      nationality: c.nationality || p.nationality,
+                                      budgetMin: c.budgetMin ? String(c.budgetMin) : p.budgetMin,
+                                      budgetMax: c.budgetMax ? String(c.budgetMax) : p.budgetMax,
+                                      tipos: c.tipos?.join(', ') || p.tipos,
+                                      zonas: c.zonas?.join(', ') || p.zonas,
+                                      origin: c.origin || p.origin,
+                                      notes: c.notes || p.notes,
+                                      ...(c.status && {status: c.status}),
+                                    }))
+                                    setShowSmartImport(false)
+                                    setSmartImportText('')
+                                  }
+                                } catch{} finally{setSmartImportLoading(false)}
+                              }}>
+                              {smartImportLoading ? '✦ A extrair...' : '✦ Extrair Dados'}
+                            </button>
+                          </div>
+                        )}
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'10px'}}>
                           <div><label className="p-label">Nome *</label><input className="p-inp" value={newContact.name} onChange={e=>setNewContact(p=>({...p,name:e.target.value}))} placeholder="Nome completo"/></div>
                           <div><label className="p-label">Email</label><input className="p-inp" value={newContact.email} onChange={e=>setNewContact(p=>({...p,email:e.target.value}))} placeholder="email@exemplo.com"/></div>
