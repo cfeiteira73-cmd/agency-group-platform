@@ -5800,6 +5800,40 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                               )}
                             </div>
 
+                            {/* Commission Calculator */}
+                            {(() => {
+                              const dealVal = parseFloat(deal.valor.replace(/[^0-9.]/g,'')) || 0
+                              if (dealVal <= 0) return null
+                              const commBruta = dealVal * 0.05
+                              const commCPCV = commBruta * 0.5
+                              const commEscritura = commBruta * 0.5
+                              const irsWithholding = commBruta * 0.25 // 25% retenção categoria B
+                              const commLiquida = commBruta - irsWithholding
+                              return (
+                                <div style={{background:'rgba(201,169,110,.04)',border:'1px solid rgba(201,169,110,.12)',padding:'14px',marginBottom:'14px'}}>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'12px'}}>💰 Calculadora de Comissão — AMI 22506</div>
+                                  <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'8px',marginBottom:'10px'}}>
+                                    {[
+                                      { label:'Valor do Deal', val:`€${dealVal.toLocaleString('pt-PT')}`, color:'#0e0e0d', bold:true },
+                                      { label:'Comissão 5% (bruta)', val:`€${commBruta.toLocaleString('pt-PT')}`, color:'#1c4a35', bold:true },
+                                      { label:'CPCV (50%)', val:`€${commCPCV.toLocaleString('pt-PT')}`, color:'#c9a96e', bold:false },
+                                      { label:'Escritura (50%)', val:`€${commEscritura.toLocaleString('pt-PT')}`, color:'#c9a96e', bold:false },
+                                      { label:'Retenção IRS 25%', val:`-€${irsWithholding.toLocaleString('pt-PT')}`, color:'#e05454', bold:false },
+                                      { label:'Comissão Líquida', val:`€${Math.round(commLiquida).toLocaleString('pt-PT')}`, color:'#4a9c7a', bold:true },
+                                    ].map(item => (
+                                      <div key={item.label} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 10px',background:item.bold?'rgba(14,14,13,.03)':'transparent',border:item.bold?'1px solid rgba(14,14,13,.06)':'none'}}>
+                                        <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.5)'}}>{item.label}</span>
+                                        <span style={{fontFamily:"'Cormorant',serif",fontSize:item.bold?'1.1rem':'.95rem',color:item.color,fontWeight:item.bold?400:300}}>{item.val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.35)',borderTop:'1px solid rgba(14,14,13,.06)',paddingTop:'8px'}}>
+                                    Protocolo: 50% na assinatura do CPCV · 50% na escritura · IRS cat. B 25% ret. fonte · IVA isento (AMI)
+                                  </div>
+                                </div>
+                              )
+                            })()}
+
                             {/* Make Offer Modal */}
                             {makeOfferOpen && (
                               <div style={{position:'fixed',inset:0,background:'rgba(12,31,21,.85)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:100,padding:'20px'}}>
