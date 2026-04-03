@@ -2347,6 +2347,113 @@ ${dealsHtml}
                   )
                 })()}
 
+                {/* Row 8: Revenue Forecast + Hot Leads Radar */}
+                {(() => {
+                  // Pipeline probability by stage
+                  const stageProbability: Record<string,number> = {
+                    'Angariação': 0.10, 'Proposta': 0.30, 'Negociação': 0.55,
+                    'CPCV': 0.80, 'Escritura Concluída': 1.00
+                  }
+                  // Weighted expected commissions
+                  const expectedComm = deals.reduce((s,d) => {
+                    const val = parseFloat(d.valor.replace(/[^0-9.]/g,''))||0
+                    const prob = stageProbability[d.fase] || 0
+                    return s + val * 0.05 * prob
+                  }, 0)
+                  // Horizon scenarios
+                  const horizons = [
+                    { label:'3M', months:3, multiplier:0.35, color:'#4a9c7a' },
+                    { label:'6M', months:6, multiplier:0.65, color:'#1c4a35' },
+                    { label:'12M', months:12, multiplier:1.00, color:'#c9a96e' },
+                  ]
+                  const maxForecast = expectedComm * 1.2
+                  // Hot leads: contacts with high score + recent activity
+                  const hotLeads = crmContacts
+                    .map(c => {
+                      const ls = computeLeadScore(c)
+                      const dSince = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : 999
+                      const urgency = (ls.score + Math.max(0,30-dSince)*2 + (c.nextFollowUp && c.nextFollowUp <= new Date().toISOString().split('T')[0] ? 20 : 0))
+                      return { ...c, ls, urgency }
+                    })
+                    .filter(c => c.ls.score >= 50)
+                    .sort((a,b) => b.urgency - a.urgency)
+                    .slice(0, 5)
+                  return (
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'28px'}}>
+                      {/* Revenue Forecast */}
+                      <div className="p-card">
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>💰 Forecast de Receita</div>
+                        <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(14,14,13,.35)',marginBottom:'14px'}}>Comissão esperada por probabilidade de fecho</div>
+                        <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2rem',color:'#1c4a35',lineHeight:1,marginBottom:'4px'}}>€{Math.round(expectedComm/1000)}K</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',marginBottom:'16px'}}>Comissão ponderada total do pipeline</div>
+                        {/* Horizon bars */}
+                        <div style={{display:'flex',flexDirection:'column',gap:'10px',marginBottom:'16px'}}>
+                          {horizons.map(h => {
+                            const forecast = expectedComm * h.multiplier
+                            const barPct = Math.round(forecast / Math.max(maxForecast,1) * 100)
+                            return (
+                              <div key={h.label} style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.5)',width:'24px',flexShrink:0}}>{h.label}</div>
+                                <div style={{flex:1,height:'24px',background:'rgba(14,14,13,.04)',borderRadius:'2px',overflow:'hidden',position:'relative'}}>
+                                  <div style={{height:'100%',background:h.color,width:`${barPct}%`,borderRadius:'2px',opacity:.85,transition:'width .5s'}}/>
+                                  <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',paddingLeft:'10px',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.7)',fontWeight:700}}>€{Math.round(forecast/1000)}K</div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        {/* Stage breakdown */}
+                        <div style={{borderTop:'1px solid rgba(14,14,13,.06)',paddingTop:'10px'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.35)',marginBottom:'8px',letterSpacing:'.08em'}}>PROBABILIDADE POR FASE</div>
+                          <div style={{display:'flex',gap:'4px',flexWrap:'wrap' as const}}>
+                            {Object.entries(stageProbability).map(([fase,prob]) => (
+                              <div key={fase} style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',padding:'2px 7px',background:'rgba(14,14,13,.04)',border:'1px solid rgba(14,14,13,.08)',color:'rgba(14,14,13,.45)'}}>
+                                {fase.split(' ')[0]} {Math.round(prob*100)}%
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Hot Leads Radar */}
+                      <div className="p-card">
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>🔥 Hot Leads Radar</div>
+                        <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(14,14,13,.35)',marginBottom:'14px'}}>Contactos com maior urgência de acção</div>
+                        {hotLeads.length === 0 ? (
+                          <div style={{padding:'24px',textAlign:'center' as const,color:'rgba(14,14,13,.3)',fontFamily:"'Jost',sans-serif",fontSize:'.8rem'}}>Sem leads quentes no pipeline</div>
+                        ) : (
+                          <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                            {hotLeads.map((c,i) => {
+                              const sc = STATUS_CONFIG[c.status] ?? STATUS_CONFIG['lead']
+                              const initials3 = c.name.split(' ').map((n:string)=>n[0]).slice(0,2).join('').toUpperCase()
+                              const dSince = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : null
+                              const isOverdue2 = c.nextFollowUp && c.nextFollowUp <= new Date().toISOString().split('T')[0]
+                              return (
+                                <div key={c.id} style={{display:'flex',alignItems:'center',gap:'10px',padding:'10px',background:i===0?'rgba(201,169,110,.06)':'rgba(14,14,13,.02)',border:`1px solid ${i===0?'rgba(201,169,110,.2)':'rgba(14,14,13,.06)'}`,cursor:'pointer'}}
+                                  onClick={()=>{setActiveCrmId(c.id);setCrmProfileTab('overview');setSection('crm')}}>
+                                  <div style={{width:'28px',height:'28px',borderRadius:'50%',background:sc.avatar,color:sc.color,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'DM Mono',monospace",fontSize:'.45rem',fontWeight:700,flexShrink:0}}>{initials3}</div>
+                                  <div style={{flex:1,minWidth:0}}>
+                                    <div style={{fontWeight:500,fontSize:'.83rem',color:'#0e0e0d',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{c.name}</div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)'}}>€{((Number(c.budgetMax)||0)/1e6).toFixed(1)}M · {c.ls.label} {c.ls.score}</div>
+                                  </div>
+                                  <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'3px',flexShrink:0}}>
+                                    {isOverdue2 && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'#e05454',background:'rgba(224,84,84,.08)',padding:'2px 5px'}}>FOLLOW-UP</div>}
+                                    {dSince !== null && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:dSince>7?'#f97316':dSince>3?'#f59e0b':'#10b981'}}>{dSince}d</div>}
+                                    <button style={{background:'#25d366',border:'none',color:'#fff',width:'22px',height:'22px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',borderRadius:'50%',fontSize:'.7rem'}} onClick={e=>{e.stopPropagation();if(c.phone)window.open(`https://wa.me/${c.phone.replace(/\D/g,'')}`)}}>💬</button>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                        <button onClick={()=>setSection('crm')} style={{marginTop:'12px',width:'100%',background:'none',border:'1px solid rgba(14,14,13,.1)',color:'rgba(14,14,13,.45)',padding:'8px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer',letterSpacing:'.1em'}}>
+                          Ver todos no CRM →
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 </div>
               </div>
             )}
