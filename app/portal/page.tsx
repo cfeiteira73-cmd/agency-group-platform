@@ -22,6 +22,9 @@ const NAV = [
   { id:'imoveis', label:'Im\u00f3veis', icon:'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2zM9 22V12h6v10', group:'MAIS' },
   { id:'campanhas', label:'Campanhas Email', icon:'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', group:'MAIS' },
   { id:'agenda', label:'Agenda Semanal', icon:'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', group:'MAIS' },
+  { id:'visitas', label:'Gestão de Visitas', icon:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', group:'MAIS' },
+  { id:'imt', label:'Calculadora IMT/IS', icon:'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z', group:'ANÁLISE' },
+  { id:'comissoes', label:'Comissões P&L', icon:'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', group:'ANÁLISE' },
 ]
 
 const PIPELINE_STAGES = ['Angariação','Proposta Enviada','Proposta Aceite','Due Diligence','CPCV Assinado','Financiamento','Escritura Marcada','Escritura Concluída']
@@ -102,6 +105,9 @@ const SECTION_NAMES: Record<string,string> = {
   juridico:'Consultor Jur\u00eddico IA', imoveis:'Im\u00f3veis', campanhas:'Campanhas Email',
   sofia:'Sofia Avatar IA',
   agenda:'Agenda Semanal',
+  visitas:'Gestão de Visitas',
+  imt:'Calculadora IMT + IS + Custos',
+  comissoes:'Comissões & P&L',
 }
 
 const BUYER_DEMAND = [
@@ -647,6 +653,52 @@ export default function Portal() {
   const [showNotifPanel, setShowNotifPanel] = useState(false)
   const [cmdkQuery, setCmdkQuery] = useState('')
 
+  // IMT Calculator
+  const [imtValor, setImtValor] = useState('')
+  const [imtTipo, setImtTipo] = useState<'hpp'|'second'|'invest'>('hpp')
+  const [imtComprador, setImtComprador] = useState<'singular'|'empresa'>('singular')
+  const [imtResult, setImtResult] = useState<Record<string,unknown>|null>(null)
+  const [imtLoading, setImtLoading] = useState(false)
+
+  // Gestão de Visitas
+  interface Visita {
+    id: number; propertyId: string; propertyName: string
+    contactId: number; contactName: string
+    date: string; time: string; status: 'agendada'|'realizada'|'cancelada'
+    notes: string; interestScore?: number; feedback?: string; aiSuggestion?: Record<string,unknown>
+  }
+  const [visitas, setVisitas] = useState<Visita[]>([
+    { id:1, propertyId:'AG-2026-001', propertyName:'Villa Quinta da Marinha · Cascais', contactId:3, contactName:'Carlos Ferreira', date:'2026-04-05', time:'10:00', status:'agendada', notes:'Visita confirmada. Levar planta e relatório AVM.' },
+    { id:2, propertyId:'AG-2026-011', propertyName:'Penthouse Chiado · Lisboa', contactId:2, contactName:'Marie-Claire Dupont', date:'2026-04-07', time:'15:30', status:'agendada', notes:'Apresentar o terraço e vistas. Cliente prefere tarde.' },
+    { id:3, propertyId:'AG-2026-012', propertyName:'Moradia Sintra · Serra', contactId:1, contactName:'James Mitchell', date:'2026-03-28', time:'11:00', status:'realizada', notes:'Gostou muito. Preocupação com preço.', interestScore:4, feedback:'Muito interessado mas acima do budget. Pedir margem ao vendedor.' },
+    { id:4, propertyId:'AG-2026-021', propertyName:'Villa Comporta · Alentejo', contactId:4, contactName:'Khalid Al-Mansouri', date:'2026-03-20', time:'14:00', status:'realizada', notes:'Vista por drone. Interesse em portfólio completo.', interestScore:5, feedback:'Quer proposta formal em 48h.' },
+    { id:5, propertyId:'AG-2026-030', propertyName:'Herdade Alentejo · Évora', contactId:4, contactName:'Khalid Al-Mansouri', date:'2026-04-08', time:'10:00', status:'cancelada', notes:'Reagendada para semana seguinte.' },
+  ])
+  const [visitasTab, setVisitasTab] = useState<'lista'|'agenda'|'stats'>('lista')
+  const [showNewVisita, setShowNewVisita] = useState(false)
+  const [newVisita, setNewVisita] = useState({ propertyId:'', propertyName:'', contactId:0, contactName:'', date:'', time:'10:00', notes:'' })
+  const [visitaFeedbackId, setVisitaFeedbackId] = useState<number|null>(null)
+  const [visitaFeedback, setVisitaFeedback] = useState({ interesse: 3, observacoes:'', nextStep:'' })
+  const [visitaAiLoading, setVisitaAiLoading] = useState(false)
+  const [visitaAiResult, setVisitaAiResult] = useState<Record<string,unknown>|null>(null)
+
+  // Comissões P&L
+  const [commLoading, setCommLoading] = useState(false)
+  const [commResult, setCommResult] = useState<Record<string,unknown>|null>(null)
+
+  // CMA (Comparativo de Mercado)
+  const [cmaLoading, setCmaLoading] = useState(false)
+  const [cmaResult, setCmaResult] = useState<Record<string,unknown>|null>(null)
+  const [cmaPropertyId, setCmaPropertyId] = useState<string|null>(null)
+
+  // Natural language search in Imóveis
+  const [natSearch, setNatSearch] = useState('')
+  const [natSearchLoading, setNatSearchLoading] = useState(false)
+  const [natSearchResults, setNatSearchResults] = useState<Record<string,unknown>[]|null>(null)
+
+  // Price history modal
+  const [priceHistoryId, setPriceHistoryId] = useState<string|null>(null)
+
   // Sofia Avatar IA
   const sofiaVideoRef = useRef<HTMLVideoElement|null>(null)
   const sofiaPeerRef = useRef<RTCPeerConnection|null>(null)
@@ -745,6 +797,84 @@ export default function Portal() {
   function saveImoveis(updated: (typeof PORTAL_PROPERTIES[0] & Record<string, unknown>)[]) {
     setImoveisList(updated)
     localStorage.setItem(`ag_imoveis_${agentEmail}`, JSON.stringify(updated))
+  }
+
+  // ── PDF EXPORT ──────────────────────────────────────────────────────────────
+  function exportToPDF(title: string, htmlContent: string) {
+    const w = window.open('', '_blank', 'width=960,height=780')
+    if (!w) { alert('Permita pop-ups para exportar PDF'); return }
+    const dateStr = new Date().toLocaleDateString('pt-PT', {year:'numeric',month:'long',day:'numeric'})
+    w.document.write(`<!DOCTYPE html><html lang="pt"><head>
+      <meta charset="UTF-8"><title>${title} — Agency Group</title>
+      <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,600;1,300&family=Jost:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Jost',sans-serif;color:#0e0e0d;background:#fff;font-size:14px}
+        @media print{.no-print{display:none!important}@page{margin:0}}
+        .hdr{background:#0c1f15;color:#f4f0e6;padding:28px 40px;display:flex;justify-content:space-between;align-items:center}
+        .hdr-brand{font-family:'Cormorant',serif;font-size:1.6rem;font-weight:300;letter-spacing:-.01em}
+        .hdr-ami{font-family:'DM Mono',monospace;font-size:.5rem;color:#c9a96e;letter-spacing:.1em;margin-top:3px}
+        .hdr-date{font-family:'DM Mono',monospace;font-size:.45rem;color:rgba(244,240,230,.45);text-align:right}
+        .hdr-title{font-family:'DM Mono',monospace;font-size:.5rem;color:rgba(244,240,230,.6);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+        .body{padding:36px 40px}
+        .label{font-family:'DM Mono',monospace;font-size:.45rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(14,14,13,.35);margin-bottom:10px;margin-top:24px}
+        .metric{font-family:'Cormorant',serif;font-size:1.8rem;font-weight:600;color:#1c4a35;line-height:1}
+        .row{display:flex;gap:20px;margin-bottom:16px;flex-wrap:wrap}
+        .card{flex:1;min-width:160px;padding:16px 20px;border:1px solid rgba(14,14,13,.1)}
+        .tag{display:inline-block;font-family:'DM Mono',monospace;font-size:.42rem;padding:3px 8px;background:rgba(28,74,53,.08);color:#1c4a35;border:1px solid rgba(28,74,53,.2);letter-spacing:.06em;margin:2px}
+        .gold{color:#c9a96e}
+        .green{color:#1c4a35}
+        .divider{border:none;border-top:1px solid rgba(14,14,13,.08);margin:20px 0}
+        table{width:100%;border-collapse:collapse;margin-top:12px}
+        th{background:rgba(14,14,13,.04);font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(14,14,13,.5);padding:8px 12px;text-align:left;border-bottom:1px solid rgba(14,14,13,.1)}
+        td{padding:10px 12px;font-size:.85rem;border-bottom:1px solid rgba(14,14,13,.05)}
+        .ftr{background:rgba(14,14,13,.03);border-top:1px solid rgba(14,14,13,.08);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;margin-top:40px}
+        .ftr-text{font-family:'DM Mono',monospace;font-size:.42rem;color:rgba(14,14,13,.35);letter-spacing:.06em}
+        .print-btn{position:fixed;bottom:24px;right:24px;background:#c9a96e;color:#0c1f15;border:none;padding:12px 24px;cursor:pointer;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+        .print-btn:hover{background:#b8904a}
+      </style>
+    </head><body>
+      <button class="print-btn no-print" onclick="window.print()">⬇ IMPRIMIR / PDF</button>
+      <div class="hdr">
+        <div>
+          <div class="hdr-brand">Agency Group</div>
+          <div class="hdr-ami">AMI 22506 · LUXO PREMIUM</div>
+          <div class="hdr-title">${title}</div>
+        </div>
+        <div class="hdr-date">${dateStr}</div>
+      </div>
+      <div class="body">${htmlContent}</div>
+      <div class="ftr">
+        <span class="ftr-text">Agency Group · AMI 22506 · Comissão 5% · www.agencygroup.pt</span>
+        <span class="ftr-text">Documento gerado em ${dateStr} · Confidencial</span>
+      </div>
+    </body></html>`)
+    w.document.close()
+  }
+
+  // ── ICS CALENDAR EXPORT ──────────────────────────────────────────────────────
+  function exportToICS(events: {title:string;date:string;time?:string;description?:string}[]) {
+    const pad = (n:number) => String(n).padStart(2,'0')
+    const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Agency Group//Portal 2026//PT','CALSCALE:GREGORIAN','METHOD:PUBLISH']
+    events.forEach((ev,i) => {
+      const d = ev.date.replace(/-/g,'')
+      const h = ev.time ? ev.time.split(':')[0] : '09'
+      const m = ev.time ? ev.time.split(':')[1] : '00'
+      const dtStart = ev.time ? `${d}T${h}${m}00` : d
+      const dtEnd = ev.time ? `${d}T${pad(Math.min(23,parseInt(h)+1))}${m}00` : d
+      lines.push('BEGIN:VEVENT',
+        `UID:ag-${Date.now()}-${i}@agencygroup.pt`,
+        `DTSTART${ev.time?'':';VALUE=DATE'}:${dtStart}`,
+        `DTEND${ev.time?'':';VALUE=DATE'}:${dtEnd}`,
+        `SUMMARY:${(ev.title||'').replace(/,/g,'\\,')}`,
+        `DESCRIPTION:${(ev.description||'Agency Group — AMI 22506').replace(/,/g,'\\,')}`,
+        'END:VEVENT')
+    })
+    lines.push('END:VCALENDAR')
+    const blob = new Blob([lines.join('\r\n')], {type:'text/calendar;charset=utf-8'})
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href=url; a.download=`agenda-ag-${new Date().toISOString().split('T')[0]}.ics`; a.click()
+    URL.revokeObjectURL(url)
   }
 
   function exportCrmCSV() {
@@ -1817,6 +1947,24 @@ ${dealsHtml}
                         <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(244,240,230,.35)',marginTop:'2px'}}>{String(weeklyReport.period)}</div>
                       </div>
                       <div style={{display:'flex',gap:'8px'}}>
+                        <button style={{padding:'5px 12px',background:'rgba(244,240,230,.06)',border:'1px solid rgba(244,240,230,.1)',color:'rgba(244,240,230,.5)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.06em'}}
+                          onClick={()=>{
+                            const html=`
+                              <div class="label">${weeklyReport.period}</div>
+                              <div style="font-family:'Cormorant',serif;font-size:1.6rem;font-weight:300;margin-bottom:12px">${weeklyReport.title}</div>
+                              <div style="padding:14px 18px;background:rgba(28,74,53,.05);border-left:3px solid #1c4a35;margin-bottom:20px;font-family:'Jost',sans-serif;font-size:.85rem;line-height:1.7;color:rgba(14,14,13,.7)">${weeklyReport.executiveSummary}</div>
+                              <div class="row">
+                                <div class="card"><div class="label">Destaques</div>${(weeklyReport.highlights as string[]).map(h=>`<div style="margin-bottom:6px;font-size:.82rem">★ ${h}</div>`).join('')}</div>
+                                <div class="card"><div class="label">Prioridades</div>${(weeklyReport.priorities as string[]).map((p,i)=>`<div style="margin-bottom:6px;font-size:.82rem">${i+1}. ${p}</div>`).join('')}</div>
+                              </div>
+                              ${weeklyReport.pipeline?`<div class="label" style="margin-top:16px">Pipeline</div><table><tbody>${Object.entries(weeklyReport.pipeline as Record<string,unknown>).map(([k,v])=>`<tr><td>${k}</td><td><strong>${v}</strong></td></tr>`).join('')}</tbody></table>`:''}
+                              <div style="margin-top:16px;padding:12px 14px;background:rgba(201,169,110,.06);border-left:3px solid #c9a96e"><div class="label">Foco Próxima Semana</div><div style="font-size:.85rem;line-height:1.6">${weeklyReport.nextWeekFocus}</div></div>
+                              ${weeklyReport.marketInsight?`<div style="margin-top:12px;padding:12px 14px;background:rgba(14,14,13,.03);border:1px solid rgba(14,14,13,.08)"><div class="label">Market Insight</div><div style="font-size:.85rem;line-height:1.6">${weeklyReport.marketInsight}</div></div>`:''}
+                            `
+                            exportToPDF(String(weeklyReport.title),html)
+                          }}>
+                          ⬇ PDF
+                        </button>
                         <button style={{padding:'5px 12px',background:'rgba(244,240,230,.06)',border:'1px solid rgba(244,240,230,.1)',color:'rgba(244,240,230,.5)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.06em'}}
                           onClick={()=>{
                             const text = `${weeklyReport.title}\n${weeklyReport.period}\n\n${weeklyReport.executiveSummary}\n\nHIGHLIGHTS:\n${(weeklyReport.highlights as string[]).map(h=>`• ${h}`).join('\n')}\n\nPRIORIDADES:\n${(weeklyReport.priorities as string[]).map(p=>`• ${p}`).join('\n')}\n\nMARKET INSIGHT:\n${weeklyReport.marketInsight}\n\nFOCO PRÓXIMA SEMANA:\n${weeklyReport.nextWeekFocus}`
@@ -8653,6 +8801,23 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                       )
                     })()}
 
+                    {/* Natural Language Search IA */}
+                    <div style={{marginBottom:'20px',padding:'16px 20px',background:'rgba(201,169,110,.04)',border:'1px solid rgba(201,169,110,.15)',borderLeft:'2px solid #c9a96e'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(201,169,110,.6)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>✦ Pesquisa em Linguagem Natural IA</div>
+                      <div style={{display:'flex',gap:'10px',flexWrap:'wrap',alignItems:'center'}}>
+                        <input value={natSearch} onChange={e=>{setNatSearch(e.target.value);setNatSearchResults(null)}} placeholder='Ex: "Villa com piscina abaixo de 2M em Cascais" · "T3 Lisboa centro com terraço"' style={{flex:1,minWidth:'280px',background:'rgba(244,240,230,.06)',border:'1px solid rgba(201,169,110,.2)',color:'#f4f0e6',padding:'9px 14px',fontFamily:"'Jost',sans-serif",fontSize:'.85rem',outline:'none'}} onKeyDown={async e=>{if(e.key==='Enter'&&natSearch.trim()){setNatSearchLoading(true);try{const r=await fetch('/api/properties/search-natural',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:natSearch,properties:imoveisList})});const d=await r.json();setNatSearchResults(d.properties||d.results||[])}catch{}finally{setNatSearchLoading(false)}}}} />
+                        <button style={{padding:'9px 18px',background:'#c9a96e',color:'#0c1f15',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',cursor:'pointer',whiteSpace:'nowrap'}} onClick={async()=>{if(!natSearch.trim())return;setNatSearchLoading(true);try{const r=await fetch('/api/properties/search-natural',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:natSearch,properties:imoveisList})});const d=await r.json();setNatSearchResults(d.properties||d.results||[])}catch{}finally{setNatSearchLoading(false)}}}>
+                          {natSearchLoading?'A pesquisar...':'✦ Pesquisar'}
+                        </button>
+                        {natSearchResults&&<button style={{padding:'9px 14px',background:'transparent',border:'1px solid rgba(201,169,110,.2)',color:'rgba(244,240,230,.5)',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer'}} onClick={()=>{setNatSearchResults(null);setNatSearch('')}}>× Limpar</button>}
+                      </div>
+                      {natSearchResults&&(
+                        <div style={{marginTop:'10px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(201,169,110,.6)'}}>
+                          {natSearchResults.length===0?'Nenhum imóvel encontrado para essa pesquisa.':`${natSearchResults.length} imóvel(is) encontrado(s) · Mostrando abaixo`}
+                        </div>
+                      )}
+                    </div>
+
                     {/* Search + Filter bar */}
                     <div style={{ display:'flex', gap:'12px', marginBottom:'24px', flexWrap:'wrap', alignItems:'center' }}>
                       <input value={imoveisSearch} onChange={e => setImoveisSearch(e.target.value)} placeholder="Pesquisar imóvel..." style={{ flex:1, minWidth:'200px', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none' }} />
@@ -8667,8 +8832,9 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
 
                     {/* Properties grid */}
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px,1fr))', gap:'20px' }}>
-                      {imoveisList
+                      {(natSearchResults ? natSearchResults.map(r=>imoveisList.find(p=>p.id===(r as Record<string,unknown>).id)||imoveisList.find(p=>String(p.nome)===String((r as Record<string,unknown>).nome))).filter(Boolean) as typeof imoveisList : imoveisList)
                         .filter(p => {
+                          if (natSearchResults) return true
                           const matchSearch = !imoveisSearch || p.nome.toLowerCase().includes(imoveisSearch.toLowerCase()) || p.bairro.toLowerCase().includes(imoveisSearch.toLowerCase())
                           const matchZona = !imoveisZona || p.zona === imoveisZona
                           const ld = (p as Record<string,unknown>).listingDate as string|undefined
@@ -8738,11 +8904,34 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                               {p.piscina && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)' }}>Piscina</span>}
                               {p.garagem && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)' }}>Garagem</span>}
                             </div>
-                            <div style={{ display:'flex', gap:'8px' }}>
-                              <button onClick={() => setShowcaseImovel(p as Record<string,unknown>)} style={{ flex:1, background:'rgba(201,169,110,.1)', color:'#c9a96e', border:'1px solid rgba(201,169,110,.2)', padding:'8px', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', cursor:'pointer' }}>Showcase ↗</button>
-                              <a href={`/imoveis/${p.id}`} target='_blank' rel='noopener' style={{ flex:1, background:'rgba(201,169,110,.1)', color:'#c9a96e', border:'1px solid rgba(201,169,110,.2)', padding:'8px', textAlign:'center', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', textDecoration:'none', display:'block' }}>Ver Página →</a>
+                            <div style={{ display:'flex', gap:'8px', flexWrap:'wrap' }}>
+                              <button onClick={() => setShowcaseImovel(p as Record<string,unknown>)} style={{ flex:1, minWidth:'80px', background:'rgba(201,169,110,.1)', color:'#c9a96e', border:'1px solid rgba(201,169,110,.2)', padding:'8px', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', cursor:'pointer' }}>Showcase ↗</button>
+                              <a href={`/imoveis/${p.id}`} target='_blank' rel='noopener' style={{ flex:1, minWidth:'80px', background:'rgba(201,169,110,.1)', color:'#c9a96e', border:'1px solid rgba(201,169,110,.2)', padding:'8px', textAlign:'center', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.1em', textDecoration:'none', display:'block' }}>Página →</a>
+                              <button onClick={async()=>{
+                                setCmaPropertyId(String(p.id)); setCmaResult(null); setCmaLoading(true)
+                                try{const r=await fetch('/api/properties/cma',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({property:p,allProperties:imoveisList})});const d=await r.json();if(d.summary)setCmaResult(d)}catch{}finally{setCmaLoading(false)}
+                              }} style={{flex:1,minWidth:'60px',background:cmaPropertyId===String(p.id)&&cmaResult?'rgba(28,74,53,.2)':'rgba(201,169,110,.06)',color:cmaPropertyId===String(p.id)&&cmaResult?'#4a9c7a':'rgba(201,169,110,.6)',border:'1px solid rgba(201,169,110,.15)',padding:'8px',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.08em',cursor:'pointer',whiteSpace:'nowrap'}}>
+                                {cmaLoading&&cmaPropertyId===String(p.id)?'...':'CMA ↗'}
+                              </button>
                               <button onClick={() => { const updated = imoveisList.map(im => im.id===p.id ? {...im, status: im.status==='Ativo'?'Vendido':'Ativo'} : im); saveImoveis(updated) }} style={{ background: p.status==='Ativo'?'rgba(44,122,86,.2)':'rgba(201,169,110,.08)', color: p.status==='Ativo'?'#2d7a56':'rgba(244,240,230,.4)', border:`1px solid ${p.status==='Ativo'?'rgba(44,122,86,.4)':'rgba(244,240,230,.1)'}`, padding:'8px 12px', fontFamily:"'DM Mono',monospace", fontSize:'.35rem', cursor:'pointer', letterSpacing:'.08em' }}>{p.status==='Ativo'?'Ativo':'Vendido'}</button>
                             </div>
+                            {/* CMA Result */}
+                            {cmaPropertyId===String(p.id)&&cmaResult&&(
+                              <div style={{marginTop:'10px',padding:'12px 14px',background:'rgba(28,74,53,.06)',border:'1px solid rgba(28,74,53,.2)',animation:'fadeIn .3s ease'}}>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'#4a9c7a',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'6px'}}>✦ Análise CMA — Comparativo de Mercado</div>
+                                <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(244,240,230,.7)',lineHeight:1.6,marginBottom:'8px'}}>{String((cmaResult as Record<string,unknown>).summary||'')}</div>
+                                <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+                                  {[{l:'Valor Justo',v:`€${((Number((cmaResult as Record<string,unknown>).valorJusto)||0)/1e6).toFixed(2)}M`,c:'#c9a96e'},{l:'Min',v:`€${((Number((cmaResult as Record<string,unknown>).valorMinimo)||0)/1e6).toFixed(2)}M`,c:'rgba(244,240,230,.5)'},{l:'Max',v:`€${((Number((cmaResult as Record<string,unknown>).valorMaximo)||0)/1e6).toFixed(2)}M`,c:'rgba(244,240,230,.5)'}].map(m=>(
+                                    <div key={m.l} style={{textAlign:'center'}}>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase'}}>{m.l}</div>
+                                      <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',fontWeight:600,color:m.c}}>{m.v}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                                {(cmaResult as Record<string,unknown>).recomendacao&&<div style={{marginTop:'8px',fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(201,169,110,.8)',fontStyle:'italic'}}>{String((cmaResult as Record<string,unknown>).recomendacao)}</div>}
+                                <button style={{marginTop:'8px',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',padding:'4px 10px',background:'transparent',border:'1px solid rgba(244,240,230,.1)',color:'rgba(244,240,230,.35)',cursor:'pointer'}} onClick={()=>{const r=cmaResult as Record<string,unknown>;exportToPDF(`CMA — ${String(p.nome)}`,`<div class="label">Comparativo de Mercado — ${String(p.nome)}</div><div style="font-size:.85rem;line-height:1.7;margin-bottom:16px">${String(r.summary)}</div><div class="row"><div class="card"><div class="label">Valor Justo</div><div class="metric gold">€${((Number(r.valorJusto)||0)/1e6).toFixed(2)}M</div></div><div class="card"><div class="label">Mín</div><div class="metric">€${((Number(r.valorMinimo)||0)/1e6).toFixed(2)}M</div></div><div class="card"><div class="label">Máx</div><div class="metric">€${((Number(r.valorMaximo)||0)/1e6).toFixed(2)}M</div></div></div>${r.recomendacao?`<div style="margin-top:12px;padding:12px;background:rgba(201,169,110,.06);border-left:3px solid #c9a96e;font-size:.85rem">${String(r.recomendacao)}</div>`:''}`)}}>⬇ PDF</button>
+                              </div>
+                            )}
                             {/* Price reduction tip for stale properties */}
                             {(() => {
                               const ld = (p as Record<string,unknown>).listingDate as string|undefined
@@ -10000,13 +10189,670 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                       <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.4)'}}>Sincronize com Google Calendar ou adicione manualmente</div>
                     </div>
                     <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                      <button className="p-btn" style={{fontSize:'.44rem',padding:'8px 16px'}} onClick={()=>alert('Integração Google Calendar — em breve')}>
-                        📅 Sync Google Cal
+                      <button className="p-btn" style={{fontSize:'.44rem',padding:'8px 16px'}} onClick={()=>{
+                        const allEvents = eventsByDay.flatMap((evs,i)=>evs.map(ev=>({title:ev.label,date:weekDays[i].toISOString().split('T')[0],time:ev.time,description:ev.sub})))
+                        exportToICS(allEvents)
+                      }}>
+                        📅 Exportar para iCal / Google
                       </button>
+                      <button className="p-btn p-btn-gold" style={{fontSize:'.44rem',padding:'8px 16px'}} onClick={()=>setSection('visitas')}>
+                        🏠 Gerir Visitas
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* ══════════════════════════════════════════════════════════
+                GESTÃO DE VISITAS
+            ══════════════════════════════════════════════════════════ */}
+            {section==='visitas' && (()=>{
+              const today = new Date('2026-04-03')
+              const agendadas = visitas.filter(v=>v.status==='agendada')
+              const realizadas = visitas.filter(v=>v.status==='realizada')
+              const canceladas = visitas.filter(v=>v.status==='cancelada')
+              const avgInterest = realizadas.filter(v=>v.interestScore).reduce((s,v)=>s+(v.interestScore||0),0) / Math.max(1,realizadas.filter(v=>v.interestScore).length)
+
+              const STATUS_V: Record<string,{label:string;bg:string;color:string;dot:string}> = {
+                agendada:  {label:'Agendada', bg:'rgba(58,123,213,.08)',  color:'#3a7bd5', dot:'#3a7bd5'},
+                realizada: {label:'Realizada', bg:'rgba(28,74,53,.08)',   color:'#1c4a35', dot:'#4a9c7a'},
+                cancelada: {label:'Cancelada', bg:'rgba(136,136,136,.08)',color:'#888',    dot:'#ccc'},
+              }
+
+              return (
+                <div>
+                  {/* Header */}
+                  <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:'16px',marginBottom:'28px'}}>
+                    <div>
+                      <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.6rem',color:'#0e0e0d',letterSpacing:'-.01em'}}>Gestão de Visitas</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginTop:'4px'}}>Agendamento · Feedback · Follow-up IA</div>
+                    </div>
+                    <button className="p-btn p-btn-gold" style={{fontSize:'.5rem',padding:'10px 22px'}} onClick={()=>setShowNewVisita(true)}>+ Nova Visita</button>
+                  </div>
+
+                  {/* Stats */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'12px',marginBottom:'28px'}}>
+                    {[
+                      {label:'Agendadas',value:agendadas.length,color:'#3a7bd5',icon:'📅'},
+                      {label:'Realizadas',value:realizadas.length,color:'#1c4a35',icon:'✅'},
+                      {label:'Canceladas',value:canceladas.length,color:'#888',icon:'✗'},
+                      {label:'Interesse Médio',value:`${avgInterest.toFixed(1)}/5 ★`,color:'#c9a96e',icon:'⭐'},
+                    ].map(s=>(
+                      <div key={s.label} style={{padding:'16px 20px',border:'1px solid rgba(14,14,13,.08)',background:'#fff',display:'flex',gap:'12px',alignItems:'center'}}>
+                        <span style={{fontSize:'1.4rem'}}>{s.icon}</span>
+                        <div>
+                          <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:600,color:s.color,lineHeight:1}}>{s.value}</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.08em',marginTop:'2px'}}>{s.label}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tabs */}
+                  <div style={{display:'flex',gap:'0',marginBottom:'20px',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
+                    {(['lista','agenda','stats'] as const).map(t=>(
+                      <button key={t} onClick={()=>setVisitasTab(t)} style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',textTransform:'uppercase',padding:'10px 20px',background:'transparent',border:'none',borderBottom:`2px solid ${visitasTab===t?'#1c4a35':'transparent'}`,color:visitasTab===t?'#1c4a35':'rgba(14,14,13,.4)',cursor:'pointer',transition:'all .2s'}}>
+                        {t==='lista'?'Lista':'Agenda'===t?'Calendário':'Estatísticas'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* LISTA */}
+                  {visitasTab==='lista' && (
+                    <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                      {visitas.sort((a,b)=>a.date.localeCompare(b.date)).map(v=>{
+                        const cfg = STATUS_V[v.status]
+                        const visitDate = new Date(v.date)
+                        const isPast = visitDate < today
+                        const contact = crmContacts.find(c=>c.id===v.contactId)
+                        const property = imoveisList.find(p=>p.id===v.propertyId)
+                        return (
+                          <div key={v.id} style={{background:'#fff',border:`1px solid ${cfg.color==='#3a7bd5'?'rgba(58,123,213,.15)':cfg.color==='#1c4a35'?'rgba(28,74,53,.15)':'rgba(136,136,136,.1)'}`,borderLeft:`3px solid ${cfg.dot}`,padding:'16px 20px'}}>
+                            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
+                              <div style={{flex:1,minWidth:'200px'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'6px',flexWrap:'wrap'}}>
+                                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',padding:'3px 8px',background:cfg.bg,color:cfg.color,border:`1px solid ${cfg.color}33`,textTransform:'uppercase',letterSpacing:'.06em'}}>{cfg.label}</span>
+                                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.5)'}}>{visitDate.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'})} · {v.time}</span>
+                                  {v.interestScore && <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#c9a96e'}}>{'★'.repeat(v.interestScore)}{'☆'.repeat(5-v.interestScore)}</span>}
+                                </div>
+                                <div style={{fontSize:'.9rem',fontWeight:600,color:'#0e0e0d',marginBottom:'3px'}}>🏠 {v.propertyName}</div>
+                                <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(14,14,13,.55)'}}>👤 {v.contactName} {contact?.nationality&&`· ${contact.nationality.split(' ')[0]}`} {contact?.phone&&`· ${contact.phone}`}</div>
+                                {v.notes && <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.5)',marginTop:'6px',fontStyle:'italic'}}>{v.notes}</div>}
+                                {v.feedback && <div style={{marginTop:'8px',padding:'8px 12px',background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.1)',fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.7)',lineHeight:1.6}}>{v.feedback}</div>}
+                                {v.aiSuggestion && (
+                                  <div style={{marginTop:'8px',padding:'10px 14px',background:'rgba(201,169,110,.06)',border:'1px solid rgba(201,169,110,.2)',borderLeft:'2px solid #c9a96e'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'#c9a96e',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'4px'}}>✦ Sugestão IA</div>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.7)',lineHeight:1.6}}>{v.aiSuggestion.nextStep as string}</div>
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{display:'flex',flexDirection:'column',gap:'6px',alignItems:'flex-end',flexShrink:0}}>
+                                {v.status==='agendada' && (
+                                  <>
+                                    <button className="p-btn" style={{fontSize:'.4rem',padding:'5px 12px',whiteSpace:'nowrap'}} onClick={()=>{
+                                      setVisitas(vs=>vs.map(vi=>vi.id===v.id?{...vi,status:'realizada' as const}:vi))
+                                      setVisitaFeedbackId(v.id)
+                                    }}>✓ Marcar Realizada</button>
+                                    <button style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',padding:'5px 12px',background:'transparent',border:'1px solid rgba(136,136,136,.2)',color:'#888',cursor:'pointer',whiteSpace:'nowrap'}} onClick={()=>setVisitas(vs=>vs.map(vi=>vi.id===v.id?{...vi,status:'cancelada' as const}:vi))}>✗ Cancelar</button>
+                                  </>
+                                )}
+                                {v.status==='realizada' && !v.aiSuggestion && (
+                                  <button className="p-btn p-btn-gold" style={{fontSize:'.4rem',padding:'5px 12px',whiteSpace:'nowrap'}} onClick={async()=>{
+                                    setVisitaAiLoading(true)
+                                    try {
+                                      const res = await fetch('/api/visitas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'suggest-feedback',visit:v,contact:crmContacts.find(c=>c.id===v.contactId)})})
+                                      const d = await res.json()
+                                      if(d.nextStep) setVisitas(vs=>vs.map(vi=>vi.id===v.id?{...vi,aiSuggestion:d}:vi))
+                                    } finally { setVisitaAiLoading(false) }
+                                  }}>✦ Follow-up IA {visitaAiLoading&&'...'}</button>
+                                )}
+                                {contact && <button style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',padding:'4px 10px',background:'rgba(58,123,213,.07)',color:'#3a7bd5',border:'1px solid rgba(58,123,213,.2)',cursor:'pointer'}} onClick={()=>{setSection('crm');setActiveCrmId(v.contactId);setCrmProfileTab('overview')}}>→ CRM</button>}
+                                <button style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',padding:'4px 8px',background:'transparent',color:'rgba(14,14,13,.3)',border:'1px solid rgba(14,14,13,.1)',cursor:'pointer'}} onClick={()=>setVisitas(vs=>vs.filter(vi=>vi.id!==v.id))}>✕</button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {visitas.length===0&&<div style={{padding:'40px',textAlign:'center',color:'rgba(14,14,13,.35)',fontFamily:"'Jost',sans-serif"}}>Sem visitas registadas. Clique em "+ Nova Visita" para começar.</div>}
+                    </div>
+                  )}
+
+                  {/* AGENDA CALENDAR VIEW */}
+                  {visitasTab==='agenda' && (
+                    <div>
+                      {(['agendada','realizada','cancelada'] as const).map(status=>{
+                        const group = visitas.filter(v=>v.status===status)
+                        if (!group.length) return null
+                        const cfg = STATUS_V[status]
+                        return (
+                          <div key={status} style={{marginBottom:'24px'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:cfg.color,marginBottom:'12px'}}>▸ {cfg.label}s ({group.length})</div>
+                            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'10px'}}>
+                              {group.sort((a,b)=>a.date.localeCompare(b.date)).map(v=>(
+                                <div key={v.id} style={{padding:'14px 16px',border:`1px solid ${cfg.color}33`,background:cfg.bg}}>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:cfg.color,marginBottom:'4px'}}>{new Date(v.date).toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'})} · {v.time}</div>
+                                  <div style={{fontSize:'.85rem',fontWeight:600,color:'#0e0e0d',marginBottom:'3px'}}>{v.propertyName}</div>
+                                  <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.5)'}}>{v.contactName}</div>
+                                  {v.interestScore&&<div style={{marginTop:'6px',color:'#c9a96e',fontSize:'.7rem'}}>{'★'.repeat(v.interestScore)}{'☆'.repeat(5-v.interestScore)}</div>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* STATS */}
+                  {visitasTab==='stats' && (
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'20px'}}>
+                      {/* Conversion funnel */}
+                      <div style={{padding:'20px',border:'1px solid rgba(14,14,13,.08)',background:'#fff'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'16px'}}>Funil de Conversão</div>
+                        {[
+                          {label:'Total Visitas',n:visitas.length,pct:100,color:'#3a7bd5'},
+                          {label:'Realizadas',n:realizadas.length,pct:Math.round(realizadas.length/Math.max(1,visitas.length)*100),color:'#4a9c7a'},
+                          {label:'Interesse ≥ 4★',n:realizadas.filter(v=>(v.interestScore||0)>=4).length,pct:Math.round(realizadas.filter(v=>(v.interestScore||0)>=4).length/Math.max(1,visitas.length)*100),color:'#c9a96e'},
+                          {label:'Em Negociação',n:deals.length,pct:Math.round(deals.length/Math.max(1,visitas.length)*100),color:'#1c4a35'},
+                        ].map(row=>(
+                          <div key={row.label} style={{marginBottom:'12px'}}>
+                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+                              <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'#0e0e0d'}}>{row.label}</span>
+                              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:row.color,fontWeight:600}}>{row.n} · {row.pct}%</span>
+                            </div>
+                            <div style={{height:'6px',background:'rgba(14,14,13,.06)',borderRadius:'1px'}}>
+                              <div style={{height:'100%',width:`${row.pct}%`,background:row.color,transition:'width 1s ease'}}/>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Interest by property */}
+                      <div style={{padding:'20px',border:'1px solid rgba(14,14,13,.08)',background:'#fff'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'16px'}}>Interesse por Imóvel</div>
+                        {Object.entries(realizadas.reduce((acc:Record<string,{total:number;count:number}>,v)=>{
+                          if (!v.interestScore) return acc
+                          const key = v.propertyName.split('·')[0].trim()
+                          acc[key] = acc[key]||{total:0,count:0}
+                          acc[key].total += v.interestScore
+                          acc[key].count++
+                          return acc
+                        },{})).map(([name,{total,count}])=>(
+                          <div key={name} style={{display:'flex',alignItems:'center',gap:'12px',marginBottom:'10px'}}>
+                            <div style={{flex:1,fontSize:'.82rem',color:'#0e0e0d',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{name}</div>
+                            <div style={{flexShrink:0,color:'#c9a96e',fontSize:'.75rem'}}>{'★'.repeat(Math.round(total/count))} {(total/count).toFixed(1)}</div>
+                          </div>
+                        ))}
+                        {realizadas.filter(v=>v.interestScore).length===0&&<div style={{color:'rgba(14,14,13,.3)',fontSize:'.85rem',fontFamily:"'Jost',sans-serif"}}>Sem dados de interesse ainda.</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ICS export */}
+                  <div style={{marginTop:'24px',padding:'16px 20px',border:'1px dashed rgba(14,14,13,.12)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.4)'}}>Exportar visitas agendadas para Google Calendar, Apple Calendar ou Outlook</div>
+                    <button className="p-btn" style={{fontSize:'.44rem',padding:'8px 16px'}} onClick={()=>exportToICS(agendadas.map(v=>({title:`🏠 Visita: ${v.propertyName}`,date:v.date,time:v.time,description:`Cliente: ${v.contactName} | ${v.notes}`})))}>📅 Exportar Visitas (.ics)</button>
+                  </div>
+
+                  {/* New Visit Modal */}
+                  {showNewVisita && (
+                    <div style={{position:'fixed',inset:0,zIndex:5000,background:'rgba(12,31,21,.5)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setShowNewVisita(false)}>
+                      <div style={{width:'500px',maxWidth:'95vw',background:'#fff',padding:'28px',boxShadow:'0 20px 60px rgba(0,0,0,.15)'}} onClick={e=>e.stopPropagation()}>
+                        <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.3rem',fontWeight:600,color:'#0e0e0d',marginBottom:'20px'}}>Nova Visita</div>
+                        <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+                          <div>
+                            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Imóvel</label>
+                            <select className="p-inp" value={newVisita.propertyId} onChange={e=>{const p=imoveisList.find(im=>im.id===e.target.value);setNewVisita(v=>({...v,propertyId:e.target.value,propertyName:p?String(p.nome):e.target.value}))}}>
+                              <option value="">Seleccionar imóvel...</option>
+                              {imoveisList.map(p=><option key={String(p.id)} value={String(p.id)}>{String(p.nome)} · {String(p.zona)}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Cliente</label>
+                            <select className="p-inp" value={newVisita.contactId} onChange={e=>{const c=crmContacts.find(co=>co.id===Number(e.target.value));setNewVisita(v=>({...v,contactId:Number(e.target.value),contactName:c?.name||''}))}}>
+                              <option value={0}>Seleccionar cliente...</option>
+                              {crmContacts.map(c=><option key={c.id} value={c.id}>{c.name} · {c.status.toUpperCase()}</option>)}
+                            </select>
+                          </div>
+                          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
+                            <div>
+                              <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Data</label>
+                              <input type="date" className="p-inp" value={newVisita.date} onChange={e=>setNewVisita(v=>({...v,date:e.target.value}))} />
+                            </div>
+                            <div>
+                              <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Hora</label>
+                              <input type="time" className="p-inp" value={newVisita.time} onChange={e=>setNewVisita(v=>({...v,time:e.target.value}))} />
+                            </div>
+                          </div>
+                          <div>
+                            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Notas</label>
+                            <textarea className="p-inp" rows={2} value={newVisita.notes} onChange={e=>setNewVisita(v=>({...v,notes:e.target.value}))} placeholder="Preparação, documentos, preferências do cliente..." style={{resize:'vertical'}}/>
+                          </div>
+                        </div>
+                        <div style={{display:'flex',gap:'10px',marginTop:'20px',justifyContent:'flex-end'}}>
+                          <button className="p-btn" style={{background:'rgba(14,14,13,.06)',color:'rgba(14,14,13,.6)'}} onClick={()=>setShowNewVisita(false)}>Cancelar</button>
+                          <button className="p-btn p-btn-gold" onClick={()=>{
+                            if (!newVisita.propertyId||!newVisita.contactId||!newVisita.date) return
+                            const v: Visita = { id:Date.now(), ...newVisita, status:'agendada' }
+                            setVisitas(vs=>[...vs,v])
+                            setShowNewVisita(false)
+                            setNewVisita({propertyId:'',propertyName:'',contactId:0,contactName:'',date:'',time:'10:00',notes:''})
+                          }}>Agendar Visita</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Feedback Modal */}
+                  {visitaFeedbackId && (
+                    <div style={{position:'fixed',inset:0,zIndex:5000,background:'rgba(12,31,21,.5)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center'}} onClick={()=>setVisitaFeedbackId(null)}>
+                      <div style={{width:'460px',maxWidth:'95vw',background:'#fff',padding:'28px'}} onClick={e=>e.stopPropagation()}>
+                        <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:600,color:'#0e0e0d',marginBottom:'16px'}}>Feedback da Visita</div>
+                        <div style={{marginBottom:'14px'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'8px'}}>Interesse do Cliente</div>
+                          <div style={{display:'flex',gap:'8px'}}>
+                            {[1,2,3,4,5].map(n=>(
+                              <button key={n} onClick={()=>setVisitaFeedback(f=>({...f,interesse:n}))}
+                                style={{width:'44px',height:'44px',background:visitaFeedback.interesse>=n?'rgba(201,169,110,.15)':'rgba(14,14,13,.04)',border:`1px solid ${visitaFeedback.interesse>=n?'#c9a96e':'rgba(14,14,13,.1)'}`,cursor:'pointer',fontSize:'1.1rem',color:visitaFeedback.interesse>=n?'#c9a96e':'#ccc'}}>★</button>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{marginBottom:'14px'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>Observações</div>
+                          <textarea className="p-inp" rows={3} value={visitaFeedback.observacoes} onChange={e=>setVisitaFeedback(f=>({...f,observacoes:e.target.value}))} placeholder="Reacção do cliente, objecções, perguntas..." style={{resize:'vertical'}}/>
+                        </div>
+                        <div style={{marginBottom:'16px'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>Próximo Passo</div>
+                          <input className="p-inp" value={visitaFeedback.nextStep} onChange={e=>setVisitaFeedback(f=>({...f,nextStep:e.target.value}))} placeholder="Ex: Enviar proposta, Segunda visita, Aguarda decisão..." />
+                        </div>
+                        <div style={{display:'flex',gap:'10px',justifyContent:'flex-end'}}>
+                          <button className="p-btn" style={{background:'rgba(14,14,13,.06)',color:'rgba(14,14,13,.6)'}} onClick={()=>setVisitaFeedbackId(null)}>Cancelar</button>
+                          <button className="p-btn p-btn-gold" onClick={()=>{
+                            setVisitas(vs=>vs.map(v=>v.id===visitaFeedbackId?{...v,interestScore:visitaFeedback.interesse,feedback:visitaFeedback.observacoes,notes:v.notes+(visitaFeedback.nextStep?` | Próximo: ${visitaFeedback.nextStep}`:'')}:v))
+                            setVisitaFeedbackId(null)
+                            setVisitaFeedback({interesse:3,observacoes:'',nextStep:''})
+                          }}>Guardar Feedback</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* ══════════════════════════════════════════════════════════
+                CALCULADORA IMT + IS + CUSTOS TOTAIS
+            ══════════════════════════════════════════════════════════ */}
+            {section==='imt' && (()=>{
+              const calcIMT = async () => {
+                if (!imtValor || Number(imtValor)<=0) return
+                setImtLoading(true)
+                try {
+                  const res = await fetch('/api/imt', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({valor:Number(imtValor),tipo:imtTipo,comprador:imtComprador})})
+                  const d = await res.json()
+                  if (d.success) setImtResult(d)
+                } catch(e) { console.error(e) }
+                finally { setImtLoading(false) }
+              }
+
+              const fmt = (n:number) => `€${Math.round(n).toLocaleString('pt-PT')}`
+              const presets = [
+                {label:'€250K',v:'250000'},{label:'€500K',v:'500000'},{label:'€750K',v:'750000'},
+                {label:'€1M',v:'1000000'},{label:'€2M',v:'2000000'},{label:'€5M',v:'5000000'},
+              ]
+
+              return (
+                <div>
+                  {/* Header */}
+                  <div style={{marginBottom:'28px'}}>
+                    <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.6rem',color:'#0e0e0d',letterSpacing:'-.01em',marginBottom:'4px'}}>Calculadora IMT + IS + Custos Totais</div>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase'}}>Tabelas actualizadas 2026 · Portugal · IMI exempt · HPP / Segunda Habitação / Investimento</div>
+                  </div>
+
+                  {/* Input card */}
+                  <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'28px',marginBottom:'24px'}}>
+                    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:'20px',marginBottom:'20px'}}>
+                      <div>
+                        <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'6px'}}>Valor do Imóvel (€)</label>
+                        <input className="p-inp" type="number" value={imtValor} onChange={e=>setImtValor(e.target.value)} placeholder="Ex: 500000" style={{fontSize:'1rem',padding:'10px 14px',fontFamily:"'Cormorant',serif"}} onKeyDown={e=>e.key==='Enter'&&calcIMT()} />
+                      </div>
+                      <div>
+                        <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'6px'}}>Tipo de Aquisição</label>
+                        <select className="p-inp" value={imtTipo} onChange={e=>setImtTipo(e.target.value as 'hpp'|'second'|'invest')}>
+                          <option value="hpp">🏠 Habitação Própria Permanente</option>
+                          <option value="second">🏖 Segunda Habitação</option>
+                          <option value="invest">🏢 Investimento / Empresa</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'6px'}}>Comprador</label>
+                        <select className="p-inp" value={imtComprador} onChange={e=>setImtComprador(e.target.value as 'singular'|'empresa')}>
+                          <option value="singular">Pessoa Singular</option>
+                          <option value="empresa">Empresa / Jurídico</option>
+                        </select>
+                      </div>
+                    </div>
+                    {/* Presets */}
+                    <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'20px'}}>
+                      {presets.map(p=>(
+                        <button key={p.label} onClick={()=>{setImtValor(p.v);setImtResult(null)}}
+                          style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',padding:'6px 14px',background:imtValor===p.v?'#1c4a35':'rgba(14,14,13,.04)',color:imtValor===p.v?'#f4f0e6':'rgba(14,14,13,.5)',border:`1px solid ${imtValor===p.v?'#1c4a35':'rgba(14,14,13,.1)'}`,cursor:'pointer',letterSpacing:'.06em',transition:'all .2s'}}>
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                    <button className="p-btn p-btn-gold" style={{padding:'12px 32px',fontSize:'.5rem',letterSpacing:'.12em'}} onClick={calcIMT} disabled={imtLoading||!imtValor}>
+                      {imtLoading ? 'A calcular...' : '⟶ Calcular Custos Totais'}
+                    </button>
+                  </div>
+
+                  {/* Results */}
+                  {imtResult && (()=>{
+                    const r = imtResult as {imt:number;is:number;registro:number;notario:number;advogado:number;total:number;totalSemAdvogado:number;taxaEfetiva:string;isento:boolean;savings:number;breakdown:{label:string;value:number;pct:string}[]}
+                    const valor = Number(imtValor)
+                    return (
+                      <div>
+                        {/* Isento banner */}
+                        {r.isento && (
+                          <div style={{padding:'14px 20px',background:'rgba(28,74,53,.08)',border:'1px solid rgba(28,74,53,.2)',borderLeft:'3px solid #1c4a35',marginBottom:'20px',display:'flex',alignItems:'center',gap:'12px'}}>
+                            <span style={{fontSize:'1.4rem'}}>✅</span>
+                            <div>
+                              <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',fontWeight:600,color:'#1c4a35'}}>Isenção de IMT Aplicável</div>
+                              <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(14,14,13,.6)'}}>Habitação Própria Permanente abaixo do limiar de isenção. IMT = €0.</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Main metrics */}
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'16px',marginBottom:'24px'}}>
+                          <div style={{padding:'20px 24px',background:'#0c1f15',color:'#f4f0e6'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(244,240,230,.45)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>Total Custos Aquisição</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'2rem',fontWeight:600,color:'#c9a96e',lineHeight:1}}>{fmt(r.total)}</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(244,240,230,.35)',marginTop:'4px'}}>incl. advogado estimado</div>
+                          </div>
+                          <div style={{padding:'20px 24px',background:'rgba(28,74,53,.06)',border:'1px solid rgba(28,74,53,.15)'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>IMT + IS</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:600,color:'#1c4a35',lineHeight:1}}>{fmt(r.imt+r.is)}</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.35)',marginTop:'4px'}}>Taxa efectiva: {r.taxaEfetiva}</div>
+                          </div>
+                          <div style={{padding:'20px 24px',border:'1px solid rgba(14,14,13,.08)',background:'#fff'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>Valor Total c/ Imóvel</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:600,color:'#0e0e0d',lineHeight:1}}>{fmt(valor+r.total)}</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.35)',marginTop:'4px'}}>{((r.total/valor)*100).toFixed(1)}% do valor do imóvel</div>
+                          </div>
+                        </div>
+
+                        {/* Breakdown table */}
+                        <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',marginBottom:'20px'}}>
+                          <div style={{padding:'14px 20px',background:'rgba(14,14,13,.03)',borderBottom:'1px solid rgba(14,14,13,.08)',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)'}}>Desdobramento de Custos</div>
+                          {[
+                            {label:'🏛 IMT (Imposto Municipal Transacções)',value:r.imt,note:r.isento?'Isento HPP':'Tabela 2026'},
+                            {label:'📜 IS (Imposto de Selo 0,8%)',value:r.is,note:'Sobre o valor do imóvel'},
+                            {label:'📋 Registo Predial',value:r.registro,note:'Conservatória do Registo Predial'},
+                            {label:'⚖ Escritura / Notário',value:r.notario,note:'Estimativa — varia conforme notário'},
+                            {label:'👨‍⚖️ Advogado / Solicitador',value:r.advogado,note:'~1% do valor (estimativa)'},
+                          ].map((row,i)=>(
+                            <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:'1px solid rgba(14,14,13,.05)',background:i%2===0?'#fff':'rgba(14,14,13,.01)'}}>
+                              <div>
+                                <div style={{fontSize:'.88rem',color:'#0e0e0d',marginBottom:'1px'}}>{row.label}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.35)'}}>{row.note}</div>
+                              </div>
+                              <div style={{textAlign:'right'}}>
+                                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.1rem',fontWeight:600,color:row.value===0?'#4a9c7a':'#0e0e0d'}}>{row.value===0?'ISENTO':fmt(row.value)}</div>
+                                {row.value>0&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.3)'}}>{((row.value/valor)*100).toFixed(2)}%</div>}
+                              </div>
+                            </div>
+                          ))}
+                          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 20px',background:'rgba(28,74,53,.04)',borderTop:'2px solid rgba(28,74,53,.15)'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',color:'#1c4a35',textTransform:'uppercase',letterSpacing:'.1em',fontWeight:600}}>TOTAL CUSTOS</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.3rem',fontWeight:700,color:'#1c4a35'}}>{fmt(r.total)}</div>
+                          </div>
+                        </div>
+
+                        {/* HPP savings */}
+                        {r.savings > 0 && (
+                          <div style={{padding:'14px 20px',background:'rgba(74,156,122,.06)',border:'1px solid rgba(74,156,122,.2)',borderLeft:'3px solid #4a9c7a',marginBottom:'20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                            <div>
+                              <div style={{fontFamily:"'Cormorant',serif",fontSize:'.95rem',fontWeight:600,color:'#1c4a35'}}>Poupança HPP vs Segunda Habitação</div>
+                              <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.55)',marginTop:'2px'}}>Benefício fiscal da habitação própria permanente</div>
+                            </div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',fontWeight:700,color:'#1c4a35'}}>{fmt(r.savings)}</div>
+                          </div>
+                        )}
+
+                        {/* NHR note for foreigners */}
+                        <div style={{padding:'14px 20px',background:'rgba(201,169,110,.05)',border:'1px solid rgba(201,169,110,.15)',marginBottom:'20px',display:'flex',gap:'12px',alignItems:'flex-start'}}>
+                          <span style={{fontSize:'1.2rem',flexShrink:0}}>💡</span>
+                          <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(14,14,13,.65)',lineHeight:1.7}}>
+                            <strong>Compradores Internacionais:</strong> O regime NHR/IFICI pode isentar rendimentos durante 10 anos. Consulte a secção NHR para simulação. O IMT é sempre aplicável independentemente do estatuto fiscal.
+                          </div>
+                        </div>
+
+                        {/* PDF Export */}
+                        <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+                          <button className="p-btn p-btn-gold" style={{fontSize:'.46rem',padding:'10px 22px'}} onClick={()=>{
+                            const html = `
+                              <div class="label">Simulação IMT + Custos de Aquisição</div>
+                              <div class="row">
+                                <div class="card"><div class="label">Valor do Imóvel</div><div class="metric">${fmt(valor)}</div></div>
+                                <div class="card"><div class="label">Tipo</div><div class="metric" style="font-size:1rem">${imtTipo==='hpp'?'HPP':imtTipo==='second'?'2ª Hab':'Invest.'}</div></div>
+                                <div class="card"><div class="label">Total Custos</div><div class="metric gold">${fmt(r.total)}</div></div>
+                                <div class="card"><div class="label">Taxa Efectiva</div><div class="metric">${r.taxaEfetiva}</div></div>
+                              </div>
+                              <hr class="divider">
+                              <table>
+                                <thead><tr><th>Custo</th><th>Valor</th><th>% do Preço</th></tr></thead>
+                                <tbody>
+                                  ${[{l:'IMT',v:r.imt},{l:'IS (0,8%)',v:r.is},{l:'Registo Predial',v:r.registro},{l:'Notário',v:r.notario},{l:'Advogado (~1%)',v:r.advogado}]
+                                    .map(row=>`<tr><td>${row.l}</td><td><strong>${row.v===0?'ISENTO':fmt(row.v)}</strong></td><td>${row.v===0?'—':((row.v/valor)*100).toFixed(2)+'%'}</td></tr>`).join('')}
+                                  <tr style="background:rgba(28,74,53,.08)"><td><strong>TOTAL</strong></td><td><strong>${fmt(r.total)}</strong></td><td><strong>${((r.total/valor)*100).toFixed(1)}%</strong></td></tr>
+                                </tbody>
+                              </table>
+                              ${r.savings>0?`<div style="margin-top:16px;padding:12px 16px;background:rgba(74,156,122,.06);border-left:3px solid #4a9c7a"><strong>Poupança HPP:</strong> ${fmt(r.savings)} em relação a segunda habitação</div>`:''}
+                              <div style="margin-top:16px;font-size:.8rem;color:rgba(14,14,13,.45)">Nota: Valores estimados com base nas tabelas IMT 2026. Confirmar com advogado/solicitador antes de assinar CPCV.</div>
+                            `
+                            exportToPDF(`Simulação IMT — ${fmt(valor)}`, html)
+                          }}>⬇ Exportar PDF</button>
+                          <button className="p-btn" style={{fontSize:'.46rem',padding:'10px 22px'}} onClick={()=>setSection('nhr')}>→ Simular NHR/IFICI</button>
+                          <button className="p-btn" style={{fontSize:'.46rem',padding:'10px 22px'}} onClick={()=>setSection('credito')}>→ Simular Crédito</button>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* Info boxes */}
+                  {!imtResult && (
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'16px',marginTop:'8px'}}>
+                      {[
+                        {icon:'🏠',title:'Habitação Própria',body:'Isenção até ~€97K. Taxas reduzidas até €603K. Diferencial significativo vs segunda habitação.'},
+                        {icon:'🌍',title:'Compradores Internacionais',body:'Mesmo IMT independente da residência fiscal. NHR não afecta IMT. IRS sobre mais-valias pode ser diferente.'},
+                        {icon:'⚠',title:'Atenção',body:'Valores estimados. IMT é calculado sobre o VPT (valor patrimonial) se superior ao preço de venda.'},
+                      ].map(b=>(
+                        <div key={b.icon} style={{padding:'16px 18px',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.07)'}}>
+                          <div style={{fontSize:'1.2rem',marginBottom:'8px'}}>{b.icon}</div>
+                          <div style={{fontFamily:"'Cormorant',serif",fontSize:'.95rem',fontWeight:600,color:'#0e0e0d',marginBottom:'6px'}}>{b.title}</div>
+                          <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.55)',lineHeight:1.6}}>{b.body}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* ══════════════════════════════════════════════════════════
+                COMISSÕES & P&L
+            ══════════════════════════════════════════════════════════ */}
+            {section==='comissoes' && (()=>{
+              const STAGE_PCT_C: Record<string,number> = {'Angariação':0.10,'Proposta Enviada':0.20,'Proposta Aceite':0.35,'Due Diligence':0.50,'CPCV Assinado':0.70,'Financiamento':0.80,'Escritura Marcada':0.90,'Escritura Concluída':1.00}
+              const parseValor = (v:string) => parseFloat(v.replace(/[^0-9.]/g,''))||0
+
+              const pipelineWeighted = deals.reduce((s,d)=>{
+                const val = parseValor(d.valor)
+                const pct = STAGE_PCT_C[d.fase]||0
+                return s + val * 0.05 * pct
+              },0)
+              const realized = deals.filter(d=>d.fase==='Escritura Concluída').reduce((s,d)=>s+parseValor(d.valor)*0.05,0)
+              const grossTotal = deals.reduce((s,d)=>s+parseValor(d.valor)*0.05,0)
+              const irsWithholding = pipelineWeighted * 0.25
+              const netExpected = pipelineWeighted * 0.75
+              const cpcvExpected = pipelineWeighted * 0.5
+              const escrituraExpected = pipelineWeighted * 0.5
+              const fmt2 = (n:number) => `€${Math.round(n).toLocaleString('pt-PT')}`
+
+              const byStage = Object.entries(STAGE_PCT_C).map(([stage,pct])=>{
+                const stageDeals = deals.filter(d=>d.fase===stage)
+                const stageVal = stageDeals.reduce((s,d)=>s+parseValor(d.valor),0)
+                const stageComm = stageVal * 0.05 * pct
+                return {stage,deals:stageDeals.length,value:stageVal,commission:stageComm,probability:pct}
+              }).filter(s=>s.deals>0)
+
+              const topDeal = deals.reduce((best,d)=>{
+                const v=parseValor(d.valor)*0.05
+                return v>best.v?{d,v}:best
+              },{d:deals[0],v:0})
+
+              return (
+                <div>
+                  <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:'16px',marginBottom:'28px'}}>
+                    <div>
+                      <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.6rem',color:'#0e0e0d',letterSpacing:'-.01em'}}>Comissões & P&L</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginTop:'4px'}}>5% Comissão · 50% CPCV + 50% Escritura · IRS 25% Retenção</div>
+                    </div>
+                    <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
+                      <button className="p-btn" style={{fontSize:'.44rem',padding:'8px 16px'}} onClick={async()=>{
+                        setCommLoading(true)
+                        try {
+                          const res=await fetch('/api/deal/commission-pl',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deals,period:'2026'})})
+                          const d=await res.json()
+                          if(d.forecast) setCommResult(d)
+                        } finally{setCommLoading(false)}
+                      }} disabled={commLoading}>{commLoading?'A analisar...':'✦ Análise IA'}</button>
                       <button className="p-btn p-btn-gold" style={{fontSize:'.44rem',padding:'8px 16px'}} onClick={()=>{
-                        const label = prompt('Descrição do evento:')
-                        if (label) alert(`Evento "${label}" adicionado — funcionalidade de persistência em breve.`)
-                      }}>+ Novo Evento</button>
+                        const html=`
+                          <div class="label">Pipeline & Comissões — Agency Group 2026</div>
+                          <div class="row">
+                            <div class="card"><div class="label">Pipeline Ponderado</div><div class="metric">${fmt2(pipelineWeighted)}</div></div>
+                            <div class="card"><div class="label">Realizado</div><div class="metric green">${fmt2(realized)}</div></div>
+                            <div class="card"><div class="label">Líquido Esperado</div><div class="metric gold">${fmt2(netExpected)}</div></div>
+                            <div class="card"><div class="label">IRS Retido</div><div class="metric" style="color:#e05454">${fmt2(irsWithholding)}</div></div>
+                          </div>
+                          <hr class="divider">
+                          <table>
+                            <thead><tr><th>Deal</th><th>Valor</th><th>Fase</th><th>Comissão Bruta</th><th>Prob.</th><th>Comissão Ponderada</th></tr></thead>
+                            <tbody>${deals.map(d=>{const v=parseValor(d.valor);const pct=STAGE_PCT_C[d.fase]||0;return`<tr><td>${d.imovel}</td><td>${fmt2(v)}</td><td>${d.fase}</td><td>${fmt2(v*0.05)}</td><td>${Math.round(pct*100)}%</td><td>${fmt2(v*0.05*pct)}</td></tr>`}).join('')}</tbody>
+                          </table>
+                        `
+                        exportToPDF('Comissões & P&L — Agency Group',html)
+                      }}>⬇ Exportar PDF</button>
+                    </div>
+                  </div>
+
+                  {/* Main KPIs */}
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'14px',marginBottom:'24px'}}>
+                    {[
+                      {label:'Pipeline Ponderado',value:fmt2(pipelineWeighted),sub:'Por probabilidade de fase',color:'#0e0e0d',bg:'#0c1f15',textColor:'#c9a96e'},
+                      {label:'Realizado',value:fmt2(realized),sub:'Escrituras concluídas',color:'#1c4a35',bg:'rgba(28,74,53,.06)',textColor:'#1c4a35'},
+                      {label:'Comissão Líquida',value:fmt2(netExpected),sub:'Após IRS 25% retido',color:'#4a9c7a',bg:'rgba(74,156,122,.06)',textColor:'#4a9c7a'},
+                      {label:'IRS Retenção',value:fmt2(irsWithholding),sub:'25% retido na fonte',color:'#e05454',bg:'rgba(224,84,84,.05)',textColor:'#e05454'},
+                    ].map(k=>(
+                      <div key={k.label} style={{padding:'20px 22px',background:k.bg==='#0c1f15'?'#0c1f15':'#fff',border:`1px solid ${k.bg==='#0c1f15'?'#0c1f15':'rgba(14,14,13,.08)'}`,position:'relative',overflow:'hidden'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:k.bg==='#0c1f15'?'rgba(244,240,230,.4)':'rgba(14,14,13,.35)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>{k.label}</div>
+                        <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.7rem',fontWeight:600,color:k.textColor,lineHeight:1,marginBottom:'4px'}}>{k.value}</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:k.bg==='#0c1f15'?'rgba(244,240,230,.3)':'rgba(14,14,13,.3)'}}>{k.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CPCV vs Escritura split */}
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'14px',marginBottom:'24px'}}>
+                    <div style={{padding:'16px 20px',background:'rgba(201,169,110,.06)',border:'1px solid rgba(201,169,110,.2)'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}}>Comissão CPCV (50%)</div>
+                      <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',fontWeight:600,color:'#c9a96e'}}>{fmt2(cpcvExpected)}</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.3)',marginTop:'3px'}}>Recebível no CPCV</div>
+                    </div>
+                    <div style={{padding:'16px 20px',background:'rgba(28,74,53,.06)',border:'1px solid rgba(28,74,53,.15)'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}}>Comissão Escritura (50%)</div>
+                      <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',fontWeight:600,color:'#1c4a35'}}>{fmt2(escrituraExpected)}</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.3)',marginTop:'3px'}}>Recebível na Escritura</div>
+                    </div>
+                    <div style={{padding:'16px 20px',background:'rgba(14,14,13,.03)',border:'1px solid rgba(14,14,13,.08)'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'6px'}}>Top Deal</div>
+                      <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',fontWeight:600,color:'#0e0e0d',lineHeight:1.3}}>{topDeal.d?.imovel?.split('·')[0]?.trim()||'—'}</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'#c9a96e',marginTop:'4px'}}>{fmt2(topDeal.v)}</div>
+                    </div>
+                  </div>
+
+                  {/* Pipeline visual bars */}
+                  <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'20px',marginBottom:'20px'}}>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'16px'}}>Comissão por Fase do Pipeline</div>
+                    {byStage.map(s=>(
+                      <div key={s.stage} style={{marginBottom:'14px'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'4px'}}>
+                          <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.85rem',color:'#0e0e0d'}}>{s.stage}</span>
+                          <div style={{display:'flex',gap:'16px',alignItems:'center'}}>
+                            <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)'}}>{s.deals} deal{s.deals!==1?'s':''} · {fmt2(s.value)}</span>
+                            <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',fontWeight:600,color:'#1c4a35',minWidth:'70px',textAlign:'right'}}>{fmt2(s.commission)}</span>
+                          </div>
+                        </div>
+                        <div style={{height:'6px',background:'rgba(14,14,13,.06)'}}>
+                          <div style={{height:'100%',width:`${Math.min(100,s.probability*100)}%`,background:`linear-gradient(90deg,#1c4a35,#4a9c7a)`,transition:'width .8s ease'}}/>
+                        </div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.3)',marginTop:'2px'}}>Probabilidade: {Math.round(s.probability*100)}%</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* AI Analysis */}
+                  {commResult && (
+                    <div style={{background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.15)',padding:'20px',marginBottom:'20px',animation:'fadeIn .3s ease'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'#1c4a35',letterSpacing:'.12em',textTransform:'uppercase',marginBottom:'14px'}}>✦ Análise IA — Previsão de Comissões</div>
+                      {(commResult.forecast as Record<string,string>) && (
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'12px',marginBottom:'14px'}}>
+                          {[['3 Meses','3months'],['6 Meses','6months'],['12 Meses','12months']].map(([label,key])=>(
+                            <div key={key} style={{padding:'12px 14px',background:'#fff',border:'1px solid rgba(28,74,53,.1)'}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:'4px'}}>Previsão {label}</div>
+                              <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.85rem',color:'#1c4a35',lineHeight:1.5}}>{(commResult.forecast as Record<string,string>)[key]}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {(commResult.insights as string[])?.map((ins,i)=>(
+                        <div key={i} style={{display:'flex',gap:'10px',alignItems:'flex-start',marginBottom:'8px'}}>
+                          <span style={{color:'#c9a96e',flexShrink:0}}>▸</span>
+                          <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.85rem',color:'rgba(14,14,13,.7)',lineHeight:1.6}}>{ins}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Deal-by-deal table */}
+                  <div style={{border:'1px solid rgba(14,14,13,.08)',overflow:'hidden'}}>
+                    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr 1fr',background:'rgba(14,14,13,.03)',borderBottom:'1px solid rgba(14,14,13,.08)',padding:'10px 16px',gap:'8px'}}>
+                      {['Imóvel','Valor','Fase','Comissão Bruta','Prob.','Ponderado'].map(h=>(
+                        <div key={h} style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.35)',textTransform:'uppercase',letterSpacing:'.06em'}}>{h}</div>
+                      ))}
+                    </div>
+                    {deals.map((d,i)=>{
+                      const v=parseValor(d.valor)
+                      const comm=v*0.05
+                      const pct=STAGE_PCT_C[d.fase]||0
+                      const ponderado=comm*pct
+                      return (
+                        <div key={i} style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr 1fr',padding:'12px 16px',gap:'8px',alignItems:'center',borderBottom:'1px solid rgba(14,14,13,.04)',background:i%2===0?'#fff':'rgba(14,14,13,.01)'}}>
+                          <div style={{fontSize:'.85rem',fontWeight:500,color:'#0e0e0d',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.imovel}</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.6)'}}>{fmt2(v)}</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',padding:'2px 6px',background:'rgba(28,74,53,.07)',color:'#1c4a35',border:'1px solid rgba(28,74,53,.15)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{d.fase}</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.6)'}}>{fmt2(comm)}</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'#c9a96e',fontWeight:600}}>{Math.round(pct*100)}%</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'#1c4a35',fontWeight:600}}>{fmt2(ponderado)}</div>
+                        </div>
+                      )
+                    })}
+                    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr 1fr',padding:'14px 16px',gap:'8px',background:'rgba(28,74,53,.04)',borderTop:'2px solid rgba(28,74,53,.15)'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'#1c4a35',fontWeight:600,textTransform:'uppercase',letterSpacing:'.08em',gridColumn:'1/5'}}>TOTAL PIPELINE</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.4)'}}></div>
+                      <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',fontWeight:700,color:'#1c4a35'}}>{fmt2(pipelineWeighted)}</div>
                     </div>
                   </div>
                 </div>
