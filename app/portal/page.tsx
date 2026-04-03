@@ -225,16 +225,16 @@ function renderJurMarkdown(raw: string): string {
 }
 
 const PORTAL_PROPERTIES = [
-  { id:'AG-2026-010', ref:'AG-2026-010', nome:'Penthouse Príncipe Real', zona:'Lisboa', bairro:'Príncipe Real', tipo:'Apartamento', preco:2850000, area:220, quartos:3, casasBanho:3, badge:'Destaque', status:'Ativo', piscina:true, garagem:true, jardim:false, terraco:true },
-  { id:'AG-2026-011', ref:'AG-2026-011', nome:'Apartamento Chiado Premium', zona:'Lisboa', bairro:'Chiado', tipo:'Apartamento', preco:1450000, area:145, quartos:2, casasBanho:2, badge:'Novo', status:'Ativo', piscina:false, garagem:true, jardim:false, terraco:false },
-  { id:'AG-2026-012', ref:'AG-2026-012', nome:'Moradia Belém com Jardim', zona:'Lisboa', bairro:'Belém', tipo:'Moradia', preco:3200000, area:380, quartos:5, casasBanho:4, badge:'Off-Market', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true },
-  { id:'AG-2026-020', ref:'AG-2026-020', nome:'Villa Quinta da Marinha', zona:'Cascais', bairro:'Quinta da Marinha', tipo:'Moradia', preco:3800000, area:450, quartos:5, casasBanho:5, badge:'Exclusivo', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true },
-  { id:'AG-2026-021', ref:'AG-2026-021', nome:'Moradia Estoril Frente Mar', zona:'Cascais', bairro:'Estoril', tipo:'Moradia', preco:2100000, area:280, quartos:4, casasBanho:3, badge:'Destaque', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true },
-  { id:'AG-2026-030', ref:'AG-2026-030', nome:'Herdade Comporta Exclusiva', zona:'Comporta', bairro:'Comporta', tipo:'Herdade', preco:6500000, area:850, quartos:6, casasBanho:6, badge:'Off-Market', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true },
-  { id:'AG-2026-040', ref:'AG-2026-040', nome:'Apartamento Foz do Douro', zona:'Porto', bairro:'Foz do Douro', tipo:'Apartamento', preco:980000, area:180, quartos:3, casasBanho:2, badge:'Destaque', status:'Ativo', piscina:false, garagem:true, jardim:false, terraco:true },
-  { id:'AG-2026-050', ref:'AG-2026-050', nome:'Villa Vale do Lobo Golf', zona:'Algarve', bairro:'Vale do Lobo', tipo:'Moradia', preco:4200000, area:480, quartos:5, casasBanho:5, badge:'Exclusivo', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true },
-  { id:'AG-2026-060', ref:'AG-2026-060', nome:'Apartamento Funchal Prime', zona:'Madeira', bairro:'Funchal', tipo:'Apartamento', preco:980000, area:165, quartos:3, casasBanho:2, badge:'Destaque', status:'Ativo', piscina:true, garagem:true, jardim:false, terraco:true },
-  { id:'AG-2026-070', ref:'AG-2026-070', nome:'Quinta Histórica Sintra', zona:'Sintra', bairro:'Sintra Vila', tipo:'Quinta', preco:2800000, area:650, quartos:6, casasBanho:5, badge:'Off-Market', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true },
+  { id:'AG-2026-010', ref:'AG-2026-010', nome:'Penthouse Príncipe Real', zona:'Lisboa', bairro:'Príncipe Real', tipo:'Apartamento', preco:2850000, area:220, quartos:3, casasBanho:3, badge:'Destaque', status:'Ativo', piscina:true, garagem:true, jardim:false, terraco:true, listingDate:'2026-01-10' },
+  { id:'AG-2026-011', ref:'AG-2026-011', nome:'Apartamento Chiado Premium', zona:'Lisboa', bairro:'Chiado', tipo:'Apartamento', preco:1450000, area:145, quartos:2, casasBanho:2, badge:'Novo', status:'Ativo', piscina:false, garagem:true, jardim:false, terraco:false, listingDate:'2026-02-15' },
+  { id:'AG-2026-012', ref:'AG-2026-012', nome:'Moradia Belém com Jardim', zona:'Lisboa', bairro:'Belém', tipo:'Moradia', preco:3200000, area:380, quartos:5, casasBanho:4, badge:'Off-Market', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true, listingDate:'2026-01-15' },
+  { id:'AG-2026-020', ref:'AG-2026-020', nome:'Villa Quinta da Marinha', zona:'Cascais', bairro:'Quinta da Marinha', tipo:'Moradia', preco:3800000, area:450, quartos:5, casasBanho:5, badge:'Exclusivo', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true, listingDate:'2026-02-01' },
+  { id:'AG-2026-021', ref:'AG-2026-021', nome:'Moradia Estoril Frente Mar', zona:'Cascais', bairro:'Estoril', tipo:'Moradia', preco:2100000, area:280, quartos:4, casasBanho:3, badge:'Destaque', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true, listingDate:'2026-02-20' },
+  { id:'AG-2026-030', ref:'AG-2026-030', nome:'Herdade Comporta Exclusiva', zona:'Comporta', bairro:'Comporta', tipo:'Herdade', preco:6500000, area:850, quartos:6, casasBanho:6, badge:'Off-Market', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true, listingDate:'2026-01-05' },
+  { id:'AG-2026-040', ref:'AG-2026-040', nome:'Apartamento Foz do Douro', zona:'Porto', bairro:'Foz do Douro', tipo:'Apartamento', preco:980000, area:180, quartos:3, casasBanho:2, badge:'Destaque', status:'Ativo', piscina:false, garagem:true, jardim:false, terraco:true, listingDate:'2026-03-01' },
+  { id:'AG-2026-050', ref:'AG-2026-050', nome:'Villa Vale do Lobo Golf', zona:'Algarve', bairro:'Vale do Lobo', tipo:'Moradia', preco:4200000, area:480, quartos:5, casasBanho:5, badge:'Exclusivo', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true, listingDate:'2026-02-10' },
+  { id:'AG-2026-060', ref:'AG-2026-060', nome:'Apartamento Funchal Prime', zona:'Madeira', bairro:'Funchal', tipo:'Apartamento', preco:980000, area:165, quartos:3, casasBanho:2, badge:'Destaque', status:'Ativo', piscina:true, garagem:true, jardim:false, terraco:true, listingDate:'2026-03-10' },
+  { id:'AG-2026-070', ref:'AG-2026-070', nome:'Quinta Histórica Sintra', zona:'Sintra', bairro:'Sintra Vila', tipo:'Quinta', preco:2800000, area:650, quartos:6, casasBanho:5, badge:'Off-Market', status:'Ativo', piscina:true, garagem:true, jardim:true, terraco:true, listingDate:'2026-01-20' },
 ]
 
 // ─── CRM Lead Scoring (budget / completeness / source / notes) ───────────────
@@ -649,6 +649,7 @@ export default function Portal() {
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [imoveisSearch, setImoveisSearch] = useState('')
   const [imoveisZona, setImoveisZona] = useState('')
+  const [imoveisStaleOnly, setImoveisStaleOnly] = useState(false)
   const [newImovel, setNewImovel] = useState({
     nome: '', zona: 'Lisboa', bairro: '', tipo: 'Apartamento',
     preco: 0, area: 0, quartos: 0, casasBanho: 0, andar: '',
@@ -7875,27 +7876,42 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                 {imoveisTab === 'lista' && (
                   <div>
                     {/* Stats bar */}
-                    <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'16px', marginBottom:'24px' }}>
-                      {[
-                        { label:'Total Carteira', value: imoveisList.length.toString() },
-                        { label:'Valor Total', value: '€' + (imoveisList.reduce((s,p) => s+p.preco,0)/1000000).toFixed(1) + 'M' },
-                        { label:'Off-Market', value: imoveisList.filter(p => p.badge==='Off-Market').length.toString() },
-                        { label:'Exclusivos', value: imoveisList.filter(p => p.badge==='Exclusivo').length.toString() },
-                      ].map(s => (
-                        <div key={s.label} style={{ background:'rgba(201,169,110,.06)', border:'1px solid rgba(201,169,110,.12)', padding:'20px', borderTop:'2px solid #c9a96e' }}>
-                          <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', color:'rgba(244,240,230,.4)', marginBottom:'8px', textTransform:'uppercase' }}>{s.label}</div>
-                          <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.8rem', color:'#c9a96e', fontWeight:300 }}>{s.value}</div>
+                    {(() => {
+                      const today = new Date()
+                      const staleCount = imoveisList.filter(p => {
+                        const ld = (p as Record<string,unknown>).listingDate as string|undefined
+                        if (!ld) return false
+                        return Math.floor((today.getTime() - new Date(ld).getTime()) / 86400000) > 60
+                      }).length
+                      return (
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'16px', marginBottom:'24px' }}>
+                          {[
+                            { label:'Total Carteira', value: imoveisList.length.toString(), color:'#c9a96e', alert:false },
+                            { label:'Valor Total', value: '€' + (imoveisList.reduce((s,p) => s+p.preco,0)/1000000).toFixed(1) + 'M', color:'#c9a96e', alert:false },
+                            { label:'Off-Market', value: imoveisList.filter(p => p.badge==='Off-Market').length.toString(), color:'#c9a96e', alert:false },
+                            { label:'Exclusivos', value: imoveisList.filter(p => p.badge==='Exclusivo').length.toString(), color:'#c9a96e', alert:false },
+                            { label:'Stale >60d', value: staleCount.toString(), color: staleCount > 0 ? '#e05454' : '#c9a96e', alert: staleCount > 0 },
+                          ].map(s => (
+                            <div key={s.label} style={{ background: s.alert ? 'rgba(224,84,84,.06)' : 'rgba(201,169,110,.06)', border:`1px solid ${s.alert ? 'rgba(224,84,84,.2)' : 'rgba(201,169,110,.12)'}`, padding:'20px', borderTop:`2px solid ${s.color}` }}>
+                              <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', letterSpacing:'.12em', color: s.alert ? 'rgba(224,84,84,.6)' : 'rgba(244,240,230,.4)', marginBottom:'8px', textTransform:'uppercase' }}>{s.label}</div>
+                              <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.8rem', color: s.color, fontWeight:300 }}>{s.value}</div>
+                              {s.alert && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(224,84,84,.6)',marginTop:'4px'}}>Rever preço / estratégia</div>}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      )
+                    })()}
 
                     {/* Search + Filter bar */}
-                    <div style={{ display:'flex', gap:'12px', marginBottom:'24px', flexWrap:'wrap' }}>
+                    <div style={{ display:'flex', gap:'12px', marginBottom:'24px', flexWrap:'wrap', alignItems:'center' }}>
                       <input value={imoveisSearch} onChange={e => setImoveisSearch(e.target.value)} placeholder="Pesquisar imóvel..." style={{ flex:1, minWidth:'200px', background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none' }} />
                       <select value={imoveisZona} onChange={e => setImoveisZona(e.target.value)} style={{ background:'rgba(244,240,230,.05)', border:'1px solid rgba(201,169,110,.2)', color:'#f4f0e6', padding:'10px 16px', fontFamily:"'Jost',sans-serif", fontSize:'.85rem', outline:'none', cursor:'pointer' }}>
                         <option value=''>Todas as zonas</option>
                         {['Lisboa','Cascais','Comporta','Porto','Algarve','Madeira','Sintra','Ericeira'].map(z => <option key={z} value={z}>{z}</option>)}
                       </select>
+                      <button onClick={()=>setImoveisStaleOnly(s=>!s)} style={{padding:'10px 16px',background:imoveisStaleOnly?'rgba(224,84,84,.15)':'rgba(244,240,230,.05)',border:`1px solid ${imoveisStaleOnly?'rgba(224,84,84,.4)':'rgba(201,169,110,.2)'}`,color:imoveisStaleOnly?'#e05454':'rgba(244,240,230,.5)',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.08em',cursor:'pointer',whiteSpace:'nowrap' as const}}>
+                        ⚠ Stale {imoveisStaleOnly ? '✓' : ''}
+                      </button>
                     </div>
 
                     {/* Properties grid */}
@@ -7904,7 +7920,10 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                         .filter(p => {
                           const matchSearch = !imoveisSearch || p.nome.toLowerCase().includes(imoveisSearch.toLowerCase()) || p.bairro.toLowerCase().includes(imoveisSearch.toLowerCase())
                           const matchZona = !imoveisZona || p.zona === imoveisZona
-                          return matchSearch && matchZona
+                          const ld = (p as Record<string,unknown>).listingDate as string|undefined
+                          const daysListed = ld ? Math.floor((Date.now() - new Date(ld).getTime()) / 86400000) : 0
+                          const matchStale = !imoveisStaleOnly || daysListed > 60
+                          return matchSearch && matchZona && matchStale
                         })
                         .map(p => (
                           <div key={p.id} style={{ background:'rgba(244,240,230,.04)', border:'1px solid rgba(201,169,110,.12)', position:'relative', overflow:'hidden' }}>
@@ -7925,7 +7944,20 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                               </div>
                             )}
                             <div style={{ padding:'20px' }}>
-                            <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.3)', letterSpacing:'.1em', marginBottom:'6px' }}>{p.ref}</div>
+                            {(() => {
+                              const ld = (p as Record<string,unknown>).listingDate as string|undefined
+                              const daysListed = ld ? Math.floor((Date.now() - new Date(ld).getTime()) / 86400000) : null
+                              const isStale = daysListed !== null && daysListed > 60
+                              const isWarm = daysListed !== null && daysListed > 30 && !isStale
+                              return (
+                                <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'6px',flexWrap:'wrap'}}>
+                                  <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.3)', letterSpacing:'.1em' }}>{p.ref}</div>
+                                  {isStale && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.3rem',padding:'2px 7px',background:'rgba(224,84,84,.12)',color:'#e05454',border:'1px solid rgba(224,84,84,.25)',letterSpacing:'.08em'}}>⚠ {daysListed}d STALE</div>}
+                                  {isWarm && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.3rem',padding:'2px 7px',background:'rgba(249,115,22,.08)',color:'#f97316',border:'1px solid rgba(249,115,22,.2)',letterSpacing:'.08em'}}>{daysListed}d mercado</div>}
+                                  {!isStale && !isWarm && daysListed !== null && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.3rem',color:'rgba(244,240,230,.25)'}}>{daysListed}d</div>}
+                                </div>
+                              )
+                            })()}
                             <div style={{ fontFamily:"'Cormorant',serif", fontWeight:400, fontSize:'1.15rem', color:'#f4f0e6', marginBottom:'4px', paddingRight:'80px' }}>{p.nome}</div>
                             <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)', marginBottom:'16px' }}>{p.bairro} · {p.zona}</div>
                             <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.4rem', color:'#c9a96e', fontWeight:300, marginBottom:'12px' }}>€{(p.preco/1000000).toFixed(p.preco>=1000000?1:0)}{p.preco>=1000000?'M':''}</div>
