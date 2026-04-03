@@ -638,6 +638,8 @@ export default function Portal() {
   const [emailDraftPurpose, setEmailDraftPurpose] = useState('Follow-up geral')
   const [weeklyReportLoading, setWeeklyReportLoading] = useState(false)
   const [weeklyReport, setWeeklyReport] = useState<Record<string,unknown>|null>(null)
+  const [meetingPrepLoading, setMeetingPrepLoading] = useState(false)
+  const [meetingPrep, setMeetingPrep] = useState<Record<string,unknown>|null>(null)
   const [fabOpen, setFabOpen] = useState(false)
   const [cmdkOpen, setCmdkOpen] = useState(false)
   const [showNotifPanel, setShowNotifPanel] = useState(false)
@@ -7358,6 +7360,19 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                                     }}>
                                     {emailDraftLoading?'✦ A gerar...':'✉ Draft Email IA'}
                                   </button>
+                                  <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'rgba(14,14,13,.06)',color:'rgba(14,14,13,.55)',border:'1px solid rgba(14,14,13,.15)'}}
+                                    disabled={meetingPrepLoading}
+                                    onClick={async()=>{
+                                      if (meetingPrep) { setMeetingPrep(null); return }
+                                      setMeetingPrepLoading(true)
+                                      try {
+                                        const res = await fetch('/api/crm/meeting-prep',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:activeContact,properties:imoveisList,deals,agentName})})
+                                        const d = await res.json()
+                                        if (d.briefing) setMeetingPrep(d.briefing)
+                                      } catch{} finally{setMeetingPrepLoading(false)}
+                                    }}>
+                                    {meetingPrepLoading?'✦ A preparar...':meetingPrep?'× Fechar Briefing':'📋 Meeting Prep IA'}
+                                  </button>
                                   <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'rgba(224,84,84,.08)',color:'#e05454',border:'1px solid rgba(224,84,84,.2)'}}
                                     onClick={()=>{if(confirm(`Eliminar ${activeContact.name}?`)){saveCrmContacts(crmContacts.filter(c=>c.id!==activeContact.id));setActiveCrmId(null)}}}>
                                     🗑 Eliminar
@@ -7464,6 +7479,57 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                                     <button className="p-btn" style={{padding:'7px 16px',fontSize:'.42rem',background:'rgba(28,74,53,.08)',color:'#1c4a35',border:'1px solid rgba(28,74,53,.2)'}}
                                       onClick={()=>{setEmailDraft(null);setEmailDraftLoading(false)}}>
                                       ✕ Fechar
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                              {/* Meeting Prep IA Result */}
+                              {meetingPrep && (
+                                <div style={{gridColumn:'1/-1',background:'linear-gradient(135deg,#0c1f15,#1a3d2a)',padding:'18px',marginTop:'14px',border:'1px solid rgba(201,169,110,.12)'}}>
+                                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px',flexWrap:'wrap',gap:'8px'}}>
+                                    <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(201,169,110,.5)'}}>📋 Meeting Prep IA</div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(201,169,110,.7)',background:'rgba(201,169,110,.08)',padding:'2px 7px',border:'1px solid rgba(201,169,110,.15)'}}>Claude Opus</div>
+                                    </div>
+                                    <button style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,240,230,.12)',color:'rgba(244,240,230,.5)',padding:'4px 10px',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',cursor:'pointer'}} onClick={()=>setMeetingPrep(null)}>× Fechar</button>
+                                  </div>
+                                  {/* Opening line */}
+                                  <div style={{background:'rgba(201,169,110,.08)',border:'1px solid rgba(201,169,110,.15)',padding:'10px 14px',marginBottom:'12px',fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'#f4f0e6',lineHeight:1.6,fontStyle:'italic'}}>
+                                    "{String(meetingPrep.openingLine)}"
+                                  </div>
+                                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'12px'}}>
+                                    <div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(201,169,110,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'6px'}}>Key Insights</div>
+                                      {(meetingPrep.keyInsights as string[]).map((ins,i)=>(
+                                        <div key={i} style={{display:'flex',gap:'6px',marginBottom:'5px'}}>
+                                          <span style={{color:'#c9a96e',flexShrink:0}}>★</span>
+                                          <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(244,240,230,.6)',lineHeight:1.4}}>{ins}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(201,169,110,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'6px'}}>Perguntas a Fazer</div>
+                                      {(meetingPrep.questionsToAsk as string[]).map((q,i)=>(
+                                        <div key={i} style={{display:'flex',gap:'6px',marginBottom:'5px'}}>
+                                          <span style={{color:'#4a9c7a',flexShrink:0,fontWeight:700}}>?</span>
+                                          <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(244,240,230,.6)',lineHeight:1.4}}>{q}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  {meetingPrep.closingStrategy && (
+                                    <div style={{padding:'10px 12px',background:'rgba(255,255,255,.04)',border:'1px solid rgba(244,240,230,.08)',marginBottom:'10px'}}>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(244,240,230,.3)',letterSpacing:'.08em',marginBottom:'3px'}}>ESTRATÉGIA DE FECHO DA REUNIÃO</div>
+                                      <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(244,240,230,.65)',lineHeight:1.4}}>{String(meetingPrep.closingStrategy)}</div>
+                                    </div>
+                                  )}
+                                  <div style={{display:'flex',gap:'8px'}}>
+                                    <button style={{padding:'6px 14px',background:'rgba(201,169,110,.12)',border:'1px solid rgba(201,169,110,.2)',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.08em'}}
+                                      onClick={()=>{
+                                        const t = `BRIEFING: ${activeContact.name}\n\nAbertura: ${meetingPrep.openingLine}\n\nInsights:\n${(meetingPrep.keyInsights as string[]).map(i=>`• ${i}`).join('\n')}\n\nPerguntas:\n${(meetingPrep.questionsToAsk as string[]).map(q=>`• ${q}`).join('\n')}\n\nFecho: ${meetingPrep.closingStrategy}`
+                                        navigator.clipboard.writeText(t)
+                                      }}>
+                                      📋 Copiar Briefing
                                     </button>
                                   </div>
                                 </div>
