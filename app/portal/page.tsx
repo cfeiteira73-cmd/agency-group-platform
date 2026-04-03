@@ -1487,6 +1487,33 @@ ${dealsHtml}
         html.dark input::placeholder,html.dark textarea::placeholder{color:rgba(244,240,230,.3)!important}
         html.dark input:focus,html.dark select:focus,html.dark textarea:focus{border-color:#c9a96e!important;outline:none}
         html.dark .breadcrumb{color:rgba(244,240,230,.4)}
+
+        /* ── Sobrepor cores escuras inline com attribute selectors ── */
+        html.dark .portal-main [style*="color:#0e0e0d"]{color:rgba(244,240,230,.88)!important}
+        html.dark .portal-main [style*="color:#1c4a35"]{color:#6fcf97!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.7"]{color:rgba(244,240,230,.7)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.6"]{color:rgba(244,240,230,.6)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.5"]{color:rgba(244,240,230,.5)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.45"]{color:rgba(244,240,230,.45)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.4"]{color:rgba(244,240,230,.4)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.35"]{color:rgba(244,240,230,.35)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.3"]{color:rgba(244,240,230,.3)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.28"]{color:rgba(244,240,230,.28)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.25"]{color:rgba(244,240,230,.25)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.2"]{color:rgba(244,240,230,.2)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.15"]{color:rgba(244,240,230,.15)!important}
+        html.dark .portal-main [style*="color:rgba(14,14,13,.1"]{color:rgba(244,240,230,.1)!important}
+        /* Backgrounds brancas → verde escuro */
+        html.dark .portal-main [style*="background:#fff"]{background:#122a1a!important}
+        html.dark .portal-main [style*="background:white"]{background:#122a1a!important}
+        html.dark .portal-main [style*="background:rgba(14,14,13,.02)"]{background:rgba(201,169,110,.03)!important}
+        html.dark .portal-main [style*="background:rgba(14,14,13,.03)"]{background:rgba(201,169,110,.03)!important}
+        html.dark .portal-main [style*="background:rgba(14,14,13,.04)"]{background:rgba(201,169,110,.04)!important}
+        html.dark .portal-main [style*="background:rgba(28,74,53,.04)"]{background:rgba(201,169,110,.05)!important}
+        /* Borders escuras → douradas subtis */
+        html.dark .portal-main [style*="border:1px solid rgba(14,14,13"]{border-color:rgba(201,169,110,.15)!important}
+        html.dark .portal-main [style*="borderBottom:1px solid rgba(14,14,13"]{border-bottom-color:rgba(244,240,230,.08)!important}
+        html.dark .portal-main [style*="borderTop:1px solid rgba(14,14,13"]{border-top-color:rgba(244,240,230,.08)!important}
       `}</style>
 
       <div style={{display:'flex',flexDirection:'row',height:'100vh',overflow:'hidden'}} className={`portal-main${darkMode?' dark bg-gray-950 text-gray-100':''}`}>
