@@ -1618,10 +1618,24 @@ ${dealsHtml}
               <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.08em',color:darkMode?'rgba(244,240,230,.4)':'rgba(14,14,13,.35)'}}>
                 {now.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'})} · {now.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}
               </div>
+              {/* Notification Bell */}
+              {(() => {
+                const today = new Date().toISOString().split('T')[0]
+                const followUps = crmContacts.filter(c => c.nextFollowUp && c.nextFollowUp <= today)
+                const hasNew = followUps.length > 0
+                return (
+                  <button
+                    onClick={()=>{setSection('crm')}}
+                    title={`${followUps.length} follow-up${followUps.length!==1?'s':''} pendente${followUps.length!==1?'s':''}`}
+                    style={{position:'relative',background:'none',border:`1px solid ${darkMode?'rgba(244,240,230,.1)':'rgba(14,14,13,.1)'}`,borderRadius:'8px',padding:'6px 10px',cursor:'pointer',color:darkMode?'rgba(244,240,230,.6)':'rgba(14,14,13,.5)',transition:'all .2s',display:'flex',alignItems:'center'}}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="18" height="18"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    {hasNew && <span style={{position:'absolute',top:'3px',right:'3px',width:'8px',height:'8px',borderRadius:'50%',background:'#c9a96e',border:`2px solid ${darkMode?'#0c1f15':'#fff'}`}}/>}
+                  </button>
+                )
+              })()}
               <button
                 onClick={() => setDarkMode(d => !d)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${darkMode ? 'bg-gray-700 text-yellow-300' : 'bg-gray-200 text-gray-700'}`}
-                style={{padding:'5px 10px',borderRadius:'6px',border:'none',cursor:'pointer',fontSize:'.75rem',background:darkMode?'rgba(55,65,81,1)':'rgba(229,231,235,1)',color:darkMode?'#fcd34d':'#374151',transition:'all .2s',flexShrink:0}}
+                style={{padding:'6px 10px',borderRadius:'8px',border:`1px solid ${darkMode?'rgba(244,240,230,.1)':'rgba(14,14,13,.1)'}`,cursor:'pointer',fontSize:'.78rem',background:'transparent',color:darkMode?'rgba(244,240,230,.5)':'rgba(14,14,13,.4)',transition:'all .2s',flexShrink:0}}
                 title={darkMode ? 'Modo claro' : 'Modo escuro'}
               >
                 {darkMode ? '☀️' : '🌙'}
@@ -1655,21 +1669,38 @@ ${dealsHtml}
                   </div>
                 </div>
 
-                {/* Row 1: KPI Cards */}
-                <div className="kpi-grid" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'16px',marginBottom:'28px'}}>
-                  {[
-                    {label:'Pipeline Total',val:`€${(pipelineTotal/1e6).toFixed(1)}M`,sub:'Deals activos',color:'#1c4a35'},
-                    {label:'Deals Ativos',val:String(deals.length),sub:'Em progresso',color:'#c9a96e'},
-                    {label:'Comissão Prevista',val:`€${Math.round(pipelineTotal*0.05/1000)}K`,sub:'5% pipeline',color:'#1c4a35'},
-                    {label:'Mercado 2026',val:'+17,6%',sub:'INE Q3 2025',color:'#c9a96e'},
-                  ].map(k=>(
-                    <div key={k.label} className="kpi-card">
-                      <div className="kpi-val" style={{color:k.color}}>{k.val}</div>
-                      <div className="kpi-label">{k.label}</div>
-                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.3)',marginTop:'4px',letterSpacing:'.08em'}}>{k.sub}</div>
+                {/* Row 1: KPI Cards — 6 métricas */}
+                {(() => {
+                  const today = new Date().toISOString().split('T')[0]
+                  const followUpsHoje = crmContacts.filter(c=>c.nextFollowUp && c.nextFollowUp<=today).length
+                  const leadsAtivos = crmContacts.filter(c=>c.status==='lead'||c.status==='prospect').length
+                  const closedDeals = deals.filter(d=>d.fase==='Escritura Concluída')
+                  const totalComissaoRecebida = closedDeals.reduce((s,d)=>{
+                    const v = parseFloat(d.valor.replace(/[^0-9.]/g,''))||0
+                    return s + v*0.05
+                  }, 0)
+                  return (
+                    <div className="kpi-grid" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'14px',marginBottom:'28px'}}>
+                      {[
+                        {label:'Pipeline Total',val:`€${(pipelineTotal/1e6).toFixed(1)}M`,sub:'Valor total em negociação',color:'#1c4a35',icon:'📊'},
+                        {label:'Deals Ativos',val:String(deals.length),sub:'Em progresso · '+deals.filter(d=>d.fase==='CPCV Assinado').length+' CPCV assinados',color:'#c9a96e',icon:'🏠'},
+                        {label:'Comissão Prevista',val:`€${Math.round(pipelineTotal*0.05/1000)}K`,sub:'5% · AMI 22506',color:'#4a9c7a',icon:'💰'},
+                        {label:'Leads & Prospects',val:String(leadsAtivos),sub:`${crmContacts.length} contactos no CRM`,color:'#c9a96e',icon:'👥'},
+                        {label:'Follow-Up Hoje',val:String(followUpsHoje),sub:followUpsHoje>0?'⚠️ Acção necessária':'✓ Em dia',color:followUpsHoje>0?'#dc2626':'#4a9c7a',icon:'📅'},
+                        {label:'Mercado 2026',val:'+17,6%',sub:'INE Q3 2025 · Lisboa Top 5 Mundial',color:'#c9a96e',icon:'📈'},
+                      ].map(k=>(
+                        <div key={k.label} className="kpi-card" style={{display:'flex',gap:'14px',alignItems:'flex-start'}}>
+                          <div style={{fontSize:'1.3rem',lineHeight:1,flexShrink:0,marginTop:'2px'}}>{k.icon}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div className="kpi-val" style={{color:k.color,fontSize:'1.6rem'}}>{k.val}</div>
+                            <div className="kpi-label" style={{marginTop:'2px'}}>{k.label}</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.3)',marginTop:'3px',letterSpacing:'.06em',lineHeight:1.4}}>{k.sub}</div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )
+                })()}
 
                 {/* Row 2: Acções Rápidas */}
                 <div style={{marginBottom:'28px'}}>
@@ -1782,7 +1813,108 @@ ${dealsHtml}
                   })()}
                 </div>
 
-                {/* Row 4: Pipeline + Buyer Demand */}
+                {/* Row 4: Follow-up Hoje + Comissão Tracker */}
+                {(() => {
+                  const today = new Date().toISOString().split('T')[0]
+                  const urgentContacts = crmContacts.filter(c=>c.nextFollowUp && c.nextFollowUp<=today).sort((a,b)=>(a.nextFollowUp||'').localeCompare(b.nextFollowUp||''))
+                  const STATUS_CFG: Record<string,{color:string;label:string}> = {
+                    lead:{ color:'#888', label:'Lead' },
+                    prospect:{ color:'#3a7bd5', label:'Prospect' },
+                    cliente:{ color:'#4a9c7a', label:'Cliente' },
+                    vip:{ color:'#c9a96e', label:'VIP' },
+                  }
+                  return (
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'16px'}}>
+                      {/* Follow-up Hoje */}
+                      <div className="p-card" style={{border:urgentContacts.length>0?'1px solid rgba(220,38,38,.2)':'1px solid rgba(14,14,13,.08)',position:'relative',overflow:'hidden'}}>
+                        {urgentContacts.length>0&&<div style={{position:'absolute',top:0,left:0,right:0,height:'3px',background:'linear-gradient(90deg,#dc2626,#c9a96e)'}}/>}
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
+                          <div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.14em',textTransform:'uppercase',color:urgentContacts.length>0?'rgba(220,38,38,.7)':'rgba(14,14,13,.35)',marginBottom:'4px'}}>
+                              {urgentContacts.length>0?'⚠️ Acção Necessária':'✓ Follow-Up'}
+                            </div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1rem',color:'#0e0e0d'}}>
+                              Follow-up <em style={{color:urgentContacts.length>0?'#dc2626':'#1c4a35'}}>Hoje</em>
+                            </div>
+                          </div>
+                          <div style={{fontFamily:"'Cormorant',serif",fontSize:'2rem',color:urgentContacts.length>0?'#dc2626':'#4a9c7a',lineHeight:1,fontWeight:300}}>{urgentContacts.length}</div>
+                        </div>
+                        {urgentContacts.length===0 ? (
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.3)',letterSpacing:'.06em',padding:'16px 0',textAlign:'center'}}>✓ Todos os contactos em dia</div>
+                        ) : (
+                          <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                            {urgentContacts.slice(0,4).map(c=>{
+                              const cfg = STATUS_CFG[c.status]||STATUS_CFG.lead
+                              const isOverdue = c.nextFollowUp && c.nextFollowUp < today
+                              return (
+                                <div key={c.id} onClick={()=>{setSection('crm');setActiveCrmId(c.id)}} style={{display:'flex',alignItems:'center',gap:'10px',padding:'8px 10px',background:isOverdue?'rgba(220,38,38,.04)':'rgba(14,14,13,.02)',border:`1px solid ${isOverdue?'rgba(220,38,38,.15)':'rgba(14,14,13,.06)'}`,cursor:'pointer',transition:'border .2s'}}>
+                                  <div style={{width:'28px',height:'28px',borderRadius:'50%',background:cfg.color+'20',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                                    <span style={{fontFamily:"'Cormorant',serif",fontSize:'.8rem',color:cfg.color,fontWeight:600}}>{c.name.split(' ').map((n:string)=>n[0]).slice(0,2).join('')}</span>
+                                  </div>
+                                  <div style={{flex:1,minWidth:0}}>
+                                    <div style={{fontSize:'.82rem',color:'#0e0e0d',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.name}</div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.35)'}}>€{Number(c.budgetMax).toLocaleString('pt-PT')} · {c.zonas[0]}</div>
+                                  </div>
+                                  <div style={{flexShrink:0,textAlign:'right'}}>
+                                    <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',background:cfg.color+'20',color:cfg.color,padding:'1px 5px',letterSpacing:'.06em'}}>{cfg.label}</span>
+                                    {isOverdue && <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'#dc2626',marginTop:'2px'}}>ATRASADO</div>}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            {urgentContacts.length>4&&(
+                              <button onClick={()=>setSection('crm')} style={{background:'none',border:'1px dashed rgba(220,38,38,.25)',color:'#dc2626',padding:'6px',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.08em',textAlign:'center'}}>
+                                +{urgentContacts.length-4} mais → Ver CRM
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Comissão Tracker */}
+                      <div className="p-card" style={{background:'linear-gradient(135deg,rgba(28,74,53,.06) 0%,rgba(201,169,110,.04) 100%)'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>💰 Tracker de Comissões</div>
+                        <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1rem',color:'#0e0e0d',marginBottom:'16px'}}>Pipeline <em style={{color:'#1c4a35'}}>AMI 22506</em></div>
+                        <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'16px'}}>
+                          {deals.map(d=>{
+                            const val = parseFloat(d.valor.replace(/[^0-9.]/g,''))||0
+                            const comm5 = val*0.05
+                            const pct = (STAGE_PCT[d.fase]||10)/100
+                            return (
+                              <div key={d.id} style={{padding:'8px 12px',background:'rgba(255,255,255,.7)',border:'1px solid rgba(14,14,13,.06)'}}>
+                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'4px'}}>
+                                  <span style={{fontSize:'.78rem',color:'#0e0e0d',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'65%'}}>{d.imovel.split('·')[0].trim()}</span>
+                                  <div style={{textAlign:'right',flexShrink:0}}>
+                                    <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#1c4a35',fontWeight:600}}>€{Math.round(comm5/1000)}K</span>
+                                  </div>
+                                </div>
+                                <div style={{height:'3px',background:'rgba(14,14,13,.06)',borderRadius:'2px',overflow:'hidden'}}>
+                                  <div style={{height:'100%',width:`${pct*100}%`,background:`linear-gradient(90deg,#1c4a35,#c9a96e)`,borderRadius:'2px'}}/>
+                                </div>
+                                <div style={{display:'flex',justifyContent:'space-between',marginTop:'3px'}}>
+                                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.3)'}}>{d.fase}</span>
+                                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.3)'}}>{Math.round(pct*100)}%</span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div style={{borderTop:'1px solid rgba(14,14,13,.08)',paddingTop:'12px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                          <div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.35)',letterSpacing:'.08em',textTransform:'uppercase'}}>Total Previsto</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.5rem',color:'#c9a96e',lineHeight:1,fontWeight:300}}>€{Math.round(pipelineTotal*0.05/1000)}K</div>
+                          </div>
+                          <div style={{textAlign:'right'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.35)',letterSpacing:'.08em',textTransform:'uppercase'}}>5% Pipeline</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',marginTop:'2px'}}>€{(pipelineTotal/1e6).toFixed(1)}M</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Row 5: Pipeline + Buyer Demand */}
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px'}}>
                   <div className="p-card">
                     <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.1rem',color:'#0e0e0d',marginBottom:'16px'}}>Pipeline Activo</div>
