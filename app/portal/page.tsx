@@ -595,6 +595,8 @@ export default function Portal() {
   const [crmSearch, setCrmSearch] = useState('')
   const [activeCrmId, setActiveCrmId] = useState<number|null>(null)
   const [crmProfileTab, setCrmProfileTab] = useState<'overview'|'timeline'|'tasks'|'notes'|'matching'|'postclosing'>('overview')
+  const [crmBulkMode, setCrmBulkMode] = useState(false)
+  const [crmSelectedIds, setCrmSelectedIds] = useState<Set<number>>(new Set())
   const [voiceActive, setVoiceActive] = useState(false)
   const [voiceText, setVoiceText] = useState('')
   const [showNewContact, setShowNewContact] = useState(false)
@@ -6609,7 +6611,7 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                         />
                       </div>
                       {/* Status filters */}
-                      <div style={{display:'flex',gap:'4px',padding:'8px 12px',borderBottom:'1px solid rgba(14,14,13,.06)',flexWrap:'wrap'}}>
+                      <div style={{display:'flex',gap:'4px',padding:'8px 12px',borderBottom:'1px solid rgba(14,14,13,.06)',flexWrap:'wrap',alignItems:'center'}}>
                         {Object.entries(STATUS_CONFIG).map(([k,v])=>(
                           <div key={k} style={{padding:'3px 8px',background:v.bg,fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',textTransform:'uppercase',color:v.color,cursor:'pointer'}}
                             onClick={()=>setCrmSearch(k)}>
@@ -6617,7 +6619,46 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                           </div>
                         ))}
                         {crmSearch && <div style={{padding:'3px 8px',background:'rgba(14,14,13,.06)',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',cursor:'pointer'}} onClick={()=>setCrmSearch('')}>× limpar</div>}
+                        <div style={{marginLeft:'auto'}}>
+                          <button onClick={()=>{setCrmBulkMode(b=>!b);setCrmSelectedIds(new Set())}} style={{padding:'3px 8px',background:crmBulkMode?'rgba(28,74,53,.12)':'rgba(14,14,13,.04)',border:`1px solid ${crmBulkMode?'rgba(28,74,53,.3)':'rgba(14,14,13,.1)'}`,color:crmBulkMode?'#1c4a35':'rgba(14,14,13,.4)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.06em'}}>
+                            {crmBulkMode ? '✓ Bulk' : '☐ Bulk'}
+                          </button>
+                        </div>
                       </div>
+                      {/* Bulk action bar */}
+                      {crmBulkMode && crmSelectedIds.size > 0 && (
+                        <div style={{padding:'8px 12px',background:'rgba(28,74,53,.06)',borderBottom:'1px solid rgba(28,74,53,.12)',display:'flex',alignItems:'center',gap:'8px',flexWrap:'wrap'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'#1c4a35',fontWeight:700}}>{crmSelectedIds.size} selec.</div>
+                          <button style={{padding:'4px 10px',background:'#25d366',color:'#fff',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.06em'}}
+                            onClick={()=>{
+                              const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
+                              const phones = selected.map(c=>c.phone?.replace(/\D/g,'')).filter(Boolean)
+                              if (phones.length === 1) window.open(`https://wa.me/${phones[0]}`)
+                              else if (phones.length > 1) {
+                                const names = selected.map(c=>c.name).join(', ')
+                                alert(`Campanha WA para ${phones.length} contactos:\n${names}\n\nNota: O WhatsApp Web apenas suporta 1 contacto de cada vez. Abre cada contacto individualmente.`)
+                                phones.forEach((p,i) => setTimeout(() => window.open(`https://wa.me/${p}`), i * 500))
+                              }
+                            }}>
+                            💬 WA Campaign
+                          </button>
+                          <button style={{padding:'4px 10px',background:'rgba(14,14,13,.06)',color:'rgba(14,14,13,.5)',border:'1px solid rgba(14,14,13,.1)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer'}}
+                            onClick={()=>{
+                              const today = new Date(); today.setDate(today.getDate()+3)
+                              const dateStr = today.toISOString().split('T')[0]
+                              const updated = crmContacts.map(c => crmSelectedIds.has(c.id) ? {...c, nextFollowUp: dateStr} : c)
+                              saveCrmContacts(updated)
+                              setCrmSelectedIds(new Set())
+                            }}>
+                            📅 Follow-up +3d
+                          </button>
+                          <button style={{padding:'4px 10px',background:'rgba(14,14,13,.04)',color:'rgba(14,14,13,.35)',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer'}} onClick={()=>setCrmSelectedIds(new Set())}>× Limpar</button>
+                          <button style={{padding:'4px 10px',background:'rgba(14,14,13,.04)',color:'rgba(14,14,13,.35)',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',marginLeft:'auto'}}
+                            onClick={()=>setCrmSelectedIds(new Set(filtered.map(c=>c.id)))}>
+                            Todos ({filtered.length})
+                          </button>
+                        </div>
+                      )}
                       {/* List */}
                       <div style={{flex:1,overflowY:'auto'}}>
                         {filtered.map(c=>{
@@ -6628,8 +6669,20 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                             <div
                               key={c.id}
                               className={`crm-contact-row${activeCrmId===c.id?' active':''}`}
-                              onClick={()=>{setActiveCrmId(c.id);setCrmProfileTab('overview')}}
+                              style={{background: crmBulkMode && crmSelectedIds.has(c.id) ? 'rgba(28,74,53,.08)' : undefined}}
+                              onClick={()=>{
+                                if (crmBulkMode) {
+                                  setCrmSelectedIds(prev => { const next = new Set(prev); next.has(c.id) ? next.delete(c.id) : next.add(c.id); return next })
+                                } else {
+                                  setActiveCrmId(c.id); setCrmProfileTab('overview')
+                                }
+                              }}
                             >
+                              {crmBulkMode && (
+                                <div style={{flexShrink:0,width:'18px',height:'18px',border:`2px solid ${crmSelectedIds.has(c.id)?'#1c4a35':'rgba(14,14,13,.2)'}`,background:crmSelectedIds.has(c.id)?'#1c4a35':'transparent',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'3px',transition:'all .15s'}}>
+                                  {crmSelectedIds.has(c.id) && <svg width="10" height="10" fill="none" stroke="#fff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7"/></svg>}
+                                </div>
+                              )}
                               <div className="crm-avatar" style={{background:sc.avatar,color:sc.color}}>{initials2}</div>
                               <div style={{flex:1,minWidth:0}}>
                                 {/* Lead Score Bar */}
