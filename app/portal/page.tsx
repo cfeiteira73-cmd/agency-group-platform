@@ -425,7 +425,7 @@ function PriceHistoryWidget({ url }: { url: string }) {
 
 export default function Portal() {
   const [ready, setReady] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(true)
   const [agentEmail, setAgentEmail] = useState('')
   const [agentName, setAgentName] = useState('Agente')
   const [section, setSection] = useState('dashboard')
@@ -1440,6 +1440,53 @@ ${dealsHtml}
         .comparison-table th{padding:8px 12px;text-align:left;border-bottom:1px solid rgba(244,240,230,.1);color:rgba(244,240,230,.4);letter-spacing:.1em;text-transform:uppercase}
         .comparison-table td{padding:8px 12px;border-bottom:1px solid rgba(244,240,230,.06);color:rgba(244,240,230,.7)}
         .comparison-table tr.highlight td{color:#c9a96e}
+
+        /* ═══ DARK MODE — Verde Agency Group ═══ */
+        html.dark .kpi-card{background:#122a1a;border-color:rgba(201,169,110,.12)}
+        html.dark .kpi-val{color:#c9a96e!important}
+        html.dark .kpi-label{color:rgba(244,240,230,.35)}
+        html.dark .action-card{background:#122a1a;border-color:rgba(201,169,110,.12);color:rgba(244,240,230,.8)}
+        html.dark .action-card:hover{border-color:#c9a96e;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+        html.dark .deal-card{background:#122a1a;border-color:rgba(201,169,110,.12)}
+        html.dark .deal-card:hover{border-color:#c9a96e}
+        html.dark .deal-card.active{border-color:#c9a96e}
+        html.dark .mkt-result{background:#0e2416;border-color:rgba(201,169,110,.12);color:rgba(244,240,230,.85)}
+        html.dark .mkt-tab{border-color:rgba(244,240,230,.1);color:rgba(244,240,230,.45)}
+        html.dark .mkt-tab.active{background:#1c4a35;color:#f4f0e6;border-color:#1c4a35}
+        html.dark .mkt-input-tab{color:rgba(244,240,230,.35)}
+        html.dark .mkt-input-tab.active{color:#c9a96e;border-bottom-color:#c9a96e}
+        html.dark .check-item{color:rgba(244,240,230,.65);border-bottom-color:rgba(244,240,230,.06)}
+        html.dark .check-item:hover{color:#f4f0e6}
+        html.dark .check-item.done{color:rgba(244,240,230,.25)}
+        html.dark .doc-item{border-bottom-color:rgba(244,240,230,.06)}
+        html.dark .port-card{background:#122a1a;border-color:rgba(201,169,110,.12)}
+        html.dark .port-card.top{border-color:#c9a96e}
+        html.dark .crm-contact-row{border-bottom-color:rgba(244,240,230,.06)}
+        html.dark .crm-contact-row:hover{background:rgba(201,169,110,.06)}
+        html.dark .crm-contact-row.active{background:rgba(201,169,110,.1);border-left-color:#c9a96e}
+        html.dark .crm-stat-card{background:#122a1a;border-color:rgba(201,169,110,.12)}
+        html.dark .crm-profile-tab{color:rgba(244,240,230,.35)}
+        html.dark .crm-profile-tab.active{color:#c9a96e;border-bottom-color:#c9a96e}
+        html.dark .deal-tab{color:rgba(244,240,230,.35)}
+        html.dark .deal-tab.active{color:#c9a96e;border-bottom-color:#c9a96e}
+        html.dark .inv-metric{background:#122a1a;border-color:rgba(201,169,110,.12)}
+        html.dark .inv-metric .val{color:#c9a96e}
+        html.dark .inv-metric .lbl{color:rgba(244,240,230,.35)}
+        html.dark .inv-scenario{border-color:rgba(244,240,230,.1)}
+        html.dark .inv-scenario.best{border-color:#c9a96e;background:rgba(201,169,110,.06)}
+        html.dark .market-pulse-item{border-bottom-color:rgba(244,240,230,.06)}
+        html.dark .photo-drop{border-color:rgba(244,240,230,.15);background:rgba(244,240,230,.02)}
+        html.dark .photo-drop:hover{border-color:#c9a96e}
+        html.dark .photo-thumb{background:#122a1a}
+        html.dark .tour-platform-btn{border-color:rgba(244,240,230,.12);color:rgba(244,240,230,.45)}
+        html.dark .tour-platform-btn.active{background:#1c4a35;color:#f4f0e6;border-color:#1c4a35}
+        html.dark .tour-timer{border-color:rgba(201,169,110,.25);color:#c9a96e}
+        html.dark .timeline-dot{border-color:rgba(244,240,230,.2)}
+        html.dark .hamburger span{background:#f4f0e6}
+        html.dark input,html.dark select,html.dark textarea{background:#0e2416!important;border-color:rgba(201,169,110,.2)!important;color:#f4f0e6!important}
+        html.dark input::placeholder,html.dark textarea::placeholder{color:rgba(244,240,230,.3)!important}
+        html.dark input:focus,html.dark select:focus,html.dark textarea:focus{border-color:#c9a96e!important;outline:none}
+        html.dark .breadcrumb{color:rgba(244,240,230,.4)}
       `}</style>
 
       <div style={{display:'flex',flexDirection:'row',height:'100vh',overflow:'hidden'}} className={`portal-main${darkMode?' dark bg-gray-950 text-gray-100':''}`}>
@@ -1514,10 +1561,10 @@ ${dealsHtml}
         </aside>
 
         {/* ═══════════ MAIN ═══════════ */}
-        <div style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',overflow:'hidden',background:darkMode?'#111827':'#f4f0e6'}}>
+        <div style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',overflow:'hidden',background:darkMode?'#0f2518':'#f4f0e6'}}>
 
           {/* HEADER — só título + stats */}
-          <header style={{height:'56px',background:darkMode?'#1f2937':'#f4f0e6',borderBottom:`1px solid ${darkMode?'rgba(255,255,255,.08)':'rgba(14,14,13,.08)'}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 16px 0 20px',flexShrink:0}}>
+          <header style={{height:'56px',background:darkMode?'#0c1f15':'#f4f0e6',borderBottom:`1px solid ${darkMode?'rgba(201,169,110,.12)':'rgba(14,14,13,.08)'}`,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 16px 0 20px',flexShrink:0}}>
             <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
               <button className="hamburger" onClick={()=>setSidebarOpen(!sidebarOpen)}>
                 <span/><span/><span/>
@@ -1530,18 +1577,18 @@ ${dealsHtml}
                   ← voltar
                 </button>
               )}
-              <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.05rem',color:'#0e0e0d',letterSpacing:'.01em'}}>{SECTION_NAMES[section]}</div>
+              <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.05rem',color:darkMode?'#f4f0e6':'#0e0e0d',letterSpacing:'.01em'}}>{SECTION_NAMES[section]}</div>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:'20px'}}>
               <div style={{display:'flex',gap:'18px'}}>
                 {[['Pipeline',`€${(pipelineTotal/1e6).toFixed(1)}M`],['Deals',String(deals.length)],['Mercado','+17,6%']].map(([l,v])=>(
                   <div key={l} style={{textAlign:'center'}}>
-                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.53rem',color:'#1c4a35',fontWeight:500}}>{v}</div>
-                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',color:'rgba(14,14,13,.32)',textTransform:'uppercase'}}>{l}</div>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.53rem',color:darkMode?'#c9a96e':'#1c4a35',fontWeight:500}}>{v}</div>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',color:darkMode?'rgba(244,240,230,.35)':'rgba(14,14,13,.32)',textTransform:'uppercase'}}>{l}</div>
                   </div>
                 ))}
               </div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.08em',color:'rgba(14,14,13,.35)'}}>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.08em',color:darkMode?'rgba(244,240,230,.4)':'rgba(14,14,13,.35)'}}>
                 {now.toLocaleDateString('pt-PT',{weekday:'short',day:'numeric',month:'short'})} · {now.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}
               </div>
               <button
@@ -1563,11 +1610,11 @@ ${dealsHtml}
               <div>
                 <div style={{marginBottom:'32px',display:'flex',alignItems:'flex-end',justifyContent:'space-between',flexWrap:'wrap',gap:'12px'}}>
                   <div>
-                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',marginBottom:'8px'}}>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.2em',textTransform:'uppercase',color:darkMode?'rgba(244,240,230,.3)':'rgba(14,14,13,.3)',marginBottom:'8px'}}>
                       {now.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
                     </div>
-                    <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2.2rem',color:'#0e0e0d',lineHeight:1.05}}>
-                      {now.getHours()<12?'Bom dia':now.getHours()<19?'Boa tarde':'Boa noite'}, <em style={{fontStyle:'italic',color:'#1c4a35'}}>{agentName}</em>.
+                    <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2.2rem',color:darkMode?'#f4f0e6':'#0e0e0d',lineHeight:1.05}}>
+                      {now.getHours()<12?'Bom dia':now.getHours()<19?'Boa tarde':'Boa noite'}, <em style={{fontStyle:'italic',color:'#c9a96e'}}>{agentName}</em>.
                     </div>
                   </div>
                   <div style={{display:'flex',gap:'8px'}}>
