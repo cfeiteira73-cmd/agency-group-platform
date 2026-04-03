@@ -10,6 +10,7 @@ const NAV = [
   { id:'avm', label:'Avaliação AVM', icon:'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z', group:'DEALS' },
   { id:'marketing', label:'Marketing AI', icon:'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z', group:'FERRAMENTAS IA' },
   { id:'homestaging', label:'Home Staging IA', icon:'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', group:'FERRAMENTAS IA' },
+  { id:'investorpitch', label:'Investor Pitch IA', icon:'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z', group:'FERRAMENTAS IA' },
   { id:'juridico', label:'Consultor Jurídico IA', icon:'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', group:'FERRAMENTAS IA' },
   { id:'credito', label:'Simulador Crédito', icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', group:'ANÁLISE' },
   { id:'nhr', label:'NHR / IFICI', icon:'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064', group:'ANÁLISE' },
@@ -92,7 +93,7 @@ const PERSONAS = [
 ]
 
 const SECTION_NAMES: Record<string,string> = {
-  dashboard:'Dashboard', crm:'CRM Clientes', avm:'Avalia\u00e7\u00e3o AVM', radar:'Deal Radar 16D',
+  dashboard:'Dashboard', crm:'CRM Clientes', avm:'Avalia\u00e7\u00e3o AVM', radar:'Deal Radar 16D', investorpitch:'Investor Pitch IA',
   credito:'Simulador de Cr\u00e9dito', nhr:'NHR / IFICI Calculator', maisvalias:'Mais-Valias PT 2026', financiamento:'Cr\u00e9dito para Estrangeiros',
   portfolio:'Portfolio An\u00e1lise', pipeline:'Pipeline CPCV',
   marketing:'Marketing AI Suite', homestaging:'Home Staging IA', documentos:'Documenta\u00e7\u00e3o Legal',
@@ -550,6 +551,20 @@ export default function Portal() {
   const [hsDragOver, setHsDragOver] = useState(false)
   const hsFileRef = useRef<HTMLInputElement>(null)
   const hsSliderRef = useRef<HTMLDivElement>(null)
+
+  // Investor Pitch IA
+  const [ipProperty, setIpProperty] = useState<string>('')
+  const [ipInvestorType, setIpInvestorType] = useState<'private'|'family_office'|'institutional'|'hnwi'>('private')
+  const [ipHorizon, setIpHorizon] = useState<3|5|10>(5)
+  const [ipIrr, setIpIrr] = useState<8|12|15|20>(12)
+  const [ipLang, setIpLang] = useState<'PT'|'EN'|'FR'|'AR'>('EN')
+  const [ipLoading, setIpLoading] = useState(false)
+  const [ipResult, setIpResult] = useState<Record<string,unknown>|null>(null)
+  const [ipError, setIpError] = useState<string|null>(null)
+
+  // CRM Next Step IA
+  const [crmNextStep, setCrmNextStep] = useState<Record<string,unknown>|null>(null)
+  const [crmNextStepLoading, setCrmNextStepLoading] = useState(false)
 
   // CRM
   interface Activity {
@@ -6485,6 +6500,22 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                                   {activeContact.email && <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem'}} onClick={()=>window.open(`mailto:${activeContact.email}`)}>✉ Email</button>}
                                   <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'rgba(28,74,53,.08)',color:'#1c4a35'}} onClick={()=>{setSection('avm')}}>📊 AVM</button>
                                   <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'rgba(28,74,53,.08)',color:'#1c4a35'}} onClick={()=>setSection('nhr')}>🌍 NHR</button>
+                                  <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'linear-gradient(135deg,#0c1f15,#1c4a35)',color:'#c9a96e',border:'1px solid rgba(201,169,110,.3)'}}
+                                    disabled={crmNextStepLoading}
+                                    onClick={async()=>{
+                                      setCrmNextStepLoading(true); setCrmNextStep(null)
+                                      try {
+                                        const res = await fetch('/api/crm/next-step',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contact:activeContact,deals,recentActivity:activeContact.notes})})
+                                        const d = await res.json()
+                                        setCrmNextStep(d)
+                                      } catch{} finally{setCrmNextStepLoading(false)}
+                                    }}>
+                                    {crmNextStepLoading?'✦ A analisar...':'✦ IA Próxima Acção'}
+                                  </button>
+                                  <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'rgba(201,169,110,.1)',color:'#c9a96e',border:'1px solid rgba(201,169,110,.25)'}}
+                                    onClick={()=>{setIpProperty(activeContact.id?String(activeContact.id):'');setSection('investorpitch')}}>
+                                    📑 Investor Pitch
+                                  </button>
                                   <button className="p-btn" style={{padding:'8px 16px',fontSize:'.46rem',background:'rgba(224,84,84,.08)',color:'#e05454',border:'1px solid rgba(224,84,84,.2)'}}
                                     onClick={()=>{if(confirm(`Eliminar ${activeContact.name}?`)){saveCrmContacts(crmContacts.filter(c=>c.id!==activeContact.id));setActiveCrmId(null)}}}>
                                     🗑 Eliminar
@@ -6522,6 +6553,37 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                                   </div>
                                 )
                               })()}
+                              {/* IA Próxima Acção Result */}
+                              {crmNextStep && (
+                                <div style={{gridColumn:'1/-1',background:'linear-gradient(135deg,#0c1f15,#1c4a35)',border:'1px solid rgba(201,169,110,.2)',padding:'16px',marginTop:'12px',animation:'fadeIn .3s ease'}}>
+                                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'12px'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(201,169,110,.6)'}}>✦ IA Próxima Acção — Claude Analysis</div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',fontWeight:700,color:'#c9a96e',background:'rgba(201,169,110,.12)',padding:'2px 8px'}}>Score: {String(crmNextStep.leadScore||'—')}/100</div>
+                                  </div>
+                                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px',marginBottom:'12px'}}>
+                                    <div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(244,240,230,.35)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'4px'}}>Acção Recomendada</div>
+                                      <div style={{fontFamily:"'Cormorant',serif",fontSize:'.95rem',color:'#f4f0e6',lineHeight:1.4}}>{String(crmNextStep.nextAction||'—')}</div>
+                                    </div>
+                                    <div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(244,240,230,.35)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'4px'}}>Canal · Timing</div>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',color:'#c9a96e'}}>{String(crmNextStep.channel||'—').toUpperCase()} · {String(crmNextStep.timing||'—')}</div>
+                                    </div>
+                                  </div>
+                                  {crmNextStep.nextActionDetail && <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(244,240,230,.6)',lineHeight:1.6,marginBottom:'12px'}}>{String(crmNextStep.nextActionDetail)}</div>}
+                                  {crmNextStep.messageTemplate && (
+                                    <div style={{background:'rgba(255,255,255,.04)',border:'1px solid rgba(244,240,230,.08)',padding:'10px 12px',marginBottom:'10px'}}>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(244,240,230,.3)',marginBottom:'4px',letterSpacing:'.08em',textTransform:'uppercase'}}>Template Pronto a Enviar</div>
+                                      <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(244,240,230,.75)',lineHeight:1.6}}>{String(crmNextStep.messageTemplate)}</div>
+                                    </div>
+                                  )}
+                                  <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                                    {crmNextStep.messageTemplate&&<button className="p-btn p-btn-gold" style={{padding:'6px 14px',fontSize:'.42rem'}} onClick={()=>window.open(`https://wa.me/${activeContact.phone?.replace(/\D/g,'')}?text=${encodeURIComponent(String(crmNextStep.messageTemplate||''))}`)}>💬 Enviar WA</button>}
+                                    <button style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(244,240,230,.12)',color:'rgba(244,240,230,.6)',padding:'6px 14px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.08em',cursor:'pointer'}} onClick={()=>setCrmNextStep(null)}>✕ Fechar</button>
+                                    {crmNextStep.riskFlag&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#e05454',background:'rgba(224,84,84,.08)',border:'1px solid rgba(224,84,84,.2)',padding:'4px 8px',display:'flex',alignItems:'center'}}>⚠ {String(crmNextStep.riskFlag)}</div>}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                           {crmProfileTab === 'timeline' && (
@@ -6854,6 +6916,241 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                       </div>
                     )}
                   </div>}
+                </div>
+              )
+            })()}
+
+            {/* ── INVESTOR PITCH IA ── */}
+            {section==='investorpitch' && (() => {
+              const INVESTOR_TYPES = [
+                { id:'private', label:'Privado / HNW', desc:'Compra directa · Capital próprio' },
+                { id:'family_office', label:'Family Office', desc:'Portfolio · Longo prazo' },
+                { id:'institutional', label:'Institucional', desc:'REIT · Fund · Asset manager' },
+                { id:'hnwi', label:'HNWI Internacional', desc:'NHR · Golden Visa · Offshore' },
+              ]
+              const pitchProperty = imoveisList.find(p=>String(p.id)===ipProperty) || imoveisList[0]
+              const r = ipResult as Record<string,unknown>|null
+              const fm = r?.financialModel as Record<string,unknown>|undefined
+
+              const runPitch = async () => {
+                if (!pitchProperty) return
+                setIpLoading(true); setIpResult(null); setIpError(null)
+                try {
+                  const res = await fetch('/api/investor-pitch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({property:pitchProperty,investorType:ipInvestorType,horizon:ipHorizon,irrTarget:ipIrr,language:ipLang,budget:pitchProperty.preco})})
+                  const d = await res.json()
+                  if(d.success) setIpResult(d.pitch)
+                  else setIpError(d.error||'Erro a gerar pitch')
+                } catch(e){ setIpError(e instanceof Error?e.message:'Erro de rede') }
+                finally { setIpLoading(false) }
+              }
+
+              return (
+                <div style={{maxWidth:'1100px'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'8px'}}>Claude Opus · Goldman Sachs Style · PT/EN/FR/AR</div>
+                  <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.8rem',color:'#0e0e0d',marginBottom:'4px'}}>Investor Pitch <em style={{color:'#1c4a35'}}>IA</em></div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.35)',marginBottom:'28px'}}>Investment Memorandum completo · IRR · Yield · Risk Matrix · Comparables · Executive Summary</div>
+
+                  <div style={{display:'grid',gridTemplateColumns:'340px 1fr',gap:'24px',alignItems:'start'}}>
+                    {/* LEFT: Config */}
+                    <div>
+                      {/* Property selector */}
+                      <div className="p-card" style={{marginBottom:'14px'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'10px'}}>✦ Imóvel</div>
+                        <select className="p-sel" value={ipProperty} onChange={e=>setIpProperty(e.target.value)}>
+                          {imoveisList.map(p=><option key={p.id} value={String(p.id)}>{p.nome} — €{(p.preco/1e6).toFixed(2)}M</option>)}
+                        </select>
+                        {pitchProperty && (
+                          <div style={{marginTop:'10px',padding:'10px',background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.1)'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.5)',lineHeight:1.7}}>
+                              📍 {pitchProperty.zona} · {pitchProperty.bairro}<br/>
+                              🏠 {pitchProperty.tipo} · {pitchProperty.area}m² · T{pitchProperty.quartos}<br/>
+                              💰 €{pitchProperty.preco.toLocaleString('pt-PT')} · €{Math.round(pitchProperty.preco/pitchProperty.area).toLocaleString('pt-PT')}/m²<br/>
+                              {pitchProperty.badge && <span style={{background:'#c9a96e',color:'#0c1f15',padding:'0 4px',fontSize:'.32rem',fontWeight:700}}>{pitchProperty.badge}</span>}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Investor type */}
+                      <div className="p-card" style={{marginBottom:'14px'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'10px'}}>✦ Perfil do Investidor</div>
+                        {INVESTOR_TYPES.map(t=>(
+                          <button key={t.id} onClick={()=>setIpInvestorType(t.id as typeof ipInvestorType)}
+                            style={{width:'100%',textAlign:'left',padding:'8px 10px',marginBottom:'5px',cursor:'pointer',border:`1px solid ${ipInvestorType===t.id?'#1c4a35':'rgba(14,14,13,.1)'}`,background:ipInvestorType===t.id?'rgba(28,74,53,.08)':'transparent',transition:'all .15s'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:ipInvestorType===t.id?'#1c4a35':'rgba(14,14,13,.6)',fontWeight:ipInvestorType===t.id?600:400}}>{t.label}</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',marginTop:'2px'}}>{t.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Horizon + IRR */}
+                      <div className="p-card" style={{marginBottom:'14px'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'10px'}}>✦ Horizonte & IRR Target</div>
+                        <div style={{marginBottom:'12px'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.5)',marginBottom:'5px'}}>Horizonte de Investimento</div>
+                          <div style={{display:'flex',gap:'5px'}}>
+                            {([3,5,10] as const).map(h=>(
+                              <button key={h} onClick={()=>setIpHorizon(h)} style={{flex:1,padding:'7px',fontFamily:"'DM Mono',monospace",fontSize:'.42rem',cursor:'pointer',border:'1px solid',background:ipHorizon===h?'#1c4a35':'transparent',color:ipHorizon===h?'#fff':'rgba(14,14,13,.5)',borderColor:ipHorizon===h?'#1c4a35':'rgba(14,14,13,.15)'}}>{h}A</button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.5)',marginBottom:'5px'}}>IRR Target mínimo</div>
+                          <div style={{display:'flex',gap:'5px'}}>
+                            {([8,12,15,20] as const).map(irr=>(
+                              <button key={irr} onClick={()=>setIpIrr(irr)} style={{flex:1,padding:'6px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer',border:'1px solid',background:ipIrr===irr?'#c9a96e':'transparent',color:ipIrr===irr?'#0c1f15':'rgba(14,14,13,.5)',borderColor:ipIrr===irr?'#c9a96e':'rgba(14,14,13,.15)'}}>{irr}%+</button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Language */}
+                      <div className="p-card" style={{marginBottom:'14px'}}>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'8px'}}>✦ Língua do Pitch</div>
+                        <div style={{display:'flex',gap:'5px'}}>
+                          {(['PT','EN','FR','AR'] as const).map(l=>(
+                            <button key={l} onClick={()=>setIpLang(l)} style={{flex:1,padding:'7px',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',fontWeight:600,cursor:'pointer',border:'1px solid',background:ipLang===l?'#1c4a35':'transparent',color:ipLang===l?'#fff':'rgba(14,14,13,.5)',borderColor:ipLang===l?'#1c4a35':'rgba(14,14,13,.15)'}}>{l}</button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button onClick={runPitch} disabled={ipLoading||!pitchProperty}
+                        style={{width:'100%',padding:'14px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.15em',textTransform:'uppercase',cursor:ipLoading?'not-allowed':'pointer',background:ipLoading?'rgba(14,14,13,.06)':'linear-gradient(135deg,#0c1f15,#1c4a35)',color:ipLoading?'rgba(14,14,13,.3)':'#c9a96e',border:'none',transition:'all .3s'}}>
+                        {ipLoading?'✦ A gerar memorandum...':'✦ Gerar Investment Memorandum'}
+                      </button>
+                      {ipError&&<div style={{marginTop:'8px',padding:'8px',background:'rgba(220,38,38,.05)',border:'1px solid rgba(220,38,38,.2)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#dc2626'}}>{ipError}</div>}
+                    </div>
+
+                    {/* RIGHT: Pitch Output */}
+                    <div>
+                      {ipResult ? (
+                        <div style={{animation:'fadeIn .4s ease'}}>
+                          {/* Header */}
+                          <div style={{background:'linear-gradient(135deg,#0c1f15,#1a3d28)',padding:'28px',marginBottom:'16px',border:'1px solid rgba(201,169,110,.2)'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.15em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'8px'}}>INVESTMENT MEMORANDUM · CONFIDENCIAL · AGENCY GROUP AMI 22506</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.8rem',color:'#f4f0e6',lineHeight:1.1,marginBottom:'6px'}}>{String(r?.title||'')}</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontStyle:'italic',fontSize:'1rem',color:'#c9a96e',marginBottom:'16px'}}>{String(r?.tagline||'')}</div>
+                            <div style={{display:'flex',gap:'12px',flexWrap:'wrap'}}>
+                              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(244,240,230,.5)',background:'rgba(255,255,255,.05)',padding:'4px 10px'}}>{String(r?.recommendation||'')}</span>
+                              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'#c9a96e',background:'rgba(201,169,110,.1)',padding:'4px 10px'}}>Confiança: {String(r?.confidenceScore||'—')}/100</span>
+                              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(244,240,230,.4)',padding:'4px 10px'}}>IRR Target: {ipIrr}%+ · {ipHorizon}A</span>
+                            </div>
+                          </div>
+
+                          {/* Financial Model */}
+                          {fm && (
+                            <div className="p-card" style={{marginBottom:'14px',borderTop:'3px solid #c9a96e'}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'14px'}}>Modelo Financeiro</div>
+                              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'10px',marginBottom:'12px'}}>
+                                {[
+                                  ['Renda Mensal',`€${Number(fm.estimatedRent||0).toLocaleString('pt-PT')}`,'#4a9c7a'],
+                                  ['Yield Bruto',`${Number(fm.yieldBruto||0).toFixed(2)}%`,'#22c55e'],
+                                  ['Yield Líquido',`${Number(fm.yieldLiquido||0).toFixed(2)}%`,'#86efac'],
+                                  ['IRR Estimado',`${Number(fm.irr||0).toFixed(1)}%`,'#c9a96e'],
+                                  ['Cash-on-Cash',`${Number(fm.cashOnCash||0).toFixed(2)}%`,'#60a5fa'],
+                                  [`Valor ${ipHorizon}A`,`€${Number(fm[`projectedValue${ipHorizon}Y`]||0).toLocaleString('pt-PT')}`,'#c9a96e'],
+                                  ['Return Total',`+${Number(fm.totalReturn||0).toFixed(0)}%`,'#22c55e'],
+                                  ['Saída',String(fm.exitStrategy||'—'),'rgba(14,14,13,.5)'],
+                                ].map(([l,v,c])=>(
+                                  <div key={String(l)} style={{background:'rgba(14,14,13,.03)',border:'1px solid rgba(14,14,13,.06)',padding:'10px',textAlign:'center'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:'4px'}}>{l}</div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.58rem',fontWeight:700,color:String(c),lineHeight:1}}>{v}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Executive Summary */}
+                          <div className="p-card" style={{marginBottom:'14px'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'12px'}}>Executive Summary</div>
+                            <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.84rem',lineHeight:1.8,color:'rgba(14,14,13,.7)',whiteSpace:'pre-wrap'}}>{String(r?.executiveSummary||'')}</div>
+                          </div>
+
+                          {/* Investment Thesis */}
+                          <div className="p-card" style={{marginBottom:'14px',background:'rgba(12,31,21,.03)',borderLeft:'3px solid #1c4a35'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'12px'}}>Investment Thesis</div>
+                            <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.84rem',lineHeight:1.8,color:'rgba(14,14,13,.7)',whiteSpace:'pre-wrap'}}>{String(r?.investmentThesis||'')}</div>
+                          </div>
+
+                          {/* Risk Matrix */}
+                          {Array.isArray(r?.riskMatrix) && (
+                            <div className="p-card" style={{marginBottom:'14px'}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'12px'}}>Risk Matrix</div>
+                              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 2fr',gap:'0'}}>
+                                {['Risco','Probabilidade','Impacto','Mitigação'].map(h=>(
+                                  <div key={h} style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',padding:'6px 10px',borderBottom:'2px solid rgba(14,14,13,.08)',background:'rgba(14,14,13,.02)'}}>{h}</div>
+                                ))}
+                                {(r?.riskMatrix as {risk:string;probability:string;impact:string;mitigation:string}[]).map((risk,i)=>(
+                                  <>
+                                    <div key={`r${i}`} style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(14,14,13,.7)',padding:'8px 10px',borderBottom:'1px solid rgba(14,14,13,.04)'}}>{risk.risk}</div>
+                                    <div key={`p${i}`} style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',fontWeight:600,padding:'8px 10px',borderBottom:'1px solid rgba(14,14,13,.04)',color:risk.probability==='Alta'?'#dc2626':risk.probability==='Média'?'#c9a96e':'#4a9c7a'}}>{risk.probability}</div>
+                                    <div key={`im${i}`} style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',fontWeight:600,padding:'8px 10px',borderBottom:'1px solid rgba(14,14,13,.04)',color:risk.impact==='Alto'?'#dc2626':risk.impact==='Médio'?'#c9a96e':'#4a9c7a'}}>{risk.impact}</div>
+                                    <div key={`m${i}`} style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(14,14,13,.6)',padding:'8px 10px',borderBottom:'1px solid rgba(14,14,13,.04)'}}>{risk.mitigation}</div>
+                                  </>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* USPs + Tax Advantages + Action Plan */}
+                          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',marginBottom:'14px'}}>
+                            <div className="p-card">
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'10px'}}>Unique Selling Points</div>
+                              {Array.isArray(r?.uniqueSellingPoints)&&(r?.uniqueSellingPoints as string[]).map((u,i)=>(
+                                <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',fontSize:'.82rem',color:'rgba(14,14,13,.7)'}}>
+                                  <span style={{color:'#1c4a35',fontWeight:700,flexShrink:0}}>✓</span>{u}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="p-card">
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'10px'}}>Vantagens Fiscais</div>
+                              {Array.isArray(r?.taxAdvantages)&&(r?.taxAdvantages as string[]).map((t,i)=>(
+                                <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',fontSize:'.82rem',color:'rgba(14,14,13,.7)'}}>
+                                  <span style={{color:'#c9a96e',fontWeight:700,flexShrink:0}}>€</span>{t}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Action Plan */}
+                          {Array.isArray(r?.actionPlan)&&(
+                            <div className="p-card" style={{marginBottom:'14px',background:'#0c1f15',border:'1px solid rgba(201,169,110,.15)'}}>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'10px'}}>Plano de Acção</div>
+                              {(r?.actionPlan as string[]).map((step,i)=>(
+                                <div key={i} style={{display:'flex',gap:'12px',alignItems:'flex-start',marginBottom:'8px'}}>
+                                  <span style={{fontFamily:"'Cormorant',serif",fontSize:'1.1rem',color:'#c9a96e',lineHeight:1,flexShrink:0,minWidth:'20px'}}>{i+1}.</span>
+                                  <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(244,240,230,.7)',lineHeight:1.5}}>{step}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Share buttons */}
+                          <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
+                            <button className="p-btn p-btn-gold" onClick={()=>{
+                              const text = `INVESTMENT MEMORANDUM — Agency Group\n${String(r?.title||'')}\n\n${String(r?.tagline||'')}\n\nRecomendação: ${String(r?.recommendation||'')}\nIRR: ${Number(fm?.irr||0).toFixed(1)}% · Yield: ${Number(fm?.yieldBruto||0).toFixed(2)}%\n\n${String(r?.executiveSummary||'').substring(0,400)}...\n\nAgency Group · AMI 22506 · +351919948986`
+                              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank')
+                            }}>💬 Enviar por WhatsApp</button>
+                            <button className="p-btn" style={{background:'transparent',color:'#1c4a35',border:'1px solid #1c4a35'}} onClick={()=>{
+                              const text = JSON.stringify(r,null,2)
+                              navigator.clipboard.writeText(text)
+                            }}>📋 Copiar JSON</button>
+                            <button className="p-btn" style={{background:'transparent',color:'rgba(14,14,13,.5)',border:'1px solid rgba(14,14,13,.15)'}} onClick={()=>setIpResult(null)}>Novo Pitch</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'400px',border:'1px dashed rgba(14,14,13,.1)',background:'rgba(14,14,13,.01)'}}>
+                          <div style={{fontFamily:"'Cormorant',serif",fontSize:'2.5rem',color:'rgba(14,14,13,.1)',marginBottom:'12px'}}>Goldman</div>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',color:'rgba(14,14,13,.25)',textTransform:'uppercase',textAlign:'center',lineHeight:2}}>
+                            Selecciona o imóvel<br/>
+                            Configura o perfil do investidor<br/>
+                            Claude gera o memorandum completo
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )
             })()}
