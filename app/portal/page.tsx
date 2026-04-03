@@ -512,6 +512,8 @@ export default function Portal() {
   const [activeDeal, setActiveDeal] = useState<number|null>(null)
   const [dealRiskLoading, setDealRiskLoading] = useState(false)
   const [dealRiskAnalysis, setDealRiskAnalysis] = useState<Record<string,unknown>|null>(null)
+  const [dealNegoLoading, setDealNegoLoading] = useState(false)
+  const [dealNego, setDealNego] = useState<Record<string,unknown>|null>(null)
   const [newDeal, setNewDeal] = useState({ imovel:'', valor:'' })
   const [showNewDeal, setShowNewDeal] = useState(false)
 
@@ -838,7 +840,7 @@ export default function Portal() {
   const [docSearch, setDocSearch] = useState('')
 
   // Pipeline Investor Dashboard
-  const [dealTab, setDealTab] = useState<'checklist'|'investor'|'dealroom'|'timeline'>('checklist')
+  const [dealTab, setDealTab] = useState<'checklist'|'investor'|'dealroom'|'timeline'|'nego'>('checklist')
   const [makeOfferOpen, setMakeOfferOpen] = useState(false)
   const [offerMsg, setOfferMsg] = useState('')
   const [dealRoomMsg, setDealRoomMsg] = useState('')
@@ -5248,6 +5250,7 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                         </button>
                         <button className={`deal-tab${dealTab==='dealroom'?' active':''}`} onClick={()=>setDealTab('dealroom')}>🏛 Deal Room</button>
                         <button className={`deal-tab${dealTab==='timeline'?' active':''}`} onClick={()=>setDealTab('timeline')}>Timeline</button>
+                        <button className={`deal-tab${dealTab==='nego'?' active':''}`} onClick={()=>setDealTab('nego' as typeof dealTab)}>⚡ Negociação IA</button>
                       </div>
 
                       <div style={{padding:'24px'}}>
@@ -5849,6 +5852,105 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                         )}
 
                         {/* ── TIMELINE TAB ── */}
+                        {dealTab === ('nego' as string) && (
+                          <div>
+                            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'8px'}}>
+                              <div>
+                                <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.1rem',color:'#0e0e0d'}}>Estratégia de Negociação IA</div>
+                                <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.4)',marginTop:'2px'}}>Claude Opus · Baseado no perfil do deal e comprador</div>
+                              </div>
+                              <button style={{padding:'8px 18px',background:dealNego?'rgba(14,14,13,.06)':'linear-gradient(135deg,#0c1f15,#1c4a35)',color:dealNego?'rgba(14,14,13,.5)':'#c9a96e',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',cursor:'pointer',transition:'all .15s'}}
+                                disabled={dealNegoLoading}
+                                onClick={async()=>{
+                                  if (dealNego) { setDealNego(null); return }
+                                  setDealNegoLoading(true)
+                                  const contact = crmContacts.find(c=>c.name===deal.comprador||c.dealRef===deal.ref)
+                                  try {
+                                    const res = await fetch('/api/deal/negotiation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deal,contact,agentName})})
+                                    const d = await res.json()
+                                    if (d.negotiation) setDealNego(d.negotiation)
+                                  } catch{} finally{setDealNegoLoading(false)}
+                                }}>
+                                {dealNegoLoading ? '✦ A gerar...' : dealNego ? '↺ Regenerar' : '⚡ Gerar Estratégia IA'}
+                              </button>
+                            </div>
+                            {!dealNego && !dealNegoLoading && (
+                              <div style={{padding:'32px',textAlign:'center' as const,background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.08)'}}>
+                                <div style={{fontSize:'2rem',marginBottom:'8px'}}>⚡</div>
+                                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',color:'rgba(14,14,13,.5)',marginBottom:'6px'}}>Pronto para negociar</div>
+                                <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.8rem',color:'rgba(14,14,13,.4)'}}>Clica em "Gerar Estratégia IA" para receber argumentos, concessões e script de fecho personalizado</div>
+                              </div>
+                            )}
+                            {dealNego && (
+                              <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+                                {/* Strategy header */}
+                                <div style={{background:'linear-gradient(135deg,#0c1f15,#1c4a35)',padding:'14px 18px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                                  <div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(201,169,110,.5)',letterSpacing:'.12em',marginBottom:'3px'}}>ESTRATÉGIA</div>
+                                    <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.1rem',color:'#f4f0e6',fontWeight:300}}>{String(dealNego.strategy)}</div>
+                                  </div>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(201,169,110,.7)',background:'rgba(201,169,110,.1)',padding:'4px 10px',border:'1px solid rgba(201,169,110,.2)'}}>{deal.valor}</div>
+                                </div>
+                                <div style={{background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.12)',padding:'14px',borderLeft:'3px solid #1c4a35'}}>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(28,74,53,.6)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'6px'}}>Posição de Abertura</div>
+                                  <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.85rem',color:'rgba(14,14,13,.75)',lineHeight:1.6}}>{String(dealNego.openingPosition)}</div>
+                                </div>
+                                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
+                                  <div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>Argumentos-Chave</div>
+                                    {(dealNego.keyArguments as string[]).map((a,i)=>(
+                                      <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px'}}>
+                                        <span style={{color:'#4a9c7a',fontWeight:700,flexShrink:0}}>{i+1}.</span>
+                                        <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(14,14,13,.65)',lineHeight:1.4}}>{a}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'8px'}}>Concessões Possíveis</div>
+                                    {(dealNego.concessions as string[]).map((c2,i)=>(
+                                      <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px'}}>
+                                        <span style={{color:'#f59e0b',flexShrink:0}}>◌</span>
+                                        <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(14,14,13,.65)',lineHeight:1.4}}>{c2}</span>
+                                      </div>
+                                    ))}
+                                    <div style={{marginTop:'8px',padding:'8px',background:'rgba(224,84,84,.04)',border:'1px solid rgba(224,84,84,.15)'}}>
+                                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'#e05454',marginBottom:'4px',letterSpacing:'.08em'}}>LINHAS VERMELHAS</div>
+                                      {(dealNego.redLines as string[]).map((r,i)=>(
+                                        <div key={i} style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(14,14,13,.6)',marginBottom:'3px'}}>✗ {r}</div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                                {/* Closing script */}
+                                <div style={{background:'rgba(201,169,110,.06)',border:'1px solid rgba(201,169,110,.2)',padding:'14px',borderLeft:'3px solid #c9a96e'}}>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'6px'}}>Script de Fecho</div>
+                                  <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(14,14,13,.75)',lineHeight:1.7,fontStyle:'italic'}}>"{String(dealNego.closingScript)}"</div>
+                                </div>
+                                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+                                  <div style={{padding:'10px 12px',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.08)'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.4)',marginBottom:'4px',letterSpacing:'.08em'}}>ORIENTAÇÃO DE PREÇO</div>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'#1c4a35',fontWeight:500}}>{String(dealNego.priceGuidance)}</div>
+                                  </div>
+                                  <div style={{padding:'10px 12px',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.08)'}}>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.4)',marginBottom:'4px',letterSpacing:'.08em'}}>SE A NEGOCIAÇÃO FALHAR</div>
+                                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(14,14,13,.65)'}}>{String(dealNego.alternativeIfFails)}</div>
+                                  </div>
+                                </div>
+                                <div style={{display:'flex',gap:'8px'}}>
+                                  <button style={{padding:'8px 16px',background:'#25d366',color:'#fff',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer',letterSpacing:'.08em'}}
+                                    onClick={()=>window.open(`https://wa.me/?text=${encodeURIComponent(String(dealNego.closingScript))}`)}>
+                                    💬 Enviar WA
+                                  </button>
+                                  <button style={{padding:'8px 16px',background:'rgba(14,14,13,.06)',border:'1px solid rgba(14,14,13,.1)',color:'rgba(14,14,13,.5)',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer'}}
+                                    onClick={()=>navigator.clipboard.writeText(`ESTRATÉGIA: ${dealNego.strategy}\n\nABERTURA: ${dealNego.openingPosition}\n\nSCRIPT DE FECHO: ${dealNego.closingScript}\n\nPREÇO: ${dealNego.priceGuidance}`)}>
+                                    📋 Copiar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {dealTab === 'timeline' && (
                           <div>
                             <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.1rem',color:'#0e0e0d',marginBottom:'16px'}}>Progresso Completo — Todas as Fases</div>
