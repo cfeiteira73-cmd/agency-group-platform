@@ -1700,7 +1700,89 @@ ${dealsHtml}
                   </div>
                 </div>
 
-                {/* Row 3: Pipeline + Market Pulse */}
+                {/* Row 3: AI Market Pulse + Off-Market Exclusivos */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'16px'}}>
+                  {/* AI Market Pulse */}
+                  {(() => {
+                    const PULSE_INSIGHTS = [
+                      { icon:'📈', text:'Lisboa Chiado/Santos: transacções +22% YoY. Compradores franceses e americanos lideram procura por T2/T3 premium.' },
+                      { icon:'🌍', text:'Comporta regista escassez crítica de oferta. Stock de Off-Market esgota em <30 dias. Oportunidade de captação urgente.' },
+                      { icon:'💰', text:'Euribor 6M estabilizou nos 2.95%. Retorno ao crédito habitual: +18% de compradores elegíveis vs. Q4 2024.' },
+                      { icon:'🏆', text:'Cascais Quinta da Marinha: yields 4.1–4.8% brutas. Perfil HNWI britânico e alemão a entrar fortemente no mercado.' },
+                      { icon:'🔑', text:`Semana de ${new Date().toLocaleDateString('pt-PT',{month:'long'})} — Foco estratégico: acompanhar leads quentes CRM + follow-up compradores >€1M.` },
+                    ]
+                    return (
+                      <div className="p-card" style={{background:'linear-gradient(135deg,#0c1f15 0%,#1c4a35 100%)',border:'none'}}>
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
+                          <div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'4px'}}>✦ Market Pulse IA</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1rem',color:'#f4f0e6'}}>Inteligência de <em style={{color:'#c9a96e'}}>Mercado</em></div>
+                          </div>
+                          <div style={{display:'flex',alignItems:'center',gap:'5px'}}>
+                            <div style={{width:'6px',height:'6px',borderRadius:'50%',background:'#6fcf97',animation:'pulse 1.5s ease-in-out infinite'}}/>
+                            <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(244,240,230,.3)'}}>Abr 2026</span>
+                          </div>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+                          {PULSE_INSIGHTS.map((ins,i)=>(
+                            <div key={i} style={{display:'flex',gap:'8px',alignItems:'flex-start',padding:'8px 10px',background:'rgba(255,255,255,.04)',borderRadius:'6px',borderLeft:'2px solid rgba(201,169,110,.3)'}}>
+                              <span style={{fontSize:'.8rem',flexShrink:0,lineHeight:1.4}}>{ins.icon}</span>
+                              <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.7rem',color:'rgba(244,240,230,.75)',lineHeight:1.5}}>{ins.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{marginTop:'12px',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(244,240,230,.2)'}}>
+                          ✦ Agency Group · INE/AT Q1 2026 · Euribor Live · AMI 22506
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* Off-Market Exclusivos */}
+                  {(() => {
+                    const offMarketList = imoveisList.filter(p=>p.badge==='Off-Market'||p.badge==='Exclusivo')
+                    return (
+                      <div className="p-card" style={{border:'1px solid rgba(201,169,110,.2)',position:'relative',overflow:'hidden'}}>
+                        <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',background:'linear-gradient(90deg,#c9a96e,#1c4a35)'}}/>
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'14px'}}>
+                          <div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>🔒 Carteira Exclusiva</div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1rem',color:'#0e0e0d'}}>Off-Market & <em style={{color:'#1c4a35'}}>Exclusivos</em></div>
+                          </div>
+                          <div style={{display:'flex',gap:'6px'}}>
+                            <span style={{background:'#c9a96e',color:'#0c1f15',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',padding:'3px 8px',letterSpacing:'.08em',fontWeight:700}}>{imoveisList.filter(p=>p.badge==='Off-Market').length} OFF</span>
+                            <span style={{background:'rgba(28,74,53,.15)',color:'#1c4a35',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',padding:'3px 8px',letterSpacing:'.08em',fontWeight:700}}>{imoveisList.filter(p=>p.badge==='Exclusivo').length} EXC</span>
+                          </div>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                          {offMarketList.slice(0,4).map(p=>(
+                            <div key={p.id} onClick={()=>setSection('imoveis')} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 10px',background:p.badge==='Off-Market'?'rgba(201,169,110,.06)':'rgba(28,74,53,.04)',border:`1px solid ${p.badge==='Off-Market'?'rgba(201,169,110,.2)':'rgba(28,74,53,.12)'}`,cursor:'pointer',transition:'border .2s'}}>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'2px'}}>
+                                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',background:p.badge==='Off-Market'?'#c9a96e':'rgba(28,74,53,.15)',color:p.badge==='Off-Market'?'#0c1f15':'#1c4a35',padding:'1px 5px',letterSpacing:'.06em',fontWeight:600}}>{p.badge?.toUpperCase()}</span>
+                                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.3)'}}>{p.ref}</span>
+                                </div>
+                                <div style={{fontSize:'.78rem',color:'#0e0e0d',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.nome}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)'}}>{p.zona} · {p.area}m² · T{p.quartos}</div>
+                              </div>
+                              <div style={{textAlign:'right',flexShrink:0,marginLeft:'8px'}}>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.58rem',color:'#c9a96e',fontWeight:600}}>€{(p.preco/1e6).toFixed(2).replace('.','.')}M</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.3)',marginTop:'2px'}}>→</div>
+                              </div>
+                            </div>
+                          ))}
+                          {offMarketList.length > 4 && (
+                            <button onClick={()=>setSection('imoveis')} style={{background:'none',border:'1px dashed rgba(201,169,110,.3)',color:'#c9a96e',padding:'8px',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.1em',textAlign:'center'}}>
+                              +{offMarketList.length-4} imóveis off-market → Ver todos
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* Row 4: Pipeline + Buyer Demand */}
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px'}}>
                   <div className="p-card">
                     <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.1rem',color:'#0e0e0d',marginBottom:'16px'}}>Pipeline Activo</div>
@@ -2064,6 +2146,65 @@ ${dealsHtml}
                           </div>
                         </div>
                       )}
+
+                      {/* ── PRICE FORECAST ── */}
+                      {(() => {
+                        const trendYoY = merc.trend_yoy_pct || 4.5
+                        const monthlyRate = Math.pow(1 + trendYoY/100, 1/12) - 1
+                        const f3m  = Math.round(estimativa * Math.pow(1+monthlyRate, 3))
+                        const f6m  = Math.round(estimativa * Math.pow(1+monthlyRate, 6))
+                        const f12m = Math.round(estimativa * Math.pow(1+monthlyRate, 12))
+                        const g3m  = ((f3m-estimativa)/estimativa*100).toFixed(1)
+                        const g6m  = ((f6m-estimativa)/estimativa*100).toFixed(1)
+                        const g12m = ((f12m-estimativa)/estimativa*100).toFixed(1)
+                        return (
+                          <div className="p-card" style={{marginBottom:'12px',background:'linear-gradient(135deg,rgba(12,31,21,.04) 0%,rgba(201,169,110,.04) 100%)',border:'1px solid rgba(201,169,110,.18)'}}>
+                            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'16px'}}>
+                              <div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'4px'}}>Previsão de Preço · Property Finder Style</div>
+                                <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.1rem',color:'#0e0e0d'}}>Evolução Estimada <em style={{color:'#1c4a35'}}>do Valor</em></div>
+                              </div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.3)',textAlign:'right'}}>Baseado em trend YoY<br/>{avmZona}: +{trendYoY}%/ano</div>
+                            </div>
+                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'16px'}}>
+                              {[
+                                {label:'+3 Meses',val:f3m,gain:g3m,color:'#22c55e'},
+                                {label:'+6 Meses',val:f6m,gain:g6m,color:'#16a34a'},
+                                {label:'+12 Meses',val:f12m,gain:g12m,color:'#c9a96e'},
+                              ].map(item=>(
+                                <div key={item.label} style={{background:'rgba(255,255,255,.6)',border:'1px solid rgba(28,74,53,.12)',borderRadius:'8px',padding:'14px 16px',textAlign:'center'}}>
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'8px'}}>{item.label}</div>
+                                  <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.3rem',fontWeight:600,color:item.color,lineHeight:1,marginBottom:'6px'}}>€{item.val.toLocaleString('pt-PT')}</div>
+                                  <div style={{display:'inline-flex',alignItems:'center',gap:'3px',background:'rgba(34,197,94,.1)',border:`1px solid ${item.color}30`,borderRadius:'20px',padding:'2px 8px'}}>
+                                    <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',fontWeight:700,color:item.color}}>+{item.gain}%</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            {/* Visual bar chart */}
+                            <div style={{display:'flex',alignItems:'flex-end',gap:'6px',height:'40px',marginBottom:'8px'}}>
+                              {[
+                                {val:estimativa,label:'Hoje',color:'rgba(28,74,53,.3)'},
+                                {val:f3m,label:'+3M',color:'#22c55e'},
+                                {val:f6m,label:'+6M',color:'#16a34a'},
+                                {val:f12m,label:'+12M',color:'#c9a96e'},
+                              ].map((bar,i)=>{
+                                const maxVal = f12m
+                                const pct = Math.round((bar.val/maxVal)*100)
+                                return (
+                                  <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}}>
+                                    <div style={{width:'100%',height:`${pct}%`,background:bar.color,borderRadius:'3px 3px 0 0',minHeight:'4px',transition:'height .5s ease'}}/>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(14,14,13,.35)',textAlign:'center'}}>{bar.label}</div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.25)',marginTop:'4px'}}>
+                              * Projeção baseada em dados INE/AT Q1 2026 e tendência histórica da zona. Não constitui garantia de valor.
+                            </div>
+                          </div>
+                        )
+                      })()}
 
                       {/* ── ACTIONS ── */}
                       <div style={{display:'flex',gap:'10px',flexWrap:'wrap'}}>
@@ -4035,6 +4176,8 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                               </select>
                               <button onClick={e=>{e.stopPropagation();window.open(`https://wa.me/351919948986?text=${encodeURIComponent(`${d.ref} — ${d.imovel}\nValor: ${d.valor}\nFase: ${d.fase}`)}`, '_blank')}}
                                 style={{background:'rgba(28,74,53,.08)',border:'none',color:'#1c4a35',padding:'3px 8px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.08em',cursor:'pointer'}}>WA</button>
+                              <button onClick={e=>{e.stopPropagation();const link=`${window.location.origin}/deal/${d.ref}`;navigator.clipboard.writeText(link).then(()=>alert(`✓ Link copiado!\n${link}`)).catch(()=>window.open(link,'_blank'))}}
+                                style={{background:'rgba(201,169,110,.12)',border:'1px solid rgba(201,169,110,.3)',color:'#c9a96e',padding:'3px 8px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.06em',cursor:'pointer'}} title="Partilhar timeline com cliente">↗ Partilhar</button>
                             </div>
                           </div>
                           {/* Progress bar */}

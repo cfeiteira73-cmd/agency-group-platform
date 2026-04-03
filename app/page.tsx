@@ -378,6 +378,12 @@ export default function Home() {
   const [searchTipo, setSearchTipo] = useState('')
   const [searchPreco, setSearchPreco] = useState('')
   const [searchQuartos, setSearchQuartos] = useState('')
+  // ═══ AI SEARCH STATE ═══
+  const [searchMode, setSearchMode] = useState<'filtros'|'ai'>('filtros')
+  const [naturalQuery, setNaturalQuery] = useState('')
+  const [aiResults, setAiResults] = useState<typeof PROPERTIES|null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiSummary, setAiSummary] = useState('')
 
   const filteredProperties = PROPERTIES.filter(p => {
     if (searchZona && !p.zonaLabel.toLowerCase().includes(searchZona.toLowerCase()) && !p.zona.toLowerCase().includes(searchZona.toLowerCase())) return false
@@ -395,9 +401,21 @@ export default function Home() {
     if (searchQuartos && p.quartos < parseInt(searchQuartos)) return false
     return true
   })
+  const displayedProperties = (searchMode === 'ai' && aiResults !== null) ? aiResults : filteredProperties
 
   // ═══ UTIL ═══
   function doSearch() { document.getElementById('imoveis')?.scrollIntoView({behavior:'smooth'}) }
+  async function doAiSearch() {
+    if (!naturalQuery.trim() || aiLoading) return
+    setAiLoading(true); setAiResults(null); setAiSummary('')
+    try {
+      const res = await fetch('/api/properties/search-natural', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:naturalQuery})})
+      const d = await res.json()
+      const matched = (d.matches||[]).map((m:{id:string})=>PROPERTIES.find(p=>p.id===m.id)).filter(Boolean) as typeof PROPERTIES
+      setAiResults(matched); setAiSummary(d.searchSummary||'')
+    } catch { setAiResults([]) }
+    finally { setAiLoading(false); document.getElementById('imoveis')?.scrollIntoView({behavior:'smooth'}) }
+  }
   function filterZ(z:string) { document.getElementById('imoveis')?.scrollIntoView({behavior:'smooth'}); setSearchZona(z) }
   async function agLogin() {
     const emailEl = document.getElementById('agEmail') as HTMLInputElement
@@ -637,16 +655,33 @@ export default function Home() {
 
       {/* SEARCH */}
       <div className="search-wrap">
-        <div className="search-box" id="searchBox">
-          <div className="sf" style={{flex:2}}>
-            <label className="sf-lbl">Localização</label>
-            <input className="sf-inp" type="text" id="sfQ" placeholder="Lisboa, Cascais, Comporta..." value={searchZona} onChange={e=>{setSearchZona(e.target.value)}}/>
-          </div>
-          <div className="sf"><label className="sf-lbl">Tipo</label><select className="sf-sel" value={searchTipo} onChange={e=>setSearchTipo(e.target.value)}><option value="">Todos</option><option value="Apartamento">Apartamento</option><option value="Moradia">Moradia</option><option value="Villa">Villa</option><option value="Penthouse">Penthouse</option><option value="Quinta">Quinta</option></select></div>
-          <div className="sf"><label className="sf-lbl">Preço</label><select className="sf-sel" value={searchPreco} onChange={e=>setSearchPreco(e.target.value)}><option value="">Qualquer</option><option value="500-1000">€500K–€1M</option><option value="1000-2500">€1M–€2.5M</option><option value="2500-5000">€2.5M–€5M</option><option value="5000-999999">€5M+</option></select></div>
-          <div className="sf"><label className="sf-lbl">Quartos (mín.)</label><select className="sf-sel" value={searchQuartos} onChange={e=>setSearchQuartos(e.target.value)}><option value="">Todos</option><option value="1">T1+</option><option value="2">T2+</option><option value="3">T3+</option><option value="4">T4+</option><option value="5">T5+</option></select></div>
-          <button className="sf-btn" onClick={doSearch}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Pesquisar</button>
+        {/* Mode Toggle */}
+        <div style={{display:'flex',justifyContent:'center',marginBottom:'14px'}}>
+          <button onClick={()=>{setSearchMode('filtros');setAiResults(null);setAiSummary('')}} style={{background:searchMode==='filtros'?'#c9a96e':'rgba(255,255,255,.07)',color:searchMode==='filtros'?'#0c1f15':'rgba(244,240,230,.5)',border:'none',padding:'9px 28px',fontFamily:"'Jost',sans-serif",fontSize:'.58rem',fontWeight:600,letterSpacing:'.15em',textTransform:'uppercase',cursor:'pointer',transition:'all .2s',borderRadius:'4px 0 0 4px'}}>⊞ Filtros</button>
+          <button onClick={()=>setSearchMode('ai')} style={{background:searchMode==='ai'?'#c9a96e':'rgba(255,255,255,.07)',color:searchMode==='ai'?'#0c1f15':'rgba(244,240,230,.5)',border:'none',padding:'9px 28px',fontFamily:"'Jost',sans-serif",fontSize:'.58rem',fontWeight:600,letterSpacing:'.15em',textTransform:'uppercase',cursor:'pointer',transition:'all .2s',borderRadius:'0 4px 4px 0'}}>✦ Pesquisa IA</button>
         </div>
+        {searchMode==='filtros' ? (
+          <div className="search-box" id="searchBox">
+            <div className="sf" style={{flex:2}}>
+              <label className="sf-lbl">Localização</label>
+              <input className="sf-inp" type="text" id="sfQ" placeholder="Lisboa, Cascais, Comporta..." value={searchZona} onChange={e=>{setSearchZona(e.target.value)}}/>
+            </div>
+            <div className="sf"><label className="sf-lbl">Tipo</label><select className="sf-sel" value={searchTipo} onChange={e=>setSearchTipo(e.target.value)}><option value="">Todos</option><option value="Apartamento">Apartamento</option><option value="Moradia">Moradia</option><option value="Villa">Villa</option><option value="Penthouse">Penthouse</option><option value="Quinta">Quinta</option></select></div>
+            <div className="sf"><label className="sf-lbl">Preço</label><select className="sf-sel" value={searchPreco} onChange={e=>setSearchPreco(e.target.value)}><option value="">Qualquer</option><option value="500-1000">€500K–€1M</option><option value="1000-2500">€1M–€2.5M</option><option value="2500-5000">€2.5M–€5M</option><option value="5000-999999">€5M+</option></select></div>
+            <div className="sf"><label className="sf-lbl">Quartos (mín.)</label><select className="sf-sel" value={searchQuartos} onChange={e=>setSearchQuartos(e.target.value)}><option value="">Todos</option><option value="1">T1+</option><option value="2">T2+</option><option value="3">T3+</option><option value="4">T4+</option><option value="5">T5+</option></select></div>
+            <button className="sf-btn" onClick={doSearch}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Pesquisar</button>
+          </div>
+        ) : (
+          <div className="search-box" id="searchBox" style={{display:'flex',gap:'16px',alignItems:'flex-end'}}>
+            <div style={{flex:1}}>
+              <label className="sf-lbl" style={{color:'rgba(244,240,230,.4)',letterSpacing:'.12em'}}>Descreve o que procuras em linguagem natural</label>
+              <input className="sf-inp" type="text" placeholder='"T3 com piscina em Cascais até €2M, vista mar, garagem..."' value={naturalQuery} onChange={e=>setNaturalQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAiSearch()} style={{width:'100%'}}/>
+            </div>
+            <button className="sf-btn" onClick={doAiSearch} disabled={aiLoading} style={{opacity:aiLoading?.65:1,whiteSpace:'nowrap',background:'#c9a96e',color:'#0c1f15',flexShrink:0}}>
+              {aiLoading ? '✦ A analisar...' : '✦ Pesquisar com IA'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ZONAS */}
@@ -703,16 +738,25 @@ export default function Home() {
           </div>
           {/* Results count + clear filters */}
           <div className="im-count" style={{ fontFamily: 'Jost, sans-serif', fontSize: '14px', color: '#666', marginBottom: '16px' }}>
-            {filteredProperties.length} imóve{filteredProperties.length !== 1 ? 'is' : 'l'} encontrado{filteredProperties.length !== 1 ? 's' : ''}
-            {(searchZona || searchTipo || searchPreco || searchQuartos) && (
-              <button onClick={() => { setSearchZona(''); setSearchTipo(''); setSearchPreco(''); setSearchQuartos('') }}
+            {displayedProperties.length} imóve{displayedProperties.length !== 1 ? 'is' : 'l'} encontrado{displayedProperties.length !== 1 ? 's' : ''}
+            {(searchZona || searchTipo || searchPreco || searchQuartos || (searchMode==='ai'&&aiResults!==null)) && (
+              <button onClick={() => { setSearchZona(''); setSearchTipo(''); setSearchPreco(''); setSearchQuartos(''); setAiResults(null); setNaturalQuery(''); setSearchMode('filtros'); setAiSummary('') }}
                 style={{ marginLeft: '12px', background: 'none', border: '1px solid #c9a96e', color: '#c9a96e', padding: '2px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
                 Limpar filtros
               </button>
             )}
           </div>
+          {/* AI Summary */}
+          {searchMode==='ai' && aiSummary && (
+            <div style={{background:'rgba(28,74,53,.06)',border:'1px solid rgba(28,74,53,.18)',borderLeft:'3px solid #1c4a35',padding:'10px 16px',marginBottom:'16px',fontFamily:"'Jost',sans-serif",fontSize:'13px',color:'rgba(14,14,13,.7)',lineHeight:1.6}}>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.1em',textTransform:'uppercase',color:'#1c4a35',fontWeight:600,marginRight:'8px'}}>✦ IA</span>{aiSummary}
+            </div>
+          )}
+          {searchMode==='ai' && aiLoading && (
+            <div style={{textAlign:'center',padding:'40px',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.6rem',letterSpacing:'.15em'}}>✦ Inteligência Artificial a analisar pedido...</div>
+          )}
 
-          {filteredProperties.length === 0 ? (
+          {displayedProperties.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px', color: '#c9a96e', fontFamily: 'Cormorant, serif', fontSize: '24px' }}>
               <div>Sem resultados para estes filtros</div>
               <div style={{ fontSize: '16px', fontFamily: 'Jost, sans-serif', color: '#666', marginTop: '12px' }}>
@@ -724,7 +768,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="im-grid">
-              {filteredProperties.map(im=>(
+              {displayedProperties.map(im=>(
                 <div key={im.id} className={`imc${im.feat?' feat':''}`}>
                   <div className="imc-img">
                     <div className="imc-img-reveal" id={im.id}></div>
