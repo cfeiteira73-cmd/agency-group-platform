@@ -8458,7 +8458,26 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                             })()}
                             <div style={{ fontFamily:"'Cormorant',serif", fontWeight:400, fontSize:'1.15rem', color:'#f4f0e6', marginBottom:'4px', paddingRight:'80px' }}>{p.nome}</div>
                             <div style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(201,169,110,.6)', marginBottom:'16px' }}>{p.bairro} · {p.zona}</div>
-                            <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.4rem', color:'#c9a96e', fontWeight:300, marginBottom:'12px' }}>€{(p.preco/1000000).toFixed(p.preco>=1000000?1:0)}{p.preco>=1000000?'M':''}</div>
+                            <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}}>
+                              <div style={{ fontFamily:"'Cormorant',serif", fontSize:'1.4rem', color:'#c9a96e', fontWeight:300, lineHeight:1 }}>€{(p.preco/1000000).toFixed(p.preco>=1000000?1:0)}{p.preco>=1000000?'M':''}</div>
+                              {/* Buyer match count */}
+                              {(() => {
+                                const matchCount = crmContacts.filter(c => {
+                                  const budgetOk = Number(c.budgetMin) <= p.preco && p.preco <= Number(c.budgetMax) * 1.2
+                                  const zonaOk = !c.zonas || c.zonas.length === 0 || c.zonas.some((z:string) => z.includes(p.zona) || p.zona.includes(z.split('—')[0].trim()))
+                                  const tipoOk = !c.tipos || c.tipos.length === 0 || c.tipos.includes(p.tipo)
+                                  return budgetOk && (zonaOk || tipoOk)
+                                }).length
+                                if (matchCount === 0) return null
+                                return (
+                                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',padding:'3px 8px',background:'rgba(16,185,129,.1)',border:'1px solid rgba(16,185,129,.25)',color:'#10b981',letterSpacing:'.06em',cursor:'pointer'}}
+                                    onClick={()=>setSection('crm')} title="Ver contactos correspondentes no CRM">
+                                    👥 {matchCount} match{matchCount!==1?'es':''}
+                                  </div>
+                                )
+                              })()}
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.3)'}}>€{Math.round(p.preco/p.area).toLocaleString('pt-PT')}/m²</div>
+                            </div>
                             <div style={{ display:'flex', gap:'16px', marginBottom:'16px', flexWrap:'wrap' }}>
                               <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.4)' }}>{p.area}m²</span>
                               <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'rgba(244,240,230,.4)' }}>T{p.quartos}</span>
