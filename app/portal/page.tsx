@@ -631,6 +631,8 @@ export default function Portal() {
   const [emailDraftLoading, setEmailDraftLoading] = useState(false)
   const [emailDraft, setEmailDraft] = useState<Record<string,string>|null>(null)
   const [emailDraftPurpose, setEmailDraftPurpose] = useState('Follow-up geral')
+  const [weeklyReportLoading, setWeeklyReportLoading] = useState(false)
+  const [weeklyReport, setWeeklyReport] = useState<Record<string,unknown>|null>(null)
   const [fabOpen, setFabOpen] = useState(false)
   const [cmdkOpen, setCmdkOpen] = useState(false)
   const [showNotifPanel, setShowNotifPanel] = useState(false)
@@ -1771,7 +1773,22 @@ ${dealsHtml}
                       {now.getHours()<12?'Bom dia':now.getHours()<19?'Boa tarde':'Boa noite'}, <em style={{fontStyle:'italic',color:'#c9a96e'}}>{agentName}</em>.
                     </div>
                   </div>
-                  <div style={{display:'flex',gap:'8px'}}>
+                  <div style={{display:'flex',gap:'8px',alignItems:'center',flexWrap:'wrap'}}>
+                    <button style={{padding:'6px 14px',background:weeklyReport?'rgba(201,169,110,.12)':'rgba(28,74,53,.06)',border:`1px solid ${weeklyReport?'rgba(201,169,110,.3)':'rgba(28,74,53,.2)'}`,color:weeklyReport?'#c9a96e':'#1c4a35',fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.08em',cursor:'pointer',transition:'all .15s'}}
+                      disabled={weeklyReportLoading}
+                      onClick={async()=>{
+                        if (weeklyReport) { setWeeklyReport(null); return }
+                        setWeeklyReportLoading(true)
+                        try {
+                          const today2 = new Date()
+                          const period = `Semana de ${today2.toLocaleDateString('pt-PT',{day:'numeric',month:'long',year:'numeric'})}`
+                          const res = await fetch('/api/agent/weekly-report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:agentName,deals,contacts:crmContacts,properties:imoveisList,period})})
+                          const d = await res.json()
+                          if (d.report) setWeeklyReport(d.report)
+                        } catch{} finally{setWeeklyReportLoading(false)}
+                      }}>
+                      {weeklyReportLoading ? '✦ A gerar...' : weeklyReport ? '× Fechar Relatório' : '📋 Relatório Semanal IA'}
+                    </button>
                     <div style={{background:'#1c4a35',padding:'6px 14px',display:'flex',alignItems:'center',gap:'6px'}}>
                       <div style={{width:'6px',height:'6px',borderRadius:'50%',background:'#6fcf97'}}/>
                       <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',color:'#f4f0e6',textTransform:'uppercase'}}>Portal Activo</span>
@@ -1781,6 +1798,72 @@ ${dealsHtml}
                     </div>
                   </div>
                 </div>
+                {/* Weekly Report Panel */}
+                {weeklyReport && (
+                  <div style={{background:'linear-gradient(135deg,#0c1f15,#1a3d2a)',padding:'20px 24px',marginBottom:'24px',border:'1px solid rgba(201,169,110,.15)'}}>
+                    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:'16px',flexWrap:'wrap',gap:'8px'}}>
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(201,169,110,.5)',letterSpacing:'.12em',textTransform:'uppercase',marginBottom:'4px'}}>📋 Relatório Semanal IA — Claude Opus</div>
+                        <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',color:'#f4f0e6',fontWeight:300}}>{String(weeklyReport.title)}</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(244,240,230,.35)',marginTop:'2px'}}>{String(weeklyReport.period)}</div>
+                      </div>
+                      <div style={{display:'flex',gap:'8px'}}>
+                        <button style={{padding:'5px 12px',background:'rgba(244,240,230,.06)',border:'1px solid rgba(244,240,230,.1)',color:'rgba(244,240,230,.5)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.06em'}}
+                          onClick={()=>{
+                            const text = `${weeklyReport.title}\n${weeklyReport.period}\n\n${weeklyReport.executiveSummary}\n\nHIGHLIGHTS:\n${(weeklyReport.highlights as string[]).map(h=>`• ${h}`).join('\n')}\n\nPRIORIDADES:\n${(weeklyReport.priorities as string[]).map(p=>`• ${p}`).join('\n')}\n\nMARKET INSIGHT:\n${weeklyReport.marketInsight}\n\nFOCO PRÓXIMA SEMANA:\n${weeklyReport.nextWeekFocus}`
+                            navigator.clipboard.writeText(text)
+                          }}>
+                          📋 Copiar
+                        </button>
+                        <button style={{padding:'5px 12px',background:'rgba(244,240,230,.06)',border:'1px solid rgba(244,240,230,.1)',color:'rgba(244,240,230,.5)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer'}} onClick={()=>setWeeklyReport(null)}>× Fechar</button>
+                      </div>
+                    </div>
+                    {/* Executive Summary */}
+                    <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(244,240,230,.7)',lineHeight:1.7,marginBottom:'16px',padding:'12px 14px',background:'rgba(255,255,255,.04)',borderLeft:'3px solid rgba(201,169,110,.4)'}}>{String(weeklyReport.executiveSummary)}</div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'12px',marginBottom:'12px'}}>
+                      {/* Highlights */}
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(201,169,110,.5)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'6px'}}>Destaques</div>
+                        {(weeklyReport.highlights as string[]).map((h,i)=>(
+                          <div key={i} style={{display:'flex',gap:'6px',marginBottom:'5px'}}>
+                            <span style={{color:'#c9a96e',flexShrink:0}}>★</span>
+                            <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(244,240,230,.6)',lineHeight:1.4}}>{h}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Priorities */}
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(201,169,110,.5)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'6px'}}>Prioridades</div>
+                        {(weeklyReport.priorities as string[]).map((p,i)=>(
+                          <div key={i} style={{display:'flex',gap:'6px',marginBottom:'5px'}}>
+                            <span style={{color:'#4a9c7a',flexShrink:0,fontWeight:700}}>{i+1}.</span>
+                            <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(244,240,230,.6)',lineHeight:1.4}}>{p}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Pipeline + Next week */}
+                      <div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(201,169,110,.5)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:'6px'}}>Pipeline</div>
+                        {weeklyReport.pipeline && Object.entries(weeklyReport.pipeline as Record<string,unknown>).map(([k,v])=>(
+                          <div key={k} style={{display:'flex',justifyContent:'space-between',marginBottom:'4px'}}>
+                            <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(244,240,230,.35)'}}>{k}</span>
+                            <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#c9a96e',fontWeight:700}}>{String(v)}</span>
+                          </div>
+                        ))}
+                        <div style={{marginTop:'10px',padding:'8px',background:'rgba(201,169,110,.06)',border:'1px solid rgba(201,169,110,.1)'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(201,169,110,.4)',marginBottom:'3px',textTransform:'uppercase'}}>Foco Próxima Semana</div>
+                          <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.72rem',color:'rgba(244,240,230,.65)',lineHeight:1.4}}>{String(weeklyReport.nextWeekFocus)}</div>
+                        </div>
+                      </div>
+                    </div>
+                    {weeklyReport.marketInsight && (
+                      <div style={{padding:'10px 12px',background:'rgba(201,169,110,.04)',border:'1px solid rgba(201,169,110,.1)',display:'flex',gap:'8px'}}>
+                        <span style={{color:'#c9a96e',flexShrink:0}}>📈</span>
+                        <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.76rem',color:'rgba(244,240,230,.55)',lineHeight:1.5}}>{String(weeklyReport.marketInsight)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Row 1: KPI Cards — 6 métricas */}
                 {(() => {
