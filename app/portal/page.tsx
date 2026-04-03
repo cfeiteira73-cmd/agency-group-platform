@@ -642,7 +642,8 @@ export default function Portal() {
   const [sofiaLang, setSofiaLang] = useState<'PT'|'EN'|'FR'|'AR'>('EN')
 
   // Imoveis states
-  const [imoveisTab, setImoveisTab] = useState<'lista'|'adicionar'|'stats'>('lista')
+  const [imoveisTab, setImoveisTab] = useState<'lista'|'adicionar'|'stats'|'comparar'>('lista')
+  const [compareIds, setCompareIds] = useState<string[]>([])
   const [imoveisSearch, setImoveisSearch] = useState('')
   const [imoveisZona, setImoveisZona] = useState('')
   const [newImovel, setNewImovel] = useState({
@@ -7805,9 +7806,9 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                     <h2 style={{ fontFamily:"'Cormorant',serif", fontWeight:300, fontSize:'2rem', color:'#f4f0e6' }}>Imóveis</h2>
                   </div>
                   <div style={{ display:'flex', gap:'12px', flexWrap:'wrap' }}>
-                    {(['lista','adicionar','stats'] as const).map(t => (
+                    {([['lista','Carteira'],['adicionar','+ Adicionar'],['stats','Estatísticas'],['comparar','⇄ Comparar']] as const).map(([t,l]) => (
                       <button key={t} onClick={() => setImoveisTab(t)} style={{ background: imoveisTab===t ? '#c9a96e' : 'rgba(201,169,110,.1)', color: imoveisTab===t ? '#0c1f15' : '#c9a96e', border:'1px solid rgba(201,169,110,.3)', padding:'8px 20px', fontFamily:"'DM Mono',monospace", fontSize:'.4rem', letterSpacing:'.12em', textTransform:'uppercase', cursor:'pointer' }}>
-                        {t === 'lista' ? 'Carteira' : t === 'adicionar' ? '+ Adicionar' : 'Estatísticas'}
+                        {l}
                       </button>
                     ))}
                   </div>
@@ -8503,6 +8504,124 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* COMPARAR TAB */}
+                {imoveisTab === 'comparar' && (
+                  <div>
+                    {/* Property selector */}
+                    <div style={{marginBottom:'24px'}}>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'12px'}}>Selecciona até 3 imóveis para comparar</div>
+                      <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px'}}>
+                        {imoveisList.slice(0,12).map(p => {
+                          const isSelected = compareIds.includes(String(p.id))
+                          return (
+                            <button key={p.id as string}
+                              onClick={()=>{
+                                const sid = String(p.id)
+                                if (isSelected) setCompareIds(prev=>prev.filter(x=>x!==sid))
+                                else if (compareIds.length < 3) setCompareIds(prev=>[...prev,sid])
+                              }}
+                              style={{padding:'6px 14px',border:`1px solid ${isSelected?'#c9a96e':'rgba(201,169,110,.2)'}`,background:isSelected?'rgba(201,169,110,.15)':'transparent',color:isSelected?'#c9a96e':'rgba(244,240,230,.5)',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',transition:'all .15s',letterSpacing:'.06em'}}>
+                              {isSelected ? '✓ ' : ''}{String(p.nome).substring(0,20)}
+                            </button>
+                          )
+                        })}
+                        {compareIds.length > 0 && (
+                          <button onClick={()=>setCompareIds([])}
+                            style={{padding:'6px 14px',border:'1px solid rgba(224,84,84,.3)',background:'rgba(224,84,84,.08)',color:'#e05454',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',cursor:'pointer',letterSpacing:'.06em'}}>
+                            × Limpar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Comparison table */}
+                    {compareIds.length >= 2 ? (() => {
+                      const selected = compareIds.map(id => imoveisList.find(p=>String(p.id)===id)).filter(Boolean) as typeof imoveisList
+                      const pm2s = selected.map(p => p.area > 0 ? Math.round(Number(p.preco)/Number(p.area)) : 0)
+                      const maxPm2 = Math.max(...pm2s)
+                      const rows: { label: string; vals: (p: typeof imoveisList[0]) => string; highlight?: 'min'|'max'|'none' }[] = [
+                        { label:'Preço', vals: p => `€${(Number(p.preco)/1e6).toFixed(3)}M`, highlight:'min' },
+                        { label:'Área', vals: p => `${p.area}m²`, highlight:'max' },
+                        { label:'€/m²', vals: p => `€${p.area>0?Math.round(Number(p.preco)/Number(p.area)).toLocaleString('pt-PT'):'—'}`, highlight:'min' },
+                        { label:'Quartos', vals: p => `T${p.quartos}`, highlight:'max' },
+                        { label:'WC', vals: p => String(p.casasBanho||'—'), highlight:'none' },
+                        { label:'Zona', vals: p => String(p.zona), highlight:'none' },
+                        { label:'Tipo', vals: p => String(p.tipo), highlight:'none' },
+                        { label:'Piscina', vals: p => p.piscina ? '✓' : '—', highlight:'none' },
+                        { label:'Garagem', vals: p => p.garagem ? '✓' : '—', highlight:'none' },
+                        { label:'Terraço', vals: p => p.terraco ? '✓' : '—', highlight:'none' },
+                        { label:'Energia', vals: p => String(p.energia||'—'), highlight:'none' },
+                        { label:'Badge', vals: p => String(p.badge||'Standard'), highlight:'none' },
+                        { label:'Comissão 5%', vals: p => `€${Math.round(Number(p.preco)*0.05/1000)}K`, highlight:'none' },
+                      ]
+                      return (
+                        <div style={{overflowX:'auto'}}>
+                          <table style={{width:'100%',borderCollapse:'collapse',background:'rgba(244,240,230,.03)'}}>
+                            <thead>
+                              <tr>
+                                <th style={{padding:'12px 16px',textAlign:'left',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(201,169,110,.4)',borderBottom:'1px solid rgba(201,169,110,.15)',minWidth:'100px'}}>Atributo</th>
+                                {selected.map(p => (
+                                  <th key={String(p.id)} style={{padding:'12px 16px',textAlign:'center',borderBottom:'1px solid rgba(201,169,110,.15)'}}>
+                                    <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1rem',color:'#f4f0e6',marginBottom:'2px'}}>{String(p.nome).substring(0,24)}</div>
+                                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(201,169,110,.5)'}}>{String(p.zona)} · {String(p.ref||'')}</div>
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rows.map((row, rowIdx) => {
+                                const vals = selected.map(p => row.vals(p))
+                                const numVals = vals.map(v => parseFloat(v.replace(/[^0-9.]/g,'')))
+                                const maxVal = Math.max(...numVals.filter(n=>!isNaN(n)))
+                                const minVal = Math.min(...numVals.filter(n=>!isNaN(n)))
+                                return (
+                                  <tr key={row.label} style={{background:rowIdx%2===0?'rgba(244,240,230,.02)':'transparent'}}>
+                                    <td style={{padding:'10px 16px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(244,240,230,.4)',letterSpacing:'.06em',borderBottom:'1px solid rgba(201,169,110,.06)'}}>{row.label}</td>
+                                    {selected.map((p, i) => {
+                                      const val = row.vals(p)
+                                      const num = parseFloat(val.replace(/[^0-9.]/g,''))
+                                      const isBest = !isNaN(num) && row.highlight === 'max' && num === maxVal
+                                      const isWorst = !isNaN(num) && row.highlight === 'min' && num === minVal
+                                      return (
+                                        <td key={String(p.id)} style={{padding:'10px 16px',textAlign:'center',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',borderBottom:'1px solid rgba(201,169,110,.06)',
+                                          color:isBest?'#10b981':isWorst?'#c9a96e':'rgba(244,240,230,.7)',
+                                          background:isBest?'rgba(16,185,129,.06)':isWorst?'rgba(201,169,110,.06)':'transparent',
+                                          fontWeight:isBest||isWorst?700:400}}>
+                                          {val} {isBest&&<span style={{fontSize:'.3rem',marginLeft:'4px'}}>★</span>}
+                                        </td>
+                                      )
+                                    })}
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                          {/* Share comparison */}
+                          <div style={{marginTop:'16px',display:'flex',gap:'10px',justifyContent:'flex-end'}}>
+                            <button onClick={()=>{
+                              const text = `Comparativo Agency Group\n\n${selected.map(p=>`${String(p.nome)} — ${String(p.zona)}\nPreço: €${(Number(p.preco)/1e6).toFixed(2)}M · ${p.area}m² · €${p.area>0?Math.round(Number(p.preco)/Number(p.area)):0}/m²\nT${p.quartos}${p.casasBanho?' · '+p.casasBanho+' WC':''} · ${p.tipo}`).join('\n\n')}\n\nAgency Group · AMI 22506`
+                              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank')
+                            }} style={{padding:'10px 22px',background:'#c9a96e',color:'#0c1f15',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',cursor:'pointer',fontWeight:700}}>
+                              💬 Enviar por WA
+                            </button>
+                            <button onClick={()=>{
+                              const text = `Comparativo Agency Group\n\n${selected.map(p=>`${String(p.nome)} — €${(Number(p.preco)/1e6).toFixed(2)}M · ${p.area}m² · €${p.area>0?Math.round(Number(p.preco)/Number(p.area)):0}/m²`).join('\n')}\n\nAgency Group · AMI 22506`
+                              navigator.clipboard.writeText(text)
+                            }} style={{padding:'10px 22px',background:'rgba(244,240,230,.08)',color:'rgba(244,240,230,.7)',border:'1px solid rgba(201,169,110,.2)',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',cursor:'pointer'}}>
+                              Copiar
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })() : (
+                      <div style={{textAlign:'center',padding:'60px 0',border:'1px dashed rgba(201,169,110,.2)'}}>
+                        <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2rem',color:'rgba(201,169,110,.2)',marginBottom:'12px'}}>⇄</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',color:'rgba(244,240,230,.25)',letterSpacing:'.12em',textTransform:'uppercase'}}>Selecciona 2 ou 3 imóveis para comparar</div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
