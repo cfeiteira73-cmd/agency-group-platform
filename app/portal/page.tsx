@@ -624,6 +624,9 @@ export default function Portal() {
   ])
   const [expandedDrip, setExpandedDrip] = useState<string|null>(null)
   const [campTab, setCampTab] = useState<'email'|'whatsapp'>('email')
+  const [fabOpen, setFabOpen] = useState(false)
+  const [cmdkOpen, setCmdkOpen] = useState(false)
+  const [cmdkQuery, setCmdkQuery] = useState('')
 
   // Sofia Avatar IA
   const sofiaVideoRef = useRef<HTMLVideoElement|null>(null)
@@ -792,6 +795,16 @@ export default function Portal() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [showcaseImovel, lightboxOpen])
+
+  // Cmd+K / Ctrl+K global shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setCmdkOpen(o=>!o); setCmdkQuery('') }
+      if (e.key === 'Escape') { setCmdkOpen(false); setFabOpen(false) }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const openLightbox = (photos: {url:string; label?:string}[], startIdx: number) => {
     setLightboxPhotos(photos)
@@ -8703,6 +8716,113 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
 
           </main>
         </div>
+      </div>
+
+      {/* ── CMD+K SEARCH MODAL ── */}
+      {cmdkOpen && (
+        <div style={{position:'fixed',inset:0,zIndex:9000,background:'rgba(12,31,21,.6)',backdropFilter:'blur(4px)',display:'flex',alignItems:'flex-start',justifyContent:'center',paddingTop:'15vh'}}
+          onClick={()=>setCmdkOpen(false)}>
+          <div style={{width:'560px',maxWidth:'90vw',background:'#fff',boxShadow:'0 20px 60px rgba(12,31,21,.25)',overflow:'hidden'}}
+            onClick={e=>e.stopPropagation()}>
+            {/* Search input */}
+            <div style={{display:'flex',alignItems:'center',gap:'12px',padding:'16px 20px',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1c4a35" strokeWidth="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input autoFocus value={cmdkQuery} onChange={e=>setCmdkQuery(e.target.value)}
+                placeholder="Pesquisar secções, imóveis, contactos..."
+                style={{flex:1,border:'none',outline:'none',fontFamily:"'Jost',sans-serif",fontSize:'.9rem',color:'#0e0e0d',background:'transparent'}}/>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.25)',background:'rgba(14,14,13,.06)',padding:'3px 8px',borderRadius:'3px'}}>ESC</span>
+            </div>
+            {/* Results */}
+            <div style={{maxHeight:'60vh',overflowY:'auto'}}>
+              {/* Section shortcuts */}
+              {(cmdkQuery === '' || 'secções'.includes(cmdkQuery.toLowerCase())) && (
+                <div style={{padding:'8px 0'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',padding:'6px 20px',marginBottom:'2px'}}>Secções</div>
+                  {NAV.filter(n=>cmdkQuery===''||n.label.toLowerCase().includes(cmdkQuery.toLowerCase())).map(n=>(
+                    <div key={n.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'10px 20px',cursor:'pointer',transition:'background .15s'}}
+                      onClick={()=>{setSection(n.id);setCmdkOpen(false)}}
+                      onMouseOver={e=>{(e.currentTarget as HTMLDivElement).style.background='rgba(28,74,53,.04)'}}
+                      onMouseOut={e=>{(e.currentTarget as HTMLDivElement).style.background='transparent'}}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#1c4a35" strokeWidth="1.5" width="16" height="16"><path strokeLinecap="round" strokeLinejoin="round" d={n.icon}/></svg>
+                      <span style={{fontSize:'.82rem',color:'#0e0e0d'}}>{n.label}</span>
+                      {n.group && <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.3)',marginLeft:'auto'}}>{n.group}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Property search */}
+              {cmdkQuery.length >= 2 && (
+                <div style={{padding:'8px 0',borderTop:'1px solid rgba(14,14,13,.06)'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',padding:'6px 20px',marginBottom:'2px'}}>Imóveis</div>
+                  {imoveisList.filter(p=>String(p.nome).toLowerCase().includes(cmdkQuery.toLowerCase())||String(p.zona).toLowerCase().includes(cmdkQuery.toLowerCase())).slice(0,4).map(p=>(
+                    <div key={p.id as string} style={{display:'flex',alignItems:'center',gap:'12px',padding:'10px 20px',cursor:'pointer',transition:'background .15s'}}
+                      onClick={()=>{setSection('imoveis');setCmdkOpen(false)}}
+                      onMouseOver={e=>{(e.currentTarget as HTMLDivElement).style.background='rgba(201,169,110,.04)'}}
+                      onMouseOut={e=>{(e.currentTarget as HTMLDivElement).style.background='transparent'}}>
+                      <span style={{fontSize:'.9rem'}}>🏠</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:'.8rem',color:'#0e0e0d',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{String(p.nome)}</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)'}}>{String(p.zona)} · €{(Number(p.preco)/1e6).toFixed(2)}M</div>
+                      </div>
+                      <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'#c9a96e',flexShrink:0}}>{String(p.badge||'')}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Contact search */}
+              {cmdkQuery.length >= 2 && (
+                <div style={{padding:'8px 0',borderTop:'1px solid rgba(14,14,13,.06)'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',padding:'6px 20px',marginBottom:'2px'}}>Contactos CRM</div>
+                  {crmContacts.filter(c=>c.name.toLowerCase().includes(cmdkQuery.toLowerCase())||c.email.toLowerCase().includes(cmdkQuery.toLowerCase())).slice(0,3).map(c=>(
+                    <div key={c.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'10px 20px',cursor:'pointer',transition:'background .15s'}}
+                      onClick={()=>{setActiveCrmId(c.id);setSection('crm');setCmdkOpen(false)}}
+                      onMouseOver={e=>{(e.currentTarget as HTMLDivElement).style.background='rgba(201,169,110,.04)'}}
+                      onMouseOut={e=>{(e.currentTarget as HTMLDivElement).style.background='transparent'}}>
+                      <span style={{fontSize:'.9rem'}}>{c.status==='vip'?'⭐':c.status==='cliente'?'✅':'👤'}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:'.8rem',color:'#0e0e0d',fontWeight:500}}>{c.name}</div>
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)'}}>{c.nationality} · €{((c.budgetMin||0)/1e6).toFixed(1)}M–€{((c.budgetMax||0)/1e6).toFixed(1)}M</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div style={{padding:'8px 20px',borderTop:'1px solid rgba(14,14,13,.06)',display:'flex',gap:'16px',alignItems:'center'}}>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.25)'}}>↑↓ navegar</span>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.25)'}}>↵ abrir</span>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.25)'}}>Esc fechar</span>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.2)',marginLeft:'auto'}}>⌘K</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING ACTION BUTTON ── */}
+      <div style={{position:'fixed',bottom:'28px',right:'28px',zIndex:8000,display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'10px'}}>
+        {fabOpen && (
+          <div style={{display:'flex',flexDirection:'column',gap:'8px',alignItems:'flex-end'}}>
+            {[
+              { label:'⌘K Pesquisa Rápida', action:()=>{setCmdkOpen(true);setFabOpen(false)} },
+              { label:'+ Novo Deal', action:()=>{setSection('pipeline');setShowNewDeal(true);setFabOpen(false)} },
+              { label:'✦ Investor Pitch', action:()=>{setSection('investorpitch');setFabOpen(false)} },
+              { label:'🎬 Sofia Avatar', action:()=>{setSection('sofia');setFabOpen(false)} },
+              { label:'⚖ Jurídico IA', action:()=>{setSection('juridico');setFabOpen(false)} },
+              { label:'📊 AVM Avaliação', action:()=>{setSection('avm');setFabOpen(false)} },
+            ].map(item=>(
+              <button key={item.label} onClick={item.action}
+                style={{background:'#0c1f15',color:'#f4f0e6',border:'1px solid rgba(201,169,110,.2)',padding:'9px 18px',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.08em',cursor:'pointer',boxShadow:'0 4px 16px rgba(12,31,21,.3)',transition:'all .15s',whiteSpace:'nowrap'}}
+                onMouseOver={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor='#c9a96e';(e.currentTarget as HTMLButtonElement).style.color='#c9a96e'}}
+                onMouseOut={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.2)';(e.currentTarget as HTMLButtonElement).style.color='#f4f0e6'}}>
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <button onClick={()=>setFabOpen(o=>!o)}
+          style={{width:'52px',height:'52px',borderRadius:'50%',background:fabOpen?'#c9a96e':'#0c1f15',border:'2px solid rgba(201,169,110,.3)',color:fabOpen?'#0c1f15':'#c9a96e',fontSize:'1.3rem',cursor:'pointer',boxShadow:'0 6px 24px rgba(12,31,21,.35)',display:'flex',alignItems:'center',justifyContent:'center',transition:'all .25s',transform:fabOpen?'rotate(45deg)':'rotate(0deg)'}}>
+          {fabOpen ? '×' : '⚡'}
+        </button>
       </div>
 
       {/* FULLSCREEN LIGHTBOX */}
