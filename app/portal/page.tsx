@@ -2196,6 +2196,96 @@ ${dealsHtml}
                   )
                 })()}
 
+                {/* Row 7: Pipeline Velocity + Market Intelligence */}
+                {(() => {
+                  const fases = ['Angariação','Proposta','Negociação','CPCV','Escritura Concluída']
+                  const faseColors = ['#6366f1','#3b82f6','#f59e0b','#10b981','#c9a96e']
+                  const faseCounts = fases.map(f => deals.filter(d => d.fase === f).length)
+                  const maxCount = Math.max(1, ...faseCounts)
+                  // Avg days per stage (simulated from deal data)
+                  const faseAvgDays = [14, 21, 18, 45, 30]
+                  const marketZonas = [
+                    { zona:'Lisboa', price:5000, trend:+3.2 },
+                    { zona:'Cascais', price:4713, trend:+2.8 },
+                    { zona:'Algarve', price:3941, trend:+4.1 },
+                    { zona:'Porto', price:3643, trend:+2.1 },
+                    { zona:'Madeira', price:3760, trend:+5.3 },
+                    { zona:'Comporta', price:8500, trend:+6.7 },
+                  ]
+                  return (
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'28px'}}>
+                      {/* Pipeline Velocity */}
+                      <div className="p-card">
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>⚡ Pipeline Velocity</div>
+                        <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(14,14,13,.35)',marginBottom:'14px'}}>Deals por fase · tempo médio estimado</div>
+                        <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+                          {fases.map((fase, i) => {
+                            const count = faseCounts[i]
+                            const pct = Math.round(count / maxCount * 100)
+                            return (
+                              <div key={fase} style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.5)',width:'88px',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' as const}}>{fase}</div>
+                                <div style={{flex:1,height:'20px',background:'rgba(14,14,13,.04)',borderRadius:'2px',overflow:'hidden',position:'relative'}}>
+                                  <div style={{height:'100%',background:faseColors[i],width:`${Math.max(pct,4)}%`,borderRadius:'2px',opacity:.85,transition:'width .5s'}}/>
+                                  <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',paddingLeft:'8px',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.6)',fontWeight:700}}>{count} deal{count!==1?'s':''}</div>
+                                </div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.35)',width:'42px',textAlign:'right',flexShrink:0}}>~{faseAvgDays[i]}d</div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div style={{marginTop:'14px',padding:'10px',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.06)',display:'flex',gap:'16px'}}>
+                          <div style={{flex:1}}>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',color:'#1c4a35',lineHeight:1}}>{faseAvgDays.reduce((s,d)=>s+d,0)}</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',marginTop:'2px'}}>dias angariação→escritura</div>
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',color:'#c9a96e',lineHeight:1}}>{deals.filter(d=>d.fase!=='Escritura Concluída').length}</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',marginTop:'2px'}}>deals activos agora</div>
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',color:'#4a9c7a',lineHeight:1}}>€{Math.round(deals.filter(d=>d.fase!=='Escritura Concluída').reduce((s,d)=>s+(parseFloat(d.valor.replace(/[^0-9.]/g,''))||0),0)*0.05/1000)}K</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',marginTop:'2px'}}>comissão pipeline</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Market Intelligence */}
+                      <div className="p-card">
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>📈 Market Intelligence</div>
+                        <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.75rem',color:'rgba(14,14,13,.35)',marginBottom:'14px'}}>Preços médios €/m² · Q1 2026 · INE/AT</div>
+                        <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'14px'}}>
+                          {marketZonas.map(z => {
+                            const barPct = Math.round(z.price / 10000 * 100)
+                            const isPos = z.trend > 0
+                            return (
+                              <div key={z.zona} style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.55)',width:'72px',flexShrink:0}}>{z.zona}</div>
+                                <div style={{flex:1,height:'5px',background:'rgba(14,14,13,.06)',borderRadius:'3px',overflow:'hidden'}}>
+                                  <div style={{height:'100%',background:`linear-gradient(90deg,#1c4a35,#4a9c7a)`,width:`${barPct}%`,borderRadius:'3px'}}/>
+                                </div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.6)',width:'52px',textAlign:'right',flexShrink:0}}>€{z.price.toLocaleString('pt-PT')}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:isPos?'#10b981':'#e05454',width:'36px',textAlign:'right',flexShrink:0}}>{isPos?'↑':'↓'}{Math.abs(z.trend)}%</div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div style={{padding:'10px',background:'rgba(201,169,110,.04)',border:'1px solid rgba(201,169,110,.12)'}}>
+                          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',marginBottom:'6px',letterSpacing:'.08em'}}>MERCADO NACIONAL 2026</div>
+                          <div style={{display:'flex',gap:'12px',flexWrap:'wrap' as const}}>
+                            {[['€3.076/m²','Mediana PT'],['+17,6%','YoY'],[`169.812`,'Transacções'],['210d','Tempo Médio']].map(([v,l])=>(
+                              <div key={l} style={{textAlign:'center'}}>
+                                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',color:'#c9a96e',lineHeight:1}}>{v}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(14,14,13,.35)',marginTop:'2px'}}>{l}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 </div>
               </div>
             )}
