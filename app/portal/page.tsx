@@ -623,6 +623,7 @@ export default function Portal() {
     { id:'d3', name:'Reactiva\u00e7\u00e3o Lead Frio', status:'draft', emails:3, days:21, openRate:'29%' },
   ])
   const [expandedDrip, setExpandedDrip] = useState<string|null>(null)
+  const [campTab, setCampTab] = useState<'email'|'whatsapp'>('email')
 
   // Sofia Avatar IA
   const sofiaVideoRef = useRef<HTMLVideoElement|null>(null)
@@ -2081,6 +2082,97 @@ ${dealsHtml}
                       </div>
                       <div style={{textAlign:'right',marginTop:'8px'}}>
                         <button onClick={()=>setSection('crm')} style={{background:'none',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'#1c4a35',cursor:'pointer',letterSpacing:'.1em'}}>Ver todos no CRM →</button>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Row 6: Agent Performance + Deal Velocity */}
+                {(() => {
+                  const closedDeals = deals.filter(d => d.fase === 'Escritura Concluída')
+                  const totalCommClosed = closedDeals.reduce((s,d) => s + ((parseFloat(d.valor.replace(/[^0-9.]/g,''))||0)*0.05), 0)
+                  const ytdTarget = 300000 // €300K commission target 2026
+                  const ytdPct = Math.min(100, Math.round(totalCommClosed / ytdTarget * 100))
+                  const activePipeline = deals.filter(d => d.fase !== 'Escritura Concluída')
+                  const avgDealSize = activePipeline.length ? activePipeline.reduce((s,d)=>s+(parseFloat(d.valor.replace(/[^0-9.]/g,''))||0),0)/activePipeline.length : 0
+                  const conversionRate = deals.length ? Math.round(closedDeals.length / deals.length * 100) : 0
+                  const zonaStats: Record<string, number> = {}
+                  imoveisList.forEach(p => { const z = String(p.zona).split('—')[0].trim(); zonaStats[z] = (zonaStats[z]||0) + 1 })
+                  const topZonas = Object.entries(zonaStats).sort((a,b)=>b[1]-a[1]).slice(0,5)
+                  return (
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'16px',marginBottom:'28px'}}>
+                      {/* Goal Tracker */}
+                      <div className="p-card">
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'14px'}}>🎯 Objectivo 2026</div>
+                        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:'10px'}}>
+                          <div>
+                            <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.8rem',color:'#1c4a35',lineHeight:1}}>€{Math.round(totalCommClosed/1000)}K</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',marginTop:'4px'}}>Comissão recebida 2026</div>
+                          </div>
+                          <div style={{textAlign:'right'}}>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.6rem',fontWeight:700,color:ytdPct>=80?'#10b981':ytdPct>=50?'#c9a96e':'rgba(14,14,13,.4)'}}>{ytdPct}%</div>
+                            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.3)'}}>meta €{Math.round(ytdTarget/1000)}K</div>
+                          </div>
+                        </div>
+                        {/* Progress bar */}
+                        <div style={{height:'8px',background:'rgba(14,14,13,.08)',borderRadius:'4px',overflow:'hidden',marginBottom:'14px',position:'relative'}}>
+                          <div style={{height:'100%',borderRadius:'4px',background:`linear-gradient(90deg,#1c4a35,#c9a96e)`,width:`${ytdPct}%`,transition:'width .6s'}}/>
+                          {[25,50,75].map(mark => (
+                            <div key={mark} style={{position:'absolute',top:0,bottom:0,left:`${mark}%`,width:'1px',background:'rgba(255,255,255,.4)'}}/>
+                          ))}
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px'}}>
+                          {[
+                            { label:'Deals Fechados', val:String(closedDeals.length), color:'#1c4a35' },
+                            { label:'Conversão', val:`${conversionRate}%`, color:'#c9a96e' },
+                            { label:'Avg Deal Size', val:`€${(avgDealSize/1e6).toFixed(1)}M`, color:'#4a9c7a' },
+                          ].map(k => (
+                            <div key={k.label} style={{textAlign:'center',padding:'10px 6px',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.06)'}}>
+                              <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',color:k.color,lineHeight:1}}>{k.val}</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',marginTop:'4px',letterSpacing:'.06em'}}>{k.label}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{marginTop:'12px',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.3)'}}>
+                          Restam €{Math.round(Math.max(0,ytdTarget-totalCommClosed)/1000)}K para meta 2026 · {Math.max(0,Math.round((ytdTarget-totalCommClosed)/(ytdTarget/12)))} meses
+                        </div>
+                      </div>
+
+                      {/* Portfolio Distribution */}
+                      <div className="p-card">
+                        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'14px'}}>📍 Distribuição Portfólio</div>
+                        <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'14px'}}>
+                          {topZonas.map(([zona, count]) => {
+                            const pct = Math.round(count / imoveisList.length * 100)
+                            const totalVal = imoveisList.filter(p=>String(p.zona).startsWith(zona)).reduce((s,p)=>s+Number(p.preco),0)
+                            return (
+                              <div key={zona} style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.55)',width:'80px',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{zona}</div>
+                                <div style={{flex:1,height:'6px',background:'rgba(14,14,13,.06)',borderRadius:'3px',overflow:'hidden'}}>
+                                  <div style={{height:'100%',background:'linear-gradient(90deg,#1c4a35,#4a9c7a)',width:`${pct}%`,borderRadius:'3px'}}/>
+                                </div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',minWidth:'28px',textAlign:'right'}}>{count}</div>
+                                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#c9a96e',minWidth:'48px',textAlign:'right'}}>€{(totalVal/1e6).toFixed(1)}M</div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
+                          {[
+                            { label:'Total Imóveis', val:String(imoveisList.length), color:'#1c4a35' },
+                            { label:'Portfolio Total', val:`€${(imoveisList.reduce((s,p)=>s+Number(p.preco),0)/1e6).toFixed(1)}M`, color:'#c9a96e' },
+                          ].map(k => (
+                            <div key={k.label} style={{textAlign:'center',padding:'10px',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.06)'}}>
+                              <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.3rem',color:k.color,lineHeight:1}}>{k.val}</div>
+                              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.4)',marginTop:'4px'}}>{k.label}</div>
+                            </div>
+                          ))}
+                        </div>
+                        <button onClick={()=>setSection('imoveis')} style={{marginTop:'12px',width:'100%',background:'none',border:'1px solid rgba(14,14,13,.1)',color:'rgba(14,14,13,.45)',padding:'8px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer',letterSpacing:'.1em',transition:'all .2s'}}
+                          onMouseOver={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor='#1c4a35';(e.currentTarget as HTMLButtonElement).style.color='#1c4a35'}}
+                          onMouseOut={e=>{(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(14,14,13,.1)';(e.currentTarget as HTMLButtonElement).style.color='rgba(14,14,13,.45)'}}>
+                          Gestão do Portfólio →
+                        </button>
                       </div>
                     </div>
                   )
@@ -8431,7 +8523,6 @@ Agency Group · AMI 22506 · geral@agencygroup.pt`}
                 paused: { label:'Pausada', bg:'rgba(201,169,110,.1)', color:'#c9a96e' },
                 draft: { label:'Rascunho', bg:'rgba(136,136,136,.1)', color:'#888' },
               }
-              const [campTab, setCampTab] = (useState as <T>(v:T)=>[T,(v:T)=>void])('email') as [string, (v:string)=>void]
               const WA_STATS = [
                 { template:'Contacto Inicial', sent:127, delivered:124, read:89, response:34, responseRate:'27%', lang:'PT/EN/FR' },
                 { template:'Follow-up', sent:98, delivered:97, read:71, response:29, responseRate:'30%', lang:'PT/EN' },
