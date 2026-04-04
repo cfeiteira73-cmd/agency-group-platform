@@ -786,33 +786,36 @@ export default function Home() {
 
       {/* SEARCH */}
       <div className="search-wrap">
-        {/* Mode Toggle */}
-        <div style={{display:'flex',justifyContent:'center',marginBottom:'14px'}}>
-          <button onClick={()=>{setSearchMode('filtros');setAiResults(null);setAiSummary('')}} style={{background:searchMode==='filtros'?'#c9a96e':'rgba(255,255,255,.07)',color:searchMode==='filtros'?'#0c1f15':'rgba(244,240,230,.5)',border:'none',padding:'9px 28px',fontFamily:"'Jost',sans-serif",fontSize:'.58rem',fontWeight:600,letterSpacing:'.15em',textTransform:'uppercase',cursor:'pointer',transition:'all .2s',borderRadius:'0'}}>⊞ Filtros</button>
-          <button onClick={()=>setSearchMode('ai')} style={{background:searchMode==='ai'?'#c9a96e':'rgba(255,255,255,.07)',color:searchMode==='ai'?'#0c1f15':'rgba(244,240,230,.5)',border:'none',padding:'9px 28px',fontFamily:"'Jost',sans-serif",fontSize:'.58rem',fontWeight:600,letterSpacing:'.15em',textTransform:'uppercase',cursor:'pointer',transition:'all .2s',borderRadius:'0'}}>✦ Linguagem Natural</button>
+        <div className="search-box" id="searchBox">
+          {/* Tabs — inside the box, no overlap with marquee */}
+          <div className="search-tabs">
+            <button className={`search-tab${searchMode==='filtros'?' active':''}`} onClick={()=>{setSearchMode('filtros');setAiResults(null);setAiSummary('')}}>⊞ Filtros</button>
+            <button className={`search-tab${searchMode==='ai'?' active':''}`} onClick={()=>setSearchMode('ai')}>✦ Linguagem Natural</button>
+          </div>
+          {/* Fields */}
+          {searchMode==='filtros' ? (
+            <div className="search-fields">
+              <div className="sf" style={{flex:2}}>
+                <label className="sf-lbl">Localização</label>
+                <input className="sf-inp" type="text" id="sfQ" placeholder="Lisboa, Cascais, Comporta..." value={searchZona} onChange={e=>{setSearchZona(e.target.value)}}/>
+              </div>
+              <div className="sf"><label className="sf-lbl">Tipo</label><select className="sf-sel" value={searchTipo} onChange={e=>setSearchTipo(e.target.value)}><option value="">Todos</option><option value="Apartamento">Apartamento</option><option value="Moradia">Moradia</option><option value="Villa">Villa</option><option value="Penthouse">Penthouse</option><option value="Quinta">Quinta</option></select></div>
+              <div className="sf"><label className="sf-lbl">Preço</label><select className="sf-sel" value={searchPreco} onChange={e=>setSearchPreco(e.target.value)}><option value="">Qualquer</option><option value="500-1000">€500K–€1M</option><option value="1000-2500">€1M–€2.5M</option><option value="2500-5000">€2.5M–€5M</option><option value="5000-999999">€5M+</option></select></div>
+              <div className="sf"><label className="sf-lbl">Quartos (mín.)</label><select className="sf-sel" value={searchQuartos} onChange={e=>setSearchQuartos(e.target.value)}><option value="">Todos</option><option value="1">T1+</option><option value="2">T2+</option><option value="3">T3+</option><option value="4">T4+</option><option value="5">T5+</option></select></div>
+              <button className="sf-btn" onClick={doSearch}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Descobrir</button>
+            </div>
+          ) : (
+            <div className="search-fields" style={{gap:'16px',alignItems:'flex-end',padding:'18px 24px'}}>
+              <div style={{flex:1}}>
+                <label className="sf-lbl" style={{letterSpacing:'.12em'}}>Descreve o imóvel que imaginas</label>
+                <input className="sf-inp" type="text" placeholder='"T3 com piscina em Cascais até €2M, vista mar, garagem..."' value={naturalQuery} onChange={e=>setNaturalQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAiSearch()} style={{width:'100%'}}/>
+              </div>
+              <button className="sf-btn" onClick={doAiSearch} disabled={aiLoading} style={{opacity:aiLoading?.65:1,whiteSpace:'nowrap',flexShrink:0}}>
+                {aiLoading ? '✦ A analisar...' : '✦ Descobrir'}
+              </button>
+            </div>
+          )}
         </div>
-        {searchMode==='filtros' ? (
-          <div className="search-box" id="searchBox">
-            <div className="sf" style={{flex:2}}>
-              <label className="sf-lbl">Localização</label>
-              <input className="sf-inp" type="text" id="sfQ" placeholder="Lisboa, Cascais, Comporta..." value={searchZona} onChange={e=>{setSearchZona(e.target.value)}}/>
-            </div>
-            <div className="sf"><label className="sf-lbl">Tipo</label><select className="sf-sel" value={searchTipo} onChange={e=>setSearchTipo(e.target.value)}><option value="">Todos</option><option value="Apartamento">Apartamento</option><option value="Moradia">Moradia</option><option value="Villa">Villa</option><option value="Penthouse">Penthouse</option><option value="Quinta">Quinta</option></select></div>
-            <div className="sf"><label className="sf-lbl">Preço</label><select className="sf-sel" value={searchPreco} onChange={e=>setSearchPreco(e.target.value)}><option value="">Qualquer</option><option value="500-1000">€500K–€1M</option><option value="1000-2500">€1M–€2.5M</option><option value="2500-5000">€2.5M–€5M</option><option value="5000-999999">€5M+</option></select></div>
-            <div className="sf"><label className="sf-lbl">Quartos (mín.)</label><select className="sf-sel" value={searchQuartos} onChange={e=>setSearchQuartos(e.target.value)}><option value="">Todos</option><option value="1">T1+</option><option value="2">T2+</option><option value="3">T3+</option><option value="4">T4+</option><option value="5">T5+</option></select></div>
-            <button className="sf-btn" onClick={doSearch}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Descobrir</button>
-          </div>
-        ) : (
-          <div className="search-box" id="searchBox" style={{display:'flex',gap:'16px',alignItems:'flex-end'}}>
-            <div style={{flex:1}}>
-              <label className="sf-lbl" style={{color:'rgba(244,240,230,.4)',letterSpacing:'.12em'}}>Descreve o imóvel que imaginas</label>
-              <input className="sf-inp" type="text" placeholder='"T3 com piscina em Cascais até €2M, vista mar, garagem..."' value={naturalQuery} onChange={e=>setNaturalQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAiSearch()} style={{width:'100%'}}/>
-            </div>
-            <button className="sf-btn" onClick={doAiSearch} disabled={aiLoading} style={{opacity:aiLoading?.65:1,whiteSpace:'nowrap',background:'#c9a96e',color:'#0c1f15',flexShrink:0}}>
-              {aiLoading ? '✦ A analisar...' : '✦ Descobrir'}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ZONAS */}
