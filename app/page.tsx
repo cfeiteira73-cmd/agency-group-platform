@@ -366,18 +366,25 @@ export default function Home() {
       onComplete: () => {
         loader.classList.add('done')
         document.body.style.overflow = ''
-        setTimeout(heroEntrance, 200)
+        setTimeout(heroEntrance, 150)
       }
     })
     ldrTL
-      .to('#ldrA', { opacity: 1, duration: 0.5, ease: 'power2.out' })
-      .to('#ldrG', { opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.2')
-      .to('#ldrFill', { scaleX: 1, duration: 1.6, ease: 'power2.inOut' }, '-=0.3')
-      .to('#ldrTxt', { opacity: 1, duration: 0.4, ease: 'power2.out' }, '-=1')
-      .to(loader, { opacity: 0, duration: 0.6, ease: 'power2.inOut' }, '+=0.3')
+      .to('#ldrA', { opacity: 1, duration: 0.4, ease: 'power2.out' })
+      .to('#ldrG', { opacity: 1, duration: 0.4, ease: 'power2.out' }, '-=0.2')
+      .to('#ldrFill', { scaleX: 1, duration: 0.9, ease: 'power2.inOut' }, '-=0.2')
+      .to('#ldrTxt', { opacity: 1, duration: 0.35, ease: 'power2.out' }, '-=0.55')
+      .to(loader, { opacity: 0, duration: 0.45, ease: 'power2.inOut' })
 
     // HERO ENTRANCE
     function heroEntrance() {
+      // Set initial hidden states (CSS no longer has them — progressive enhancement)
+      gsap.set('.hero-h1 .line-inner', { y: '110%' })
+      gsap.set('#hSub', { opacity: 0, y: 20 })
+      gsap.set('#hBtns', { opacity: 0, y: 20 })
+      gsap.set('#hStats', { opacity: 0, x: 20 })
+      gsap.set('#hScroll', { opacity: 0 })
+      gsap.set('#searchBox', { opacity: 0, y: 16 })
       const tl = gsap.timeline()
       tl.fromTo('#hEye',
           { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
@@ -425,19 +432,23 @@ export default function Home() {
             onEnter: () => document.getElementById('mainNav')?.classList.add('solid'),
             onLeaveBack: () => document.getElementById('mainNav')?.classList.remove('solid'),
           })
+          // Set initial states programmatically (CSS no longer hides these — progressive enhancement)
+          gsap.set('.text-reveal-inner', { y: '100%' })
+          gsap.set('.clip-reveal', { clipPath: 'inset(0 100% 0 0)' })
+          gsap.set('.fade-in', { opacity: 0, y: 24 })
           // TEXT REVEALS
           document.querySelectorAll('.text-reveal').forEach(el => {
             const inner = el.querySelector('.text-reveal-inner')
             if (!inner) return
-            gsap.to(inner, { y:0, duration:0.9, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 88%', once:true }})
+            gsap.fromTo(inner, { y: '100%' }, { y:0, duration:0.9, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 88%', once:true }})
           })
           // CLIP REVEALS
           document.querySelectorAll('.clip-reveal').forEach(el => {
-            gsap.to(el, { clipPath:'inset(0 0% 0 0)', duration:0.9, ease:'power3.inOut', scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
+            gsap.fromTo(el, { clipPath: 'inset(0 100% 0 0)' }, { clipPath:'inset(0 0% 0 0)', duration:0.9, ease:'power3.inOut', scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
           })
           // FADE IN
           document.querySelectorAll('.fade-in').forEach((el, i) => {
-            gsap.to(el, { opacity:1, y:0, duration:0.8, ease:'power2.out', delay:(i%3)*0.08, scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
+            gsap.fromTo(el, { opacity:0, y:24 }, { opacity:1, y:0, duration:0.8, ease:'power2.out', delay:(i%3)*0.08, scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
           })
           // IMÓVEIS CLIP-PATH REVEAL
           document.querySelectorAll<HTMLElement>('.imc').forEach((card, i) => {
@@ -455,11 +466,12 @@ export default function Home() {
           }
           // MARKET BARS ANIMATION
           if (document.querySelector('.mkt-zones')) {
+            gsap.set('.mkt-fill', { scaleX: 0, transformOrigin: 'left' })
             gsap.to('.mkt-fill', { scaleX:1, duration:1.4, stagger:0.08, ease:'power3.out', scrollTrigger:{ trigger:'.mkt-zones', start:'top 80%', once:true }})
           }
-          // CREDENCIAIS
+          // CREDENCIAIS — override the .fade-in set above
           if (document.querySelector('.cred-grid')) {
-            gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.7, stagger:0.1, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
+            gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.8, stagger:0.12, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
           }
           // FONTS READY — final refresh after all triggers registered
           document.fonts.ready.then(() => {
