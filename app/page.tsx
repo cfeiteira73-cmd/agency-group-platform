@@ -397,27 +397,27 @@ export default function Home() {
       .to('#ldrG', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' }, '-=0.45')
       .to('#ldrFill', { scaleX: 1, duration: 1.2, ease: 'power3.out' }, '-=0.4')
       .to('#ldrTxt', { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, '-=0.9')
-      .to(loader, { opacity: 0, duration: 0.6, ease: 'power2.inOut', delay: 0.3 })
+      .to(loader, { opacity: 0, scale: 1.03, duration: 0.65, ease: 'power3.inOut', delay: 0.3 })
 
     // HERO ENTRANCE
     function heroEntrance() {
       // Set initial hidden states (CSS no longer has them — progressive enhancement)
       gsap.set('.hero-h1 .line-inner', { y: '115%' })
-      gsap.set('#hSub', { opacity: 0, y: 28, filter: 'blur(4px)' })
-      gsap.set('#hBtns', { opacity: 0, y: 24 })
-      gsap.set('#hStats', { opacity: 0, y: 20 })
-      gsap.set('#hScroll', { opacity: 0, y: 8 })
-      gsap.set('#searchBox', { opacity: 0, y: 32 })
+      gsap.set('#hSub', { opacity: 0, y: 36, filter: 'blur(4px)' })
+      gsap.set('#hBtns', { opacity: 0, y: 32 })
+      gsap.set('#hStats', { opacity: 0, y: 24 })
+      gsap.set('#hScroll', { opacity: 0, y: 12 })
+      gsap.set('#searchBox', { opacity: 0, y: 28 })
       const tl = gsap.timeline()
       tl.fromTo('#hEye',
-          { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
-          { clipPath: 'inset(0 0% 0 0)', duration: 1.0, ease: 'expo.inOut' })
-        .to('.hero-h1 .line-inner', { y: 0, duration: 1.1, stagger: 0.11, ease: 'power4.out' }, '-=0.5')
-        .to('#hSub', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.85, ease: 'power4.out' }, '-=0.5')
-        .to('#hBtns', { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.35')
-        .to('#hStats', { opacity: 1, y: 0, duration: 0.75, ease: 'expo.out' }, '-=0.45')
-        .to('#searchBox', { opacity: 1, y: 0, duration: 0.8, ease: 'expo.out' }, '-=0.4')
-        .to('#hScroll', { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.3')
+          { clipPath: 'inset(0 100% 0 0)' },
+          { clipPath: 'inset(0 0% 0 0)', duration: 1.0, ease: 'power4.out' })
+        .to('.hero-h1 .line-inner', { y: 0, duration: 1.1, stagger: 0.14, ease: 'power4.out' }, '-=0.55')
+        .to('#hSub', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'power3.out' }, '-=0.4')
+        .to('#hBtns', { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, '-=0.35')
+        .to('#hStats', { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, '-=0.5')
+        .to('#searchBox', { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, '-=0.5')
+        .to('#hScroll', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '-=0.3')
       // Hero stat counters — count up after entrance (varied durations = luxury weight)
       ;[
         { sel: '#hStats > div:nth-child(1) .hs-n', to: 169, pre: '', suf: 'K', dur: 2.6 },
@@ -465,14 +465,14 @@ export default function Home() {
           gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ trigger: document.body, start:'top top', end:'bottom bottom', scrub:0.5 }})
           // NAV SOLID
           ScrollTrigger.create({
-            start: 60,
+            start: 90,
             onEnter: () => document.getElementById('mainNav')?.classList.add('solid'),
             onLeaveBack: () => document.getElementById('mainNav')?.classList.remove('solid'),
           })
           // Set initial states programmatically (CSS no longer hides these — progressive enhancement)
-          gsap.set('.text-reveal-inner', { y: '100%' })
+          gsap.set('.text-reveal-inner', { y: '102%' })
           gsap.set('.clip-reveal', { clipPath: 'inset(0 100% 0 0)' })
-          gsap.set('.fade-in', { opacity: 0, y: 24 })
+          gsap.set('.fade-in', { opacity: 0, y: 48 })
           // TEXT REVEALS — grouped by heading for stagger
           document.querySelectorAll('.sec-h2,.mkt-h2,.ag-h2').forEach(heading => {
             const lines = heading.querySelectorAll('.text-reveal-inner')
@@ -483,29 +483,32 @@ export default function Home() {
             const inner = el.querySelector('.text-reveal-inner')
             if (!inner) return
             if ((el.closest('.sec-h2,.mkt-h2,.ag-h2'))) return // already handled above
-            gsap.fromTo(inner, { y: '100%' }, { y:0, duration:0.9, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 82%', once:true }})
+            gsap.fromTo(inner, { y: '102%' }, { y:0, duration:1.1, ease:'power4.out', scrollTrigger:{ trigger:el, start:'top 82%', once:true }})
           })
           // CLIP REVEALS
           document.querySelectorAll('.clip-reveal').forEach(el => {
-            gsap.fromTo(el, { clipPath: 'inset(0 100% 0 0)' }, { clipPath:'inset(0 0% 0 0)', duration:0.7, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 85%', once:true }})
+            gsap.fromTo(el, { clipPath: 'inset(0 100% 0 0)' }, { clipPath:'inset(0 0% 0 0)', duration:1.2, ease:'power4.inOut', scrollTrigger:{ trigger:el, start:'top 85%', once:true }})
           })
           // FADE IN
-          document.querySelectorAll('.fade-in').forEach((el) => {
-            gsap.fromTo(el, { opacity:0, y:32 }, { opacity:1, y:0, duration:0.85, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 85%', once:true }})
+          document.querySelectorAll('.fade-in').forEach((el, i) => {
+            const delay = Math.min(i * 0.05, 0.25)
+            gsap.fromTo(el, { opacity:0, y:48 }, { opacity:1, y:0, duration:1.0, ease:'power3.out', delay, scrollTrigger:{ trigger:el, start:'top 84%', once:true }})
           })
           // IMÓVEIS CLIP-PATH REVEAL
           document.querySelectorAll<HTMLElement>('.imc').forEach((card, i) => {
             const revEl = card.querySelector('.imc-img-reveal')
             if (!revEl) return
-            gsap.timeline({ scrollTrigger:{ trigger:card, start:'top 85%', once:true, onEnter:()=>card.classList.add('revealed') }})
-              .to(revEl, { clipPath:'inset(0 0 100% 0)', duration:0.8, delay:(i%3)*0.12, ease:'power3.inOut' })
+            gsap.timeline({ scrollTrigger:{ trigger:card, start:'top 80%', once:true, onEnter:()=>card.classList.add('revealed') }})
+              .fromTo(revEl,
+                { clipPath:'inset(0 0 0% 0)' },
+                { clipPath:'inset(0 0 100% 0)', duration:1.2, delay: Math.min(i * 0.1, 0.3), ease:'power4.inOut' })
           })
           // ZONAS STAGGER
           if (document.querySelector('.zc') && document.querySelector('.zonas-grid')) {
             gsap.fromTo('.zc',
-              { clipPath:'inset(0 0 100% 0)', opacity:0.8 },
-              { clipPath:'inset(0 0 0% 0)', opacity:1, duration:0.8, stagger:{ amount:0.6, from:'start' }, ease:'power3.inOut',
-                scrollTrigger:{ trigger:'.zonas-grid', start:'top 80%', once:true } })
+              { clipPath:'inset(0 0 100% 0)', opacity:0 },
+              { clipPath:'inset(0 0 0% 0)', opacity:1, duration:1.1, stagger:{ amount:0.7, from:'start' }, ease:'power4.inOut',
+                scrollTrigger:{ trigger:'.zonas-grid', start:'top 78%', once:true } })
           }
           // MARKET BARS ANIMATION
           if (document.querySelector('.mkt-zones')) {
@@ -514,7 +517,7 @@ export default function Home() {
           }
           // CREDENCIAIS — override the .fade-in set above
           if (document.querySelector('.cred-grid')) {
-            gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.8, stagger:0.12, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
+            gsap.fromTo('.cred-c', { opacity:0, y:56 }, { opacity:1, y:0, duration:1.1, stagger:0.1, ease:'power3.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 82%', once:true }})
           }
           // NUMBER COUNTERS — credenciais
           ;[
@@ -526,7 +529,7 @@ export default function Home() {
             if (!el) return
             const obj = { n: 0 }
             gsap.to(obj, {
-              n: to, duration: 2.4, ease: 'power2.out',
+              n: to, duration: 2.8, ease: 'power4.out',
               scrollTrigger: { trigger: el, start: 'top 85%', once: true },
               onUpdate() { el.innerHTML = `${pre}${Math.round(obj.n)}<sup>${suf}</sup>` }
             })
@@ -535,10 +538,10 @@ export default function Home() {
           document.querySelectorAll<HTMLElement>('.btn-gold, .btn-outline').forEach(btn => {
             btn.addEventListener('mousemove', (e: MouseEvent) => {
               const r = btn.getBoundingClientRect()
-              gsap.to(btn, { x: (e.clientX-r.left-r.width/2)*0.28, y: (e.clientY-r.top-r.height/2)*0.28, duration: 0.5, ease: 'power2.out', overwrite: 'auto' })
+              gsap.to(btn, { x: (e.clientX-r.left-r.width/2)*0.22, y: (e.clientY-r.top-r.height/2)*0.22, duration: 0.35, ease: 'power3.out', overwrite: 'auto' })
             })
             btn.addEventListener('mouseleave', () => {
-              gsap.to(btn, { x: 0, y: 0, duration: 0.9, ease: 'elastic.out(1,0.35)', overwrite: 'auto' })
+              gsap.to(btn, { x: 0, y: 0, duration: 0.85, ease: 'elastic.out(0.75,0.4)', overwrite: 'auto' })
             })
           })
           // ZONE CARDS — mousemove image parallax (GSAP owns transform — CSS transform removed)
@@ -550,7 +553,7 @@ export default function Home() {
               gsap.to(bg, { x: ((e.clientX-r.left)/r.width-0.5)*22, y: ((e.clientY-r.top)/r.height-0.5)*22, scale: 1.06, duration: 0.6, ease: 'power2.out', overwrite: 'auto' })
             })
             card.addEventListener('mouseleave', () => {
-              gsap.to(bg, { x: 0, y: 0, scale: 1, duration: 0.9, ease: 'power2.out', overwrite: 'auto' })
+              gsap.to(bg, { x: 0, y: 0, scale: 1, duration: 1.1, ease: 'power3.out', overwrite: 'auto' })
             })
           })
           // FONTS READY — final refresh after all triggers registered
