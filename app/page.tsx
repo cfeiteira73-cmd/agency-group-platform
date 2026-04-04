@@ -162,16 +162,16 @@ function HomeMortgage() {
             <div style={{padding:'22px 26px',background:'#0c1f15',marginBottom:'12px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'16px'}}>
               <div>
                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>Prestação Mensal</div>
-                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:600,color:'#c9a96e',lineHeight:1}}>{fmtM(result.resultado.prestacao_mensal)}</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:400,color:'var(--gold)',lineHeight:1}}>{fmtM(result.resultado.prestacao_mensal)}</div>
               </div>
               <div>
                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAN</div>
-                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:600,color:'#f4f0e6',lineHeight:1}}>{result.resultado.tan_pct}%</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:300,color:'var(--cr)',lineHeight:1}}>{result.resultado.tan_pct}%</div>
                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.25)',marginTop:'2px'}}>Euribor {result.resultado.euribor_6m_pct}%</div>
               </div>
               <div>
                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAEG</div>
-                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:600,color:'#f4f0e6',lineHeight:1}}>{result.resultado.taeg_pct}%</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:300,color:'var(--cr)',lineHeight:1}}>{result.resultado.taeg_pct}%</div>
               </div>
             </div>
             {/* Key metrics */}
@@ -218,7 +218,7 @@ function HomeMortgage() {
                       <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'#0e0e0d',marginBottom:'1px'}}>{c.label}</div>
                       <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)'}}>TAN {c.tan_pct}%</div>
                     </div>
-                    <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:600,color:i===0?'#c9a96e':i===1?'#dc2626':'#1c4a35'}}>{fmtM(c.pmt)}<span style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',fontWeight:400}}>/mês</span></div>
+                    <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:400,color:i===0?'var(--gold)':i===1?'#dc2626':'var(--g)'}}>{fmtM(c.pmt)}<span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.35)',fontWeight:400}}>/mês</span></div>
                   </div>
                 ))}
               </div>
@@ -335,9 +335,22 @@ export default function Home() {
       el.addEventListener('focus',()=>document.body.classList.add('hovering'))
       el.addEventListener('blur',()=>document.body.classList.remove('hovering'))
     })
-    document.querySelectorAll('.hl,.market-section,.mq,.ag-section').forEach(el => {
+    document.querySelectorAll('.hl,.market-section,.mq,.ag-section,.test-section,.cred-section,.nhr-section,.cpcv-section').forEach(el => {
       el.addEventListener('mouseenter',()=>document.body.classList.add('on-dark'))
       el.addEventListener('mouseleave',()=>document.body.classList.remove('on-dark'))
+    })
+    // Zone cards — custom expanded cursor with zone name
+    const cTxt = document.getElementById('cTxt')
+    document.querySelectorAll('.zc').forEach(el => {
+      const nome = el.querySelector('.zc-nm')?.textContent || ''
+      el.addEventListener('mouseenter', () => {
+        if (cTxt) cTxt.textContent = nome
+        document.body.classList.add('on-zone')
+        document.body.classList.remove('hovering', 'on-dark')
+      })
+      el.addEventListener('mouseleave', () => {
+        document.body.classList.remove('on-zone')
+      })
     })
     const onKey = (e:KeyboardEvent) => {
       if (e.key==='Escape') {
@@ -362,39 +375,63 @@ export default function Home() {
     document.body.style.overflow = 'hidden'
     const loader = loaderRef.current
     if (!loader) return
+    const loaderEl = loader
+    function finishLoader() {
+      if (loaderEl.classList.contains('done')) return
+      loaderEl.classList.add('done')
+      document.body.style.overflow = ''
+      setTimeout(heroEntrance, 150)
+    }
+    // Safety: force loader out after 4500ms (cinematic loader needs breathing room)
+    const ldrSafetyTimer = setTimeout(finishLoader, 4500)
+    // Loader — cinematic luxury entrance
+    gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })
+    gsap.set('#ldrG', { y: 40, opacity: 0, filter: 'blur(8px)' })
+    gsap.set('#ldrFill', { scaleX: 0, transformOrigin: 'left center' })
+    gsap.set('#ldrTxt', { opacity: 0, y: 12 })
     const ldrTL = gsap.timeline({
-      onComplete: () => {
-        loader.classList.add('done')
-        document.body.style.overflow = ''
-        setTimeout(heroEntrance, 150)
-      }
+      onComplete: () => { clearTimeout(ldrSafetyTimer); finishLoader() }
     })
     ldrTL
-      .to('#ldrA', { opacity: 1, duration: 0.4, ease: 'power2.out' })
-      .to('#ldrG', { opacity: 1, duration: 0.4, ease: 'power2.out' }, '-=0.2')
-      .to('#ldrFill', { scaleX: 1, duration: 0.9, ease: 'power2.inOut' }, '-=0.2')
-      .to('#ldrTxt', { opacity: 1, duration: 0.35, ease: 'power2.out' }, '-=0.55')
-      .to(loader, { opacity: 0, duration: 0.45, ease: 'power2.inOut' })
+      .to('#ldrA', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' })
+      .to('#ldrG', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' }, '-=0.45')
+      .to('#ldrFill', { scaleX: 1, duration: 1.2, ease: 'power3.out' }, '-=0.4')
+      .to('#ldrTxt', { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, '-=0.9')
+      .to(loader, { opacity: 0, duration: 0.6, ease: 'power2.inOut', delay: 0.3 })
 
     // HERO ENTRANCE
     function heroEntrance() {
       // Set initial hidden states (CSS no longer has them — progressive enhancement)
-      gsap.set('.hero-h1 .line-inner', { y: '110%' })
-      gsap.set('#hSub', { opacity: 0, y: 20 })
-      gsap.set('#hBtns', { opacity: 0, y: 20 })
-      gsap.set('#hStats', { opacity: 0, x: 20 })
-      gsap.set('#hScroll', { opacity: 0 })
-      gsap.set('#searchBox', { opacity: 0, y: 16 })
+      gsap.set('.hero-h1 .line-inner', { y: '115%' })
+      gsap.set('#hSub', { opacity: 0, y: 28, filter: 'blur(4px)' })
+      gsap.set('#hBtns', { opacity: 0, y: 24 })
+      gsap.set('#hStats', { opacity: 0, y: 20 })
+      gsap.set('#hScroll', { opacity: 0, y: 8 })
+      gsap.set('#searchBox', { opacity: 0, y: 32 })
       const tl = gsap.timeline()
       tl.fromTo('#hEye',
           { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
-          { clipPath: 'inset(0 0% 0 0)', duration: 0.8, ease: 'power3.out' })
-        .to('.hero-h1 .line-inner', { y: 0, duration: 0.9, stagger: 0.15, ease: 'power3.out' }, '-=0.3')
-        .to('#hSub', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '-=0.3')
-        .to('#hBtns', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, '-=0.2')
-        .to('#hStats', { opacity: 1, x: 0, duration: 0.7, ease: 'power2.out' }, '-=0.3')
-        .to('#hScroll', { opacity: 1, duration: 0.5 }, '-=0.2')
-        .to('#searchBox', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, '-=0.3')
+          { clipPath: 'inset(0 0% 0 0)', duration: 1.0, ease: 'expo.inOut' })
+        .to('.hero-h1 .line-inner', { y: 0, duration: 1.1, stagger: 0.11, ease: 'power4.out' }, '-=0.5')
+        .to('#hSub', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.85, ease: 'power4.out' }, '-=0.5')
+        .to('#hBtns', { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.35')
+        .to('#hStats', { opacity: 1, y: 0, duration: 0.75, ease: 'expo.out' }, '-=0.45')
+        .to('#searchBox', { opacity: 1, y: 0, duration: 0.8, ease: 'expo.out' }, '-=0.4')
+        .to('#hScroll', { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, '-=0.3')
+      // Hero stat counters — count up after entrance (varied durations = luxury weight)
+      ;[
+        { sel: '#hStats > div:nth-child(1) .hs-n', to: 169, pre: '', suf: 'K', dur: 2.6 },
+        { sel: '#hStats > div:nth-child(2) .hs-n', to: 17, pre: '+', suf: '%', dur: 2.0 },
+        { sel: '#hStats > div:nth-child(3) .hs-n', to: 44, pre: '', suf: '%', dur: 2.2 },
+      ].forEach(({ sel, to, pre, suf, dur }, i) => {
+        const el = document.querySelector<HTMLElement>(sel)
+        if (!el) return
+        const obj = { n: 0 }
+        gsap.to(obj, {
+          n: to, duration: dur, ease: 'expo.out', delay: 1.4 + i * 0.18,
+          onUpdate() { el.innerHTML = `${pre}${Math.round(obj.n)}<em>${suf}</em>` }
+        })
+      })
     }
 
     // MARKET BARS DOM — build before GSAP context so elements exist when animated
@@ -425,7 +462,7 @@ export default function Home() {
       try {
         ctx = gsap.context(() => {
           // SCROLL PROGRESS
-          gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ trigger: document.body, start:'top top', end:'bottom bottom', scrub:0 }})
+          gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ trigger: document.body, start:'top top', end:'bottom bottom', scrub:0.5 }})
           // NAV SOLID
           ScrollTrigger.create({
             start: 60,
@@ -436,19 +473,25 @@ export default function Home() {
           gsap.set('.text-reveal-inner', { y: '100%' })
           gsap.set('.clip-reveal', { clipPath: 'inset(0 100% 0 0)' })
           gsap.set('.fade-in', { opacity: 0, y: 24 })
-          // TEXT REVEALS
+          // TEXT REVEALS — grouped by heading for stagger
+          document.querySelectorAll('.sec-h2,.mkt-h2,.ag-h2').forEach(heading => {
+            const lines = heading.querySelectorAll('.text-reveal-inner')
+            if (!lines.length) return
+            gsap.fromTo(lines, { y: '115%' }, { y:0, duration:1.1, stagger:0.11, ease:'power4.out', scrollTrigger:{ trigger:heading, start:'top 80%', once:true }})
+          })
           document.querySelectorAll('.text-reveal').forEach(el => {
             const inner = el.querySelector('.text-reveal-inner')
             if (!inner) return
-            gsap.fromTo(inner, { y: '100%' }, { y:0, duration:0.9, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 88%', once:true }})
+            if ((el.closest('.sec-h2,.mkt-h2,.ag-h2'))) return // already handled above
+            gsap.fromTo(inner, { y: '100%' }, { y:0, duration:0.9, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 82%', once:true }})
           })
           // CLIP REVEALS
           document.querySelectorAll('.clip-reveal').forEach(el => {
-            gsap.fromTo(el, { clipPath: 'inset(0 100% 0 0)' }, { clipPath:'inset(0 0% 0 0)', duration:0.9, ease:'power3.inOut', scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
+            gsap.fromTo(el, { clipPath: 'inset(0 100% 0 0)' }, { clipPath:'inset(0 0% 0 0)', duration:0.7, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 85%', once:true }})
           })
           // FADE IN
-          document.querySelectorAll('.fade-in').forEach((el, i) => {
-            gsap.fromTo(el, { opacity:0, y:24 }, { opacity:1, y:0, duration:0.8, ease:'power2.out', delay:(i%3)*0.08, scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
+          document.querySelectorAll('.fade-in').forEach((el) => {
+            gsap.fromTo(el, { opacity:0, y:32 }, { opacity:1, y:0, duration:0.85, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 85%', once:true }})
           })
           // IMÓVEIS CLIP-PATH REVEAL
           document.querySelectorAll<HTMLElement>('.imc').forEach((card, i) => {
@@ -473,6 +516,43 @@ export default function Home() {
           if (document.querySelector('.cred-grid')) {
             gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.8, stagger:0.12, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
           }
+          // NUMBER COUNTERS — credenciais
+          ;[
+            { sel: '.cred-c:nth-child(1) .cred-n', to: 169, pre: '', suf: 'K' },
+            { sel: '.cred-c:nth-child(2) .cred-n', to: 17, pre: '+', suf: '%' },
+            { sel: '.cred-c:nth-child(3) .cred-n', to: 44, pre: '', suf: '%' },
+          ].forEach(({ sel, to, pre, suf }) => {
+            const el = document.querySelector<HTMLElement>(sel)
+            if (!el) return
+            const obj = { n: 0 }
+            gsap.to(obj, {
+              n: to, duration: 2.4, ease: 'power2.out',
+              scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+              onUpdate() { el.innerHTML = `${pre}${Math.round(obj.n)}<sup>${suf}</sup>` }
+            })
+          })
+          // MAGNETIC BUTTONS
+          document.querySelectorAll<HTMLElement>('.btn-gold, .btn-outline').forEach(btn => {
+            btn.addEventListener('mousemove', (e: MouseEvent) => {
+              const r = btn.getBoundingClientRect()
+              gsap.to(btn, { x: (e.clientX-r.left-r.width/2)*0.28, y: (e.clientY-r.top-r.height/2)*0.28, duration: 0.5, ease: 'power2.out', overwrite: 'auto' })
+            })
+            btn.addEventListener('mouseleave', () => {
+              gsap.to(btn, { x: 0, y: 0, duration: 0.9, ease: 'elastic.out(1,0.35)', overwrite: 'auto' })
+            })
+          })
+          // ZONE CARDS — mousemove image parallax (GSAP owns transform — CSS transform removed)
+          document.querySelectorAll<HTMLElement>('.zc').forEach(card => {
+            const bg = card.querySelector<HTMLElement>('.zc-bg')
+            if (!bg) return
+            card.addEventListener('mousemove', (e: MouseEvent) => {
+              const r = card.getBoundingClientRect()
+              gsap.to(bg, { x: ((e.clientX-r.left)/r.width-0.5)*22, y: ((e.clientY-r.top)/r.height-0.5)*22, scale: 1.06, duration: 0.6, ease: 'power2.out', overwrite: 'auto' })
+            })
+            card.addEventListener('mouseleave', () => {
+              gsap.to(bg, { x: 0, y: 0, scale: 1, duration: 0.9, ease: 'power2.out', overwrite: 'auto' })
+            })
+          })
           // FONTS READY — final refresh after all triggers registered
           document.fonts.ready.then(() => {
             if (!cancelled) requestAnimationFrame(() => { if (!cancelled) ScrollTrigger.refresh() })
@@ -487,6 +567,8 @@ export default function Home() {
 
     return () => {
       cancelled = true
+      gsapInitRef.current = false   // allow re-init after StrictMode cleanup
+      clearTimeout(ldrSafetyTimer)
       cancelAnimationFrame(stRafId)
       ctx?.revert()
       document.body.style.overflow = ''
@@ -511,12 +593,12 @@ export default function Home() {
 
   // ═══ PROPERTIES DATA ═══
   const PROPERTIES = [
-    { id: 'rev0', feat: true, badge: 'b-off', bl: 'Off-Market', zona: 'Cascais', zonaLabel: 'Cascais · Quinta da Marinha', tipo: 'Moradia', titulo: 'Villa Contemporânea com Piscina Infinita e Vista Mar', specs: ['5 Quartos', '620 m²', 'Piscina Infinita', 'Vista Mar', '3 Garagens', 'EPC A'], preco: 3800000, precoLabel: '€ 3.800.000', pm2: '€6.129/m²', quartos: 5, grad: 'linear-gradient(145deg,#1c3d28,#0b1a10 55%,#3d8b68 100%)' },
-    { id: 'rev1', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Lisboa', zonaLabel: 'Lisboa · Chiado', tipo: 'Apartamento', titulo: 'Penthouse com Terraço e Vista Rio Tejo', specs: ['4 Quartos', '280 m²', 'Vista Rio', 'EPC A'], preco: 2100000, precoLabel: '€ 2.100.000', pm2: '€7.500/m²', quartos: 4, grad: 'linear-gradient(145deg,#0c2030,#060e18 60%,#1c4a35 100%)' },
-    { id: 'rev2', feat: false, badge: 'b-exc', bl: 'Exclusivo', zona: 'Comporta', zonaLabel: 'Comporta · Grândola', tipo: 'Quinta', titulo: 'Herdade Privada nos Arrozais da Comporta', specs: ['6 Quartos', '850 m²', '12 hectares', 'Piscina'], preco: 6500000, precoLabel: '€ 6.500.000', pm2: '€7.647/m²', quartos: 6, grad: 'linear-gradient(145deg,#2e2009,#140e05 60%,#c9a96e 100%)' },
-    { id: 'rev3', feat: false, badge: null, bl: null, zona: 'Cascais', zonaLabel: 'Abóboda · Cascais', tipo: 'Moradia', titulo: 'Moradia Contemporânea Nova Construção · Design Premium', specs: ['3 Quartos', '113 m²', 'Nova Construção'], preco: 1400000, precoLabel: '€ 1.400.000', pm2: '€12.389/m²', quartos: 3, grad: 'linear-gradient(145deg,#1a3a26,#081510 60%,#2d6a4f 100%)' },
-    { id: 'rev4', feat: false, badge: null, bl: null, zona: 'Ericeira', zonaLabel: "Ericeira · Ribeira d'Ilhas", tipo: 'Apartamento', titulo: 'Duplex Vista Mar · World Surf Reserve · Ericeira', specs: ['3 Quartos', '189 m²', 'Vista Mar'], preco: 679000, precoLabel: '€ 679.000', pm2: '€3.593/m²', quartos: 3, grad: 'linear-gradient(145deg,#081e1e,#040f0f 60%,#1c4a35 100%)' },
-    { id: 'rev5', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Oeiras', zonaLabel: 'Oeiras · Av. República', tipo: 'Apartamento', titulo: 'T4 Reabilitado com Terraço · Potencial Premium', specs: ['4 Quartos', '111 m²', 'Exclusividade 6M'], preco: 520000, precoLabel: '€ 520.000', pm2: '€4.685/m²', quartos: 4, grad: 'linear-gradient(145deg,#0a1828,#05090f 60%,#2d4a6a 100%)' },
+    { id: 'rev0', feat: true, badge: 'b-off', bl: 'Off-Market', zona: 'Cascais', zonaLabel: 'Cascais · Quinta da Marinha', tipo: 'Moradia', titulo: 'Villa Contemporânea com Piscina Infinita e Vista Mar', specs: ['5 Quartos', '620 m²', 'Piscina Infinita', 'Vista Mar', '3 Garagens', 'EPC A'], preco: 3800000, precoLabel: '€ 3.800.000', pm2: '€6.129/m²', quartos: 5, grad: 'linear-gradient(145deg,#1c3d28,#0b1a10 55%,#3d8b68 100%)', photo: '/properties/villa-cascais.jpg' },
+    { id: 'rev1', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Lisboa', zonaLabel: 'Lisboa · Chiado', tipo: 'Apartamento', titulo: 'Penthouse com Terraço e Vista Rio Tejo', specs: ['4 Quartos', '280 m²', 'Vista Rio', 'EPC A'], preco: 2100000, precoLabel: '€ 2.100.000', pm2: '€7.500/m²', quartos: 4, grad: 'linear-gradient(145deg,#0c2030,#060e18 60%,#1c4a35 100%)', photo: '/properties/penthouse-lisboa.jpg' },
+    { id: 'rev2', feat: false, badge: 'b-exc', bl: 'Exclusivo', zona: 'Comporta', zonaLabel: 'Comporta · Grândola', tipo: 'Quinta', titulo: 'Herdade Privada nos Arrozais da Comporta', specs: ['6 Quartos', '850 m²', '12 hectares', 'Piscina'], preco: 6500000, precoLabel: '€ 6.500.000', pm2: '€7.647/m²', quartos: 6, grad: 'linear-gradient(145deg,#2e2009,#140e05 60%,#c9a96e 100%)', photo: '/properties/quinta-comporta.jpg' },
+    { id: 'rev3', feat: false, badge: null, bl: null, zona: 'Cascais', zonaLabel: 'Abóboda · Cascais', tipo: 'Moradia', titulo: 'Moradia Contemporânea Nova Construção · Design Premium', specs: ['3 Quartos', '113 m²', 'Nova Construção'], preco: 1400000, precoLabel: '€ 1.400.000', pm2: '€12.389/m²', quartos: 3, grad: 'linear-gradient(145deg,#1a3a26,#081510 60%,#2d6a4f 100%)', photo: '/properties/moradia-cascais.jpg' },
+    { id: 'rev4', feat: false, badge: null, bl: null, zona: 'Ericeira', zonaLabel: "Ericeira · Ribeira d'Ilhas", tipo: 'Apartamento', titulo: 'Duplex Vista Mar · World Surf Reserve · Ericeira', specs: ['3 Quartos', '189 m²', 'Vista Mar'], preco: 679000, precoLabel: '€ 679.000', pm2: '€3.593/m²', quartos: 3, grad: 'linear-gradient(145deg,#081e1e,#040f0f 60%,#1c4a35 100%)', photo: '/properties/duplex-ericeira.jpg' },
+    { id: 'rev5', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Oeiras', zonaLabel: 'Oeiras · Av. República', tipo: 'Apartamento', titulo: 'T4 Reabilitado com Terraço · Potencial Premium', specs: ['4 Quartos', '111 m²', 'Exclusividade 6M'], preco: 520000, precoLabel: '€ 520.000', pm2: '€4.685/m²', quartos: 4, grad: 'linear-gradient(145deg,#0a1828,#05090f 60%,#2d4a6a 100%)', photo: '/properties/apartamento-oeiras.jpg' },
   ]
 
   // ═══ SEARCH STATE ═══
@@ -633,9 +715,9 @@ export default function Home() {
 
   // ═══ SLIDES DATA ═══
   const SLIDES = [
-    { badge:'b-off', label:'Off-Market', titulo:'Villa Contemporânea\nQuinta da Marinha · Cascais', preco:'€ 3.800.000', specs:'5 Qtos · 620m² · Vista Mar', num:'01', grad:'linear-gradient(140deg,#1a3a26,#0b1a10 50%,#2d6a4f 100%)' },
-    { badge:'b-new', label:'Novo', titulo:'Penthouse Panorâmica\nChiado · Lisboa', preco:'€ 2.100.000', specs:'4 Qtos · 280m² · Vista Rio', num:'02', grad:'linear-gradient(140deg,#0c2030,#060e18 50%,#1c4a35 100%)' },
-    { badge:'b-exc', label:'Exclusivo', titulo:'Herdade Privada\nComporta · Grândola', preco:'€ 6.500.000', specs:'6 Qtos · 850m² · 12 ha', num:'03', grad:'linear-gradient(140deg,#2e2009,#150f04 50%,#c9a96e 100%)' },
+    { badge:'b-off', label:'Off-Market', titulo:'Villa Contemporânea\nQuinta da Marinha · Cascais', preco:'€ 3.800.000', specs:'5 Qtos · 620m² · Vista Mar', num:'01', grad:'linear-gradient(140deg,#1a3a26,#0b1a10 50%,#2d6a4f 100%)', photo:'/slides/slide1.jpg' },
+    { badge:'b-new', label:'Novo', titulo:'Penthouse Panorâmica\nChiado · Lisboa', preco:'€ 2.100.000', specs:'4 Qtos · 280m² · Vista Rio', num:'02', grad:'linear-gradient(140deg,#0c2030,#060e18 50%,#1c4a35 100%)', photo:'/slides/slide2.jpg' },
+    { badge:'b-exc', label:'Exclusivo', titulo:'Herdade Privada\nComporta · Grândola', preco:'€ 6.500.000', specs:'6 Qtos · 850m² · 12 ha', num:'03', grad:'linear-gradient(140deg,#2e2009,#150f04 50%,#c9a96e 100%)', photo:'/slides/slide3.jpg' },
   ]
 
   return (
@@ -651,7 +733,7 @@ export default function Home() {
       </div>
 
       {/* CURSOR */}
-      <div id="cur"><div className="c-dot" id="cDot"></div><div className="c-ring" id="cRing"></div></div>
+      <div id="cur"><div className="c-dot" id="cDot"></div><div className="c-ring" id="cRing"><span className="c-txt" id="cTxt"></span></div></div>
       <div id="pgb"></div>
 
       {/* MODAL OFF-MARKET */}
@@ -764,7 +846,7 @@ export default function Home() {
           <div id="slides">
             {SLIDES.map((s,i)=>(
               <div key={i} className={`hr-slide${slideIdx===i?' on':''}`}>
-                <div className="hr-slide-bg" style={{background:s.grad}}></div>
+                <div className="hr-slide-bg" style={{backgroundImage:`url(${s.photo})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
                 <div className="hr-ov"></div>
                 <div className="hr-info">
                   <div className={`hr-badge ${s.badge}`}>{s.label}</div>
@@ -845,18 +927,18 @@ export default function Home() {
           </div>
           <div className="zonas-grid">
             {[
-              {c:'z1',nome:'Lisboa',pais:'Portugal',pm2:'€6.538/m²',yoy:'+19%',tag:'The city that reinvented itself'},
-              {c:'z2',nome:'Cascais',pais:'Portugal',pm2:'€6.638/m²',yoy:'+14%',tag:'Where old money meets the Atlantic'},
-              {c:'z3',nome:'Comporta',pais:'Portugal',pm2:'€11.000/m²',yoy:'+28%',tag:"Europe's last unhurried place"},
-              {c:'z4',nome:'Porto',pais:'Portugal',pm2:'€4.528/m²',yoy:'+12%',tag:'The river that seduces everyone'},
-              {c:'z5',nome:'Algarve',pais:'Portugal',pm2:'€5.200/m²',yoy:'+10%',tag:'300 mornings of light'},
-              {c:'z6',nome:'Madeira',pais:'Portugal',pm2:'€3.959/m²',yoy:'+20%',tag:'The island that needs nothing'},
-              {c:'z7',nome:'Sintra',pais:'Portugal',pm2:'€3.600/m²',yoy:'+13%',tag:'Where history forgot to leave'},
-              {c:'z8',nome:'Arrábida',pais:'Portugal',pm2:'€4.500/m²',yoy:'+19%',tag:'The coast nobody found yet'},
-              {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally'},
+              {c:'z1',nome:'Lisboa',pais:'Portugal',pm2:'€6.538/m²',yoy:'+19%',tag:'The city that reinvented itself',photo:'/zones/lisboa.jpg'},
+              {c:'z2',nome:'Cascais',pais:'Portugal',pm2:'€6.638/m²',yoy:'+14%',tag:'Where old money meets the Atlantic',photo:'/zones/cascais.jpg'},
+              {c:'z3',nome:'Comporta',pais:'Portugal',pm2:'€11.000/m²',yoy:'+28%',tag:"Europe's last unhurried place",photo:'/zones/comporta.jpg'},
+              {c:'z4',nome:'Porto',pais:'Portugal',pm2:'€4.528/m²',yoy:'+12%',tag:'The river that seduces everyone',photo:'/zones/porto.jpg'},
+              {c:'z5',nome:'Algarve',pais:'Portugal',pm2:'€5.200/m²',yoy:'+10%',tag:'300 mornings of light',photo:'/zones/algarve.jpg'},
+              {c:'z6',nome:'Madeira',pais:'Portugal',pm2:'€3.760/m²',yoy:'+20%',tag:'The island that needs nothing',photo:'/zones/madeira.jpg'},
+              {c:'z7',nome:'Sintra',pais:'Portugal',pm2:'€3.600/m²',yoy:'+13%',tag:'Where history forgot to leave',photo:'/zones/sintra.jpg'},
+              {c:'z8',nome:'Arrábida',pais:'Portugal',pm2:'€4.500/m²',yoy:'+19%',tag:'The coast nobody found yet',photo:'/zones/arrabida.jpg'},
+              {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally',photo:'/zones/ericeira.jpg'},
             ].map(z=>(
               <div key={z.c} className={`zc ${z.c}`} onClick={()=>filterZ(z.nome)}>
-                <div className="zc-bg"></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
+                <div className="zc-bg" style={{backgroundImage:`url(${z.photo})`}}></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
                 <div className="zc-c">
                   <div className="zc-id">{z.nome} · {z.pais}</div>
                   <h3 className="zc-nm">{z.nome}</h3>
@@ -952,7 +1034,7 @@ export default function Home() {
                 <div key={im.id} className={`imc${im.feat?' feat':''}`}>
                   <div className="imc-img">
                     <div className="imc-img-reveal" id={im.id}></div>
-                    <div className="imc-img-inner" style={{background:im.grad}}></div>
+                    <div className="imc-img-inner" style={{backgroundImage:`url(${im.photo})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
                     {im.badge && <span className={`imc-badge ${im.badge}`}>{im.bl}</span>}
                   </div>
                   <div className="imc-body">
@@ -1070,7 +1152,7 @@ export default function Home() {
       <section id="simulador" style={{background:'#f4f0e6',padding:'112px 0',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
         <div className="sw">
           <div style={{marginBottom:'40px'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Simulador · Crédito Habitação · Portugal</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Simulação · Crédito Habitação · Portugal</div>
             <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2.2rem,4vw,4rem)',color:'#0e0e0d',lineHeight:1.05,marginBottom:'12px',letterSpacing:'-.012em'}}>A Verdade <em style={{fontStyle:'italic',color:'#1c4a35'}}>Sobre o Crédito</em></h2>
             <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.86rem',lineHeight:1.8,color:'rgba(14,14,13,.5)',maxWidth:'560px'}}>Euribor 6M em tempo real · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização · DSTI Banco de Portugal · IMT + IS incluído</p>
           </div>
