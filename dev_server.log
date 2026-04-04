@@ -1,0 +1,46 @@
+▲ Next.js 16.2.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.246:3000
+- Environments: .env.local
+✓ Ready in 999ms
+
+○ Compiling / ...
+
+thread 'tokio-runtime-worker' (52608) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 81699 (TaskId { id: 81699 } <ModuleAssetContext as AssetContext>::process) from TaskId 178563 (TaskId { id: 178563 } primary_chunkable_referenced_modules) as they don't exist as upper or follower edges
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'tokio-runtime-worker' (64968) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220658 (TaskId { id: 220658 } <ModuleAssetContext as AssetContext>::process) from TaskId 228819 (TaskId { id: 228819 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (70064) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 219993 (TaskId { id: 219993 } ModuleAssetContext::is_types_resolving_enabled) from TaskId 222312 (TaskId { id: 222312 } <EsmAssetReference as ModuleReference>::resolve_reference) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (68360) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 229094 (TaskId { id: 229094 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (10272) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 228275 (TaskId { id: 228275 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (71500) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 228813 (TaskId { id: 228813 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (68920) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 229475 (TaskId { id: 229475 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (67044) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 229196 (TaskId { id: 229196 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (62380) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 229107 (TaskId { id: 229107 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (64624) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1677:17:
+inner_of_uppers_lost_follower is not able to remove follower TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 220102 (TaskId { id: 220102 } SingleModuleGraph::new_with_entries), TaskId 234954 (TaskId { id: 234954 } SingleModuleGraph::new_with_entries) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (64908) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 227900 (TaskId { id: 227900 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+
+thread 'tokio-runtime-worker' (65856) panicked at turbopack\crates\turbo-tasks-backend\src\backend\operation\aggregation_update.rs:1864:17:
+inner_of_upper_lost_followers is not able to remove followers TaskId 220511 (TaskId { id: 220511 } <ModuleAssetContext as AssetContext>::process) from TaskId 229713 (TaskId { id: 229713 } EcmascriptModuleContent::new) as they don't exist as upper or follower edges
+  Reload env: .env.local
+[?25h

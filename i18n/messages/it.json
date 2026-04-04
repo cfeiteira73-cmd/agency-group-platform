@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "home": "Home",
+    "properties": "Proprietà",
+    "portal": "Portale",
+    "contact": "Contatto",
+    "about": "Chi Siamo"
+  },
+  "hero": {
+    "tagline": "Lisbona · Portogallo · AMI 22506",
+    "title": "Immobili di Lusso in Portogallo",
+    "subtitle": "Compriamo, vendiamo e gestiamo immobili premium a Lisbona, Cascais, Comporta, Algarve e Madeira.",
+    "cta_explore": "Esplora Proprietà",
+    "cta_visit": "Prenota una Visita",
+    "cta_contact": "Contatta un Consulente"
+  },
+  "search": {
+    "placeholder": "Descrivi l'immobile che stai cercando...",
+    "zona": "Zona",
+    "tipo": "Tipo",
+    "preco": "Prezzo",
+    "quartos": "Camere",
+    "button": "Cerca"
+  },
+  "property": {
+    "price": "Prezzo",
+    "area": "Superficie",
+    "bedrooms": "Camere da Letto",
+    "bathrooms": "Bagni",
+    "energy": "Certificato Energetico",
+    "schedule_visit": "Prenota una Visita",
+    "request_info": "Richiedi Informazioni",
+    "share": "Condividi",
+    "cma": "Analisi di Mercato",
+    "off_market": "Fuori Mercato",
+    "exclusive": "Esclusivo",
+    "featured": "In Evidenza",
+    "new": "Nuovo"
+  },
+  "calculators": {
+    "imt_title": "Calcolatore IMT + Imposta di Bollo",
+    "imt_valor": "Valore dell'Immobile",
+    "imt_tipo_hpp": "Prima Casa",
+    "imt_tipo_second": "Seconda Casa",
+    "imt_tipo_invest": "Investimento",
+    "imt_calculate": "Calcola",
+    "imt_total": "Totale da Pagare",
+    "imt_savings": "Risparmio vs. Seconda Casa",
+    "imt_exempt": "Esente da IMT",
+    "mortgage_title": "Simulatore Mutuo",
+    "avm_title": "Valutazione Automatica (AVM)",
+    "nhr_title": "Calcolatore NHR / IFICI"
+  },
+  "crm": {
+    "contacts": "Contatti",
+    "new_contact": "Nuovo Contatto",
+    "lead_score": "Punteggio Lead",
+    "last_contact": "Ultimo Contatto",
+    "budget": "Budget",
+    "status_lead": "Lead",
+    "status_prospect": "Prospect",
+    "status_cliente": "Cliente",
+    "status_vip": "VIP",
+    "email_draft": "Scrivi Email",
+    "meeting_prep": "Prepara Riunione",
+    "next_step": "Passo Successivo",
+    "whatsapp": "WhatsApp"
+  },
+  "pipeline": {
+    "title": "Pipeline Commerciale",
+    "stage_0": "Acquisizione",
+    "stage_1": "Proposta Inviata",
+    "stage_2": "Proposta Accettata",
+    "stage_3": "Due Diligence",
+    "stage_4": "Contratto Firmato",
+    "stage_5": "Finanziamento",
+    "stage_6": "Atto Programmato",
+    "stage_7": "Atto Completato",
+    "new_deal": "Nuovo Affare"
+  },
+  "notifications": {
+    "new_lead": "Nuovo lead: {name} — €{budget}",
+    "visit_tomorrow": "Visita domani: {property} alle {time}",
+    "deal_update": "L'affare {ref} è avanzato a {stage}",
+    "follow_up": "Follow-up in sospeso: {name}",
+    "enable_notifications": "Attiva Notifiche",
+    "notifications_enabled": "Notifiche attivate",
+    "notifications_denied": "Notifiche bloccate nel browser"
+  },
+  "common": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "close": "Chiudi",
+    "loading": "Caricamento...",
+    "error": "Si è verificato un errore. Si prega di riprovare.",
+    "success": "Salvato con successo",
+    "copy": "Copia",
+    "copied": "Copiato!",
+    "export_pdf": "Esporta PDF",
+    "export_csv": "Esporta CSV",
+    "share": "Condividi",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "all": "Tutti",
+    "none": "Nessuno",
+    "yes": "Sì",
+    "no": "No"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "address": "Lisbona, Portogallo",
+    "phone": "+351 910 000 000",
+    "email": "geral@agencygroup.pt",
+    "privacy": "Politica sulla Privacy",
+    "terms": "Termini e Condizioni",
+    "rights": "Tutti i diritti riservati"
+  }
+}

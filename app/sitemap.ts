@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import { PROPERTIES } from './imoveis/data'
 import { ARTICLES } from './blog/[slug]/articles'
 
-const BASE = 'https://agencygroup.pt'
+const BASE = 'https://www.agencygroup.pt'
 
 const ZONAS = ['lisboa', 'cascais', 'comporta', 'porto', 'algarve', 'madeira', 'sintra', 'ericeira']
 
@@ -26,16 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/ar`,              lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
     { url: `${BASE}/relatorio-2026`,  lastModified: now, changeFrequency: 'monthly', priority: 0.65 },
     { url: `${BASE}/reports`,         lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${BASE}/portal`,          lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
-    // ── Static blog articles ────────────────────────────────────────────────
-    { url: `${BASE}/blog/comprar-casa-portugal-2026`,         lastModified: new Date('2026-03-30'), changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${BASE}/blog/imt-impostos-portugal-2026`,         lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${BASE}/blog/visto-d7-portugal-2026`,             lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${BASE}/blog/credito-habitacao-estrangeiros-portugal`, lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${BASE}/blog/mais-valias-imoveis-portugal-2026`,  lastModified: new Date('2026-04-01'), changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${BASE}/blog/buying-property-portugal-2026`,     lastModified: new Date('2026-04-02'), changeFrequency: 'monthly' as const, priority: 0.78 },
-    { url: `${BASE}/blog/taxes-imt-portugal-2026`,           lastModified: new Date('2026-04-02'), changeFrequency: 'monthly' as const, priority: 0.78 },
-    { url: `${BASE}/blog/capital-gains-property-portugal-2026`, lastModified: new Date('2026-04-02'), changeFrequency: 'monthly' as const, priority: 0.78 },
+    // /portal is disallowed in robots.txt — excluded from sitemap
   ]
 
   // ── Zone pages ───────────────────────────────────────────────────────────────

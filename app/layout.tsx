@@ -1,43 +1,68 @@
 import type { Metadata } from 'next'
+import { Cormorant, Jost, DM_Mono } from 'next/font/google'
 import './globals.css'
 import Script from 'next/script'
 import { CurrencyProvider } from './components/CurrencyWidget'
 import PWAInstallBanner from './components/PWAInstallBanner'
 
+const cormorant = Cormorant({
+  subsets: ['latin'],
+  weight: ['300', '400'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-cormorant',
+})
+const jost = Jost({
+  subsets: ['latin'],
+  weight: ['200', '300', '400', '500'],
+  display: 'swap',
+  variable: '--font-jost',
+})
+const dmMono = DM_Mono({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  display: 'swap',
+  variable: '--font-dm-mono',
+})
+
 export const viewport = {
-  themeColor: '#1c4a35',
+  themeColor: '#0c1f15',
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export const metadata: Metadata = {
-  title: 'Agency Group · Imobiliário de Luxo Portugal · AMI 22506',
+  title: 'AgencyGroup.App · Imobiliário de Luxo Portugal · AMI 22506',
   description: 'Boutique imobiliária de luxo. Lisboa, Cascais, Comporta, Porto, Algarve, Madeira. €500K–€10M. AVM gratuito. AMI 22506.',
   robots: 'index, follow, max-image-preview:large',
   manifest: '/manifest.json',
   alternates: {
-    canonical: 'https://agencygroup.pt/',
+    canonical: 'https://www.agencygroup.pt/',
     languages: {
-      'pt-PT':   'https://agencygroup.pt/',
-      'en':      'https://agencygroup.pt/en/',
-      'fr':      'https://agencygroup.pt/fr/',
-      'de':      'https://agencygroup.pt/de',
-      'zh-Hans': 'https://agencygroup.pt/zh',
-      'ar':      'https://agencygroup.pt/ar',
+      'pt-PT':   'https://www.agencygroup.pt/',
+      'en':      'https://www.agencygroup.pt/en/',
+      'fr':      'https://www.agencygroup.pt/fr/',
+      'de':      'https://www.agencygroup.pt/de',
+      'zh-Hans': 'https://www.agencygroup.pt/zh',
+      'ar':      'https://www.agencygroup.pt/ar',
     },
   },
   openGraph: {
     title: 'Agency Group · Luxury Real Estate Portugal',
     description: 'Boutique luxury real estate agency. Lisbon, Cascais, Comporta, Porto, Algarve, Madeira. Free AVM. AMI 22506.',
     type: 'website',
-    url: 'https://agencygroup.pt/',
+    url: 'https://www.agencygroup.pt/',
     siteName: 'Agency Group',
     locale: 'pt_PT',
-    alternateLocale: ['en_US', 'fr_FR'],
+    alternateLocale: ['en_US', 'fr_FR', 'de_DE', 'zh_CN', 'ar_SA'],
+    images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630, alt: 'Agency Group — Luxury Real Estate Portugal' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Agency Group · Luxury Real Estate Portugal',
     description: 'Boutique luxury real estate agency. Lisbon, Cascais, Comporta. Free AVM. AMI 22506.',
     site: '@agencygroup_pt',
+    images: ['https://www.agencygroup.pt/og-image.jpg'],
   },
   other: {
     'geo.region':   'PT',
@@ -308,30 +333,8 @@ const schemaAggregateRatingExpanded = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-PT">
+    <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`}>
       <head>
-        {/* Hreflang alternate language links */}
-        <link rel="alternate" hrefLang="pt-PT"   href="https://agencygroup.pt/" />
-        <link rel="alternate" hrefLang="en"      href="https://agencygroup.pt/en/" />
-        <link rel="alternate" hrefLang="fr"      href="https://agencygroup.pt/fr/" />
-        <link rel="alternate" hrefLang="de"      href="https://agencygroup.pt/de" />
-        <link rel="alternate" hrefLang="zh-Hans" href="https://agencygroup.pt/zh" />
-        <link rel="alternate" hrefLang="ar"      href="https://agencygroup.pt/ar" />
-        <link rel="alternate" hrefLang="x-default" href="https://agencygroup.pt/" />
-
-        {/* Geo meta tags */}
-        <meta name="geo.region"   content="PT" />
-        <meta name="geo.placename" content="Lisboa" />
-        <meta name="geo.position" content="38.7169;-9.1399" />
-        <meta name="ICBM"         content="38.7169, -9.1399" />
-
-        {/* Twitter Card (supplement Next.js metadata) */}
-        <meta name="twitter:card"        content="summary_large_image" />
-        <meta name="twitter:site"        content="@agencygroup_pt" />
-        <meta name="twitter:title"       content="Agency Group · Luxury Real Estate Portugal" />
-        <meta name="twitter:description" content="Boutique luxury real estate agency. Lisbon, Cascais, Comporta. Free AVM. AMI 22506." />
-        <meta name="twitter:image"       content="https://agencygroup.pt/og-image.jpg" />
-
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
@@ -371,12 +374,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
       </head>
       <body>
+        {/* Skip-to-content — accessibility (CSS-only, no event handlers) */}
+        <a href="#main-content" className="skip-to-content">
+          Saltar para o conteúdo principal
+        </a>
         {/* Vercel Analytics */}
         <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />
         {/* Vercel Speed Insights */}
         <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
         <CurrencyProvider>
-        {children}
+        <main id="main-content">{children}</main>
         <PWAInstallBanner />
         <script dangerouslySetInnerHTML={{ __html: `
   if ('serviceWorker' in navigator) {

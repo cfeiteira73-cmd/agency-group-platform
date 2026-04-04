@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const RadarSchema = z.object({
+  url: z.string().min(5, 'URL ou texto inválido'),
+})
 
 // ─── Cache 6h ─────────────────────────────────────────────────────────────────
 const responseCache = new Map<string, { data: unknown; ts: number }>()
@@ -504,9 +509,12 @@ export async function POST(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
     if (!checkRate(ip)) return NextResponse.json({ error: 'Rate limit: 30 pedidos/hora.' }, { status: 429 })
 
-    const { url } = await req.json()
-    if (!url || String(url).trim().length < 5) return NextResponse.json({ error: 'URL ou texto inválido' }, { status: 400 })
-    const urlStr = String(url).trim()
+    const rawBody = await req.json()
+    const parsedBody = RadarSchema.safeParse(rawBody)
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsedBody.error.flatten() }, { status: 400 })
+    }
+    const urlStr = parsedBody.data.url.trim()
 
     const cacheKey = hashKey(urlStr)
     const cached = responseCache.get(cacheKey)

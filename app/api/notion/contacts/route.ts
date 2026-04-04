@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 
-const DB_ID = process.env.NOTION_CRM_DB || '385a010f42244ef79b0a2ead4f258698'
+const DB_ID = process.env.NOTION_CRM_DB
 const TOKEN = process.env.NOTION_TOKEN
 
 const headers = () => ({
@@ -11,7 +12,9 @@ const headers = () => ({
 
 // GET — list contacts, optional ?agent= filter (not supported in this DB, returns all)
 export async function GET(req: NextRequest) {
-  if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   const zona = req.nextUrl.searchParams.get('zona') || ''
 
   const body: Record<string, unknown> = {
@@ -28,7 +31,7 @@ export async function GET(req: NextRequest) {
     body: JSON.stringify(body),
   })
   const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
+  if (!res.ok) return NextResponse.json({ error: 'Failed to fetch contacts' }, { status: 500 })
 
   const contacts = (data.results || []).map((page: Record<string, unknown>) => {
     const props = page.properties as Record<string, Record<string, unknown>>
@@ -58,7 +61,9 @@ export async function GET(req: NextRequest) {
 
 // POST — create contact
 export async function POST(req: NextRequest) {
-  if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   const body = await req.json()
 
   const res = await fetch('https://api.notion.com/v1/pages', {
@@ -70,13 +75,15 @@ export async function POST(req: NextRequest) {
     }),
   })
   const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
+  if (!res.ok) return NextResponse.json({ error: 'Failed to create contact' }, { status: 500 })
   return NextResponse.json({ success: true, notionId: data.id })
 }
 
 // PATCH — update contact by notionId
 export async function PATCH(req: NextRequest) {
-  if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   const body = await req.json()
   const { notionId, ...contact } = body
   if (!notionId) return NextResponse.json({ error: 'notionId required' }, { status: 400 })
@@ -87,7 +94,7 @@ export async function PATCH(req: NextRequest) {
     body: JSON.stringify({ properties: buildProps(contact) }),
   })
   const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
+  if (!res.ok) return NextResponse.json({ error: 'Failed to update contact' }, { status: 500 })
   return NextResponse.json({ success: true })
 }
 

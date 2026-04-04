@@ -1,4 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const MaisValiasSchema = z.object({
+  preco_aquisicao:    z.number().positive('Preço de aquisição deve ser positivo'),
+  preco_venda:        z.number().positive('Preço de venda deve ser positivo'),
+  ano_aquisicao:      z.number().int().min(1970).max(2026),
+  despesas_aquisicao: z.number().min(0).optional().default(0),
+  despesas_venda:     z.number().min(0).optional().default(0),
+  obras:              z.number().min(0).optional().default(0),
+  residente:          z.boolean().optional().default(true),
+  habitacao_propria:  z.boolean().optional().default(false),
+  reinvestimento:     z.boolean().optional().default(false),
+  rendimento_anual:   z.number().min(0).optional().default(40000),
+})
 
 // ─── Coeficientes de desvalorização monetária AT (artigo 47º CIRS) ────────────
 const COEFICIENTES: Record<number, number> = {
@@ -33,23 +47,23 @@ function calcIRS(rendimento: number): number {
 
 export async function POST(req: NextRequest) {
   try {
-    const {
-      preco_aquisicao,      // € valor de compra
-      preco_venda,          // € valor de venda
-      ano_aquisicao,        // ano de compra (2000-2026)
-      despesas_aquisicao,   // IMT + IS + notário na compra
-      despesas_venda,       // comissão agente + notário na venda
-      obras,                // obras com factura nos últimos 12 anos
-      residente,            // residente fiscal em Portugal?
-      habitacao_propria,    // habitação própria e permanente?
-      reinvestimento,       // reinveste o produto numa nova HPP?
-      rendimento_anual,     // rendimento colectável anual (para calcular taxa marginal)
-    } = await req.json()
-
-    // Validação
-    if (!preco_aquisicao || !preco_venda || !ano_aquisicao) {
-      return NextResponse.json({ error: 'Campos obrigatórios em falta.' }, { status: 400 })
+    const raw = await req.json()
+    const parsed = MaisValiasSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
     }
+    const {
+      preco_aquisicao,
+      preco_venda,
+      ano_aquisicao,
+      despesas_aquisicao,
+      despesas_venda,
+      obras,
+      residente,
+      habitacao_propria,
+      reinvestimento,
+      rendimento_anual,
+    } = parsed.data
 
     const coef = COEFICIENTES[ano_aquisicao] ?? 1.00
 

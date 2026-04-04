@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "home": "Início",
+    "properties": "Imóveis",
+    "portal": "Portal",
+    "contact": "Contacto",
+    "about": "Sobre"
+  },
+  "hero": {
+    "tagline": "Lisboa · Portugal · AMI 22506",
+    "title": "Imóveis de Luxo em Portugal",
+    "subtitle": "Compramos, vendemos e gerimos imóveis premium em Lisboa, Cascais, Comporta, Algarve e Madeira.",
+    "cta_explore": "Explorar Imóveis",
+    "cta_visit": "Agendar Visita",
+    "cta_contact": "Contactar Consultor"
+  },
+  "search": {
+    "placeholder": "Descreva o imóvel que procura...",
+    "zona": "Zona",
+    "tipo": "Tipo",
+    "preco": "Preço",
+    "quartos": "Quartos",
+    "button": "Pesquisar"
+  },
+  "property": {
+    "price": "Preço",
+    "area": "Área",
+    "bedrooms": "Quartos",
+    "bathrooms": "Casas de Banho",
+    "energy": "Certificado Energético",
+    "schedule_visit": "Agendar Visita",
+    "request_info": "Pedir Informação",
+    "share": "Partilhar",
+    "cma": "Análise de Mercado",
+    "off_market": "Off-Market",
+    "exclusive": "Exclusivo",
+    "featured": "Destaque",
+    "new": "Novo"
+  },
+  "calculators": {
+    "imt_title": "Calculadora IMT + IS",
+    "imt_valor": "Valor do Imóvel",
+    "imt_tipo_hpp": "Habitação Própria Permanente",
+    "imt_tipo_second": "2ª Habitação",
+    "imt_tipo_invest": "Investimento",
+    "imt_calculate": "Calcular",
+    "imt_total": "Total a Pagar",
+    "imt_savings": "Poupança vs. 2ª Habitação",
+    "imt_exempt": "Isento de IMT",
+    "mortgage_title": "Simulador Crédito Habitação",
+    "avm_title": "Avaliação Automática (AVM)",
+    "nhr_title": "Calculadora NHR / IFICI"
+  },
+  "crm": {
+    "contacts": "Contactos",
+    "new_contact": "Novo Contacto",
+    "lead_score": "Lead Score",
+    "last_contact": "Último Contacto",
+    "budget": "Budget",
+    "status_lead": "Lead",
+    "status_prospect": "Prospect",
+    "status_cliente": "Cliente",
+    "status_vip": "VIP",
+    "email_draft": "Redigir Email",
+    "meeting_prep": "Preparar Reunião",
+    "next_step": "Próximo Passo",
+    "whatsapp": "WhatsApp"
+  },
+  "pipeline": {
+    "title": "Pipeline de Negócios",
+    "stage_0": "Angariação",
+    "stage_1": "Proposta Enviada",
+    "stage_2": "Proposta Aceite",
+    "stage_3": "Due Diligence",
+    "stage_4": "CPCV Assinado",
+    "stage_5": "Financiamento",
+    "stage_6": "Escritura Marcada",
+    "stage_7": "Escritura Concluída",
+    "new_deal": "Novo Deal"
+  },
+  "notifications": {
+    "new_lead": "Novo lead: {name} — €{budget}",
+    "visit_tomorrow": "Visita amanhã: {property} às {time}",
+    "deal_update": "Deal {ref} avançou para {stage}",
+    "follow_up": "Follow-up pendente: {name}",
+    "enable_notifications": "Activar Notificações",
+    "notifications_enabled": "Notificações activadas",
+    "notifications_denied": "Notificações bloqueadas no browser"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Fechar",
+    "loading": "A carregar...",
+    "error": "Ocorreu um erro. Tente novamente.",
+    "success": "Guardado com sucesso",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "export_pdf": "Exportar PDF",
+    "export_csv": "Exportar CSV",
+    "share": "Partilhar",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "all": "Todos",
+    "none": "Nenhum",
+    "yes": "Sim",
+    "no": "Não"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "address": "Lisboa, Portugal",
+    "phone": "+351 910 000 000",
+    "email": "geral@agencygroup.pt",
+    "privacy": "Política de Privacidade",
+    "terms": "Termos e Condições",
+    "rights": "Todos os direitos reservados"
+  }
+}

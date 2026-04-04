@@ -137,7 +137,7 @@ export default function PressSection() {
             fontWeight: 300,
             fontStyle: 'italic',
             fontSize: 'clamp(1.6rem, 3.5vw, 3rem)',
-            color: 'rgba(244,240,230,.88)',
+            color: 'rgba(244,240,230,.94)',
             lineHeight: 1.25,
             margin: '0 0 36px',
             letterSpacing: '-.01em',
@@ -154,7 +154,7 @@ export default function PressSection() {
               fontSize: '10px',
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
-              color: 'rgba(201,169,110,.55)',
+              color: 'rgba(201,169,110,.68)',
             }}>
               Bloomberg · Setembro 2024
             </span>
@@ -186,7 +186,7 @@ export default function PressSection() {
 
         <div style={{
           display: 'flex',
-          animation: 'pubTicker 30s linear infinite',
+          animation: 'pubTicker 44s linear infinite',
           whiteSpace: 'nowrap',
         }}>
           {[...Array(3)].map((_, rep) => (
@@ -286,10 +286,9 @@ export default function PressSection() {
               margin: '0 auto',
               lineHeight: 1.8,
             }}>
-              Imagine acordar com 53 restaurantes Michelin à porta, golf com o Atlântico como
-              pano de fundo, a maior onda do mundo a 2 horas e a cidade mais habitável da Europa
-              como rotina diária. Portugal não é apenas um país — é o estilo de vida que o mundo
-              inteiro cobiça.
+              53 restaurantes Michelin. Golf com o Atlântico. A maior onda do mundo a 2 horas.
+              A cidade mais habitável da Europa como rotina. Portugal não é um destino —
+              é o estilo de vida que o mundo inteiro cobiça.
             </p>
           </div>
 
@@ -393,7 +392,7 @@ function LifestyleCard({ name, cat, emoji, headline, sub, dream, color, url }: {
         fontFamily: "'Cormorant', serif",
         fontSize: 'clamp(1rem, 1.15vw, 1.2rem)',
         fontWeight: 300,
-        color: hovered ? '#f4f0e6' : 'rgba(244,240,230,.72)',
+        color: hovered ? '#f4f0e6' : 'rgba(244,240,230,.82)',
         lineHeight: 1.3,
         whiteSpace: 'pre-line',
         marginBottom: '12px',

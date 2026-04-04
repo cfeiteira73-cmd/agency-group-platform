@@ -3,6 +3,20 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+// Rate limit: 30 messages/hour per IP
+const rateLimitMap = new Map<string, { count: number; reset: number }>()
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip)
+  if (!entry || now > entry.reset) {
+    rateLimitMap.set(ip, { count: 1, reset: now + 3600000 })
+    return true
+  }
+  if (entry.count >= 30) return false
+  entry.count++
+  return true
+}
+
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY ?? '',
   dangerouslyAllowBrowser: true, // required for Next.js Edge Runtime
@@ -125,6 +139,11 @@ RESPONSE RULES:
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
+    if (!checkRateLimit(ip)) {
+      return new Response(JSON.stringify({ error: 'Rate limit: 30 mensagens/hora' }), { status: 429, headers: { 'Content-Type': 'application/json' } })
+    }
+
     const { messages, language, sessionId } = await req.json()
 
     if (!Array.isArray(messages) || messages.length === 0) {

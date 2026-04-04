@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { ratesCache, CacheKeys } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,6 +118,9 @@ async function fetchExchangeRateApiFX(): Promise<Record<string, number>> {
 // ─── GET handler ──────────────────────────────────────────────────────────────
 
 export async function GET() {
+  const cached = ratesCache.get(CacheKeys.rates())
+  if (cached) return NextResponse.json(cached)
+
   const sources: string[] = []
   let euribor_6m  = EURIBOR_6M_CONFIRMED
   let euribor_12m = EURIBOR_12M_CONFIRMED
@@ -159,6 +163,8 @@ export async function GET() {
     next_update: new Date(now.getTime() + 4 * 3600_000).toISOString(),
     sources,
   }
+
+  ratesCache.set(CacheKeys.rates(), data, 4 * 60 * 60)
 
   return NextResponse.json(data, {
     headers: {

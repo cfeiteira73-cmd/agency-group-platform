@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
+
+const DealSchema = z.object({
+  valor:     z.string(),
+  fase:      z.string(),
+  comprador: z.string().optional(),
+  imovel:    z.string().optional(),
+}).passthrough();
+
+const CommissionPLSchema = z.object({
+  deals:  z.array(DealSchema).min(1, 'É necessário pelo menos um deal'),
+  period: z.string().optional().default('atual'),
+});
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -49,12 +62,12 @@ interface StageGroup {
 
 export async function POST(req: NextRequest) {
   try {
-    const body: CommissionPLRequest = await req.json();
-    const { deals, period } = body;
-
-    if (!deals || !Array.isArray(deals)) {
-      return NextResponse.json({ success: false, error: 'Campo obrigatório: deals (array)' }, { status: 400 });
+    const raw = await req.json();
+    const parsed = CommissionPLSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { deals, period } = parsed.data;
 
     // Group by stage
     const stageMap: Record<string, StageGroup> = {};
@@ -150,6 +163,7 @@ Responde APENAS com um objeto JSON válido, sem markdown nem explicações:
       byStage,
       forecast: aiAnalysis.forecast ?? { '3months': 'N/D', '6months': 'N/D', '12months': 'N/D' },
       insights: aiAnalysis.insights ?? [],
+      recommendations: aiAnalysis.recommendations ?? [],
       topDeal,
     });
   } catch (error) {

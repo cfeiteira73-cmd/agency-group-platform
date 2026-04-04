@@ -207,7 +207,7 @@ export default function DealPage() {
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
           *{box-sizing:border-box;margin:0;padding:0}
-          body{font-family:'Jost',sans-serif;background:#0c1f15;-webkit-font-smoothing:antialiased}
+          body{font-family:var(--font-jost),sans-serif;background:#0c1f15;-webkit-font-smoothing:antialiased}
         `}</style>
         <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px',textAlign:'center'}}>
           <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'3rem',color:'#c9a96e',marginBottom:'16px'}}>Deal não encontrado</div>
@@ -223,13 +223,13 @@ export default function DealPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:'Jost',sans-serif;background:#f4f0e6;-webkit-font-smoothing:antialiased}
+        body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;-webkit-font-smoothing:antialiased}
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(14,14,13,.15)}
-        .dp-btn{background:#1c4a35;color:#f4f0e6;border:none;padding:12px 24px;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+        .dp-btn{background:#1c4a35;color:#f4f0e6;border:none;padding:12px 24px;font-family:var(--font-dm-mono),monospace;font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
         .dp-btn:hover{background:#163d2c;transform:translateY(-1px)}
         .dp-btn-gold{background:#c9a96e;color:#0c1f15}
         .dp-btn-gold:hover{background:#b8965a}
-        .dp-inp{width:100%;background:#fff;border:1px solid rgba(14,14,13,.15);padding:11px 16px;font-family:'Jost',sans-serif;font-size:.88rem;color:#0e0e0d;outline:none}
+        .dp-inp{width:100%;background:#fff;border:1px solid rgba(14,14,13,.15);padding:11px 16px;font-family:var(--font-jost),sans-serif;font-size:.88rem;color:#0e0e0d;outline:none}
         .dp-inp:focus{border-color:#1c4a35}
         .doc-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff;border:1px solid rgba(14,14,13,.07);margin-bottom:6px;transition:border .2s}
         .doc-item:hover{border-color:rgba(14,14,13,.18)}
@@ -237,7 +237,7 @@ export default function DealPage() {
         .faq-item{border-bottom:1px solid rgba(14,14,13,.07);overflow:hidden}
         .faq-q{display:flex;justify-content:space-between;align-items:center;padding:16px 0;cursor:pointer;font-size:.9rem;color:#0e0e0d;font-weight:400;gap:16px;background:none;border:none;width:100%;text-align:left}
         .faq-q:hover{color:#1c4a35}
-        .nps-btn{width:36px;height:36px;border-radius:50%;border:2px solid rgba(14,14,13,.12);background:transparent;cursor:pointer;font-family:'DM Mono',monospace;font-size:.65rem;font-weight:600;transition:all .2s;display:flex;align-items:center;justify-content:center}
+        .nps-btn{width:36px;height:36px;border-radius:50%;border:2px solid rgba(14,14,13,.12);background:transparent;cursor:pointer;font-family:var(--font-dm-mono),monospace;font-size:.65rem;font-weight:600;transition:all .2s;display:flex;align-items:center;justify-content:center}
         .nps-btn:hover{border-color:#1c4a35;color:#1c4a35;transform:scale(1.08)}
         .nps-btn.selected{background:#1c4a35;border-color:#1c4a35;color:#f4f0e6}
         .cost-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(14,14,13,.06)}
@@ -589,7 +589,7 @@ export default function DealPage() {
           <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.1)',padding:'24px',marginBottom:'28px',animation:'fadeIn .5s ease .4s both'}}>
             <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.1rem',color:'#0e0e0d',marginBottom:'14px'}}>Enviar Mensagem ao Agente</div>
             <div style={{display:'flex',gap:'10px'}}>
-              <input className="dp-inp" placeholder="Tenho uma dúvida sobre..." value={msgText} onChange={e=>setMsgText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&msgText.trim()&&(window.open(`https://wa.me/${deal.agent.phone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(`Deal ${deal.ref} — ${deal.imovel}\n\n${msgText)}`),setMsgSent(true))} style={{flex:1}}/>
+              <input className="dp-inp" placeholder="Tenho uma dúvida sobre..." value={msgText} onChange={e=>setMsgText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&msgText.trim()){window.open(`https://wa.me/${deal.agent.phone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent('Deal '+deal.ref+' — '+deal.imovel+'\n\n'+msgText)}`);setMsgSent(true)}}} style={{flex:1}}/>
               <button className="dp-btn" onClick={()=>{if(msgText.trim()){window.open(`https://wa.me/${deal.agent.phone.replace(/[^0-9]/g,'')}?text=${encodeURIComponent(`Deal ${deal.ref} — ${deal.imovel}\n\n${msgText}`)}`);setMsgSent(true)}}} style={{whiteSpace:'nowrap'}}>Enviar →</button>
             </div>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.25)',marginTop:'8px'}}>Respondemos em menos de 2 horas · 7 dias/semana</div>

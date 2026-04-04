@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "home": "Home",
+    "properties": "Properties",
+    "portal": "Portal",
+    "contact": "Contact",
+    "about": "About"
+  },
+  "hero": {
+    "tagline": "Lisbon · Portugal · AMI 22506",
+    "title": "Luxury Properties in Portugal",
+    "subtitle": "We buy, sell and manage premium real estate in Lisbon, Cascais, Comporta, Algarve and Madeira.",
+    "cta_explore": "Explore Properties",
+    "cta_visit": "Schedule a Visit",
+    "cta_contact": "Contact a Consultant"
+  },
+  "search": {
+    "placeholder": "Describe the property you are looking for...",
+    "zona": "Area",
+    "tipo": "Type",
+    "preco": "Price",
+    "quartos": "Bedrooms",
+    "button": "Search"
+  },
+  "property": {
+    "price": "Price",
+    "area": "Area",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "energy": "Energy Certificate",
+    "schedule_visit": "Schedule a Visit",
+    "request_info": "Request Information",
+    "share": "Share",
+    "cma": "Market Analysis",
+    "off_market": "Off-Market",
+    "exclusive": "Exclusive",
+    "featured": "Featured",
+    "new": "New"
+  },
+  "calculators": {
+    "imt_title": "IMT + Stamp Duty Calculator",
+    "imt_valor": "Property Value",
+    "imt_tipo_hpp": "Primary Residence",
+    "imt_tipo_second": "Second Home",
+    "imt_tipo_invest": "Investment",
+    "imt_calculate": "Calculate",
+    "imt_total": "Total to Pay",
+    "imt_savings": "Savings vs. Second Home",
+    "imt_exempt": "IMT Exempt",
+    "mortgage_title": "Mortgage Simulator",
+    "avm_title": "Automated Valuation (AVM)",
+    "nhr_title": "NHR / IFICI Calculator"
+  },
+  "crm": {
+    "contacts": "Contacts",
+    "new_contact": "New Contact",
+    "lead_score": "Lead Score",
+    "last_contact": "Last Contact",
+    "budget": "Budget",
+    "status_lead": "Lead",
+    "status_prospect": "Prospect",
+    "status_cliente": "Client",
+    "status_vip": "VIP",
+    "email_draft": "Draft Email",
+    "meeting_prep": "Prepare Meeting",
+    "next_step": "Next Step",
+    "whatsapp": "WhatsApp"
+  },
+  "pipeline": {
+    "title": "Deal Pipeline",
+    "stage_0": "Listing",
+    "stage_1": "Proposal Sent",
+    "stage_2": "Proposal Accepted",
+    "stage_3": "Due Diligence",
+    "stage_4": "CPCV Signed",
+    "stage_5": "Financing",
+    "stage_6": "Deed Scheduled",
+    "stage_7": "Deed Completed",
+    "new_deal": "New Deal"
+  },
+  "notifications": {
+    "new_lead": "New lead: {name} — €{budget}",
+    "visit_tomorrow": "Visit tomorrow: {property} at {time}",
+    "deal_update": "Deal {ref} moved to {stage}",
+    "follow_up": "Pending follow-up: {name}",
+    "enable_notifications": "Enable Notifications",
+    "notifications_enabled": "Notifications enabled",
+    "notifications_denied": "Notifications blocked in browser"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "An error occurred. Please try again.",
+    "success": "Saved successfully",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "export_pdf": "Export PDF",
+    "export_csv": "Export CSV",
+    "share": "Share",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "address": "Lisbon, Portugal",
+    "phone": "+351 910 000 000",
+    "email": "geral@agencygroup.pt",
+    "privacy": "Privacy Policy",
+    "terms": "Terms and Conditions",
+    "rights": "All rights reserved"
+  }
+}

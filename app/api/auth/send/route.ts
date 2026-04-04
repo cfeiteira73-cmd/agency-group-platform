@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
+import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
 
 const PORTAL_URL = (process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/portal'
 
@@ -13,6 +14,16 @@ function makeToken(email: string, secret: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const limit = rateLimit(ip, { maxAttempts: 3, windowMs: 60 * 60 * 1000 })
+  if (!limit.success) {
+    const minutes = getRetryAfterMinutes(limit.reset)
+    return NextResponse.json(
+      { error: `Demasiadas tentativas. Tente novamente em ${minutes} minuto${minutes !== 1 ? 's' : ''}.` },
+      { status: 429, headers: { 'Retry-After': String(minutes * 60) } }
+    )
+  }
+
   const resend = new Resend(process.env.RESEND_API_KEY)
   const SECRET = process.env.AUTH_SECRET!
   try {

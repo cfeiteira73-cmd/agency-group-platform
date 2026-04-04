@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 
 // ─── Staging Styles ────────────────────────────────────────────────────────────
 const STYLE_PROMPTS: Record<string, string> = {
@@ -81,6 +82,8 @@ async function runStabilityStructure(params: {
 
 // ─── POST /api/homestaging ─────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
     if (!checkRateLimit(ip)) {

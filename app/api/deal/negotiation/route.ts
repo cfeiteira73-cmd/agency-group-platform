@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { z } from 'zod'
+
+const NegotiationSchema = z.object({
+  deal: z.object({
+    imovel:        z.string(),
+    valor:         z.string(),
+    fase:          z.string(),
+    comprador:     z.string().optional(),
+    notas:         z.string().optional(),
+    dataCPCV:      z.string().optional(),
+    dataEscritura: z.string().optional(),
+  }),
+  contact: z.object({
+    name:        z.string().optional(),
+    nationality: z.string().optional(),
+    budgetMin:   z.number().optional(),
+    budgetMax:   z.number().optional(),
+    status:      z.string().optional(),
+  }).optional(),
+  agentName: z.string().optional(),
+})
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -8,7 +29,12 @@ const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
   try {
-    const { deal, contact, agentName } = await req.json()
+    const raw = await req.json()
+    const parsed = NegotiationSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
+    }
+    const { deal, contact, agentName } = parsed.data
 
     const prompt = `És ${agentName || 'Carlos Feiteira'}, agente sénior de imobiliário de luxo da Agency Group (AMI 22506).
 

@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
+
+const IMTSchema = z.object({
+  valor:     z.number().positive('Valor deve ser positivo'),
+  tipo:      z.enum(['hpp', 'second', 'invest']),
+  comprador: z.enum(['singular', 'empresa']),
+});
 
 interface IMTRequest {
   valor: number;
@@ -16,21 +23,22 @@ interface Bracket {
   flat?: boolean;
 }
 
+// Portaria 306-A/2025 — brackets effective 2025
 const HPP_BRACKETS: Bracket[] = [
-  { max: 97064,   rate: 0.00, deduction: 0,         flat: false },
-  { max: 132774,  rate: 0.02, deduction: 1941.28,   flat: false },
-  { max: 181034,  rate: 0.05, deduction: 5924.50,   flat: false },
-  { max: 301688,  rate: 0.07, deduction: 9545.18,   flat: false },
-  { max: 603289,  rate: 0.08, deduction: 12562.06,  flat: false },
-  { max: Infinity, rate: 0.06, deduction: 0,        flat: true  },
+  { max: 97064,    rate: 0.00, deduction: 0,         flat: false },
+  { max: 132774,   rate: 0.02, deduction: 1941.28,   flat: false },
+  { max: 182349,   rate: 0.05, deduction: 5924.50,   flat: false },
+  { max: 316772,   rate: 0.07, deduction: 9569.48,   flat: false },
+  { max: 633453,   rate: 0.08, deduction: 12736.97,  flat: false },
+  { max: Infinity, rate: 0.06, deduction: 0,         flat: true  },
 ];
 
 const SECOND_BRACKETS: Bracket[] = [
   { max: 97064,    rate: 0.01, deduction: 0,         flat: false },
-  { max: 132774,   rate: 0.02, deduction: 971.28,    flat: false },
-  { max: 181034,   rate: 0.05, deduction: 4953.22,   flat: false },
-  { max: 301688,   rate: 0.07, deduction: 8573.90,   flat: false },
-  { max: 578598,   rate: 0.08, deduction: 11590.78,  flat: false },
+  { max: 132774,   rate: 0.02, deduction: 970.64,    flat: false },
+  { max: 182349,   rate: 0.05, deduction: 4954.50,   flat: false },
+  { max: 316772,   rate: 0.07, deduction: 8596.98,   flat: false },
+  { max: 633453,   rate: 0.08, deduction: 11764.47,  flat: false },
   { max: 1050400,  rate: 0.06, deduction: 0,         flat: true  },
   { max: Infinity, rate: 0.075, deduction: 0,        flat: true  },
 ];
@@ -53,12 +61,12 @@ function fmt(n: number): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const body: IMTRequest = await req.json();
-    const { valor, tipo, comprador } = body;
-
-    if (!valor || !tipo || !comprador) {
-      return NextResponse.json({ success: false, error: 'Campos obrigatórios: valor, tipo, comprador' }, { status: 400 });
+    const raw = await req.json();
+    const parsed = IMTSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { valor, tipo, comprador } = parsed.data;
 
     // Empresas pagam sempre como second/invest
     const isHPP = tipo === 'hpp' && comprador === 'singular';
