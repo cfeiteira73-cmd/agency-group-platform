@@ -728,14 +728,14 @@ export default function Home() {
           <div className="hero-content">
             <div className="hero-eyebrow" id="hEye">Lisboa · Portugal · AMI 22506</div>
             <h1 className="hero-h1" id="hTitle">
-              <span className="line"><span className="line-inner">O lugar onde</span></span>
-              <span className="line"><span className="line-inner"><em>Portugal</em></span></span>
-              <span className="line"><span className="line-inner">encontra o mundo.</span></span>
+              <span className="line"><span className="line-inner">Aqui, o mundo</span></span>
+              <span className="line"><span className="line-inner"><em>veio ter</em></span></span>
+              <span className="line"><span className="line-inner">consigo.</span></span>
             </h1>
-            <p className="hero-sub" id="hSub">Mediação imobiliária de luxo. €500K–€10M. Boutique especializada nos mercados mais exclusivos de Portugal e Espanha.</p>
+            <p className="hero-sub" id="hSub">Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem sabe onde procurar.</p>
             <div className="hero-btns" id="hBtns">
-              <a href="#imoveis" className="btn-gold">Ver Portfolio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-              <a href="#avaliacao" className="btn-outline">Avaliar Imóvel</a>
+              <a href="#imoveis" className="btn-gold">Descobrir Portfolio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+              <a href="#avaliacao" className="btn-outline">Avaliação Privada</a>
             </div>
           </div>
           <div className="hero-stats" id="hStats">
@@ -822,8 +822,8 @@ export default function Home() {
             <div>
               <div className="sec-eye"><span className="clip-reveal" data-reveal="left">9 Zonas · Portugal &amp; Espanha</span></div>
               <h2 className="sec-h2" id="zonasH2">
-                <span className="text-reveal"><span className="text-reveal-inner">Os mercados</span></span>
-                <span className="text-reveal"><span className="text-reveal-inner"><em>que conhecemos</em></span></span>
+                <span className="text-reveal"><span className="text-reveal-inner">Os lugares</span></span>
+                <span className="text-reveal"><span className="text-reveal-inner"><em>que o mundo cobiça</em></span></span>
               </h2>
             </div>
             <a href="#imoveis" className="lnk-sm fade-in">Ver todos →</a>
@@ -1085,7 +1085,7 @@ export default function Home() {
         <div style={{display:'flex',flexDirection:'column',justifyContent:'center',padding:'80px 64px'}}>
           <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.37rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'28px'}}>NHR · IFICI · Residência Fiscal · Portugal</div>
           <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2rem,3.5vw,3.2rem)',fontWeight:300,color:'#f4f0e6',lineHeight:1.1,margin:'0 0 28px',letterSpacing:'-.01em'}}>
-            Viver e Investir<br/>em <em style={{fontStyle:'italic',color:'#c9a96e'}}>Portugal</em>
+            Dez Anos de<br/>Liberdade Fiscal.<br/><em style={{fontStyle:'italic',color:'#c9a96e'}}>Uma Vida Nova.</em>
           </h2>
           <div style={{width:'36px',height:'1px',background:'rgba(201,169,110,.4)',marginBottom:'28px'}}/>
           <div style={{display:'flex',flexDirection:'column',gap:'18px',marginBottom:'44px'}}>
@@ -1179,10 +1179,10 @@ export default function Home() {
       {/* CREDENCIAIS */}
       <section className="cred-section">
         <div className="cred-grid">
-          <div className="cred-c fade-in"><div className="cred-n">169<sup>K</sup></div><div className="cred-l">Transacções PT 2025</div><div className="cred-d">Máximo histórico absoluto.</div></div>
-          <div className="cred-c fade-in"><div className="cred-n">+17<sup>%</sup></div><div className="cred-l">Valorização 2025</div><div className="cred-d">INE Q3 2025. 4º máximo.</div></div>
-          <div className="cred-c fade-in"><div className="cred-n">44<sup>%</sup></div><div className="cred-l">Compradores Int.</div><div className="cred-d">UK, França, EUA lideram.</div></div>
-          <div className="cred-c fade-in"><div className="cred-n">Top<sup>5</sup></div><div className="cred-l">Luxo Mundial</div><div className="cred-d">Savills World Cities 2026.</div></div>
+          <div className="cred-c fade-in"><div className="cred-n">169<sup>K</sup></div><div className="cred-l">Transacções em Portugal</div><div className="cred-d">O mercado mais activo da história.</div></div>
+          <div className="cred-c fade-in"><div className="cred-n">+17<sup>%</sup></div><div className="cred-l">Valorização 2025</div><div className="cred-d">Quarto máximo histórico consecutivo.</div></div>
+          <div className="cred-c fade-in"><div className="cred-n">44<sup>%</sup></div><div className="cred-l">Compradores Internacionais</div><div className="cred-d">O mundo descobriu Portugal.</div></div>
+          <div className="cred-c fade-in"><div className="cred-n">Top<sup>5</sup></div><div className="cred-l">Luxo Mundial</div><div className="cred-d">Lisboa. As 5 melhores do mundo.</div></div>
         </div>
       </section>
 
@@ -1262,12 +1262,17 @@ export default function Home() {
               fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
               letterSpacing: '.28em', color: 'rgba(201,169,110,.6)',
               textTransform: 'uppercase', marginBottom: '16px',
-            }}>Clientes · 47 Avaliações · 4.9/5</div>
+            }}>47 Famílias · 14 Nacionalidades · 4.9/5</div>
             <h2 style={{
               fontFamily: "'Cormorant', serif", fontWeight: 300,
               fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#f4f0e6',
+              margin: '0 0 8px',
+            }}>Eles chegaram.</h2>
+            <h2 style={{
+              fontFamily: "'Cormorant', serif", fontWeight: 300, fontStyle: 'italic',
+              fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#c9a96e',
               margin: 0,
-            }}>O Que Dizem os Nossos Clientes</h2>
+            }}>Eles ficaram.</h2>
             <div style={{
               display: 'flex', justifyContent: 'center', gap: '4px',
               marginTop: '16px',
@@ -1292,7 +1297,7 @@ export default function Home() {
                 country: '🇬🇧 Reino Unido',
                 zone: 'Cascais',
                 rating: 5,
-                quote: 'A equipa da Agency Group encontrou a nossa villa de sonho em Cascais em menos de 3 semanas. O processo foi impecável, do primeiro contacto à escritura. Profissionalismo de nível mundial.',
+                quote: 'Três semanas. Villa de sonho. Escritura assinada. Nunca pensámos que seria tão simples — nem que Cascais seria para sempre.',
                 property: 'Villa T5 · Cascais · €2.4M',
                 date: 'Janeiro 2026',
               },
@@ -1301,7 +1306,7 @@ export default function Home() {
                 country: '🇸🇦 Arábia Saudita',
                 zone: 'Lisboa',
                 rating: 5,
-                quote: 'Compramos um penthouse no Príncipe Real como investimento. O retorno já supera as expectativas. A Agency Group conhece o mercado melhor do que qualquer outra imobiliária que consultámos.',
+                quote: 'Penthouse no Príncipe Real como investimento. O retorno superou todas as projecções. Lisboa está a crescer — e nós estamos dentro.',
                 property: 'Penthouse T4 · Lisboa · €3.1M',
                 date: 'Dezembro 2025',
               },
@@ -1310,7 +1315,7 @@ export default function Home() {
                 country: '🇨🇳 China',
                 zone: 'Comporta',
                 rating: 5,
-                quote: 'A Comporta era o nosso sonho. A Agency Group não só encontrou a propriedade certa como nos acompanhou em todo o processo legal e fiscal. Sentimo-nos completamente seguros.',
+                quote: 'A Comporta era o nosso sonho. Encontraram a propriedade certa. Trataram de tudo. No dia da escritura, soubemos que tínhamos chegado.',
                 property: 'Quinta T6 · Comporta · €5.2M',
                 date: 'Novembro 2025',
               },
@@ -1319,7 +1324,7 @@ export default function Home() {
                 country: '🇫🇷 França',
                 zone: 'Porto',
                 rating: 5,
-                quote: 'Investidores há 15 anos, nunca trabalhámos com uma equipa tão dedicada. O conhecimento do mercado do Porto é extraordinário. Rentabilidade de 5.1% no primeiro ano.',
+                quote: 'Investidores há 15 anos. Nunca trabalhámos com uma equipa assim. 5.1% de rentabilidade no primeiro ano. O Porto foi a melhor decisão.',
                 property: 'Apartamento T3 · Porto · €890K',
                 date: 'Outubro 2025',
               },
@@ -1328,7 +1333,7 @@ export default function Home() {
                 country: '🇩🇪 Alemanha',
                 zone: 'Algarve',
                 rating: 5,
-                quote: 'Após comparar 6 imobiliárias, escolhemos a Agency Group pela sua transparência e pelos relatórios de mercado exclusivos. A nossa villa no Algarve é perfeita.',
+                quote: 'Comparámos 6 agências. Escolhemos a Agency Group. A villa no Algarve é exactamente o que imaginámos — e o processo foi impecável.',
                 property: 'Villa T5 · Algarve · €1.8M',
                 date: 'Setembro 2025',
               },
@@ -1337,7 +1342,7 @@ export default function Home() {
                 country: '🇺🇸 Estados Unidos',
                 zone: 'Madeira',
                 rating: 5,
-                quote: 'Relocalizámo-nos para a Madeira com o regime NHR. A Agency Group tratou de tudo: imóvel, advogado, contabilista, escola para os filhos. Um serviço verdadeiramente completo.',
+                quote: 'Viemos para a Madeira com o NHR. Trataram de tudo — imóvel, advogado, escola para os filhos. Hoje dizemos que a vida começou aqui.',
                 property: 'Moradia T4 · Madeira · €1.2M',
                 date: 'Agosto 2025',
               },
