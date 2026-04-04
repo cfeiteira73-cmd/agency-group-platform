@@ -938,7 +938,7 @@ export default function Home() {
               {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally',photo:'/zones/ericeira.jpg'},
             ].map(z=>(
               <div key={z.c} className={`zc ${z.c}`} onClick={()=>filterZ(z.nome)}>
-                <div className="zc-bg" style={{backgroundImage:`url(${z.photo})`}}></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
+                <div className="zc-bg"></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
                 <div className="zc-c">
                   <div className="zc-id">{z.nome} · {z.pais}</div>
                   <h3 className="zc-nm">{z.nome}</h3>

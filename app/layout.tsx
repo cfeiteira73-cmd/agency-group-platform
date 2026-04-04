@@ -29,6 +29,7 @@ export const viewport = {
   themeColor: '#0c1f15',
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 5,
 }
 
 export const metadata: Metadata = {
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
       'pt-PT':   'https://www.agencygroup.pt/',
       'en':      'https://www.agencygroup.pt/en/',
       'fr':      'https://www.agencygroup.pt/fr/',
-      'de':      'https://www.agencygroup.pt/de',
+      'de':      'https://www.agencygroup.pt/de/',
       'zh-Hans': 'https://www.agencygroup.pt/zh',
       'ar':      'https://www.agencygroup.pt/ar',
     },
@@ -335,6 +336,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`}>
       <head>
+        <meta name="author" content="Agency Group – Mediação Imobiliária Lda" />
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"

@@ -210,10 +210,10 @@ export function CurrencySelector() {
           alignItems: 'center',
           gap: '6px',
           padding: '6px 12px',
-          background: open ? 'rgba(198,168,104,0.15)' : 'rgba(10,20,12,0.85)',
+          background: open ? 'rgba(201,169,110,0.15)' : 'rgba(10,20,12,0.85)',
           border: '1px solid',
-          borderColor: open ? '#c6a868' : 'rgba(198,168,104,0.3)',
-          borderRadius: '6px',
+          borderColor: open ? '#c9a96e' : 'rgba(201,169,110,0.3)',
+          borderRadius: 0,
           color: '#e8dfc8',
           fontSize: '12px',
           fontFamily: 'inherit',
@@ -227,11 +227,11 @@ export function CurrencySelector() {
         aria-expanded={open}
       >
         <span style={{ fontSize: '14px' }}>{current.flag}</span>
-        <span style={{ color: '#c6a868', fontWeight: 600 }}>{current.code}</span>
+        <span style={{ color: '#c9a96e', fontWeight: 600 }}>{current.code}</span>
         {loading && (
           <span style={{
             width: '6px', height: '6px', borderRadius: '50%',
-            background: '#c6a868', opacity: 0.6,
+            background: '#c9a96e', opacity: 0.6,
             animation: 'ag-pulse 1s infinite',
           }} />
         )}
@@ -239,7 +239,7 @@ export function CurrencySelector() {
           width="10" height="10" viewBox="0 0 10 10" fill="none"
           style={{ transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none', opacity: 0.7 }}
         >
-          <path d="M2 3.5L5 6.5L8 3.5" stroke="#c6a868" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 3.5L5 6.5L8 3.5" stroke="#c9a96e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
@@ -253,8 +253,8 @@ export function CurrencySelector() {
             right: 0,
             minWidth: '220px',
             background: 'rgba(7,15,10,0.97)',
-            border: '1px solid rgba(198,168,104,0.25)',
-            borderRadius: '8px',
+            border: '1px solid rgba(201,169,110,0.25)',
+            borderRadius: 0,
             overflow: 'hidden',
             boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
             backdropFilter: 'blur(16px)',
@@ -264,8 +264,8 @@ export function CurrencySelector() {
           {/* Header */}
           <div style={{
             padding: '8px 12px 6px',
-            borderBottom: '1px solid rgba(198,168,104,0.12)',
-            color: 'rgba(198,168,104,0.5)',
+            borderBottom: '1px solid rgba(201,169,110,0.12)',
+            color: 'rgba(201,169,110,0.5)',
             fontSize: '10px',
             letterSpacing: '0.15em',
             textTransform: 'uppercase',
@@ -288,9 +288,9 @@ export function CurrencySelector() {
                   width: '100%',
                   gap: '10px',
                   padding: '9px 14px',
-                  background: isActive ? 'rgba(198,168,104,0.1)' : 'transparent',
+                  background: isActive ? 'rgba(201,169,110,0.1)' : 'transparent',
                   border: 'none',
-                  borderLeft: isActive ? '2px solid #c6a868' : '2px solid transparent',
+                  borderLeft: isActive ? '2px solid #c9a96e' : '2px solid transparent',
                   color: isActive ? '#e8dfc8' : 'rgba(200,210,200,0.75)',
                   fontSize: '12px',
                   fontFamily: 'inherit',
@@ -301,7 +301,7 @@ export function CurrencySelector() {
                 }}
                 onMouseEnter={e => {
                   if (!isActive) {
-                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(198,168,104,0.06)'
+                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(201,169,110,0.06)'
                     ;(e.currentTarget as HTMLButtonElement).style.color = '#e8dfc8'
                   }
                 }}
@@ -314,7 +314,7 @@ export function CurrencySelector() {
               >
                 <span style={{ fontSize: '16px', lineHeight: 1 }}>{c.flag}</span>
                 <span style={{ flex: 1 }}>
-                  <span style={{ color: isActive ? '#c6a868' : 'inherit', fontWeight: isActive ? 600 : 400 }}>
+                  <span style={{ color: isActive ? '#c9a96e' : 'inherit', fontWeight: isActive ? 600 : 400 }}>
                     {c.code}
                   </span>
                   <span style={{ marginLeft: '6px', opacity: 0.55, fontSize: '11px' }}>{c.name}</span>
@@ -329,12 +329,12 @@ export function CurrencySelector() {
           {/* Footer note */}
           <div style={{
             padding: '6px 14px 8px',
-            borderTop: '1px solid rgba(198,168,104,0.1)',
-            color: 'rgba(198,168,104,0.35)',
+            borderTop: '1px solid rgba(201,169,110,0.1)',
+            color: 'rgba(201,169,110,0.35)',
             fontSize: '9px',
             letterSpacing: '0.1em',
           }}>
-            Fonte BCE via Frankfurter · Cache 4h
+            Fonte BCE via Frankfurter · Cache 1h
           </div>
         </div>
       )}

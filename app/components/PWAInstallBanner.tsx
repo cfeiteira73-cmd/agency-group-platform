@@ -70,8 +70,8 @@ export default function PWAInstallBanner() {
         width: 'calc(100% - 32px)',
         maxWidth: '400px',
         background: 'rgba(7,15,10,0.97)',
-        border: '1px solid rgba(198,168,104,0.35)',
-        borderRadius: '14px',
+        border: '1px solid rgba(201,169,110,0.35)',
+        borderRadius: 0,
         padding: '16px 18px',
         zIndex: 9999,
         backdropFilter: 'blur(20px)',
@@ -92,9 +92,9 @@ export default function PWAInstallBanner() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {/* App icon */}
         <div style={{
-          width: '44px', height: '44px', borderRadius: '10px',
+          width: '44px', height: '44px', borderRadius: 0,
           background: 'linear-gradient(135deg,#0f2818,#1a3d28)',
-          border: '1px solid rgba(198,168,104,0.3)',
+          border: '1px solid rgba(201,169,110,0.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
           fontSize: '22px',
@@ -102,17 +102,17 @@ export default function PWAInstallBanner() {
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: "'Cormorant', serif",
-            color: '#e8dfc8',
+            fontFamily: "var(--font-cormorant, 'Cormorant', serif)",
+            color: '#f4f0e6',
             fontSize: '1rem',
-            fontWeight: 600,
+            fontWeight: 400,
             letterSpacing: '.02em',
           }}>
             Agency Group
           </div>
           <div style={{
             fontFamily: "'DM Mono', monospace",
-            color: 'rgba(198,168,104,0.7)',
+            color: 'rgba(201,169,110,0.7)',
             fontSize: '11px',
             letterSpacing: '.05em',
             marginTop: '2px',
@@ -138,11 +138,11 @@ export default function PWAInstallBanner() {
           fontSize: '.75rem',
           color: 'rgba(200,210,200,0.65)',
           lineHeight: '1.6',
-          borderTop: '1px solid rgba(198,168,104,.1)',
+          borderTop: '1px solid rgba(201,169,110,.1)',
           paddingTop: '10px',
         }}>
-          Toque em <strong style={{color:'#c6a868'}}>Partilhar</strong> e depois em{' '}
-          <strong style={{color:'#c6a868'}}>"Adicionar ao Ecrã Principal"</strong> para instalar a app.
+          Toque em <strong style={{color:'#c9a96e'}}>Partilhar</strong> e depois em{' '}
+          <strong style={{color:'#c9a96e'}}>"Adicionar ao Ecrã Principal"</strong> para instalar a app.
         </div>
       ) : (
         <button
