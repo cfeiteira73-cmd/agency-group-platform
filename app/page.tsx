@@ -3,32 +3,275 @@ import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import PressSection from './components/PressSection'
-import ReviewsWidget from './components/ReviewsWidget'
 import { CurrencySelector } from './components/CurrencyWidget'
 
 gsap.registerPlugin(ScrollTrigger)
 
+// ─── Mortgage Simulator component (homepage — standalone, sem Zustand) ────────
+
+interface MortRes {
+  inputs: { montante: number; capital: number; ltv_pct: number; prazo_anos: number; spread_pct: number; tan_pct: number; uso: string }
+  resultado: { prestacao_mensal: number; tan_pct: number; taeg_pct: number; total_juros: number; total_pago: number; custo_total_aquisicao: number; imt_estimado: number; is_estimado: number; imi_anual: number; deducao_irs_ano1: number; euribor_6m_pct: number }
+  cenarios: { label: string; tan_pct: number; pmt: number }[]
+  tabela_amortizacao: { ano: number; prestacao_anual: number; juros: number; amortizacao: number; saldo: number }[]
+  acessibilidade: { dsti_pct: number; dsti_ok: boolean; nota: string; poupanca_irs_anual: number } | null
+  info: { nota_legal: string; intermediario: string }
+}
+
+const fmtM = (n: number) => `€${Math.round(n).toLocaleString('pt-PT')}`
+
+function HomeMortgage() {
+  const [montante, setMontante] = useState('')
+  const [entrada, setEntrada] = useState(20)
+  const [prazo, setPrazo] = useState(30)
+  const [spread, setSpread] = useState(1.4)
+  const [uso, setUso] = useState<'habitacao_propria'|'investimento'>('habitacao_propria')
+  const [rendimento, setRendimento] = useState('')
+  const [result, setResult] = useState<MortRes|null>(null)
+  const [loading, setLoading] = useState(false)
+  const [subTab, setSubTab] = useState<'cenarios'|'amortizacao'>('cenarios')
+
+  const PERSONAS = [
+    { label: 'Comprador HPP', montante: '400000', entrada: 20, prazo: 35, spread: 0.9, uso: 'habitacao_propria' as const },
+    { label: 'Investidor Premium', montante: '1200000', entrada: 30, prazo: 25, spread: 1.2, uso: 'investimento' as const, rendimento: '60000' },
+    { label: 'Estrangeiro NHR', montante: '800000', entrada: 40, prazo: 20, spread: 1.5, uso: 'habitacao_propria' as const },
+  ]
+
+  const simulate = async (overrides?: { montante?: string; entrada?: number; prazo?: number; spread?: number; uso?: 'habitacao_propria'|'investimento'; rendimento?: string }) => {
+    const m = overrides?.montante ?? montante
+    if (!m || Number(m) < 10000) return
+    setLoading(true)
+    try {
+      const body = {
+        montante: Number(overrides?.montante ?? montante),
+        entrada_pct: overrides?.entrada ?? entrada,
+        prazo: overrides?.prazo ?? prazo,
+        spread: overrides?.spread ?? spread,
+        uso: overrides?.uso ?? uso,
+        rendimento_anual: Number(overrides?.rendimento ?? rendimento) || 0,
+      }
+      const res = await fetch('/api/mortgage', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const data = await res.json()
+      if (data.success) setResult(data as MortRes)
+      else alert(data.error || 'Erro no cálculo')
+    } catch { alert('Erro de ligação.') }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1.4fr',gap:'40px',alignItems:'start'}}>
+      {/* ── Form ── */}
+      <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'28px',boxShadow:'0 8px 40px rgba(14,14,13,.06)'}}>
+        <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:400,fontSize:'1.2rem',color:'#0e0e0d',marginBottom:'16px'}}>Simulação Rápida</h3>
+        {/* Persona presets */}
+        <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'18px'}}>
+          {PERSONAS.map(p=>(
+            <button key={p.label} onClick={()=>{
+              if(p.montante) setMontante(p.montante)
+              setEntrada(p.entrada); setPrazo(p.prazo); setSpread(p.spread); setUso(p.uso)
+              if(p.rendimento) setRendimento(p.rendimento)
+              simulate({montante:p.montante,entrada:p.entrada,prazo:p.prazo,spread:p.spread,uso:p.uso,rendimento:p.rendimento})
+            }} style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',padding:'5px 10px',background:'rgba(28,74,53,.06)',color:'#1c4a35',border:'1px solid rgba(28,74,53,.15)',cursor:'pointer'}}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div style={{display:'grid',gap:'14px'}}>
+          <div>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Valor do Imóvel (€)</label>
+            <input type="number" value={montante} onChange={e=>setMontante(e.target.value)} placeholder="ex: 500000" style={{width:'100%',padding:'9px 12px',border:'1px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d',boxSizing:'border-box'}} />
+          </div>
+          <div>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Entrada — {entrada}% {montante&&Number(montante)>0?`(${fmtM(Number(montante)*entrada/100)})`:''}  </label>
+            <input type="range" min={10} max={80} value={entrada} onChange={e=>setEntrada(Number(e.target.value))} style={{width:'100%',accentColor:'#1c4a35'}} />
+          </div>
+          <div>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Prazo — {prazo} anos</label>
+            <input type="range" min={5} max={40} value={prazo} onChange={e=>setPrazo(Number(e.target.value))} style={{width:'100%',accentColor:'#1c4a35'}} />
+          </div>
+          <div>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Spread — {spread.toFixed(2)}%</label>
+            <input type="range" min={0.5} max={3} step={0.05} value={spread} onChange={e=>setSpread(Number(e.target.value))} style={{width:'100%',accentColor:'#1c4a35'}} />
+          </div>
+          <div>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Finalidade</label>
+            <select value={uso} onChange={e=>setUso(e.target.value as 'habitacao_propria'|'investimento')} style={{width:'100%',padding:'9px 12px',border:'1px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'.88rem',outline:'none',background:'#fff',color:'#0e0e0d'}}>
+              <option value="habitacao_propria">Habitação Própria Permanente</option>
+              <option value="investimento">Investimento / 2ª Habitação</option>
+            </select>
+          </div>
+          <div>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Rendimento Anual (€) — DSTI</label>
+            <input type="number" value={rendimento} onChange={e=>setRendimento(e.target.value)} placeholder="ex: 80000 — opcional" style={{width:'100%',padding:'9px 12px',border:'1px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d',boxSizing:'border-box'}} />
+          </div>
+          <button onClick={()=>simulate()} disabled={loading||!montante} style={{width:'100%',padding:'12px',background:'#c9a96e',color:'#0c1f15',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',fontWeight:700,opacity:loading?0.6:1}}>
+            {loading?'A simular...':'Simular Crédito →'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Results ── */}
+      <div>
+        {!result&&!loading&&(
+          <div style={{background:'#0c1f15',padding:'40px 36px',position:'relative',overflow:'hidden',minHeight:'420px',display:'flex',flexDirection:'column',justifyContent:'space-between'}}>
+            {/* Ambient glow */}
+            <div style={{position:'absolute',top:'-40px',right:'-40px',width:'220px',height:'220px',background:'radial-gradient(circle,rgba(201,169,110,.12) 0%,transparent 70%)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',bottom:'-30px',left:'-30px',width:'180px',height:'180px',background:'radial-gradient(circle,rgba(28,74,53,.3) 0%,transparent 70%)',pointerEvents:'none'}}/>
+            {/* Top */}
+            <div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'16px'}}>O QUE VAI DESCOBRIR</div>
+              <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.7rem',color:'#f4f0e6',lineHeight:1.15,marginBottom:'8px'}}>
+                A simulação mais<br/><em style={{fontStyle:'italic',color:'#c9a96e'}}>completa de Portugal</em>
+              </div>
+              <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.78rem',color:'rgba(244,240,230,.35)',lineHeight:1.7,marginBottom:'28px',maxWidth:'320px'}}>
+                Euribor 6M em tempo real · TAEG exacto · 4 cenários de stress-test · Tabela de amortização completa
+              </div>
+            </div>
+            {/* Feature cards */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'28px'}}>
+              {[
+                {icon:'📊',label:'Prestação mensal',sub:'TAN + TAEG exacto'},
+                {icon:'🏛',label:'IMT + IS + IMI',sub:'Custo total de aquisição'},
+                {icon:'📈',label:'4 cenários Euribor',sub:'Bear · Base · Bull · Mínimo'},
+                {icon:'📋',label:'Amortização 30 anos',sub:'Tabela anual completa'},
+              ].map(f=>(
+                <div key={f.label} style={{padding:'14px 16px',background:'rgba(244,240,230,.04)',border:'1px solid rgba(244,240,230,.08)'}}>
+                  <div style={{fontSize:'.95rem',marginBottom:'5px'}}>{f.icon}</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(244,240,230,.7)',letterSpacing:'.04em',marginBottom:'2px'}}>{f.label}</div>
+                  <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.72rem',color:'rgba(244,240,230,.3)'}}>{f.sub}</div>
+                </div>
+              ))}
+            </div>
+            {/* Bottom DSTI note */}
+            <div style={{display:'flex',alignItems:'center',gap:'10px',padding:'12px 14px',background:'rgba(201,169,110,.06)',border:'1px solid rgba(201,169,110,.12)'}}>
+              <span style={{fontSize:'1rem',flexShrink:0}}>✦</span>
+              <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.76rem',color:'rgba(244,240,230,.4)',lineHeight:1.5}}>
+                Introduz o rendimento anual para obter o <strong style={{color:'rgba(201,169,110,.7)'}}>DSTI</strong> — verificação Banco de Portugal e dedução IRS habitação própria
+              </div>
+            </div>
+          </div>
+        )}
+        {loading&&(
+          <div style={{padding:'64px 24px',textAlign:'center',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.06)'}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',color:'#1c4a35',letterSpacing:'.2em'}}>✦ A simular...</div>
+          </div>
+        )}
+        {result&&(
+          <div>
+            {/* Main metric */}
+            <div style={{padding:'22px 26px',background:'#0c1f15',marginBottom:'12px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'16px'}}>
+              <div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>Prestação Mensal</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:600,color:'#c9a96e',lineHeight:1}}>{fmtM(result.resultado.prestacao_mensal)}</div>
+              </div>
+              <div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAN</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:600,color:'#f4f0e6',lineHeight:1}}>{result.resultado.tan_pct}%</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.25)',marginTop:'2px'}}>Euribor {result.resultado.euribor_6m_pct}%</div>
+              </div>
+              <div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAEG</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:600,color:'#f4f0e6',lineHeight:1}}>{result.resultado.taeg_pct}%</div>
+              </div>
+            </div>
+            {/* Key metrics */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'8px',marginBottom:'12px'}}>
+              {[
+                {l:'Capital',v:result.inputs.capital},
+                {l:'Total Juros',v:result.resultado.total_juros},
+                {l:'Total Pago',v:result.resultado.total_pago},
+                {l:'IMT + IS',v:result.resultado.imt_estimado+result.resultado.is_estimado},
+                {l:'IMI / Ano',v:result.resultado.imi_anual},
+                {l:'Custo Total',v:result.resultado.custo_total_aquisicao,gold:true},
+              ].map(m=>(
+                <div key={m.l} style={{padding:'10px 12px',background:'#fff',border:'1px solid rgba(14,14,13,.07)',textAlign:'center'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(14,14,13,.35)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'3px'}}>{m.l}</div>
+                  <div style={{fontFamily:"'Cormorant',serif",fontSize:'.95rem',fontWeight:600,color:(m as {gold?:boolean}).gold?'#c9a96e':'#0e0e0d'}}>{fmtM(m.v)}</div>
+                </div>
+              ))}
+            </div>
+            {/* DSTI */}
+            {result.acessibilidade&&(
+              <div style={{padding:'10px 14px',background:result.acessibilidade.dsti_ok?'rgba(28,74,53,.05)':'rgba(220,38,38,.05)',border:`1px solid ${result.acessibilidade.dsti_ok?'rgba(28,74,53,.18)':'rgba(220,38,38,.18)'}`,borderLeft:`3px solid ${result.acessibilidade.dsti_ok?'#1c4a35':'#dc2626'}`,marginBottom:'12px'}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:result.acessibilidade.dsti_ok?'#1c4a35':'#dc2626',textTransform:'uppercase',letterSpacing:'.08em'}}>DSTI {result.acessibilidade.dsti_pct}% {result.acessibilidade.dsti_ok?'✓':'⚠'}</div>
+                  {result.acessibilidade.poupanca_irs_anual>0&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'#1c4a35'}}>Dedução IRS: {fmtM(result.acessibilidade.poupanca_irs_anual)}/ano</div>}
+                </div>
+                <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.76rem',color:'rgba(14,14,13,.5)',marginTop:'3px',lineHeight:1.5}}>{result.acessibilidade.nota}</div>
+              </div>
+            )}
+            {/* Sub-tabs */}
+            <div style={{display:'flex',gap:'0',marginBottom:'12px',borderBottom:'1px solid rgba(14,14,13,.1)'}}>
+              {(['cenarios','amortizacao'] as const).map(t=>(
+                <button key={t} onClick={()=>setSubTab(t)} style={{padding:'8px 16px',background:'none',border:'none',borderBottom:`2px solid ${subTab===t?'#c9a96e':'transparent'}`,fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:subTab===t?'#0e0e0d':'rgba(14,14,13,.4)',cursor:'pointer',letterSpacing:'.06em',textTransform:'uppercase',transition:'all .15s'}}>
+                  {t==='cenarios'?'Cenários Euribor':'Amortização'}
+                </button>
+              ))}
+              <a href="/portal" style={{marginLeft:'auto',padding:'8px 14px',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#c9a96e',textDecoration:'none',display:'flex',alignItems:'center',gap:'4px'}}>Ver análise completa →</a>
+            </div>
+            {/* Cenários */}
+            {subTab==='cenarios'&&(
+              <div style={{display:'grid',gap:'6px'}}>
+                {result.cenarios.map((c,i)=>(
+                  <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 16px',background:'#fff',border:'1px solid rgba(14,14,13,.07)'}}>
+                    <div>
+                      <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'#0e0e0d',marginBottom:'1px'}}>{c.label}</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)'}}>TAN {c.tan_pct}%</div>
+                    </div>
+                    <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:600,color:i===0?'#c9a96e':i===1?'#dc2626':'#1c4a35'}}>{fmtM(c.pmt)}<span style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',fontWeight:400}}>/mês</span></div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Amortização */}
+            {subTab==='amortizacao'&&(
+              <div style={{overflowX:'auto',maxHeight:'320px',overflowY:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontFamily:"'Jost',sans-serif",fontSize:'.78rem'}}>
+                  <thead style={{position:'sticky',top:0}}>
+                    <tr style={{background:'rgba(28,74,53,.06)'}}>
+                      {['Ano','Prestação','Juros','Amort.','Saldo'].map(h=>(
+                        <th key={h} style={{padding:'7px 10px',textAlign:'right',fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(14,14,13,.4)',letterSpacing:'.06em',textTransform:'uppercase',fontWeight:400,borderBottom:'1px solid rgba(14,14,13,.08)'}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.tabela_amortizacao.map((row,i)=>(
+                      <tr key={row.ano} style={{background:i%2===0?'#fff':'rgba(14,14,13,.01)',borderBottom:'1px solid rgba(14,14,13,.04)'}}>
+                        <td style={{padding:'6px 10px',textAlign:'right',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.45)'}}>{row.ano}</td>
+                        <td style={{padding:'6px 10px',textAlign:'right',color:'#0e0e0d'}}>{fmtM(row.prestacao_anual)}</td>
+                        <td style={{padding:'6px 10px',textAlign:'right',color:'#dc2626'}}>{fmtM(row.juros)}</td>
+                        <td style={{padding:'6px 10px',textAlign:'right',color:'#1c4a35'}}>{fmtM(row.amortizacao)}</td>
+                        <td style={{padding:'6px 10px',textAlign:'right',color:'#0e0e0d',fontWeight:600}}>{fmtM(row.saldo)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {/* Nota legal */}
+            <div style={{marginTop:'10px',fontFamily:"'Jost',sans-serif",fontSize:'.7rem',color:'rgba(14,14,13,.3)',lineHeight:1.5}}>{result.info?.nota_legal}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Home() {
   const [slideIdx, setSlideIdx] = useState(0)
-  const [avmResult, setAvmResult] = useState<number|null>(null)
-  const [radarDone, setRadarDone] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [isAgent, setIsAgent] = useState(false)
   const [agModal, setAgModal] = useState(false)
   const [agEmailVal, setAgEmailVal] = useState('')
   const [agSent, setAgSent] = useState(false)
   const [agSending, setAgSending] = useState(false)
-  const [mortgageResult, setMortgageResult] = useState<Record<string,unknown>|null>(null)
-  const [nhrResult, setNhrResult] = useState<Record<string,unknown>|null>(null)
-  const [portfolioResult, setPortfolioResult] = useState<Record<string,unknown>|null>(null)
-  const [portfolioItems, setPortfolioItems] = useState<string[]>(['','',''])
-  const [portfolioLoading, setPortfolioLoading] = useState(false)
   const [cpcvDeals, setCpcvDeals] = useState([
     { id:1, ref:'AG-2026-001', imovel:'Villa Quinta da Marinha · Cascais', valor:'€ 3.800.000', fase:'CPCV Assinado', pct:60, cor:'#c9a96e', data:'15 Jan 2026' },
     { id:2, ref:'AG-2026-002', imovel:'Penthouse Chiado · Lisboa', valor:'€ 2.100.000', fase:'Due Diligence', pct:40, cor:'#4a9c7a', data:'22 Jan 2026' },
     { id:3, ref:'AG-2026-003', imovel:'Herdade Comporta', valor:'€ 6.500.000', fase:'Proposta Aceite', pct:25, cor:'#3a7bd5', data:'28 Jan 2026' },
   ])
   const loaderRef = useRef<HTMLDivElement>(null)
+  const gsapInitRef = useRef(false)
 
   useEffect(() => {
     // Token in URL always takes priority (magic link flow)
@@ -68,11 +311,57 @@ export default function Home() {
     }
   }, [])
 
-  // ═══ GSAP + CURSOR + TUDO ═══
+  // ═══ CURSOR + KEYBOARD (runs every mount — works correctly with StrictMode) ═══
   useEffect(() => {
+    const dot = document.getElementById('cDot')
+    const ring = document.getElementById('cRing')
+    if (!dot || !ring) return
+    let mx=0,my=0,dx=0,dy=0,rx=0,ry=0,rafId=0
+    const onMove = (e:MouseEvent) => { mx=e.clientX; my=e.clientY }
+    window.addEventListener('mousemove', onMove)
+    const loop = () => {
+      dx+=(mx-dx)*0.22; dy+=(my-dy)*0.22
+      rx+=(mx-rx)*0.08; ry+=(my-ry)*0.08
+      dot.style.transform=`translate(calc(${dx}px - 50%), calc(${dy}px - 50%))`
+      ring.style.transform=`translate(calc(${rx}px - 50%), calc(${ry}px - 50%))`
+      rafId=requestAnimationFrame(loop)
+    }
+    rafId=requestAnimationFrame(loop)
+    document.querySelectorAll('a,button,[data-hover],.zc,.imc').forEach(el => {
+      el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'))
+      el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'))
+    })
+    document.querySelectorAll('input,textarea,select').forEach(el => {
+      el.addEventListener('focus',()=>document.body.classList.add('hovering'))
+      el.addEventListener('blur',()=>document.body.classList.remove('hovering'))
+    })
+    document.querySelectorAll('.hl,.market-section,.mq,.ag-section').forEach(el => {
+      el.addEventListener('mouseenter',()=>document.body.classList.add('on-dark'))
+      el.addEventListener('mouseleave',()=>document.body.classList.remove('on-dark'))
+    })
+    const onKey = (e:KeyboardEvent) => {
+      if (e.key==='Escape') {
+        setModalOpen(false)
+        document.body.style.overflow=''
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('mousemove', onMove)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [])
+
+  // ═══ GSAP (guarded with ref — runs once per component instance, skips StrictMode second mount) ═══
+  useEffect(() => {
+    if (gsapInitRef.current) return   // StrictMode second run: GSAP still alive, skip re-init
+    gsapInitRef.current = true
+    let cancelled = false
     // LOADER
     document.body.style.overflow = 'hidden'
-    const loader = loaderRef.current!
+    const loader = loaderRef.current
+    if (!loader) return
     const ldrTL = gsap.timeline({
       onComplete: () => {
         loader.classList.add('done')
@@ -101,77 +390,7 @@ export default function Home() {
         .to('#searchBox', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, '-=0.3')
     }
 
-    // CURSOR — inércia dupla
-    const dot = document.getElementById('cDot')!
-    const ring = document.getElementById('cRing')!
-    let mx=0,my=0,dx=0,dy=0,rx=0,ry=0,rafId=0
-    const onMove = (e:MouseEvent) => { mx=e.clientX; my=e.clientY }
-    window.addEventListener('mousemove', onMove)
-    const loop = () => {
-      dx+=(mx-dx)*0.22; dy+=(my-dy)*0.22
-      rx+=(mx-rx)*0.08; ry+=(my-ry)*0.08
-      dot.style.transform=`translate(calc(${dx}px - 50%), calc(${dy}px - 50%))`
-      ring.style.transform=`translate(calc(${rx}px - 50%), calc(${ry}px - 50%))`
-      rafId=requestAnimationFrame(loop)
-    }
-    rafId=requestAnimationFrame(loop)
-    document.querySelectorAll('a,button,[data-hover],.zc,.imc').forEach(el => {
-      el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'))
-      el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'))
-    })
-    document.querySelectorAll('input,textarea,select').forEach(el => {
-      el.addEventListener('focus',()=>document.body.classList.add('hovering'))
-      el.addEventListener('blur',()=>document.body.classList.remove('hovering'))
-    })
-    document.querySelectorAll('.hl,.market-section,.mq,.ag-section').forEach(el => {
-      el.addEventListener('mouseenter',()=>document.body.classList.add('on-dark'))
-      el.addEventListener('mouseleave',()=>document.body.classList.remove('on-dark'))
-    })
-
-    // SCROLL PROGRESS
-    gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ trigger: document.body, start:'top top', end:'bottom bottom', scrub:0 }})
-
-    // NAV SOLID
-    ScrollTrigger.create({
-      start: 60,
-      onEnter: () => document.getElementById('mainNav')?.classList.add('solid'),
-      onLeaveBack: () => document.getElementById('mainNav')?.classList.remove('solid')
-    })
-
-    // TEXT REVEALS
-    document.querySelectorAll('.text-reveal').forEach(el => {
-      const inner = el.querySelector('.text-reveal-inner')
-      if (!inner) return
-      gsap.to(inner, { y:0, duration:0.9, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 88%', once:true }})
-    })
-
-    // CLIP REVEALS
-    document.querySelectorAll('.clip-reveal').forEach(el => {
-      gsap.to(el, { clipPath:'inset(0 0% 0 0)', duration:0.9, ease:'power3.inOut', scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
-    })
-
-    // FADE IN
-    document.querySelectorAll('.fade-in').forEach((el, i) => {
-      gsap.to(el, { opacity:1, y:0, duration:0.8, ease:'power2.out', delay:(i%3)*0.08, scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
-    })
-
-    // IMÓVEIS CLIP-PATH REVEAL
-    document.querySelectorAll<HTMLElement>('.imc').forEach((card, i) => {
-      const revEl = card.querySelector('.imc-img-reveal')
-      if (!revEl) return
-      gsap.timeline({ scrollTrigger:{ trigger:card, start:'top 85%', once:true, onEnter:()=>card.classList.add('revealed') }})
-        .to(revEl, { clipPath:'inset(0 0 100% 0)', duration:0.8, delay:(i%3)*0.12, ease:'power3.inOut' })
-    })
-
-    // ZONAS STAGGER
-    if (document.querySelector('.zc') && document.querySelector('.zonas-grid')) {
-    gsap.fromTo('.zc',
-      { clipPath:'inset(0 0 100% 0)', opacity:0.8 },
-      { clipPath:'inset(0 0 0% 0)', opacity:1, duration:0.8, stagger:{ amount:0.6, from:'start' }, ease:'power3.inOut',
-        scrollTrigger:{ trigger:'.zonas-grid', start:'top 80%', once:true }})
-    }
-
-    // MARKET BARS
+    // MARKET BARS DOM — build before GSAP context so elements exist when animated
     const ZONES_MKT = [
       {n:'Comporta',pm2:'€11.000',yoy:'+28%',w:1},
       {n:'Quinta do Lago',pm2:'€12.000',yoy:'+22%',w:1},
@@ -182,42 +401,84 @@ export default function Home() {
       {n:'Oeiras',pm2:'€5.189',yoy:'+16%',w:.75},
     ]
     const mktEl = document.getElementById('mktZones')
-    if (mktEl) {
+    if (mktEl && !mktEl.hasChildNodes()) {
       ZONES_MKT.forEach(z => {
         const d = document.createElement('div')
         d.className = 'mkt-row'
         d.innerHTML = `<span class="mkt-nm">${z.n}</span><div class="mkt-bar"><div class="mkt-fill" style="width:${z.w*100}%"></div></div><span class="mkt-pm2">${z.pm2}</span><span class="mkt-yoy">${z.yoy}</span>`
         mktEl.appendChild(d)
       })
-      if (document.querySelector('.mkt-zones')) {
-        gsap.to('.mkt-fill', { scaleX:1, duration:1.4, stagger:0.08, ease:'power3.out', scrollTrigger:{ trigger:'.mkt-zones', start:'top 80%', once:true }})
+    }
+
+    // ALL SCROLLTRIGGER ANIMATIONS — deferred one frame so DOM is painted
+    // try-catch prevents StrictMode double-invoke crash from bubbling to error boundary
+    let ctx: gsap.Context | null = null
+    const stRafId = requestAnimationFrame(() => {
+      if (cancelled) return
+      try {
+        ctx = gsap.context(() => {
+          // SCROLL PROGRESS
+          gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ trigger: document.body, start:'top top', end:'bottom bottom', scrub:0 }})
+          // NAV SOLID
+          ScrollTrigger.create({
+            start: 60,
+            onEnter: () => document.getElementById('mainNav')?.classList.add('solid'),
+            onLeaveBack: () => document.getElementById('mainNav')?.classList.remove('solid'),
+          })
+          // TEXT REVEALS
+          document.querySelectorAll('.text-reveal').forEach(el => {
+            const inner = el.querySelector('.text-reveal-inner')
+            if (!inner) return
+            gsap.to(inner, { y:0, duration:0.9, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 88%', once:true }})
+          })
+          // CLIP REVEALS
+          document.querySelectorAll('.clip-reveal').forEach(el => {
+            gsap.to(el, { clipPath:'inset(0 0% 0 0)', duration:0.9, ease:'power3.inOut', scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
+          })
+          // FADE IN
+          document.querySelectorAll('.fade-in').forEach((el, i) => {
+            gsap.to(el, { opacity:1, y:0, duration:0.8, ease:'power2.out', delay:(i%3)*0.08, scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
+          })
+          // IMÓVEIS CLIP-PATH REVEAL
+          document.querySelectorAll<HTMLElement>('.imc').forEach((card, i) => {
+            const revEl = card.querySelector('.imc-img-reveal')
+            if (!revEl) return
+            gsap.timeline({ scrollTrigger:{ trigger:card, start:'top 85%', once:true, onEnter:()=>card.classList.add('revealed') }})
+              .to(revEl, { clipPath:'inset(0 0 100% 0)', duration:0.8, delay:(i%3)*0.12, ease:'power3.inOut' })
+          })
+          // ZONAS STAGGER
+          if (document.querySelector('.zc') && document.querySelector('.zonas-grid')) {
+            gsap.fromTo('.zc',
+              { clipPath:'inset(0 0 100% 0)', opacity:0.8 },
+              { clipPath:'inset(0 0 0% 0)', opacity:1, duration:0.8, stagger:{ amount:0.6, from:'start' }, ease:'power3.inOut',
+                scrollTrigger:{ trigger:'.zonas-grid', start:'top 80%', once:true } })
+          }
+          // MARKET BARS ANIMATION
+          if (document.querySelector('.mkt-zones')) {
+            gsap.to('.mkt-fill', { scaleX:1, duration:1.4, stagger:0.08, ease:'power3.out', scrollTrigger:{ trigger:'.mkt-zones', start:'top 80%', once:true }})
+          }
+          // CREDENCIAIS
+          if (document.querySelector('.cred-grid')) {
+            gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.7, stagger:0.1, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
+          }
+          // FONTS READY — final refresh after all triggers registered
+          document.fonts.ready.then(() => {
+            if (!cancelled) requestAnimationFrame(() => { if (!cancelled) ScrollTrigger.refresh() })
+          })
+        })
+      } catch (e) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[GSAP] ScrollTrigger init error (StrictMode):', e)
+        }
       }
-    }
-
-    // CREDENCIAIS
-    if (document.querySelector('.cred-grid')) {
-      gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.7, stagger:0.1, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
-    }
-
-    // ESC HANDLER
-    const onKey = (e:KeyboardEvent) => {
-      if (e.key==='Escape') {
-        setModalOpen(false)
-        document.body.style.overflow=''
-      }
-    }
-    document.addEventListener('keydown', onKey)
-
-    // FONTS READY — REFRESH SCROLLTRIGGER (double-RAF to avoid recursive refresh during init)
-    document.fonts.ready.then(() => {
-      requestAnimationFrame(() => requestAnimationFrame(() => ScrollTrigger.refresh()))
     })
 
     return () => {
-      cancelAnimationFrame(rafId)
-      window.removeEventListener('mousemove', onMove)
-      document.removeEventListener('keydown', onKey)
-      ScrollTrigger.getAll().forEach(t => t.kill())
+      cancelled = true
+      cancelAnimationFrame(stRafId)
+      ctx?.revert()
+      document.body.style.overflow = ''
+      ldrTL.kill()
     }
   }, [])
 
@@ -226,133 +487,6 @@ export default function Home() {
     const timer = setInterval(() => setSlideIdx(s => (s+1)%3), 5500)
     return () => clearInterval(timer)
   }, [])
-
-  // ═══ AVM ENGINE ═══
-  async function calcAVM() {
-    const zona = (document.getElementById('avmZona') as HTMLSelectElement).value
-    const area = (document.getElementById('avmArea') as HTMLInputElement).value
-    if (!zona || !area || parseFloat(area)<20) { alert('Preenche a zona e a área.'); return }
-    const btn = document.querySelector('.avm-submit') as HTMLButtonElement
-    const txt = btn.textContent; btn.textContent='A calcular...'; btn.style.opacity='.6'; btn.disabled=true
-    try {
-      const res = await fetch('/api/avm', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          zona, area:parseFloat(area),
-          estado:(document.getElementById('avmEst') as HTMLSelectElement).value,
-          tipologia:(document.getElementById('avmTip') as HTMLSelectElement).value,
-          vista:(document.getElementById('avmVista') as HTMLSelectElement).value,
-          pool:(document.getElementById('avmPool') as HTMLSelectElement).value,
-          epc:(document.getElementById('avmEpc') as HTMLSelectElement).value,
-          garagem:(document.getElementById('avmGaragem') as HTMLSelectElement)?.value??'0',
-          andar:(document.getElementById('avmAndar') as HTMLSelectElement)?.value??'0.3',
-          exterior:'1', elevador:'1'
-        })
-      })
-      const data = await res.json()
-      if (!data.success) { alert(data.error||'Erro no cálculo'); return }
-      setAvmResult(data.valor_justo)
-      setTimeout(()=>{
-        document.getElementById('bH')?.classList.add('go')
-        document.getElementById('bC')?.classList.add('go')
-        document.getElementById('bD')?.classList.add('go')
-        const noteEl = document.querySelector('.avm-note') as HTMLElement
-        if (noteEl && data.dados_ine) noteEl.textContent=`INE Q3 2025 · ${zona} €${data.dados_ine.mediana_transacao_q3_2025.toLocaleString('pt-PT')}/m² · Confiança ${data.confianca}%`
-      },200)
-    } catch { alert('Erro de ligação.') }
-    finally { btn.textContent=txt; btn.style.opacity='1'; btn.disabled=false }
-  }
-
-  // ═══ MORTGAGE SIMULATOR ═══
-  async function calcMortgage() {
-    const montante = parseFloat((document.getElementById('mtgMontante') as HTMLInputElement).value)
-    const entrada_pct = parseFloat((document.getElementById('mtgEntrada') as HTMLSelectElement).value)
-    const prazo = (document.getElementById('mtgPrazo') as HTMLSelectElement).value
-    const spread = (document.getElementById('mtgSpread') as HTMLSelectElement).value
-    const uso = (document.getElementById('mtgUso') as HTMLSelectElement).value
-    if (!montante || montante < 50000) { alert('Introduz o valor do imóvel (mínimo €50.000)'); return }
-    const btn = document.querySelector('.mtg-submit') as HTMLButtonElement
-    btn.textContent = 'A calcular...'; btn.style.opacity = '.6'; btn.disabled = true
-    try {
-      const res = await fetch('/api/mortgage', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ montante, entrada_pct, prazo, spread, uso }) })
-      const data = await res.json()
-      if (!data.success) { alert(data.error || 'Erro no cálculo'); return }
-      setMortgageResult(data)
-    } catch { alert('Erro de ligação.') }
-    finally { btn.textContent = 'Calcular'; btn.style.opacity = '1'; btn.disabled = false }
-  }
-
-  // ═══ NHR CALCULATOR ═══
-  async function calcNHR() {
-    const pais = (document.getElementById('nhrPais') as HTMLSelectElement).value
-    const tipo = (document.getElementById('nhrTipo') as HTMLSelectElement).value
-    const rendimento = parseFloat((document.getElementById('nhrRendimento') as HTMLInputElement).value)
-    if (!rendimento || rendimento < 1000) { alert('Introduz o rendimento anual (mínimo €1.000)'); return }
-    const btn = document.querySelector('.nhr-submit') as HTMLButtonElement
-    btn.textContent = 'A calcular...'; btn.style.opacity = '.6'; btn.disabled = true
-    try {
-      const res = await fetch('/api/nhr', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ pais, tipo_rendimento: tipo, rendimento_anual: rendimento, regime: 'compare' }) })
-      const data = await res.json()
-      if (!data.success) { alert(data.error || 'Erro no cálculo'); return }
-      setNhrResult(data)
-    } catch { alert('Erro de ligação.') }
-    finally { btn.textContent = 'Calcular Poupança', btn.style.opacity = '1'; btn.disabled = false }
-  }
-
-  // ═══ PORTFOLIO ANALYSER ═══
-  async function calcPortfolio() {
-    const items = portfolioItems.filter(x => x.trim())
-    if (items.length < 2) { alert('Introduz pelo menos 2 URLs ou descrições de imóveis.'); return }
-    setPortfolioLoading(true)
-    try {
-      const res = await fetch('/api/portfolio', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ properties: items.filter(x=>x.trim()).map(url => ({ url })) })
-      })
-      const data = await res.json()
-      if (!data.success) { alert(data.error || 'Erro na análise'); return }
-      setPortfolioResult(data)
-    } catch { alert('Erro de ligação. Tenta novamente.') }
-    finally { setPortfolioLoading(false) }
-  }
-
-  // ═══ DEAL RADAR ═══
-  async function runRadar() {
-    const v = (document.getElementById('radarUrl') as HTMLTextAreaElement).value.trim()
-    if (!v) { alert('Cola um link ou texto.'); return }
-    const btn = document.getElementById('radarBtn') as HTMLButtonElement
-    btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> A analisar...'
-    btn.style.opacity='.6'; btn.disabled=true
-    try {
-      const res = await fetch('/api/radar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:v})})
-      const data = await res.json()
-      if (!data.success) { alert(data.error||'Erro na análise.'); return }
-      setRadarDone(true)
-      const a = data.analise
-      setTimeout(()=>{
-        const set=(id:string,val:string)=>{const el=document.getElementById(id);if(el)el.textContent=val}
-        const scoreEl=document.getElementById('rScore')
-        if (scoreEl) scoreEl.innerHTML=`${a.score??'—'}<small style="font-size:1.1rem;opacity:.45">/100</small>`
-        const pillEl=document.getElementById('rPill')
-        if (pillEl) {
-          pillEl.textContent=a.classificacao??'EM ANÁLISE'
-          const c:Record<string,string>={'ATAQUE IMEDIATO':'#c8f0d4','PRIORITÁRIO':'#d4e8f7','BOM NEGÓCIO':'#d4f0d8','VALOR JUSTO':'#f0f0d4','SOBREVALORIZADO':'#f0e4d4','EVITAR':'#f0d4d4'}
-          pillEl.style.background=c[a.classificacao??'']??'#d4e8f7'; pillEl.style.color='#1a3a6b'
-        }
-        if (a.valor_justo)        set('rValor', `€ ${a.valor_justo.toLocaleString('pt-PT')}`)
-        if (a.oferta_recomendada) set('rOferta',`€ ${a.oferta_recomendada.toLocaleString('pt-PT')}`)
-        if (a.desconto_percentagem!==undefined) set('rDesc',`${a.desconto_percentagem>0?'+':''}${a.desconto_percentagem}%`)
-        if (a.yield_bruto)        set('rYield', `${a.yield_bruto}%`)
-        const waBtn=document.getElementById('rWA')
-        if (waBtn && a.mensagem_wa_vendedor) (waBtn as HTMLButtonElement).onclick=()=>window.open('https://wa.me/351919948986?text='+encodeURIComponent(a.mensagem_wa_vendedor),'_blank')
-      },100)
-    } catch { alert('Erro de ligação.') }
-    finally {
-      btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Analisar Agora'
-      btn.style.opacity='1'; btn.disabled=false
-    }
-  }
 
   // ═══ MODAL ═══
   function openModal() { setModalOpen(true); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('offPwd')?.focus(),300) }
@@ -479,52 +613,6 @@ export default function Home() {
     setAgEmailVal('')
   }
 
-  function IMTQuickCalc() {
-    const [v, setV] = useState('')
-    const [tipo, setTipo] = useState<'hpp'|'second'>('hpp')
-    const [result, setResult] = useState<{imt:number;is:number;total:number;isento:boolean}|null>(null)
-    const calc = async () => {
-      if(!v||Number(v)<=0) return
-      try {
-        const r = await fetch('/api/imt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({valor:Number(v),tipo,comprador:'singular'})})
-        const d = await r.json()
-        if(d.success) setResult(d)
-      } catch {}
-    }
-    const fmt = (n:number) => `€${Math.round(n).toLocaleString('pt-PT')}`
-    return (
-      <div>
-        <div style={{marginBottom:'14px'}}>
-          <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'6px'}}>Valor do Imóvel (€)</label>
-          <input type="number" value={v} onChange={e=>{setV(e.target.value);setResult(null)}} placeholder="Ex: 750000" style={{width:'100%',padding:'10px 14px',border:'1px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d'}} onKeyDown={e=>e.key==='Enter'&&calc()} />
-        </div>
-        <div style={{marginBottom:'16px'}}>
-          <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'6px'}}>Tipo</label>
-          <div style={{display:'flex',gap:'8px'}}>
-            {([['hpp','🏠 HPP'],['second','🏖 2ª Hab']] as const).map(([t,l])=>(
-              <button key={t} onClick={()=>{setTipo(t);setResult(null)}} style={{flex:1,padding:'8px',background:tipo===t?'#1c4a35':'rgba(14,14,13,.04)',color:tipo===t?'#f4f0e6':'rgba(14,14,13,.6)',border:`1px solid ${tipo===t?'#1c4a35':'rgba(14,14,13,.12)'}`,fontFamily:"'DM Mono',monospace",fontSize:'.4rem',cursor:'pointer',transition:'all .15s'}}>{l}</button>
-            ))}
-          </div>
-        </div>
-        <button onClick={calc} style={{width:'100%',padding:'11px',background:'#c9a96e',color:'#0c1f15',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',fontWeight:700}}>Calcular →</button>
-        {result && (
-          <div style={{marginTop:'16px',padding:'16px',background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.12)'}}>
-            {result.isento&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#4a9c7a',marginBottom:'8px'}}>✅ ISENTO DE IMT (HPP)</div>}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
-              {[{l:'IMT',v:result.imt},{l:'IS (0,8%)',v:result.is},{l:'Registo + Notário',v:750},{l:'Total Custos',v:result.total}].map(m=>(
-                <div key={m.l} style={{textAlign:'center',padding:'10px',background:'#fff',border:'1px solid rgba(14,14,13,.07)'}}>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'3px'}}>{m.l}</div>
-                  <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',fontWeight:600,color:m.l==='Total Custos'?'#1c4a35':m.v===0?'#4a9c7a':'#0e0e0d'}}>{m.v===0?'€0':fmt(m.v)}</div>
-                </div>
-              ))}
-            </div>
-            <a href="/portal" style={{display:'block',marginTop:'10px',textAlign:'center',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#1c4a35',textDecoration:'none',padding:'6px',border:'1px solid rgba(28,74,53,.2)'}}>Ver análise completa + PDF →</a>
-          </div>
-        )}
-      </div>
-    )
-  }
-
   function requireAgent() {
     document.getElementById('agentes')?.scrollIntoView({behavior:'smooth'})
     setTimeout(()=>document.getElementById('agEmail')?.focus(), 600)
@@ -618,10 +706,7 @@ export default function Home() {
         <ul className="nav-links">
           <li><a href="/imoveis">Imóveis</a></li>
           <li><a href="#zonas">Zonas</a></li>
-          <li><a href="#avaliacao">Avaliação</a></li>
-          <li><a href="#deal-radar">Deal Radar</a></li>
           <li><a href="#simulador">Crédito</a></li>
-          <li><a href="#nhr">NHR</a></li>
           <li><a href="/reports" style={{color:'var(--gold)'}}>Reports</a></li>
           <li><a href="#" onClick={e=>{e.preventDefault();openModal()}}>Off-Market</a></li>
           <li><a href="#contacto">Contacto</a></li>
@@ -803,31 +888,6 @@ export default function Home() {
         <style>{`@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
       </div>
 
-      {/* ── IMT CALCULATOR SECTION ── */}
-      <section style={{background:'#f4f0e6',padding:'72px 0',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
-        <div className="sw">
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'64px',alignItems:'start'}}>
-            <div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'12px'}}>Calculadora Gratuita · 2026</div>
-              <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2rem,4vw,3rem)',color:'#0e0e0d',lineHeight:1.1,marginBottom:'16px'}}>IMT + IS +<br/><em style={{fontStyle:'italic',color:'#1c4a35'}}>Custos Totais</em></h2>
-              <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.88rem',lineHeight:1.8,color:'rgba(14,14,13,.55)',marginBottom:'28px',maxWidth:'380px'}}>A calculadora mais completa de Portugal para compradores nacionais e internacionais. Tabelas IMT 2026 actualizadas. Isenções HPP. Custos notariais e registo.</p>
-              <div style={{display:'flex',flexDirection:'column',gap:'10px',marginBottom:'32px'}}>
-                {['Tabelas IMT 2026 — actualizadas','Isenção HPP até €97.064','IS 0,8% · Registo · Notário · Advogado','Comparação HPP vs 2ª Habitação vs Investimento','Export PDF profissional para clientes'].map(f=>(
-                  <div key={f} style={{display:'flex',alignItems:'center',gap:'10px',fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'rgba(14,14,13,.6)'}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1c4a35" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>{f}
-                  </div>
-                ))}
-              </div>
-              <a href="/portal" style={{display:'inline-block',background:'#1c4a35',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.14em',textTransform:'uppercase',padding:'14px 32px',textDecoration:'none'}}>Abrir Calculadora Completa →</a>
-            </div>
-            <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'28px',boxShadow:'0 8px 40px rgba(14,14,13,.06)'}}>
-              <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:400,fontSize:'1.2rem',color:'#0e0e0d',marginBottom:'20px'}}>Simulação Rápida</h3>
-              <IMTQuickCalc />
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* IMÓVEIS */}
       <section className="imoveis-section section" id="imoveis">
         <div className="sw">
@@ -936,153 +996,183 @@ export default function Home() {
         </div>
       </section>
 
-      {/* AVM — removido da página pública, disponível no Portal */}
+      {/* BLOCO 2 — Avaliação Privada */}
+      <section style={{background:'#f7f3ec',padding:'120px 0',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',background:'linear-gradient(90deg, transparent, rgba(201,169,110,.6), transparent)'}}/>
+        <div className="sw" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'80px',alignItems:'center'}}>
 
-      {/* SIMULADOR DE CRÉDITO */}
-      <section className="simulador-section" id="simulador">
-        <div className="sw">
-          <div className="sim-grid">
-            <div>
-              <div className="sec-eye">Simulador · Crédito Habitação · Portugal</div>
-              <h2 className="sec-h2">
-                <span className="text-reveal"><span className="text-reveal-inner">Simular</span></span>
-                <span className="text-reveal"><span className="text-reveal-inner"><em>Crédito</em></span></span>
-              </h2>
-              <p className="fade-in" style={{fontSize:'.83rem',lineHeight:'1.78',color:'var(--ink2)',margin:'20px 0 28px',maxWidth:'420px'}}>
-                Euribor 6M em tempo real. Cenários stress-test. Tabela de amortização completa.
-                IMT + IS + custos totais de aquisição calculados automaticamente.
-              </p>
-              <div className="fade-in" style={{display:'flex',flexDirection:'column',gap:'11px'}}>
-                {['Euribor 6M BCE — Março 2026: 2,95%','Cálculo TAEG com Newton-Raphson','Amortização anual completa (30 anos)','DSTI check conforme Banco de Portugal','Deducão IRS habitação própria (Art. 85º CIRS)'].map(t=>(
-                  <div key={t} style={{display:'flex',alignItems:'center',gap:'11px',fontSize:'.78rem',color:'var(--ink2)'}}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>{t}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="sim-widget fade-in">
-              <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.3rem',color:'var(--g)',marginBottom:'24px',letterSpacing:'.02em'}}>Simular Crédito</h3>
-              <div className="avm-row full">
-                <div>
-                  <label className="avm-lbl">Valor do Imóvel (€)</label>
-                  <input className="avm-inp" type="number" id="mtgMontante" placeholder="ex: 500000" min="50000"/>
+          {/* LEFT — Text */}
+          <div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'28px'}}>Avaliação · Reservada a Proprietários</div>
+            <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.4rem,4vw,4rem)',fontWeight:300,color:'#0e0e0d',lineHeight:1.08,margin:'0 0 28px',letterSpacing:'-.01em'}}>
+              O seu imóvel vale<br/>quanto vale.<br/><em style={{fontStyle:'italic',color:'#1c4a35'}}>Não mais. Não menos.</em>
+            </h2>
+            <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.92rem',fontWeight:300,color:'rgba(14,14,13,.55)',lineHeight:1.78,marginBottom:'40px',maxWidth:'400px'}}>
+              Avaliação proprietária calibrada com dados INE 2025 e transacções reais. Reservado a proprietários e investidores qualificados.
+            </p>
+            <a
+              href="https://wa.me/351919948986?text=Gostaria+de+solicitar+uma+avalia%C3%A7%C3%A3o+privada+do+meu+im%C3%B3vel."
+              target="_blank" rel="noreferrer"
+              style={{display:'inline-flex',alignItems:'center',gap:'12px',padding:'16px 40px',background:'#1c4a35',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.18em',textTransform:'uppercase',textDecoration:'none',fontWeight:400}}
+            >
+              Pedir Avaliação Privada
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+
+          {/* RIGHT — Formulário simples */}
+          <div style={{background:'#fff',padding:'48px',boxShadow:'0 2px 40px rgba(14,14,13,.06)'}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',marginBottom:'28px'}}>Pedido de Avaliação · Confidencial</div>
+            <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+              {[{id:'avalNome',label:'Nome',placeholder:'O seu nome'},
+                {id:'avalTel',label:'Telefone',placeholder:'+351 9XX XXX XXX'},
+                {id:'avalZona',label:'Zona',placeholder:'Ex: Lisboa, Cascais, Comporta...'}
+              ].map(f=>(
+                <div key={f.id}>
+                  <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',display:'block',marginBottom:'6px'}}>{f.label}</label>
+                  <input id={f.id} placeholder={f.placeholder} style={{width:'100%',padding:'12px 16px',border:'1px solid rgba(14,14,13,.14)',fontFamily:"'Jost',sans-serif",fontSize:'.88rem',color:'#0e0e0d',outline:'none',background:'#faf8f4',boxSizing:'border-box'}}/>
                 </div>
-              </div>
-              <div className="avm-row">
-                <div><label className="avm-lbl">Entrada</label>
-                  <select className="avm-sel" id="mtgEntrada">
-                    <option value="10">10% (Habitação Própria)</option>
-                    <option value="20" >20%</option>
-                    <option value="25" >25% (Investimento)</option>
-                    <option value="30">30%</option>
-                    <option value="40">40%</option>
-                    <option value="50">50%</option>
-                  </select>
-                </div>
-                <div><label className="avm-lbl">Prazo</label>
-                  <select className="avm-sel" id="mtgPrazo">
-                    <option value="15">15 anos</option>
-                    <option value="20">20 anos</option>
-                    <option value="25">25 anos</option>
-                    <option value="30" >30 anos</option>
-                    <option value="35">35 anos</option>
-                    <option value="40">40 anos</option>
-                  </select>
-                </div>
-              </div>
-              <div className="avm-row">
-                <div><label className="avm-lbl">Spread</label>
-                  <select className="avm-sel" id="mtgSpread">
-                    <option value="0.75">0,75% (excelente)</option>
-                    <option value="1.0">1,00% (bom)</option>
-                    <option value="1.4" >1,40% (típico)</option>
-                    <option value="1.8">1,80% (standard)</option>
-                    <option value="2.5">2,50% (alto)</option>
-                  </select>
-                </div>
-                <div><label className="avm-lbl">Finalidade</label>
-                  <select className="avm-sel" id="mtgUso">
-                    <option value="habitacao_propria">Habitação Própria</option>
-                    <option value="investimento">Investimento</option>
-                  </select>
-                </div>
-              </div>
-              <button className="avm-submit mtg-submit" onClick={calcMortgage}>Calcular</button>
-              {mortgageResult && (() => {
-                const r = mortgageResult as Record<string,Record<string,number>&{euribor_6m_pct?:number,tan_pct?:number,taeg_pct?:number}>
-                const res = r.resultado as Record<string,number>
-                const inp = r.inputs as Record<string,number>
-                return (
-                  <div className="mtg-result">
-                    <div className="mtg-hero">
-                      <div className="mtg-main">
-                        <div className="mtg-label">Prestação Mensal</div>
-                        <div className="mtg-value">€ {res.prestacao_mensal?.toLocaleString('pt-PT')}</div>
-                        <div className="mtg-sub">TAN {res.tan_pct}% · TAEG {res.taeg_pct}%</div>
-                      </div>
-                    </div>
-                    <div className="mtg-grid3">
-                      <div><div className="mtg-gl">Capital</div><div className="mtg-gv">€ {inp.capital?.toLocaleString('pt-PT')}</div></div>
-                      <div><div className="mtg-gl">Total Juros</div><div className="mtg-gv">€ {res.total_juros?.toLocaleString('pt-PT')}</div></div>
-                      <div><div className="mtg-gl">Total Pago</div><div className="mtg-gv">€ {res.total_pago?.toLocaleString('pt-PT')}</div></div>
-                      <div><div className="mtg-gl">IMT + IS</div><div className="mtg-gv">€ {((res.imt_estimado||0)+(res.is_estimado||0)).toLocaleString('pt-PT')}</div></div>
-                      <div><div className="mtg-gl">IMI/Ano</div><div className="mtg-gv">€ {res.imi_anual?.toLocaleString('pt-PT')}</div></div>
-                      <div><div className="mtg-gl">Custo Total</div><div className="mtg-gv" style={{color:'var(--gold)'}}>€ {res.custo_total_aquisicao?.toLocaleString('pt-PT')}</div></div>
-                    </div>
-                  </div>
-                )
-              })()}
+              ))}
+              <button
+                onClick={()=>{
+                  const nome=(document.getElementById('avalNome') as HTMLInputElement)?.value||''
+                  const tel=(document.getElementById('avalTel') as HTMLInputElement)?.value||''
+                  const zona=(document.getElementById('avalZona') as HTMLInputElement)?.value||''
+                  if(!nome||!tel){alert('Por favor preenche o nome e telefone.');return}
+                  window.open(`https://wa.me/351919948986?text=${encodeURIComponent(`Pedido de avaliação privada:\nNome: ${nome}\nTelefone: ${tel}\nZona: ${zona}`)}`, '_blank')
+                }}
+                style={{marginTop:'8px',padding:'14px',background:'#1c4a35',color:'#f4f0e6',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.16em',textTransform:'uppercase',cursor:'pointer',fontWeight:400}}
+              >
+                Pedir Avaliação Privada →
+              </button>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.33rem',color:'rgba(14,14,13,.25)',letterSpacing:'.06em',textTransform:'uppercase',textAlign:'center'}}>Resposta em menos de 2 horas · 100% confidencial</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* FINANCIAMENTO NÃO-RESIDENTES — removido da página pública, disponível no Portal */}
-      {/* MAIS-VALIAS — removido da página pública, disponível no Portal */}
-      {/* NHR — removido da página pública, disponível no Portal */}
-
-      {/* FERRAMENTAS EXCLUSIVAS — 4 cards */}
-      <section style={{background:'var(--cd)',padding:'110px 0'}}>
+      {/* SIMULADOR DE CRÉDITO — versão completa (cenários, amortização, DSTI) */}
+      <section id="simulador" style={{background:'#f9f7f2',padding:'80px 0',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
         <div className="sw">
-          <div style={{marginBottom:'56px'}}>
-            <div className="sec-eye">Ferramentas Exclusivas · Portal de Agentes</div>
-            <h2 className="sec-h2" style={{marginTop:'10px'}}>
-              <span className="text-reveal"><span className="text-reveal-inner" style={{transform:'none'}}>Tecnologia</span></span>
-              <span className="text-reveal"><span className="text-reveal-inner" style={{transform:'none'}}><em>Proprietária</em></span></span>
-            </h2>
-            <p className="tools-desc" style={{fontSize:'.83rem',lineHeight:'1.8',color:'var(--ink2)',marginTop:'16px',maxWidth:'520px'}}>Quatro ferramentas desenvolvidas exclusivamente para os agentes Agency Group. Totalmente operacionais no portal seguro — a um clique.</p>
+          <div style={{marginBottom:'40px'}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Simulador · Crédito Habitação · Portugal</div>
+            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2rem,4vw,3rem)',color:'#0e0e0d',lineHeight:1.1,marginBottom:'12px'}}>Simular <em style={{fontStyle:'italic',color:'#1c4a35'}}>Crédito</em></h2>
+            <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.86rem',lineHeight:1.8,color:'rgba(14,14,13,.5)',maxWidth:'560px'}}>Euribor 6M em tempo real · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização · DSTI Banco de Portugal · IMT + IS incluído</p>
           </div>
+          <HomeMortgage />
+        </div>
+      </section>
 
-          <div className="tools-grid" style={{display:'grid',gap:'2px'}}>
 
-            {/* Card 1 — Avaliação AVM */}
-            {(() => {
-              const items = [['Agency Radar','Avaliação &amp; Oferta Imediata','var(--g)','M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z','Cola o link de qualquer imóvel. Em 30 segundos obtens o valor justo, a oferta óptima a negociar e a mensagem de WhatsApp pronta a enviar ao vendedor.',['Score proprietário 16D','Valor justo de mercado','Oferta óptima calculada','Análise comparativa de zona','Mensagem WhatsApp automática ao vendedor'],'Aceder ao Radar'],['Investor Dashboard','Comparação &amp; Investimento','var(--g)','M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z','Compara até 5 imóveis em simultâneo com análise completa. Ranking automático por score, yield real e oferta óptima para apresentar ao cliente investidor.',['Comparação multi-imóvel (até 5)','Score 16D por cada imóvel','Yield bruto e ROI em tempo real','Ranking automático por potencial','Relatório para o cliente investidor'],'Aceder ao Dashboard'],['AVM World-Class','Avaliação &amp; Preço Justo','var(--g)','M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z','Avaliação automática e instantânea com precisão de referência. Motor de avaliação calibrado com dados INE Q3 2025 para o mercado de luxo em todas as zonas de Portugal.',['Precisão de referência em qualquer zona','Calibração INE Q3 2025 em tempo real','Ajustes por tipologia, estado e localização','Score de confiança e potencial futuro','Relatório profissional em segundos'],'Aceder à Avaliação'],['NHR / IFICI','Poupança Fiscal · 10 Anos','var(--gm)','M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064','Portugal oferece 10 anos de tributação reduzida via NHR/IFICI. Calcula exactamente quanto o teu cliente poupa face ao país de origem — argumento decisivo para compradores internacionais.',['NHR Clássico: 20% flat ou isenção total','IFICI 2024: 20% rendimentos qualificados','Comparativo vs UK (45%), EUA (37%), França (45%)','Projecção 10 anos com crescimento 3% a.a.','Processo 4–6 semanas — acompanhamos'],'Aceder à Calculadora NHR']]
-              return items.map(([title,badge,color,icon,desc,feats,cta],i)=>(
-                <div key={i} style={{background:'var(--w)',padding:'44px 40px',borderTop:`3px solid ${color}`,display:'flex',flexDirection:'column'}}>
-                  <div className="radar-tag" style={{marginBottom:'24px',background:color==='var(--gold)'?'rgba(201,169,110,.12)':undefined}}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="12"><path d={icon as string}/></svg>
-                    <span dangerouslySetInnerHTML={{__html:badge as string}}/>
-                  </div>
-                  <div className="tool-title" style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2rem',color:'var(--ink)',lineHeight:'1.05',marginBottom:'14px'}}>{title}</div>
-                  <p className="tool-desc" style={{fontSize:'.8rem',color:'var(--ink2)',lineHeight:'1.8',margin:'0 0 24px'}}>{desc as string}</p>
-                  <div className="tool-feats" style={{display:'flex',flexDirection:'column',gap:'11px',marginBottom:'36px',flex:1}}>
-                    {(feats as string[]).map((f:string)=>(
-                      <div key={f} className="tool-feat" style={{display:'flex',alignItems:'center',gap:'11px'}}>
-                        <div style={{width:'5px',height:'5px',background:'var(--gold)',flexShrink:0}}/>
-                        <span style={{fontSize:'.75rem',color:'var(--ink2)',fontFamily:"'DM Mono',monospace",letterSpacing:'.03em'}}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <a href={(() => { try { const d = JSON.parse(localStorage.getItem('ag_auth')||'{}'); return d.token ? `/portal?token=${encodeURIComponent(d.token)}` : '/portal' } catch { return '/portal' } })()} style={{display:'block',padding:'14px 24px',background:color==='var(--gold)'?'var(--gold)':color==='var(--gm)'?'var(--gm)':'var(--g)',color:color==='var(--gold)'?'var(--ink)':'var(--cr)',fontFamily:"'DM Mono',monospace",fontSize:'.53rem',letterSpacing:'.16em',textTransform:'uppercase',textDecoration:'none',textAlign:'center',fontWeight:600}}>
-                    {cta as string} →
-                  </a>
+      {/* BLOCO 3 — Viver e Investir em Portugal · Editorial 2 colunas */}
+      <section style={{background:'#0c1f15',minHeight:'560px',display:'grid',gridTemplateColumns:'1fr 1fr',overflow:'hidden',position:'relative'}}>
+
+        {/* LEFT — Lifestyle image simulation: mesa de jantar em Comporta */}
+        <div style={{position:'relative',minHeight:'560px',overflow:'hidden'}}>
+          {/* Warm terracotta/clay afternoon light */}
+          <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg, #1a0e08 0%, #3d1f0d 25%, #7a4020 45%, #c4844a 62%, #e8b87a 72%, #c99850 82%, #241005 100%)'}}/>
+          <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(ellipse 70% 50% at 45% 55%, rgba(232,184,122,.25) 0%, transparent 65%)',mixBlendMode:'overlay'}}/>
+          <div style={{position:'absolute',inset:0,background:'linear-gradient(to right, transparent 60%, rgba(12,31,21,.95) 100%)'}}/>
+          <div style={{position:'absolute',inset:0,background:'linear-gradient(to top, rgba(12,31,21,.7) 0%, transparent 50%)'}}/>
+          <div style={{position:'absolute',bottom:'32px',left:'32px'}}>
+            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.1rem',fontWeight:300,color:'rgba(244,240,230,.6)',fontStyle:'italic'}}>
+              "Uma mesa em Comporta.<br/>Uma vida em Portugal."
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT — Text + bullets + CTA */}
+        <div style={{display:'flex',flexDirection:'column',justifyContent:'center',padding:'80px 64px'}}>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.37rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'28px'}}>NHR · IFICI · Residência Fiscal · Portugal</div>
+          <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2rem,3.5vw,3.2rem)',fontWeight:300,color:'#f4f0e6',lineHeight:1.1,margin:'0 0 28px',letterSpacing:'-.01em'}}>
+            Viver e Investir<br/>em <em style={{fontStyle:'italic',color:'#c9a96e'}}>Portugal</em>
+          </h2>
+          <div style={{width:'36px',height:'1px',background:'rgba(201,169,110,.4)',marginBottom:'28px'}}/>
+          <div style={{display:'flex',flexDirection:'column',gap:'18px',marginBottom:'44px'}}>
+            {[
+              'NHR / IFICI — 20% de taxa flat durante 10 anos. Para rendimentos qualificados.',
+              'Sem imposto sobre dividendos, mais-valias e rendimentos estrangeiros em muitos casos.',
+              'Portugal no top 5 mundial de qualidade de vida para famílias de alto rendimento.',
+            ].map((t,i)=>(
+              <div key={i} style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
+                <div style={{width:'20px',height:'20px',border:'1px solid rgba(201,169,110,.35)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:'2px'}}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#c9a96e" strokeWidth="2" width="10"><polyline points="20 6 9 17 4 12"/></svg>
                 </div>
-              ))
-            })()}
-
+                <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.85rem',color:'rgba(244,240,230,.5)',lineHeight:1.65,fontWeight:300}}>{t}</span>
+              </div>
+            ))}
           </div>
-          <p style={{marginTop:'24px',fontFamily:"'DM Mono',monospace",fontSize:'.48rem',letterSpacing:'.12em',color:'var(--ink2)',opacity:.4,textTransform:'uppercase'}}>Ferramentas exclusivas Agency Group · AMI 22506 · Acesso restrito a agentes autenticados</p>
+          <a
+            href="https://wa.me/351919948986?text=Gostaria+de+falar+com+o+vosso+consultor+fiscal+sobre+NHR%2FIFICI."
+            target="_blank" rel="noreferrer"
+            style={{display:'inline-flex',alignItems:'center',gap:'12px',padding:'16px 36px',background:'transparent',border:'1px solid rgba(201,169,110,.4)',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.18em',textTransform:'uppercase',textDecoration:'none',fontWeight:400,width:'fit-content'}}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="14"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a9.88 9.88 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Falar com o Consultor Fiscal
+          </a>
+        </div>
+      </section>
+
+      {/* ACESSO PRIVADO — Private Client · Split editorial */}
+      <section style={{background:'#070f0a',minHeight:'640px',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 1fr'}}>
+
+        {/* LEFT — Editorial photo simulation: villa ao pôr do sol */}
+        <div style={{position:'relative',minHeight:'640px',overflow:'hidden'}}>
+          {/* Golden hour base */}
+          <div style={{position:'absolute',inset:0,background:'linear-gradient(160deg, #0c0802 0%, #1a0e03 20%, #3d2008 45%, #c9862a 65%, #e8a84e 78%, #b87520 88%, #050300 100%)'}}/>
+          {/* Villa silhouette overlay */}
+          <div style={{position:'absolute',inset:0,backgroundImage:'radial-gradient(ellipse 80% 40% at 50% 68%, rgba(201,134,42,.35) 0%, transparent 60%)',mixBlendMode:'screen'}}/>
+          {/* Atmosphere haze */}
+          <div style={{position:'absolute',bottom:0,left:0,right:0,height:'55%',background:'linear-gradient(to top, rgba(7,15,10,.95) 0%, transparent 100%)'}}/>
+          {/* Top vignette */}
+          <div style={{position:'absolute',top:0,left:0,right:0,height:'30%',background:'linear-gradient(to bottom, rgba(7,15,10,.7) 0%, transparent 100%)'}}/>
+          {/* Editorial label */}
+          <div style={{position:'absolute',bottom:'36px',left:'36px',right:'36px'}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'8px'}}>Comporta · Herdade Privada · Off-Market</div>
+            <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',fontWeight:300,color:'rgba(244,240,230,.75)',fontStyle:'italic',lineHeight:1.2}}>
+              "Os imóveis mais extraordinários<br/>nunca chegam ao mercado."
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT — Text + CTA */}
+        <div style={{display:'flex',flexDirection:'column',justifyContent:'center',padding:'80px 64px',position:'relative'}}>
+          {/* Subtle grid */}
+          <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(201,169,110,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(201,169,110,.025) 1px,transparent 1px)',backgroundSize:'48px 48px',pointerEvents:'none'}}/>
+
+          <div style={{position:'relative'}}>
+            {/* Eyebrow */}
+            <div style={{display:'inline-flex',alignItems:'center',gap:'10px',padding:'6px 18px',border:'1px solid rgba(201,169,110,.22)',marginBottom:'40px'}}>
+              <div style={{width:'5px',height:'5px',background:'#c9a96e',borderRadius:'50%'}}/>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.75)'}}>Off-Market · By Invitation Only</span>
+            </div>
+
+            {/* Title */}
+            <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.8rem,4.5vw,4.8rem)',fontWeight:300,color:'#f4f0e6',lineHeight:1.03,margin:'0 0 6px',letterSpacing:'-.01em'}}>Acesso</h2>
+            <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.8rem,4.5vw,4.8rem)',fontWeight:300,color:'#f4f0e6',lineHeight:1.03,margin:'0 0 32px',letterSpacing:'-.01em',fontStyle:'italic'}}>Privado</h2>
+
+            {/* Divider */}
+            <div style={{width:'40px',height:'1px',background:'rgba(201,169,110,.4)',marginBottom:'32px'}}/>
+
+            {/* Subtitle */}
+            <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.9rem',fontWeight:300,color:'rgba(244,240,230,.38)',lineHeight:1.8,marginBottom:'48px',maxWidth:'340px'}}>
+              Imóveis que nunca chegam ao mercado.<br/>Para clientes e investidores qualificados.<br/>Acesso por referência directa.
+            </p>
+
+            {/* CTA */}
+            <button
+              onClick={()=>setAgModal(true)}
+              style={{display:'inline-flex',alignItems:'center',gap:'14px',padding:'17px 44px',background:'transparent',border:'1px solid rgba(201,169,110,.42)',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.47rem',letterSpacing:'.2em',textTransform:'uppercase',cursor:'pointer',transition:'all .25s',fontWeight:400,width:'fit-content'}}
+              onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(201,169,110,.09)';(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.75)'}}
+              onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent';(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.42)'}}
+            >
+              Solicitar Acesso
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+
+            {/* Bottom note */}
+            <div style={{marginTop:'52px',fontFamily:"'DM Mono',monospace",fontSize:'.34rem',letterSpacing:'.12em',color:'rgba(244,240,230,.16)',textTransform:'uppercase'}}>Agency Group · AMI 22506 · Acesso restrito</div>
+          </div>
         </div>
       </section>
 
@@ -1158,9 +1248,6 @@ export default function Home() {
 
       {/* ── PRESS SECTION ─────────────────────────────────────── */}
       <PressSection />
-
-      {/* ── REVIEWS ─────────────────────────────────────── */}
-      <ReviewsWidget />
 
       {/* ── TESTIMONIALS ─────────────────────────────────────── */}
       <section className="test-section" style={{
@@ -1369,7 +1456,7 @@ export default function Home() {
           <div className="ft-top">
             <div><div className="ft-la">Agency</div><div className="ft-lg">Group</div><p className="ft-tag">Mediação imobiliária de luxo em Portugal. €500K–€10M.</p></div>
             <div className="ft-col"><div className="ft-col-h">Zonas</div><ul><li><a href="#">Lisboa</a></li><li><a href="#">Cascais</a></li><li><a href="#">Comporta</a></li><li><a href="#">Porto</a></li><li><a href="#">Algarve</a></li><li><a href="#">Madeira</a></li></ul></div>
-            <div className="ft-col"><div className="ft-col-h">Serviços</div><ul><li><a href="#avaliacao">Avaliação AVM</a></li><li><a href="#deal-radar">Deal Radar</a></li><li><a href="#" onClick={e=>{e.preventDefault();openModal()}}>Off-Market</a></li><li><a href="#contacto">NHR / Vistos</a></li></ul></div>
+            <div className="ft-col"><div className="ft-col-h">Serviços</div><ul><li><a href="#" onClick={e=>{e.preventDefault();openModal()}}>Off-Market</a></li><li><a href="/portal">Portal Agentes</a></li><li><a href="#contacto">NHR / Vistos</a></li><li><a href="#imt">Simulador IMT</a></li></ul></div>
             <div className="ft-col"><div className="ft-col-h">Empresa</div><ul><li><a href="#contacto">Sobre Nós</a></li><li><a href="#agentes">Agentes</a></li><li><a href="/relatorio-2026" style={{color:'var(--gold)',fontWeight:500}}>Market Report 2026 ↗</a></li><li><a href="mailto:geral@agencygroup.pt">Email</a></li></ul></div>
           </div>
           <div className="ft-bot">
