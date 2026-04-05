@@ -157,7 +157,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       if (!error && data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = (data as any[]).map((row) => ({
-          id: row.id,
+          id: typeof row.id === 'number' ? row.id : parseInt(String(row.id), 10) || 0,
           ref: row.ref || '',
           imovel: row.imovel || '',
           valor: row.valor ? `€${Number(row.valor).toLocaleString('pt-PT')}` : '€0',
