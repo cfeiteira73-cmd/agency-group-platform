@@ -1,0 +1,93 @@
+{
+  "name": "Workflow B — Lead Scoring Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "b1a2c3d4-e5f6-7890-abcd-ef0000000001",
+      "name": "Cron — A cada 6 horas",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  c.id,\n  c.full_name,\n  c.email,\n  c.phone,\n  c.budget,\n  c.tier,\n  c.lead_score AS current_score,\n  c.source,\n  c.created_at,\n  c.last_activity,\n  COUNT(a.id) AS total_activities,\n  MAX(a.created_at) AS latest_activity,\n  SUM(CASE WHEN a.type = 'visit' THEN 1 ELSE 0 END) AS visit_count,\n  SUM(CASE WHEN a.type = 'inquiry' THEN 1 ELSE 0 END) AS inquiry_count,\n  SUM(CASE WHEN a.type = 'whatsapp_reply' THEN 1 ELSE 0 END) AS reply_count\nFROM contacts c\nLEFT JOIN activities a ON a.contact_id = c.id\nWHERE c.status = 'active'\nGROUP BY c.id\nORDER BY c.lead_score DESC\nLIMIT 200",
+        "options": {}
+      },
+      "id": "b1a2c3d4-e5f6-7890-abcd-ef0000000002",
+      "name": "Supabase — Leads para Rescoring",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lead scoring algorithm\n// Max score: 100 points\nconst lead = $input.first().json;\n\nlet score = 0;\nconst factors = [];\n\n// Budget (30pts)\nconst budget = Number(lead.budget) || 0;\nif (budget >= 1000000) { score += 30; factors.push('Budget 1M+ (30pts)'); }\nelse if (budget >= 500000) { score += 22; factors.push('Budget 500K+ (22pts)'); }\nelse if (budget >= 200000) { score += 15; factors.push('Budget 200K+ (15pts)'); }\nelse if (budget >= 100000) { score += 8; factors.push('Budget 100K+ (8pts)'); }\n\n// Engagement activity (30pts)\nconst visits = Number(lead.visit_count) || 0;\nconst inquiries = Number(lead.inquiry_count) || 0;\nconst replies = Number(lead.reply_count) || 0;\nconst engagementScore = Math.min(30, (visits * 10) + (inquiries * 5) + (replies * 3));\nscore += engagementScore;\nif (engagementScore > 0) factors.push(`Engagement: ${visits}v/${inquiries}i/${replies}r (${engagementScore}pts)`);\n\n// Recency (20pts)\nconst daysSinceActivity = lead.latest_activity\n  ? Math.floor((Date.now() - new Date(lead.latest_activity).getTime()) / 86400000)\n  : 999;\nif (daysSinceActivity <= 1) { score += 20; factors.push('Activo hoje (20pts)'); }\nelse if (daysSinceActivity <= 7) { score += 15; factors.push('Activo esta semana (15pts)'); }\nelse if (daysSinceActivity <= 30) { score += 8; factors.push('Activo este mês (8pts)'); }\nelse if (daysSinceActivity <= 60) { score += 3; factors.push('Activo 60d (3pts)'); }\n\n// Source quality (20pts)\nconst sourceScores = {\n  referral: 20, 'word-of-mouth': 20,\n  linkedin: 15, 'direct-contact': 15,\n  website: 10, portal: 8,\n  'social-media': 6, other: 3\n};\nconst sourceScore = sourceScores[lead.source] || 3;\nscore += sourceScore;\nfactors.push(`Source: ${lead.source} (${sourceScore}pts)`);\n\n// Tier assignment\nlet tier = 'D';\nif (score >= 80) tier = 'A';\nelse if (score >= 60) tier = 'B';\nelse if (score >= 40) tier = 'C';\n\nreturn [{\n  json: {\n    contact_id: lead.id,\n    new_score: score,\n    previous_score: lead.current_score,\n    score_delta: score - (lead.current_score || 0),\n    tier,\n    scoring_factors: factors,\n    scored_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "b1a2c3d4-e5f6-7890-abcd-ef0000000003",
+      "name": "Code — Calcular Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE contacts SET lead_score = {{ $json.new_score }}, tier = '{{ $json.tier }}', updated_at = NOW() WHERE id = '{{ $json.contact_id }}'",
+        "options": {}
+      },
+      "id": "b1a2c3d4-e5f6-7890-abcd-ef0000000004",
+      "name": "Supabase — Actualizar Score",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron — A cada 6 horas": {
+      "main": [
+        [{ "node": "Supabase — Leads para Rescoring", "type": "main", "index": 0 }]
+      ]
+    },
+    "Supabase — Leads para Rescoring": {
+      "main": [
+        [{ "node": "Code — Calcular Score", "type": "main", "index": 0 }]
+      ]
+    },
+    "Code — Calcular Score": {
+      "main": [
+        [{ "node": "Supabase — Actualizar Score", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": ["leads", "scoring", "agency-group"],
+  "meta": {
+    "instanceId": "agency-group"
+  }
+}

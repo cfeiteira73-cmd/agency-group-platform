@@ -561,6 +561,15 @@ export default function PortalPulse() {
   const [lastUpdated, setLastUpdated] = useState<string>('')
   const [insightIndex, setInsightIndex] = useState(0)
   const [pulse, setPulse] = useState(true)
+  const [liveSource, setLiveSource] = useState<'live' | 'demo'>('demo')
+
+  // ── Live data fetch ────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetch('/api/market-data')
+      .then(r => { if (!r.ok) throw new Error('not ok'); return r.json() })
+      .then(() => setLiveSource('live'))
+      .catch(() => setLiveSource('demo'))
+  }, [])
 
   useEffect(() => {
     const updateTime = () => {
@@ -602,14 +611,19 @@ export default function PortalPulse() {
               <h1 style={{ fontFamily: 'Cormorant, serif', fontSize: 28, color: '#f4f0e6', fontWeight: 700, margin: 0 }}>
                 Market Pulse
               </h1>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{ background: 'rgba(201,169,110,0.2)', border: '1px solid rgba(201,169,110,0.4)' }}>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{
+                background: liveSource === 'live' ? 'rgba(74,222,128,0.15)' : 'rgba(251,191,36,0.15)',
+                border: `1px solid ${liveSource === 'live' ? 'rgba(74,222,128,0.4)' : 'rgba(251,191,36,0.4)'}`,
+              }}>
                 <div style={{
                   width: 8, height: 8, borderRadius: '50%',
-                  background: pulse ? '#4ade80' : '#22c55e',
-                  boxShadow: pulse ? '0 0 0 3px rgba(74,222,128,0.3)' : 'none',
+                  background: liveSource === 'live' ? (pulse ? '#4ade80' : '#22c55e') : '#fbbf24',
+                  boxShadow: liveSource === 'live' && pulse ? '0 0 0 3px rgba(74,222,128,0.3)' : 'none',
                   transition: 'all 0.6s ease',
                 }} />
-                <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#c9a96e', letterSpacing: '0.1em' }}>LIVE</span>
+                <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: liveSource === 'live' ? '#4ade80' : '#fbbf24', letterSpacing: '0.1em' }}>
+                  {liveSource === 'live' ? 'LIVE' : 'DEMO'}
+                </span>
               </div>
             </div>
             <p style={{ color: 'rgba(244,240,230,0.6)', fontSize: 13, marginTop: 4, fontFamily: 'DM Mono, monospace' }}>

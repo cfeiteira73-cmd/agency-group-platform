@@ -1664,6 +1664,20 @@ export default function PortalOutbound() {
     } catch { return INITIAL_SIGNALS }
   })
   const [sequences, setSequences] = useState<OutreachSequence[]>(DEFAULT_SEQUENCES)
+  const [liveSource, setLiveSource] = useState<'live' | 'demo'>('demo')
+
+  // ── Live contacts/signals fetch ────────────────────────────────────────────
+  useEffect(() => {
+    fetch('/api/signals')
+      .then(r => { if (!r.ok) throw new Error('not ok'); return r.json() })
+      .then((data: { signals?: ProspectSignal[] }) => {
+        if (Array.isArray(data.signals) && data.signals.length > 0) {
+          setSignals(data.signals)
+        }
+        setLiveSource('live')
+      })
+      .catch(() => setLiveSource('demo'))
+  }, [])
 
   useEffect(() => {
     try {
@@ -1738,9 +1752,27 @@ export default function PortalOutbound() {
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#c9a96e', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 6 }}>
               AGENCY GROUP · AMI 22506
             </div>
-            <h1 style={{ fontFamily: "'Cormorant',serif", fontSize: 38, color: '#0e0e0d', margin: 0, lineHeight: 1.1 }}>
-              Outbound Off-Market
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h1 style={{ fontFamily: "'Cormorant',serif", fontSize: 38, color: '#0e0e0d', margin: 0, lineHeight: 1.1 }}>
+                Outbound Off-Market
+              </h1>
+              {/* LIVE / DEMO badge */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '4px 10px', borderRadius: 999,
+                background: liveSource === 'live' ? 'rgba(34,197,94,.1)' : 'rgba(251,191,36,.1)',
+                border: `1px solid ${liveSource === 'live' ? 'rgba(34,197,94,.35)' : 'rgba(251,191,36,.35)'}`,
+              }}>
+                <span style={{
+                  display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+                  background: liveSource === 'live' ? '#22c55e' : '#fbbf24',
+                  boxShadow: liveSource === 'live' ? '0 0 0 2px rgba(34,197,94,.25)' : 'none',
+                }} />
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: liveSource === 'live' ? '#16a34a' : '#d97706' }}>
+                  {liveSource === 'live' ? 'LIVE' : 'DEMO'}
+                </span>
+              </div>
+            </div>
             <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: '#6b7280', margin: '8px 0 0' }}>
               Motor de prospecção e captação off-market — o mais avançado de Portugal
             </p>

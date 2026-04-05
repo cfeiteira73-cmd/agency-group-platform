@@ -23,6 +23,7 @@ import { usePortfolioStore } from './stores/portfolioStore'
 // Components — PortalDashboard loaded eagerly (default section); all others lazy
 import dynamic from 'next/dynamic'
 import PortalDashboard from './components/PortalDashboard'
+import { PortalBootstrap } from './components/PortalBootstrap'
 const PortalAVM           = dynamic(() => import('./components/PortalAVM'),           { ssr: false })
 const PortalMortgage      = dynamic(() => import('./components/PortalMortgage'),      { ssr: false })
 const PortalNHR           = dynamic(() => import('./components/PortalNHR'),           { ssr: false })
@@ -691,6 +692,7 @@ export default function Portal() {
 
   return (
     <>
+      <PortalBootstrap />
       {/* Toast notifications */}
       {toasts.length > 0 && (
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>

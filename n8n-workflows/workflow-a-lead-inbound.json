@@ -1,0 +1,85 @@
+{
+  "name": "Workflow A — Lead Inbound (Entry Point)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-inbound",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0000000001",
+      "name": "Webhook — Lead Inbound",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "agency-group-lead-inbound"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Minimal validation — forward to lead-enrichment workflow\nconst body = $input.first().json.body || $input.first().json;\n\nif (!body.email && !body.phone) {\n  throw new Error('Lead sem email nem telefone — descartado');\n}\n\nreturn [{ json: body }];"
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0000000002",
+      "name": "Code — Validar Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.N8N_WEBHOOK_URL }}/webhook/lead-enrichment",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=",
+              "value": "={{ JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0000000003",
+      "name": "HTTP — Forward to Enrichment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"received\", \"message\": \"Lead queued for processing\" }"
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0000000004",
+      "name": "Respond — 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Lead Inbound": {
+      "main": [
+        [{ "node": "Code — Validar Payload", "type": "main", "index": 0 }]
+      ]
+    },
+    "Code — Validar Payload": {
+      "main": [
+        [{ "node": "HTTP — Forward to Enrichment", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP — Forward to Enrichment": {
+      "main": [
+        [{ "node": "Respond — 200 OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": ["leads", "inbound", "agency-group"],
+  "meta": {
+    "instanceId": "agency-group"
+  }
+}

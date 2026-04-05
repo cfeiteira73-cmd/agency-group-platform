@@ -306,9 +306,18 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
   const [resultTab, setResultTab] = useState<ResultTab>('overview')
   const [radarHistory, setRadarHistory] = useState<RadarHistoryItem[]>([])
   const [showHistory, setShowHistory] = useState(false)
+  const [liveSource, setLiveSource] = useState<'live' | 'demo'>('demo')
 
   const TIPOS_IMOVEL = ['apartamento', 'moradia', 'villa', 'penthouse', 'loja', 'escritorio', 'terreno', 'armazem']
   const FONTES = ['idealista', 'imovirtual', 'eleiloes', 'banca', 'century21', 'remax', 'era']
+
+  // ── Live signals fetch ─────────────────────────────────────────────────────
+  useEffect(() => {
+    fetch('/api/signals')
+      .then(r => { if (!r.ok) throw new Error('not ok'); return r.json() })
+      .then(() => setLiveSource('live'))
+      .catch(() => setLiveSource('demo'))
+  }, [])
 
   // Load history from localStorage on mount
   useEffect(() => {
@@ -362,7 +371,25 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
     <div>
       <div style={{ marginBottom: '28px' }}>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Inteligência de Mercado</div>
-        <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Deal Radar 16D</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Deal Radar 16D</div>
+          {/* LIVE / DEMO badge */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '5px',
+            padding: '3px 10px', borderRadius: '999px',
+            background: liveSource === 'live' ? 'rgba(34,197,94,.1)' : 'rgba(251,191,36,.1)',
+            border: `1px solid ${liveSource === 'live' ? 'rgba(34,197,94,.3)' : 'rgba(251,191,36,.3)'}`,
+          }}>
+            <span style={{
+              display: 'inline-block', width: 7, height: 7, borderRadius: '50%',
+              background: liveSource === 'live' ? '#22c55e' : '#fbbf24',
+              boxShadow: liveSource === 'live' ? '0 0 0 2px rgba(34,197,94,.25)' : 'none',
+            }} />
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', fontWeight: 700, letterSpacing: '.1em', color: liveSource === 'live' ? '#22c55e' : '#f59e0b' }}>
+              {liveSource === 'live' ? 'LIVE' : 'DEMO'}
+            </span>
+          </div>
+        </div>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>16 dimensões · Score AI · Leilões + Banca + Mercado livre</div>
       </div>
 

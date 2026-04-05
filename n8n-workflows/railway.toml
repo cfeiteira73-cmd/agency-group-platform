@@ -1,0 +1,11 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "n8n-workflows/Dockerfile.n8n"
+
+[deploy]
+startCommand = "n8n start"
+healthcheckPath = "/healthz"
+healthcheckTimeout = 120
+
+[[services]]
+name = "ag-n8n"

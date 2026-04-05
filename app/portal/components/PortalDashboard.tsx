@@ -230,6 +230,14 @@ export default function PortalDashboard({
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
   const [sofiaRefreshing, setSofiaRefreshing] = useState(false)
   const [sofiaTs, setSofiaTs] = useState(new Date())
+  const [liveKPIs, setLiveKPIs] = useState<{
+    pipeline: number
+    deals: number
+    commission: number
+    closingNow: number
+    contactCount: number
+    source: 'live' | 'demo'
+  }>({ pipeline: 0, deals: 0, commission: 0, closingNow: 0, contactCount: 0, source: 'demo' })
 
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 60000)
@@ -239,15 +247,65 @@ export default function PortalDashboard({
   // ── Supabase real data loader ─────────────────────────────────────────────
   const loadDashboardData = useCallback(async () => {
     try {
-      const [kpiRes, activityRes] = await Promise.allSettled([
+      const [kpiRes, activityRes, healthRes, dealsRes] = await Promise.allSettled([
         fetch('/api/automation/daily-brief'),
         fetch('/api/crm?limit=5'),
+        fetch('/api/health'),
+        fetch('/api/deals'),
       ])
+
       if (kpiRes.status === 'fulfilled' && kpiRes.value.ok) {
         setSupabaseConnected(true)
       }
       // suppress unused warning — activityRes used for future enrichment
       void activityRes
+
+      // ── Parse /api/health for contact count ────────────────────────────────
+      let contactCount = 0
+      if (healthRes.status === 'fulfilled' && healthRes.value.ok) {
+        try {
+          const healthData = await healthRes.value.json()
+          contactCount = healthData?.counts?.contacts ?? 0
+          setSupabaseConnected(true)
+        } catch { /* ignore */ }
+      }
+
+      // ── Parse /api/deals for real pipeline KPIs ────────────────────────────
+      if (dealsRes.status === 'fulfilled' && dealsRes.value.ok) {
+        try {
+          const dealsData = await dealsRes.value.json()
+          const rawDeals: { valor?: string; escrituraDate?: string; cpcvDate?: string }[] =
+            dealsData?.data ?? []
+
+          // Parse Portuguese-formatted currency strings: €1.250.000 → 1250000
+          const parseValor = (s?: string): number => {
+            if (!s) return 0
+            // remove currency symbol, spaces, then replace thousand-dots before parsing
+            const cleaned = s.replace(/[€\s]/g, '').replace(/\./g, '').replace(',', '.')
+            return parseFloat(cleaned) || 0
+          }
+
+          const totalPipelineValue = rawDeals.reduce((sum, d) => sum + parseValor(d.valor), 0)
+          const activeDealCount = rawDeals.length
+          const estimatedCommission = totalPipelineValue * 0.05
+          const closingThisMonth = rawDeals.filter(
+            d =>
+              (d.escrituraDate && d.escrituraDate.includes('2026-04')) ||
+              (d.cpcvDate && d.cpcvDate.includes('2026-04'))
+          ).length
+
+          if (activeDealCount > 0 || contactCount > 0) {
+            setLiveKPIs({
+              pipeline: totalPipelineValue,
+              deals: activeDealCount,
+              commission: estimatedCommission,
+              closingNow: closingThisMonth,
+              contactCount,
+              source: 'live',
+            })
+          }
+        } catch { /* silently fall back */ }
+      }
     } catch {
       // silently fall back to mock data
     } finally {
@@ -302,6 +360,13 @@ export default function PortalDashboard({
       : '0.0'
 
   const gciPrevisto = Math.round((pipelineTotal * 0.05) / 1000)
+
+  // ── Live KPI helpers: use real Supabase data when available ─────────────────
+  const livePipeline = liveKPIs.source === 'live' ? liveKPIs.pipeline : pipelineTotal
+  const liveDealCount = liveKPIs.source === 'live' ? liveKPIs.deals : deals.length
+  const liveGCI = Math.round((liveKPIs.source === 'live' ? liveKPIs.commission : pipelineTotal * 0.05) / 1000)
+  const liveClosingNow = liveKPIs.source === 'live' ? liveKPIs.closingNow : cpcvDeals.length
+  const liveTotalContacts = liveKPIs.source === 'live' && liveKPIs.contactCount > 0 ? liveKPIs.contactCount : crmContacts.length
 
   // ── Stalled deals revenue at risk ────────────────────────────────────────────
   const stalledDeals = deals.filter(d => {
@@ -438,26 +503,26 @@ export default function PortalDashboard({
   const kpiCards: KPICardData[] = [
     {
       title: 'GCI Previsto',
-      value: `€${gciPrevisto}K`,
-      sub: '5% do pipeline total',
+      value: `€${liveGCI}K`,
+      sub: `5% do pipeline${liveKPIs.source === 'live' ? ' · LIVE' : ''}`,
       badge: '+12% vs mês ant.',
       badgeColor: '#4a9c7a',
       badgeBg: 'rgba(74,156,122,.12)',
       color: '#1c4a35',
-      spark: [45, 52, 49, 61, 70, 80, gciPrevisto > 0 ? Math.min(gciPrevisto, 120) : 90],
+      spark: [45, 52, 49, 61, 70, 80, liveGCI > 0 ? Math.min(liveGCI, 120) : 90],
       delta: 12,
       deltaPositive: true,
-      highlight: gciPrevisto > 80,
+      highlight: liveGCI > 80,
     },
     {
       title: 'Pipeline Total',
-      value: `€${(pipelineTotal / 1e6).toFixed(1)}M`,
-      sub: `${deals.length} deals em progresso`,
-      badge: `${deals.length} negócios`,
+      value: `€${(livePipeline / 1e6).toFixed(1)}M`,
+      sub: `${liveDealCount} deals em progresso`,
+      badge: `${liveDealCount} negócios`,
       badgeColor: '#c9a96e',
       badgeBg: 'rgba(201,169,110,.12)',
       color: '#c9a96e',
-      spark: [1.2, 1.5, 1.4, 1.8, 2.1, 2.4, pipelineTotal > 0 ? Math.min(pipelineTotal / 1e6, 3.5) : 2.6],
+      spark: [1.2, 1.5, 1.4, 1.8, 2.1, 2.4, livePipeline > 0 ? Math.min(livePipeline / 1e6, 3.5) : 2.6],
       delta: 8,
       deltaPositive: true,
     },
@@ -465,7 +530,7 @@ export default function PortalDashboard({
       title: 'Leads Activos',
       value: `${leadsAtivos}`,
       sub: `${leadsAtivos} prospects · ${vipContacts} VIPs`,
-      badge: `${crmContacts.length} no CRM`,
+      badge: `${liveTotalContacts} no CRM`,
       badgeColor: '#3a7bd5',
       badgeBg: 'rgba(58,123,213,.1)',
       color: '#3a7bd5',
@@ -490,7 +555,7 @@ export default function PortalDashboard({
     {
       title: 'Deals CPCV',
       value: `${cpcvDeals.length}`,
-      sub: 'Em fase de escritura',
+      sub: `${liveClosingNow} a fechar em Abril`,
       badge: `${closedDeals.length} escrituras`,
       badgeColor: '#c9a96e',
       badgeBg: 'rgba(201,169,110,.12)',
@@ -636,7 +701,7 @@ export default function PortalDashboard({
           >
             <span>
               {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} ·{' '}
-              {deals.length} deals activos · pipeline €{(pipelineTotal / 1e6).toFixed(2)}M
+              {liveDealCount} deals activos · pipeline €{(livePipeline / 1e6).toFixed(2)}M
             </span>
             {/* ── Supabase status badge ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
