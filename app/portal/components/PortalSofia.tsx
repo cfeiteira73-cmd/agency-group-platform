@@ -1,5 +1,5 @@
 'use client'
-import { useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { PORTAL_PROPERTIES } from './constants'
 
@@ -23,8 +23,100 @@ interface PortalSofiaProps {
   onGenerateScript: () => Promise<void>
 }
 
+type SofiaMode = 'avatar' | 'chat'
+type AssistantMode = 'deal' | 'market' | 'legal' | 'investor'
+
+interface ChatMessage {
+  id: number
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+}
+
+const ASSISTANT_MODES: Record<AssistantMode, { label: string; icon: string; color: string; systemHint: string }> = {
+  deal:     { label: 'Deal Assistant',    icon: '🏠', color: '#1c4a35', systemHint: 'Foco em análise de imóveis, deal flow e oportunidades de mercado.' },
+  market:   { label: 'Market Expert',     icon: '📊', color: '#3a7bd5', systemHint: 'Foco em tendências de mercado, preços por zona e análise comparativa.' },
+  legal:    { label: 'Legal Guide',       icon: '⚖️', color: '#c9a96e', systemHint: 'Foco em aspectos jurídicos — CPCV, escritura, NHR, Golden Visa, IMT, IMI.' },
+  investor: { label: 'Investor Matcher',  icon: '💼', color: '#9b59b6', systemHint: 'Foco em match de investidores, ROI, yield, estratégia de saída e family offices.' },
+}
+
+const QUICK_ACTIONS = [
+  { label: 'Avaliar imóvel',    prompt: 'Preciso avaliar um imóvel. Ajuda-me a calcular o valor de mercado com base na zona, área e características.' },
+  { label: 'Analisar comprador', prompt: 'Tenho um potencial comprador. Ajuda-me a perceber o seu perfil, motivação e melhores imóveis para apresentar.' },
+  { label: 'Redigir proposta',  prompt: 'Preciso de redigir uma proposta formal de compra. Que elementos deve incluir e como estruturá-la?' },
+  { label: 'Off-market opp',   prompt: 'Procuro oportunidades off-market em Portugal. Como devo abordar proprietários e onde procurar?' },
+  { label: 'Market report',    prompt: 'Cria um market report resumido do mercado imobiliário português para apresentar a um investidor internacional.' },
+]
+
+const CONVERSATION_STARTERS = [
+  { icon: '🏡', text: 'Qual o melhor imóvel para um investidor francês com €1,5M de budget em Lisboa?' },
+  { icon: '📈', text: 'Qual a yield média em Cascais vs Algarve em 2026?' },
+  { icon: '⚖️', text: 'Explica-me as etapas de uma transação imobiliária em Portugal — do CPCV à escritura.' },
+  { icon: '🌍', text: 'Como abordar um HNWI do Médio Oriente interessado em imóveis premium?' },
+  { icon: '💰', text: 'Calcula a rentabilidade de um apartamento T3 em Lisboa a €900K para alojamento local.' },
+  { icon: '🔎', text: 'Que zonas de Portugal têm maior potencial de valorização nos próximos 3 anos?' },
+]
+
+function renderMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split('\n')
+  const result: React.ReactNode[] = []
+  let keyIdx = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    // H3
+    if (line.startsWith('### ')) {
+      result.push(<div key={keyIdx++} style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', fontWeight: 600, color: '#1c4a35', marginTop: '12px', marginBottom: '4px' }}>{line.slice(4)}</div>)
+    // H2
+    } else if (line.startsWith('## ')) {
+      result.push(<div key={keyIdx++} style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 700, color: '#0e0e0d', marginTop: '14px', marginBottom: '5px' }}>{line.slice(3)}</div>)
+    // H1
+    } else if (line.startsWith('# ')) {
+      result.push(<div key={keyIdx++} style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 700, color: '#0e0e0d', marginTop: '16px', marginBottom: '6px' }}>{line.slice(2)}</div>)
+    // Bullet
+    } else if (line.match(/^[-*•] /)) {
+      result.push(
+        <div key={keyIdx++} style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
+          <span style={{ color: '#c9a96e', flexShrink: 0, marginTop: '1px' }}>·</span>
+          <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.6 }}>{inlineFormat(line.slice(2))}</span>
+        </div>
+      )
+    // Numbered list
+    } else if (line.match(/^\d+\. /)) {
+      const num = line.match(/^(\d+)\. /)?.[1] ?? ''
+      result.push(
+        <div key={keyIdx++} style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#c9a96e', flexShrink: 0, marginTop: '2px', minWidth: '16px' }}>{num}.</span>
+          <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.6 }}>{inlineFormat(line.replace(/^\d+\. /, ''))}</span>
+        </div>
+      )
+    // Horizontal rule
+    } else if (line.match(/^---+$/)) {
+      result.push(<hr key={keyIdx++} style={{ border: 'none', borderTop: '1px solid rgba(14,14,13,.1)', margin: '10px 0' }} />)
+    // Empty line → spacing
+    } else if (line.trim() === '') {
+      result.push(<div key={keyIdx++} style={{ height: '6px' }} />)
+    // Normal paragraph
+    } else {
+      result.push(<div key={keyIdx++} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.7, marginBottom: '2px' }}>{inlineFormat(line)}</div>)
+    }
+  }
+  return result
+}
+
+function inlineFormat(text: string): React.ReactNode {
+  // Bold **text**
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} style={{ fontWeight: 700, color: '#0e0e0d' }}>{part.slice(2, -2)}</strong>
+    }
+    return part
+  })
+}
+
 export default function PortalSofia({
-  sofiaSessionId,
+  sofiaSessionId: _sofiaSessionId,
   sofiaConnected,
   sofiaLoading,
   sofiaSpeaking,
@@ -44,121 +136,363 @@ export default function PortalSofia({
 }: PortalSofiaProps) {
   const { darkMode } = useUIStore()
 
+  const [sofiaMode, setSofiaMode] = useState<SofiaMode>('avatar')
+  const [assistantMode, setAssistantMode] = useState<AssistantMode>('deal')
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+  const chatInputRef = useRef<HTMLTextAreaElement>(null)
+
+  const border = darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.08)'
+  const bg = darkMode ? '#0c1f15' : '#fff'
+  const textPrimary = darkMode ? '#f4f0e6' : '#0e0e0d'
+  const textMuted = darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)'
+  const panelBg = darkMode ? '#0f2117' : '#fff'
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
+
+  const sendChatMessage = useCallback(async (text: string) => {
+    const content = text.trim()
+    if (!content || chatLoading) return
+
+    const userMsg: ChatMessage = { id: Date.now(), role: 'user', content, timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }
+    setChatMessages(prev => [...prev, userMsg])
+    setChatInput('')
+    setChatLoading(true)
+
+    try {
+      const modeConfig = ASSISTANT_MODES[assistantMode]
+      const res = await fetch('/api/sofia/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...chatMessages, userMsg].map(m => ({ role: m.role, content: m.content })),
+          systemHint: modeConfig.systemHint,
+          mode: assistantMode,
+          lang: sofiaLang,
+        }),
+      })
+      const data = await res.json() as { reply?: string; error?: string }
+      const reply = data.reply ?? data.error ?? 'Erro ao obter resposta.'
+      const assistantMsg: ChatMessage = { id: Date.now() + 1, role: 'assistant', content: reply, timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }
+      setChatMessages(prev => [...prev, assistantMsg])
+    } catch {
+      const errMsg: ChatMessage = { id: Date.now() + 1, role: 'assistant', content: 'Erro de ligação. Verifica a tua ligação à internet.', timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }
+      setChatMessages(prev => [...prev, errMsg])
+    } finally {
+      setChatLoading(false)
+    }
+  }, [chatMessages, chatLoading, assistantMode, sofiaLang])
+
+  const exportConversation = useCallback(() => {
+    if (chatMessages.length === 0) return
+    const text = chatMessages.map(m => `[${m.timestamp}] ${m.role === 'user' ? 'Você' : 'Sofia'}: ${m.content}`).join('\n\n')
+    navigator.clipboard.writeText(text)
+  }, [chatMessages])
+
+  const clearConversation = useCallback(() => {
+    setChatMessages([])
+  }, [])
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <style>{`
+        .sofia-mode-btn { padding: 7px 16px; border: 1px solid rgba(14,14,13,.12); background: transparent; font-family: 'DM Mono',monospace; font-size: .44rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; color: rgba(14,14,13,.5); transition: all .2s; }
+        .sofia-mode-btn.active { background: #1c4a35; color: #f4f0e6; border-color: #1c4a35; }
+        .sofia-chip { padding: 6px 14px; border: 1px solid rgba(14,14,13,.12); background: transparent; font-family: 'DM Mono',monospace; font-size: .4rem; letter-spacing: .06em; cursor: pointer; color: rgba(14,14,13,.5); transition: all .2s; white-space: nowrap; }
+        .sofia-chip:hover { background: rgba(28,74,53,.06); border-color: rgba(28,74,53,.3); color: #1c4a35; }
+        .chat-bubble-user { background: #1c4a35; color: #f4f0e6; border-radius: 12px 12px 2px 12px; padding: 10px 14px; max-width: 80%; align-self: flex-end; font-family: 'Jost',sans-serif; font-size: .84rem; line-height: 1.6; }
+        .chat-bubble-ai { background: ${darkMode ? 'rgba(244,240,230,.06)' : '#f8f7f4'}; border: 1px solid ${border}; border-radius: 12px 12px 12px 2px; padding: 12px 16px; max-width: 88%; align-self: flex-start; }
+        .chat-input-area { border: 1px solid ${border}; background: ${darkMode ? 'rgba(244,240,230,.04)' : '#fff'}; font-family: 'Jost',sans-serif; font-size: .84rem; color: ${textPrimary}; padding: 10px 14px; resize: none; outline: none; line-height: 1.5; flex: 1; }
+        .chat-input-area::placeholder { color: ${textMuted}; }
+        .mode-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; font-family: 'DM Mono',monospace; font-size: .38rem; letter-spacing: .06em; cursor: pointer; border: 1px solid transparent; transition: all .2s; }
+        .mode-pill.active { background: rgba(28,74,53,.1); border-color: rgba(28,74,53,.25); color: #1c4a35; }
+        .mode-pill:not(.active) { color: rgba(14,14,13,.4); }
+        .mode-pill:not(.active):hover { background: rgba(14,14,13,.04); }
+      `}</style>
+
       {/* Header */}
-      <div style={{ padding: '16px 24px', borderBottom: `1px solid ${darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: darkMode ? '#0c1f15' : '#fff' }}>
+      <div style={{ padding: '14px 24px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: bg }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant',serif", fontSize: '1rem', color: '#f4f0e6', fontWeight: 300 }}>S</div>
+          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant',serif", fontSize: '1rem', color: '#f4f0e6', fontWeight: 300, flexShrink: 0 }}>S</div>
           <div>
-            <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 300, color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Sofia <em style={{ fontStyle: 'italic', color: '#c9a96e' }}>Avatar IA</em></div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: sofiaConnected ? '#4a9c7a' : 'rgba(14,14,13,.3)', letterSpacing: '.06em' }}>
-              {sofiaConnected ? '● CONECTADO' : sofiaLoading ? '● A conectar...' : '○ Desconectado'}
+            <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 300, color: textPrimary }}>Sofia <em style={{ fontStyle: 'italic', color: '#c9a96e' }}>IA</em></div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: sofiaConnected ? '#4a9c7a' : textMuted, letterSpacing: '.06em' }}>
+              {sofiaConnected ? '● AVATAR CONECTADO' : sofiaLoading ? '● A conectar...' : sofiaMode === 'chat' ? '● CHAT ACTIVO' : '○ Avatar Offline'}
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Mode toggle */}
+          <div style={{ display: 'flex', border: `1px solid ${border}`, overflow: 'hidden' }}>
+            <button className={`sofia-mode-btn${sofiaMode === 'avatar' ? ' active' : ''}`} onClick={() => setSofiaMode('avatar')}>▶ Avatar</button>
+            <button className={`sofia-mode-btn${sofiaMode === 'chat' ? ' active' : ''}`} onClick={() => setSofiaMode('chat')}>💬 Chat IA</button>
+          </div>
+
           {/* Language selector */}
           {(['PT', 'EN', 'FR', 'AR'] as const).map(l => (
             <button key={l}
-              style={{ padding: '4px 10px', background: sofiaLang === l ? '#c9a96e' : 'transparent', border: `1px solid ${sofiaLang === l ? '#c9a96e' : darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, color: sofiaLang === l ? '#0c1f15' : darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', background: sofiaLang === l ? '#c9a96e' : 'transparent', border: `1px solid ${sofiaLang === l ? '#c9a96e' : border}`, color: sofiaLang === l ? '#0c1f15' : textMuted, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
               onClick={() => setSofiaLang(l)}>
               {l}
             </button>
           ))}
-          {!sofiaConnected ? (
-            <button className="p-btn" style={{ padding: '6px 14px' }} onClick={onConnect} disabled={sofiaLoading}>
-              {sofiaLoading ? '✦ A conectar...' : '▶ Conectar Sofia'}
-            </button>
-          ) : (
-            <button style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(220,38,38,.3)', color: '#dc2626', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer', letterSpacing: '.08em' }} onClick={onDisconnect}>
-              ■ Desconectar
-            </button>
+
+          {sofiaMode === 'avatar' && (
+            !sofiaConnected ? (
+              <button className="p-btn" style={{ padding: '6px 14px' }} onClick={onConnect} disabled={sofiaLoading}>
+                {sofiaLoading ? '✦ A conectar...' : '▶ Conectar Sofia'}
+              </button>
+            ) : (
+              <button style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(220,38,38,.3)', color: '#dc2626', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer', letterSpacing: '.08em' }} onClick={onDisconnect}>
+                ■ Desconectar
+              </button>
+            )
           )}
         </div>
       </div>
 
-      {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', gap: '0', overflow: 'hidden' }}>
-        {/* Video panel */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1f15', position: 'relative' }}>
-          {sofiaConnected ? (
-            <video
-              ref={sofiaVideoRef as React.RefObject<HTMLVideoElement>}
-              autoPlay
-              playsInline
-              style={{ width: '100%', maxWidth: '500px', height: 'auto', borderRadius: '4px' }}
-            />
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg,rgba(28,74,53,.5),rgba(201,169,110,.3))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1px solid rgba(201,169,110,.2)' }}>
-                <span style={{ fontFamily: "'Cormorant',serif", fontSize: '2rem', color: '#c9a96e' }}>S</span>
+      {/* ── AVATAR MODE ── */}
+      {sofiaMode === 'avatar' && (
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {/* Video panel */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1f15', position: 'relative' }}>
+            {sofiaConnected ? (
+              <video
+                ref={sofiaVideoRef as React.RefObject<HTMLVideoElement>}
+                autoPlay
+                playsInline
+                style={{ width: '100%', maxWidth: '500px', height: 'auto', borderRadius: '4px' }}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg,rgba(28,74,53,.5),rgba(201,169,110,.3))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1px solid rgba(201,169,110,.2)' }}>
+                  <span style={{ fontFamily: "'Cormorant',serif", fontSize: '2rem', color: '#c9a96e' }}>S</span>
+                </div>
+                <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 300, color: 'rgba(244,240,230,.6)', marginBottom: '8px' }}>Sofia está offline</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.25)', lineHeight: 1.6 }}>Clique em &ldquo;Conectar Sofia&rdquo; para iniciar<br />apresentação de propriedade com avatar IA</div>
               </div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 300, color: 'rgba(244,240,230,.6)', marginBottom: '8px' }}>Sofia está offline</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.25)', lineHeight: 1.6 }}>Clique em "Conectar Sofia" para iniciar<br />apresentação de propriedade com avatar IA</div>
+            )}
+            {sofiaSpeaking && (
+              <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '4px', alignItems: 'flex-end' }}>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} style={{ width: '4px', background: '#c9a96e', borderRadius: '2px', animation: `soundBar .5s ease-in-out ${i * 0.1}s infinite alternate` }} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Controls panel */}
+          <div style={{ width: '300px', flexShrink: 0, borderLeft: `1px solid ${border}`, padding: '20px', background: panelBg, display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
+            <div>
+              <label className="p-label">Imóvel para Apresentar</label>
+              <select className="p-sel" value={sofiaPropSel} onChange={e => setSofiaPropSel(e.target.value)}>
+                <option value="">— Selecionar imóvel</option>
+                {(PORTAL_PROPERTIES as Record<string, unknown>[]).map(p => (
+                  <option key={String(p.id)} value={String(p.id)}>{String(p.nome || p.title)}</option>
+                ))}
+              </select>
             </div>
-          )}
-          {sofiaSpeaking && (
-            <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '4px', alignItems: 'flex-end' }}>
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} style={{ width: '4px', background: '#c9a96e', borderRadius: '2px', animation: `soundBar .5s ease-in-out ${i * 0.1}s infinite alternate` }} />
+
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label className="p-label" style={{ marginBottom: 0 }}>Script</label>
+                <button
+                  style={{ background: 'transparent', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', cursor: 'pointer' }}
+                  onClick={onGenerateScript}
+                  disabled={sofiaScriptLoading || !sofiaPropSel}>
+                  {sofiaScriptLoading ? '✦ A gerar...' : '✦ Gerar Script IA'}
+                </button>
+              </div>
+              <textarea
+                className="p-inp"
+                rows={8}
+                placeholder="Escreva o texto para a Sofia apresentar..."
+                value={sofiaText}
+                onChange={e => setSofiaText(e.target.value)}
+                style={{ resize: 'vertical' }}
+              />
+            </div>
+
+            <button className="p-btn" onClick={onSpeak} disabled={!sofiaConnected || sofiaSpeaking || !sofiaText.trim()}>
+              {sofiaSpeaking ? '✦ A falar...' : '▶ Falar'}
+            </button>
+
+            {sofiaError && (
+              <div style={{ padding: '10px 12px', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#dc2626' }}>
+                {sofiaError}
+              </div>
+            )}
+
+            <div style={{ padding: '12px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.08)' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.08em', marginBottom: '8px', textTransform: 'uppercase' }}>Casos de Uso</div>
+              {['Apresentação Virtual', 'Tour Remoto HNWI', 'Pitch Investidor', 'WhatsApp Vídeo'].map(u => (
+                <div key={u} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.5)', padding: '4px 0', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
+                  ✓ {u}
+                </div>
               ))}
             </div>
-          )}
+          </div>
         </div>
+      )}
 
-        {/* Controls panel */}
-        <div style={{ width: '300px', flexShrink: 0, borderLeft: `1px solid ${darkMode ? 'rgba(244,240,230,.06)' : 'rgba(14,14,13,.08)'}`, padding: '20px', background: darkMode ? '#0f2117' : '#fff', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
-          <div>
-            <label className="p-label">Imóvel para Apresentar</label>
-            <select className="p-sel" value={sofiaPropSel} onChange={e => setSofiaPropSel(e.target.value)}>
-              <option value="">— Selecionar imóvel</option>
-              {(PORTAL_PROPERTIES as Record<string, unknown>[]).map(p => (
-                <option key={String(p.id)} value={String(p.id)}>{String(p.nome || p.title)}</option>
-              ))}
-            </select>
-          </div>
+      {/* ── CHAT MODE ── */}
+      {sofiaMode === 'chat' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label className="p-label" style={{ marginBottom: 0 }}>Script</label>
-              <button
-                style={{ background: 'transparent', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', cursor: 'pointer' }}
-                onClick={onGenerateScript}
-                disabled={sofiaScriptLoading || !sofiaPropSel}>
-                {sofiaScriptLoading ? '✦ A gerar...' : '✦ Gerar Script IA'}
+          {/* Assistant mode selector + actions bar */}
+          <div style={{ padding: '10px 20px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, background: bg, flexWrap: 'wrap' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: textMuted, letterSpacing: '.1em', textTransform: 'uppercase', marginRight: '4px' }}>Modo</div>
+            {(Object.entries(ASSISTANT_MODES) as [AssistantMode, typeof ASSISTANT_MODES[AssistantMode]][]).map(([k, v]) => (
+              <button key={k} className={`mode-pill${assistantMode === k ? ' active' : ''}`} onClick={() => setAssistantMode(k)}>
+                <span>{v.icon}</span> {v.label}
               </button>
+            ))}
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
+              {chatMessages.length > 0 && (
+                <>
+                  <button
+                    onClick={exportConversation}
+                    style={{ padding: '4px 10px', background: 'rgba(28,74,53,.06)', border: `1px solid rgba(28,74,53,.15)`, color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer', letterSpacing: '.06em' }}
+                    title="Copiar conversa para clipboard">
+                    ↗ Exportar
+                  </button>
+                  <button
+                    onClick={clearConversation}
+                    style={{ padding: '4px 10px', background: 'transparent', border: `1px solid ${border}`, color: textMuted, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}>
+                    × Limpar
+                  </button>
+                </>
+              )}
             </div>
-            <textarea
-              className="p-inp"
-              rows={8}
-              placeholder="Escreva o texto para a Sofia apresentar..."
-              value={sofiaText}
-              onChange={e => setSofiaText(e.target.value)}
-              style={{ resize: 'vertical' }}
-            />
           </div>
 
-          <button className="p-btn" onClick={onSpeak} disabled={!sofiaConnected || sofiaSpeaking || !sofiaText.trim()}>
-            {sofiaSpeaking ? '✦ A falar...' : '▶ Falar'}
-          </button>
+          {/* Messages area */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-          {sofiaError && (
-            <div style={{ padding: '10px 12px', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#dc2626' }}>
-              {sofiaError}
-            </div>
-          )}
+            {/* Empty state: conversation starters */}
+            {chatMessages.length === 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '24px', padding: '20px 0' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontFamily: "'Cormorant',serif", fontSize: '1.5rem', color: '#f4f0e6' }}>S</div>
+                  <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', fontWeight: 300, color: textPrimary, marginBottom: '4px' }}>Sofia <em style={{ color: '#c9a96e' }}>Assistente IA</em></div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: textMuted, letterSpacing: '.08em' }}>
+                    Modo: {ASSISTANT_MODES[assistantMode].icon} {ASSISTANT_MODES[assistantMode].label}
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', maxWidth: '560px', width: '100%' }}>
+                  {CONVERSATION_STARTERS.map((s, i) => (
+                    <button key={i}
+                      onClick={() => sendChatMessage(s.text)}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '12px 14px', background: darkMode ? 'rgba(244,240,230,.04)' : '#f8f7f4', border: `1px solid ${border}`, cursor: 'pointer', textAlign: 'left', transition: 'all .15s' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#1c4a35'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(28,74,53,.06)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = border; (e.currentTarget as HTMLButtonElement).style.background = darkMode ? 'rgba(244,240,230,.04)' : '#f8f7f4' }}>
+                      <span style={{ fontSize: '.9rem', flexShrink: 0 }}>{s.icon}</span>
+                      <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: darkMode ? 'rgba(244,240,230,.6)' : 'rgba(14,14,13,.65)', lineHeight: 1.4 }}>{s.text}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          <div style={{ padding: '12px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.08)' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.08em', marginBottom: '8px', textTransform: 'uppercase' }}>Casos de Uso</div>
-            {['Apresentação Virtual', 'Tour Remoto HNWI', 'Pitch Investidor', 'WhatsApp Vídeo'].map(u => (
-              <div key={u} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.5)', padding: '4px 0', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
-                ✓ {u}
+            {/* Messages */}
+            {chatMessages.map(msg => (
+              <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {msg.role === 'assistant' && (
+                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant',serif", fontSize: '.5rem', color: '#f4f0e6', flexShrink: 0 }}>S</div>
+                  )}
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: textMuted }}>{msg.timestamp}</span>
+                </div>
+                {msg.role === 'user' ? (
+                  <div className="chat-bubble-user">{msg.content}</div>
+                ) : (
+                  <div className="chat-bubble-ai">
+                    {renderMarkdown(msg.content)}
+                  </div>
+                )}
               </div>
             ))}
+
+            {/* Loading indicator */}
+            {chatLoading && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', alignSelf: 'flex-start' }}>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant',serif", fontSize: '.5rem', color: '#f4f0e6' }}>S</div>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', padding: '10px 14px', background: darkMode ? 'rgba(244,240,230,.06)' : '#f8f7f4', border: `1px solid ${border}`, borderRadius: '12px 12px 12px 2px' }}>
+                  {[0, 1, 2].map(i => (
+                    <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#c9a96e', animation: `dotPulse .8s ease-in-out ${i * 0.2}s infinite` }} />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Quick actions chips */}
+          <div style={{ padding: '8px 20px', borderTop: `1px solid ${border}`, display: 'flex', gap: '6px', overflowX: 'auto', flexShrink: 0, background: bg }}>
+            {QUICK_ACTIONS.map((a, i) => (
+              <button key={i} className="sofia-chip" onClick={() => sendChatMessage(a.prompt)} disabled={chatLoading}>{a.label}</button>
+            ))}
+          </div>
+
+          {/* Input area */}
+          <div style={{ padding: '12px 20px', borderTop: `1px solid ${border}`, background: bg, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+              <textarea
+                ref={chatInputRef}
+                className="chat-input-area"
+                rows={2}
+                placeholder={`Pergunta à Sofia (${ASSISTANT_MODES[assistantMode].label})...`}
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    sendChatMessage(chatInput)
+                  }
+                }}
+                disabled={chatLoading}
+              />
+              <button
+                onClick={() => sendChatMessage(chatInput)}
+                disabled={chatLoading || !chatInput.trim()}
+                style={{
+                  padding: '10px 18px',
+                  background: chatLoading || !chatInput.trim() ? 'rgba(28,74,53,.3)' : '#1c4a35',
+                  color: '#c9a96e',
+                  border: 'none',
+                  fontFamily: "'DM Mono',monospace",
+                  fontSize: '.44rem',
+                  letterSpacing: '.1em',
+                  cursor: chatLoading || !chatInput.trim() ? 'default' : 'pointer',
+                  flexShrink: 0,
+                  alignSelf: 'stretch',
+                  transition: 'background .2s',
+                }}>
+                {chatLoading ? '✦' : '→'}
+              </button>
+            </div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: textMuted, marginTop: '5px', letterSpacing: '.04em' }}>
+              Enter para enviar · Shift+Enter para nova linha · {ASSISTANT_MODES[assistantMode].icon} {ASSISTANT_MODES[assistantMode].label}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      <style>{`
+        @keyframes dotPulse {
+          0%, 100% { opacity: .3; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.3); }
+        }
+        @keyframes soundBar {
+          from { height: 6px; }
+          to { height: 22px; }
+        }
+      `}</style>
     </div>
   )
 }

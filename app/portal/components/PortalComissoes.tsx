@@ -25,6 +25,301 @@ const STAGE_PCT_C: Record<string, number> = {
   'Escritura Concluída': 1.00,
 }
 
+// Average days per stage to reach close (used for monthly forecast)
+const STAGE_DAYS_TO_CLOSE: Record<string, number> = {
+  'Angariação': 210,
+  'Proposta Enviada': 150,
+  'Proposta Aceite': 90,
+  'Due Diligence': 60,
+  'CPCV Assinado': 45,
+  'Financiamento': 30,
+  'Escritura Marcada': 14,
+  'Escritura Concluída': 0,
+}
+
+// ─── SVG Waterfall Chart ──────────────────────────────────────────────────────
+
+interface WaterfallStep {
+  label: string
+  value: number
+  type: 'income' | 'deduction' | 'split'
+}
+
+function WaterfallChart({ steps }: { steps: WaterfallStep[] }) {
+  const W = 600
+  const H = 160
+  const padL = 10
+  const padR = 10
+  const padT = 16
+  const padB = 36
+
+  const chartW = W - padL - padR
+  const chartH = H - padT - padB
+  const barW = Math.floor(chartW / steps.length) - 8
+
+  const maxVal = Math.max(...steps.map(s => s.value), 1)
+
+  const COLOR: Record<WaterfallStep['type'], string> = {
+    income: '#1c4a35',
+    deduction: '#e05454',
+    split: '#c9a96e',
+  }
+
+  const fmt = (v: number) => v >= 1000 ? `€${(v / 1000).toFixed(0)}k` : `€${Math.round(v)}`
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '20px', marginBottom: '20px' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '14px' }}>
+        Fluxo de Comissão — Waterfall
+      </div>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height={H}
+        aria-label="Gráfico waterfall do fluxo de comissões"
+        style={{ display: 'block', overflow: 'visible' }}
+      >
+        {/* Horizontal base line */}
+        <line
+          x1={padL}
+          y1={padT + chartH}
+          x2={W - padR}
+          y2={padT + chartH}
+          stroke="rgba(14,14,13,.12)"
+          strokeWidth={1}
+        />
+        {steps.map((step, i) => {
+          const slotW = chartW / steps.length
+          const cx = padL + i * slotW + slotW / 2
+          const barH = Math.max(4, (step.value / maxVal) * chartH)
+          const barX = cx - barW / 2
+          const barY = padT + chartH - barH
+          const color = COLOR[step.type]
+          const isDeduction = step.type === 'deduction'
+
+          return (
+            <g key={step.label}>
+              {/* Connector line from previous bar */}
+              {i > 0 && (
+                <line
+                  x1={padL + (i - 1) * slotW + slotW / 2 + barW / 2}
+                  y1={padT + chartH - Math.max(4, (steps[i - 1].value / maxVal) * chartH)}
+                  x2={barX}
+                  y2={padT + chartH - barH}
+                  stroke="rgba(14,14,13,.08)"
+                  strokeWidth={1}
+                  strokeDasharray="3 2"
+                />
+              )}
+              {/* Bar */}
+              <rect
+                x={barX}
+                y={barY}
+                width={barW}
+                height={barH}
+                fill={color}
+                opacity={isDeduction ? 0.85 : 0.9}
+                rx={2}
+              />
+              {/* Top value label */}
+              <text
+                x={cx}
+                y={barY - 5}
+                textAnchor="middle"
+                fontFamily="'DM Mono',monospace"
+                fontSize={9}
+                fill={color}
+                fontWeight="bold"
+              >
+                {fmt(step.value)}
+              </text>
+              {/* Bottom label */}
+              <text
+                x={cx}
+                y={padT + chartH + 14}
+                textAnchor="middle"
+                fontFamily="'DM Mono',monospace"
+                fontSize={8}
+                fill="rgba(14,14,13,.45)"
+              >
+                {step.label.length > 12 ? step.label.slice(0, 11) + '…' : step.label}
+              </text>
+              {/* Arrow indicator for deductions */}
+              {isDeduction && (
+                <text
+                  x={cx}
+                  y={barY + barH / 2 + 4}
+                  textAnchor="middle"
+                  fontFamily="'DM Mono',monospace"
+                  fontSize={10}
+                  fill="#fff"
+                  opacity={0.85}
+                >
+                  ▼
+                </text>
+              )}
+            </g>
+          )
+        })}
+      </svg>
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: '16px', marginTop: '4px', flexWrap: 'wrap' }}>
+        {[
+          { color: '#1c4a35', label: 'Receita' },
+          { color: '#e05454', label: 'Dedução' },
+          { color: '#c9a96e', label: 'Divisão' },
+        ].map(l => (
+          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ width: 10, height: 10, background: l.color, borderRadius: 2 }} />
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.45)' }}>{l.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── SVG Monthly Forecast Chart ───────────────────────────────────────────────
+
+interface MonthForecast {
+  month: string
+  low: number
+  mid: number
+  high: number
+}
+
+function MonthlyForecastChart({ forecasts }: { forecasts: MonthForecast[] }) {
+  if (forecasts.length === 0) return null
+
+  const W = 560
+  const H = 140
+  const padL = 56
+  const padR = 16
+  const padT = 16
+  const padB = 32
+  const chartW = W - padL - padR
+  const chartH = H - padT - padB
+
+  const maxVal = Math.max(...forecasts.map(f => f.high), 1)
+  const slotW = chartW / forecasts.length
+  const barGroupW = slotW * 0.7
+  const barW = barGroupW / 3
+
+  const toX = (i: number, sub: number) => padL + i * slotW + (slotW - barGroupW) / 2 + sub * barW
+  const toY = (v: number) => padT + chartH - (v / maxVal) * chartH
+  const toH = (v: number) => Math.max(2, (v / maxVal) * chartH)
+
+  const fmt = (v: number) => `€${(v / 1000).toFixed(0)}k`
+
+  const yTicks = [0, 0.5, 1].map(f => ({ val: maxVal * f, y: padT + chartH - f * chartH }))
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '20px', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
+          Previsão Mensal — Próximos 3 Meses
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          {[
+            { color: 'rgba(28,74,53,.25)', label: 'Pessimista' },
+            { color: '#1c4a35', label: 'Médio' },
+            { color: '#c9a96e', label: 'Optimista' },
+          ].map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: 8, height: 8, background: l.color, borderRadius: 1 }} />
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)' }}>{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height={H}
+        aria-label="Gráfico de previsão de comissões para os próximos 3 meses"
+        style={{ display: 'block', overflow: 'visible' }}
+      >
+        {/* Y grid */}
+        {yTicks.map(t => (
+          <g key={t.val}>
+            <line x1={padL} y1={t.y} x2={W - padR} y2={t.y} stroke="rgba(14,14,13,.06)" strokeWidth={1} />
+            <text
+              x={padL - 6}
+              y={t.y + 4}
+              textAnchor="end"
+              fontFamily="'DM Mono',monospace"
+              fontSize={9}
+              fill="rgba(14,14,13,.3)"
+            >
+              {fmt(t.val)}
+            </text>
+          </g>
+        ))}
+        {/* Base */}
+        <line x1={padL} y1={padT + chartH} x2={W - padR} y2={padT + chartH} stroke="rgba(14,14,13,.12)" strokeWidth={1} />
+
+        {forecasts.map((f, i) => (
+          <g key={f.month}>
+            {/* Low bar */}
+            <rect
+              x={toX(i, 0)}
+              y={toY(f.low)}
+              width={barW - 2}
+              height={toH(f.low)}
+              fill="rgba(28,74,53,.25)"
+              rx={2}
+            />
+            {/* Mid bar */}
+            <rect
+              x={toX(i, 1)}
+              y={toY(f.mid)}
+              width={barW - 2}
+              height={toH(f.mid)}
+              fill="#1c4a35"
+              rx={2}
+            />
+            {/* High bar */}
+            <rect
+              x={toX(i, 2)}
+              y={toY(f.high)}
+              width={barW - 2}
+              height={toH(f.high)}
+              fill="#c9a96e"
+              rx={2}
+            />
+            {/* Mid value label */}
+            <text
+              x={toX(i, 1) + (barW - 2) / 2}
+              y={toY(f.mid) - 5}
+              textAnchor="middle"
+              fontFamily="'DM Mono',monospace"
+              fontSize={9}
+              fill="#1c4a35"
+              fontWeight="bold"
+            >
+              {fmt(f.mid)}
+            </text>
+            {/* Month label */}
+            <text
+              x={padL + i * slotW + slotW / 2}
+              y={padT + chartH + 16}
+              textAnchor="middle"
+              fontFamily="'DM Mono',monospace"
+              fontSize={9}
+              fill="rgba(14,14,13,.5)"
+            >
+              {f.month}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.25)', marginTop: '6px' }}>
+        Estimativa baseada em fase do pipeline e prazo médio de fecho por etapa.
+      </div>
+    </div>
+  )
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function PortalComissoes() {
@@ -62,6 +357,44 @@ export default function PortalComissoes() {
     const v = parseValor(d.valor) * 0.05
     return v > best.v ? { d, v } : best
   }, { d: deals[0], v: 0 })
+
+  // ─── Waterfall steps ────────────────────────────────────────────────────────
+  const waterfallSteps: { label: string; value: number; type: 'income' | 'deduction' | 'split' }[] = [
+    { label: 'Comissão Bruta', value: pipelineWeighted, type: 'income' },
+    { label: 'IRS Retido', value: irsWithholding, type: 'deduction' },
+    { label: 'Comissão Líquida', value: netExpected, type: 'income' },
+    { label: 'CPCV 50%', value: cpcvExpected * 0.75, type: 'split' },
+    { label: 'Escritura 50%', value: escrituraExpected * 0.75, type: 'split' },
+  ]
+
+  // ─── Monthly forecast ──────────────────────────────────────────────────────
+  const monthlyForecasts: { month: string; low: number; mid: number; high: number }[] = (() => {
+    const now = new Date(2026, 3, 5) // current date from context
+    return [1, 2, 3].map(offset => {
+      const target = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+      const monthName = target.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' })
+      const daysAway = offset * 30
+
+      let midComm = 0
+      for (const d of deals) {
+        if (d.fase === 'Escritura Concluída') continue
+        const daysToClose = STAGE_DAYS_TO_CLOSE[d.fase] ?? 210
+        const val = parseValor(d.valor)
+        const comm = val * 0.05 * 0.75 // net after IRS
+        // Gaussian-style weight: peak if daysToClose ~ daysAway
+        const diff = Math.abs(daysToClose - daysAway)
+        const weight = Math.exp(-(diff * diff) / (2 * 30 * 30)) // sigma = 30 days
+        midComm += comm * weight
+      }
+
+      return {
+        month: monthName,
+        low: midComm * 0.5,
+        mid: midComm,
+        high: midComm * 1.6,
+      }
+    })
+  })()
 
   const handleAIAnalysis = async () => {
     setCommLoading(true)
@@ -153,6 +486,9 @@ export default function PortalComissoes() {
         </div>
       </div>
 
+      {/* Waterfall Chart */}
+      <WaterfallChart steps={waterfallSteps} />
+
       {/* Pipeline visual bars */}
       <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '20px', marginBottom: '20px' }}>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '16px' }}>Comissão por Fase do Pipeline</div>
@@ -172,6 +508,9 @@ export default function PortalComissoes() {
           </div>
         ))}
       </div>
+
+      {/* Monthly Forecast */}
+      <MonthlyForecastChart forecasts={monthlyForecasts} />
 
       {/* AI Analysis */}
       {cr && (

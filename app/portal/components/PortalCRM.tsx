@@ -143,6 +143,15 @@ export default function PortalCRM() {
   const [quickNoteText, setQuickNoteText] = useState('')
   const [showBulkEmailModal, setShowBulkEmailModal] = useState(false)
   const [showBulkStatusModal, setShowBulkStatusModal] = useState(false)
+  // Import CSV
+  const [showImportCSV, setShowImportCSV] = useState(false)
+  const [csvImportResult, setCsvImportResult] = useState<string>('')
+  // Budget range filter (in €M)
+  const [budgetFilterMin, setBudgetFilterMin] = useState(0)
+  const [budgetFilterMax, setBudgetFilterMax] = useState(10)
+  // Quick action modals
+  const [quickCallId, setQuickCallId] = useState<number | null>(null)
+  const [quickEmailId, setQuickEmailId] = useState<number | null>(null)
 
   useEffect(() => {
     try {
@@ -171,6 +180,10 @@ export default function PortalCRM() {
     const natMatch = !crmNatFilter || c.nationality.toLowerCase().includes(crmNatFilter.toLowerCase())
     const zonaMatch = !crmZonaFilter || c.zonas.some(z => z.toLowerCase().includes(crmZonaFilter.toLowerCase()))
     const statusMatch = !crmStatusFilter || c.status === crmStatusFilter
+    // Budget slider filter (0 = off, only apply if user moved sliders from defaults)
+    const budgetMatch = (budgetFilterMin === 0 && budgetFilterMax === 10)
+      ? true
+      : (Number(c.budgetMax) / 1e6) >= budgetFilterMin && (Number(c.budgetMin) / 1e6) <= budgetFilterMax
     // Quick filter logic
     const todayStr = new Date().toISOString().split('T')[0]
     const dSinceContact = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : null
@@ -182,7 +195,7 @@ export default function PortalCRM() {
       : quickFilter === 'followup' ? (!!c.nextFollowUp && c.nextFollowUp <= todayStr)
       : quickFilter === 'sem_contacto' ? (dSinceContact !== null && dSinceContact >= 14)
       : true
-    return searchMatch && natMatch && zonaMatch && statusMatch && qfMatch
+    return searchMatch && natMatch && zonaMatch && statusMatch && qfMatch && budgetMatch
   }).sort((a, b) => {
     if (sortBy === 'score') return computeLeadScore(b).score - computeLeadScore(a).score
     if (sortBy === 'actividade') {
@@ -239,31 +252,157 @@ export default function PortalCRM() {
             style={{ padding: '7px 14px', background: 'transparent', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', cursor: 'pointer' }}>
             ↓ CSV
           </button>
+          <button onClick={() => setShowImportCSV(!showImportCSV)}
+            style={{ padding: '7px 14px', background: showImportCSV ? 'rgba(28,74,53,.1)' : 'transparent', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', cursor: 'pointer' }}>
+            ↑ Import CSV
+          </button>
           <button className="p-btn p-btn-gold" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => setShowNewContact(true)}>+ Novo</button>
         </div>
       </div>
 
       {/* Advanced Filters */}
       {crmShowFilters && (
-        <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)', padding: '14px 16px', marginBottom: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1, minWidth: '140px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Nacionalidade</div>
-            <input className="p-inp" style={{ fontSize: '.75rem', padding: '6px 8px' }} placeholder="ex: Francesa..." value={crmNatFilter} onChange={e => setCrmNatFilter(e.target.value)} />
+        <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)', padding: '14px 16px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '12px' }}>
+            <div style={{ flex: 1, minWidth: '140px' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Nacionalidade</div>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '5px' }}>
+                {['🇺🇸 Americana', '🇫🇷 Francesa', '🇬🇧 Britânica', '🇨🇳 Chinesa', '🇧🇷 Brasileira', '🇩🇪 Alemã', '🇵🇹 Portuguesa'].map(flag => {
+                  const nat = flag.split(' ')[1]
+                  return (
+                    <button key={nat} onClick={() => setCrmNatFilter(crmNatFilter === nat ? '' : nat)}
+                      style={{ padding: '3px 8px', background: crmNatFilter === nat ? 'rgba(28,74,53,.15)' : 'rgba(14,14,13,.04)', border: `1px solid ${crmNatFilter === nat ? 'rgba(28,74,53,.3)' : 'rgba(14,14,13,.1)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer', color: crmNatFilter === nat ? '#1c4a35' : 'rgba(14,14,13,.5)' }}>
+                      {flag}
+                    </button>
+                  )
+                })}
+              </div>
+              <input className="p-inp" style={{ fontSize: '.75rem', padding: '6px 8px' }} placeholder="ou escrever..." value={crmNatFilter} onChange={e => setCrmNatFilter(e.target.value)} />
+            </div>
+            <div style={{ flex: 1, minWidth: '140px' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Zona</div>
+              <input className="p-inp" style={{ fontSize: '.75rem', padding: '6px 8px' }} placeholder="ex: Cascais..." value={crmZonaFilter} onChange={e => setCrmZonaFilter(e.target.value)} />
+            </div>
+            <div style={{ flex: 1, minWidth: '120px' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Status</div>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                {(['', 'lead', 'prospect', 'cliente', 'vip'] as const).map(s => {
+                  const sc = s ? STATUS_CONFIG[s] : null
+                  return (
+                    <button key={s || 'all'} onClick={() => setCrmStatusFilter(s)}
+                      style={{ padding: '3px 8px', background: crmStatusFilter === s ? (sc?.bg || 'rgba(28,74,53,.12)') : 'transparent', border: `1px solid ${crmStatusFilter === s ? (sc?.color || '#1c4a35') + '50' : 'rgba(14,14,13,.1)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer', color: crmStatusFilter === s ? (sc?.color || '#1c4a35') : 'rgba(14,14,13,.45)' }}>
+                      {s ? s.toUpperCase() : 'TODOS'}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <button onClick={() => { setCrmNatFilter(''); setCrmZonaFilter(''); setCrmStatusFilter(''); setBudgetFilterMin(0); setBudgetFilterMax(10) }}
+              style={{ padding: '6px 12px', background: 'rgba(14,14,13,.06)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', alignSelf: 'flex-end' }}>
+              Limpar
+            </button>
           </div>
-          <div style={{ flex: 1, minWidth: '140px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Zona</div>
-            <input className="p-inp" style={{ fontSize: '.75rem', padding: '6px 8px' }} placeholder="ex: Cascais..." value={crmZonaFilter} onChange={e => setCrmZonaFilter(e.target.value)} />
+          {/* Budget range slider */}
+          <div style={{ borderTop: '1px solid rgba(28,74,53,.1)', paddingTop: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '6px' }}>
+              Budget Range: €{budgetFilterMin}M – €{budgetFilterMax}M {budgetFilterMin === 0 && budgetFilterMax === 10 ? '(sem filtro)' : ''}
+            </div>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', minWidth: '30px' }}>€0M</span>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', width: '20px' }}>Mín</span>
+                  <input type="range" min={0} max={10} step={0.5} value={budgetFilterMin}
+                    onChange={e => setBudgetFilterMin(Math.min(Number(e.target.value), budgetFilterMax - 0.5))}
+                    style={{ flex: 1, accentColor: '#1c4a35' }} />
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#1c4a35', width: '36px', textAlign: 'right' }}>€{budgetFilterMin}M</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', width: '20px' }}>Máx</span>
+                  <input type="range" min={0} max={10} step={0.5} value={budgetFilterMax}
+                    onChange={e => setBudgetFilterMax(Math.max(Number(e.target.value), budgetFilterMin + 0.5))}
+                    style={{ flex: 1, accentColor: '#c9a96e' }} />
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#c9a96e', width: '36px', textAlign: 'right' }}>€{budgetFilterMax}M</span>
+                </div>
+              </div>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', minWidth: '34px' }}>€10M+</span>
+            </div>
           </div>
-          <div style={{ flex: 1, minWidth: '120px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Status</div>
-            <select className="p-sel" style={{ fontSize: '.75rem', padding: '6px 8px' }} value={crmStatusFilter} onChange={e => setCrmStatusFilter(e.target.value)}>
-              <option value="">Todos</option>
-              {['lead', 'prospect', 'cliente', 'vip'].map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
-            </select>
+        </div>
+      )}
+
+      {/* Import CSV Panel */}
+      {showImportCSV && (
+        <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.15)', padding: '16px', marginBottom: '16px' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '10px' }}>↑ Import CSV — Contactos</div>
+          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.5)', lineHeight: 1.5, marginBottom: '10px' }}>
+            Formato esperado: <strong>Nome, Email, Telefone, Nacionalidade, BudgetMin, BudgetMax, Zonas, Status</strong><br />
+            Primeira linha = cabeçalhos (ignorada). Separador: vírgula ou ponto e vírgula.
           </div>
-          <button onClick={() => { setCrmNatFilter(''); setCrmZonaFilter(''); setCrmStatusFilter('') }}
-            style={{ padding: '6px 12px', background: 'rgba(14,14,13,.06)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}>
-            Limpar
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#1c4a35', color: '#c9a96e', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.08em', cursor: 'pointer' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-label="Selecionar ficheiro CSV"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Selecionar Ficheiro .CSV
+              <input type="file" accept=".csv,.txt" style={{ display: 'none' }}
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = evt => {
+                    const text = evt.target?.result as string
+                    const lines = text.split(/\r?\n/).filter(l => l.trim())
+                    if (lines.length < 2) { setCsvImportResult('Ficheiro vazio ou sem dados.'); return }
+                    const sep = lines[0].includes(';') ? ';' : ','
+                    const rows = lines.slice(1) // skip header
+                    const imported: CRMContact[] = []
+                    const errors: string[] = []
+                    rows.forEach((row, i) => {
+                      const cols = row.split(sep).map(c => c.trim().replace(/^"|"$/g, ''))
+                      const [name, email, phone, nationality, budgetMinStr, budgetMaxStr, zonas, status] = cols
+                      if (!name) { errors.push(`Linha ${i + 2}: nome em falta`); return }
+                      const validStatus = ['lead', 'prospect', 'cliente', 'vip']
+                      imported.push({
+                        id: Date.now() + i,
+                        name, email: email || '', phone: phone || '',
+                        nationality: nationality || '',
+                        budgetMin: parseInt(budgetMinStr) || 0,
+                        budgetMax: parseInt(budgetMaxStr) || 0,
+                        tipos: [],
+                        zonas: zonas ? zonas.split('|').map(z => z.trim()).filter(Boolean) : [],
+                        status: (validStatus.includes((status || '').toLowerCase()) ? (status || '').toLowerCase() : 'lead') as CRMContact['status'],
+                        notes: '', lastContact: today, nextFollowUp: '', dealRef: '', origin: 'Import CSV',
+                        createdAt: today,
+                      })
+                    })
+                    saveCrmContacts([...crmContacts, ...imported])
+                    setCsvImportResult(`✓ ${imported.length} contactos importados${errors.length > 0 ? ` · ${errors.length} erros: ${errors.join(', ')}` : ''}`)
+                    e.target.value = ''
+                  }
+                  reader.readAsText(file)
+                }}
+              />
+            </label>
+            {csvImportResult && (
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: csvImportResult.startsWith('✓') ? '#4a9c7a' : '#e05252', flex: 1 }}>
+                {csvImportResult}
+              </div>
+            )}
+            <button onClick={() => { setShowImportCSV(false); setCsvImportResult('') }}
+              style={{ padding: '6px 12px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }}>
+              × Fechar
+            </button>
+          </div>
+          {/* Download template */}
+          <button
+            style={{ marginTop: '10px', padding: '5px 12px', background: 'transparent', border: '1px dashed rgba(28,74,53,.3)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(28,74,53,.6)', cursor: 'pointer' }}
+            onClick={() => {
+              const template = 'Nome,Email,Telefone,Nacionalidade,BudgetMin,BudgetMax,Zonas,Status\nJohn Smith,john@example.com,+44700000000,Britânica,800000,1500000,Lisboa|Cascais,prospect'
+              const blob = new Blob([template], { type: 'text/csv' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a'); a.href = url; a.download = 'template_crm.csv'; a.click()
+              URL.revokeObjectURL(url)
+            }}>
+            ↓ Download Template CSV
           </button>
         </div>
       )}
@@ -690,8 +829,36 @@ export default function PortalCRM() {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
                         <ScoreCircle score={ls2.score} budgetLabel={budgetLabel} engagementLabel={engagementLabel} />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', fontWeight: 700, color: dColor }}>{dLabel}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', fontWeight: 700, color: dColor, marginRight: '2px' }}>{dLabel}</div>
+                          {/* Quick Action: Call */}
+                          {c.phone && (
+                            <button
+                              title={`Ligar para ${c.phone}`}
+                              onClick={e => { e.stopPropagation(); setQuickCallId(quickCallId === c.id ? null : c.id) }}
+                              style={{ padding: '2px 5px', background: quickCallId === c.id ? 'rgba(28,74,53,.15)' : 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', cursor: 'pointer', lineHeight: 1 }}>
+                              📞
+                            </button>
+                          )}
+                          {/* Quick Action: WhatsApp */}
+                          {c.phone && (
+                            <button
+                              title="WhatsApp"
+                              onClick={e => { e.stopPropagation(); setWaModalContact(c.id); setWaLang((c.language as typeof waLang) || 'PT'); setShowWaModal(true) }}
+                              style={{ padding: '2px 5px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#25D366', cursor: 'pointer', lineHeight: 1 }}>
+                              💬
+                            </button>
+                          )}
+                          {/* Quick Action: Email */}
+                          {c.email && (
+                            <button
+                              title={`Email: ${c.email}`}
+                              onClick={e => { e.stopPropagation(); setQuickEmailId(quickEmailId === c.id ? null : c.id) }}
+                              style={{ padding: '2px 5px', background: quickEmailId === c.id ? 'rgba(58,123,213,.12)' : 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#3a7bd5', cursor: 'pointer', lineHeight: 1 }}>
+                              ✉️
+                            </button>
+                          )}
+                          {/* Quick Note */}
                           <button
                             title="Nota rápida"
                             onClick={e => { e.stopPropagation(); setQuickNoteId(isQuickNoteOpen ? null : c.id); setQuickNoteText('') }}
@@ -701,6 +868,38 @@ export default function PortalCRM() {
                         </div>
                       </div>
                     </div>
+                    {/* Quick Call inline */}
+                    {quickCallId === c.id && (
+                      <div style={{ padding: '8px 12px', background: 'rgba(28,74,53,.04)', borderBottom: '1px solid rgba(28,74,53,.1)', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={e => e.stopPropagation()}>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#1c4a35' }}>📞 {c.phone}</span>
+                        <a href={`tel:${c.phone}`}
+                          style={{ padding: '4px 12px', background: '#1c4a35', color: '#c9a96e', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', textDecoration: 'none', cursor: 'pointer' }}
+                          onClick={() => {
+                            const act = { id: Date.now(), type: 'call' as const, note: 'Chamada iniciada', date: today }
+                            saveCrmContacts(crmContacts.map(cont => cont.id === c.id ? { ...cont, activities: [act, ...(cont.activities || [])], lastContact: today } : cont))
+                            setQuickCallId(null)
+                          }}>
+                          Ligar ↗
+                        </a>
+                        <button style={{ background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer' }} onClick={() => setQuickCallId(null)}>× cancelar</button>
+                      </div>
+                    )}
+                    {/* Quick Email inline */}
+                    {quickEmailId === c.id && (
+                      <div style={{ padding: '8px 12px', background: 'rgba(58,123,213,.04)', borderBottom: '1px solid rgba(58,123,213,.1)', display: 'flex', alignItems: 'center', gap: '10px' }} onClick={e => e.stopPropagation()}>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#3a7bd5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>✉ {c.email}</span>
+                        <a href={`mailto:${c.email}`}
+                          style={{ padding: '4px 12px', background: '#3a7bd5', color: '#fff', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', textDecoration: 'none', cursor: 'pointer', flexShrink: 0 }}
+                          onClick={() => {
+                            const act = { id: Date.now(), type: 'email' as const, note: 'Email enviado', date: today }
+                            saveCrmContacts(crmContacts.map(cont => cont.id === c.id ? { ...cont, activities: [act, ...(cont.activities || [])], lastContact: today } : cont))
+                            setQuickEmailId(null)
+                          }}>
+                          Abrir Mail ↗
+                        </a>
+                        <button style={{ background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer', flexShrink: 0 }} onClick={() => setQuickEmailId(null)}>× cancelar</button>
+                      </div>
+                    )}
                     {/* Quick Note inline */}
                     {isQuickNoteOpen && (
                       <div style={{ padding: '8px 12px', background: 'rgba(28,74,53,.04)', borderBottom: '1px solid rgba(28,74,53,.1)' }} onClick={e => e.stopPropagation()}>
@@ -797,19 +996,41 @@ export default function PortalCRM() {
                         {(activeContact.zonas || []).map(z => <span key={z} style={{ background: 'rgba(201,169,110,.1)', color: '#c9a96e', padding: '3px 8px', fontFamily: "'DM Mono',monospace", fontSize: '.44rem' }}>{z}</span>)}
                       </div>
                     </div>
-                    <div className="p-card">
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>Timeline</div>
+                    <div className="p-card" style={{ borderLeft: activeContact.nextFollowUp && activeContact.nextFollowUp <= today ? '3px solid #e05454' : activeContact.nextFollowUp ? '3px solid #c9a96e' : '3px solid rgba(14,14,13,.1)' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>Contacto &amp; Follow-up</div>
+                      {/* Next follow-up — prominent */}
+                      {activeContact.nextFollowUp && (
+                        <div style={{ padding: '8px 10px', background: activeContact.nextFollowUp <= today ? 'rgba(224,84,84,.08)' : 'rgba(201,169,110,.06)', border: `1px solid ${activeContact.nextFollowUp <= today ? 'rgba(224,84,84,.2)' : 'rgba(201,169,110,.15)'}`, marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: activeContact.nextFollowUp <= today ? '#e05454' : '#c9a96e', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '2px' }}>
+                              {activeContact.nextFollowUp <= today ? '🔴 FOLLOW-UP URGENTE' : '🟡 Próximo Follow-up'}
+                            </div>
+                            <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 300, color: activeContact.nextFollowUp <= today ? '#e05454' : '#c9a96e', lineHeight: 1 }}>{activeContact.nextFollowUp}</div>
+                          </div>
+                          <button className="p-btn" style={{ padding: '5px 10px', fontSize: '.42rem', background: 'rgba(14,14,13,.06)' }}
+                            onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today, nextFollowUp: '' } : c))}>
+                            ✓ Feito
+                          </button>
+                        </div>
+                      )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.5)' }}>Último contacto</span>
                         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: '#1c4a35' }}>{activeContact.lastContact || '—'}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.5)' }}>Próximo follow-up</span>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: activeContact.nextFollowUp && activeContact.nextFollowUp < today ? '#e05454' : '#c9a96e' }}>{activeContact.nextFollowUp || '—'}</span>
-                      </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <input type="date" className="p-inp" style={{ flex: 1, fontSize: '.75rem', padding: '6px 8px' }} value={activeContact.nextFollowUp || ''} onChange={e => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, nextFollowUp: e.target.value } : c))} />
                         <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.44rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today } : c))}>Hoje</button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
+                        {[1, 3, 7, 14, 30].map(d => {
+                          const dt = new Date(); dt.setDate(dt.getDate() + d)
+                          return (
+                            <button key={d} style={{ padding: '3px 8px', background: 'rgba(14,14,13,.05)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}
+                              onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, nextFollowUp: dt.toISOString().split('T')[0] } : c))}>
+                              +{d}d
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                     <div className="p-card">

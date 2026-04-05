@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { useAVMStore } from '../stores/avmStore'
 
@@ -7,7 +8,7 @@ interface PortalAVMProps {
   onAddToPortfolio?: (data: Record<string, unknown>) => void
 }
 
-// ─── Gauge SVG ────────────────────────────────────────────────────────────────
+// ─── Confidence Gauge SVG ─────────────────────────────────────────────────────
 function Gauge({ value, max = 100 }: { value: number; max?: number }) {
   const pct = Math.min(Math.max(value / max, 0), 1)
   const r = 40
@@ -18,39 +19,59 @@ function Gauge({ value, max = 100 }: { value: number; max?: number }) {
   const gap = circumference - dash
   const color = pct > 0.8 ? '#22c55e' : pct > 0.6 ? '#c9a96e' : '#e05252'
 
-  // Arc: starts at 180deg (left), ends at 0deg (right) — top semi-circle
   const startX = cx - r
   const startY = cy
   const endX = cx + r
   const endY = cy
 
+  // Needle angle (0% = 180deg left, 100% = 0deg right)
+  const needleAngle = 180 - pct * 180
+  const needleRad = (needleAngle * Math.PI) / 180
+  const needleLen = 32
+  const nx = cx + needleLen * Math.cos(needleRad)
+  const ny = cy - needleLen * Math.sin(needleRad)
+
   return (
-    <svg width="100" height="60" viewBox="0 0 100 60" style={{ overflow: 'visible' }}>
+    <svg width="100" height="64" viewBox="0 0 100 64" aria-label={`Confiança: ${value}%`} style={{ overflow: 'visible' }}>
       {/* Track */}
       <path
         d={`M ${startX} ${startY} A ${r} ${r} 0 0 1 ${endX} ${endY}`}
-        fill="none"
-        stroke="rgba(14,14,13,.08)"
-        strokeWidth="8"
-        strokeLinecap="round"
+        fill="none" stroke="rgba(14,14,13,.08)" strokeWidth="8" strokeLinecap="round"
       />
+      {/* Zone ticks — low/mid/high */}
+      {[0, 0.33, 0.66, 1].map((t, i) => {
+        const ang = (180 - t * 180) * Math.PI / 180
+        const x1 = cx + (r - 6) * Math.cos(ang)
+        const y1 = cy - (r - 6) * Math.sin(ang)
+        const x2 = cx + (r + 2) * Math.cos(ang)
+        const y2 = cy - (r + 2) * Math.sin(ang)
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(14,14,13,.12)" strokeWidth="1" />
+      })}
       {/* Fill */}
       <path
         d={`M ${startX} ${startY} A ${r} ${r} 0 0 1 ${endX} ${endY}`}
-        fill="none"
-        stroke={color}
-        strokeWidth="8"
-        strokeLinecap="round"
+        fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
         strokeDasharray={`${dash} ${gap}`}
         style={{ transition: 'stroke-dasharray .6s ease, stroke .4s ease' }}
       />
+      {/* Needle */}
+      <line
+        x1={cx} y1={cy} x2={nx} y2={ny}
+        stroke={color} strokeWidth="2" strokeLinecap="round"
+        style={{ transition: 'x2 .6s ease, y2 .6s ease' }}
+      />
+      <circle cx={cx} cy={cy} r="3.5" fill={color} />
       {/* Value label */}
-      <text x={cx} y={cy - 6} textAnchor="middle" style={{ fontFamily: "'Cormorant',serif", fontSize: '13px', fill: color, fontWeight: 600 }}>
+      <text x={cx} y={cy - 8} textAnchor="middle" style={{ fontFamily: "'Cormorant',serif", fontSize: '13px', fill: color, fontWeight: 600 }}>
         {value}%
       </text>
-      <text x={cx} y={cy + 8} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '6px', fill: 'rgba(14,14,13,.35)', letterSpacing: '.1em' }}>
+      <text x={cx} y={cy + 9} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '5.5px', fill: 'rgba(14,14,13,.35)', letterSpacing: '.1em' }}>
         CONFIANÇA
       </text>
+      {/* Zone labels */}
+      <text x={startX - 2} y={cy + 16} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '5px', fill: '#e05252', opacity: .7 }}>Baixa</text>
+      <text x={cx} y={cy - r - 6} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '5px', fill: '#c9a96e', opacity: .7 }}>Mod.</text>
+      <text x={endX + 2} y={cy + 16} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '5px', fill: '#22c55e', opacity: .7 }}>Alta</text>
     </svg>
   )
 }
@@ -60,6 +81,289 @@ function InlineBar({ pct, color = '#1c4a35' }: { pct: number; color?: string }) 
   return (
     <div style={{ height: '4px', background: 'rgba(14,14,13,.06)', borderRadius: '2px', overflow: 'hidden', minWidth: '60px' }}>
       <div style={{ height: '100%', width: `${Math.min(pct * 100, 100)}%`, background: color, borderRadius: '2px', transition: 'width .5s ease' }} />
+    </div>
+  )
+}
+
+// ─── Price History SVG Line Chart ────────────────────────────────────────────
+const PRICE_HISTORY: Record<string, { year: number; price: number }[]> = {
+  'Lisboa — Chiado': [
+    { year: 2022, price: 7800 }, { year: 2023, price: 8400 }, { year: 2024, price: 9100 }, { year: 2025, price: 9500 }, { year: 2026, price: 9800 },
+  ],
+  'Lisboa — Príncipe Real': [
+    { year: 2022, price: 7200 }, { year: 2023, price: 7800 }, { year: 2024, price: 8500 }, { year: 2025, price: 8900 }, { year: 2026, price: 9200 },
+  ],
+  'Lisboa — Bairro Alto': [
+    { year: 2022, price: 6800 }, { year: 2023, price: 7400 }, { year: 2024, price: 8000 }, { year: 2025, price: 8500 }, { year: 2026, price: 8800 },
+  ],
+  'Lisboa — Alfama': [
+    { year: 2022, price: 5900 }, { year: 2023, price: 6400 }, { year: 2024, price: 6900 }, { year: 2025, price: 7200 }, { year: 2026, price: 7400 },
+  ],
+  'Lisboa — Belém': [
+    { year: 2022, price: 5600 }, { year: 2023, price: 6100 }, { year: 2024, price: 6600 }, { year: 2025, price: 6900 }, { year: 2026, price: 7100 },
+  ],
+  'Lisboa — Parque das Nações': [
+    { year: 2022, price: 5500 }, { year: 2023, price: 5900 }, { year: 2024, price: 6300 }, { year: 2025, price: 6600 }, { year: 2026, price: 6800 },
+  ],
+  'Lisboa — Avenidas Novas': [
+    { year: 2022, price: 5100 }, { year: 2023, price: 5500 }, { year: 2024, price: 5900 }, { year: 2025, price: 6200 }, { year: 2026, price: 6400 },
+  ],
+  'Cascais': [
+    { year: 2022, price: 4600 }, { year: 2023, price: 5000 }, { year: 2024, price: 5400 }, { year: 2025, price: 5700 }, { year: 2026, price: 5890 },
+  ],
+  'Porto — Foz': [
+    { year: 2022, price: 4100 }, { year: 2023, price: 4500 }, { year: 2024, price: 4800 }, { year: 2025, price: 5000 }, { year: 2026, price: 5200 },
+  ],
+  'Algarve — Vilamoura': [
+    { year: 2022, price: 4000 }, { year: 2023, price: 4400 }, { year: 2024, price: 4700 }, { year: 2025, price: 4900 }, { year: 2026, price: 5100 },
+  ],
+}
+
+const DEFAULT_HISTORY = [
+  { year: 2022, price: 2400 }, { year: 2023, price: 2650 }, { year: 2024, price: 2850 }, { year: 2025, price: 3000 }, { year: 2026, price: 3076 },
+]
+
+function PriceHistoryChart({ zona }: { zona: string }) {
+  const data = PRICE_HISTORY[zona] ?? DEFAULT_HISTORY
+  const W = 260
+  const H = 80
+  const padL = 38
+  const padR = 12
+  const padT = 10
+  const padB = 22
+  const innerW = W - padL - padR
+  const innerH = H - padT - padB
+
+  const minPrice = Math.min(...data.map(d => d.price)) * 0.92
+  const maxPrice = Math.max(...data.map(d => d.price)) * 1.04
+  const priceRange = maxPrice - minPrice || 1
+
+  const toX = (i: number) => padL + (i / (data.length - 1)) * innerW
+  const toY = (p: number) => padT + innerH - ((p - minPrice) / priceRange) * innerH
+
+  const polyPoints = data.map((d, i) => `${toX(i).toFixed(1)},${toY(d.price).toFixed(1)}`).join(' ')
+  // Area fill path
+  const areaPath = [
+    `M ${toX(0).toFixed(1)} ${(padT + innerH).toFixed(1)}`,
+    ...data.map((d, i) => `L ${toX(i).toFixed(1)} ${toY(d.price).toFixed(1)}`),
+    `L ${toX(data.length - 1).toFixed(1)} ${(padT + innerH).toFixed(1)}`,
+    'Z',
+  ].join(' ')
+
+  const growth = data.length >= 2
+    ? (((data[data.length - 1].price - data[0].price) / data[0].price) * 100).toFixed(1)
+    : '0.0'
+  const growthPositive = parseFloat(growth) >= 0
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '6px' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
+          Evolução do Preço 2022–2026
+        </div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: growthPositive ? '#22c55e' : '#e05252' }}>
+          {growthPositive ? '+' : ''}{growth}% · 4 anos
+        </div>
+      </div>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-label={`Evolução de preço €/m² em ${zona}`} style={{ overflow: 'visible', display: 'block' }}>
+        {/* Grid lines */}
+        {[0, 0.5, 1].map((t, i) => {
+          const y = padT + innerH * (1 - t)
+          const priceAtLine = Math.round(minPrice + t * priceRange)
+          return (
+            <g key={i}>
+              <line x1={padL} y1={y} x2={W - padR} y2={y} stroke="rgba(14,14,13,.06)" strokeWidth="1" strokeDasharray="3,3" />
+              <text x={padL - 4} y={y + 4} textAnchor="end" style={{ fontFamily: "'DM Mono',monospace", fontSize: '5px', fill: 'rgba(14,14,13,.3)' }}>
+                {priceAtLine >= 1000 ? `${(priceAtLine / 1000).toFixed(1)}k` : priceAtLine}
+              </text>
+            </g>
+          )
+        })}
+
+        {/* Area fill */}
+        <defs>
+          <linearGradient id="avm-area-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#1c4a35" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#1c4a35" stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+        <path d={areaPath} fill="url(#avm-area-grad)" />
+
+        {/* Line */}
+        <polyline points={polyPoints} fill="none" stroke="#1c4a35" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+
+        {/* Data points */}
+        {data.map((d, i) => (
+          <g key={i}>
+            <circle cx={toX(i)} cy={toY(d.price)} r="3.5" fill="#1c4a35" />
+            <circle cx={toX(i)} cy={toY(d.price)} r="6" fill="#1c4a35" fillOpacity="0.08" />
+          </g>
+        ))}
+
+        {/* Year labels */}
+        {data.map((d, i) => (
+          <text key={i} x={toX(i)} y={H - 4} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '5.5px', fill: 'rgba(14,14,13,.35)' }}>
+            {d.year}
+          </text>
+        ))}
+
+        {/* Current value tooltip on last point */}
+        {data.length > 0 && (() => {
+          const last = data[data.length - 1]
+          const lx = toX(data.length - 1)
+          const ly = toY(last.price)
+          return (
+            <g>
+              <rect x={lx - 22} y={ly - 20} width="44" height="13" rx="2" fill="#1c4a35" />
+              <text x={lx} y={ly - 10} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '6px', fill: '#f4f0e6' }}>
+                €{last.price.toLocaleString('pt-PT')}/m²
+              </text>
+            </g>
+          )
+        })()}
+      </svg>
+    </div>
+  )
+}
+
+// ─── Adjustment Factors Panel ─────────────────────────────────────────────────
+
+interface AdjustmentFactor {
+  label: string
+  key: string
+  min: number
+  max: number
+  step: number
+  defaultVal: number
+  unit: string
+  description: string
+}
+
+const ADJUSTMENT_FACTORS: AdjustmentFactor[] = [
+  { label: 'Estado de Conservação', key: 'estado', min: -15, max: 10, step: 1, defaultVal: 0, unit: '%', description: 'Novo → Para Renovar' },
+  { label: 'Andar / Elevação', key: 'andar', min: -5, max: 12, step: 1, defaultVal: 0, unit: '%', description: 'RC → 6+' },
+  { label: 'Vista Privilegiada', key: 'vista', min: 0, max: 20, step: 1, defaultVal: 0, unit: '%', description: 'Interior → Mar/Rio' },
+  { label: 'Garagem / Estacionamento', key: 'garagem', min: 0, max: 8, step: 0.5, defaultVal: 0, unit: '%', description: 'Sem → Box privada' },
+]
+
+function AdjustmentFactorsPanel({
+  baseValue,
+  darkMode,
+}: {
+  baseValue: number
+  darkMode: boolean
+}) {
+  const [factors, setFactors] = useState<Record<string, number>>(() =>
+    Object.fromEntries(ADJUSTMENT_FACTORS.map(f => [f.key, f.defaultVal]))
+  )
+
+  const totalAdjustment = Object.values(factors).reduce((s, v) => s + v, 0)
+  const adjustedValue = baseValue > 0 ? baseValue * (1 + totalAdjustment / 100) : 0
+  const adjustedColor = totalAdjustment >= 0 ? '#4a9c7a' : '#dc2626'
+
+  return (
+    <div className="p-card">
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>
+        Factores de Ajuste
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '14px' }}>
+        {ADJUSTMENT_FACTORS.map(f => {
+          const val = factors[f.key] ?? f.defaultVal
+          const pct = (val - f.min) / (f.max - f.min)
+          const isPositive = val > 0
+          const isNegative = val < 0
+          const valueColor = isPositive ? '#4a9c7a' : isNegative ? '#dc2626' : 'rgba(14,14,13,.35)'
+
+          return (
+            <div key={f.key}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                <div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.7)', marginBottom: '1px' }}>{f.label}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)' }}>{f.description}</div>
+                </div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: valueColor, fontWeight: 600, minWidth: '40px', textAlign: 'right' }}>
+                  {val > 0 ? '+' : ''}{val}{f.unit}
+                </div>
+              </div>
+              <div style={{ position: 'relative', height: '6px', background: 'rgba(14,14,13,.06)', borderRadius: '3px' }}>
+                {/* Zero marker */}
+                <div style={{
+                  position: 'absolute',
+                  left: `${((0 - f.min) / (f.max - f.min)) * 100}%`,
+                  top: '-2px', bottom: '-2px',
+                  width: '1px', background: 'rgba(14,14,13,.2)',
+                }} />
+                {/* Fill bar */}
+                <div style={{
+                  position: 'absolute',
+                  left: `${((0 - f.min) / (f.max - f.min)) * 100}%`,
+                  width: `${Math.abs(pct - (0 - f.min) / (f.max - f.min)) * 100}%`,
+                  marginLeft: val < 0 ? `-${Math.abs(pct - (0 - f.min) / (f.max - f.min)) * 100}%` : '0',
+                  height: '100%',
+                  background: valueColor,
+                  borderRadius: '3px',
+                  transition: 'width .3s, background .2s',
+                }} />
+                {/* Thumb */}
+                <div style={{
+                  position: 'absolute',
+                  left: `${pct * 100}%`,
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '12px', height: '12px',
+                  background: valueColor,
+                  borderRadius: '50%',
+                  border: `2px solid ${darkMode ? '#122a1a' : '#f9f7f4'}`,
+                  boxShadow: `0 0 0 2px ${valueColor}40`,
+                  transition: 'left .1s, background .2s',
+                  zIndex: 1,
+                }} />
+              </div>
+              <input
+                type="range"
+                min={f.min}
+                max={f.max}
+                step={f.step}
+                value={val}
+                onChange={e => setFactors(prev => ({ ...prev, [f.key]: parseFloat(e.target.value) }))}
+                style={{
+                  position: 'absolute',
+                  opacity: 0,
+                  width: '100%',
+                  height: '20px',
+                  marginTop: '-13px',
+                  cursor: 'pointer',
+                }}
+                aria-label={f.label}
+              />
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Summary */}
+      <div style={{
+        padding: '10px 14px',
+        background: `${adjustedColor}08`,
+        border: `1px solid ${adjustedColor}25`,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>AJUSTE TOTAL</div>
+          <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: adjustedColor, fontWeight: 300 }}>
+            {totalAdjustment > 0 ? '+' : ''}{totalAdjustment.toFixed(1)}%
+          </div>
+        </div>
+        {baseValue > 0 && (
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>VALOR AJUSTADO</div>
+            <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', color: adjustedColor, fontWeight: 300 }}>
+              €{Math.round(adjustedValue).toLocaleString('pt-PT')}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -89,6 +393,97 @@ const ZONA_PRICES: Record<string, number> = {
   'Açores — Ponta Delgada': 1952,
 }
 
+// ─── Zone Heatmap Reference Table ─────────────────────────────────────────────
+const ZONE_HEATMAP_DATA = [
+  { zona: 'Lisboa — Chiado', preco: 9800, variacao: '+12.3%', liquidez: 'Alta', segmento: 'Ultra-Luxo' },
+  { zona: 'Cascais', preco: 5890, variacao: '+9.8%', liquidez: 'Alta', segmento: 'Luxo' },
+  { zona: 'Comporta', preco: 6500, variacao: '+18.2%', liquidez: 'Média', segmento: 'Ultra-Luxo' },
+  { zona: 'Porto — Foz', preco: 5200, variacao: '+11.4%', liquidez: 'Alta', segmento: 'Premium' },
+  { zona: 'Algarve — Vilamoura', preco: 5100, variacao: '+8.6%', liquidez: 'Média', segmento: 'Premium' },
+  { zona: 'Oeiras', preco: 4100, variacao: '+7.2%', liquidez: 'Alta', segmento: 'Médio-Alto' },
+  { zona: 'Madeira — Funchal', preco: 3760, variacao: '+14.1%', liquidez: 'Média', segmento: 'Premium' },
+  { zona: 'Porto — Boavista', preco: 4600, variacao: '+10.5%', liquidez: 'Alta', segmento: 'Premium' },
+  { zona: 'Sintra', preco: 3200, variacao: '+6.8%', liquidez: 'Média', segmento: 'Médio-Alto' },
+  { zona: 'Açores — Ponta Delgada', preco: 1952, variacao: '+21.4%', liquidez: 'Baixa', segmento: 'Médio' },
+]
+
+function ZoneHeatmap({ activeZona, onSelect }: { activeZona: string; onSelect: (z: string) => void }) {
+  const maxPrice = Math.max(...ZONE_HEATMAP_DATA.map(z => z.preco))
+
+  const liquidezColor: Record<string, string> = {
+    'Alta': '#4a9c7a',
+    'Média': '#c9a96e',
+    'Baixa': '#dc2626',
+  }
+
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.72rem' }}>
+        <thead>
+          <tr>
+            {['Zona', '€/m²', 'Var. YoY', 'Liquidez', 'Segmento'].map(h => (
+              <th key={h} style={{
+                fontFamily: "'DM Mono',monospace", fontSize: '.3rem',
+                color: 'rgba(14,14,13,.35)', letterSpacing: '.1em', textTransform: 'uppercase',
+                padding: '4px 8px', textAlign: 'left', borderBottom: '1px solid rgba(14,14,13,.07)',
+                fontWeight: 400,
+              }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {ZONE_HEATMAP_DATA.map(row => {
+            const isActive = activeZona.includes(row.zona.split(' — ')[row.zona.includes('—') ? 1 : 0]) ||
+              activeZona === row.zona ||
+              row.zona.includes(activeZona.split(' — ')[activeZona.includes('—') ? 1 : 0] || '')
+            const heatPct = row.preco / maxPrice
+            const heatColor = heatPct > 0.8 ? '#dc2626' : heatPct > 0.6 ? '#c9a96e' : heatPct > 0.4 ? '#4a9c7a' : '#3a7bd5'
+
+            return (
+              <tr
+                key={row.zona}
+                onClick={() => onSelect(row.zona)}
+                style={{
+                  cursor: 'pointer',
+                  background: isActive ? 'rgba(28,74,53,.06)' : 'transparent',
+                  transition: 'background .12s',
+                }}
+              >
+                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)', fontFamily: "'Jost',sans-serif", fontSize: '.76rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.65)', fontWeight: isActive ? 600 : 400 }}>
+                  {row.zona}
+                </td>
+                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ width: `${heatPct * 48}px`, height: '4px', background: heatColor, borderRadius: '2px', flexShrink: 0, transition: 'width .4s ease' }} />
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: heatColor, fontWeight: 600 }}>
+                      €{row.preco.toLocaleString('pt-PT')}
+                    </span>
+                  </div>
+                </td>
+                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)', fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#4a9c7a' }}>
+                  {row.variacao}
+                </td>
+                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
+                  <span style={{
+                    fontFamily: "'DM Mono',monospace", fontSize: '.3rem',
+                    color: liquidezColor[row.liquidez] || '#888',
+                    background: (liquidezColor[row.liquidez] || '#888') + '14',
+                    padding: '1px 6px', borderRadius: '2px',
+                  }}>{row.liquidez}</span>
+                </td>
+                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)', fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.4)' }}>
+                  {row.segmento}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps) {
   const { darkMode } = useUIStore()
   const {
@@ -109,6 +504,9 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
     avmUso, setAvmUso,
   } = useAVMStore()
 
+  const [showZoneHeatmap, setShowZoneHeatmap] = useState(false)
+  const [showAdjustments, setShowAdjustments] = useState(false)
+
   const ZONAS = [
     'Lisboa — Chiado','Lisboa — Príncipe Real','Lisboa — Bairro Alto','Lisboa — Alfama','Lisboa — Belém',
     'Lisboa — Parque das Nações','Lisboa — Avenidas Novas','Cascais','Estoril','Sintra','Oeiras',
@@ -118,7 +516,6 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
 
   const res = avmResult as Record<string, unknown> | null
 
-  // Normalize field names (API pode devolver camelCase ou snake_case)
   const valorCentral = Number(res?.valor_central ?? res?.valorEstimado ?? 0)
   const valorMin = Number(res?.valor_min ?? res?.valorMin ?? 0)
   const valorMax = Number(res?.valor_max ?? res?.valorMax ?? 0)
@@ -138,7 +535,6 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
   const confidenceLabel = confianca > 80 ? 'Alta Confiança' : confianca > 60 ? 'Confiança Moderada' : 'Confiança Baixa'
   const confidenceColor = confianca > 80 ? '#22c55e' : confianca > 60 ? '#c9a96e' : '#e05252'
 
-  // Comparável badge
   const comparavelBadge = (ajuste: number) => {
     if (ajuste < -5) return { label: 'Inferior', color: '#e05252', bg: 'rgba(224,82,82,.08)' }
     if (ajuste > 5) return { label: 'Superior', color: '#1c4a35', bg: 'rgba(28,74,53,.08)' }
@@ -155,7 +551,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
 
       <div className="p-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
 
-        {/* ── Form ─────────────────────────────────────────────────────────── */}
+        {/* ── Form Column ──────────────────────────────────────────────────── */}
         <div>
           <div className="p-card">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -249,42 +645,67 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
             </div>
           </div>
 
-          {/* ── Painel de referência de mercado ─────────────────────────────── */}
+          {/* ── Price History Chart ──────────────────────────────────────── */}
           <div className="p-card" style={{ marginTop: '16px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Referência de Mercado · €/m²</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {Object.entries(ZONA_PRICES)
-                .sort((a, b) => b[1] - a[1])
-                .map(([zona, preco]) => {
-                  const isActive = avmZona === zona
-                  const maxPrice = 10000
-                  const barPct = preco / maxPrice
-                  return (
-                    <div
-                      key={zona}
-                      onClick={() => setAvmZona(zona)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 8px',
-                        cursor: 'pointer',
-                        background: isActive ? 'rgba(28,74,53,.06)' : 'transparent',
-                        border: isActive ? '1px solid rgba(28,74,53,.15)' : '1px solid transparent',
-                        borderRadius: '2px',
-                        transition: 'background .15s',
-                      }}
-                    >
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.55)', width: '140px', flexShrink: 0, fontWeight: isActive ? 700 : 400 }}>{zona}</div>
-                      <InlineBar pct={barPct} color={isActive ? '#1c4a35' : 'rgba(28,74,53,.25)'} />
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.5)', width: '52px', textAlign: 'right', flexShrink: 0, fontWeight: isActive ? 700 : 400 }}>
-                        €{preco.toLocaleString('pt-PT')}
-                      </div>
-                    </div>
-                  )
-                })}
-            </div>
+            <PriceHistoryChart zona={avmZona} />
           </div>
+
+          {/* ── Zone Heatmap Toggle ──────────────────────────────────────── */}
+          <div className="p-card" style={{ marginTop: '16px' }}>
+            <button
+              onClick={() => setShowZoneHeatmap(v => !v)}
+              style={{
+                width: '100%', background: 'transparent', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0',
+              }}
+            >
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Heatmap de Zonas · €/m²</div>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)' }}>{showZoneHeatmap ? '▲' : '▼'}</span>
+            </button>
+            {showZoneHeatmap && (
+              <div style={{ marginTop: '12px' }}>
+                <ZoneHeatmap activeZona={avmZona} onSelect={setAvmZona} />
+              </div>
+            )}
+          </div>
+
+          {/* ── Market Reference (compact) ───────────────────────────────── */}
+          {!showZoneHeatmap && (
+            <div className="p-card" style={{ marginTop: '16px' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Referência de Mercado · €/m²</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {Object.entries(ZONA_PRICES)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([zona, preco]) => {
+                    const isActive = avmZona === zona
+                    const barPct = preco / 10000
+                    return (
+                      <div
+                        key={zona}
+                        onClick={() => setAvmZona(zona)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 8px',
+                          cursor: 'pointer',
+                          background: isActive ? 'rgba(28,74,53,.06)' : 'transparent',
+                          border: isActive ? '1px solid rgba(28,74,53,.15)' : '1px solid transparent',
+                          borderRadius: '2px', transition: 'background .15s',
+                        }}
+                      >
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.55)', width: '140px', flexShrink: 0, fontWeight: isActive ? 700 : 400 }}>{zona}</div>
+                        <InlineBar pct={barPct} color={isActive ? '#1c4a35' : 'rgba(28,74,53,.25)'} />
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.5)', width: '52px', textAlign: 'right', flexShrink: 0, fontWeight: isActive ? 700 : 400 }}>
+                          €{preco.toLocaleString('pt-PT')}
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* ── Results ──────────────────────────────────────────────────────── */}
+        {/* ── Results Column ───────────────────────────────────────────────── */}
         <div>
           {!avmResult && !avmLoading && (
             <div className="p-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
@@ -338,7 +759,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                       </div>
                     )}
                   </div>
-                  {/* Gauge */}
+                  {/* Improved Confidence Gauge */}
                   {confianca > 0 && (
                     <div style={{ flexShrink: 0 }}>
                       <Gauge value={confianca} />
@@ -360,6 +781,27 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                     <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.4rem', color: '#1c4a35', fontWeight: 300 }}>{m.val}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* ── Adjustment Factors Toggle ────────────────────────────── */}
+              <div>
+                <button
+                  onClick={() => setShowAdjustments(v => !v)}
+                  style={{
+                    width: '100%', padding: '10px 14px',
+                    background: 'rgba(201,169,110,.05)', border: '1px solid rgba(201,169,110,.2)',
+                    cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#c9a96e', letterSpacing: '.1em',
+                  }}
+                >
+                  <span>✦ Factores de Ajuste Manual</span>
+                  <span>{showAdjustments ? '▲' : '▼'}</span>
+                </button>
+                {showAdjustments && (
+                  <div style={{ marginTop: '8px' }}>
+                    <AdjustmentFactorsPanel baseValue={valorCentral} darkMode={darkMode} />
+                  </div>
+                )}
               </div>
 
               {/* ── Metodologias ─────────────────────────────────────────────── */}
@@ -386,29 +828,45 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                 </div>
               )}
 
-              {/* ── Comparáveis ──────────────────────────────────────────────── */}
+              {/* ── Comparáveis Grid ──────────────────────────────────────── */}
               {comparaveis.length > 0 && (
                 <div className="p-card">
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Comparáveis de Mercado</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>
+                    Comparáveis de Mercado
+                    <span style={{ marginLeft: '8px', color: 'rgba(14,14,13,.25)', fontWeight: 400 }}>· {comparaveis.length} imóveis</span>
+                  </div>
+                  {/* Grid header */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '4px 12px', marginBottom: '4px' }}>
+                    {['Imóvel', 'Área', '€/m²', 'Ajuste'].map(h => (
+                      <div key={h} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>{h}</div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {comparaveis.slice(0, 5).map((c, i) => {
                       const badge = comparavelBadge(c.ajuste ?? 0)
                       const pm2 = c.area > 0 ? Math.round(c.valor / c.area) : 0
                       return (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', borderRadius: '2px' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.75)', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.morada}</div>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)' }}>{c.area}m²</span>
-                              {pm2 > 0 && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)' }}>€{pm2.toLocaleString('pt-PT')}/m²</span>}
-                              {c.distancia > 0 && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)' }}>{c.distancia}km</span>}
+                        <div key={i} style={{
+                          display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px',
+                          alignItems: 'center', padding: '10px 12px',
+                          background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.05)',
+                          borderRadius: '2px',
+                        }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.76rem', color: 'rgba(14,14,13,.75)', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.morada}</div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <span style={{ fontFamily: "'Cormorant',serif", fontSize: '.9rem', color: '#1c4a35' }}>€{c.valor.toLocaleString('pt-PT')}</span>
+                              {c.distancia > 0 && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)', alignSelf: 'center' }}>{c.distancia}km</span>}
                             </div>
                           </div>
-                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: '#1c4a35', marginBottom: '4px' }}>€{c.valor.toLocaleString('pt-PT')}</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.area}m²</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.5)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            {pm2 > 0 ? `€${pm2.toLocaleString('pt-PT')}` : '—'}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
                             <div style={{ display: 'inline-block', padding: '2px 8px', background: badge.bg, borderRadius: '10px' }}>
-                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: badge.color, letterSpacing: '.05em' }}>
-                                {badge.label}{c.ajuste !== 0 ? ` ${c.ajuste > 0 ? '+' : ''}${c.ajuste}%` : ''}
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: badge.color, letterSpacing: '.04em', whiteSpace: 'nowrap' }}>
+                                {c.ajuste !== 0 ? `${c.ajuste > 0 ? '+' : ''}${c.ajuste}%` : badge.label}
                               </span>
                             </div>
                           </div>
@@ -419,7 +877,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                 </div>
               )}
 
-              {/* ── Botão Adicionar ao Portfólio ─────────────────────────────── */}
+              {/* ── Adicionar ao Portfólio ───────────────────────────────── */}
               {onAddToPortfolio && (
                 <button
                   className="p-btn"

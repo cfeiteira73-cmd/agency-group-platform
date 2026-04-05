@@ -59,6 +59,18 @@ interface RadarHistoryItem {
 const RADAR_HISTORY_KEY = 'ag_radar_history'
 const MAX_HISTORY = 5
 
+// Zone benchmark data — median price/m² and avg yield for key zones
+const ZONE_BENCHMARKS: Record<string, { pm2: number; yield: number; dom: number; trend: string }> = {
+  'lisboa':     { pm2: 5000, yield: 3.8, dom: 90,  trend: '+14%' },
+  'cascais':    { pm2: 4713, yield: 4.1, dom: 120, trend: '+11%' },
+  'algarve':    { pm2: 3941, yield: 5.2, dom: 150, trend: '+18%' },
+  'porto':      { pm2: 3643, yield: 4.6, dom: 80,  trend: '+16%' },
+  'madeira':    { pm2: 3760, yield: 5.8, dom: 180, trend: '+22%' },
+  'açores':     { pm2: 1952, yield: 6.5, dom: 200, trend: '+9%'  },
+  'sintra':     { pm2: 3200, yield: 4.2, dom: 130, trend: '+12%' },
+  'setubal':    { pm2: 2400, yield: 4.8, dom: 110, trend: '+15%' },
+}
+
 function getScoreColor(score: number): string {
   if (score > 75) return '#22c55e'
   if (score > 50) return '#c9a96e'
@@ -164,6 +176,114 @@ function RadarChart({ dimensions }: { dimensions: RadarDimension[] }) {
         )
       })}
     </svg>
+  )
+}
+
+// ── Benchmark Panel ─────────────────────────────────────────────────────────
+function BenchmarkPanel({ url, score, darkMode }: { url: string; score: number; darkMode: boolean }) {
+  // Detect zone from URL/text
+  const urlLower = url.toLowerCase()
+  const detectedZone = Object.keys(ZONE_BENCHMARKS).find(z => urlLower.includes(z)) ?? 'lisboa'
+  const bench = ZONE_BENCHMARKS[detectedZone]
+  const textMuted = darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)'
+  const border = darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.08)'
+
+  const metrics = [
+    { label: 'Preço/m² Zona',     val: `€${bench.pm2.toLocaleString('pt-PT')}`,   bench: 'Mediana mercado', color: '#1c4a35' },
+    { label: 'Yield Médio',       val: `${bench.yield}%`,                           bench: 'Arrendamento zona', color: '#4a9c7a' },
+    { label: 'Dias no Mercado',   val: `${bench.dom}d`,                             bench: 'Média zona', color: '#c9a96e' },
+    { label: 'Tendência YoY',     val: bench.trend,                                 bench: 'Valorização anual', color: '#3a7bd5' },
+  ]
+
+  // SVG bar comparison: score vs zone average (70)
+  const zoneAvgScore = 70
+  const barW = 200
+  const myBar = Math.round((score / 100) * barW)
+  const zoneBar = Math.round((zoneAvgScore / 100) * barW)
+
+  return (
+    <div style={{ padding: '16px', background: darkMode ? 'rgba(244,240,230,.03)' : 'rgba(14,14,13,.02)', border: `1px solid ${border}`, marginBottom: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.14em', textTransform: 'uppercase', color: textMuted }}>Benchmark — Zona Detectada</div>
+          <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', fontWeight: 300, color: darkMode ? '#f4f0e6' : '#0e0e0d', marginTop: '2px', textTransform: 'capitalize' }}>{detectedZone}</div>
+        </div>
+        {/* SVG score comparison bar */}
+        <svg width={barW + 60} height={44} viewBox={`0 0 ${barW + 60} 44`} aria-label={`Score ${score} vs zona ${zoneAvgScore}`}>
+          <text x="0" y="10" fontFamily="DM Mono, monospace" fontSize="7" fill={textMuted}>Este imóvel</text>
+          <rect x="0" y="14" width={barW} height="8" rx="4" fill="rgba(14,14,13,.07)" />
+          <rect x="0" y="14" width={myBar} height="8" rx="4" fill={getScoreColor(score)} />
+          <text x={myBar + 4} y="21" fontFamily="DM Mono, monospace" fontSize="7" fontWeight="700" fill={getScoreColor(score)}>{score}</text>
+          <text x="0" y="36" fontFamily="DM Mono, monospace" fontSize="7" fill={textMuted}>Média zona</text>
+          <rect x="0" y="40" width={barW} height="4" rx="2" fill="rgba(14,14,13,.07)" />
+          <rect x="0" y="40" width={zoneBar} height="4" rx="2" fill="rgba(14,14,13,.25)" />
+          <text x={zoneBar + 4} y="44" fontFamily="DM Mono, monospace" fontSize="7" fill={textMuted}>{zoneAvgScore}</text>
+        </svg>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+        {metrics.map(m => (
+          <div key={m.label} style={{ padding: '10px 12px', background: darkMode ? 'rgba(244,240,230,.04)' : '#fff', border: `1px solid ${border}` }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.1em', textTransform: 'uppercase', color: textMuted, marginBottom: '4px' }}>{m.label}</div>
+            <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 300, color: m.color, lineHeight: 1 }}>{m.val}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: textMuted, marginTop: '2px' }}>{m.bench}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Alert System (top 3 opps + top 3 risks) ─────────────────────────────────
+function AlertSystem({ risks, opportunities, darkMode }: { risks: string[]; opportunities: string[]; darkMode: boolean }) {
+  const top3risks = (risks ?? []).slice(0, 3)
+  const top3opps  = (opportunities ?? []).slice(0, 3)
+  if (top3risks.length === 0 && top3opps.length === 0) return null
+  const border = darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.08)'
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+      {/* Top 3 Opportunities */}
+      {top3opps.length > 0 && (
+        <div style={{ background: 'rgba(28,74,53,.05)', border: '2px solid rgba(28,74,53,.2)', padding: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-label="Oportunidades">
+              <polygon points="8,2 10,6 15,6 11,9.5 12.5,14 8,11 3.5,14 5,9.5 1,6 6,6" fill="#22c55e" opacity=".9" />
+            </svg>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#22c55e', fontWeight: 700 }}>Top Oportunidades</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {top3opps.map((o, i) => (
+              <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '7px 10px', background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.12)' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#22c55e', fontWeight: 700, flexShrink: 0 }}>0{i + 1}</span>
+                <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: darkMode ? 'rgba(244,240,230,.7)' : 'rgba(14,14,13,.7)', lineHeight: 1.4 }}>{o}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top 3 Risks */}
+      {top3risks.length > 0 && (
+        <div style={{ background: 'rgba(224,82,82,.05)', border: '2px solid rgba(224,82,82,.2)', padding: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-label="Riscos">
+              <path d="M8 2L15 13H1Z" fill="#e05252" opacity=".9" />
+              <rect x="7.3" y="6" width="1.4" height="4" rx=".5" fill="#fff" />
+              <circle cx="8" cy="11.5" r=".8" fill="#fff" />
+            </svg>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#e05252', fontWeight: 700 }}>Top Riscos</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {top3risks.map((r, i) => (
+              <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '7px 10px', background: 'rgba(224,82,82,.06)', border: '1px solid rgba(224,82,82,.12)' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#e05252', fontWeight: 700, flexShrink: 0 }}>0{i + 1}</span>
+                <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: darkMode ? 'rgba(244,240,230,.7)' : 'rgba(14,14,13,.7)', lineHeight: 1.4 }}>{r}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -417,12 +537,38 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                 }}>{getRecommendationLabel(resultRec)}</div>
               </div>
             </div>
-            <button
-              className="p-btn p-btn-gold"
-              style={{ padding: '10px 20px', fontSize: '.48rem', flexShrink: 0 }}
-              onClick={() => setSection('pipeline')}
-            >+ Adicionar ao Pipeline</button>
+            <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+              <button
+                className="p-btn"
+                style={{ padding: '10px 16px', fontSize: '.46rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.6)', border: '1px solid rgba(14,14,13,.15)' }}
+                onClick={() => {
+                  // Build text report including chart dimensions for PDF
+                  const dimText = typedResult?.dimensions?.map(d => `${d.name}: ${d.score}/100`).join('\n') ?? ''
+                  const riskText = typedResult?.risks?.join('\n') ?? ''
+                  const oppText  = typedResult?.opportunities?.join('\n') ?? ''
+                  const report = `DEAL RADAR 16D — Agency Group\n\nURL: ${radarUrl}\nScore: ${resultScore}/100\nRecomendação: ${getRecommendationLabel(resultRec)}\n\n${resultSummary}\n\nDIMENSÕES:\n${dimText}\n\nOPORTUNIDADES:\n${oppText}\n\nRISCOS:\n${riskText}`
+                  navigator.clipboard.writeText(report)
+                }}
+              >↗ Copiar Relatório</button>
+              <button
+                className="p-btn p-btn-gold"
+                style={{ padding: '10px 20px', fontSize: '.48rem' }}
+                onClick={() => setSection('pipeline')}
+              >+ Pipeline</button>
+            </div>
           </div>
+
+          {/* Benchmark Panel */}
+          <BenchmarkPanel url={radarUrl} score={resultScore} darkMode={darkMode} />
+
+          {/* Alert System — Top 3 Opps & Risks */}
+          {hasRisksOrOpps && (
+            <AlertSystem
+              risks={typedResult?.risks ?? []}
+              opportunities={typedResult?.opportunities ?? []}
+              darkMode={darkMode}
+            />
+          )}
 
           {/* Tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '20px', overflowX: 'auto', gap: '0' }}>
@@ -449,44 +595,48 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
           {resultTab === 'overview' && (
             <div>
               {resultSummary && (
-                <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.87rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.8, marginBottom: '20px' }}>
+                <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.87rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.8, marginBottom: '20px', padding: '14px 16px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)' }}>
                   {resultSummary}
                 </div>
               )}
 
               {/* Radar Chart */}
               {hasDimensions && (
-                <div style={{ marginBottom: '24px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '12px' }}>Análise 16 Dimensões</div>
+                <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)' }}>Análise 16 Dimensões — Visualização Radar</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.3)' }}>{typedResult!.dimensions!.length} dimensões</div>
+                  </div>
                   <RadarChart dimensions={typedResult!.dimensions!} />
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.25)', textAlign: 'center', marginTop: '8px', letterSpacing: '.06em' }}>Clique em &quot;Copiar Relatório&quot; para exportar com todas as dimensões</div>
                 </div>
               )}
 
-              {/* Risks & Opportunities */}
-              {hasRisksOrOpps && (
+              {/* All risks & opportunities (full list) — beyond top 3 shown in alert above */}
+              {hasRisksOrOpps && (typedResult?.risks?.length ?? 0) > 3 || (typedResult?.opportunities?.length ?? 0) > 3 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  {typedResult?.risks && typedResult.risks.length > 0 && (
+                  {typedResult?.risks && typedResult.risks.length > 3 && (
                     <div style={{ background: 'rgba(224,82,82,.04)', border: '1px solid rgba(224,82,82,.15)', padding: '14px' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#e05252', marginBottom: '10px' }}>Riscos</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#e05252', marginBottom: '10px' }}>Todos os Riscos ({typedResult.risks.length})</div>
                       <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                        {typedResult.risks.map((r, i) => (
+                        {typedResult.risks.slice(3).map((r, i) => (
                           <li key={i} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.65)', lineHeight: 1.5 }}>{r}</li>
                         ))}
                       </ul>
                     </div>
                   )}
-                  {typedResult?.opportunities && typedResult.opportunities.length > 0 && (
+                  {typedResult?.opportunities && typedResult.opportunities.length > 3 && (
                     <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.15)', padding: '14px' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '10px' }}>Oportunidades</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '10px' }}>Mais Oportunidades ({typedResult.opportunities.length})</div>
                       <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                        {typedResult.opportunities.map((o, i) => (
+                        {typedResult.opportunities.slice(3).map((o, i) => (
                           <li key={i} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.65)', lineHeight: 1.5 }}>{o}</li>
                         ))}
                       </ul>
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
 
               {/* Fallback if no structured data */}
               {!resultSummary && !hasDimensions && !hasRisksOrOpps && (

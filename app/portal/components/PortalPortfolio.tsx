@@ -9,6 +9,381 @@ interface PortalPortfolioProps {
   onRunPortfolio: () => Promise<void>
 }
 
+// ─── Type guards ──────────────────────────────────────────────────────────────
+
+interface ComparisonProperty {
+  name: string
+  price: number
+  yield: number
+  score: number
+}
+
+interface StructuredPortResult {
+  summary?: string
+  properties?: ComparisonProperty[]
+  winner?: string
+  recommendation?: string
+}
+
+function isComparisonProperty(val: unknown): val is ComparisonProperty {
+  if (typeof val !== 'object' || val === null) return false
+  const o = val as Record<string, unknown>
+  return typeof o.name === 'string'
+}
+
+function parsePortResult(raw: unknown): StructuredPortResult {
+  if (typeof raw !== 'object' || raw === null) return {}
+  const r = raw as Record<string, unknown>
+  const result: StructuredPortResult = {}
+  if (typeof r.summary === 'string') result.summary = r.summary
+  if (typeof r.winner === 'string') result.winner = r.winner
+  if (typeof r.recommendation === 'string') result.recommendation = r.recommendation
+  if (Array.isArray(r.properties)) {
+    result.properties = r.properties.filter(isComparisonProperty).map(p => ({
+      name: p.name,
+      price: typeof p.price === 'number' ? p.price : 0,
+      yield: typeof p.yield === 'number' ? p.yield : 0,
+      score: typeof p.score === 'number' ? p.score : 0,
+    }))
+  }
+  return result
+}
+
+// ─── SVG Growth Chart ─────────────────────────────────────────────────────────
+
+interface GrowthChartProps {
+  totalValue: number
+  totalEquity: number
+  totalRental: number
+  properties: { currentValue: number; appreciation: number; rentalYield: number; downPayment: number }[]
+}
+
+function GrowthChart({ totalValue, totalEquity, totalRental, properties }: GrowthChartProps) {
+  const W = 560
+  const H = 200
+  const padL = 56
+  const padR = 16
+  const padT = 16
+  const padB = 40
+  const chartW = W - padL - padR
+  const chartH = H - padT - padB
+
+  const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+  const seriesValue = years.map(y =>
+    properties.reduce((s, p) => s + p.currentValue * Math.pow(1 + p.appreciation / 100, y), 0)
+  )
+  const seriesEquity = years.map(y => {
+    const val = properties.reduce((s, p) => s + p.currentValue * Math.pow(1 + p.appreciation / 100, y), 0)
+    const loan = properties.reduce((s, p) => s + p.currentValue * (1 - p.downPayment / 100), 0)
+    return Math.max(0, val - loan)
+  })
+  const seriesRental = years.map(y =>
+    properties.reduce((s, p) => s + p.currentValue * (p.rentalYield / 100) * y, 0)
+  )
+
+  const allVals = [...seriesValue, ...seriesEquity, ...seriesRental]
+  const maxVal = Math.max(...allVals, 1)
+
+  const toX = (y: number) => padL + (y / 10) * chartW
+  const toY = (v: number) => padT + chartH - (v / maxVal) * chartH
+
+  const pathD = (series: number[]) =>
+    series.map((v, i) => `${i === 0 ? 'M' : 'L'} ${toX(i).toFixed(1)} ${toY(v).toFixed(1)}`).join(' ')
+
+  const fmtM = (v: number) => `€${(v / 1e6).toFixed(1)}M`
+
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => ({ val: maxVal * f, y: padT + chartH - f * chartH }))
+  const xLabels = [0, 5, 10]
+
+  return (
+    <div style={{ marginTop: '24px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '20px' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '14px' }}>
+        Projeção de Crescimento — 10 Anos
+      </div>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height={H}
+        aria-label="Gráfico de crescimento do portfólio ao longo de 10 anos"
+        style={{ display: 'block', overflow: 'visible' }}
+      >
+        {/* Grid lines */}
+        {yTicks.map(t => (
+          <g key={t.val}>
+            <line x1={padL} y1={t.y} x2={W - padR} y2={t.y} stroke="rgba(14,14,13,.06)" strokeWidth={1} />
+            <text
+              x={padL - 6}
+              y={t.y + 4}
+              textAnchor="end"
+              fontFamily="'DM Mono',monospace"
+              fontSize={9}
+              fill="rgba(14,14,13,.3)"
+            >
+              {fmtM(t.val)}
+            </text>
+          </g>
+        ))}
+        {/* X axis labels */}
+        {xLabels.map(y => (
+          <text
+            key={y}
+            x={toX(y)}
+            y={H - padB + 14}
+            textAnchor="middle"
+            fontFamily="'DM Mono',monospace"
+            fontSize={9}
+            fill="rgba(14,14,13,.3)"
+          >
+            Ano {y}
+          </text>
+        ))}
+        {/* Area fill — Total Value */}
+        <path
+          d={`${pathD(seriesValue)} L ${toX(10).toFixed(1)} ${(padT + chartH).toFixed(1)} L ${toX(0).toFixed(1)} ${(padT + chartH).toFixed(1)} Z`}
+          fill="rgba(28,74,53,.07)"
+          strokeWidth={0}
+        />
+        {/* Lines */}
+        <path d={pathD(seriesValue)} fill="none" stroke="#1c4a35" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+        <path d={pathD(seriesEquity)} fill="none" stroke="#c9a96e" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" strokeDasharray="5 3" />
+        <path d={pathD(seriesRental)} fill="none" stroke="#4a9c7a" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" strokeDasharray="2 4" />
+        {/* Endpoint dots */}
+        {[
+          { series: seriesValue, color: '#1c4a35' },
+          { series: seriesEquity, color: '#c9a96e' },
+          { series: seriesRental, color: '#4a9c7a' },
+        ].map(({ series, color }) => (
+          <circle
+            key={color}
+            cx={toX(10)}
+            cy={toY(series[10])}
+            r={4}
+            fill={color}
+            stroke="#fff"
+            strokeWidth={1.5}
+          />
+        ))}
+        {/* Value labels at year 10 */}
+        <text
+          x={toX(10) + 8}
+          y={toY(seriesValue[10]) + 4}
+          fontFamily="'DM Mono',monospace"
+          fontSize={9}
+          fill="#1c4a35"
+          fontWeight="bold"
+        >
+          {fmtM(seriesValue[10])}
+        </text>
+        <text
+          x={toX(10) + 8}
+          y={toY(seriesEquity[10]) + 4}
+          fontFamily="'DM Mono',monospace"
+          fontSize={9}
+          fill="#c9a96e"
+        >
+          {fmtM(seriesEquity[10])}
+        </text>
+        <text
+          x={toX(10) + 8}
+          y={toY(seriesRental[10]) + 4}
+          fontFamily="'DM Mono',monospace"
+          fontSize={9}
+          fill="#4a9c7a"
+        >
+          {fmtM(seriesRental[10])}
+        </text>
+      </svg>
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: '20px', marginTop: '8px', flexWrap: 'wrap' }}>
+        {[
+          { color: '#1c4a35', label: 'Valor Total', dash: false },
+          { color: '#c9a96e', label: 'Equity', dash: true },
+          { color: '#4a9c7a', label: 'Renda Acumulada', dash: true },
+        ].map(l => (
+          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <svg width={24} height={8} aria-label={l.label}>
+              <line
+                x1={0} y1={4} x2={24} y2={4}
+                stroke={l.color}
+                strokeWidth={l.dash ? 1.5 : 2.5}
+                strokeDasharray={l.dash ? '4 3' : undefined}
+              />
+            </svg>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.5)' }}>{l.label}</span>
+          </div>
+        ))}
+      </div>
+      {/* Current snapshot note */}
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.25)', marginTop: '8px' }}>
+        Valor actual: {`€${(totalValue / 1e6).toFixed(2)}M`} · Equity: {`€${(totalEquity / 1e6).toFixed(2)}M`} · Renda anual: {`€${Math.round(totalRental).toLocaleString('pt-PT')}`}
+      </div>
+    </div>
+  )
+}
+
+// ─── Comparison Result Renderer ───────────────────────────────────────────────
+
+function renderSummaryText(summary: string) {
+  const paragraphs = summary.split(/\n\n+/)
+  return (
+    <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', lineHeight: 1.7, color: 'rgba(14,14,13,.75)' }}>
+      {paragraphs.map((para, i) => {
+        if (para.startsWith('# ')) {
+          return (
+            <div key={i} style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 600, color: '#0e0e0d', margin: '14px 0 6px' }}>
+              {para.replace(/^#+\s*/, '')}
+            </div>
+          )
+        }
+        if (para.startsWith('## ')) {
+          return (
+            <div key={i} style={{ fontFamily: "'Cormorant',serif", fontSize: '.95rem', fontWeight: 600, color: '#1c4a35', margin: '10px 0 4px' }}>
+              {para.replace(/^#+\s*/, '')}
+            </div>
+          )
+        }
+        return <p key={i} style={{ margin: '0 0 10px' }}>{para}</p>
+      })}
+    </div>
+  )
+}
+
+function ComparisonResult({ raw }: { raw: unknown }) {
+  const parsed = parsePortResult(raw)
+  const { properties, winner, recommendation, summary } = parsed
+
+  const hasStructured = Array.isArray(properties) && properties.length > 0
+
+  if (!hasStructured) {
+    return (
+      <div className="p-card">
+        <div className="p-label" style={{ marginBottom: '12px' }}>Análise Comparativa</div>
+        {summary ? renderSummaryText(summary) : (
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.3)' }}>Sem dados de análise.</div>
+        )}
+      </div>
+    )
+  }
+
+  const metrics: { label: string; key: keyof ComparisonProperty; fmt: (v: number) => string; higherIsBetter: boolean }[] = [
+    { label: 'Preço', key: 'price', fmt: v => `€${(v / 1e6).toFixed(2)}M`, higherIsBetter: false },
+    { label: 'Yield (%)', key: 'yield', fmt: v => `${v.toFixed(2)}%`, higherIsBetter: true },
+    { label: 'Score', key: 'score', fmt: v => `${v.toFixed(1)}/10`, higherIsBetter: true },
+  ]
+
+  return (
+    <div className="p-card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="p-label">Análise Comparativa</div>
+        {winner && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 14px',
+            background: 'linear-gradient(135deg,#c9a96e22,#c9a96e44)',
+            border: '1px solid #c9a96e',
+            fontFamily: "'DM Mono',monospace",
+            fontSize: '.4rem',
+            letterSpacing: '.1em',
+            textTransform: 'uppercase',
+            color: '#9a7340',
+          }}>
+            <span style={{ color: '#c9a96e', fontSize: '.9rem' }}>★</span>
+            Melhor opção: {winner}
+          </div>
+        )}
+      </div>
+
+      {/* Comparison table */}
+      <div style={{ overflowX: 'auto', marginBottom: recommendation ? '20px' : '0' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <thead>
+            <tr>
+              <th style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em', padding: '8px 10px', textAlign: 'left', background: 'rgba(14,14,13,.03)', borderBottom: '1px solid rgba(14,14,13,.1)', width: '120px' }}>
+                Métrica
+              </th>
+              {properties.map(p => (
+                <th key={p.name} style={{
+                  fontFamily: "'Jost',sans-serif",
+                  fontSize: '.8rem',
+                  fontWeight: 600,
+                  color: winner === p.name ? '#c9a96e' : '#0e0e0d',
+                  padding: '8px 10px',
+                  textAlign: 'center',
+                  background: winner === p.name ? 'rgba(201,169,110,.06)' : 'rgba(14,14,13,.03)',
+                  borderBottom: `2px solid ${winner === p.name ? '#c9a96e' : 'rgba(14,14,13,.1)'}`,
+                  borderLeft: '1px solid rgba(14,14,13,.06)',
+                }}>
+                  {p.name}
+                  {winner === p.name && (
+                    <span style={{ display: 'block', fontSize: '.36rem', fontFamily: "'DM Mono',monospace", color: '#c9a96e', letterSpacing: '.08em', marginTop: '2px' }}>★ VENCEDOR</span>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {metrics.map((metric, mi) => {
+              const vals = properties.map(p => p[metric.key] as number)
+              const best = metric.higherIsBetter ? Math.max(...vals) : Math.min(...vals)
+              return (
+                <tr key={metric.key} style={{ background: mi % 2 === 0 ? '#fff' : 'rgba(14,14,13,.015)' }}>
+                  <td style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.5)', textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 10px', borderBottom: '1px solid rgba(14,14,13,.06)' }}>
+                    {metric.label}
+                  </td>
+                  {properties.map(p => {
+                    const val = p[metric.key] as number
+                    const isBest = val === best
+                    return (
+                      <td key={p.name} style={{
+                        fontFamily: "'DM Mono',monospace",
+                        fontSize: '.46rem',
+                        fontWeight: isBest ? 700 : 400,
+                        color: isBest ? '#1c4a35' : 'rgba(14,14,13,.65)',
+                        padding: '10px 10px',
+                        textAlign: 'center',
+                        borderBottom: '1px solid rgba(14,14,13,.06)',
+                        borderLeft: '1px solid rgba(14,14,13,.04)',
+                        background: winner === p.name ? 'rgba(201,169,110,.03)' : 'transparent',
+                      }}>
+                        {metric.fmt(val)}
+                        {isBest && (
+                          <span style={{ display: 'inline-block', marginLeft: '4px', color: '#1c4a35', fontSize: '.7rem' }}>▲</span>
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {recommendation && (
+        <div style={{
+          borderLeft: '3px solid #c9a96e',
+          paddingLeft: '16px',
+          margin: '0 0 4px',
+          background: 'rgba(201,169,110,.04)',
+          padding: '14px 16px',
+        }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#9a7340', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>Recomendação</div>
+          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.85rem', lineHeight: 1.6, color: 'rgba(14,14,13,.75)', fontStyle: 'italic' }}>
+            {recommendation}
+          </div>
+        </div>
+      )}
+
+      {summary && !hasStructured && renderSummaryText(summary)}
+    </div>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps) {
   const { darkMode } = useUIStore()
   const {
@@ -79,14 +454,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
             </div>
           </div>
 
-          {portResult && (
-            <div className="p-card">
-              <div className="p-label" style={{ marginBottom: '12px' }}>Análise Comparativa</div>
-              <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', lineHeight: 1.7, color: 'rgba(14,14,13,.75)' }}>
-                {String((portResult as Record<string, unknown>).summary || '')}
-              </div>
-            </div>
-          )}
+          {portResult && <ComparisonResult raw={portResult} />}
         </div>
       )}
 
@@ -112,8 +480,18 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
             </div>
           )}
 
+          {/* SVG Growth Chart */}
+          {portfolioStats && portfolioProperties.length > 0 && (
+            <GrowthChart
+              totalValue={portfolioStats.totalValue}
+              totalEquity={portfolioStats.totalEquity}
+              totalRental={portfolioStats.totalRental}
+              properties={portfolioProperties}
+            />
+          )}
+
           {/* Properties in portfolio */}
-          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
               {portfolioProperties.length} Imóveis no Portfólio
             </div>
