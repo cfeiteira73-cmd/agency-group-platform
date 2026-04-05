@@ -284,6 +284,18 @@ export default function Portal() {
     saveDeals([...deals, deal])
     setNewDeal({ imovel: '', valor: '' })
     setShowNewDeal(false)
+    // Persist to Supabase (fire-and-forget)
+    fetch('/api/deals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imovel: deal.imovel,
+        valor: parseFloat(deal.valor.replace(/[^0-9.]/g, '')) || 0,
+        fase: deal.fase,
+        ref: deal.ref,
+        comprador: deal.comprador,
+      }),
+    }).catch(() => { /* silently fail — data persisted to localStorage */ })
   }
 
   function toggleCheck(dealId: number, fase: string, idx: number) {
@@ -299,6 +311,15 @@ export default function Portal() {
 
   function changeFase(dealId: number, fase: string) {
     saveDeals(deals.map(d => d.id === dealId ? { ...d, fase } : d))
+    // Persist stage change to Supabase (fire-and-forget, using ref as identifier)
+    const deal = useDealStore.getState().deals.find(d => d.id === dealId)
+    if (deal?.ref) {
+      fetch('/api/deals', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: deal.ref, fase }),
+      }).catch(() => { /* silently fail */ })
+    }
   }
 
   // ── API CALLS ────────────────────────────────────────────────────────────────

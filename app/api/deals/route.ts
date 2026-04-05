@@ -202,8 +202,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const total  = filtered.length
     const sliced = filtered.slice((page - 1) * limit, page * limit)
 
+    // Map mock data to the Deal interface expected by the portal
+    const mappedMock = sliced.map((d, i) => ({
+      id: i + 1,  // sequential numeric ID for mock deals
+      ref: d.id,
+      imovel: d.property,
+      valor: `€ ${Number(d.asking).toLocaleString('pt-PT')}`,
+      fase: d.stage,
+      comprador: d.contact,
+      cpcvDate: '',
+      escrituraDate: '',
+      checklist: {},
+      notas: '',
+      propertyId: null,
+    }))
+
     return NextResponse.json({
-      data:   sliced,
+      data:   mappedMock,
       total,
       page,
       limit,
@@ -300,10 +315,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 export async function PUT(req: NextRequest): Promise<NextResponse> {
   try {
     const body = await req.json() as Record<string, unknown>
-    const { id, ...updates } = body
+    const { id, ref, ...updates } = body
 
-    if (!id || typeof id !== 'string') {
-      return NextResponse.json({ error: 'id is required' }, { status: 400, headers: rateLimitHeaders() })
+    if (!id && !ref) {
+      return NextResponse.json({ error: 'id or ref is required' }, { status: 400, headers: rateLimitHeaders() })
     }
 
     if (typeof updates.fase === 'string' && !VALID_FASES.includes(updates.fase)) {
@@ -318,12 +333,15 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
         if (key in updates) updateData[key] = updates[key]
       }
 
-      const { data, error } = await supabaseAdmin
-        .from('deals')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single()
+      // Support both UUID id and ref-based lookups
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let query = (supabaseAdmin.from('deals') as any).update(updateData)
+      if (id && typeof id === 'string') {
+        query = query.eq('id', id)
+      } else if (ref && typeof ref === 'string') {
+        query = query.eq('ref', ref)
+      }
+      const { data, error } = await query.select().single()
       if (!error && data) return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
       if (error) console.warn('[deals PUT] Supabase error:', error.message)
     } catch {

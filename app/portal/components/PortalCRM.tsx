@@ -718,6 +718,25 @@ export default function PortalCRM() {
                   saveCrmContacts([...crmContacts, c])
                   setNewContact({ name: '', email: '', phone: '', nationality: '', budgetMin: '', budgetMax: '', tipos: '', zonas: '', origin: 'Website', notes: '' })
                   setShowNewContact(false); setActiveCrmId(c.id)
+                  // Persist to Supabase (fire-and-forget)
+                  fetch('/api/crm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      full_name: c.name,
+                      email: c.email || null,
+                      phone: c.phone || null,
+                      nationality: c.nationality || null,
+                      budget_min: c.budgetMin || null,
+                      budget_max: c.budgetMax || null,
+                      preferred_locations: c.zonas.length > 0 ? c.zonas : null,
+                      typologies_wanted: c.tipos.length > 0 ? c.tipos : null,
+                      source: c.origin || null,
+                      notes: c.notes || null,
+                      status: 'lead',
+                      gdpr_consent: true,
+                    }),
+                  }).catch(() => { /* silently fail — data persisted to localStorage */ })
                 }}>Guardar Contacto</button>
               <button className="p-btn" style={{ background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.6)' }} onClick={() => setShowNewContact(false)}>Cancelar</button>
             </div>
