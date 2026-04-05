@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
+import type { CRMContact } from '@/app/portal/components/types'
 
 // Typed shorthand for contacts table operations
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -297,24 +298,47 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .range((page - 1) * limit, page * limit - 1)
 
       if (status) query = query.eq('status', status)
-      if (tier)   query = query.eq('lead_tier', tier)
-      if (zone)   query = query.contains('preferred_locations', [zone])
+      // tier filter skipped — no lead_tier column in live schema
+      if (zone)   query = query.contains('zonas', [zone])
       if (search) {
         query = query.or(
-          `full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`
+          `name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`
         )
       }
 
       const { data, error, count } = await query
 
       if (!error && data) {
-        const response: PaginatedResponse<ContactRow> = {
-          data,
-          count:  count ?? data.length,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mapped = (data as any[]).map((row) => ({
+          id: row.id,
+          name: row.name || '',
+          email: row.email || '',
+          phone: row.phone || '',
+          nationality: row.nationality || '',
+          budgetMin: row.budget_min || 0,
+          budgetMax: row.budget_max || 0,
+          tipos: Array.isArray(row.tipos) ? row.tipos : [],
+          zonas: Array.isArray(row.zonas) ? row.zonas : [],
+          status: row.status || 'lead',
+          notes: row.notes || '',
+          lastContact: row.last_contact || '',
+          nextFollowUp: '',
+          dealRef: '',
+          origin: row.origin || '',
+          createdAt: row.created_at || '',
+          language: row.language ? (row.language as string).toUpperCase() as CRMContact['language'] : undefined,
+          source: row.source || '',
+          leadScore: row.lead_score || 0,
+        }))
+
+        const response = {
+          data:   mapped,
+          count:  count ?? mapped.length,
           page,
           limit,
-          pages: Math.ceil((count ?? data.length) / limit),
-          source: 'supabase',
+          pages: Math.ceil((count ?? mapped.length) / limit),
+          source: 'supabase' as const,
         }
         return NextResponse.json(response, { headers: rateLimitHeaders() })
       }

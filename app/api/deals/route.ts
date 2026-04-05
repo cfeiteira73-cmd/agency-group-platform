@@ -8,8 +8,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
 
@@ -121,11 +120,6 @@ const VALID_FASES = [
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders() })
-  }
-
   try {
     const { searchParams } = new URL(req.url)
     const stage     = searchParams.get('stage')
@@ -139,39 +133,50 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // --- Try Supabase ---
     try {
-      const supabase = await createClient()
-      let query = supabase
-        .from('deals')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let query = (supabaseAdmin.from('deals') as any)
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1)
 
-      if (session.user.role !== 'admin') {
-        query = query.eq('agent_id', session.user.id)
-      } else if (agentId) {
+      if (agentId) {
         query = query.eq('agent_id', agentId)
       }
 
-      if (fase && fase !== 'all')    query = query.eq('fase', fase)
-      if (status && status !== 'all') query = query.eq('stage', status)
-      if (minValue !== null)          query = query.gte('deal_value', minValue)
+      if (fase && fase !== 'all')     query = query.eq('fase', fase)
+      if (status && status !== 'all') query = query.eq('fase', status)
+      if (minValue !== null)          query = query.gte('valor', minValue)
       if (search) {
         query = query.or(
-          `title.ilike.%${search}%,reference.ilike.%${search}%`
+          `imovel.ilike.%${search}%,comprador.ilike.%${search}%,ref.ilike.%${search}%`
         )
       }
 
       const { data, error, count } = await query
 
       if (!error && data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mapped = (data as any[]).map((row) => ({
+          id: row.id,
+          ref: row.ref || '',
+          imovel: row.imovel || '',
+          valor: row.valor ? `€${Number(row.valor).toLocaleString('pt-PT')}` : '€0',
+          fase: row.fase || 'Contacto',
+          comprador: row.comprador || '',
+          cpcvDate: row.cpcv_date || '',
+          escrituraDate: row.escritura_date || '',
+          checklist: {},
+          notas: row.notas || '',
+          propertyId: row.property_id || null,
+        }))
+
         return NextResponse.json({
-          success: true,
-          deals:   data,
-          total:   count ?? data.length,
+          data:   mapped,
+          total:  count ?? mapped.length,
           page,
           limit,
-          pages:   Math.ceil((count ?? data.length) / limit),
-          source:  'supabase',
+          pages:  Math.ceil((count ?? mapped.length) / limit),
+          source: 'supabase',
         }, { headers: rateLimitHeaders() })
       }
     } catch {
@@ -198,8 +203,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const sliced = filtered.slice((page - 1) * limit, page * limit)
 
     return NextResponse.json({
-      success: true,
-      deals:   sliced,
+      data:   sliced,
       total,
       page,
       limit,
@@ -217,11 +221,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders() })
-  }
-
   try {
     const body = await req.json() as Record<string, unknown>
 
@@ -243,20 +242,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Try Supabase
     try {
-      const supabase = await createClient()
-      const { data, error } = await supabase
-        .from('deals')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabaseAdmin.from('deals') as any)
         .insert({
-          reference:      ref,
-          title:          String(body.imovel),
-          property_id:    typeof body.property_id === 'string'  ? body.property_id  : null,
-          deal_value:     typeof body.valor === 'number'        ? body.valor         : parseFloat(String(body.valor)),
-          stage:          'lead',
-          contact_id:     typeof body.contact_id === 'string'   ? body.contact_id   : '',
-          commission_rate: 0.05,
-          notes:          typeof body.notas === 'string'        ? body.notas         : null,
-          tags:           Array.isArray(body.tags)              ? body.tags as string[] : null,
-          assigned_consultant: session.user.id,
+          ref,
+          imovel:      String(body.imovel),
+          property_id: typeof body.property_id === 'string' ? body.property_id : null,
+          valor:       typeof body.valor === 'number'       ? body.valor        : parseFloat(String(body.valor)),
+          fase:        String(body.fase || 'Contacto'),
+          contact_id:  typeof body.contact_id === 'string'  ? body.contact_id   : null,
+          comprador:   typeof body.comprador === 'string'   ? body.comprador    : null,
+          notas:       typeof body.notas === 'string'       ? body.notas        : null,
+          agent_id:    typeof body.agent_id === 'string'    ? body.agent_id     : null,
         })
         .select()
         .single()
@@ -281,7 +278,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       days_in_stage: 0,
       health:        80,
       status:        'active',
-      agent_id:      session.user.id,
+      agent_id:      typeof body.agent_id === 'string' ? body.agent_id : null,
       created_at:    new Date().toISOString(),
       updated_at:    new Date().toISOString(),
     }
@@ -301,11 +298,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function PUT(req: NextRequest): Promise<NextResponse> {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders() })
-  }
-
   try {
     const body = await req.json() as Record<string, unknown>
     const { id, ...updates } = body
@@ -319,31 +311,19 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     }
 
     try {
-      const supabase = await createClient()
-
-      const allowed = ['title', 'property_id', 'deal_value', 'stage', 'contact_id',
-                       'cpcv_date', 'escritura_date', 'notes', 'tags', 'probability']
+      const allowed = ['ref', 'imovel', 'valor', 'fase', 'comprador', 'contact_id',
+                       'cpcv_date', 'escritura_date', 'notas', 'agent_id', 'property_id']
       const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
       for (const key of allowed) {
         if (key in updates) updateData[key] = updates[key]
       }
-      // Legacy campo mapping
-      if ('imovel' in updates)        updateData['title']       = updates.imovel
-      if ('valor' in updates)         updateData['deal_value']  = updates.valor
-      if ('fase' in updates)          updateData['stage']       = updates.fase
-      if ('comprador' in updates)     updateData['notes']       = updates.comprador
-      if ('notas' in updates)         updateData['notes']       = updates.notas
 
-      let query = supabase
+      const { data, error } = await supabaseAdmin
         .from('deals')
         .update(updateData)
         .eq('id', id)
-
-      if (session.user.role !== 'admin') {
-        query = query.eq('assigned_consultant', session.user.id)
-      }
-
-      const { data, error } = await query.select().single()
+        .select()
+        .single()
       if (!error && data) return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
       if (error) console.warn('[deals PUT] Supabase error:', error.message)
     } catch {
@@ -368,15 +348,6 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: rateLimitHeaders() })
-  }
-
-  if (session.user.role !== 'admin') {
-    return NextResponse.json({ error: 'Only admins can delete deals' }, { status: 403, headers: rateLimitHeaders() })
-  }
-
   try {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
@@ -386,8 +357,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     }
 
     try {
-      const supabase = await createClient()
-      const { error } = await supabase.from('deals').delete().eq('id', id)
+      const { error } = await supabaseAdmin.from('deals').delete().eq('id', id)
       if (!error) return NextResponse.json({ success: true, message: 'Deal deleted' }, { headers: rateLimitHeaders() })
       console.warn('[deals DELETE] Supabase error:', error.message)
     } catch {
