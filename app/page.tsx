@@ -259,6 +259,7 @@ function HomeMortgage() {
 
 export default function Home() {
   const [slideIdx, setSlideIdx] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [isAgent, setIsAgent] = useState(false)
   const [agModal, setAgModal] = useState(false)
@@ -397,7 +398,7 @@ export default function Home() {
       .to('#ldrG', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' }, '-=0.45')
       .to('#ldrFill', { scaleX: 1, duration: 1.2, ease: 'power3.out' }, '-=0.4')
       .to('#ldrTxt', { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, '-=0.9')
-      .to(loader, { opacity: 0, scale: 1.03, duration: 0.65, ease: 'power3.inOut', delay: 0.3 })
+      .to(loader, { opacity: 0, duration: 0.6, ease: 'power2.inOut', delay: 0.3 })
 
     // HERO ENTRANCE
     function heroEntrance() {
@@ -814,8 +815,35 @@ export default function Home() {
             ? <a href={(() => { try { const d = JSON.parse(localStorage.getItem('ag_auth')||'{}'); return d.token ? `/portal?token=${encodeURIComponent(d.token)}` : '/portal' } catch { return '/portal' } })()} className="nav-cta">Portal →</a>
             : <a href="#" className="nav-cta" onClick={e=>{e.preventDefault();setAgModal(true)}}>Área Agentes</a>
           }
+          <button
+            className={`nav-burger${menuOpen?' open':''}`}
+            aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={menuOpen}
+            onClick={() => { setMenuOpen(o => !o); document.body.style.overflow = menuOpen ? '' : 'hidden' }}
+          >
+            <span/><span/><span/>
+          </button>
         </div>
       </nav>
+
+      {/* MOBILE DRAWER */}
+      <div className={`nav-drawer${menuOpen?' open':''}`} aria-hidden={!menuOpen}>
+        <div className="nav-drawer-ov" onClick={() => { setMenuOpen(false); document.body.style.overflow = '' }} />
+        <nav className="nav-drawer-panel" aria-label="Menu móvel">
+          <div className="nav-drawer-links">
+            <a href="/imoveis" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Imóveis</a>
+            <a href="#zonas" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Zonas</a>
+            <a href="#simulador" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Crédito</a>
+            <a href="/reports" style={{color:'var(--gold)'}} onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Reports</a>
+            <a href="#" onClick={e=>{e.preventDefault();setMenuOpen(false);document.body.style.overflow='';openModal()}}>Off-Market</a>
+            <a href="#contacto" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Contacto</a>
+          </div>
+          {isAgent
+            ? <a href="/portal" className="nav-drawer-cta">Portal Agentes →</a>
+            : <a href="#" className="nav-drawer-cta" onClick={e=>{e.preventDefault();setMenuOpen(false);document.body.style.overflow='';setAgModal(true)}}>Área Agentes</a>
+          }
+        </nav>
+      </div>
 
       {/* HERO */}
       <section className="hero">
@@ -846,22 +874,15 @@ export default function Home() {
           </div>
         </div>
         <aside className="hr">
-          <div id="slides">
-            {SLIDES.map((s,i)=>(
-              <div key={i} className={`hr-slide${slideIdx===i?' on':''}`}>
-                <div className="hr-slide-bg" style={{backgroundImage:`url(${s.photo})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
-                <div className="hr-ov"></div>
-                <div className="hr-info">
-                  <div className={`hr-badge ${s.badge}`}>{s.label}</div>
-                  <div className="hr-title" dangerouslySetInnerHTML={{__html:s.titulo.replace('\n','<br/>')}}></div>
-                  <div className="hr-price">{s.preco}</div>
-                  <div className="hr-specs">{s.specs}</div>
-                  <div className="hr-dots">{SLIDES.map((_,j)=><div key={j} className={`hr-dot${slideIdx===j?' on':''}`} onClick={()=>goSlide(j)}></div>)}</div>
-                </div>
-                <div className="hr-num">{s.num}</div>
-              </div>
-            ))}
-          </div>
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            src="/hero-video.mp4"
+            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
+          />
         </aside>
       </section>
 
@@ -941,7 +962,7 @@ export default function Home() {
               {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally',photo:'/zones/ericeira.jpg'},
             ].map(z=>(
               <div key={z.c} className={`zc ${z.c}`} onClick={()=>filterZ(z.nome)}>
-                <div className="zc-bg"></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
+                <div className="zc-bg" style={{backgroundImage:`url(${z.photo})`}}></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
                 <div className="zc-c">
                   <div className="zc-id">{z.nome} · {z.pais}</div>
                   <h3 className="zc-nm">{z.nome}</h3>
