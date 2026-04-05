@@ -35,6 +35,12 @@ const PortalJuridico      = dynamic(() => import('./components/PortalJuridico'),
 const PortalAgenda        = dynamic(() => import('./components/PortalAgenda'),        { ssr: false })
 const PortalDocumentos    = dynamic(() => import('./components/PortalDocumentos'),    { ssr: false })
 const PortalInvestorPitch = dynamic(() => import('./components/PortalInvestorPitch'), { ssr: false })
+const PortalIMT           = dynamic(() => import('./components/PortalIMT'),           { ssr: false })
+const PortalComissoes     = dynamic(() => import('./components/PortalComissoes'),     { ssr: false })
+const PortalVisitas       = dynamic(() => import('./components/PortalVisitas'),       { ssr: false })
+const PortalMaisvalias    = dynamic(() => import('./components/PortalMaisvalias'),    { ssr: false })
+const PortalFinanciamento = dynamic(() => import('./components/PortalFinanciamento'), { ssr: false })
+const PortalHomestaging   = dynamic(() => import('./components/PortalHomestaging'),   { ssr: false })
 
 export default function Portal() {
   // localStorage auth — no NextAuth
@@ -906,6 +912,30 @@ export default function Portal() {
               <PortalDocumentos />
             )}
 
+            {section === 'imt' && (
+              <PortalIMT />
+            )}
+
+            {section === 'comissoes' && (
+              <PortalComissoes />
+            )}
+
+            {section === 'visitas' && (
+              <PortalVisitas />
+            )}
+
+            {section === 'maisvalias' && (
+              <PortalMaisvalias />
+            )}
+
+            {section === 'financiamento' && (
+              <PortalFinanciamento />
+            )}
+
+            {section === 'homestaging' && (
+              <PortalHomestaging />
+            )}
+
             {/* Price history modal */}
             {priceHistoryId && (
               <PriceHistoryWidget
@@ -914,7 +944,7 @@ export default function Portal() {
             )}
 
             {/* Sections not yet extracted — show placeholder */}
-            {(['crm', 'imoveis', 'visitas', 'campanhas', 'imt', 'comissoes', 'maisvalias', 'financiamento', 'exitSim', 'pulse', 'crossCompare', 'voz', 'collections', 'draftOffer', 'homestaging'] as SectionId[]).includes(section) && (
+            {(['crm', 'imoveis', 'campanhas', 'exitSim', 'pulse', 'crossCompare', 'voz', 'collections', 'draftOffer'] as SectionId[]).includes(section) && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, flexDirection: 'column', gap: '16px' }}>
                 <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.5rem', fontWeight: 300, color: darkMode ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.4)' }}>
                   {SECTION_NAMES[section] || section}

@@ -1,29 +1,15 @@
 'use client'
+import { useState } from 'react'
 import { exportToPDF } from '../utils/export'
+import { useDealStore } from '../stores/dealStore'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-interface Deal {
-  imovel: string
-  valor: string
-  fase: string
-  comprador?: string
-  [key: string]: unknown
-}
 
 interface CommResult {
   forecast?: Record<string, string>
   insights?: string[]
   recommendations?: string[]
   [key: string]: unknown
-}
-
-export interface PortalComissoesProps {
-  deals: Deal[]
-  commResult: Record<string, unknown> | null
-  setCommResult: (v: Record<string, unknown> | null) => void
-  commLoading: boolean
-  setCommLoading: (v: boolean) => void
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -41,11 +27,10 @@ const STAGE_PCT_C: Record<string, number> = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function PortalComissoes({
-  deals,
-  commResult, setCommResult,
-  commLoading, setCommLoading,
-}: PortalComissoesProps) {
+export default function PortalComissoes() {
+  const deals = useDealStore(s => s.deals)
+  const [commResult, setCommResult] = useState<Record<string, unknown> | null>(null)
+  const [commLoading, setCommLoading] = useState(false)
 
   const parseValor = (v: string) => parseFloat(v.replace(/[^0-9.]/g, '')) || 0
 

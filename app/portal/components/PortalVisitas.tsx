@@ -1,5 +1,11 @@
 'use client'
+import { useState } from 'react'
+import React from 'react'
 import { exportToICS } from '../utils/export'
+import { useCRMStore } from '../stores/crmStore'
+import { useDealStore } from '../stores/dealStore'
+import { useUIStore } from '../stores/uiStore'
+import { PORTAL_PROPERTIES } from './constants'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -18,55 +24,22 @@ export interface Visita {
   aiSuggestion?: Record<string, unknown>
 }
 
-interface CRMContact {
-  id: number
-  name: string
-  status: string
-  phone?: string
-  nationality?: string
-  [key: string]: unknown
-}
-
-interface Imovel {
-  id: string
-  nome: string | number
-  zona: string | number
-  [key: string]: unknown
-}
-
-export interface PortalVisitasProps {
-  visitas: Visita[]
-  setVisitas: React.Dispatch<React.SetStateAction<Visita[]>>
-  visitasTab: 'lista' | 'agenda' | 'stats'
-  setVisitasTab: (v: 'lista' | 'agenda' | 'stats') => void
-  showNewVisita: boolean
-  setShowNewVisita: (v: boolean) => void
-  visitaFeedbackId: number | null
-  setVisitaFeedbackId: (v: number | null) => void
-  visitaFeedback: { interesse: number; observacoes: string; nextStep: string }
-  setVisitaFeedback: React.Dispatch<React.SetStateAction<{ interesse: number; observacoes: string; nextStep: string }>>
-  visitaAiLoading: boolean
-  setVisitaAiLoading: (v: boolean) => void
-  crmContacts: CRMContact[]
-  imoveisList: Imovel[]
-  deals: { fase: string; [key: string]: unknown }[]
-  setSection: (s: string) => void
-  setActiveCrmId: (id: number) => void
-  setCrmProfileTab: (tab: string) => void
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function PortalVisitas({
-  visitas, setVisitas,
-  visitasTab, setVisitasTab,
-  showNewVisita, setShowNewVisita,
-  visitaFeedbackId, setVisitaFeedbackId,
-  visitaFeedback, setVisitaFeedback,
-  visitaAiLoading, setVisitaAiLoading,
-  crmContacts, imoveisList, deals,
-  setSection, setActiveCrmId, setCrmProfileTab,
-}: PortalVisitasProps) {
+export default function PortalVisitas() {
+  const crmContacts = useCRMStore(s => s.crmContacts)
+  const setActiveCrmId = useCRMStore(s => s.setActiveCrmId)
+  const setCrmProfileTab = useCRMStore(s => s.setCrmProfileTab)
+  const deals = useDealStore(s => s.deals)
+  const setSection = useUIStore(s => s.setSection)
+  const imoveisList = PORTAL_PROPERTIES
+
+  const [visitas, setVisitas] = useState<Visita[]>([])
+  const [visitasTab, setVisitasTab] = useState<'lista' | 'agenda' | 'stats'>('lista')
+  const [showNewVisita, setShowNewVisita] = useState(false)
+  const [visitaFeedbackId, setVisitaFeedbackId] = useState<number | null>(null)
+  const [visitaFeedback, setVisitaFeedback] = useState({ interesse: 5, observacoes: '', nextStep: '' })
+  const [visitaAiLoading, setVisitaAiLoading] = useState(false)
 
   const today = new Date()
   const agendadas = visitas.filter(v => v.status === 'agendada')

@@ -1,5 +1,7 @@
 'use client'
+import { useState } from 'react'
 import { exportToPDF } from '../utils/export'
+import { useUIStore } from '../stores/uiStore'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -17,30 +19,15 @@ interface IMTResult {
   breakdown: { label: string; value: number; pct: string }[]
 }
 
-export interface PortalIMTProps {
-  imtValor: string
-  setImtValor: (v: string) => void
-  imtTipo: 'hpp' | 'second' | 'invest'
-  setImtTipo: (v: 'hpp' | 'second' | 'invest') => void
-  imtComprador: 'singular' | 'empresa'
-  setImtComprador: (v: 'singular' | 'empresa') => void
-  imtResult: Record<string, unknown> | null
-  setImtResult: (v: Record<string, unknown> | null) => void
-  imtLoading: boolean
-  setImtLoading: (v: boolean) => void
-  setSection: (s: string) => void
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function PortalIMT({
-  imtValor, setImtValor,
-  imtTipo, setImtTipo,
-  imtComprador, setImtComprador,
-  imtResult, setImtResult,
-  imtLoading, setImtLoading,
-  setSection,
-}: PortalIMTProps) {
+export default function PortalIMT() {
+  const [imtValor, setImtValor] = useState('')
+  const [imtTipo, setImtTipo] = useState<'hpp' | 'second' | 'invest'>('hpp')
+  const [imtComprador, setImtComprador] = useState<'singular' | 'empresa'>('singular')
+  const [imtResult, setImtResult] = useState<Record<string, unknown> | null>(null)
+  const [imtLoading, setImtLoading] = useState(false)
+  const setSection = useUIStore(s => s.setSection)
 
   const calcIMT = async () => {
     if (!imtValor || Number(imtValor) <= 0) return
