@@ -156,6 +156,10 @@ export default function Portal() {
 
   function syncContactsToNotion(contacts: CRMContact[], email: string) {
     // Non-blocking fire-and-forget Notion sync
+    // Retrieve magic-link token for X-AG-Token auth header
+    const agToken = (() => {
+      try { return JSON.parse(localStorage.getItem('ag_auth') || '{}').token || '' } catch { return '' }
+    })()
     contacts.forEach(async (contact) => {
       try {
         const payload = {
@@ -164,10 +168,12 @@ export default function Portal() {
           leadScore: computeLeadScore(contact).score,
           notionId: (contact as CRMContact & { notionId?: string }).notionId,
         }
+        const notionHeaders: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (agToken) notionHeaders['X-AG-Token'] = agToken
         if ((payload as CRMContact & { notionId?: string }).notionId) {
-          await fetch('/api/notion/contacts', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+          await fetch('/api/notion/contacts', { method: 'PATCH', headers: notionHeaders, body: JSON.stringify(payload) })
         } else {
-          const res = await fetch('/api/notion/contacts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+          const res = await fetch('/api/notion/contacts', { method: 'POST', headers: notionHeaders, body: JSON.stringify(payload) })
           const data = await res.json()
           if (data.notionId) {
             const idx = contacts.findIndex(c => c.id === contact.id)
