@@ -1,0 +1,1067 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { computeLeadScore, calcLeadScore, getAINextAction, exportCrmCSV } from './utils'
+import { useCRMStore } from '../stores/crmStore'
+import { useDealStore } from '../stores/dealStore'
+import { useUIStore } from '../stores/uiStore'
+import type { CRMContact, Activity, Task } from './types'
+import { PORTAL_PROPERTIES } from './constants'
+
+const WA_TEMPLATES: Record<string, Record<string, { label: string; msg: string }>> = {
+  PT: {
+    inicial:   { label: 'Contacto Inicial', msg: 'Olá {name}! Sou {agent} da Agency Group (AMI 22506). Vi o seu interesse em imóveis em Portugal. Posso partilhar opções dentro do seu orçamento? 🏡' },
+    followup:  { label: 'Follow-up', msg: 'Olá {name}! Queria saber se já teve oportunidade de pensar nas opções que partilhei. Tenho novos imóveis exclusivos que podem ser exactamente o que procura.' },
+    proposta:  { label: 'Proposta Formal', msg: 'Olá {name}! Conforme combinado, segue a proposta formal para {property}. Por favor reveja e qualquer questão estou disponível. Agency Group.' },
+    visita:    { label: 'Confirmação Visita', msg: 'Olá {name}! Confirmamos a visita a {property} para {date}. Aguardamos a sua presença! Agency Group · AMI 22506' },
+    cpcv:      { label: 'CPCV Pronto', msg: 'Olá {name}! A documentação do CPCV está pronta para revisão. Quando podemos agendar a assinatura? 📋' },
+    pos_venda: { label: 'Pós-Venda', msg: 'Olá {name}! Espero que esteja a adorar o novo imóvel! Se precisar de qualquer apoio — remodelação, decoração ou gestão — conte connosco. Agency Group.' },
+  },
+  EN: {
+    inicial:   { label: 'Initial Contact', msg: "Hello {name}! I'm {agent} from Agency Group (AMI 22506). I see you're interested in Portuguese real estate. May I share curated options within your budget? 🏡" },
+    followup:  { label: 'Follow-up', msg: "Hello {name}! Just following up on the properties I shared earlier. I have exciting new exclusive listings that might be perfect for you." },
+    proposta:  { label: 'Formal Proposal', msg: "Hello {name}! As discussed, please find attached the formal proposal for {property}. I'm available for any questions. Agency Group." },
+    visita:    { label: 'Visit Confirmation', msg: 'Hello {name}! Confirming your property visit at {property} on {date}. Looking forward to meeting you! Agency Group · AMI 22506' },
+    cpcv:      { label: 'CPCV Ready', msg: 'Hello {name}! The CPCV documentation is ready for review. When can we schedule the signing? 📋' },
+    pos_venda: { label: 'Post-Sale', msg: "Hello {name}! Hope you're loving your new property! If you need any support — renovation, interior design or management — we're here. Agency Group." },
+  },
+  FR: {
+    inicial:   { label: 'Premier Contact', msg: "Bonjour {name}! Je suis {agent} d'Agency Group (AMI 22506). Je vois votre intérêt pour l'immobilier portugais. Puis-je partager des options dans votre budget? 🏡" },
+    followup:  { label: 'Relance', msg: "Bonjour {name}! Je vous relance concernant les propriétés partagées. J'ai de nouvelles opportunités exclusives qui pourraient vous intéresser." },
+    proposta:  { label: 'Proposition Formelle', msg: 'Bonjour {name}! Comme convenu, veuillez trouver ci-joint la proposition formelle pour {property}. Je reste disponible. Agency Group.' },
+    visita:    { label: 'Confirmation Visite', msg: 'Bonjour {name}! Confirmation de votre visite à {property} le {date}. Agency Group vous attend! AMI 22506' },
+    cpcv:      { label: 'CPCV Prêt', msg: 'Bonjour {name}! La documentation CPCV est prête pour révision. Quand pouvons-nous planifier la signature? 📋' },
+    pos_venda: { label: 'Après-Vente', msg: 'Bonjour {name}! Espero que esteja a adorar o novo imóvel! Pour tout besoin — rénovation, décoration ou gestion — nous sommes là. Agency Group.' },
+  },
+  DE: {
+    inicial:   { label: 'Erstkontakt', msg: 'Hallo {name}! Ich bin {agent} von Agency Group (AMI 22506). Ich sehe Ihr Interesse an Immobilien in Portugal. Darf ich passende Optionen teilen? 🏡' },
+    followup:  { label: 'Nachfassung', msg: 'Hallo {name}! Ich möchte bezüglich der geteilten Immobilien nachfassen. Ich habe neue exklusive Angebote, die perfekt für Sie sein könnten.' },
+    proposta:  { label: 'Formelles Angebot', msg: 'Hallo {name}! Wie besprochen, finden Sie anbei das formelle Angebot für {property}. Bei Fragen stehe ich gerne zur Verfügung. Agency Group.' },
+    visita:    { label: 'Besichtigungstermin', msg: 'Hallo {name}! Bestätigung Ihres Besichtigungstermins bei {property} am {date}. Wir freuen uns auf Sie! Agency Group · AMI 22506' },
+    cpcv:      { label: 'CPCV Bereit', msg: 'Hallo {name}! Die CPCV-Dokumentation ist zur Überprüfung bereit. Wann können wir die Unterzeichnung planen? 📋' },
+    pos_venda: { label: 'Nach dem Kauf', msg: 'Hallo {name}! Ich hoffe, Sie genießen Ihre neue Immobilie! Für Renovierung, Einrichtung oder Verwaltung — wir sind für Sie da. Agency Group.' },
+  },
+  AR: {
+    inicial:   { label: 'التواصل الأولي', msg: 'مرحباً {name}! أنا {agent} من Agency Group (AMI 22506). أرى اهتمامك بالعقارات البرتغالية. هل يمكنني مشاركة خيارات ضمن ميزانيتك؟ 🏡' },
+    followup:  { label: 'المتابعة', msg: 'مرحباً {name}! أتابع معك بخصوص العقارات التي شاركتها. لدي عقارات حصرية جديدة قد تكون مثالية لك.' },
+    proposta:  { label: 'العرض الرسمي', msg: 'مرحباً {name}! كما اتفقنا، يرجى مراجعة العرض الرسمي للعقار {property}. أنا هنا لأي استفسار. Agency Group.' },
+    visita:    { label: 'تأكيد الزيارة', msg: 'مرحباً {name}! تأكيد زيارتك لعقار {property} في {date}. نتطلع لرؤيتك! Agency Group · AMI 22506' },
+    cpcv:      { label: 'CPCV جاهز', msg: 'مرحباً {name}! وثائق CPCV جاهزة للمراجعة. متى يمكننا جدولة التوقيع؟ 📋' },
+    pos_venda: { label: 'ما بعد البيع', msg: 'مرحباً {name}! أتمنى أنك تستمتع بعقارك الجديد! لأي دعم — تجديد، ديكور أو إدارة — نحن هنا. Agency Group.' },
+  },
+}
+
+const STATUS_CONFIG = {
+  lead:     { label: 'Lead',     bg: 'rgba(136,136,136,.12)', color: '#888',     avatar: 'rgba(136,136,136,.15)' },
+  prospect: { label: 'Prospect', bg: 'rgba(58,123,213,.1)',   color: '#3a7bd5',  avatar: 'rgba(58,123,213,.12)' },
+  cliente:  { label: 'Cliente',  bg: 'rgba(74,156,122,.1)',   color: '#4a9c7a',  avatar: 'rgba(74,156,122,.12)' },
+  vip:      { label: 'VIP',      bg: 'rgba(201,169,110,.12)', color: '#c9a96e',  avatar: 'rgba(201,169,110,.15)' },
+}
+
+export default function PortalCRM() {
+  const {
+    crmContacts, setCrmContacts,
+    crmSearch, setCrmSearch,
+    activeCrmId, setActiveCrmId,
+    crmProfileTab, setCrmProfileTab,
+    crmBulkMode, setCrmBulkMode,
+    crmSelectedIds, setCrmSelectedIds,
+    crmView, setCrmView,
+    crmShowFilters, setCrmShowFilters,
+    crmNatFilter, setCrmNatFilter,
+    crmZonaFilter, setCrmZonaFilter,
+    crmStatusFilter, setCrmStatusFilter,
+    showNewContact, setShowNewContact,
+    showWaModal, setShowWaModal,
+    waModalContact, setWaModalContact,
+    waLang, setWaLang,
+    showAddActivity, setShowAddActivity,
+    newActivity, setNewActivity,
+    showAddTask, setShowAddTask,
+    newTask, setNewTask,
+    voiceActive, setVoiceActive,
+    voiceText, setVoiceText,
+    smartImportText, setSmartImportText,
+    smartImportLoading, setSmartImportLoading,
+    showSmartImport, setShowSmartImport,
+    newContact, setNewContact,
+    crmNextStep, setCrmNextStep,
+    crmNextStepLoading, setCrmNextStepLoading,
+    meetingPrepLoading, setMeetingPrepLoading,
+    meetingPrep, setMeetingPrep,
+    emailDraftLoading, setEmailDraftLoading,
+    emailDraft, setEmailDraft,
+    emailDraftPurpose, setEmailDraftPurpose,
+  } = useCRMStore()
+
+  const deals = useDealStore(s => s.deals)
+  const setSection = useUIStore(s => s.setSection)
+
+  const [agentName, setAgentName] = useState('Agente')
+  const [agentEmail, setAgentEmail] = useState('')
+
+  useEffect(() => {
+    try {
+      const auth = JSON.parse(localStorage.getItem('ag_auth') || '{}')
+      if (auth.email) {
+        setAgentEmail(auth.email)
+        setAgentName(auth.email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g, (c: string) => c.toUpperCase()))
+        // Load persisted contacts
+        const stored = localStorage.getItem(`ag_crm_${auth.email}`)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed) && parsed.length > 0) setCrmContacts(parsed)
+        }
+      }
+    } catch { /* ignore */ }
+  }, [setCrmContacts])
+
+  function saveCrmContacts(updated: CRMContact[]) {
+    setCrmContacts(updated)
+    if (agentEmail) localStorage.setItem(`ag_crm_${agentEmail}`, JSON.stringify(updated))
+  }
+
+  const filtered = crmContacts.filter(c => {
+    const q = crmSearch.toLowerCase()
+    const searchMatch = !crmSearch || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.nationality.toLowerCase().includes(q) || c.status === q
+    const natMatch = !crmNatFilter || c.nationality.toLowerCase().includes(crmNatFilter.toLowerCase())
+    const zonaMatch = !crmZonaFilter || c.zonas.some(z => z.toLowerCase().includes(crmZonaFilter.toLowerCase()))
+    const statusMatch = !crmStatusFilter || c.status === crmStatusFilter
+    return searchMatch && natMatch && zonaMatch && statusMatch
+  }).sort((a, b) => computeLeadScore(b).score - computeLeadScore(a).score)
+
+  const activeContact = activeCrmId ? crmContacts.find(c => c.id === activeCrmId) : null
+  const vipCount = crmContacts.filter(c => c.status === 'vip').length
+  const clienteCount = crmContacts.filter(c => c.status === 'cliente').length
+  const totalBudget = crmContacts.reduce((s, c) => s + (Number(c.budgetMax) || 0), 0)
+  const today = new Date().toISOString().split('T')[0]
+  const followUps = crmContacts.filter(c => c.nextFollowUp && c.nextFollowUp <= today).length
+
+  return (
+    <div style={{ maxWidth: '1200px' }}>
+      <style>{`
+        .crm-contact-row{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-bottom:1px solid rgba(14,14,13,.06);transition:background .15s}
+        .crm-contact-row:hover{background:rgba(28,74,53,.04)}
+        .crm-contact-row.active{background:rgba(201,169,110,.08);border-left:3px solid #c9a96e}
+        .crm-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.56rem;font-weight:400;flex-shrink:0;letter-spacing:.04em}
+        .crm-status{display:inline-flex;align-items:center;padding:2px 8px;font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase}
+        .crm-stat-card{background:#fff;border:1px solid rgba(14,14,13,.08);padding:16px 20px;flex:1}
+        .crm-profile-tab{padding:8px 16px;font-family:'DM Mono',monospace;font-size:.46rem;letter-spacing:.14em;text-transform:uppercase;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:rgba(14,14,13,.4);transition:all .2s;white-space:nowrap}
+        .crm-profile-tab.active{color:#1c4a35;border-bottom-color:#1c4a35}
+        @media(max-width:768px){.crm-layout{flex-direction:column!important}.crm-list{width:100%!important;min-width:unset!important;border-right:none!important;border-bottom:1px solid rgba(14,14,13,.08)!important}}
+      `}</style>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '6px' }}>Gestão de Clientes · World-Class Real Estate CRM</div>
+          <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: '#0e0e0d' }}>CRM <em style={{ color: '#1c4a35' }}>Clientes</em></div>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', border: '1px solid rgba(14,14,13,.12)', overflow: 'hidden' }}>
+            {(['list', 'kanban'] as const).map(v => (
+              <button key={v} onClick={() => setCrmView(v)}
+                style={{ padding: '7px 14px', background: crmView === v ? '#1c4a35' : 'transparent', color: crmView === v ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
+                {v === 'list' ? '≡ Lista' : '⬛ Kanban'}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setCrmShowFilters(!crmShowFilters)}
+            style={{ padding: '7px 14px', background: crmShowFilters ? 'rgba(28,74,53,.1)' : 'transparent', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', cursor: 'pointer' }}>
+            ⚙ Filtros {(crmNatFilter || crmZonaFilter || crmStatusFilter) ? '●' : ''}
+          </button>
+          <button onClick={() => exportCrmCSV(crmContacts)}
+            style={{ padding: '7px 14px', background: 'transparent', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', cursor: 'pointer' }}>
+            ↓ CSV
+          </button>
+          <button className="p-btn p-btn-gold" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => setShowNewContact(true)}>+ Novo</button>
+        </div>
+      </div>
+
+      {/* Advanced Filters */}
+      {crmShowFilters && (
+        <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)', padding: '14px 16px', marginBottom: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ flex: 1, minWidth: '140px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Nacionalidade</div>
+            <input className="p-inp" style={{ fontSize: '.75rem', padding: '6px 8px' }} placeholder="ex: Francesa..." value={crmNatFilter} onChange={e => setCrmNatFilter(e.target.value)} />
+          </div>
+          <div style={{ flex: 1, minWidth: '140px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Zona</div>
+            <input className="p-inp" style={{ fontSize: '.75rem', padding: '6px 8px' }} placeholder="ex: Cascais..." value={crmZonaFilter} onChange={e => setCrmZonaFilter(e.target.value)} />
+          </div>
+          <div style={{ flex: 1, minWidth: '120px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '5px' }}>Status</div>
+            <select className="p-sel" style={{ fontSize: '.75rem', padding: '6px 8px' }} value={crmStatusFilter} onChange={e => setCrmStatusFilter(e.target.value)}>
+              <option value="">Todos</option>
+              {['lead', 'prospect', 'cliente', 'vip'].map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
+            </select>
+          </div>
+          <button onClick={() => { setCrmNatFilter(''); setCrmZonaFilter(''); setCrmStatusFilter('') }}
+            style={{ padding: '6px 12px', background: 'rgba(14,14,13,.06)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}>
+            Limpar
+          </button>
+        </div>
+      )}
+
+      {/* KPI bar */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px', marginBottom: '20px' }}>
+        {[
+          { label: 'Total Contactos', val: String(crmContacts.length), color: '#1c4a35' },
+          { label: 'VIP / Clientes', val: `${vipCount + clienteCount}`, color: '#c9a96e' },
+          { label: 'Follow-up Urgente', val: String(followUps), color: followUps > 0 ? '#e05454' : '#1c4a35' },
+          { label: 'Budget Total', val: `€${(totalBudget / 1e6).toFixed(0)}M`, color: '#1c4a35' },
+        ].map(k => (
+          <div key={k.label} className="crm-stat-card">
+            <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: k.color, lineHeight: 1 }}>{k.val}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginTop: '4px' }}>{k.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* New Contact Modal */}
+      {showNewContact && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#f4f0e6', padding: '32px', maxWidth: '520px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.5rem', color: '#0e0e0d' }}>Novo <em style={{ color: '#1c4a35' }}>Contacto</em></div>
+              <button style={{ padding: '6px 14px', background: showSmartImport ? 'rgba(28,74,53,.12)' : 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.08em', cursor: 'pointer' }}
+                onClick={() => setShowSmartImport(!showSmartImport)}>
+                {showSmartImport ? '× Fechar' : '✦ Import Inteligente IA'}
+              </button>
+            </div>
+            {showSmartImport && (
+              <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.15)', padding: '14px', marginBottom: '14px' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(28,74,53,.6)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>✦ Colar email, WA, LinkedIn ou texto livre — Claude extrai automaticamente</div>
+                <textarea style={{ width: '100%', minHeight: '80px', border: '1px solid rgba(28,74,53,.15)', background: '#fff', color: '#0e0e0d', fontFamily: "'Jost',sans-serif", fontSize: '.8rem', padding: '8px', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+                  value={smartImportText} onChange={e => setSmartImportText(e.target.value)}
+                  placeholder="Cole aqui o email, mensagem WhatsApp, perfil LinkedIn..." />
+                <button style={{ marginTop: '8px', padding: '8px 18px', background: '#1c4a35', color: '#c9a96e', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', cursor: 'pointer' }}
+                  disabled={smartImportLoading || !smartImportText.trim()}
+                  onClick={async () => {
+                    setSmartImportLoading(true)
+                    try {
+                      const res = await fetch('/api/crm/extract-contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: smartImportText }) })
+                      const d = await res.json()
+                      if (d.contact) {
+                        const c = d.contact
+                        setNewContact({
+                          name: c.name || newContact.name, email: c.email || newContact.email, phone: c.phone || newContact.phone,
+                          nationality: c.nationality || newContact.nationality,
+                          budgetMin: c.budgetMin ? String(c.budgetMin) : newContact.budgetMin,
+                          budgetMax: c.budgetMax ? String(c.budgetMax) : newContact.budgetMax,
+                          tipos: c.tipos?.join(', ') || newContact.tipos, zonas: c.zonas?.join(', ') || newContact.zonas,
+                          origin: c.origin || newContact.origin, notes: c.notes || newContact.notes,
+                        })
+                        setShowSmartImport(false); setSmartImportText('')
+                      }
+                    } catch { /* ignore */ } finally { setSmartImportLoading(false) }
+                  }}>
+                  {smartImportLoading ? '✦ A extrair...' : '✦ Extrair Dados'}
+                </button>
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              <div><label className="p-label">Nome *</label><input className="p-inp" value={newContact.name} onChange={e => setNewContact({ name: e.target.value })} placeholder="Nome completo" /></div>
+              <div><label className="p-label">Email</label><input className="p-inp" value={newContact.email} onChange={e => setNewContact({ email: e.target.value })} placeholder="email@exemplo.com" /></div>
+              <div><label className="p-label">Telefone</label><input className="p-inp" value={newContact.phone} onChange={e => setNewContact({ phone: e.target.value })} placeholder="+351 9xx xxx xxx" /></div>
+              <div><label className="p-label">Nacionalidade</label><input className="p-inp" value={newContact.nationality} onChange={e => setNewContact({ nationality: e.target.value })} placeholder="🇬🇧 Britânico" /></div>
+              <div><label className="p-label">Budget Mín (€)</label><input type="number" className="p-inp" value={newContact.budgetMin} onChange={e => setNewContact({ budgetMin: e.target.value })} placeholder="500000" /></div>
+              <div><label className="p-label">Budget Máx (€)</label><input type="number" className="p-inp" value={newContact.budgetMax} onChange={e => setNewContact({ budgetMax: e.target.value })} placeholder="1500000" /></div>
+              <div><label className="p-label">Tipologias</label><input className="p-inp" value={newContact.tipos} onChange={e => setNewContact({ tipos: e.target.value })} placeholder="Villa, T4, Penthouse" /></div>
+              <div><label className="p-label">Zonas</label><input className="p-inp" value={newContact.zonas} onChange={e => setNewContact({ zonas: e.target.value })} placeholder="Cascais, Lisboa" /></div>
+              <div>
+                <label className="p-label">Origem</label>
+                <select className="p-sel" value={newContact.origin} onChange={e => setNewContact({ origin: e.target.value })}>
+                  {['Website', 'WhatsApp', 'Email', 'Referência', 'Redes Sociais', 'Evento', 'Portal'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+            </div>
+            <div><label className="p-label">Notas</label><textarea className="p-inp" style={{ minHeight: '60px', resize: 'vertical' }} value={newContact.notes} onChange={e => setNewContact({ notes: e.target.value })} placeholder="Preferências, observações..." /></div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+              <button className="p-btn p-btn-gold" style={{ flex: 1 }}
+                onClick={() => {
+                  if (!newContact.name) return
+                  const c: CRMContact = {
+                    id: Date.now(), name: newContact.name, email: newContact.email, phone: newContact.phone,
+                    nationality: newContact.nationality, budgetMin: parseInt(newContact.budgetMin) || 0, budgetMax: parseInt(newContact.budgetMax) || 0,
+                    tipos: newContact.tipos.split(',').map(s => s.trim()).filter(Boolean),
+                    zonas: newContact.zonas.split(',').map(s => s.trim()).filter(Boolean),
+                    status: 'lead', notes: newContact.notes, lastContact: today, nextFollowUp: '', dealRef: '',
+                    origin: newContact.origin, createdAt: today,
+                  }
+                  saveCrmContacts([...crmContacts, c])
+                  setNewContact({ name: '', email: '', phone: '', nationality: '', budgetMin: '', budgetMax: '', tipos: '', zonas: '', origin: 'Website', notes: '' })
+                  setShowNewContact(false); setActiveCrmId(c.id)
+                }}>Guardar Contacto</button>
+              <button className="p-btn" style={{ background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.6)' }} onClick={() => setShowNewContact(false)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp Modal */}
+      {showWaModal && (() => {
+        const wc = waModalContact ? crmContacts.find(c => c.id === waModalContact) : null
+        const templates = WA_TEMPLATES[waLang] || WA_TEMPLATES['PT']
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+            <div style={{ background: '#f4f0e6', maxWidth: '540px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(14,14,13,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.3rem', color: '#0e0e0d' }}>📱 Templates <em style={{ color: '#1c4a35' }}>WhatsApp</em>{wc ? ` — ${wc.name}` : ''}</div>
+                <button onClick={() => setShowWaModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>×</button>
+              </div>
+              <div style={{ padding: '16px 24px' }}>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                  {(['PT', 'EN', 'FR', 'DE', 'AR'] as const).map(l => (
+                    <button key={l} onClick={() => setWaLang(l)}
+                      style={{ padding: '5px 12px', background: waLang === l ? '#1c4a35' : 'transparent', color: waLang === l ? '#f4f0e6' : 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', cursor: 'pointer' }}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+                {Object.entries(templates).map(([key, tmpl]) => {
+                  const msg = wc ? tmpl.msg.replace('{name}', wc.name.split(' ')[0]).replace('{agent}', agentName).replace('{property}', wc.dealRef || '[imóvel]').replace('{date}', '[data]') : tmpl.msg
+                  return (
+                    <div key={key} style={{ marginBottom: '12px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '14px' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#c9a96e', marginBottom: '6px' }}>{tmpl.label}</div>
+                      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.83rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.6, marginBottom: '10px' }}>{msg}</div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => navigator.clipboard.writeText(msg)}
+                          style={{ padding: '5px 12px', background: 'rgba(14,14,13,.06)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
+                          Copiar
+                        </button>
+                        {wc && <button onClick={() => window.open(`https://wa.me/${wc.phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')}
+                          style={{ padding: '5px 12px', background: '#25D366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
+                          Abrir WhatsApp ↗
+                        </button>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Kanban View */}
+      {crmView === 'kanban' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px', marginBottom: '20px' }}>
+          {(['lead', 'prospect', 'cliente', 'vip'] as const).map(status => {
+            const sc = STATUS_CONFIG[status]
+            const statusContacts = filtered.filter(c => c.status === status)
+            return (
+              <div key={status} style={{ background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.08)', minHeight: '400px' }}>
+                <div style={{ padding: '10px 14px', borderBottom: '2px solid ' + sc.color, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: sc.bg }}>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase', color: sc.color, fontWeight: 600 }}>{sc.label}</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: sc.color, background: sc.avatar, padding: '2px 7px', borderRadius: '10px' }}>{statusContacts.length}</span>
+                </div>
+                <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {statusContacts.map(c => {
+                    const ls = computeLeadScore(c)
+                    const na = getAINextAction(c)
+                    const ini = c.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+                    return (
+                      <div key={c.id} onClick={() => { setActiveCrmId(c.id); setCrmProfileTab('overview'); setCrmView('list') }}
+                        style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '10px', cursor: 'pointer', borderLeft: `3px solid ${ls.color}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '5px' }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: sc.avatar, color: sc.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.42rem', fontWeight: 600, flexShrink: 0 }}>{ini}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '.8rem', fontWeight: 500, color: '#0e0e0d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)' }}>{c.nationality}</div>
+                          </div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: ls.color, fontWeight: 600 }}>{ls.score}</div>
+                        </div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#1c4a35', marginBottom: '4px' }}>
+                          {(Number(c.budgetMin) || 0) > 0 ? `€${((Number(c.budgetMin)) / 1e6).toFixed(1)}M–€${((Number(c.budgetMax)) / 1e6).toFixed(1)}M` : 'Budget n/d'}
+                        </div>
+                        {na.urgency !== 'low' && (
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: na.urgency === 'high' ? '#e05454' : '#c9a96e', background: na.urgency === 'high' ? 'rgba(224,84,84,.06)' : 'rgba(201,169,110,.06)', padding: '3px 6px', borderRadius: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {na.urgency === 'high' ? '🔴' : '🟡'} {na.text}
+                          </div>
+                        )}
+                        <button onClick={e => { e.stopPropagation(); setWaModalContact(c.id); setWaLang((c.language as typeof waLang) || 'PT'); setShowWaModal(true) }}
+                          style={{ marginTop: '6px', width: '100%', padding: '4px', background: '#25D366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer', borderRadius: '2px' }}>
+                          📱 WhatsApp
+                        </button>
+                      </div>
+                    )
+                  })}
+                  {statusContacts.length === 0 && (
+                    <div style={{ padding: '24px 12px', textAlign: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.25)', letterSpacing: '.08em' }}>Sem contactos</div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* List View */}
+      {crmView === 'list' && (
+        <div className="crm-layout" style={{ display: 'flex', gap: '0', background: '#fff', border: '1px solid rgba(14,14,13,.08)', minHeight: '500px' }}>
+          {/* Contact list sidebar */}
+          <div className="crm-list" style={{ width: '320px', minWidth: '280px', borderRight: '1px solid rgba(14,14,13,.08)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(14,14,13,.06)' }}>
+              <input className="p-inp" placeholder="Pesquisar contacto..." value={crmSearch} onChange={e => setCrmSearch(e.target.value)} style={{ fontSize: '.78rem', padding: '8px 12px' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '4px', padding: '8px 12px', borderBottom: '1px solid rgba(14,14,13,.06)', flexWrap: 'wrap', alignItems: 'center' }}>
+              {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                <div key={k} style={{ padding: '3px 8px', background: v.bg, fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', textTransform: 'uppercase', color: v.color, cursor: 'pointer' }}
+                  onClick={() => setCrmSearch(crmSearch === k ? '' : k)}>
+                  {v.label} {crmContacts.filter(c => c.status === k).length}
+                </div>
+              ))}
+              {crmSearch && <div style={{ padding: '3px 8px', background: 'rgba(14,14,13,.06)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => setCrmSearch('')}>× limpar</div>}
+              <div style={{ marginLeft: 'auto' }}>
+                <button onClick={() => { setCrmBulkMode(!crmBulkMode); setCrmSelectedIds(new Set()) }}
+                  style={{ padding: '3px 8px', background: crmBulkMode ? 'rgba(28,74,53,.12)' : 'rgba(14,14,13,.04)', border: `1px solid ${crmBulkMode ? 'rgba(28,74,53,.3)' : 'rgba(14,14,13,.1)'}`, color: crmBulkMode ? '#1c4a35' : 'rgba(14,14,13,.4)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}>
+                  {crmBulkMode ? '✓ Bulk' : '☐ Bulk'}
+                </button>
+              </div>
+            </div>
+            {crmBulkMode && crmSelectedIds.size > 0 && (
+              <div style={{ padding: '8px 12px', background: 'rgba(28,74,53,.06)', borderBottom: '1px solid rgba(28,74,53,.12)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#1c4a35', fontWeight: 700 }}>{crmSelectedIds.size} selec.</div>
+                <button style={{ padding: '4px 10px', background: '#25d366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+                  onClick={() => {
+                    const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
+                    const phones = selected.map(c => c.phone?.replace(/\D/g, '')).filter(Boolean)
+                    if (phones.length === 1) window.open(`https://wa.me/${phones[0]}`)
+                    else { alert(`Campanha WA para ${phones.length} contactos. Abre cada um individualmente.`); phones.forEach((p, i) => setTimeout(() => window.open(`https://wa.me/${p}`), i * 500)) }
+                  }}>💬 WA Campaign</button>
+                <button style={{ padding: '4px 10px', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+                  onClick={() => {
+                    const d = new Date(); d.setDate(d.getDate() + 3)
+                    const ds = d.toISOString().split('T')[0]
+                    saveCrmContacts(crmContacts.map(c => crmSelectedIds.has(c.id) ? { ...c, nextFollowUp: ds } : c))
+                    setCrmSelectedIds(new Set())
+                  }}>📅 Follow-up +3d</button>
+                <button style={{ padding: '4px 10px', background: 'rgba(14,14,13,.04)', color: 'rgba(14,14,13,.35)', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }} onClick={() => setCrmSelectedIds(new Set())}>× Limpar</button>
+              </div>
+            )}
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {filtered.map(c => {
+                const sc = STATUS_CONFIG[c.status] ?? STATUS_CONFIG['lead']
+                const ini = c.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+                const isOverdue = c.nextFollowUp && c.nextFollowUp < today
+                const ls2 = calcLeadScore({ budgetMax: c.budgetMax, budgetMin: c.budgetMin, phone: c.phone, email: c.email, source: c.origin, notes: c.notes })
+                const barColor = ls2.color === 'emerald' ? '#10b981' : ls2.color === 'yellow' ? '#f59e0b' : ls2.color === 'orange' ? '#f97316' : '#9ca3af'
+                const dSince = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : null
+                const dColor = dSince === null ? '#9ca3af' : dSince > 14 ? '#e05454' : dSince > 7 ? '#f97316' : dSince > 3 ? '#f59e0b' : '#10b981'
+                const dLabel = dSince === null ? '—' : dSince === 0 ? 'hoje' : `${dSince}d`
+                return (
+                  <div key={c.id}
+                    className={`crm-contact-row${activeCrmId === c.id ? ' active' : ''}`}
+                    style={{ background: crmBulkMode && crmSelectedIds.has(c.id) ? 'rgba(28,74,53,.08)' : undefined }}
+                    onClick={() => {
+                      if (crmBulkMode) {
+                        setCrmSelectedIds(prev => { const next = new Set(prev); next.has(c.id) ? next.delete(c.id) : next.add(c.id); return next })
+                      } else {
+                        setActiveCrmId(c.id); setCrmProfileTab('overview')
+                      }
+                    }}>
+                    {crmBulkMode && (
+                      <div style={{ flexShrink: 0, width: '18px', height: '18px', border: `2px solid ${crmSelectedIds.has(c.id) ? '#1c4a35' : 'rgba(14,14,13,.2)'}`, background: crmSelectedIds.has(c.id) ? '#1c4a35' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px' }}>
+                        {crmSelectedIds.has(c.id) && <svg width="10" height="10" fill="none" stroke="#fff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                      </div>
+                    )}
+                    <div className="crm-avatar" style={{ background: sc.avatar, color: sc.color }}>{ini}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <div style={{ flex: 1, height: '3px', background: 'rgba(14,14,13,.1)', borderRadius: '2px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', borderRadius: '2px', background: barColor, width: `${ls2.score}%` }} />
+                        </div>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', fontWeight: 700, color: barColor, flexShrink: 0 }}>{ls2.score}/100</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                        <span style={{ fontWeight: 500, fontSize: '.83rem', color: '#0e0e0d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                        <span className="crm-status" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+                      </div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nationality}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#1c4a35' }}>
+                          {(Number(c.budgetMin) || 0) > 0 ? `€${(Number(c.budgetMin) / 1e6).toFixed(1)}M–€${(Number(c.budgetMax) / 1e6).toFixed(1)}M` : 'Budget n/d'}
+                        </span>
+                        {isOverdue && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#e05454', background: 'rgba(224,84,84,.08)', padding: '1px 5px' }}>Follow-up!</span>}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px', flexShrink: 0 }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', fontWeight: 700, color: dColor }}>{dLabel}</div>
+                      <div style={{ width: '32px', height: '3px', background: 'rgba(14,14,13,.08)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', borderRadius: '2px', background: dColor, width: `${Math.min(100, ((dSince || 0) / 21) * 100)}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              {filtered.length === 0 && (
+                <div style={{ padding: '32px', textAlign: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Sem contactos</div>
+              )}
+            </div>
+          </div>
+
+          {/* Contact profile */}
+          {activeContact ? (
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              {/* Header */}
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(14,14,13,.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+                  <div className="crm-avatar" style={{ width: '48px', height: '48px', background: (STATUS_CONFIG[activeContact.status] ?? STATUS_CONFIG['lead']).avatar, color: (STATUS_CONFIG[activeContact.status] ?? STATUS_CONFIG['lead']).color, fontSize: '.7rem', flexShrink: 0 }}>
+                    {activeContact.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.4rem', color: '#0e0e0d' }}>{activeContact.name}</div>
+                      <span className="crm-status" style={{ background: (STATUS_CONFIG[activeContact.status] ?? STATUS_CONFIG['lead']).bg, color: (STATUS_CONFIG[activeContact.status] ?? STATUS_CONFIG['lead']).color, fontSize: '.46rem', padding: '3px 10px' }}>
+                        {(STATUS_CONFIG[activeContact.status] ?? STATUS_CONFIG['lead']).label}
+                      </span>
+                    </div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.4)', marginTop: '3px' }}>{activeContact.nationality} · {activeContact.origin}</div>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
+                      {activeContact.email && <a href={`mailto:${activeContact.email}`} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: '#1c4a35', textDecoration: 'none' }}>✉ {activeContact.email}</a>}
+                      {activeContact.phone && <a href={`https://wa.me/${activeContact.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: '#1c4a35', textDecoration: 'none' }}>📱 {activeContact.phone}</a>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
+                    {(['lead', 'prospect', 'cliente', 'vip'] as const).map(s => (
+                      <button key={s}
+                        style={{ padding: '5px 10px', background: activeContact.status === s ? STATUS_CONFIG[s].bg : 'transparent', border: `1px solid ${activeContact.status === s ? STATUS_CONFIG[s].color : 'rgba(14,14,13,.12)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', textTransform: 'uppercase', color: activeContact.status === s ? STATUS_CONFIG[s].color : 'rgba(14,14,13,.4)', cursor: 'pointer' }}
+                        onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, status: s } : c))}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.08)', padding: '0 24px', overflowX: 'auto' }}>
+                {[['overview', 'Perfil'], ['timeline', 'Timeline'], ['tasks', 'Tarefas'], ['notes', 'Notas'], ['matching', 'Matching']].map(([t, l]) => (
+                  <button key={t} className={`crm-profile-tab${crmProfileTab === t ? ' active' : ''}`} onClick={() => setCrmProfileTab(t as typeof crmProfileTab)}>{l}</button>
+                ))}
+                {activeContact.status === 'cliente' && <button className={`crm-profile-tab${crmProfileTab === 'postclosing' ? ' active' : ''}`} onClick={() => setCrmProfileTab('postclosing')}>Post-Sale</button>}
+              </div>
+
+              {/* Tab content */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+
+                {/* OVERVIEW */}
+                {crmProfileTab === 'overview' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="p-card">
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>Budget</div>
+                      <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.6rem', color: '#1c4a35', lineHeight: 1 }}>{(Number(activeContact.budgetMin) || 0) > 0 ? `€${(Number(activeContact.budgetMin) / 1e6).toFixed(1)}M` : '—'}</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>{(Number(activeContact.budgetMax) || 0) > 0 ? `até €${(Number(activeContact.budgetMax) / 1e6).toFixed(1)}M` : 'Budget não definido'}</div>
+                    </div>
+                    <div className="p-card">
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>Preferências</div>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                        {(activeContact.tipos || []).map(t => <span key={t} style={{ background: 'rgba(28,74,53,.08)', color: '#1c4a35', padding: '3px 8px', fontFamily: "'DM Mono',monospace", fontSize: '.44rem' }}>{t}</span>)}
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {(activeContact.zonas || []).map(z => <span key={z} style={{ background: 'rgba(201,169,110,.1)', color: '#c9a96e', padding: '3px 8px', fontFamily: "'DM Mono',monospace", fontSize: '.44rem' }}>{z}</span>)}
+                      </div>
+                    </div>
+                    <div className="p-card">
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>Timeline</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.5)' }}>Último contacto</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: '#1c4a35' }}>{activeContact.lastContact || '—'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.5)' }}>Próximo follow-up</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: activeContact.nextFollowUp && activeContact.nextFollowUp < today ? '#e05454' : '#c9a96e' }}>{activeContact.nextFollowUp || '—'}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <input type="date" className="p-inp" style={{ flex: 1, fontSize: '.75rem', padding: '6px 8px' }} value={activeContact.nextFollowUp || ''} onChange={e => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, nextFollowUp: e.target.value } : c))} />
+                        <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.44rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today } : c))}>Hoje</button>
+                      </div>
+                    </div>
+                    <div className="p-card">
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>Deal Associado</div>
+                      {activeContact.dealRef ? (
+                        <div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.65rem', color: '#c9a96e', marginBottom: '4px' }}>{activeContact.dealRef}</div>
+                          <button className="p-btn" style={{ padding: '6px 14px', fontSize: '.44rem', width: '100%' }} onClick={() => setSection('pipeline')}>Ver no Pipeline →</button>
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>Sem deal activo</div>
+                          <button className="p-btn" style={{ padding: '6px 14px', fontSize: '.44rem', width: '100%', background: 'rgba(28,74,53,.08)', color: '#1c4a35' }} onClick={() => setSection('pipeline')}>Criar Deal →</button>
+                        </div>
+                      )}
+                    </div>
+                    {/* AI Next Action */}
+                    {(() => {
+                      const na = getAINextAction(activeContact)
+                      return (
+                        <div style={{ gridColumn: '1/-1', padding: '12px 14px', background: na.urgency === 'high' ? 'rgba(224,84,84,.05)' : na.urgency === 'medium' ? 'rgba(201,169,110,.05)' : 'rgba(28,74,53,.04)', border: `1px solid ${na.urgency === 'high' ? 'rgba(224,84,84,.2)' : na.urgency === 'medium' ? 'rgba(201,169,110,.2)' : 'rgba(28,74,53,.12)'}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '1rem', flexShrink: 0 }}>{na.urgency === 'high' ? '🔴' : na.urgency === 'medium' ? '🟡' : '🟢'}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>IA · Próxima Acção</div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: na.urgency === 'high' ? '#e05454' : na.urgency === 'medium' ? '#c9a96e' : '#1c4a35', fontWeight: 600 }}>{na.text}</div>
+                          </div>
+                          <button className="p-btn" style={{ padding: '5px 12px', fontSize: '.42rem', flexShrink: 0, background: 'rgba(14,14,13,.06)' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today } : c))}>✓ Feito</button>
+                        </div>
+                      )
+                    })()}
+                    {/* Actions */}
+                    <div className="p-card" style={{ gridColumn: '1/-1' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Acções Rápidas</div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button className="p-btn p-btn-gold" style={{ padding: '8px 16px', fontSize: '.46rem' }} onClick={() => { setWaModalContact(activeContact.id); setWaLang((activeContact.language as typeof waLang) || 'PT'); setShowWaModal(true) }}>📱 Templates WA</button>
+                        {activeContact.phone && <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem' }} onClick={() => window.open(`https://wa.me/${activeContact.phone.replace(/\D/g, '')}`)}>📱 WhatsApp</button>}
+                        {activeContact.email && <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem' }} onClick={() => window.open(`mailto:${activeContact.email}`)}>✉ Email</button>}
+                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem', background: 'rgba(28,74,53,.08)', color: '#1c4a35' }} onClick={() => setSection('avm')}>📊 AVM</button>
+                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem', background: 'linear-gradient(135deg,#0c1f15,#1c4a35)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.3)' }}
+                          disabled={crmNextStepLoading}
+                          onClick={async () => {
+                            setCrmNextStepLoading(true); setCrmNextStep(null)
+                            try {
+                              const res = await fetch('/api/crm/next-step', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contact: activeContact, deals, recentActivity: activeContact.notes }) })
+                              const d = await res.json(); setCrmNextStep(d)
+                            } catch { /* ignore */ } finally { setCrmNextStepLoading(false) }
+                          }}>
+                          {crmNextStepLoading ? '✦ A analisar...' : '✦ IA Próxima Acção'}
+                        </button>
+                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.55)', border: '1px solid rgba(14,14,13,.15)' }}
+                          disabled={meetingPrepLoading}
+                          onClick={async () => {
+                            if (meetingPrep) { setMeetingPrep(null); return }
+                            setMeetingPrepLoading(true)
+                            try {
+                              const res = await fetch('/api/crm/meeting-prep', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contact: activeContact, properties: PORTAL_PROPERTIES, deals, agentName }) })
+                              const d = await res.json(); if (d.briefing) setMeetingPrep(d.briefing)
+                            } catch { /* ignore */ } finally { setMeetingPrepLoading(false) }
+                          }}>
+                          {meetingPrepLoading ? '✦ A preparar...' : meetingPrep ? '× Fechar Briefing' : '📋 Meeting Prep IA'}
+                        </button>
+                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem', background: 'rgba(28,74,53,.06)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)' }}
+                          disabled={emailDraftLoading}
+                          onClick={async () => {
+                            setEmailDraftLoading(true); setEmailDraft(null)
+                            try {
+                              const res = await fetch('/api/crm/email-draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contact: activeContact, purpose: emailDraftPurpose, agentName }) })
+                              const d = await res.json(); if (d.draft) setEmailDraft(d.draft)
+                            } catch { /* ignore */ } finally { setEmailDraftLoading(false) }
+                          }}>
+                          {emailDraftLoading ? '✦ A gerar...' : '✉ Draft Email IA'}
+                        </button>
+                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem', background: 'rgba(224,84,84,.08)', color: '#e05454', border: '1px solid rgba(224,84,84,.2)' }}
+                          onClick={() => { if (confirm(`Eliminar ${activeContact.name}?`)) { saveCrmContacts(crmContacts.filter(c => c.id !== activeContact.id)); setActiveCrmId(null) } }}>
+                          🗑 Eliminar
+                        </button>
+                      </div>
+                    </div>
+                    {/* AI Lead Score */}
+                    {(() => {
+                      const ls = computeLeadScore(activeContact)
+                      return (
+                        <div style={{ gridColumn: '1/-1', background: 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.08)', padding: '14px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)' }}>AI Lead Score</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.8rem', color: ls.color, lineHeight: 1 }}>{ls.score}</div>
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', color: ls.color }}>{ls.label}</div>
+                            </div>
+                          </div>
+                          <div style={{ height: '4px', background: 'rgba(14,14,13,.08)', borderRadius: '2px', overflow: 'hidden', marginBottom: '10px' }}>
+                            <div style={{ height: '100%', width: `${ls.score}%`, background: ls.score >= 80 ? '#e05454' : ls.score >= 60 ? '#c9a96e' : '#4a9c7a', borderRadius: '2px', transition: 'width .5s' }} />
+                          </div>
+                          {ls.breakdown.map((b, i) => (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.5)' }}>{b.factor}</span>
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: b.pts >= 15 ? '#4a9c7a' : b.pts >= 8 ? '#c9a96e' : 'rgba(14,14,13,.4)' }}>+{b.pts}pts</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                    {/* IA Next Step result */}
+                    {crmNextStep && (
+                      <div style={{ gridColumn: '1/-1', background: 'linear-gradient(135deg,#0c1f15,#1c4a35)', border: '1px solid rgba(201,169,110,.2)', padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(201,169,110,.6)' }}>✦ IA Próxima Acção</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', fontWeight: 700, color: '#c9a96e', background: 'rgba(201,169,110,.12)', padding: '2px 8px' }}>Score: {String(crmNextStep.leadScore || '—')}/100</div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                          <div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(244,240,230,.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '4px' }}>Acção Recomendada</div>
+                            <div style={{ fontFamily: "'Cormorant',serif", fontSize: '.95rem', color: '#f4f0e6', lineHeight: 1.4 }}>{String(crmNextStep.nextAction || '—')}</div>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(244,240,230,.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '4px' }}>Canal · Timing</div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', color: '#c9a96e' }}>{String(crmNextStep.channel || '—').toUpperCase()} · {String(crmNextStep.timing || '—')}</div>
+                          </div>
+                        </div>
+                        {crmNextStep.messageTemplate && (
+                          <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(244,240,230,.08)', padding: '10px 12px', marginBottom: '10px' }}>
+                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(244,240,230,.75)', lineHeight: 1.6 }}>{String(crmNextStep.messageTemplate)}</div>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {crmNextStep.messageTemplate && <button className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.42rem' }} onClick={() => window.open(`https://wa.me/${activeContact.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(String(crmNextStep.messageTemplate || ''))}`)}>💬 Enviar WA</button>}
+                          <button style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(244,240,230,.12)', color: 'rgba(244,240,230,.6)', padding: '6px 14px', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }} onClick={() => setCrmNextStep(null)}>✕ Fechar</button>
+                        </div>
+                      </div>
+                    )}
+                    {/* Email Draft result */}
+                    {emailDraft && (
+                      <div style={{ gridColumn: '1/-1', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.18)', padding: '18px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(28,74,53,.5)' }}>✉ Draft Email IA</div>
+                          <button onClick={() => setEmailDraft(null)} style={{ background: 'none', border: 'none', color: 'rgba(14,14,13,.3)', cursor: 'pointer', fontSize: '.85rem' }}>✕</button>
+                        </div>
+                        <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.05rem', fontWeight: 700, color: '#1c4a35', marginBottom: '14px' }}>{emailDraft.subject}</div>
+                        <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '16px', marginBottom: '12px' }}>
+                          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+                            {emailDraft.greeting}{'\n\n'}{emailDraft.body}{'\n\n'}{emailDraft.cta}{'\n\n'}{emailDraft.signature}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          <button className="p-btn p-btn-gold" style={{ padding: '7px 16px', fontSize: '.42rem' }} onClick={() => navigator.clipboard.writeText(`${emailDraft.subject}\n\n${emailDraft.greeting}\n\n${emailDraft.body}\n\n${emailDraft.cta}\n\n${emailDraft.signature}`)}>📋 Copiar</button>
+                          {activeContact.email && <button className="p-btn" style={{ padding: '7px 16px', fontSize: '.42rem' }} onClick={() => window.open(`mailto:${activeContact.email}?subject=${encodeURIComponent(emailDraft.subject)}&body=${encodeURIComponent(emailDraft.greeting + '\n\n' + emailDraft.body + '\n\n' + emailDraft.cta + '\n\n' + emailDraft.signature)}`)}>✉ Abrir no Mail</button>}
+                        </div>
+                      </div>
+                    )}
+                    {/* Meeting Prep result */}
+                    {meetingPrep && (
+                      <div style={{ gridColumn: '1/-1', background: 'linear-gradient(135deg,#0c1f15,#1a3d2a)', padding: '18px', border: '1px solid rgba(201,169,110,.12)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(201,169,110,.5)' }}>📋 Meeting Prep IA</div>
+                          <button style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(244,240,230,.12)', color: 'rgba(244,240,230,.5)', padding: '4px 10px', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }} onClick={() => setMeetingPrep(null)}>× Fechar</button>
+                        </div>
+                        <div style={{ background: 'rgba(201,169,110,.08)', border: '1px solid rgba(201,169,110,.15)', padding: '10px 14px', marginBottom: '12px', fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: '#f4f0e6', lineHeight: 1.6, fontStyle: 'italic' }}>
+                          &ldquo;{String(meetingPrep.openingLine)}&rdquo;
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                          <div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(201,169,110,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Key Insights</div>
+                            {((meetingPrep.keyInsights as string[]) || []).map((ins, i) => (
+                              <div key={i} style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}>
+                                <span style={{ color: '#c9a96e', flexShrink: 0 }}>★</span>
+                                <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.75rem', color: 'rgba(244,240,230,.6)', lineHeight: 1.4 }}>{ins}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(201,169,110,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Perguntas a Fazer</div>
+                            {((meetingPrep.questionsToAsk as string[]) || []).map((q, i) => (
+                              <div key={i} style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}>
+                                <span style={{ color: '#4a9c7a', flexShrink: 0, fontWeight: 700 }}>?</span>
+                                <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.75rem', color: 'rgba(244,240,230,.6)', lineHeight: 1.4 }}>{q}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TIMELINE */}
+                {crmProfileTab === 'timeline' && (
+                  <div>
+                    {/* Heatmap */}
+                    {(() => {
+                      const acts = activeContact.activities || []
+                      const weeks = 12; const totalDays = weeks * 7
+                      const countMap: Record<string, number> = {}
+                      acts.forEach(a => { countMap[a.date] = (countMap[a.date] || 0) + 1 })
+                      const cells: { date: string; count: number }[] = []
+                      for (let i = totalDays - 1; i >= 0; i--) {
+                        const d = new Date(); d.setDate(d.getDate() - i)
+                        const ds = d.toISOString().split('T')[0]
+                        cells.push({ date: ds, count: countMap[ds] || 0 })
+                      }
+                      const maxActs = Math.max(1, ...Object.values(countMap))
+                      const getColor = (n: number) => {
+                        if (n === 0) return 'rgba(14,14,13,.06)'
+                        const pct = n / maxActs
+                        if (pct >= .75) return '#1c4a35'; if (pct >= .5) return '#2d7a56'; if (pct >= .25) return '#4a9c7a'; return '#7abfa3'
+                      }
+                      return (
+                        <div style={{ background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.08)', padding: '14px', marginBottom: '16px' }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Actividade — 12 semanas</div>
+                          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${weeks},1fr)`, gap: '2px' }}>
+                            {Array.from({ length: weeks }, (_, wi) => (
+                              <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                {cells.slice(wi * 7, wi * 7 + 7).map(cell => (
+                                  <div key={cell.date} title={`${cell.date}: ${cell.count}`} style={{ width: '100%', aspectRatio: '1', background: getColor(cell.count), borderRadius: '2px' }} />
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.45)', marginTop: '8px' }}>{acts.length} actividades · {Object.keys(countMap).length} dias activos</div>
+                        </div>
+                      )
+                    })()}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Timeline de Actividades</div>
+                      <button onClick={() => setShowAddActivity(!showAddActivity)}
+                        style={{ padding: '6px 14px', background: 'rgba(28,74,53,.08)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer' }}>
+                        + Actividade
+                      </button>
+                    </div>
+                    {showAddActivity && (
+                      <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)', padding: '14px', marginBottom: '14px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                          <div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '4px' }}>Tipo</div>
+                            <select className="p-sel" style={{ fontSize: '.75rem', padding: '6px 8px' }} value={newActivity.type} onChange={e => setNewActivity({ type: e.target.value as Activity['type'] })}>
+                              {[['call', '📞 Chamada'], ['whatsapp', '📱 WhatsApp'], ['email', '✉ Email'], ['visit', '🏡 Visita'], ['note', '📝 Nota'], ['proposal', '📋 Proposta'], ['cpcv', '✍ CPCV']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '4px' }}>Data</div>
+                            <input type="date" className="p-inp" style={{ fontSize: '.75rem', padding: '6px 8px' }} value={newActivity.date} onChange={e => setNewActivity({ date: e.target.value })} />
+                          </div>
+                        </div>
+                        <input className="p-inp" style={{ fontSize: '.8rem', padding: '6px 8px', marginBottom: '8px' }} placeholder="Resumo da actividade..." value={newActivity.note} onChange={e => setNewActivity({ note: e.target.value })} />
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.44rem' }}
+                            onClick={() => {
+                              if (!newActivity.note.trim()) return
+                              const act: Activity = { id: Date.now(), ...newActivity }
+                              saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, activities: [act, ...(c.activities || [])], lastContact: newActivity.date } : c))
+                              setNewActivity({ type: 'call', note: '', date: today })
+                              setShowAddActivity(false)
+                            }}>Guardar</button>
+                          <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.44rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowAddActivity(false)}>Cancelar</button>
+                        </div>
+                      </div>
+                    )}
+                    {(!activeContact.activities || activeContact.activities.length === 0) ? (
+                      <div style={{ padding: '32px', textAlign: 'center', border: '1px dashed rgba(14,14,13,.1)' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Sem actividades registadas</div>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0', position: 'relative' }}>
+                        <div style={{ position: 'absolute', left: '16px', top: 0, bottom: 0, width: '1px', background: 'rgba(14,14,13,.08)' }} />
+                        {activeContact.activities.map((act, i) => {
+                          const icons: Record<string, string> = { call: '📞', whatsapp: '📱', email: '✉️', visit: '🏡', note: '📝', proposal: '📋', cpcv: '✍️' }
+                          const colors: Record<string, string> = { call: '#1c4a35', whatsapp: '#25D366', email: '#3a7bd5', visit: '#c9a96e', note: 'rgba(14,14,13,.4)', proposal: '#c9a96e', cpcv: '#e05454' }
+                          return (
+                            <div key={act.id} style={{ display: 'flex', gap: '16px', paddingBottom: '16px', position: 'relative' }}>
+                              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff', border: `2px solid ${colors[act.type] || 'rgba(14,14,13,.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, zIndex: 1, fontSize: '.7rem' }}>
+                                {icons[act.type] || '•'}
+                              </div>
+                              <div style={{ flex: 1, paddingTop: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.08em', textTransform: 'uppercase', color: colors[act.type] || 'rgba(14,14,13,.5)', fontWeight: 600 }}>{act.type}</span>
+                                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.35)' }}>{act.date}</span>
+                                </div>
+                                <div style={{ fontSize: '.82rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.5 }}>{act.note}</div>
+                              </div>
+                              <button onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, activities: (c.activities || []).filter((_, idx) => idx !== i) } : c))}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.2)', fontSize: '.8rem', padding: '0 4px', flexShrink: 0 }}>×</button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* TASKS */}
+                {crmProfileTab === 'tasks' && (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Tarefas</div>
+                      <button onClick={() => setShowAddTask(!showAddTask)}
+                        style={{ padding: '6px 14px', background: 'rgba(28,74,53,.08)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer' }}>
+                        + Tarefa
+                      </button>
+                    </div>
+                    {showAddTask && (
+                      <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)', padding: '14px', marginBottom: '14px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                          <div style={{ gridColumn: '1/3' }}>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '4px' }}>Tarefa</div>
+                            <input className="p-inp" style={{ fontSize: '.8rem', padding: '6px 8px' }} placeholder="Descreve a tarefa..." value={newTask.title} onChange={e => setNewTask({ title: e.target.value })} />
+                          </div>
+                          <div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '4px' }}>Prazo</div>
+                            <input type="date" className="p-inp" style={{ fontSize: '.75rem', padding: '6px 8px' }} value={newTask.dueDate} onChange={e => setNewTask({ dueDate: e.target.value })} />
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: '8px' }}>
+                          <select className="p-sel" style={{ fontSize: '.75rem', padding: '6px 8px' }} value={newTask.type} onChange={e => setNewTask({ type: e.target.value as Task['type'] })}>
+                            {[['call', 'Chamada'], ['visit', 'Visita'], ['email', 'Email'], ['proposal', 'Proposta'], ['other', 'Outro']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                          </select>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.44rem' }}
+                            onClick={() => {
+                              if (!newTask.title.trim()) return
+                              const task: Task = { id: Date.now(), ...newTask, done: false }
+                              saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, tasks: [...(c.tasks || []), task] } : c))
+                              setNewTask({ title: '', dueDate: '', type: 'call' })
+                              setShowAddTask(false)
+                            }}>Guardar</button>
+                          <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.44rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowAddTask(false)}>Cancelar</button>
+                        </div>
+                      </div>
+                    )}
+                    {(!activeContact.tasks || activeContact.tasks.length === 0) ? (
+                      <div style={{ padding: '32px', textAlign: 'center', border: '1px dashed rgba(14,14,13,.1)' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Sem tarefas</div>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {activeContact.tasks.map((task, i) => {
+                          const isOverdueTask = task.dueDate && !task.done && task.dueDate < today
+                          return (
+                            <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', opacity: task.done ? 0.5 : 1 }}>
+                              <input type="checkbox" checked={task.done} onChange={e => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, tasks: (c.tasks || []).map((t, idx) => idx === i ? { ...t, done: e.target.checked } : t) } : c))} style={{ cursor: 'pointer', width: '15px', height: '15px', flexShrink: 0 }} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '.83rem', color: '#0e0e0d', textDecoration: task.done ? 'line-through' : 'none' }}>{task.title}</div>
+                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: isOverdueTask ? '#e05454' : 'rgba(14,14,13,.35)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                                  {task.type}{task.dueDate ? ` · ${isOverdueTask ? 'OVERDUE — ' : ''}${task.dueDate}` : ''}
+                                </div>
+                              </div>
+                              <button onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, tasks: (c.tasks || []).filter((_, idx) => idx !== i) } : c))}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.2)', fontSize: '.8rem' }}>×</button>
+                            </div>
+                          )
+                        })}
+                        {activeContact.tasks.filter(t => t.done).length > 0 && (
+                          <button onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, tasks: (c.tasks || []).filter(t => !t.done) } : c))}
+                            style={{ marginTop: '4px', padding: '5px 12px', background: 'rgba(14,14,13,.04)', border: '1px dashed rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                            Limpar concluídas ({activeContact.tasks.filter(t => t.done).length})
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* NOTES */}
+                {crmProfileTab === 'notes' && (
+                  <div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Notas &amp; Histórico</div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
+                      <button
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: voiceActive ? 'rgba(224,84,84,.1)' : 'rgba(28,74,53,.06)', border: `1px solid ${voiceActive ? 'rgba(224,84,84,.4)' : 'rgba(28,74,53,.2)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.08em', color: voiceActive ? '#e05454' : '#1c4a35', cursor: 'pointer' }}
+                        onClick={() => {
+                          if (voiceActive) { setVoiceActive(false); return }
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+                          if (!SR) { alert('Browser não suporta reconhecimento de voz'); return }
+                          const recognition = new SR()
+                          recognition.lang = 'pt-PT'; recognition.continuous = false; recognition.interimResults = false
+                          setVoiceActive(true); recognition.start()
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          recognition.onresult = (e: any) => { setVoiceText(e.results[0][0].transcript); setVoiceActive(false) }
+                          recognition.onerror = () => setVoiceActive(false)
+                          recognition.onend = () => setVoiceActive(false)
+                        }}>
+                        <span style={{ fontSize: '.8rem' }}>{voiceActive ? '⏹' : '🎤'}</span>
+                        {voiceActive ? 'A gravar...' : 'Gravar nota'}
+                      </button>
+                      {voiceText && <button style={{ padding: '5px 10px', background: 'rgba(74,156,122,.08)', border: '1px solid rgba(74,156,122,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#4a9c7a', cursor: 'pointer' }} onClick={() => setVoiceText('')}>Limpar</button>}
+                    </div>
+                    {voiceText && (
+                      <div style={{ background: 'rgba(74,156,122,.06)', border: '1px solid rgba(74,156,122,.15)', padding: '10px 12px', marginBottom: '10px', fontFamily: "'Jost',sans-serif", fontSize: '.86rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.6 }}>
+                        🎤 &ldquo;{voiceText}&rdquo;
+                      </div>
+                    )}
+                    <textarea className="p-inp" style={{ minHeight: '200px', resize: 'vertical', fontSize: '.84rem', lineHeight: 1.7 }}
+                      value={activeContact.notes}
+                      onChange={e => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, notes: e.target.value } : c))}
+                      placeholder="Adiciona notas, preferências detalhadas, histórico de visitas..." />
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.3)', marginTop: '6px' }}>Guardado automaticamente · Criado em {activeContact.createdAt}</div>
+                  </div>
+                )}
+
+                {/* MATCHING */}
+                {crmProfileTab === 'matching' && (
+                  <div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '4px' }}>Smart Matching — Pipeline + Carteira</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.3)', marginBottom: '14px' }}>Budget ±20% · Zonas · Tipologias</div>
+                    {deals.filter(d => {
+                      const budget = parseFloat(d.valor.replace(/[^0-9.]/g, ''))
+                      const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0
+                      if (!bMin && !bMax) return true
+                      return budget >= bMin * 0.8 && budget <= bMax * 1.2
+                    }).map(d => {
+                      const budget = parseFloat(d.valor.replace(/[^0-9.]/g, ''))
+                      const inBudget = budget >= activeContact.budgetMin && budget <= activeContact.budgetMax
+                      return (
+                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', marginBottom: '8px', borderLeft: `3px solid ${inBudget ? '#4a9c7a' : '#c9a96e'}` }}>
+                          <div>
+                            <div style={{ fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d' }}>{d.imovel}</div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: '#c9a96e', marginTop: '2px' }}>{d.valor} · {d.fase}</div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: inBudget ? '#4a9c7a' : '#c9a96e', marginTop: '2px' }}>{inBudget ? '✓ Budget ideal' : '~ Budget ajustado'}</div>
+                          </div>
+                          <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.44rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, dealRef: d.ref } : c))}>Associar</button>
+                        </div>
+                      )
+                    })}
+                    {PORTAL_PROPERTIES.filter(im => {
+                      const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0
+                      const inBudget = (!bMin && !bMax) || (im.preco >= bMin * 0.8 && im.preco <= bMax * 1.2)
+                      const zonaMatch = !(activeContact.zonas || []).length || (activeContact.zonas || []).some(z => im.zona?.toLowerCase().includes(z.toLowerCase()))
+                      const tipoMatch = !(activeContact.tipos || []).length || (activeContact.tipos || []).some(t => im.tipo?.toLowerCase().includes(t.toLowerCase()))
+                      return inBudget && (zonaMatch || tipoMatch)
+                    }).slice(0, 5).map(im => (
+                      <div key={im.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#fff', border: '1px solid rgba(28,74,53,.12)', marginBottom: '8px', borderLeft: '3px solid #1c4a35' }}>
+                        <div>
+                          <div style={{ fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d' }}>{im.nome}</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: '#c9a96e', marginTop: '2px' }}>€{(im.preco / 1e6).toFixed(2)}M · {im.zona} · {im.tipo}</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>{im.area}m² · T{im.quartos}</div>
+                        </div>
+                        <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.44rem' }} onClick={() => setSection('imoveis')}>Ver →</button>
+                      </div>
+                    ))}
+                    {deals.filter(d => { const b = parseFloat(d.valor.replace(/[^0-9.]/g, '')); const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0; return (!bMin && !bMax) || (b >= bMin * 0.8 && b <= bMax * 1.2) }).length === 0 &&
+                      PORTAL_PROPERTIES.filter(im => { const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0; return (!bMin && !bMax) || (im.preco >= bMin * 0.8 && im.preco <= bMax * 1.2) }).length === 0 && (
+                        <div style={{ padding: '32px', textAlign: 'center', border: '1px dashed rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.3)' }}>
+                          Nenhum imóvel compatível encontrado com o budget definido
+                        </div>
+                      )}
+                  </div>
+                )}
+
+                {/* POST-SALE */}
+                {crmProfileTab === 'postclosing' && (
+                  <div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '16px' }}>Post-Sale · Fidelização</div>
+                    {[
+                      { icon: '🏡', title: 'Registo Predial', desc: 'Confirmar actualização do registo predial em nome do cliente', done: false },
+                      { icon: '📋', title: 'Documentação', desc: 'Entregar cópia escritura, caderneta predial, certificado energético', done: false },
+                      { icon: '🔑', title: 'Entrega de Chaves', desc: 'Organizar cerimónia de entrega — fotografia, momento memorável', done: false },
+                      { icon: '🏠', title: 'Gestão Imóvel', desc: 'Apresentar parceiros: decoração, remodelação, arrendamento, AL', done: false },
+                      { icon: '📅', title: 'Check-in 3 Meses', desc: 'Follow-up pós-compra — satisfação e referências', done: false },
+                      { icon: '⭐', title: 'Review Google', desc: 'Solicitar avaliação — chave para novos clientes', done: false },
+                    ].map((item, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '12px 14px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '1.1rem', flexShrink: 0, marginTop: '2px' }}>{item.icon}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', color: '#0e0e0d', fontWeight: 600, letterSpacing: '.06em', marginBottom: '2px' }}>{item.title}</div>
+                          <div style={{ fontSize: '.78rem', color: 'rgba(14,14,13,.55)', lineHeight: 1.5 }}>{item.desc}</div>
+                        </div>
+                        <input type="checkbox" style={{ cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0, marginTop: '2px', accentColor: '#1c4a35' }} />
+                      </div>
+                    ))}
+                    <div style={{ marginTop: '16px', padding: '14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#1c4a35', marginBottom: '8px', letterSpacing: '.08em', textTransform: 'uppercase' }}>Próximas Oportunidades</div>
+                      <div style={{ fontSize: '.8rem', color: 'rgba(14,14,13,.6)', lineHeight: 1.6 }}>Cliente {activeContact.name} poderá estar interessado em investimento adicional, AL ou nova aquisição em 12–24 meses. Manter contacto trimestral.</div>
+                      <button className="p-btn p-btn-gold" style={{ marginTop: '10px', padding: '8px 16px', fontSize: '.46rem' }} onClick={() => { setWaModalContact(activeContact.id); setWaLang((activeContact.language as typeof waLang) || 'PT'); setShowWaModal(true) }}>📱 Enviar Mensagem Pós-Venda</button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.4rem', fontWeight: 300, color: 'rgba(14,14,13,.3)' }}>Selecciona um contacto</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.25)', letterSpacing: '.1em' }}>{filtered.length} contacto{filtered.length !== 1 ? 's' : ''} disponíve{filtered.length !== 1 ? 'is' : 'l'}</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

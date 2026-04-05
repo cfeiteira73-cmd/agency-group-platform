@@ -41,6 +41,7 @@ const PortalVisitas       = dynamic(() => import('./components/PortalVisitas'), 
 const PortalMaisvalias    = dynamic(() => import('./components/PortalMaisvalias'),    { ssr: false })
 const PortalFinanciamento = dynamic(() => import('./components/PortalFinanciamento'), { ssr: false })
 const PortalHomestaging   = dynamic(() => import('./components/PortalHomestaging'),   { ssr: false })
+const PortalCRM           = dynamic(() => import('./components/PortalCRM'),           { ssr: false })
 
 export default function Portal() {
   // localStorage auth — no NextAuth
@@ -936,6 +937,10 @@ export default function Portal() {
               <PortalHomestaging />
             )}
 
+            {section === 'crm' && (
+              <PortalCRM />
+            )}
+
             {/* Price history modal */}
             {priceHistoryId && (
               <PriceHistoryWidget
@@ -944,7 +949,7 @@ export default function Portal() {
             )}
 
             {/* Sections not yet extracted — show placeholder */}
-            {(['crm', 'imoveis', 'campanhas', 'exitSim', 'pulse', 'crossCompare', 'voz', 'collections', 'draftOffer'] as SectionId[]).includes(section) && (
+            {(['imoveis', 'campanhas', 'exitSim', 'pulse', 'crossCompare', 'voz', 'collections', 'draftOffer'] as SectionId[]).includes(section) && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, flexDirection: 'column', gap: '16px' }}>
                 <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.5rem', fontWeight: 300, color: darkMode ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.4)' }}>
                   {SECTION_NAMES[section] || section}
