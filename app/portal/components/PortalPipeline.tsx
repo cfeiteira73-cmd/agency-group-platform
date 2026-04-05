@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { useDealStore } from '../stores/dealStore'
 import { PIPELINE_STAGES, STAGE_PCT, STAGE_COLOR, CHECKLISTS } from './constants'
@@ -59,20 +59,50 @@ const TIPO_OPTIONS = ['Apartamento', 'Moradia', 'Villa', 'Penthouse', 'Comercial
 
 // ─── Health Score Algorithm ────────────────────────────────────────────────────
 
-function dealHealthScore(deal: DealWithMeta): { score: number; issues: string[] } {
+type IssueSeverity = 'red' | 'amber' | 'green' | 'blue'
+interface HealthIssue { label: string; severity: IssueSeverity }
+
+function dealHealthScore(deal: DealWithMeta): { score: number; issues: string[]; badges: HealthIssue[] } {
   let score = 100
   const issues: string[] = []
+  const badges: HealthIssue[] = []
   const daysSinceCreated = (Date.now() - new Date(deal.createdAt || Date.now()).getTime()) / 86400000
+  const now = new Date()
+  const createdDate = new Date(deal.createdAt || Date.now())
+  const isNewThisMonth = (now.getFullYear() === createdDate.getFullYear() && now.getMonth() === createdDate.getMonth())
+
+  if (isNewThisMonth) { badges.push({ label: 'Novo este mês', severity: 'blue' }) }
 
   if (daysSinceCreated > 90) { score -= 20; issues.push('Deal aberto há 90+ dias') }
   if (!deal.comprador) { score -= 15; issues.push('Comprador não identificado') }
   const val = parseFloat(deal.valor.replace(/[^0-9.]/g, '')) || 0
   if (!deal.valor || val === 0) { score -= 20; issues.push('Valor não definido') }
-  if (!deal.cpcvDate && STAGE_PCT[deal.fase] >= 70) { score -= 10; issues.push('Data CPCV em falta') }
-  if (daysSinceCreated > 30 && deal.fase === 'Angariação') { score -= 15; issues.push('30+ dias sem avançar de Angariação') }
-  if (daysSinceCreated > STALE_DAYS) { score -= 10; issues.push(`Parado há ${Math.floor(daysSinceCreated)}d`) }
+  if (!deal.cpcvDate && STAGE_PCT[deal.fase] >= 70) {
+    score -= 10; issues.push('Data CPCV em falta')
+    badges.push({ label: 'Docs em falta', severity: 'amber' })
+  }
+  if (daysSinceCreated > 30 && deal.fase === 'Angariação') {
+    score -= 15; issues.push('30+ dias sem avançar de Angariação')
+    badges.push({ label: 'Em negociação 30d+', severity: 'red' })
+  }
+  if (daysSinceCreated > STALE_DAYS) {
+    score -= 10; issues.push(`Parado há ${Math.floor(daysSinceCreated)}d`)
+    badges.push({ label: `Sem contacto ${Math.floor(daysSinceCreated)}d`, severity: 'red' })
+  }
+  // Proposta expirada — if in Proposta Enviada for > 14 days
+  if (deal.fase === 'Proposta Enviada' && daysSinceCreated > 14) {
+    score -= 8; issues.push('Proposta pode ter expirado')
+    badges.push({ label: 'Proposta expirada', severity: 'amber' })
+  }
+  // Escritura próxima
+  if (deal.escrituraDate) {
+    const daysToEscritura = (new Date(deal.escrituraDate).getTime() - Date.now()) / 86400000
+    if (daysToEscritura >= 0 && daysToEscritura <= 14) {
+      badges.push({ label: 'Escritura próxima', severity: 'green' })
+    }
+  }
 
-  return { score: Math.max(0, score), issues }
+  return { score: Math.max(0, score), issues, badges }
 }
 
 function healthColor(score: number): string {
@@ -177,6 +207,33 @@ function HealthBadge({ score }: { score: number }) {
       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: color, flexShrink: 0, display: 'inline-block' }} />
       <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color, letterSpacing: '.04em' }}>{label} {score}%</span>
     </span>
+  )
+}
+
+const SEVERITY_COLOR: Record<IssueSeverity, string> = {
+  red: '#dc2626',
+  amber: '#c9a96e',
+  green: '#4a9c7a',
+  blue: '#3a7bd5',
+}
+
+function DealHealthBadges({ badges }: { badges: HealthIssue[] }) {
+  if (badges.length === 0) return null
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
+      {badges.map((b, i) => {
+        const col = SEVERITY_COLOR[b.severity]
+        return (
+          <span key={i} style={{
+            fontFamily: "'DM Mono',monospace", fontSize: '.3rem',
+            color: col, background: col + '12', border: `1px solid ${col}30`,
+            padding: '1px 6px', borderRadius: '2px',
+          }}>
+            {b.label}
+          </span>
+        )
+      })}
+    </div>
   )
 }
 
@@ -285,19 +342,29 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
   const pipelineWeighted = deals.reduce((sum, d) => {
     const val = parseDealValue(d.valor)
     const prob = STAGE_PROB[d.fase] || 0.1
-    return sum + val * prob
+    const { score } = dealHealthScore(d as DealWithMeta)
+    // Risk-adjust by health score
+    const healthAdj = score / 100
+    return sum + val * prob * healthAdj
   }, 0)
 
   const gciWeighted = pipelineWeighted * COMMISSION_RATE
 
+  // 30d: Escritura × 0.9 + CPCV × 0.8 (per spec)
   const forecast30 = deals
-    .filter(d => ['CPCV Assinado', 'Escritura Marcada'].includes(d.fase))
-    .reduce((sum, d) => sum + parseDealValue(d.valor) * 0.5 * COMMISSION_RATE, 0)
+    .filter(d => ['CPCV Assinado', 'Escritura Marcada', 'Financiamento'].includes(d.fase))
+    .reduce((sum, d) => {
+      const val = parseDealValue(d.valor)
+      const prob = d.fase === 'Escritura Marcada' ? 0.9 : d.fase === 'CPCV Assinado' ? 0.8 : 0.65
+      return sum + val * prob * COMMISSION_RATE
+    }, 0)
 
+  // 90d: all stages weighted by probability
   const forecast90 = deals
     .filter(d => STAGE_PCT[d.fase] >= 35)
-    .reduce((sum, d) => sum + parseDealValue(d.valor) * 0.30 * COMMISSION_RATE, 0)
+    .reduce((sum, d) => sum + parseDealValue(d.valor) * (STAGE_PROB[d.fase] || 0.1) * COMMISSION_RATE, 0)
 
+  // Annual: extrapolate — weighted pipeline × 4 quarters
   const forecastAnnual = deals
     .reduce((sum, d) => sum + parseDealValue(d.valor) * (STAGE_PROB[d.fase] || 0.1) * COMMISSION_RATE, 0) * 4
 
@@ -386,6 +453,7 @@ function DealCard({
   onAdvance,
   compact = false,
   isDragTarget = false,
+  justMoved = false,
 }: {
   deal: DealWithMeta
   isActive: boolean
@@ -394,16 +462,26 @@ function DealCard({
   onAdvance?: () => void
   compact?: boolean
   isDragTarget?: boolean
+  justMoved?: boolean
 }) {
   const pct = STAGE_PCT[deal.fase] || 10
   const color = STAGE_COLOR[deal.fase] || '#888'
   const days = dealDays(deal)
   const isStale = days > STALE_DAYS
   const isVeryStale = days > 30
-  const { score } = dealHealthScore(deal)
+  const { score, badges } = dealHealthScore(deal)
   const ns = nextStage(deal.fase)
   const val = parseDealValue(deal.valor)
   const commission = val * COMMISSION_RATE
+  const [glowing, setGlowing] = useState(false)
+
+  useEffect(() => {
+    if (justMoved) {
+      setGlowing(true)
+      const t = setTimeout(() => setGlowing(false), 900)
+      return () => clearTimeout(t)
+    }
+  }, [justMoved])
 
   return (
     <div
@@ -413,10 +491,11 @@ function DealCard({
         marginBottom: compact ? '0' : '8px',
         cursor: 'pointer',
         position: 'relative',
-        outline: isDragTarget ? `2px dashed ${color}` : 'none',
+        outline: isDragTarget ? `2px dashed ${color}` : glowing ? '2px solid #4a9c7a' : 'none',
         outlineOffset: '2px',
         transition: 'outline .1s ease, box-shadow .15s ease',
-        boxShadow: isDragTarget ? `0 0 0 4px ${color}15` : 'none',
+        boxShadow: glowing ? '0 0 12px rgba(74,156,122,.35)' : isDragTarget ? `0 0 0 4px ${color}15` : 'none',
+        animation: glowing ? 'deal-glow .9s ease-out' : 'none',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
@@ -457,6 +536,8 @@ function DealCard({
           {days}d
         </span>
       </div>
+
+      <DealHealthBadges badges={badges} />
 
       {deal.comprador && (
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.38)', marginTop: '5px' }}>
@@ -506,6 +587,7 @@ function KanbanView({
   const [draggingId, setDraggingId] = useState<number | null>(null)
   const [dragOverStage, setDragOverStage] = useState<string | null>(null)
   const dragCounter = useRef<Record<string, number>>({})
+  const [justMovedId, setJustMovedId] = useState<number | null>(null)
 
   const headerBg = (stage: string) => {
     if (['Angariação', 'Proposta Enviada'].includes(stage)) return '#1c4a35'
@@ -559,6 +641,8 @@ function KanbanView({
           at: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
         })
         onChangeFase(id, stage)
+        setJustMovedId(id)
+        setTimeout(() => setJustMovedId(null), 1000)
       }
     }
     setDraggingId(null)
@@ -660,6 +744,7 @@ function KanbanView({
                       darkMode={darkMode}
                       compact
                       isDragTarget={false}
+                      justMoved={justMovedId === deal.id}
                       onClick={() => onSelectDeal(activeDeal === deal.id ? null : deal.id)}
                       onAdvance={() => {
                         const ns = nextStage(deal.fase)
@@ -1350,6 +1435,35 @@ export default function PortalPipeline({
   const [showNewDealForm, setShowNewDealForm] = useState(false)
   const [newDealForm, setNewDealForm] = useState<NewDealFormData>(EMPTY_NEW_DEAL)
   const [recentMoves, setRecentMoves] = useState<PipelineMove[]>([])
+  // Filter chips
+  const [activeFilter, setActiveFilter] = useState<string>('todos')
+  // Live data
+  const [liveDataSource, setLiveDataSource] = useState<'live' | 'demo'>('demo')
+
+  // Load live deals from /api/deals
+  useEffect(() => {
+    let cancelled = false
+    async function loadDeals() {
+      try {
+        const res = await fetch('/api/deals')
+        if (res.ok) {
+          const { data } = await res.json()
+          if (!cancelled && data && data.length > 0) {
+            // Group by stage and update the store
+            data.forEach((d: Deal) => {
+              const existing = deals.find(ex => ex.id === d.id)
+              if (!existing) onChangeFase(d.id, d.fase)
+            })
+            setLiveDataSource('live')
+          }
+        }
+      } catch { /* use mock */ }
+    }
+    loadDeals()
+    const interval = setInterval(loadDeals, 60000)
+    return () => { cancelled = true; clearInterval(interval) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const pipelineTotal = useMemo(() =>
     deals.reduce((s, d) => s + parseDealValue(d.valor), 0), [deals])
@@ -1358,13 +1472,45 @@ export default function PortalPipeline({
     deals.find(d => d.id === activeDeal) as DealWithMeta | undefined || null,
     [deals, activeDeal])
 
-  const filteredDeals = useMemo(() =>
-    deals.filter(d =>
-      !pipelineSearch ||
-      d.imovel.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-      d.comprador.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-      d.ref.toLowerCase().includes(pipelineSearch.toLowerCase())
-    ), [deals, pipelineSearch])
+  const filteredDeals = useMemo(() => {
+    const now = Date.now()
+    const thirtyDaysAgo = now - 30 * 86400000
+    return deals.filter(d => {
+      // Search filter
+      const searchOk = !pipelineSearch ||
+        d.imovel.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
+        d.comprador.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
+        d.ref.toLowerCase().includes(pipelineSearch.toLowerCase())
+      if (!searchOk) return false
+      // Chip filter
+      if (activeFilter === 'todos') return true
+      if (activeFilter === 'meus') return true // no agent filter in demo
+      if (activeFilter === 'atrisk') {
+        const { score } = dealHealthScore(d as DealWithMeta)
+        return score < 60
+      }
+      if (activeFilter === 'recentes') {
+        return new Date((d as DealWithMeta).createdAt || Date.now()).getTime() >= thirtyDaysAgo
+      }
+      if (activeFilter === 'milhao') {
+        return parseDealValue(d.valor) >= 1e6
+      }
+      return true
+    })
+  }, [deals, pipelineSearch, activeFilter])
+
+  // Summary bar stats
+  const summaryStats = useMemo(() => {
+    const totalVal = filteredDeals.reduce((s, d) => s + parseDealValue(d.valor), 0)
+    const totalComm = totalVal * COMMISSION_RATE
+    const gciMes = filteredDeals
+      .filter(d => ['CPCV Assinado', 'Escritura Marcada'].includes(d.fase))
+      .reduce((s, d) => s + parseDealValue(d.valor) * 0.5 * COMMISSION_RATE, 0)
+    const closedDeals = deals.filter(d => d.fase === 'Escritura Concluída').length
+    const totalClosed = deals.filter(d => STAGE_PCT[d.fase] >= 40).length
+    const winRate = totalClosed > 0 ? Math.round((closedDeals / totalClosed) * 100) : 0
+    return { totalVal, totalComm, gciMes, winRate }
+  }, [filteredDeals, deals])
 
   const handleAddDealFromForm = useCallback((data: NewDealFormData) => {
     setNewDeal({ imovel: data.imovel, valor: data.valor })
@@ -1425,14 +1571,90 @@ export default function PortalPipeline({
         </div>
       </div>
 
+      {/* ── Pipeline Summary Bar ── */}
+      <style>{`@keyframes deal-glow{0%{box-shadow:0 0 0 0 rgba(74,156,122,.5)}50%{box-shadow:0 0 16px 4px rgba(74,156,122,.3)}100%{box-shadow:0 0 0 0 rgba(74,156,122,0)}}`}</style>
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        display: 'flex', flexWrap: 'wrap', gap: '0',
+        marginBottom: '16px',
+        background: darkMode ? '#0c1f15' : '#1c4a35',
+        border: '1px solid rgba(201,169,110,.15)',
+        overflow: 'hidden',
+      }}>
+        {[
+          { label: 'Deals Activos', val: String(filteredDeals.filter(d => d.fase !== 'Escritura Concluída').length) },
+          { label: 'Valor Total', val: fmtM(summaryStats.totalVal) },
+          { label: 'Comissão Prev.', val: fmtM(summaryStats.totalComm) },
+          { label: 'GCI Mês', val: fmtM(summaryStats.gciMes) },
+          { label: 'Win Rate', val: `${summaryStats.winRate}%` },
+        ].map((s, i, arr) => (
+          <div key={s.label} style={{
+            flex: 1, minWidth: '110px',
+            padding: '10px 16px',
+            borderRight: i < arr.length - 1 ? '1px solid rgba(201,169,110,.1)' : 'none',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: '#c9a96e', fontWeight: 300, lineHeight: 1 }}>{s.val}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(244,240,230,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '3px' }}>{s.label}</div>
+          </div>
+        ))}
+        {liveDataSource === 'live' && (
+          <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '5px', borderLeft: '1px solid rgba(201,169,110,.1)' }}>
+            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4a9c7a' }} />
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(244,240,230,.35)', letterSpacing: '.06em' }}>LIVE</span>
+          </div>
+        )}
+      </div>
+
       {/* ── Search ── */}
       <input
         className="p-inp"
-        style={{ marginBottom: '14px' }}
+        style={{ marginBottom: '10px' }}
         placeholder="Pesquisar deals por nome, comprador ou referência..."
         value={pipelineSearch}
         onChange={e => setPipelineSearch(e.target.value)}
       />
+
+      {/* ── Filter Chips ── */}
+      {(() => {
+        const now = Date.now()
+        const thirtyDaysAgo = now - 30 * 86400000
+        const chips = [
+          { key: 'todos', label: 'Todos', count: deals.length },
+          { key: 'meus', label: 'Meus Deals', count: deals.length },
+          { key: 'atrisk', label: 'At Risk', count: deals.filter(d => dealHealthScore(d as DealWithMeta).score < 60).length },
+          { key: 'recentes', label: 'Últimos 30d', count: deals.filter(d => new Date((d as DealWithMeta).createdAt || Date.now()).getTime() >= thirtyDaysAgo).length },
+          { key: 'milhao', label: '>€1M', count: deals.filter(d => parseDealValue(d.valor) >= 1e6).length },
+        ]
+        return (
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
+            {chips.map(chip => (
+              <button key={chip.key}
+                onClick={() => setActiveFilter(chip.key)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '5px 12px',
+                  background: activeFilter === chip.key ? '#1c4a35' : 'transparent',
+                  color: activeFilter === chip.key ? '#c9a96e' : 'rgba(14,14,13,.5)',
+                  border: `1px solid ${activeFilter === chip.key ? '#1c4a35' : 'rgba(14,14,13,.12)'}`,
+                  fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.06em',
+                  cursor: 'pointer',
+                  ...(chip.key === 'atrisk' && activeFilter !== 'atrisk' ? { color: '#dc2626', borderColor: 'rgba(220,38,38,.2)' } : {}),
+                }}>
+                {chip.label}
+                <span style={{
+                  background: activeFilter === chip.key ? 'rgba(201,169,110,.25)' : 'rgba(14,14,13,.06)',
+                  color: activeFilter === chip.key ? '#c9a96e' : 'rgba(14,14,13,.4)',
+                  padding: '1px 6px', borderRadius: '10px', fontSize: '.34rem', fontFamily: "'DM Mono',monospace",
+                  ...(chip.key === 'atrisk' ? { color: '#dc2626', background: 'rgba(220,38,38,.08)' } : {}),
+                }}>
+                  {chip.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        )
+      })()}
 
       {/* ── Deal at Risk Alert ── */}
       <AtRiskBanner deals={filteredDeals} darkMode={darkMode} />

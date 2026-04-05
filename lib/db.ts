@@ -1,19 +1,25 @@
 import { supabase } from './supabase'
+import type { Database } from './database.types'
+
+type ContactInsert = Database['public']['Tables']['contacts']['Insert']
+type DealInsert = Database['public']['Tables']['deals']['Insert']
+type PropertyInsert = Database['public']['Tables']['properties']['Insert']
 
 // CONTACTS
 
-export async function getContacts(agentEmail: string) {
+export async function getContacts(agentId?: string) {
   if (!supabase) return null
-  const { data, error } = await supabase
+  let query = supabase
     .from('contacts')
     .select('*')
-    .eq('agent_email', agentEmail)
     .order('created_at', { ascending: false })
+  if (agentId) query = query.eq('assigned_to', agentId)
+  const { data, error } = await query
   if (error) { console.error('getContacts error:', error); return null }
   return data
 }
 
-export async function upsertContact(contact: Record<string, unknown>) {
+export async function upsertContact(contact: ContactInsert) {
   if (!supabase) return null
   const { data, error } = await supabase
     .from('contacts')
@@ -25,18 +31,19 @@ export async function upsertContact(contact: Record<string, unknown>) {
 
 // DEALS
 
-export async function getDeals(agentEmail: string) {
+export async function getDeals(agentId?: string) {
   if (!supabase) return null
-  const { data, error } = await supabase
+  let query = supabase
     .from('deals')
     .select('*')
-    .eq('agent_email', agentEmail)
     .order('created_at', { ascending: false })
+  if (agentId) query = query.eq('assigned_consultant', agentId)
+  const { data, error } = await query
   if (error) { console.error('getDeals error:', error); return null }
   return data
 }
 
-export async function upsertDeal(deal: Record<string, unknown>) {
+export async function upsertDeal(deal: DealInsert) {
   if (!supabase) return null
   const { data, error } = await supabase
     .from('deals')
@@ -49,25 +56,24 @@ export async function upsertDeal(deal: Record<string, unknown>) {
 // PROPERTIES
 
 export async function getProperties(filters?: {
-  zona?: string
-  tipo?: string
-  precoMax?: number
+  zone?: string
+  type?: string
+  maxPrice?: number
 }) {
   if (!supabase) return null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase
+  let query = supabase
     .from('properties')
     .select('*')
-    .eq('status', 'Ativo')
-  if (filters?.zona) query = query.eq('zona', filters.zona)
-  if (filters?.tipo) query = query.eq('tipo', filters.tipo)
-  if (filters?.precoMax) query = query.lte('preco', filters.precoMax)
+    .eq('status', 'active')
+  if (filters?.zone) query = query.eq('zone', filters.zone)
+  if (filters?.type) query = query.eq('type', filters.type as import('./database.types').PropertyType)
+  if (filters?.maxPrice) query = query.lte('price', filters.maxPrice)
   const { data, error } = await query.order('created_at', { ascending: false })
   if (error) { console.error('getProperties error:', error); return null }
   return data
 }
 
-export async function upsertProperty(property: Record<string, unknown>) {
+export async function upsertProperty(property: PropertyInsert) {
   if (!supabase) return null
   const { data, error } = await supabase
     .from('properties')
@@ -83,25 +89,4 @@ export function optimisticUpdate<T extends { id: string | number }>(
   updated: T
 ): T[] {
   return items.map(item => item.id === updated.id ? updated : item)
-}
-
-// Paginated query
-export async function paginatedQuery<T>(
-  table: string,
-  page: number = 1,
-  pageSize: number = 20,
-  filters?: Record<string, unknown>
-): Promise<{ data: T[]; total: number; page: number; pageSize: number }> {
-  if (!supabase) throw new Error('Supabase client not available')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase.from(table).select('*', { count: 'exact' })
-  if (filters) {
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) query = query.eq(key, value as string)
-    })
-  }
-  const from = (page - 1) * pageSize
-  const { data, error, count } = await query.range(from, from + pageSize - 1).order('created_at', { ascending: false })
-  if (error) throw error
-  return { data: (data ?? []) as T[], total: count ?? 0, page, pageSize }
 }

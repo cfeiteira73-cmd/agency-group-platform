@@ -253,11 +253,237 @@ LIMIT 50;
 
 ---
 
+---
+
+## Workflow C — Dormant Lead Re-engagement
+
+### Propósito
+
+Re-activar leads Tier A/B sem actividade nos últimos 14+ dias. Sofia envia mensagens personalizadas por dormancy level via WhatsApp + Email.
+
+### Trigger
+
+Cron diário às **09:00 Europe/Lisbon** (`0 9 * * *`)
+
+### Lógica de dormancy
+
+| Dias sem actividade | Nível | Estratégia |
+|---------------------|-------|------------|
+| 14–21 dias | `warm` | Check-in gentil, sem pressão |
+| 22–30 dias | `cooling` | Conteúdo de valor: mercado, nova propriedade |
+| 31+ dias | `cold` | CTA forte, escassez, alerta de preço |
+
+### Tabelas Supabase necessárias
+
+- `contacts` (campos: `last_activity`, `status`, `tier`, `language_detected`)
+- `activities` (campos: `contact_id`, `type`, `description`, `metadata`)
+- `automations_log`
+
+### Setup
+
+1. Importa `workflow-c-dormant-lead.json`
+2. Confirma credencial `Supabase PostgreSQL` atribuída
+3. Confirma credencial `Anthropic API Key Header` (HTTP Header Auth com `x-api-key: sk-ant-...`)
+4. Confirma credencial `WhatsApp Bearer Token`
+5. Confirma credencial `Resend SMTP`
+6. Define `SLACK_WEBHOOK_URL` nas Railway Variables
+7. Activa o workflow
+
+### Testar
+
+```bash
+# Executa manualmente via n8n UI
+# n8n → Workflow C → Execute Manually
+
+# Ou para forçar um contacto dormiente de teste,
+# insere um registo no Supabase com last_activity antiga:
+# UPDATE contacts SET last_activity = NOW() - INTERVAL '25 days'
+# WHERE email = 'test@example.com' AND tier = 'A';
+```
+
+Resultado esperado:
+- [ ] Query retorna leads dormentes
+- [ ] Claude Haiku gera mensagem personalizada por nível
+- [ ] WhatsApp e email enviados para cada contacto
+- [ ] `activities` table actualizada com `type = 'reengagement_sent'`
+- [ ] Slack recebe resumo com contagem por nível
+- [ ] `automations_log` registo inserido
+
+---
+
+## Workflow D — Investor Property Alert
+
+### Propósito
+
+Quando uma nova propriedade é recebida via webhook, o algoritmo de matching avalia todos os investidores activos e alerta os qualificados (score >= 60pts) em tempo real.
+
+### Trigger
+
+Webhook POST em `/webhook/new-property`
+
+### Algoritmo de matching (100 pontos)
+
+| Critério | Pontos | Condição |
+|----------|--------|----------|
+| Budget | 30 | `investor.max_budget >= property.price * 0.9` |
+| Zona | 25 | `property.zone` in `investor.preferred_zones` |
+| Tipo | 20 | `property.type` in `investor.preferred_types` |
+| Yield | 25 | `property.yield >= investor.min_yield * 0.9` |
+
+Score >= 60 → match qualificado e alerta enviado.
+
+### Tabelas Supabase necessárias
+
+- `investor_profiles` (campos: `contact_id`, `is_active`, `max_budget`, `min_budget`, `preferred_zones`, `preferred_types`, `min_yield`, `investment_horizon`, `risk_profile`)
+- `contacts`
+- `notifications` (campos: `contact_id`, `type`, `title`, `body`, `metadata`, `sent_at`)
+- `investment_alerts` (campos: `investor_profile_id`, `property_id`, `match_score`, `match_reasons`, `alerted_at`)
+- `activities`
+
+### Setup
+
+1. Importa `workflow-d-investor-alert.json`
+2. Confirma todas as credenciais (Supabase, Anthropic, WhatsApp, Resend)
+3. Define `SLACK_WEBHOOK_URL`
+4. Activa o workflow
+5. O webhook fica activo em `https://n8n.agencygroup.pt/webhook/new-property`
+
+### Testar
+
+```bash
+# Testa com propriedade real ou fictícia
+curl -X POST https://n8n.agencygroup.pt/webhook/new-property \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "prop-test-001",
+    "title": "Apartamento T3 — Príncipe Real",
+    "price": 850000,
+    "zone": "Lisboa",
+    "type": "apartamento",
+    "yield_potential": 4.2,
+    "area_m2": 145,
+    "opportunity_score": 82,
+    "source": "idealista"
+  }'
+```
+
+Resultado esperado:
+- [ ] HTTP 200 com `{ property_id, matches: N, investors_alerted: [...] }`
+- [ ] Investidores com score >= 60 recebem WhatsApp + email personalizados
+- [ ] Registos em `notifications` e `investment_alerts`
+- [ ] Actividade em `activities` para cada investidor alertado
+- [ ] Slack recebe mensagem com lista de matches
+
+---
+
+## Workflow E — Weekly Vendor Report
+
+### Propósito
+
+Toda segunda-feira às 08:00, gera e envia relatórios semanais profissionais para todos os vendedores com deals activos. Inclui métricas da semana, posição vs mercado, e próximos passos.
+
+### Trigger
+
+Cron toda segunda-feira às **08:00 Europe/Lisbon** (`0 8 * * 1`)
+
+### Métricas calculadas por deal
+
+- Visitas e inquéritos da semana (via `activities`)
+- Nível médio de interesse dos visitantes
+- Dias em mercado vs mediana Portugal (210 dias)
+- Posição de preço vs mercado por zona (Lisboa €5.000/m², Porto €3.643/m², Algarve €3.941/m², Nacional €3.076/m²)
+- Tendência de actividade: forte / moderada / baixa
+
+### Branding do email
+
+- Verde escuro: `#1c4a35`
+- Dourado: `#c9a96e`
+- 4 KPIs em destaque: Visitas, Inquéritos, Interesse Médio, Posição Preço
+
+### Tabelas Supabase necessárias
+
+- `deals` (campos: `status`, `vendor_contact_id`, `property_id`, `days_on_market`, `vendor_last_contacted`)
+- `properties` (campos: `title`, `address`, `zone`, `area_m2`, `price_per_m2`)
+- `contacts`
+- `activities`
+- `vendor_reports` (campos: `deal_id`, `contact_id`, `property_id`, `report_date`, `visits_count`, etc.)
+- `market_snapshots` (campos: `deal_id`, `property_id`, `snapshot_date`, métricas semanais)
+- `automations_log`
+
+### Setup
+
+1. Importa `workflow-e-vendor-report.json`
+2. Confirma todas as credenciais
+3. Cria as tabelas `vendor_reports` e `market_snapshots` se não existirem:
+
+```sql
+CREATE TABLE IF NOT EXISTS vendor_reports (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  deal_id uuid REFERENCES deals(id),
+  contact_id uuid REFERENCES contacts(id),
+  property_id uuid REFERENCES properties(id),
+  report_date date NOT NULL,
+  visits_count int DEFAULT 0,
+  inquiries_count int DEFAULT 0,
+  avg_interest_level numeric(3,1),
+  days_on_market int,
+  price_position_label text,
+  price_position_pct int,
+  activity_trend text,
+  report_html text,
+  key_insight text,
+  sent_at timestamptz,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS market_snapshots (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  deal_id uuid REFERENCES deals(id),
+  property_id uuid REFERENCES properties(id),
+  snapshot_date date NOT NULL,
+  days_on_market int,
+  price numeric,
+  price_per_m2 int,
+  visits_count int DEFAULT 0,
+  inquiries_count int DEFAULT 0,
+  avg_interest_level numeric(3,1),
+  activity_trend text,
+  price_position_pct int,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(property_id, snapshot_date)
+);
+```
+
+4. Define `SLACK_WEBHOOK_URL`
+5. Activa o workflow
+
+### Testar
+
+```bash
+# Executa manualmente via n8n UI
+# n8n → Workflow E → Execute Manually
+
+# Verifica que existem deals activos com vendor_contact_id preenchido:
+# SELECT d.id, d.stage, c.full_name, c.email
+# FROM deals d JOIN contacts c ON c.id = d.vendor_contact_id
+# WHERE d.status = 'active' LIMIT 5;
+```
+
+Resultado esperado:
+- [ ] Relatório HTML profissional gerado por Claude Sonnet para cada deal
+- [ ] Email com branding AG recebido pelo vendedor
+- [ ] WhatsApp summary (<=160 chars) enviado ao vendedor
+- [ ] Registo em `vendor_reports`
+- [ ] Snapshot em `market_snapshots`
+- [ ] `deals.vendor_last_contacted` actualizado
+- [ ] Slack recebe resumo com N relatórios enviados
+
+---
+
 ## Próximos Workflows a Criar
 
 | ID | Nome | Trigger |
 |----|------|---------|
-| C | Dormant Lead Reactivation | Cron Ter+Qui 10:00 |
-| D | Investor Property Alert | Supabase webhook opportunity_score > 70 |
-| E | Weekly Vendor Report | Cron Sábado 09:00 |
 | F | CPCV Assinado — Pós-Venda | Supabase webhook stage = 'cpcv_assinado' |
+| G | Lead Score Decay | Cron semanal — reduz score de leads inactivos |
+| H | Price Alert — Buyer Match | Webhook preço reduzido → match buyer profiles |

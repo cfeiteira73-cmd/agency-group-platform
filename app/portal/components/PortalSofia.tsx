@@ -31,6 +31,7 @@ interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: string
+  isStreaming?: boolean
 }
 
 const ASSISTANT_MODES: Record<AssistantMode, { label: string; icon: string; color: string; systemHint: string }> = {
@@ -158,10 +159,28 @@ export default function PortalSofia({
     const content = text.trim()
     if (!content || chatLoading) return
 
-    const userMsg: ChatMessage = { id: Date.now(), role: 'user', content, timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }
+    const now = new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
+    const userMsg: ChatMessage = { id: Date.now(), role: 'user', content, timestamp: now }
+
+    // Snapshot history before adding the new user message (avoid stale closure)
+    const historySnapshot = chatMessages
+      .filter(m => !m.isStreaming)
+      .map(m => ({ role: m.role, content: m.content }))
+
     setChatMessages(prev => [...prev, userMsg])
     setChatInput('')
     setChatLoading(true)
+
+    // Placeholder assistant message that will be updated as chunks arrive
+    const assistantId = Date.now() + 1
+    const placeholderMsg: ChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: now,
+      isStreaming: true,
+    }
+    setChatMessages(prev => [...prev, placeholderMsg])
 
     try {
       const modeConfig = ASSISTANT_MODES[assistantMode]
@@ -169,19 +188,70 @@ export default function PortalSofia({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...chatMessages, userMsg].map(m => ({ role: m.role, content: m.content })),
+          messages: [...historySnapshot, { role: 'user', content }],
           systemHint: modeConfig.systemHint,
           mode: assistantMode,
           lang: sofiaLang,
         }),
       })
-      const data = await res.json() as { reply?: string; error?: string }
-      const reply = data.reply ?? data.error ?? 'Erro ao obter resposta.'
-      const assistantMsg: ChatMessage = { id: Date.now() + 1, role: 'assistant', content: reply, timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }
-      setChatMessages(prev => [...prev, assistantMsg])
+
+      // Handle non-streaming error responses (4xx/5xx JSON)
+      if (!res.ok || !res.body) {
+        const errData = await res.json().catch(() => ({})) as { error?: string }
+        const errText = errData.error ?? `Erro ${res.status}`
+        setChatMessages(prev => prev.map((m, i) =>
+          i === prev.length - 1 ? { ...m, content: errText, isStreaming: false } : m
+        ))
+        return
+      }
+
+      // SSE streaming
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let accumulated = ''
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        // Keep the last potentially incomplete line in the buffer
+        buffer = lines.pop() ?? ''
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed.startsWith('data: ')) continue
+          const payload = trimmed.slice(6)
+          if (payload === '[DONE]') break
+          try {
+            const parsed = JSON.parse(payload) as { text?: string; error?: string }
+            if (parsed.error) {
+              accumulated = parsed.error
+            } else if (parsed.text) {
+              accumulated += parsed.text
+            }
+            // Update message content in real-time
+            setChatMessages(prev => prev.map(m =>
+              m.id === assistantId ? { ...m, content: accumulated } : m
+            ))
+          } catch {
+            // Ignore malformed SSE chunks
+          }
+        }
+      }
+
+      // Mark streaming done
+      setChatMessages(prev => prev.map(m =>
+        m.id === assistantId ? { ...m, isStreaming: false } : m
+      ))
     } catch {
-      const errMsg: ChatMessage = { id: Date.now() + 1, role: 'assistant', content: 'Erro de ligação. Verifica a tua ligação à internet.', timestamp: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }
-      setChatMessages(prev => [...prev, errMsg])
+      setChatMessages(prev => prev.map(m =>
+        m.id === assistantId
+          ? { ...m, content: 'Erro de ligação. Verifica a tua ligação à internet.', isStreaming: false }
+          : m
+      ))
     } finally {
       setChatLoading(false)
     }
@@ -412,14 +482,32 @@ export default function PortalSofia({
                   <div className="chat-bubble-user">{msg.content}</div>
                 ) : (
                   <div className="chat-bubble-ai">
-                    {renderMarkdown(msg.content)}
+                    {msg.isStreaming && msg.content === ''
+                      ? (
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', padding: '2px 0' }}>
+                          {[0, 1, 2].map(i => (
+                            <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#c9a96e', animation: `dotPulse .8s ease-in-out ${i * 0.2}s infinite` }} />
+                          ))}
+                        </div>
+                      )
+                      : (
+                        <>
+                          {renderMarkdown(msg.content)}
+                          {msg.isStreaming && (
+                            <span
+                              style={{ display: 'inline-block', width: '2px', height: '1em', background: '#c9a96e', marginLeft: '2px', verticalAlign: 'text-bottom', animation: 'cursorBlink .7s step-end infinite' }}
+                            />
+                          )}
+                        </>
+                      )
+                    }
                   </div>
                 )}
               </div>
             ))}
 
-            {/* Loading indicator */}
-            {chatLoading && (
+            {/* Loading indicator — only show when there's no streaming placeholder already visible */}
+            {chatLoading && !chatMessages.some(m => m.isStreaming) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', alignSelf: 'flex-start' }}>
                 <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant',serif", fontSize: '.5rem', color: '#f4f0e6' }}>S</div>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', padding: '10px 14px', background: darkMode ? 'rgba(244,240,230,.06)' : '#f8f7f4', border: `1px solid ${border}`, borderRadius: '12px 12px 12px 2px' }}>
@@ -491,6 +579,10 @@ export default function PortalSofia({
         @keyframes soundBar {
           from { height: 6px; }
           to { height: 22px; }
+        }
+        @keyframes cursorBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
         }
       `}</style>
     </div>

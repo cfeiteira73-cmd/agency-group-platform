@@ -1,0 +1,453 @@
+{
+  "name": "Workflow C — Dormant Lead Re-engagement",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560001",
+      "name": "Cron — 09:00 Diário",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  c.id,\n  c.full_name,\n  c.email,\n  c.phone,\n  c.language_detected,\n  c.tier,\n  c.lead_score,\n  c.zone_interest,\n  c.budget,\n  c.typology,\n  c.last_activity,\n  EXTRACT(EPOCH FROM (NOW() - c.last_activity)) / 86400 AS days_dormant\nFROM contacts c\nWHERE c.last_activity < NOW() - INTERVAL '14 days'\n  AND c.status = 'active'\n  AND c.tier IN ('A', 'B')\nORDER BY c.lead_score DESC, c.last_activity ASC\nLIMIT 50",
+        "options": {}
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560002",
+      "name": "Supabase — Leads Dormentes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [470, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-dormant-leads",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560003",
+      "name": "IF — Leads Encontrados?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Determine dormancy level and messaging strategy per contact\nconst contact = $input.item.json;\nconst days = parseFloat(contact.days_dormant) || 0;\n\nlet dormancyLevel, toneGuideline, ctaStrength, subjectHint;\n\nif (days >= 14 && days <= 21) {\n  dormancyLevel = 'warm';\n  toneGuideline = 'Gentil check-in. Tom caloroso, curioso, sem pressão. Pergunta como o processo está a correr.';\n  ctaStrength = 'soft';\n  subjectHint = 'check-in amigável';\n} else if (days >= 22 && days <= 30) {\n  dormancyLevel = 'cooling';\n  toneGuideline = 'Partilha conteúdo de valor: tendência de mercado, nova propriedade relevante ou insight de zona. Tom consultivo.';\n  ctaStrength = 'medium';\n  subjectHint = 'novidade de mercado';\n} else {\n  dormancyLevel = 'cold';\n  toneGuideline = 'CTA forte mas elegante. Menciona escassez de boas oportunidades no mercado. Alerta de preço ou oportunidade exclusiva. Último toque antes de arquivar.';\n  ctaStrength = 'strong';\n  subjectHint = 'alerta exclusivo';\n}\n\nconst language = contact.language_detected || 'pt';\n\nconst languageInstructions = {\n  pt: 'Escreve em português europeu formal mas caloroso.',\n  en: 'Write in natural British English, warm and professional.',\n  fr: 'Écris en français formel mais chaleureux.',\n  de: 'Schreibe auf Deutsch, formell aber herzlich.',\n  ar: 'اكتب باللغة العربية الرسمية الدافئة.'\n};\n\nconst langInstruction = languageInstructions[language] || languageInstructions.pt;\n\nreturn [{\n  json: {\n    ...contact,\n    dormancy_level: dormancyLevel,\n    days_dormant_rounded: Math.round(days),\n    tone_guideline: toneGuideline,\n    cta_strength: ctaStrength,\n    subject_hint: subjectHint,\n    language_instruction: langInstruction\n  }\n}];"
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560004",
+      "name": "Code — Dormancy Level",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [910, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"model\": \"claude-haiku-3-5\",\n  \"max_tokens\": 400,\n  \"system\": \"Você é Sofia, assistente da Agency Group imobiliária premium portuguesa. Escreva mensagens de re-engajamento calorosas e naturais, nunca robóticas. AMI 22506. Nunca mencione que a mensagem é automática.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Gera uma mensagem de re-engajamento personalizada para este contacto.\\n\\nContacto:\\n- Nome: {{ $json.full_name }}\\n- Zona interesse: {{ $json.zone_interest }}\\n- Budget: €{{ $json.budget }}\\n- Tipologia: {{ $json.typology }}\\n- Dias sem contacto: {{ $json.days_dormant_rounded }}\\n- Nível: {{ $json.dormancy_level }}\\n\\nInstrução de tom: {{ $json.tone_guideline }}\\nIdioma: {{ $json.language_instruction }}\\n\\nResponde APENAS em JSON válido (sem markdown):\\n{\\\"whatsapp_message\\\": \\\"mensagem WhatsApp até 280 caracteres, natural e pessoal\\\",\\\"email_subject\\\": \\\"assunto email atraente até 60 chars\\\",\\\"email_body_html\\\": \\\"corpo email HTML 2-3 parágrafos com <p> tags, sem html/body/head\\\",\\\"internal_note\\\": \\\"nota interna de 1 linha para o agente\\\"}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560005",
+      "name": "Claude Haiku — Gerar Mensagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1130, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "anthropic-api-key-header",
+          "name": "Anthropic API Key Header"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude response and merge with contact data\nconst contact = $('Code — Dormancy Level').item.json;\nconst rawResponse = $input.item.json;\n\nlet claudeText = '';\ntry {\n  claudeText = rawResponse.content?.[0]?.text || rawResponse.text || '{}';\n} catch (e) {\n  claudeText = '{}';\n}\n\nlet messaging;\ntry {\n  const cleaned = claudeText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  messaging = JSON.parse(cleaned);\n} catch (e) {\n  const firstName = contact.full_name?.split(' ')[0] || 'amigo/a';\n  messaging = {\n    whatsapp_message: `Olá ${firstName}, sou a Sofia da Agency Group. Queria saber se ainda procura propriedades na zona de ${contact.zone_interest || 'Lisboa'}. Temos novidades que podem interessar-lhe.`,\n    email_subject: `Agency Group — novidade para ${firstName}`,\n    email_body_html: `<p>Olá ${firstName},</p><p>Tenho estado a acompanhar o mercado e encontrei oportunidades interessantes que correspondem ao seu perfil. Posso partilhar?</p><p>Um abraço,<br>Sofia — Agency Group</p>`,\n    internal_note: `Fallback message — Claude parse error. Dormancy: ${contact.dormancy_level}`\n  };\n}\n\nreturn [{\n  json: {\n    ...contact,\n    whatsapp_message: messaging.whatsapp_message,\n    email_subject: messaging.email_subject,\n    email_body_html: messaging.email_body_html,\n    internal_note: messaging.internal_note\n  }\n}];"
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560006",
+      "name": "Code — Parse Mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1350, 200]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.whatsapp_message }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560007",
+      "name": "WhatsApp — Enviar Mensagem",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1570, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "Sofia — Agency Group <noreply@agencygroup.pt>",
+        "to": "={{ $json.email }}",
+        "subject": "={{ $json.email_subject }}",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;\">\n  <div style=\"background: #1c4a35; padding: 24px 32px; border-radius: 4px 4px 0 0;\">\n    <h1 style=\"color: #c9a96e; margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.5px;\">Agency Group</h1>\n    <p style=\"color: rgba(255,255,255,0.7); margin: 6px 0 0 0; font-size: 13px;\">AMI 22506 — Imobiliária Premium</p>\n  </div>\n  <div style=\"padding: 32px; background: #ffffff; border-radius: 0 0 4px 4px; border: 1px solid #eee; border-top: none;\">\n    {{ $json.email_body_html }}\n    <hr style=\"margin: 28px 0; border: none; border-top: 1px solid #f0f0f0;\">\n    <p style=\"font-size: 12px; color: #999; margin: 0;\">Agency Group | AMI 22506 | Lisboa, Portugal<br>Para deixar de receber comunicações, responda com 'Remover'.</p>\n  </div>\n</div>",
+        "options": {}
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560008",
+      "name": "Resend — Email Re-engagement",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1570, 240],
+      "credentials": {
+        "smtp": {
+          "id": "resend-smtp",
+          "name": "Resend SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE contacts SET last_activity = NOW(), updated_at = NOW() WHERE id = '{{ $json.id }}';\nINSERT INTO activities (contact_id, type, description, metadata, created_at)\nVALUES (\n  '{{ $json.id }}',\n  'reengagement_sent',\n  'Mensagem de re-engajamento automática enviada (Workflow C)',\n  '{\"dormancy_level\": \"{{ $json.dormancy_level }}\", \"days_dormant\": {{ $json.days_dormant_rounded }}, \"channel\": \"whatsapp+email\"}',\n  NOW()\n);",
+        "options": {}
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560009",
+      "name": "Supabase — Update + Log Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1790, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate results for Slack summary\nconst allItems = $input.all();\nconst reengaged = allItems.length;\n\nconst byLevel = { warm: 0, cooling: 0, cold: 0 };\nallItems.forEach(item => {\n  const level = item.json.dormancy_level || 'warm';\n  if (byLevel[level] !== undefined) byLevel[level]++;\n});\n\nreturn [{\n  json: {\n    reengaged_total: reengaged,\n    by_level: byLevel,\n    messages_sent: reengaged * 2,\n    executed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560010",
+      "name": "Code — Agregar Resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2010, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"text\": \"Re-engagement Workflow C — {{ $json.executed_at.split('T')[0] }}\",\n  \"blocks\": [\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Re-engagement Diário — Workflow C*\\n*Leads re-contactados:* {{ $json.reengaged_total }} | *Mensagens enviadas:* {{ $json.messages_sent }}\\n*Warm (14-21d):* {{ $json.by_level.warm }} | *Cooling (22-30d):* {{ $json.by_level.cooling }} | *Cold (31d+):* {{ $json.by_level.cold }}\"\n      }\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560011",
+      "name": "Slack — Resumo Reengagement",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2230, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "automations_log",
+        "columns": "workflow,outcome,metadata,executed_at",
+        "values": "=workflow-c-dormant-lead,reengagement_complete,={{ JSON.stringify({reengaged: $json.reengaged_total, messages_sent: $json.messages_sent, by_level: $json.by_level}) }},={{ new Date().toISOString() }}",
+        "options": {}
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560012",
+      "name": "Supabase — Log Execução",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2450, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const summary = $('Code — Agregar Resultados').item?.json || { reengaged_total: 0, messages_sent: 0 };\nreturn [{\n  json: {\n    reengaged: summary.reengaged_total,\n    messages_sent: summary.messages_sent,\n    status: 'complete'\n  }\n}];"
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560013",
+      "name": "Code — Resposta Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2670, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { reengaged: 0, messages_sent: 0, status: 'no_dormant_leads', message: 'Nenhum lead dormente encontrado hoje' } }];"
+      },
+      "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560014",
+      "name": "Code — Sem Leads Dormentes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [910, 440]
+    }
+  ],
+  "connections": {
+    "Cron — 09:00 Diário": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Leads Dormentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Leads Dormentes": {
+      "main": [
+        [
+          {
+            "node": "IF — Leads Encontrados?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Leads Encontrados?": {
+      "main": [
+        [
+          {
+            "node": "Code — Dormancy Level",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code — Sem Leads Dormentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Dormancy Level": {
+      "main": [
+        [
+          {
+            "node": "Claude Haiku — Gerar Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Haiku — Gerar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Code — Parse Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Parse Mensagem": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp — Enviar Mensagem",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Resend — Email Re-engagement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp — Enviar Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Update + Log Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend — Email Re-engagement": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Update + Log Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Update + Log Activity": {
+      "main": [
+        [
+          {
+            "node": "Code — Agregar Resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Agregar Resultados": {
+      "main": [
+        [
+          {
+            "node": "Slack — Resumo Reengagement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack — Resumo Reengagement": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Execução",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Log Execução": {
+      "main": [
+        [
+          {
+            "node": "Code — Resposta Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Europe/Lisbon"
+  },
+  "versionId": "c3d4e5f6-a7b8-9012-cdef-123456789002",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "agency-group-n8n"
+  },
+  "id": "workflow-c-dormant-lead",
+  "tags": [
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-automation",
+      "name": "automation"
+    },
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-reengagement",
+      "name": "reengagement"
+    }
+  ]
+}

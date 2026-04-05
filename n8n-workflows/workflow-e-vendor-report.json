@@ -1,0 +1,546 @@
+{
+  "name": "Workflow E — Weekly Vendor Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560201",
+      "name": "Cron — Segunda 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  d.id AS deal_id,\n  d.stage,\n  d.property_price,\n  d.asking_price,\n  d.days_on_market,\n  d.vendor_last_contacted,\n  d.probability,\n  p.id AS property_id,\n  p.title AS property_title,\n  p.address,\n  p.zone,\n  p.tipologia,\n  p.area_m2,\n  p.price_per_m2,\n  p.price_previous,\n  p.listing_url,\n  c.id AS contact_id,\n  c.full_name AS vendor_name,\n  c.email AS vendor_email,\n  c.phone AS vendor_phone,\n  c.language_detected AS vendor_language,\n  (\n    SELECT COUNT(*) FROM activities a\n    WHERE a.contact_id = c.id\n      AND a.created_at >= NOW() - INTERVAL '7 days'\n  ) AS activities_last_7d,\n  (\n    SELECT COUNT(*) FROM activities a\n    WHERE a.contact_id = c.id\n      AND a.type = 'visit'\n      AND a.created_at >= NOW() - INTERVAL '7 days'\n  ) AS visits_last_7d,\n  (\n    SELECT COUNT(*) FROM activities a\n    WHERE a.contact_id = c.id\n      AND a.type IN ('inquiry', 'lead_contact')\n      AND a.created_at >= NOW() - INTERVAL '7 days'\n  ) AS inquiries_last_7d,\n  (\n    SELECT AVG(COALESCE((a.metadata->>'interest_level')::numeric, 3))\n    FROM activities a\n    WHERE a.contact_id = c.id\n      AND a.created_at >= NOW() - INTERVAL '7 days'\n  ) AS avg_interest_level\nFROM deals d\nJOIN properties p ON p.id = d.property_id\nJOIN contacts c ON c.id = d.vendor_contact_id\nWHERE d.status = 'active'\n  AND d.vendor_contact_id IS NOT NULL\nORDER BY d.property_price DESC",
+        "options": {}
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560202",
+      "name": "Supabase — Deals Activos + Vendedor",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [470, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-active-deals",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560203",
+      "name": "IF — Deals Activos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [690, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate weekly metrics for this deal/vendor\nconst deal = $input.item.json;\n\nconst daysOnMarket = Number(deal.days_on_market) || 0;\nconst visitsCount = Number(deal.visits_last_7d) || 0;\nconst inquiriesCount = Number(deal.inquiries_last_7d) || 0;\nconst activitiesTotal = Number(deal.activities_last_7d) || 0;\nconst avgInterest = Number(deal.avg_interest_level) || 0;\n\n// Market benchmarks (Portugal 2026)\nconst MEDIAN_DOM_PORTUGAL = 210;\nconst PRICE_PER_M2_LISBON = 5000;\nconst PRICE_PER_M2_PORTO = 3643;\nconst PRICE_PER_M2_ALGARVE = 3941;\nconst PRICE_PER_M2_MARKET_MEDIAN = 3076;\n\n// Price positioning vs market\nconst pricePerM2 = deal.area_m2 > 0 ? (deal.property_price / deal.area_m2) : 0;\nconst zone = (deal.zone || '').toLowerCase();\nlet marketRefPricePerM2;\nif (zone.includes('lisboa') || zone.includes('lisbon')) {\n  marketRefPricePerM2 = PRICE_PER_M2_LISBON;\n} else if (zone.includes('porto')) {\n  marketRefPricePerM2 = PRICE_PER_M2_PORTO;\n} else if (zone.includes('algarve') || zone.includes('faro')) {\n  marketRefPricePerM2 = PRICE_PER_M2_ALGARVE;\n} else {\n  marketRefPricePerM2 = PRICE_PER_M2_MARKET_MEDIAN;\n}\n\nconst pricePositionPct = marketRefPricePerM2 > 0\n  ? Math.round(((pricePerM2 - marketRefPricePerM2) / marketRefPricePerM2) * 100)\n  : 0;\n\nlet pricePositionLabel;\nif (pricePositionPct > 15) pricePositionLabel = 'acima do mercado';\nelse if (pricePositionPct > 5) pricePositionLabel = 'ligeiramente acima';\nelse if (pricePositionPct >= -5) pricePositionLabel = 'alinhado com mercado';\nelse if (pricePositionPct >= -15) pricePositionLabel = 'competitivo';\nelse pricePositionLabel = 'abaixo do mercado';\n\n// DOM performance vs median\nconst domPerformance = MEDIAN_DOM_PORTUGAL - daysOnMarket;\nconst domLabel = daysOnMarket <= 30 ? 'recente'\n  : daysOnMarket <= 90 ? 'em linha com o mercado'\n  : daysOnMarket <= 180 ? 'acima da média'\n  : 'necessita atenção de preço';\n\n// Activity trend assessment\nlet activityTrend;\nif (visitsCount >= 3 || inquiriesCount >= 5) activityTrend = 'forte';\nelse if (visitsCount >= 1 || inquiriesCount >= 2) activityTrend = 'moderada';\nelse activityTrend = 'baixa';\n\nconst weekOf = new Date();\nconst weekStr = weekOf.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' });\n\nreturn [{\n  json: {\n    ...deal,\n    metrics: {\n      visits_count: visitsCount,\n      inquiries_received: inquiriesCount,\n      activities_total: activitiesTotal,\n      avg_interest_level: Math.round(avgInterest * 10) / 10,\n      days_on_market: daysOnMarket,\n      price_per_m2: Math.round(pricePerM2),\n      market_ref_price_per_m2: marketRefPricePerM2,\n      price_position_pct: pricePositionPct,\n      price_position_label: pricePositionLabel,\n      dom_label: domLabel,\n      activity_trend: activityTrend,\n      dom_vs_median_days: domPerformance\n    },\n    week_of: weekStr,\n    report_date: weekOf.toISOString().split('T')[0]\n  }\n}];"
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560204",
+      "name": "Code — Métricas Semanais",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [910, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"model\": \"claude-sonnet-4-5\",\n  \"max_tokens\": 1000,\n  \"system\": \"Você é consultor senior da Agency Group (AMI 22506, Lisboa). Escreva relatórios de vendedor profissionais, tranquilizadores e baseados em dados. Foco em progresso, não em problemas. Inclua próximos passos claros. Tom: confiante, humano, baseado em factos. Nunca alarmista.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Gera um relatório semanal para o vendedor. Idioma: {{ $json.vendor_language || 'pt' }}.\\n\\nVendedor: {{ $json.vendor_name }}\\nPropriedade: {{ $json.property_title }} — {{ $json.address }}\\nSemana de: {{ $json.week_of }}\\nFase do negócio: {{ $json.stage }}\\n\\nMÉTRICAS DA SEMANA:\\n- Visitas realizadas: {{ $json.metrics.visits_count }}\\n- Inquéritos recebidos: {{ $json.metrics.inquiries_received }}\\n- Total actividades: {{ $json.metrics.activities_total }}\\n- Interesse médio dos visitantes: {{ $json.metrics.avg_interest_level }}/5\\n- Dias em mercado: {{ $json.metrics.days_on_market }} (mediana Portugal: 210 dias)\\n- Posicionamento de preço: {{ $json.metrics.price_position_label }} ({{ $json.metrics.price_position_pct > 0 ? '+' : '' }}{{ $json.metrics.price_position_pct }}% vs mercado)\\n- Tendência de actividade: {{ $json.metrics.activity_trend }}\\n\\nCONTEXTO DE MERCADO 2026:\\n- Mediana nacional: €3.076/m² (+17,6% YoY)\\n- Lisboa: €5.000/m² | Porto: €3.643/m² | Algarve: €3.941/m²\\n- Mediana dias em mercado: 210 dias\\n- Volume: 169.812 transacções anuais\\n\\nESTRUTURA DO RELATÓRIO (300-400 palavras, HTML com <p>, <strong>, <ul>, <li>):\\n1. Saudação personalizada ao vendedor (1 linha)\\n2. RESUMO DA SEMANA (2-3 frases, positivo, baseado nos números)\\n3. ACTIVIDADE DETALHADA (bullet points: visitas, inquéritos, interesse médio)\\n4. POSIÇÃO NO MERCADO (comparação com medianas, tom consultivo)\\n5. PRÓXIMOS PASSOS (2-3 acções concretas para a próxima semana)\\n6. Nota de encerramento calorosa\\n\\nResponde APENAS em JSON válido (sem markdown):\\n{\\\"report_html\\\": \\\"relatório completo em HTML\\\",\\\"whatsapp_summary\\\": \\\"resumo WA máx 160 chars com os 2 números mais importantes\\\",\\\"key_insight\\\": \\\"insight chave de 1 frase para nota interna do agente\\\"}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560205",
+      "name": "Claude Sonnet — Gerar Relatório",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1130, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "anthropic-api-key-header",
+          "name": "Anthropic API Key Header"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude report and build final email HTML\nconst deal = $('Code — Métricas Semanais').item.json;\nconst rawResponse = $input.item.json;\n\nlet claudeText = '';\ntry {\n  claudeText = rawResponse.content?.[0]?.text || rawResponse.text || '{}';\n} catch (e) {\n  claudeText = '{}';\n}\n\nlet reportData;\ntry {\n  const cleaned = claudeText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  reportData = JSON.parse(cleaned);\n} catch (e) {\n  reportData = {\n    report_html: `<p>Caro/a ${deal.vendor_name},</p><p>Esta semana tivemos ${deal.metrics.visits_count} visita(s) e ${deal.metrics.inquiries_received} inquérito(s) para a sua propriedade em ${deal.address}. A actividade está ${deal.metrics.activity_trend}. Continuamos a trabalhar activamente na sua venda.</p><p>Qualquer questão, estou à disposição.</p>`,\n    whatsapp_summary: `Relatório semanal: ${deal.metrics.visits_count} visita(s), ${deal.metrics.inquiries_received} inquérito(s) — ${deal.property_title.substring(0,40)}`,\n    key_insight: `Fallback report. Activity: ${deal.metrics.activity_trend}, DOM: ${deal.metrics.days_on_market}d`\n  };\n}\n\n// Build professional email HTML with AG branding\nconst emailHtml = `\n<div style=\"font-family: Arial, sans-serif; max-width: 660px; margin: 0 auto; background: #ffffff;\">\n  <div style=\"background: #1c4a35; padding: 28px 36px; border-radius: 4px 4px 0 0;\">\n    <table style=\"width: 100%; border-collapse: collapse;\">\n      <tr>\n        <td>\n          <h1 style=\"color: #c9a96e; margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.5px;\">Agency Group</h1>\n          <p style=\"color: rgba(255,255,255,0.6); margin: 4px 0 0 0; font-size: 12px; letter-spacing: 0.5px;\">Relatório Semanal de Vendedor | AMI 22506</p>\n        </td>\n        <td style=\"text-align: right; vertical-align: top;\">\n          <p style=\"color: rgba(255,255,255,0.5); margin: 0; font-size: 11px;\">${deal.week_of}</p>\n        </td>\n      </tr>\n    </table>\n  </div>\n  <div style=\"background: #f8f6f0; padding: 16px 36px; border-left: 1px solid #eee; border-right: 1px solid #eee;\">\n    <p style=\"margin: 0; font-size: 13px; color: #666;\">Propriedade</p>\n    <p style=\"margin: 4px 0 0 0; font-size: 17px; font-weight: bold; color: #1c4a35;\">${deal.property_title}</p>\n    <p style=\"margin: 2px 0 0 0; font-size: 13px; color: #888;\">${deal.address} &nbsp;|&nbsp; €${Number(deal.property_price).toLocaleString('pt-PT')} &nbsp;|&nbsp; ${deal.metrics.days_on_market} dias em mercado</p>\n  </div>\n  <div style=\"display: table; width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #eee; border-top: none;\">\n    <div style=\"display: table-row;\">\n      <div style=\"display: table-cell; padding: 16px; text-align: center; border-right: 1px solid #f0f0f0;\">\n        <p style=\"margin: 0; font-size: 28px; font-weight: bold; color: #1c4a35;\">${deal.metrics.visits_count}</p>\n        <p style=\"margin: 4px 0 0 0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;\">Visitas</p>\n      </div>\n      <div style=\"display: table-cell; padding: 16px; text-align: center; border-right: 1px solid #f0f0f0;\">\n        <p style=\"margin: 0; font-size: 28px; font-weight: bold; color: #1c4a35;\">${deal.metrics.inquiries_received}</p>\n        <p style=\"margin: 4px 0 0 0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;\">Inquéritos</p>\n      </div>\n      <div style=\"display: table-cell; padding: 16px; text-align: center; border-right: 1px solid #f0f0f0;\">\n        <p style=\"margin: 0; font-size: 28px; font-weight: bold; color: #1c4a35;\">${deal.metrics.avg_interest_level}/5</p>\n        <p style=\"margin: 4px 0 0 0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;\">Interesse Médio</p>\n      </div>\n      <div style=\"display: table-cell; padding: 16px; text-align: center;\">\n        <p style=\"margin: 0; font-size: 18px; font-weight: bold; color: ${deal.metrics.price_position_pct > 10 ? '#c9a96e' : '#1c4a35'};\">${deal.metrics.price_position_label}</p>\n        <p style=\"margin: 4px 0 0 0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;\">Posição Preço</p>\n      </div>\n    </div>\n  </div>\n  <div style=\"padding: 32px 36px; background: #fff; border: 1px solid #eee; border-top: none; line-height: 1.7; color: #333; font-size: 14px;\">\n    ${reportData.report_html}\n  </div>\n  <div style=\"background: #1c4a35; padding: 16px 36px; border-radius: 0 0 4px 4px;\">\n    <p style=\"margin: 0; font-size: 11px; color: rgba(255,255,255,0.5);\">Agency Group | AMI 22506 | Lisboa, Portugal | Relatório gerado automaticamente</p>\n  </div>\n</div>`;\n\nreturn [{\n  json: {\n    ...deal,\n    email_html: emailHtml,\n    whatsapp_summary: reportData.whatsapp_summary,\n    key_insight: reportData.key_insight,\n    report_html_raw: reportData.report_html\n  }\n}];"
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560206",
+      "name": "Code — Build Email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1350, 200]
+    },
+    {
+      "parameters": {
+        "from": "Agency Group <noreply@agencygroup.pt>",
+        "to": "={{ $json.vendor_email }}",
+        "subject": "=Relatório Semanal — {{ $json.property_title }} — {{ $json.week_of }}",
+        "html": "={{ $json.email_html }}",
+        "options": {}
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560207",
+      "name": "Resend — Email Relatório Vendedor",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1570, 100],
+      "credentials": {
+        "smtp": {
+          "id": "resend-smtp",
+          "name": "Resend SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.vendor_phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.whatsapp_summary }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560208",
+      "name": "WhatsApp — Resumo Vendedor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1570, 260],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "vendor_reports",
+        "columns": "deal_id,contact_id,property_id,report_date,visits_count,inquiries_count,avg_interest_level,days_on_market,price_position_label,price_position_pct,activity_trend,report_html,key_insight,sent_at",
+        "values": "={{ $json.deal_id }},={{ $json.contact_id }},={{ $json.property_id }},={{ $json.report_date }},={{ $json.metrics.visits_count }},={{ $json.metrics.inquiries_received }},={{ $json.metrics.avg_interest_level }},={{ $json.metrics.days_on_market }},={{ $json.metrics.price_position_label }},={{ $json.metrics.price_position_pct }},={{ $json.metrics.activity_trend }},={{ $json.report_html_raw }},={{ $json.key_insight }},={{ new Date().toISOString() }}",
+        "options": {}
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560209",
+      "name": "Supabase — Insert Vendor Report",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1790, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "activities",
+        "columns": "contact_id,type,description,metadata,created_at",
+        "values": "={{ $json.contact_id }},vendor_report_sent,Relatório semanal de vendedor enviado (Workflow E),={{ JSON.stringify({deal_id: $json.deal_id, property_id: $json.property_id, report_date: $json.report_date, visits: $json.metrics.visits_count, inquiries: $json.metrics.inquiries_received}) }},={{ new Date().toISOString() }}",
+        "options": {}
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560210",
+      "name": "Supabase — Log Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2010, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO market_snapshots (deal_id, property_id, snapshot_date, days_on_market, price, price_per_m2, visits_count, inquiries_count, avg_interest_level, activity_trend, price_position_pct, created_at)\nVALUES (\n  '{{ $json.deal_id }}',\n  '{{ $json.property_id }}',\n  '{{ $json.report_date }}',\n  {{ $json.metrics.days_on_market }},\n  {{ $json.property_price }},\n  {{ $json.metrics.price_per_m2 }},\n  {{ $json.metrics.visits_count }},\n  {{ $json.metrics.inquiries_received }},\n  {{ $json.metrics.avg_interest_level }},\n  '{{ $json.metrics.activity_trend }}',\n  {{ $json.metrics.price_position_pct }},\n  NOW()\n)\nON CONFLICT (property_id, snapshot_date) DO UPDATE SET\n  days_on_market = EXCLUDED.days_on_market,\n  visits_count = EXCLUDED.visits_count,\n  inquiries_count = EXCLUDED.inquiries_count,\n  activity_trend = EXCLUDED.activity_trend;",
+        "options": {}
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560211",
+      "name": "Supabase — Market Snapshot",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2230, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE deals SET vendor_last_contacted = NOW(), updated_at = NOW() WHERE id = '{{ $json.deal_id }}'",
+        "options": {}
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560212",
+      "name": "Supabase — Update Deal",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2450, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all processed deals for final summary\nconst allItems = $input.all();\nconst dealsProcessed = allItems.map(i => ({\n  deal_id: i.json.deal_id,\n  vendor_name: i.json.vendor_name,\n  property_title: i.json.property_title,\n  days_on_market: i.json.metrics?.days_on_market,\n  activity_trend: i.json.metrics?.activity_trend\n}));\n\nreturn [{\n  json: {\n    reports_sent: dealsProcessed.length,\n    deals_processed: dealsProcessed,\n    week_of: allItems[0]?.json.week_of || new Date().toLocaleDateString('pt-PT'),\n    executed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560213",
+      "name": "Code — Agregar Resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2670, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"text\": \"Relatórios semanais de vendedor enviados\",\n  \"blocks\": [\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Relatórios Semanais Vendedor — Workflow E*\\nSemana de {{ $json.week_of }}\\n*Relatórios enviados:* {{ $json.reports_sent }}\\n*Deals:* {{ $json.deals_processed.map(d => d.vendor_name + ' (' + d.activity_trend + ')').join(', ') }}\"\n      }\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560214",
+      "name": "Slack — Resumo Semanal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2890, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "automations_log",
+        "columns": "workflow,outcome,metadata,executed_at",
+        "values": "=workflow-e-vendor-report,reports_sent,={{ JSON.stringify({reports_sent: $json.reports_sent, deals: $json.deals_processed.map(d => d.deal_id)}) }},={{ new Date().toISOString() }}",
+        "options": {}
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560215",
+      "name": "Supabase — Log Execução",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [3110, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const summary = $('Code — Agregar Resultados').item?.json || { reports_sent: 0, deals_processed: [] };\nreturn [{\n  json: {\n    reports_sent: summary.reports_sent,\n    deals_processed: summary.deals_processed,\n    status: 'complete'\n  }\n}];"
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560216",
+      "name": "Code — Resposta Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3330, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { reports_sent: 0, deals_processed: [], status: 'no_active_deals', message: 'Nenhum deal activo com vendedor encontrado' } }];"
+      },
+      "id": "e1a2b3c4-d5f6-7890-abcd-ef1234560217",
+      "name": "Code — Sem Deals Activos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [910, 440]
+    }
+  ],
+  "connections": {
+    "Cron — Segunda 08:00": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Deals Activos + Vendedor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Deals Activos + Vendedor": {
+      "main": [
+        [
+          {
+            "node": "IF — Deals Activos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Deals Activos?": {
+      "main": [
+        [
+          {
+            "node": "Code — Métricas Semanais",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code — Sem Deals Activos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Métricas Semanais": {
+      "main": [
+        [
+          {
+            "node": "Claude Sonnet — Gerar Relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Sonnet — Gerar Relatório": {
+      "main": [
+        [
+          {
+            "node": "Code — Build Email HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Build Email HTML": {
+      "main": [
+        [
+          {
+            "node": "Resend — Email Relatório Vendedor",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WhatsApp — Resumo Vendedor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend — Email Relatório Vendedor": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Insert Vendor Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp — Resumo Vendedor": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Insert Vendor Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Insert Vendor Report": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Log Activity": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Market Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Market Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Update Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Update Deal": {
+      "main": [
+        [
+          {
+            "node": "Code — Agregar Resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Agregar Resultados": {
+      "main": [
+        [
+          {
+            "node": "Slack — Resumo Semanal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack — Resumo Semanal": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Execução",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Log Execução": {
+      "main": [
+        [
+          {
+            "node": "Code — Resposta Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Europe/Lisbon"
+  },
+  "versionId": "e5f6a7b8-c9d0-1234-efab-345678901204",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "agency-group-n8n"
+  },
+  "id": "workflow-e-vendor-report",
+  "tags": [
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-automation",
+      "name": "automation"
+    },
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-reports",
+      "name": "reports"
+    }
+  ]
+}

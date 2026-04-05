@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
+import Anthropic from '@anthropic-ai/sdk'
+import { sendWhatsApp } from '@/lib/whatsapp/client'
 
 export const runtime = 'nodejs'
 
@@ -98,14 +100,18 @@ export async function POST(req: NextRequest) {
             // Auto-lead creation from inbound WhatsApp — sempre activo (independente de sofiaActive)
             // Extracts name + phone and upserts into CRM contacts
             if (message.type === 'text' && text.trim()) {
+              // CRM upsert — always active
               await handleIncomingMessage({
                 from,
                 name: senderName,
                 text,
                 messageId: message.id,
               })
-              // Sofia só responde quando WHATSAPP_ACTIVE=true
-              // (resposta IA via sendWhatsApp fica aqui quando activares)
+
+              // Sofia auto-response — only when WHATSAPP_ACTIVE=true
+              if (sofiaActive) {
+                void generateAndSendSofiaReply({ to: from, name: senderName, text })
+              }
             }
           }
         }
@@ -126,6 +132,95 @@ export async function POST(req: NextRequest) {
     console.error('[WhatsApp] Webhook error:', error)
     // Still return 200 to avoid Meta retrying endlessly
     return NextResponse.json({ success: true })
+  }
+}
+
+// ─── Intent Classification ────────────────────────────────────────────────────
+
+type MessageIntent =
+  | 'price_inquiry'
+  | 'visit_request'
+  | 'document_request'
+  | 'offer_inquiry'
+  | 'general'
+
+function classifyIntent(text: string): MessageIntent {
+  const lower = text.toLowerCase()
+  if (/\bpre[çc]o|price|valeur|valor|custo|quanto custa|how much|combien\b/i.test(lower)) {
+    return 'price_inquiry'
+  }
+  if (/\bvisita|visit|visite|ver o im[oó]vel|schedule|agend|marcar\b/i.test(lower)) {
+    return 'visit_request'
+  }
+  if (/\bdocument[ao]s?|docs|certid[aã]o|registr[ao]|caderneta|contrato|cpcv\b/i.test(lower)) {
+    return 'document_request'
+  }
+  if (/\bproposta|offer|offre|oferta|comprar|buy|acheter|negoci\b/i.test(lower)) {
+    return 'offer_inquiry'
+  }
+  return 'general'
+}
+
+// ─── Sofia WhatsApp Auto-reply ────────────────────────────────────────────────
+
+async function generateAndSendSofiaReply(params: {
+  to: string
+  name: string
+  text: string
+}): Promise<void> {
+  const { to, name, text } = params
+
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) {
+    console.warn('[WhatsApp/Sofia] ANTHROPIC_API_KEY not set — skipping auto-reply')
+    return
+  }
+
+  const intent = classifyIntent(text)
+
+  const intentHints: Record<MessageIntent, string> = {
+    price_inquiry:    'O utilizador pergunta sobre preço. Pede zona e tipologia antes de responder.',
+    visit_request:    'O utilizador quer visitar um imóvel. Pede data e hora disponíveis.',
+    document_request: 'O utilizador pede documentos. Explica que irás enviar pelo canal adequado.',
+    offer_inquiry:    'O utilizador quer fazer uma proposta. Mostra disponibilidade imediata.',
+    general:          'Mensagem geral. Responde com simpatia e oferece ajudar.',
+  }
+
+  const systemPrompt = `Você é Sofia, assistente virtual da Agency Group, imobiliária premium portuguesa (AMI 22506).
+Responde no WhatsApp: máximo 3 frases curtas, natural, caloroso, profissional.
+Detecta automaticamente o idioma e responde no mesmo idioma.
+Contexto: ${intentHints[intent]}
+Sempre termina a oferecer ligar em 5 minutos se for urgente.
+Nome do contacto: ${name}.`
+
+  try {
+    const client = new Anthropic({ apiKey })
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-3-5-20241022',
+      max_tokens: 160,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: text }],
+    })
+
+    const replyBlock = response.content.find(b => b.type === 'text')
+    if (!replyBlock || replyBlock.type !== 'text') {
+      console.warn('[WhatsApp/Sofia] No text block in Anthropic response')
+      return
+    }
+
+    const reply = replyBlock.text.trim()
+    if (!reply) return
+
+    const result = await sendWhatsApp({ to, type: 'text', text: reply })
+
+    if (result.success) {
+      console.log(`[WhatsApp/Sofia] Auto-reply sent to ${to} (intent: ${intent}) — msgId: ${result.messageId}`)
+    } else {
+      console.error('[WhatsApp/Sofia] Send failed:', result.error)
+    }
+  } catch (error) {
+    console.error('[WhatsApp/Sofia] generateAndSendSofiaReply error:', error)
   }
 }
 

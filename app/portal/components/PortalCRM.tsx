@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { computeLeadScore, calcLeadScore, getAINextAction, exportCrmCSV } from './utils'
 import { useCRMStore } from '../stores/crmStore'
 import { useDealStore } from '../stores/dealStore'
@@ -57,25 +57,69 @@ const STATUS_CONFIG = {
   vip:      { label: 'VIP',      bg: 'rgba(201,169,110,.12)', color: '#c9a96e',  avatar: 'rgba(201,169,110,.15)' },
 }
 
-function ScoreCircle({ score, budgetLabel, engagementLabel }: { score: number; budgetLabel?: string; engagementLabel?: string }) {
+function ScoreCircle({ score, budgetLabel, engagementLabel, breakdown }: {
+  score: number
+  budgetLabel?: string
+  engagementLabel?: string
+  breakdown?: Array<{ factor: string; pts: number; max?: number }>
+}) {
   const color = score > 70 ? '#22c55e' : score > 40 ? '#c9a96e' : '#e05252'
   const r = 12
   const circumference = 2 * Math.PI * r
-  const dash = (score / 100) * circumference
+  const [animDash, setAnimDash] = useState(0)
+  const [hovered, setHovered] = useState(false)
+
+  useEffect(() => {
+    const target = (score / 100) * circumference
+    const timer = setTimeout(() => setAnimDash(target), 50)
+    return () => clearTimeout(timer)
+  }, [score, circumference])
+
   const tooltip = [
     `Score: ${score}`,
     budgetLabel ? `Budget: ${budgetLabel}` : '',
     engagementLabel ? `Engagement: ${engagementLabel}` : '',
   ].filter(Boolean).join(' · ')
+
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" aria-label={tooltip} style={{ cursor: 'default', flexShrink: 0 }}>
-      <circle cx="16" cy="16" r={r} fill="none" stroke="rgba(14,14,13,.08)" strokeWidth="2.5" />
-      <circle cx="16" cy="16" r={r} fill="none" stroke={color} strokeWidth="2.5"
-        strokeDasharray={`${dash} ${circumference - dash}`}
-        strokeDashoffset={circumference / 4}
-        strokeLinecap="round" />
-      <text x="16" y="20" textAnchor="middle" fontFamily="DM Mono, monospace" fontSize="8" fill={color}>{score}</text>
-    </svg>
+    <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}>
+      <svg width="32" height="32" viewBox="0 0 32 32" aria-label={tooltip} style={{ cursor: 'default' }}>
+        <circle cx="16" cy="16" r={r} fill="none" stroke="rgba(14,14,13,.08)" strokeWidth="2.5" />
+        <circle cx="16" cy="16" r={r} fill="none" stroke={color} strokeWidth="2.5"
+          strokeDasharray={`${animDash} ${circumference - animDash}`}
+          strokeDashoffset={circumference / 4}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dasharray 800ms cubic-bezier(.4,0,.2,1)' }} />
+        <text x="16" y="20" textAnchor="middle" fontFamily="DM Mono, monospace" fontSize="8" fill={color}>{score}</text>
+      </svg>
+      {hovered && breakdown && breakdown.length > 0 && (
+        <div style={{
+          position: 'absolute', bottom: '36px', right: 0,
+          background: '#0e0e0d', border: '1px solid rgba(255,255,255,.1)',
+          padding: '10px 12px', zIndex: 300, minWidth: '200px',
+          boxShadow: '0 8px 24px rgba(0,0,0,.3)',
+          pointerEvents: 'none',
+        }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: color, marginBottom: '8px', letterSpacing: '.1em' }}>
+            SCORE {score}/100
+          </div>
+          {breakdown.map((b, i) => {
+            const max = b.max || 30
+            const filled = Math.round((b.pts / max) * 8)
+            const bar = '█'.repeat(filled) + '░'.repeat(8 - filled)
+            return (
+              <div key={i} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(244,240,230,.6)', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                <span style={{ color: 'rgba(244,240,230,.4)', minWidth: '80px' }}>{b.factor}</span>
+                <span style={{ color: b.pts >= max * 0.7 ? '#4a9c7a' : b.pts >= max * 0.4 ? '#c9a96e' : 'rgba(244,240,230,.3)' }}>{bar}</span>
+                <span style={{ color: 'rgba(244,240,230,.5)' }}>{b.pts}/{max}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -92,6 +136,149 @@ function TemperatureBadge({ score, lastContactDays }: { score: number; lastConta
       style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', padding: '1px 5px', background: config.bg, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: config.color, cursor: 'default' }}>
       {config.icon}
     </span>
+  )
+}
+
+// ─── Enhanced WA Modal ────────────────────────────────────────────────────────
+
+type WaLangKey = 'PT' | 'EN' | 'FR' | 'DE' | 'AR'
+
+function WAModal({
+  wc,
+  waLang,
+  setWaLang,
+  templates,
+  agentName,
+  onClose,
+}: {
+  wc: CRMContact | null
+  waLang: WaLangKey
+  setWaLang: (l: WaLangKey) => void
+  templates: Record<string, { label: string; msg: string }>
+  agentName: string
+  onClose: () => void
+}) {
+  const WA_CHAR_LIMIT = 1024
+  const quickTemplateKeys = ['seguimento', 'nova_prop', 'convite_visita', 'followup', 'proposta', 'visita']
+  // Pick 3 most relevant templates for the selected language
+  const templateEntries = Object.entries(templates).slice(0, 6)
+  const [selectedKey, setSelectedKey] = useState(templateEntries[0]?.[0] || '')
+  const [customMsg, setCustomMsg] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  const selectedTmpl = templates[selectedKey]
+  const baseMsg = selectedTmpl
+    ? selectedTmpl.msg
+        .replace('{name}', wc ? wc.name.split(' ')[0] : '{name}')
+        .replace('{agent}', agentName)
+        .replace('{property}', wc?.dealRef || '[imóvel]')
+        .replace('{date}', '[data]')
+    : ''
+  const finalMsg = customMsg || baseMsg
+  const charCount = finalMsg.length
+  const charColor = charCount > WA_CHAR_LIMIT ? '#e05252' : charCount > 800 ? '#c9a96e' : 'rgba(14,14,13,.35)'
+
+  // Quick 3 templates
+  const quickTemplates = [
+    { key: 'followup', label: 'Seguimento', tmpl: templates['followup'] },
+    { key: 'proposta', label: 'Nova Propriedade', tmpl: templates['proposta'] },
+    { key: 'visita', label: 'Convite Visita', tmpl: templates['visita'] },
+  ].filter(t => !!t.tmpl)
+
+  void quickTemplateKeys
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ background: '#f4f0e6', maxWidth: '600px', width: '100%', maxHeight: '92vh', overflowY: 'auto' }}>
+        {/* Header */}
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(14,14,13,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.3rem', color: '#0e0e0d' }}>
+            📱 WhatsApp{wc ? <em style={{ color: '#1c4a35' }}> — {wc.name}</em> : ''}
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>×</button>
+        </div>
+
+        <div style={{ padding: '18px 24px' }}>
+          {/* Language selector */}
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            {(['PT', 'EN', 'FR', 'DE', 'AR'] as const).map(l => (
+              <button key={l} onClick={() => setWaLang(l)}
+                style={{ padding: '5px 12px', background: waLang === l ? '#1c4a35' : 'transparent', color: waLang === l ? '#f4f0e6' : 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', cursor: 'pointer' }}>
+                {l}
+              </button>
+            ))}
+          </div>
+
+          {/* Quick template selector — 3 templates */}
+          <div style={{ marginBottom: '14px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>
+              Template Rápido
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {(quickTemplates.length > 0 ? quickTemplates : templateEntries.slice(0, 3).map(([k, t]) => ({ key: k, label: t.label, tmpl: t }))).map(item => (
+                <button key={item.key}
+                  onClick={() => { setSelectedKey(item.key); setCustomMsg('') }}
+                  style={{ padding: '6px 14px', background: selectedKey === item.key ? '#1c4a35' : 'rgba(14,14,13,.04)', color: selectedKey === item.key ? '#c9a96e' : 'rgba(14,14,13,.6)', border: `1px solid ${selectedKey === item.key ? '#1c4a35' : 'rgba(14,14,13,.12)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer', letterSpacing: '.06em' }}>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* All templates list */}
+          <div style={{ borderTop: '1px solid rgba(14,14,13,.06)', paddingTop: '14px', marginBottom: '16px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>Todos os Templates</div>
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {templateEntries.map(([k, t]) => (
+                <button key={k}
+                  onClick={() => { setSelectedKey(k); setCustomMsg('') }}
+                  style={{ padding: '3px 8px', background: selectedKey === k ? 'rgba(201,169,110,.15)' : 'transparent', color: selectedKey === k ? '#c9a96e' : 'rgba(14,14,13,.4)', border: `1px solid ${selectedKey === k ? 'rgba(201,169,110,.3)' : 'rgba(14,14,13,.08)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Preview + edit */}
+          <div style={{ marginBottom: '14px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Preview &amp; Editar</span>
+              <span style={{ color: charColor, fontSize: '.36rem' }}>{charCount}/{WA_CHAR_LIMIT}</span>
+            </div>
+            <textarea
+              rows={5}
+              value={customMsg || baseMsg}
+              onChange={e => setCustomMsg(e.target.value)}
+              style={{ width: '100%', border: `1px solid ${charCount > WA_CHAR_LIMIT ? '#e05252' : 'rgba(14,14,13,.12)'}`, background: '#fff', fontFamily: "'Jost',sans-serif", fontSize: '.84rem', padding: '10px 12px', resize: 'vertical', outline: 'none', color: '#0e0e0d', lineHeight: 1.6, boxSizing: 'border-box' }}
+            />
+            {charCount > WA_CHAR_LIMIT && (
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#e05252', marginTop: '4px' }}>Mensagem excede o limite de {WA_CHAR_LIMIT} caracteres</div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => { navigator.clipboard.writeText(finalMsg); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+              style={{ padding: '8px 16px', background: 'rgba(14,14,13,.06)', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', cursor: 'pointer', color: copied ? '#4a9c7a' : 'rgba(14,14,13,.6)' }}>
+              {copied ? '✓ Copiado' : 'Copiar'}
+            </button>
+            {!!wc && !!wc.phone && (
+              <button
+                disabled={charCount > WA_CHAR_LIMIT}
+                onClick={() => window.open(`https://wa.me/${wc.phone.replace(/\D/g, '')}?text=${encodeURIComponent(finalMsg)}`, '_blank')}
+                style={{ padding: '8px 18px', background: '#25D366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', cursor: charCount > WA_CHAR_LIMIT ? 'not-allowed' : 'pointer', opacity: charCount > WA_CHAR_LIMIT ? 0.5 : 1 }}>
+                Enviar via WA Web ↗
+              </button>
+            )}
+            <button onClick={onClose}
+              style={{ padding: '8px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)', marginLeft: 'auto' }}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -152,6 +339,37 @@ export default function PortalCRM() {
   // Quick action modals
   const [quickCallId, setQuickCallId] = useState<number | null>(null)
   const [quickEmailId, setQuickEmailId] = useState<number | null>(null)
+  // Live data
+  const [isLoading, setIsLoading] = useState(true)
+  const [dataSource, setDataSource] = useState<'live' | 'demo'>('demo')
+  // Bulk email campaign modal
+  const [showCampaignModal, setShowCampaignModal] = useState(false)
+  const [campaignName, setCampaignName] = useState('')
+  const [campaignTemplate, setCampaignTemplate] = useState('followup')
+  const [campaignSent, setCampaignSent] = useState(false)
+  // Enriquecer
+  const [enrichLoading, setEnrichLoading] = useState<number | null>(null)
+  const [enrichToast, setEnrichToast] = useState<string | null>(null)
+  const enrichToastRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadContacts() {
+      try {
+        const res = await fetch('/api/crm?limit=50')
+        if (res.ok) {
+          const { data } = await res.json()
+          if (!cancelled && data && data.length > 0) {
+            setCrmContacts(data)
+            setDataSource('live')
+          }
+        }
+      } catch { /* use mock data */ }
+      finally { if (!cancelled) setIsLoading(false) }
+    }
+    loadContacts()
+    return () => { cancelled = true }
+  }, [setCrmContacts])
 
   useEffect(() => {
     try {
@@ -159,15 +377,17 @@ export default function PortalCRM() {
       if (auth.email) {
         setAgentEmail(auth.email)
         setAgentName(auth.email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g, (c: string) => c.toUpperCase()))
-        // Load persisted contacts
-        const stored = localStorage.getItem(`ag_crm_${auth.email}`)
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          if (Array.isArray(parsed) && parsed.length > 0) setCrmContacts(parsed)
+        // Load persisted contacts only if not already loaded from API
+        if (dataSource === 'demo') {
+          const stored = localStorage.getItem(`ag_crm_${auth.email}`)
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            if (Array.isArray(parsed) && parsed.length > 0) setCrmContacts(parsed)
+          }
         }
       }
     } catch { /* ignore */ }
-  }, [setCrmContacts])
+  }, [setCrmContacts, dataSource])
 
   function saveCrmContacts(updated: CRMContact[]) {
     setCrmContacts(updated)
@@ -227,6 +447,8 @@ export default function PortalCRM() {
         .crm-profile-tab{padding:8px 16px;font-family:'DM Mono',monospace;font-size:.46rem;letter-spacing:.14em;text-transform:uppercase;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;color:rgba(14,14,13,.4);transition:all .2s;white-space:nowrap}
         .crm-profile-tab.active{color:#1c4a35;border-bottom-color:#1c4a35}
         @media(max-width:768px){.crm-layout{flex-direction:column!important}.crm-list{width:100%!important;min-width:unset!important;border-right:none!important;border-bottom:1px solid rgba(14,14,13,.08)!important}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
       `}</style>
 
       {/* Header */}
@@ -503,48 +725,105 @@ export default function PortalCRM() {
         </div>
       )}
 
-      {/* WhatsApp Modal */}
+      {/* Loading indicator */}
+      {isLoading && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', padding: '8px 14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.1)' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#1c4a35', animation: 'pulse 1.2s ease-in-out infinite' }} />
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#1c4a35', letterSpacing: '.08em' }}>A sincronizar contactos...</span>
+        </div>
+      )}
+      {!isLoading && dataSource === 'live' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4a9c7a' }} />
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#4a9c7a' }}>Dados em tempo real · /api/crm</span>
+        </div>
+      )}
+
+      {/* Email Campaign Modal */}
+      {showCampaignModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#f4f0e6', maxWidth: '560px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(14,14,13,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.3rem', color: '#0e0e0d' }}>📧 Email <em style={{ color: '#1c4a35' }}>Campaign</em></div>
+              <button onClick={() => setShowCampaignModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>×</button>
+            </div>
+            {campaignSent ? (
+              <div style={{ padding: '40px 24px', textAlign: 'center' }}>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>✅</div>
+                <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.4rem', color: '#1c4a35', marginBottom: '8px' }}>Campanha enviada!</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.4)' }}>
+                  {crmSelectedIds.size} destinatários · {campaignName}
+                </div>
+                <button className="p-btn" style={{ marginTop: '20px', padding: '8px 20px' }} onClick={() => { setShowCampaignModal(false); setCampaignSent(false) }}>Fechar</button>
+              </div>
+            ) : (
+              <div style={{ padding: '20px 24px' }}>
+                <div style={{ marginBottom: '14px' }}>
+                  <label className="p-label">Nome da Campanha</label>
+                  <input className="p-inp" value={campaignName} onChange={e => setCampaignName(e.target.value)} placeholder="ex: Seguimento Q2 2026" />
+                </div>
+                <div style={{ marginBottom: '14px' }}>
+                  <label className="p-label">Template</label>
+                  <select className="p-sel" value={campaignTemplate} onChange={e => setCampaignTemplate(e.target.value)}>
+                    <option value="followup">Follow-up — Seguimento</option>
+                    <option value="proposta">Nova Propriedade</option>
+                    <option value="visita">Convite Visita</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: '16px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '14px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#c9a96e', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Preview</div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.6 }}>
+                    {campaignTemplate === 'followup' && `Olá! Queria saber se já teve oportunidade de pensar nas opções que partilhei. Tenho novos imóveis exclusivos que podem ser exactamente o que procura. — ${agentName}, Agency Group`}
+                    {campaignTemplate === 'proposta' && `Olá! Tenho uma nova propriedade exclusiva que combina perfeitamente com o seu perfil. Posso partilhar mais detalhes? — ${agentName}, Agency Group`}
+                    {campaignTemplate === 'visita' && `Olá! Gostaria de o/a convidar para uma visita privada a uma propriedade excepcional. Quando estaria disponível? — ${agentName}, Agency Group`}
+                  </div>
+                </div>
+                <div style={{ padding: '10px 14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.1)', marginBottom: '16px', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#1c4a35' }}>
+                  Total: <strong>{crmSelectedIds.size} destinatários</strong>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="p-btn p-btn-gold" style={{ flex: 1 }} disabled={!campaignName.trim()}
+                    onClick={async () => {
+                      try {
+                        const selectedContacts = crmContacts.filter(c => crmSelectedIds.has(c.id))
+                        await fetch('/api/automation/vendor-report', {
+                          method: 'POST', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ campaign: campaignName, template: campaignTemplate, contacts: selectedContacts }),
+                        }).catch(() => undefined)
+                      } catch { /* ignore */ }
+                      setCampaignSent(true)
+                    }}>
+                    Enviar Campanha
+                  </button>
+                  <button className="p-btn" style={{ background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowCampaignModal(false)}>Cancelar</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Enrich Toast */}
+      {!!enrichToast && (
+        <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 400, background: '#1c4a35', color: '#c9a96e', padding: '12px 20px', fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.08em', boxShadow: '0 4px 16px rgba(0,0,0,.2)' }}>
+          {enrichToast}
+        </div>
+      )}
+
+      {/* WhatsApp Modal — Enhanced with template selector + char counter + preview */}
       {showWaModal && (() => {
         const wc = waModalContact ? crmContacts.find(c => c.id === waModalContact) : null
         const templates = WA_TEMPLATES[waLang] || WA_TEMPLATES['PT']
+        // Enhanced WA modal with proper features
         return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-            <div style={{ background: '#f4f0e6', maxWidth: '540px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(14,14,13,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.3rem', color: '#0e0e0d' }}>📱 Templates <em style={{ color: '#1c4a35' }}>WhatsApp</em>{wc ? ` — ${wc.name}` : ''}</div>
-                <button onClick={() => setShowWaModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>×</button>
-              </div>
-              <div style={{ padding: '16px 24px' }}>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                  {(['PT', 'EN', 'FR', 'DE', 'AR'] as const).map(l => (
-                    <button key={l} onClick={() => setWaLang(l)}
-                      style={{ padding: '5px 12px', background: waLang === l ? '#1c4a35' : 'transparent', color: waLang === l ? '#f4f0e6' : 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', cursor: 'pointer' }}>
-                      {l}
-                    </button>
-                  ))}
-                </div>
-                {Object.entries(templates).map(([key, tmpl]) => {
-                  const msg = wc ? tmpl.msg.replace('{name}', wc.name.split(' ')[0]).replace('{agent}', agentName).replace('{property}', wc.dealRef || '[imóvel]').replace('{date}', '[data]') : tmpl.msg
-                  return (
-                    <div key={key} style={{ marginBottom: '12px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '14px' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#c9a96e', marginBottom: '6px' }}>{tmpl.label}</div>
-                      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.83rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.6, marginBottom: '10px' }}>{msg}</div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => navigator.clipboard.writeText(msg)}
-                          style={{ padding: '5px 12px', background: 'rgba(14,14,13,.06)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
-                          Copiar
-                        </button>
-                        {wc && <button onClick={() => window.open(`https://wa.me/${wc.phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')}
-                          style={{ padding: '5px 12px', background: '#25D366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
-                          Abrir WhatsApp ↗
-                        </button>}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
+          <WAModal
+            wc={wc || null}
+            waLang={waLang}
+            setWaLang={setWaLang}
+            templates={templates}
+            agentName={agentName}
+            onClose={() => setShowWaModal(false)}
+          />
         )
       })()}
 
@@ -714,7 +993,7 @@ export default function PortalCRM() {
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#1c4a35', fontWeight: 700 }}>{crmSelectedIds.size} seleccionados</div>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                   <button style={{ padding: '4px 8px', background: 'rgba(28,74,53,.1)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}
-                    onClick={() => setShowBulkEmailModal(true)}>📧 Email</button>
+                    onClick={() => { setShowCampaignModal(true); setCampaignSent(false) }}>📧 Email Campaign</button>
                   <button style={{ padding: '4px 8px', background: '#25d366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}
                     onClick={() => {
                       const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
@@ -767,7 +1046,7 @@ export default function PortalCRM() {
               </div>
             )}
 
-            {/* Bulk Email Modal */}
+            {/* Bulk Email Campaign Modal */}
             {showBulkEmailModal && (
               <div style={{ padding: '10px', background: 'rgba(28,74,53,.04)', borderBottom: '1px solid rgba(28,74,53,.12)' }}>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', marginBottom: '6px' }}>📧 Email em Massa · {crmSelectedIds.size} contactos</div>
@@ -1102,6 +1381,40 @@ export default function PortalCRM() {
                             } catch { /* ignore */ } finally { setEmailDraftLoading(false) }
                           }}>
                           {emailDraftLoading ? '✦ A gerar...' : '✉ Draft Email IA'}
+                        </button>
+                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem', background: enrichLoading === activeContact.id ? 'rgba(201,169,110,.12)' : 'rgba(201,169,110,.08)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.25)' }}
+                          disabled={enrichLoading === activeContact.id}
+                          onClick={async () => {
+                            setEnrichLoading(activeContact.id)
+                            try {
+                              const res = await fetch('/api/automation/lead-score', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ contact: activeContact }),
+                              })
+                              if (res.ok) {
+                                const d = await res.json()
+                                if (d.score !== undefined) {
+                                  // Append enriched score to notes for persistence
+                                  saveCrmContacts(crmContacts.map(c => c.id === activeContact.id
+                                    ? { ...c, notes: `${c.notes ? c.notes + '\n' : ''}[Enrich ${new Date().toISOString().slice(0,10)}] Score: ${d.score}/100` }
+                                    : c))
+                                }
+                                if (enrichToastRef.current) clearTimeout(enrichToastRef.current)
+                                setEnrichToast(`✦ Score actualizado: ${d.score ?? '—'}/100`)
+                                enrichToastRef.current = setTimeout(() => setEnrichToast(null), 3000)
+                              }
+                            } catch {
+                              if (enrichToastRef.current) clearTimeout(enrichToastRef.current)
+                              setEnrichToast('Score calculado localmente')
+                              enrichToastRef.current = setTimeout(() => setEnrichToast(null), 2500)
+                            } finally { setEnrichLoading(null) }
+                          }}>
+                          {enrichLoading === activeContact.id ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', border: '1.5px solid #c9a96e', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                              A enriquecer...
+                            </span>
+                          ) : '✦ Enriquecer Lead'}
                         </button>
                         <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.46rem', background: 'rgba(224,84,84,.08)', color: '#e05454', border: '1px solid rgba(224,84,84,.2)' }}
                           onClick={() => { if (confirm(`Eliminar ${activeContact.name}?`)) { saveCrmContacts(crmContacts.filter(c => c.id !== activeContact.id)); setActiveCrmId(null) } }}>

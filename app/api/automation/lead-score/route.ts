@@ -2,9 +2,11 @@
 // Agency Group — Lead Scoring API
 // POST /api/automation/lead-score
 // Scores leads 0-100, classifies A/B/C, returns recommended action
+// After scoring, upserts contact to Supabase if available
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -283,6 +285,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const result = scoreLeadRequest(leadData)
+
+    // --- Upsert to Supabase contacts table (best-effort, non-blocking) ---
+    try {
+      const upsertPayload: Record<string, unknown> = {
+        full_name:            leadData.name,
+        email:                leadData.email ?? null,
+        phone:                leadData.phone ?? null,
+        nationality:          leadData.nationality ?? null,
+        language:             leadData.language ?? null,
+        status:               result.tier === 'A' ? 'active' : result.tier === 'B' ? 'prospect' : 'lead',
+        lead_tier:            result.tier,
+        lead_score:           result.score,
+        lead_score_breakdown: { ...result.breakdown } as Record<string, number>,
+        source:               leadData.source ?? null,
+        ai_suggested_action:  result.recommended_action,
+        detected_intent:      'buy',
+        timeline:             leadData.timeline ?? null,
+        gdpr_consent:         false,
+        updated_at:           new Date().toISOString(),
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseAdmin.from('contacts') as any)
+        .upsert(upsertPayload, { onConflict: 'email', ignoreDuplicates: false })
+    } catch (supabaseError) {
+      // Non-fatal: Supabase unavailable or upsert failed — continue
+      console.warn('[lead-score] Supabase upsert skipped:', supabaseError instanceof Error ? supabaseError.message : 'unknown')
+    }
 
     return NextResponse.json(result, { status: 200 })
   } catch (error) {

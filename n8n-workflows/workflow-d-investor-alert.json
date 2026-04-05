@@ -1,0 +1,479 @@
+{
+  "name": "Workflow D — Investor Property Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-property",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560101",
+      "name": "Webhook — Nova Propriedade",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "agency-group-new-property"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and extract property data from webhook payload\nconst body = $input.first().json.body || $input.first().json;\n\nif (!body.id && !body.property_id) {\n  throw new Error('Propriedade sem ID — payload inválido');\n}\n\nif (!body.price && !body.asking_price) {\n  throw new Error('Propriedade sem preço — payload inválido');\n}\n\nconst property = {\n  id: body.id || body.property_id,\n  title: (body.title || body.name || 'Propriedade sem título').trim(),\n  price: Number(body.price || body.asking_price) || 0,\n  zone: (body.zone || body.location || body.area || body.concelho || '').trim(),\n  type: (body.type || body.property_type || body.tipologia || '').toLowerCase().trim(),\n  yield_potential: Number(body.yield_potential || body.gross_yield || body.yield || 0),\n  area_m2: Number(body.area_m2 || body.area || 0),\n  opportunity_score: Number(body.opportunity_score || 0),\n  bedrooms: Number(body.bedrooms || body.tipologia_quartos || 0),\n  description: (body.description || '').substring(0, 500),\n  source: body.source || 'manual',\n  received_at: new Date().toISOString()\n};\n\nreturn [{ json: property }];"
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560102",
+      "name": "Code — Validar Propriedade",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [470, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  ip.id AS investor_profile_id,\n  ip.contact_id,\n  ip.max_budget,\n  ip.min_budget,\n  ip.preferred_zones,\n  ip.preferred_types,\n  ip.min_yield,\n  ip.investment_horizon,\n  ip.risk_profile,\n  c.full_name,\n  c.email,\n  c.phone,\n  c.language_detected,\n  c.lead_score\nFROM investor_profiles ip\nJOIN contacts c ON c.id = ip.contact_id\nWHERE ip.is_active = true\n  AND c.status = 'active'\nORDER BY c.lead_score DESC",
+        "options": {}
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560103",
+      "name": "Supabase — Perfis de Investidor",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [690, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Investor matching algorithm\nconst property = $('Code — Validar Propriedade').item.json;\nconst investors = $input.all().map(i => i.json);\n\nconst matchedInvestors = [];\n\nfor (const inv of investors) {\n  let score = 0;\n  const reasons = [];\n\n  // Budget match (30pts): investor max_budget >= property.price * 0.9\n  const minAcceptablePrice = property.price * 0.9;\n  if (inv.max_budget >= minAcceptablePrice) {\n    score += 30;\n    reasons.push(`Budget adequado (máx €${(inv.max_budget/1000).toFixed(0)}K vs €${(property.price/1000).toFixed(0)}K)`);\n  }\n\n  // Zone match (25pts): property.zone in investor.preferred_zones array\n  const preferredZones = Array.isArray(inv.preferred_zones)\n    ? inv.preferred_zones\n    : (typeof inv.preferred_zones === 'string'\n        ? JSON.parse(inv.preferred_zones || '[]')\n        : []);\n  const propertyZoneLower = (property.zone || '').toLowerCase();\n  const zoneMatch = preferredZones.some(z =>\n    propertyZoneLower.includes(z.toLowerCase()) || z.toLowerCase().includes(propertyZoneLower)\n  );\n  if (zoneMatch) {\n    score += 25;\n    reasons.push(`Zona preferida (${property.zone})`);\n  }\n\n  // Type match (20pts): property.type in investor.preferred_types array\n  const preferredTypes = Array.isArray(inv.preferred_types)\n    ? inv.preferred_types\n    : (typeof inv.preferred_types === 'string'\n        ? JSON.parse(inv.preferred_types || '[]')\n        : []);\n  const typeMatch = preferredTypes.some(t =>\n    (property.type || '').includes(t.toLowerCase()) || t.toLowerCase().includes(property.type || '')\n  );\n  if (typeMatch) {\n    score += 20;\n    reasons.push(`Tipo matching (${property.type})`);\n  }\n\n  // Yield match (25pts): property.yield >= investor.min_yield * 0.9\n  const minAcceptableYield = (inv.min_yield || 0) * 0.9;\n  if (property.yield_potential > 0 && inv.min_yield > 0 && property.yield_potential >= minAcceptableYield) {\n    score += 25;\n    reasons.push(`Yield de ${property.yield_potential}% >= mínimo ${inv.min_yield}%`);\n  } else if (inv.min_yield === 0 || !inv.min_yield) {\n    score += 10;\n    reasons.push('Sem requisito mínimo de yield');\n  }\n\n  // Qualify: total score >= 60\n  if (score >= 60) {\n    matchedInvestors.push({\n      ...inv,\n      match_score: score,\n      match_reasons: reasons,\n      property_id: property.id,\n      property_title: property.title,\n      property_price: property.price,\n      property_zone: property.zone,\n      property_type: property.type,\n      property_yield: property.yield_potential,\n      property_area: property.area_m2\n    });\n  }\n}\n\nmatchedInvestors.sort((a, b) => b.match_score - a.match_score);\n\nreturn matchedInvestors.map(inv => ({ json: inv }));"
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560104",
+      "name": "Code — Matching Algorithm",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [910, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-matches",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560105",
+      "name": "IF — Matches Qualificados?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1130, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"model\": \"claude-haiku-3-5\",\n  \"max_tokens\": 500,\n  \"system\": \"Você é Sofia, consultora de investimento sénior da Agency Group (AMI 22506). Escreve alertas de propriedade para investidores qualificados: profissionais, concisos, focados nos números e nas razões do match. Nunca genérico, sempre personalizado.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Cria um alerta de propriedade para este investidor.\\n\\nInvestidor:\\n- Nome: {{ $json.full_name }}\\n- Budget máximo: €{{ $json.max_budget }}\\n- Risk profile: {{ $json.risk_profile }}\\n- Investment horizon: {{ $json.investment_horizon }}\\n- Match score: {{ $json.match_score }}/100\\n- Razões do match: {{ JSON.stringify($json.match_reasons) }}\\n- Idioma: {{ $json.language_detected || 'pt' }}\\n\\nPropriedade:\\n- Título: {{ $json.property_title }}\\n- Preço: €{{ $json.property_price }}\\n- Zona: {{ $json.property_zone }}\\n- Tipo: {{ $json.property_type }}\\n- Yield potencial: {{ $json.property_yield }}%\\n- Área: {{ $json.property_area }}m²\\n\\nResponde APENAS em JSON válido (sem markdown):\\n{\\\"whatsapp_alert\\\": \\\"mensagem WA até 300 chars, começa com nome do investidor, menciona 1-2 dados chave\\\",\\\"email_subject\\\": \\\"assunto email até 65 chars com urgência\\\",\\\"email_intro\\\": \\\"parágrafo HTML de abertura personalizado 2-3 frases\\\",\\\"match_summary\\\": \\\"resumo das razões do match em 1 frase para o agente\\\"}\"\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560106",
+      "name": "Claude Haiku — Alert Personalizado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1350, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "anthropic-api-key-header",
+          "name": "Anthropic API Key Header"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude investor alert and merge with investor/property data\nconst investor = $('Code — Matching Algorithm').item.json;\nconst rawResponse = $input.item.json;\n\nlet claudeText = '';\ntry {\n  claudeText = rawResponse.content?.[0]?.text || rawResponse.text || '{}';\n} catch (e) {\n  claudeText = '{}';\n}\n\nlet alert;\ntry {\n  const cleaned = claudeText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  alert = JSON.parse(cleaned);\n} catch (e) {\n  const firstName = investor.full_name?.split(' ')[0] || 'caro investidor';\n  alert = {\n    whatsapp_alert: `${firstName}, temos uma oportunidade que corresponde ao seu perfil: ${investor.property_title} — €${(investor.property_price/1000).toFixed(0)}K em ${investor.property_zone}. Match: ${investor.match_score}/100.`,\n    email_subject: `Oportunidade de investimento — ${investor.property_zone} — Agency Group`,\n    email_intro: `<p>Caro/a ${investor.full_name},</p><p>Identificámos uma oportunidade que corresponde ao seu perfil de investimento com um score de match de ${investor.match_score}/100.</p>`,\n    match_summary: investor.match_reasons?.join(', ') || 'Match automático'\n  };\n}\n\nreturn [{\n  json: {\n    ...investor,\n    whatsapp_alert: alert.whatsapp_alert,\n    email_subject: alert.email_subject,\n    email_intro: alert.email_intro,\n    match_summary: alert.match_summary\n  }\n}];"
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560107",
+      "name": "Code — Parse Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1570, 200]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $json.whatsapp_alert }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560108",
+      "name": "WhatsApp — Alert Investidor",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1790, 100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "Agency Group Investimentos <noreply@agencygroup.pt>",
+        "to": "={{ $json.email }}",
+        "subject": "={{ $json.email_subject }}",
+        "html": "=<div style=\"font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; background: #ffffff;\">\n  <div style=\"background: #1c4a35; padding: 28px 32px; border-radius: 4px 4px 0 0;\">\n    <h1 style=\"color: #c9a96e; margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;\">Alerta de Investimento</h1>\n    <p style=\"color: rgba(255,255,255,0.6); margin: 6px 0 0 0; font-size: 12px; letter-spacing: 0.5px;\">Agency Group | AMI 22506 | Confidencial</p>\n  </div>\n  <div style=\"padding: 32px; background: #fff; border: 1px solid #eee; border-top: none;\">\n    {{ $json.email_intro }}\n    <div style=\"background: #f8f6f0; border-left: 4px solid #c9a96e; padding: 20px; margin: 24px 0; border-radius: 0 4px 4px 0;\">\n      <p style=\"margin: 0 0 12px 0; font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;\">Detalhe da Oportunidade</p>\n      <p style=\"margin: 0 0 6px 0; font-size: 20px; font-weight: bold; color: #1c4a35;\">{{ $json.property_title }}</p>\n      <p style=\"margin: 0 0 4px 0; font-size: 15px; color: #333;\">Preço: <strong>€{{ ($json.property_price).toLocaleString('pt-PT') }}</strong></p>\n      <p style=\"margin: 0 0 4px 0; font-size: 14px; color: #555;\">Zona: {{ $json.property_zone }} | Tipo: {{ $json.property_type }}</p>\n      <p style=\"margin: 0 0 4px 0; font-size: 14px; color: #555;\">Yield potencial: <strong style=\"color: #1c4a35;\">{{ $json.property_yield }}%</strong> | Área: {{ $json.property_area }}m²</p>\n      <p style=\"margin: 12px 0 0 0; font-size: 13px; color: #c9a96e; font-weight: bold;\">Match Score: {{ $json.match_score }}/100</p>\n    </div>\n    <p style=\"font-size: 14px; color: #333;\"><strong>Razões do match:</strong> {{ Array.isArray($json.match_reasons) ? $json.match_reasons.join(' · ') : $json.match_reasons }}</p>\n    <a href=\"mailto:carlos@agencygroup.pt?subject=Interesse: {{ $json.property_title }}\" style=\"display: inline-block; margin-top: 20px; background: #1c4a35; color: #c9a96e; padding: 14px 28px; text-decoration: none; border-radius: 3px; font-size: 14px; font-weight: 600; letter-spacing: 0.5px;\">Quero Saber Mais</a>\n    <hr style=\"margin: 28px 0; border: none; border-top: 1px solid #f0f0f0;\">\n    <p style=\"font-size: 11px; color: #aaa; margin: 0;\">Agency Group | AMI 22506 | Lisboa, Portugal<br>Alerta exclusivo enviado com base no seu perfil de investimento registado.</p>\n  </div>\n</div>",
+        "options": {}
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560109",
+      "name": "Resend — Email Alert Investidor",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1790, 240],
+      "credentials": {
+        "smtp": {
+          "id": "resend-smtp",
+          "name": "Resend SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO notifications (contact_id, type, title, body, metadata, sent_at, created_at)\nVALUES (\n  '{{ $json.contact_id }}',\n  'investor_alert',\n  'Nova oportunidade de investimento: {{ $json.property_title }}',\n  '{{ $json.whatsapp_alert }}',\n  '{\"property_id\": \"{{ $json.property_id }}\", \"match_score\": {{ $json.match_score }}, \"channels\": [\"whatsapp\", \"email\"]}',\n  NOW(),\n  NOW()\n);\nINSERT INTO investment_alerts (investor_profile_id, property_id, match_score, match_reasons, alerted_at)\nVALUES (\n  '{{ $json.investor_profile_id }}',\n  '{{ $json.property_id }}',\n  {{ $json.match_score }},\n  '{{ JSON.stringify($json.match_reasons) }}',\n  NOW()\n)\nON CONFLICT (investor_profile_id, property_id) DO NOTHING;",
+        "options": {}
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560110",
+      "name": "Supabase — Log Notificação",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2010, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "activities",
+        "columns": "contact_id,type,description,metadata,created_at",
+        "values": "={{ $json.contact_id }},investor_alert,Alerta de propriedade enviado via Workflow D,={{ JSON.stringify({property_id: $json.property_id, property_title: $json.property_title, match_score: $json.match_score, channels: ['whatsapp','email']}) }},={{ new Date().toISOString() }}",
+        "options": {}
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560111",
+      "name": "Supabase — Log Activity",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2230, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all alerted investors for Slack summary\nconst allItems = $input.all();\nconst investorsAlerted = allItems.map(i => ({\n  name: i.json.full_name,\n  match_score: i.json.match_score,\n  contact_id: i.json.contact_id\n}));\n\nconst property = {\n  id: allItems[0]?.json.property_id,\n  title: allItems[0]?.json.property_title,\n  price: allItems[0]?.json.property_price,\n  zone: allItems[0]?.json.property_zone\n};\n\nreturn [{\n  json: {\n    property_id: property.id,\n    property_title: property.title,\n    property_price: property.price,\n    property_zone: property.zone,\n    matches_count: investorsAlerted.length,\n    investors_alerted: investorsAlerted,\n    executed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560112",
+      "name": "Code — Agregar Alertas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2450, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"text\": \"Nova propriedade alerta investidores\",\n  \"blocks\": [\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Nova Propriedade — {{ $json.matches_count }} Investidores Alertados*\\n*Propriedade:* {{ $json.property_title }}\\n*Preço:* €{{ $json.property_price }} | *Zona:* {{ $json.property_zone }}\\n*Investidores:* {{ $json.investors_alerted.map(i => i.name + ' (' + i.match_score + 'pts)').join(', ') }}\"\n      }\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560113",
+      "name": "Slack — Alerta Match",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2670, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"property_id\": \"{{ $('Code — Agregar Alertas').item.json.property_id }}\",\n  \"matches\": {{ $('Code — Agregar Alertas').item.json.matches_count }},\n  \"investors_alerted\": {{ JSON.stringify($('Code — Agregar Alertas').item.json.investors_alerted) }}\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560114",
+      "name": "Respond — Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2890, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"no_matches\",\n  \"property_id\": \"{{ $('Code — Validar Propriedade').item.json.id }}\",\n  \"matches\": 0,\n  \"message\": \"Nenhum investidor qualificado encontrado para esta propriedade\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "d1a2b3c4-e5f6-7890-abcd-ef1234560115",
+      "name": "Respond — Sem Matches",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1350, 440]
+    }
+  ],
+  "connections": {
+    "Webhook — Nova Propriedade": {
+      "main": [
+        [
+          {
+            "node": "Code — Validar Propriedade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Validar Propriedade": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Perfis de Investidor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Perfis de Investidor": {
+      "main": [
+        [
+          {
+            "node": "Code — Matching Algorithm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Matching Algorithm": {
+      "main": [
+        [
+          {
+            "node": "IF — Matches Qualificados?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Matches Qualificados?": {
+      "main": [
+        [
+          {
+            "node": "Claude Haiku — Alert Personalizado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Sem Matches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Haiku — Alert Personalizado": {
+      "main": [
+        [
+          {
+            "node": "Code — Parse Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Parse Alert": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp — Alert Investidor",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Resend — Email Alert Investidor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp — Alert Investidor": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Notificação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend — Email Alert Investidor": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Notificação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Log Notificação": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Log Activity": {
+      "main": [
+        [
+          {
+            "node": "Code — Agregar Alertas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Agregar Alertas": {
+      "main": [
+        [
+          {
+            "node": "Slack — Alerta Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack — Alerta Match": {
+      "main": [
+        [
+          {
+            "node": "Respond — Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Europe/Lisbon"
+  },
+  "versionId": "d4e5f6a7-b8c9-0123-defa-234567890103",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "agency-group-n8n"
+  },
+  "id": "workflow-d-investor-alert",
+  "tags": [
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-automation",
+      "name": "automation"
+    },
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-investors",
+      "name": "investors"
+    }
+  ]
+}
