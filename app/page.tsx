@@ -813,7 +813,7 @@ export default function Home() {
           <CurrencySelector />
           {isAgent
             ? <a href={(() => { try { const d = JSON.parse(localStorage.getItem('ag_auth')||'{}'); return d.token ? `/portal?token=${encodeURIComponent(d.token)}` : '/portal' } catch { return '/portal' } })()} className="nav-cta">Portal →</a>
-            : <a href="#" className="nav-cta" onClick={e=>{e.preventDefault();setAgModal(true)}}>Área Agentes</a>
+            : <a href="/portal" className="nav-cta">Área Agentes</a>
           }
           <button
             className={`nav-burger${menuOpen?' open':''}`}
@@ -840,7 +840,7 @@ export default function Home() {
           </div>
           {isAgent
             ? <a href="/portal" className="nav-drawer-cta">Portal Agentes →</a>
-            : <a href="#" className="nav-drawer-cta" onClick={e=>{e.preventDefault();setMenuOpen(false);document.body.style.overflow='';setAgModal(true)}}>Área Agentes</a>
+            : <a href="/portal" className="nav-drawer-cta">Área Agentes</a>
           }
         </nav>
       </div>
