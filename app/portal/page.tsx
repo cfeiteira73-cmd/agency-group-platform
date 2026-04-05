@@ -1047,7 +1047,7 @@ export default function Portal() {
         }
       } catch {}
     }
-    window.location.href = '/auth/login?callbackUrl=%2Fportal'
+    window.location.href = '/portal/login'
   }, [])
 
   // Load deals from localStorage
