@@ -1,8 +1,8 @@
 'use client'
 // =============================================================================
-// AGENCY GROUP — Global Live Data Hook v2.0
+// AGENCY GROUP — Global Live Data Hook v3.0
 // Loads real Supabase data into Zustand stores on portal mount
-// Covers: contacts, deals, properties, signals, activities, market_snapshots
+// Covers: contacts, deals, properties, signals, activities, market_data
 // =============================================================================
 
 import { useEffect, useRef } from 'react'
@@ -16,8 +16,7 @@ import { CHECKLISTS } from '../components/constants'
 export function useLiveData(): void {
   const { setCrmContacts } = useCRMStore()
   const { setDeals } = useDealStore()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const uiStore = useUIStore() as any
+  const { setProperties, setSignals, setActivities, setMarketSnapshots } = useUIStore()
   const loaded = useRef(false)
 
   useEffect(() => {
@@ -31,12 +30,12 @@ export function useLiveData(): void {
           fetch('/api/crm?limit=100'),
           fetch('/api/deals?limit=100'),
           fetch('/api/properties?limit=50'),
-          fetch('/api/radar/search?limit=20&status=new'),
-          fetch('/api/visitas/db?limit=50'),
-          fetch('/api/market-data?limit=20'),
+          fetch('/api/signals?limit=20&status=all'),
+          fetch('/api/activities?limit=50'),
+          fetch('/api/market-data'),
         ])
 
-        // Process contacts
+        // --- Contacts ---
         if (crmRes.status === 'fulfilled' && crmRes.value.ok) {
           const json = await crmRes.value.json() as { data: CRMContact[] }
           const data = json.data
@@ -46,7 +45,7 @@ export function useLiveData(): void {
           }
         }
 
-        // Process deals
+        // --- Deals ---
         if (dealsRes.status === 'fulfilled' && dealsRes.value.ok) {
           const json = await dealsRes.value.json() as { data: Deal[] }
           const data = json.data
@@ -61,43 +60,48 @@ export function useLiveData(): void {
           }
         }
 
-        // Properties — store in uiStore if available
+        // --- Properties ---
         if (propsRes.status === 'fulfilled' && propsRes.value.ok) {
-          const json = await propsRes.value.json() as { data: unknown[] }
-          const data = json.data
-          if (data && data.length > 0 && uiStore.setProperties) {
-            uiStore.setProperties(data)
+          const json = await propsRes.value.json() as { data?: unknown[]; properties?: unknown[] }
+          const data = json.data || json.properties
+          if (data && data.length > 0) {
+            setProperties(data)
             console.log(`[LiveData] ✓ ${data.length} properties loaded`)
           }
         }
 
-        // Signals — store in uiStore if available
+        // --- Signals ---
         if (signalsRes.status === 'fulfilled' && signalsRes.value.ok) {
           const json = await signalsRes.value.json() as { data?: unknown[]; signals?: unknown[] }
           const data = json.data || json.signals
-          if (data && data.length > 0 && uiStore.setSignals) {
-            uiStore.setSignals(data)
+          if (data && data.length > 0) {
+            setSignals(data)
             console.log(`[LiveData] ✓ ${data.length} signals loaded`)
           }
         }
 
-        // Activities — store in uiStore if available
+        // --- Activities ---
         if (activitiesRes.status === 'fulfilled' && activitiesRes.value.ok) {
           const json = await activitiesRes.value.json() as { data?: unknown[]; activities?: unknown[] }
           const data = json.data || json.activities
-          if (data && data.length > 0 && uiStore.setActivities) {
-            uiStore.setActivities(data)
+          if (data && data.length > 0) {
+            setActivities(data)
             console.log(`[LiveData] ✓ ${data.length} activities loaded`)
           }
         }
 
-        // Market snapshots — store in uiStore if available
+        // --- Market data ---
+        // /api/market-data returns { zones, national, luxury, updated_at }
         if (marketRes.status === 'fulfilled' && marketRes.value.ok) {
-          const json = await marketRes.value.json() as { data?: unknown[]; snapshots?: unknown[] }
-          const data = json.data || json.snapshots
-          if (data && data.length > 0 && uiStore.setMarketSnapshots) {
-            uiStore.setMarketSnapshots(data)
-            console.log(`[LiveData] ✓ ${data.length} market snapshots loaded`)
+          const json = await marketRes.value.json() as {
+            zones?: unknown[]
+            data?: unknown[]
+            snapshots?: unknown[]
+          }
+          const data = json.data || json.snapshots || json.zones
+          if (data && (data as unknown[]).length > 0) {
+            setMarketSnapshots(data as unknown[])
+            console.log(`[LiveData] ✓ ${(data as unknown[]).length} market zones loaded`)
           }
         }
 
@@ -107,5 +111,5 @@ export function useLiveData(): void {
     }
 
     bootstrap()
-  }, [setCrmContacts, setDeals, uiStore])
+  }, [setCrmContacts, setDeals, setProperties, setSignals, setActivities, setMarketSnapshots])
 }
