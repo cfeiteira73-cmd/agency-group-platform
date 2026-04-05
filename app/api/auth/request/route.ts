@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 
-const BASE_URL = process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt'
-const ADMIN_EMAIL = 'geral@agencygroup.pt'
+const BASE_URL = process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.agencygroup.pt'
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'geral@agencygroup.pt'
 const FROM = 'Agency Group <noreply@agencygroup.pt>'
 
 function makeToken(payload: object, secret: string): string {
@@ -15,7 +15,9 @@ function makeToken(payload: object, secret: string): string {
 export async function POST(req: NextRequest) {
   const SECRET = process.env.AUTH_SECRET!
   const resend = new Resend(process.env.RESEND_API_KEY)
-  const ALLOWED = [ADMIN_EMAIL]
+  // Build allowed list from env var (comma-separated) + hardcoded admin
+  const envAllowed = (process.env.ALLOWED_AGENTS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+  const ALLOWED = [...new Set([ADMIN_EMAIL.toLowerCase(), ...envAllowed])]
 
   try {
     const { email } = await req.json()
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
     // Pre-approved agents: skip admin approval, send magic link directly
     if (ALLOWED.includes(email.toLowerCase())) {
       const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
-      const magicLink = `${BASE_URL}/?token=${magicToken}`
+      const magicLink = `${BASE_URL}/portal?token=${magicToken}`
       const { data: magicData, error: magicErr } = await resend.emails.send({
         from: FROM,
         to: email,
