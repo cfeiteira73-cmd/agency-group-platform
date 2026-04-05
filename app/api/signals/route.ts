@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ data: [], source: 'error', error: error?.message }, { headers: headers() })
     }
 
-    return NextResponse.json({ data, total: data.length, source: 'supabase' }, { headers: headers() })
+    return NextResponse.json({ data, signals: data, total: data.length, source: 'supabase' }, { headers: headers() })
   } catch (err) {
     console.error('[signals GET]', err)
     return NextResponse.json({ data: [], source: 'error' }, { status: 500, headers: headers() })
