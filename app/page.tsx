@@ -752,7 +752,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* MODAL ÁREA AGENTES */}
+      {/* MODAL ÁREA AGENTES — nunca abre, código inactivo */}
       {agModal && (
         <div style={{position:'fixed',inset:0,zIndex:2000,background:'rgba(12,31,21,.92)',backdropFilter:'blur(24px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}} onClick={closeAgModal}>
           <div style={{background:'#0c1f15',border:'1px solid rgba(201,169,110,.18)',padding:'52px 44px',maxWidth:'420px',width:'100%',position:'relative',boxShadow:'0 40px 100px rgba(0,0,0,.5)'}} onClick={e=>e.stopPropagation()}>
@@ -1313,8 +1313,7 @@ export default function Home() {
           <h2 className="ag-h2">Portal do Consultor</h2>
           <p className="ag-sub">Pipeline · CRM · Deal Radar · Relatórios · Off-Market.</p>
           <div className="ag-form">
-            <input type="email" className="ag-inp" id="agEmail" placeholder="email@agencygroup.pt"/>
-            <button className="ag-btn" onClick={agLogin}>Entrar</button>
+            <a href="/portal" className="ag-btn" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',textDecoration:'none'}}>Aceder ao Portal →</a>
           </div>
           <div className="ag-ami">Agency Group · Mediação Imobiliária Lda · AMI 22506</div>
         </div>
