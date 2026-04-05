@@ -1416,7 +1416,7 @@ export default function PortalPipeline({
 }: PortalPipelineProps) {
   const { darkMode } = useUIStore()
   const {
-    deals,
+    deals, setDeals,
     activeDeal, setActiveDeal,
     showNewDeal, setShowNewDeal,
     newDeal, setNewDeal,
@@ -1449,11 +1449,14 @@ export default function PortalPipeline({
         if (res.ok) {
           const { data } = await res.json()
           if (!cancelled && data && data.length > 0) {
-            // Group by stage and update the store
-            data.forEach((d: Deal) => {
-              const existing = deals.find(ex => ex.id === d.id)
-              if (!existing) onChangeFase(d.id, d.fase)
-            })
+            const fullChecklist = Object.fromEntries(
+              Object.keys(CHECKLISTS).map(k => [k, CHECKLISTS[k].map(() => false)])
+            )
+            const liveDeals = data.map((d: Deal) => ({
+              ...d,
+              checklist: fullChecklist,
+            }))
+            setDeals(liveDeals)
             setLiveDataSource('live')
           }
         }
