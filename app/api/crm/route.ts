@@ -311,7 +311,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       if (!error && data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = (data as any[]).map((row) => ({
-          id: String(row.id),
+          id: typeof row.id === 'number' ? row.id : parseInt(String(row.id), 10) || 0,
           name: row.full_name || row.name || '',
           email: row.email || '',
           phone: row.phone || '',
@@ -370,16 +370,41 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const total  = filtered.length
     const sliced = filtered.slice((page - 1) * limit, page * limit)
 
-    const response: PaginatedResponse<ContactRow> = {
-      data:   sliced,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mappedMock = sliced.map((row: any) => ({
+      id: typeof row.id === 'number' ? row.id : parseInt(String(row.id), 10) || 0,
+      name: row.full_name || row.name || '',
+      email: row.email || '',
+      phone: row.phone || '',
+      nationality: row.nationality || '',
+      budgetMin: row.budget_min || 0,
+      budgetMax: row.budget_max || 0,
+      tipos: Array.isArray(row.typologies_wanted) ? row.typologies_wanted : [],
+      zonas: Array.isArray(row.preferred_locations) ? row.preferred_locations : [],
+      status: row.status || 'lead',
+      notes: row.notes || '',
+      lastContact: row.last_contact_at || '',
+      nextFollowUp: row.next_followup_at || '',
+      dealRef: '',
+      origin: row.source || '',
+      createdAt: row.created_at || '',
+      language: row.language ? (row.language as string).toUpperCase() as CRMContact['language'] : undefined,
+      leadScore: row.lead_score || 0,
+      leadTier: row.lead_tier || null,
+      company: row.company || '',
+      jobTitle: row.job_title || '',
+      aiSummary: row.ai_summary || '',
+      tags: Array.isArray(row.tags) ? row.tags : [],
+    }))
+
+    return NextResponse.json({
+      data:   mappedMock,
       count:  total,
       page,
       limit,
       pages:  Math.ceil(total / limit),
       source: 'mock',
-    }
-
-    return NextResponse.json(response, { headers: rateLimitHeaders() })
+    }, { headers: rateLimitHeaders() })
   } catch (error) {
     console.error('[CRM GET]', error)
     return NextResponse.json(
