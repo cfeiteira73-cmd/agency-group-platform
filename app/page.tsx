@@ -305,10 +305,9 @@ export default function Home() {
       } catch { localStorage.removeItem('ag_auth') }
     }
 
-    // Redirected from /portal (session expired or no cookie) → open login modal
+    // Redirected from /portal (session expired or no cookie) → redirect to portal
     if (params.get('acesso') === 'required') {
-      setTimeout(() => setAgModal(true), 600)
-      window.history.replaceState({}, '', '/')
+      window.location.href = '/portal'
     }
   }, [])
 
@@ -1282,7 +1281,7 @@ export default function Home() {
 
             {/* CTA */}
             <button
-              onClick={()=>setAgModal(true)}
+              onClick={()=>window.location.href='/portal'}
               style={{display:'inline-flex',alignItems:'center',gap:'14px',padding:'17px 44px',background:'transparent',border:'1px solid rgba(201,169,110,.42)',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.47rem',letterSpacing:'.2em',textTransform:'uppercase',cursor:'pointer',transition:'all .25s',fontWeight:400,width:'fit-content'}}
               onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(201,169,110,.09)';(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.75)'}}
               onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent';(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.42)'}}
