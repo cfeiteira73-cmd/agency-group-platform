@@ -1,5 +1,8 @@
-const CACHE_NAME = 'agency-group-v2';
-const STATIC_ASSETS = ['/', '/en', '/fr', '/de', '/zh', '/relatorio-2026', '/blog'];
+// Agency Group Service Worker v3.0
+// Caching + Web Push Notifications + Background Sync
+
+const CACHE_NAME = 'agency-group-v3';
+const STATIC_ASSETS = ['/', '/en', '/fr', '/de', '/es', '/it', '/zh', '/relatorio-2026', '/blog'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -19,6 +22,8 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Skip non-http(s) requests
+  if (!event.request.url.startsWith('http')) return;
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request).then(response => {
@@ -31,3 +36,76 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// ─── Push Notification Handling ──────────────────────────────────────────────
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: 'Agency Group', body: event.data.text() };
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/icon-192.png',
+    badge: '/badge-72.png',
+    image: data.image,
+    data: { url: data.url || '/' },
+    actions: data.actions || [],
+    tag: data.tag || 'ag-notification',
+    requireInteraction: data.urgent || false,
+    vibrate: [100, 50, 100],
+    silent: false,
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Agency Group', options)
+  );
+});
+
+// ─── Notification Click Handling ─────────────────────────────────────────────
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url === url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
+});
+
+// ─── Background Sync (offline actions) ───────────────────────────────────────
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-contacts') {
+    event.waitUntil(syncOfflineActions());
+  }
+});
+
+async function syncOfflineActions() {
+  try {
+    const cache = await caches.open('ag-offline-actions');
+    const requests = await cache.keys();
+    return Promise.all(
+      requests.map(async req => {
+        try {
+          await fetch(req.clone());
+          await cache.delete(req);
+        } catch {
+          // Keep for next sync attempt
+        }
+      })
+    );
+  } catch {
+    // Fail silently
+  }
+}

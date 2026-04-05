@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { z } from 'zod'
+
+const DealRiskSchema = z.object({
+  deal: z.object({
+    imovel:        z.string().optional(),
+    comprador:     z.string().optional(),
+    valor:         z.string().optional(),
+    fase:          z.string().optional(),
+    dataCPCV:      z.string().optional(),
+    dataEscritura: z.string().optional(),
+    financiamento: z.string().optional(),
+    notas:         z.string().optional(),
+  }),
+})
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -8,7 +22,12 @@ const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
   try {
-    const { deal } = await req.json()
+    const raw = await req.json()
+    const parsed = DealRiskSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
+    }
+    const { deal } = parsed.data
 
     const prompt = `És um consultor sénior de imobiliário de luxo da Agency Group (AMI 22506) a analisar riscos num negócio activo.
 

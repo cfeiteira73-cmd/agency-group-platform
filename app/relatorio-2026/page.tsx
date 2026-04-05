@@ -204,17 +204,17 @@ export default function Relatorio2026() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:'Jost',sans-serif;background:#f4f0e6;-webkit-font-smoothing:antialiased}
+        body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;-webkit-font-smoothing:antialiased}
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(14,14,13,.15)}
-        .r-btn{background:#1c4a35;color:#f4f0e6;border:none;padding:14px 32px;font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+        .r-btn{background:#1c4a35;color:#f4f0e6;border:none;padding:14px 32px;font-family:var(--font-dm-mono),monospace;font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:background .2s}
         .r-btn:hover{background:#163d2c}
-        .r-inp{width:100%;background:#fff;border:1px solid rgba(14,14,13,.15);padding:13px 18px;font-family:'Jost',sans-serif;font-size:.9rem;color:#0e0e0d;outline:none;transition:border .2s}
+        .r-inp{width:100%;background:#fff;border:1px solid rgba(14,14,13,.15);padding:13px 18px;font-family:var(--font-jost),sans-serif;font-size:.9rem;color:#0e0e0d;outline:none;transition:border .2s}
         .r-inp:focus{border-color:#1c4a35}
-        .r-sel{background:#fff;border:1px solid rgba(14,14,13,.12);padding:10px 14px;font-family:'DM Mono',monospace;font-size:.5rem;color:#0e0e0d;outline:none;cursor:pointer;letter-spacing:.06em}
-        .zone-btn{padding:10px 20px;font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(244,240,230,.15);background:none;cursor:pointer;color:rgba(244,240,230,.45);transition:all .2s}
+        .r-sel{background:#fff;border:1px solid rgba(14,14,13,.12);padding:10px 14px;font-family:var(--font-dm-mono),monospace;font-size:.5rem;color:#0e0e0d;outline:none;cursor:pointer;letter-spacing:.06em}
+        .zone-btn{padding:10px 20px;font-family:var(--font-dm-mono),monospace;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(244,240,230,.15);background:none;cursor:pointer;color:rgba(244,240,230,.45);transition:all .2s}
         .zone-btn:hover{border-color:rgba(244,240,230,.35);color:rgba(244,240,230,.7)}
         .zone-btn.active{background:rgba(201,169,110,.15);border-color:#c9a96e;color:#c9a96e}
-        .light-zone-btn{padding:10px 20px;font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(14,14,13,.12);background:none;cursor:pointer;color:rgba(14,14,13,.4);transition:all .2s}
+        .light-zone-btn{padding:10px 20px;font-family:var(--font-dm-mono),monospace;font-size:.48rem;letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(14,14,13,.12);background:none;cursor:pointer;color:rgba(14,14,13,.4);transition:all .2s}
         .light-zone-btn:hover{border-color:rgba(14,14,13,.25);color:rgba(14,14,13,.7)}
         .light-zone-btn.active{background:rgba(28,74,53,.06);border-color:#1c4a35;color:#1c4a35}
         .stat-bar{height:4px;background:rgba(201,169,110,.2);border-radius:2px;overflow:hidden;margin-top:8px}
@@ -223,12 +223,12 @@ export default function Relatorio2026() {
         .ipri-tier-gold{background:rgba(201,169,110,.06);border:1px solid rgba(201,169,110,.2)}
         .ipri-tier-silver{background:rgba(244,240,230,.03);border:1px solid rgba(244,240,230,.1)}
         .calc-input-group{display:flex;flex-direction:column;gap:6px}
-        .calc-label{font-family:'DM Mono',monospace;font-size:.44rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(14,14,13,.45)}
+        .calc-label{font-family:var(--font-dm-mono),monospace;font-size:.44rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(14,14,13,.45)}
         .calc-metric{background:#fff;border:1px solid rgba(14,14,13,.08);padding:16px 20px;border-left:3px solid #c9a96e}
         .calc-metric-green{background:#fff;border:1px solid rgba(14,14,13,.08);padding:16px 20px;border-left:3px solid #1c4a35}
         .pipe-progress{height:3px;background:rgba(244,240,230,.08);border-radius:2px;overflow:hidden;margin-top:6px}
         .pipe-progress-fill{height:100%;background:#c9a96e;border-radius:2px}
-        .pipe-badge{display:inline-block;padding:3px 8px;font-family:'DM Mono',monospace;font-size:.4rem;letter-spacing:.08em;text-transform:uppercase}
+        .pipe-badge{display:inline-block;padding:3px 8px;font-family:var(--font-dm-mono),monospace;font-size:.4rem;letter-spacing:.08em;text-transform:uppercase}
         @media (max-width:768px){
           section{padding:48px 24px!important}
           footer{padding:24px!important}

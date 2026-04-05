@@ -1,4 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const FinancingSchema = z.object({
+  country_code:     z.string().toUpperCase().default('OTHER'),
+  montante:         z.coerce.number().min(50_000, 'Montante mínimo €50.000'),
+  rendimento_anual: z.coerce.number().min(0).optional().default(0),
+  prazo:            z.coerce.number().int().min(5).max(40).optional().default(25),
+})
 
 // ─── Country-specific mortgage criteria for Portugal property ─────────────────
 // Based on Portuguese bank underwriting guidelines for non-resident buyers (2026)
@@ -174,15 +182,12 @@ function calcPMT(principal: number, annualRate: number, months: number): number 
 // ─── POST /api/financing ─────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const country_code = (String(body.country_code ?? 'OTHER')).toUpperCase()
-    const montante     = parseFloat(body.montante ?? 0)
-    const rendimento   = parseFloat(body.rendimento_anual ?? 0)
-    const prazo        = Math.min(Math.max(parseInt(body.prazo ?? 25), 5), 40)
-
-    if (montante < 50_000) {
-      return NextResponse.json({ error: 'Montante mínimo €50.000' }, { status: 400 })
+    const raw = await req.json()
+    const parsed = FinancingSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
     }
+    const { country_code, montante, rendimento_anual: rendimento, prazo } = parsed.data
 
     const profile = COUNTRY_PROFILES[country_code] ?? COUNTRY_PROFILES.OTHER
 

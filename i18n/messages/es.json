@@ -1,0 +1,118 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "properties": "Propiedades",
+    "portal": "Portal",
+    "contact": "Contacto",
+    "about": "Sobre Nosotros"
+  },
+  "hero": {
+    "tagline": "Lisboa · Portugal · AMI 22506",
+    "title": "Propiedades de Lujo en Portugal",
+    "subtitle": "Compramos, vendemos y gestionamos propiedades premium en Lisboa, Cascais, Comporta, Algarve y Madeira.",
+    "cta_explore": "Explorar Propiedades",
+    "cta_visit": "Agendar Visita",
+    "cta_contact": "Contactar Consultor"
+  },
+  "search": {
+    "placeholder": "Describa la propiedad que busca...",
+    "zona": "Zona",
+    "tipo": "Tipo",
+    "preco": "Precio",
+    "quartos": "Habitaciones",
+    "button": "Buscar"
+  },
+  "property": {
+    "price": "Precio",
+    "area": "Superficie",
+    "bedrooms": "Habitaciones",
+    "bathrooms": "Baños",
+    "energy": "Certificado Energético",
+    "schedule_visit": "Agendar Visita",
+    "request_info": "Solicitar Información",
+    "share": "Compartir",
+    "cma": "Análisis de Mercado",
+    "off_market": "Fuera de Mercado",
+    "exclusive": "Exclusivo",
+    "featured": "Destacado",
+    "new": "Nuevo"
+  },
+  "calculators": {
+    "imt_title": "Calculadora IMT + Impuesto de Actos Jurídicos",
+    "imt_valor": "Valor de la Propiedad",
+    "imt_tipo_hpp": "Vivienda Habitual",
+    "imt_tipo_second": "Segunda Vivienda",
+    "imt_tipo_invest": "Inversión",
+    "imt_calculate": "Calcular",
+    "imt_total": "Total a Pagar",
+    "imt_savings": "Ahorro vs. Segunda Vivienda",
+    "imt_exempt": "Exento de IMT",
+    "mortgage_title": "Simulador de Hipoteca",
+    "avm_title": "Valoración Automática (AVM)",
+    "nhr_title": "Calculadora NHR / IFICI"
+  },
+  "crm": {
+    "contacts": "Contactos",
+    "new_contact": "Nuevo Contacto",
+    "lead_score": "Puntuación Lead",
+    "last_contact": "Último Contacto",
+    "budget": "Presupuesto",
+    "status_lead": "Lead",
+    "status_prospect": "Prospecto",
+    "status_cliente": "Cliente",
+    "status_vip": "VIP",
+    "email_draft": "Redactar Email",
+    "meeting_prep": "Preparar Reunión",
+    "next_step": "Siguiente Paso",
+    "whatsapp": "WhatsApp"
+  },
+  "pipeline": {
+    "title": "Pipeline de Negocios",
+    "stage_0": "Captación",
+    "stage_1": "Oferta Enviada",
+    "stage_2": "Oferta Aceptada",
+    "stage_3": "Due Diligence",
+    "stage_4": "Contrato Firmado",
+    "stage_5": "Financiación",
+    "stage_6": "Escritura Programada",
+    "stage_7": "Escritura Completada",
+    "new_deal": "Nuevo Negocio"
+  },
+  "notifications": {
+    "new_lead": "Nuevo lead: {name} — €{budget}",
+    "visit_tomorrow": "Visita mañana: {property} a las {time}",
+    "deal_update": "El negocio {ref} avanzó a {stage}",
+    "follow_up": "Seguimiento pendiente: {name}",
+    "enable_notifications": "Activar Notificaciones",
+    "notifications_enabled": "Notificaciones activadas",
+    "notifications_denied": "Notificaciones bloqueadas en el navegador"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "loading": "Cargando...",
+    "error": "Ha ocurrido un error. Por favor, inténtelo de nuevo.",
+    "success": "Guardado correctamente",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "export_pdf": "Exportar PDF",
+    "export_csv": "Exportar CSV",
+    "share": "Compartir",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "all": "Todos",
+    "none": "Ninguno",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "footer": {
+    "ami": "AMI 22506",
+    "address": "Lisboa, Portugal",
+    "phone": "+351 910 000 000",
+    "email": "geral@agencygroup.pt",
+    "privacy": "Política de Privacidad",
+    "terms": "Términos y Condiciones",
+    "rights": "Todos los derechos reservados"
+  }
+}

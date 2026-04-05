@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
+import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
 
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const limit = rateLimit(ip, { maxAttempts: 10, windowMs: 15 * 60 * 1000 })
+  if (!limit.success) {
+    const minutes = getRetryAfterMinutes(limit.reset)
+    return NextResponse.json(
+      { error: `Demasiadas tentativas. Tente novamente em ${minutes} minuto${minutes !== 1 ? 's' : ''}.` },
+      { status: 429, headers: { 'Retry-After': String(minutes * 60) } }
+    )
+  }
+
   const SECRET = process.env.AUTH_SECRET!
   try {
     const token = req.nextUrl.searchParams.get('token')

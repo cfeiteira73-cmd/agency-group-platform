@@ -76,3 +76,32 @@ export async function upsertProperty(property: Record<string, unknown>) {
   if (error) { console.error('upsertProperty error:', error); return null }
   return data?.[0]
 }
+
+// Optimistic update helper
+export function optimisticUpdate<T extends { id: string | number }>(
+  items: T[],
+  updated: T
+): T[] {
+  return items.map(item => item.id === updated.id ? updated : item)
+}
+
+// Paginated query
+export async function paginatedQuery<T>(
+  table: string,
+  page: number = 1,
+  pageSize: number = 20,
+  filters?: Record<string, unknown>
+): Promise<{ data: T[]; total: number; page: number; pageSize: number }> {
+  if (!supabase) throw new Error('Supabase client not available')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query: any = supabase.from(table).select('*', { count: 'exact' })
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) query = query.eq(key, value as string)
+    })
+  }
+  const from = (page - 1) * pageSize
+  const { data, error, count } = await query.range(from, from + pageSize - 1).order('created_at', { ascending: false })
+  if (error) throw error
+  return { data: (data ?? []) as T[], total: count ?? 0, page, pageSize }
+}

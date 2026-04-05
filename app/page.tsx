@@ -61,8 +61,8 @@ function HomeMortgage() {
   return (
     <div style={{display:'grid',gridTemplateColumns:'1fr 1.4fr',gap:'40px',alignItems:'start'}}>
       {/* ── Form ── */}
-      <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'28px',boxShadow:'0 8px 40px rgba(14,14,13,.06)'}}>
-        <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:400,fontSize:'1.2rem',color:'#0e0e0d',marginBottom:'16px'}}>Simulação Rápida</h3>
+      <div style={{background:'#fff',borderTop:'2px solid #1c4a35',padding:'32px',boxShadow:'0 12px 56px rgba(14,14,13,.08)'}}>
+        <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.35rem',color:'#0e0e0d',marginBottom:'16px',letterSpacing:'-.01em'}}>Simulação · Crédito Habitação</h3>
         {/* Persona presets */}
         <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'18px'}}>
           {PERSONAS.map(p=>(
@@ -79,7 +79,7 @@ function HomeMortgage() {
         <div style={{display:'grid',gap:'14px'}}>
           <div>
             <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Valor do Imóvel (€)</label>
-            <input type="number" value={montante} onChange={e=>setMontante(e.target.value)} placeholder="ex: 500000" style={{width:'100%',padding:'9px 12px',border:'1px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d',boxSizing:'border-box'}} />
+            <input type="number" value={montante} onChange={e=>setMontante(e.target.value)} placeholder="ex: 500000" style={{width:'100%',padding:'10px 0',border:'none',borderBottom:'1.5px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d',boxSizing:'border-box',background:'transparent',transition:'border-color .2s'}} />
           </div>
           <div>
             <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Entrada — {entrada}% {montante&&Number(montante)>0?`(${fmtM(Number(montante)*entrada/100)})`:''}  </label>
@@ -95,17 +95,17 @@ function HomeMortgage() {
           </div>
           <div>
             <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Finalidade</label>
-            <select value={uso} onChange={e=>setUso(e.target.value as 'habitacao_propria'|'investimento')} style={{width:'100%',padding:'9px 12px',border:'1px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'.88rem',outline:'none',background:'#fff',color:'#0e0e0d'}}>
+            <select value={uso} onChange={e=>setUso(e.target.value as 'habitacao_propria'|'investimento')} style={{width:'100%',padding:'10px 0',border:'none',borderBottom:'1.5px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'.88rem',outline:'none',background:'transparent',color:'#0e0e0d',appearance:'none',cursor:'pointer'}}>
               <option value="habitacao_propria">Habitação Própria Permanente</option>
               <option value="investimento">Investimento / 2ª Habitação</option>
             </select>
           </div>
           <div>
             <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Rendimento Anual (€) — DSTI</label>
-            <input type="number" value={rendimento} onChange={e=>setRendimento(e.target.value)} placeholder="ex: 80000 — opcional" style={{width:'100%',padding:'9px 12px',border:'1px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d',boxSizing:'border-box'}} />
+            <input type="number" value={rendimento} onChange={e=>setRendimento(e.target.value)} placeholder="ex: 80000 — opcional" style={{width:'100%',padding:'10px 0',border:'none',borderBottom:'1.5px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d',boxSizing:'border-box',background:'transparent',transition:'border-color .2s'}} />
           </div>
-          <button onClick={()=>simulate()} disabled={loading||!montante} style={{width:'100%',padding:'12px',background:'#c9a96e',color:'#0c1f15',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',fontWeight:700,opacity:loading?0.6:1}}>
-            {loading?'A simular...':'Simular Crédito →'}
+          <button onClick={()=>simulate()} disabled={loading||!montante} style={{width:'100%',padding:'14px',background:'#1c4a35',color:'#f4f0e6',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.16em',textTransform:'uppercase',cursor:'pointer',fontWeight:400,opacity:loading?0.6:1,marginTop:'8px',transition:'background .25s'}}>
+            {loading?'✦ A simular...':'Calcular →'}
           </button>
         </div>
       </div>
@@ -130,10 +130,10 @@ function HomeMortgage() {
             {/* Feature cards */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px',marginBottom:'28px'}}>
               {[
-                {icon:'📊',label:'Prestação mensal',sub:'TAN + TAEG exacto'},
-                {icon:'🏛',label:'IMT + IS + IMI',sub:'Custo total de aquisição'},
-                {icon:'📈',label:'4 cenários Euribor',sub:'Bear · Base · Bull · Mínimo'},
-                {icon:'📋',label:'Amortização 30 anos',sub:'Tabela anual completa'},
+                {icon:'◆',label:'Prestação mensal',sub:'TAN + TAEG exacto'},
+                {icon:'◇',label:'IMT + IS + IMI',sub:'Custo total de aquisição'},
+                {icon:'◈',label:'4 cenários Euribor',sub:'Bear · Base · Bull · Mínimo'},
+                {icon:'▲',label:'Amortização 30 anos',sub:'Tabela anual completa'},
               ].map(f=>(
                 <div key={f.label} style={{padding:'14px 16px',background:'rgba(244,240,230,.04)',border:'1px solid rgba(244,240,230,.08)'}}>
                   <div style={{fontSize:'.95rem',marginBottom:'5px'}}>{f.icon}</div>
@@ -162,16 +162,16 @@ function HomeMortgage() {
             <div style={{padding:'22px 26px',background:'#0c1f15',marginBottom:'12px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'16px'}}>
               <div>
                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>Prestação Mensal</div>
-                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:600,color:'#c9a96e',lineHeight:1}}>{fmtM(result.resultado.prestacao_mensal)}</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:400,color:'var(--gold)',lineHeight:1}}>{fmtM(result.resultado.prestacao_mensal)}</div>
               </div>
               <div>
                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAN</div>
-                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:600,color:'#f4f0e6',lineHeight:1}}>{result.resultado.tan_pct}%</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:300,color:'var(--cr)',lineHeight:1}}>{result.resultado.tan_pct}%</div>
                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.25)',marginTop:'2px'}}>Euribor {result.resultado.euribor_6m_pct}%</div>
               </div>
               <div>
                 <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAEG</div>
-                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:600,color:'#f4f0e6',lineHeight:1}}>{result.resultado.taeg_pct}%</div>
+                <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:300,color:'var(--cr)',lineHeight:1}}>{result.resultado.taeg_pct}%</div>
               </div>
             </div>
             {/* Key metrics */}
@@ -218,7 +218,7 @@ function HomeMortgage() {
                       <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'#0e0e0d',marginBottom:'1px'}}>{c.label}</div>
                       <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)'}}>TAN {c.tan_pct}%</div>
                     </div>
-                    <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:600,color:i===0?'#c9a96e':i===1?'#dc2626':'#1c4a35'}}>{fmtM(c.pmt)}<span style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)',fontWeight:400}}>/mês</span></div>
+                    <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:400,color:i===0?'var(--gold)':i===1?'#dc2626':'var(--g)'}}>{fmtM(c.pmt)}<span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.35)',fontWeight:400}}>/mês</span></div>
                   </div>
                 ))}
               </div>
@@ -259,6 +259,7 @@ function HomeMortgage() {
 
 export default function Home() {
   const [slideIdx, setSlideIdx] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [isAgent, setIsAgent] = useState(false)
   const [agModal, setAgModal] = useState(false)
@@ -335,9 +336,22 @@ export default function Home() {
       el.addEventListener('focus',()=>document.body.classList.add('hovering'))
       el.addEventListener('blur',()=>document.body.classList.remove('hovering'))
     })
-    document.querySelectorAll('.hl,.market-section,.mq,.ag-section').forEach(el => {
+    document.querySelectorAll('.hl,.market-section,.mq,.ag-section,.test-section,.cred-section,.nhr-section,.cpcv-section').forEach(el => {
       el.addEventListener('mouseenter',()=>document.body.classList.add('on-dark'))
       el.addEventListener('mouseleave',()=>document.body.classList.remove('on-dark'))
+    })
+    // Zone cards — custom expanded cursor with zone name
+    const cTxt = document.getElementById('cTxt')
+    document.querySelectorAll('.zc').forEach(el => {
+      const nome = el.querySelector('.zc-nm')?.textContent || ''
+      el.addEventListener('mouseenter', () => {
+        if (cTxt) cTxt.textContent = nome
+        document.body.classList.add('on-zone')
+        document.body.classList.remove('hovering', 'on-dark')
+      })
+      el.addEventListener('mouseleave', () => {
+        document.body.classList.remove('on-zone')
+      })
     })
     const onKey = (e:KeyboardEvent) => {
       if (e.key==='Escape') {
@@ -362,32 +376,63 @@ export default function Home() {
     document.body.style.overflow = 'hidden'
     const loader = loaderRef.current
     if (!loader) return
+    const loaderEl = loader
+    function finishLoader() {
+      if (loaderEl.classList.contains('done')) return
+      loaderEl.classList.add('done')
+      document.body.style.overflow = ''
+      setTimeout(heroEntrance, 150)
+    }
+    // Safety: force loader out after 4500ms (cinematic loader needs breathing room)
+    const ldrSafetyTimer = setTimeout(finishLoader, 4500)
+    // Loader — cinematic luxury entrance
+    gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })
+    gsap.set('#ldrG', { y: 40, opacity: 0, filter: 'blur(8px)' })
+    gsap.set('#ldrFill', { scaleX: 0, transformOrigin: 'left center' })
+    gsap.set('#ldrTxt', { opacity: 0, y: 12 })
     const ldrTL = gsap.timeline({
-      onComplete: () => {
-        loader.classList.add('done')
-        document.body.style.overflow = ''
-        setTimeout(heroEntrance, 200)
-      }
+      onComplete: () => { clearTimeout(ldrSafetyTimer); finishLoader() }
     })
     ldrTL
-      .to('#ldrA', { opacity: 1, duration: 0.5, ease: 'power2.out' })
-      .to('#ldrG', { opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.2')
-      .to('#ldrFill', { scaleX: 1, duration: 1.6, ease: 'power2.inOut' }, '-=0.3')
-      .to('#ldrTxt', { opacity: 1, duration: 0.4, ease: 'power2.out' }, '-=1')
-      .to(loader, { opacity: 0, duration: 0.6, ease: 'power2.inOut' }, '+=0.3')
+      .to('#ldrA', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' })
+      .to('#ldrG', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' }, '-=0.45')
+      .to('#ldrFill', { scaleX: 1, duration: 1.2, ease: 'power3.out' }, '-=0.4')
+      .to('#ldrTxt', { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, '-=0.9')
+      .to(loader, { opacity: 0, duration: 0.6, ease: 'power2.inOut', delay: 0.3 })
 
     // HERO ENTRANCE
     function heroEntrance() {
+      // Set initial hidden states (CSS no longer has them — progressive enhancement)
+      gsap.set('.hero-h1 .line-inner', { y: '115%' })
+      gsap.set('#hSub', { opacity: 0, y: 36, filter: 'blur(4px)' })
+      gsap.set('#hBtns', { opacity: 0, y: 32 })
+      gsap.set('#hStats', { opacity: 0, y: 24 })
+      gsap.set('#hScroll', { opacity: 0, y: 12 })
+      gsap.set('#searchBox', { opacity: 0, y: 28 })
       const tl = gsap.timeline()
       tl.fromTo('#hEye',
-          { clipPath: 'inset(0 100% 0 0)', opacity: 1 },
-          { clipPath: 'inset(0 0% 0 0)', duration: 0.8, ease: 'power3.out' })
-        .to('.hero-h1 .line-inner', { y: 0, duration: 0.9, stagger: 0.15, ease: 'power3.out' }, '-=0.3')
-        .to('#hSub', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '-=0.3')
-        .to('#hBtns', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, '-=0.2')
-        .to('#hStats', { opacity: 1, x: 0, duration: 0.7, ease: 'power2.out' }, '-=0.3')
-        .to('#hScroll', { opacity: 1, duration: 0.5 }, '-=0.2')
-        .to('#searchBox', { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, '-=0.3')
+          { clipPath: 'inset(0 100% 0 0)' },
+          { clipPath: 'inset(0 0% 0 0)', duration: 1.0, ease: 'power4.out' })
+        .to('.hero-h1 .line-inner', { y: 0, duration: 1.1, stagger: 0.14, ease: 'power4.out' }, '-=0.55')
+        .to('#hSub', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'power3.out' }, '-=0.4')
+        .to('#hBtns', { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, '-=0.35')
+        .to('#hStats', { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, '-=0.5')
+        .to('#searchBox', { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, '-=0.5')
+        .to('#hScroll', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '-=0.3')
+      // Hero stat counters — count up after entrance (varied durations = luxury weight)
+      ;[
+        { sel: '#hStats > div:nth-child(1) .hs-n', to: 169, pre: '', suf: 'K', dur: 2.6 },
+        { sel: '#hStats > div:nth-child(2) .hs-n', to: 17, pre: '+', suf: '%', dur: 2.0 },
+        { sel: '#hStats > div:nth-child(3) .hs-n', to: 44, pre: '', suf: '%', dur: 2.2 },
+      ].forEach(({ sel, to, pre, suf, dur }, i) => {
+        const el = document.querySelector<HTMLElement>(sel)
+        if (!el) return
+        const obj = { n: 0 }
+        gsap.to(obj, {
+          n: to, duration: dur, ease: 'expo.out', delay: 1.4 + i * 0.18,
+          onUpdate() { el.innerHTML = `${pre}${Math.round(obj.n)}<em>${suf}</em>` }
+        })
+      })
     }
 
     // MARKET BARS DOM — build before GSAP context so elements exist when animated
@@ -418,49 +463,100 @@ export default function Home() {
       try {
         ctx = gsap.context(() => {
           // SCROLL PROGRESS
-          gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ trigger: document.body, start:'top top', end:'bottom bottom', scrub:0 }})
+          gsap.to('#pgb', { scaleX:1, ease:'none', scrollTrigger:{ trigger: document.body, start:'top top', end:'bottom bottom', scrub:0.5 }})
           // NAV SOLID
           ScrollTrigger.create({
-            start: 60,
+            start: 90,
             onEnter: () => document.getElementById('mainNav')?.classList.add('solid'),
             onLeaveBack: () => document.getElementById('mainNav')?.classList.remove('solid'),
           })
-          // TEXT REVEALS
+          // Set initial states programmatically (CSS no longer hides these — progressive enhancement)
+          gsap.set('.text-reveal-inner', { y: '102%' })
+          gsap.set('.clip-reveal', { clipPath: 'inset(0 100% 0 0)' })
+          gsap.set('.fade-in', { opacity: 0, y: 48 })
+          // TEXT REVEALS — grouped by heading for stagger
+          document.querySelectorAll('.sec-h2,.mkt-h2,.ag-h2').forEach(heading => {
+            const lines = heading.querySelectorAll('.text-reveal-inner')
+            if (!lines.length) return
+            gsap.fromTo(lines, { y: '115%' }, { y:0, duration:1.1, stagger:0.11, ease:'power4.out', scrollTrigger:{ trigger:heading, start:'top 80%', once:true }})
+          })
           document.querySelectorAll('.text-reveal').forEach(el => {
             const inner = el.querySelector('.text-reveal-inner')
             if (!inner) return
-            gsap.to(inner, { y:0, duration:0.9, ease:'power3.out', scrollTrigger:{ trigger:el, start:'top 88%', once:true }})
+            if ((el.closest('.sec-h2,.mkt-h2,.ag-h2'))) return // already handled above
+            gsap.fromTo(inner, { y: '102%' }, { y:0, duration:1.1, ease:'power4.out', scrollTrigger:{ trigger:el, start:'top 82%', once:true }})
           })
           // CLIP REVEALS
           document.querySelectorAll('.clip-reveal').forEach(el => {
-            gsap.to(el, { clipPath:'inset(0 0% 0 0)', duration:0.9, ease:'power3.inOut', scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
+            gsap.fromTo(el, { clipPath: 'inset(0 100% 0 0)' }, { clipPath:'inset(0 0% 0 0)', duration:1.2, ease:'power4.inOut', scrollTrigger:{ trigger:el, start:'top 85%', once:true }})
           })
           // FADE IN
           document.querySelectorAll('.fade-in').forEach((el, i) => {
-            gsap.to(el, { opacity:1, y:0, duration:0.8, ease:'power2.out', delay:(i%3)*0.08, scrollTrigger:{ trigger:el, start:'top 90%', once:true }})
+            const delay = Math.min(i * 0.05, 0.25)
+            gsap.fromTo(el, { opacity:0, y:48 }, { opacity:1, y:0, duration:1.0, ease:'power3.out', delay, scrollTrigger:{ trigger:el, start:'top 84%', once:true }})
           })
           // IMÓVEIS CLIP-PATH REVEAL
           document.querySelectorAll<HTMLElement>('.imc').forEach((card, i) => {
             const revEl = card.querySelector('.imc-img-reveal')
             if (!revEl) return
-            gsap.timeline({ scrollTrigger:{ trigger:card, start:'top 85%', once:true, onEnter:()=>card.classList.add('revealed') }})
-              .to(revEl, { clipPath:'inset(0 0 100% 0)', duration:0.8, delay:(i%3)*0.12, ease:'power3.inOut' })
+            gsap.timeline({ scrollTrigger:{ trigger:card, start:'top 80%', once:true, onEnter:()=>card.classList.add('revealed') }})
+              .fromTo(revEl,
+                { clipPath:'inset(0 0 0% 0)' },
+                { clipPath:'inset(0 0 100% 0)', duration:1.2, delay: Math.min(i * 0.1, 0.3), ease:'power4.inOut' })
           })
           // ZONAS STAGGER
           if (document.querySelector('.zc') && document.querySelector('.zonas-grid')) {
             gsap.fromTo('.zc',
-              { clipPath:'inset(0 0 100% 0)', opacity:0.8 },
-              { clipPath:'inset(0 0 0% 0)', opacity:1, duration:0.8, stagger:{ amount:0.6, from:'start' }, ease:'power3.inOut',
-                scrollTrigger:{ trigger:'.zonas-grid', start:'top 80%', once:true } })
+              { clipPath:'inset(0 0 100% 0)', opacity:0 },
+              { clipPath:'inset(0 0 0% 0)', opacity:1, duration:1.1, stagger:{ amount:0.7, from:'start' }, ease:'power4.inOut',
+                scrollTrigger:{ trigger:'.zonas-grid', start:'top 78%', once:true } })
           }
           // MARKET BARS ANIMATION
           if (document.querySelector('.mkt-zones')) {
+            gsap.set('.mkt-fill', { scaleX: 0, transformOrigin: 'left' })
             gsap.to('.mkt-fill', { scaleX:1, duration:1.4, stagger:0.08, ease:'power3.out', scrollTrigger:{ trigger:'.mkt-zones', start:'top 80%', once:true }})
           }
-          // CREDENCIAIS
+          // CREDENCIAIS — override the .fade-in set above
           if (document.querySelector('.cred-grid')) {
-            gsap.fromTo('.cred-c', { opacity:0, y:30 }, { opacity:1, y:0, duration:0.7, stagger:0.1, ease:'power2.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 85%', once:true }})
+            gsap.fromTo('.cred-c', { opacity:0, y:56 }, { opacity:1, y:0, duration:1.1, stagger:0.1, ease:'power3.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 82%', once:true }})
           }
+          // NUMBER COUNTERS — credenciais
+          ;[
+            { sel: '.cred-c:nth-child(1) .cred-n', to: 169, pre: '', suf: 'K' },
+            { sel: '.cred-c:nth-child(2) .cred-n', to: 17, pre: '+', suf: '%' },
+            { sel: '.cred-c:nth-child(3) .cred-n', to: 44, pre: '', suf: '%' },
+          ].forEach(({ sel, to, pre, suf }) => {
+            const el = document.querySelector<HTMLElement>(sel)
+            if (!el) return
+            const obj = { n: 0 }
+            gsap.to(obj, {
+              n: to, duration: 2.8, ease: 'power4.out',
+              scrollTrigger: { trigger: el, start: 'top 85%', once: true },
+              onUpdate() { el.innerHTML = `${pre}${Math.round(obj.n)}<sup>${suf}</sup>` }
+            })
+          })
+          // MAGNETIC BUTTONS
+          document.querySelectorAll<HTMLElement>('.btn-gold, .btn-outline').forEach(btn => {
+            btn.addEventListener('mousemove', (e: MouseEvent) => {
+              const r = btn.getBoundingClientRect()
+              gsap.to(btn, { x: (e.clientX-r.left-r.width/2)*0.22, y: (e.clientY-r.top-r.height/2)*0.22, duration: 0.35, ease: 'power3.out', overwrite: 'auto' })
+            })
+            btn.addEventListener('mouseleave', () => {
+              gsap.to(btn, { x: 0, y: 0, duration: 0.85, ease: 'elastic.out(0.75,0.4)', overwrite: 'auto' })
+            })
+          })
+          // ZONE CARDS — mousemove image parallax (GSAP owns transform — CSS transform removed)
+          document.querySelectorAll<HTMLElement>('.zc').forEach(card => {
+            const bg = card.querySelector<HTMLElement>('.zc-bg')
+            if (!bg) return
+            card.addEventListener('mousemove', (e: MouseEvent) => {
+              const r = card.getBoundingClientRect()
+              gsap.to(bg, { x: ((e.clientX-r.left)/r.width-0.5)*22, y: ((e.clientY-r.top)/r.height-0.5)*22, scale: 1.06, duration: 0.6, ease: 'power2.out', overwrite: 'auto' })
+            })
+            card.addEventListener('mouseleave', () => {
+              gsap.to(bg, { x: 0, y: 0, scale: 1, duration: 1.1, ease: 'power3.out', overwrite: 'auto' })
+            })
+          })
           // FONTS READY — final refresh after all triggers registered
           document.fonts.ready.then(() => {
             if (!cancelled) requestAnimationFrame(() => { if (!cancelled) ScrollTrigger.refresh() })
@@ -475,6 +571,8 @@ export default function Home() {
 
     return () => {
       cancelled = true
+      gsapInitRef.current = false   // allow re-init after StrictMode cleanup
+      clearTimeout(ldrSafetyTimer)
       cancelAnimationFrame(stRafId)
       ctx?.revert()
       document.body.style.overflow = ''
@@ -484,7 +582,7 @@ export default function Home() {
 
   // HERO SLIDESHOW
   useEffect(() => {
-    const timer = setInterval(() => setSlideIdx(s => (s+1)%3), 5500)
+    const timer = setInterval(() => setSlideIdx(s => (s+1)%3), 6500)
     return () => clearInterval(timer)
   }, [])
 
@@ -499,12 +597,12 @@ export default function Home() {
 
   // ═══ PROPERTIES DATA ═══
   const PROPERTIES = [
-    { id: 'rev0', feat: true, badge: 'b-off', bl: 'Off-Market', zona: 'Cascais', zonaLabel: 'Cascais · Quinta da Marinha', tipo: 'Moradia', titulo: 'Villa Contemporânea com Piscina Infinita e Vista Mar', specs: ['5 Quartos', '620 m²', 'Piscina Infinita', 'Vista Mar', '3 Garagens', 'EPC A'], preco: 3800000, precoLabel: '€ 3.800.000', pm2: '€6.129/m²', quartos: 5, grad: 'linear-gradient(145deg,#1c3d28,#0b1a10 55%,#3d8b68 100%)' },
-    { id: 'rev1', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Lisboa', zonaLabel: 'Lisboa · Chiado', tipo: 'Apartamento', titulo: 'Penthouse com Terraço e Vista Rio Tejo', specs: ['4 Quartos', '280 m²', 'Vista Rio', 'EPC A'], preco: 2100000, precoLabel: '€ 2.100.000', pm2: '€7.500/m²', quartos: 4, grad: 'linear-gradient(145deg,#0c2030,#060e18 60%,#1c4a35 100%)' },
-    { id: 'rev2', feat: false, badge: 'b-exc', bl: 'Exclusivo', zona: 'Comporta', zonaLabel: 'Comporta · Grândola', tipo: 'Quinta', titulo: 'Herdade Privada nos Arrozais da Comporta', specs: ['6 Quartos', '850 m²', '12 hectares', 'Piscina'], preco: 6500000, precoLabel: '€ 6.500.000', pm2: '€7.647/m²', quartos: 6, grad: 'linear-gradient(145deg,#2e2009,#140e05 60%,#c9a96e 100%)' },
-    { id: 'rev3', feat: false, badge: null, bl: null, zona: 'Cascais', zonaLabel: 'Abóboda · Cascais', tipo: 'Moradia', titulo: 'Moradia LSF Nova Construção Porcelanosa', specs: ['3 Quartos', '113 m²', 'Nova Construção'], preco: 1400000, precoLabel: '€ 1.400.000', pm2: '€12.389/m²', quartos: 3, grad: 'linear-gradient(145deg,#1a3a26,#081510 60%,#2d6a4f 100%)' },
-    { id: 'rev4', feat: false, badge: null, bl: null, zona: 'Ericeira', zonaLabel: "Ericeira · Ribeira d'Ilhas", tipo: 'Apartamento', titulo: 'T3 Duplex Vista Mar — World Surf Reserve', specs: ['3 Quartos', '189 m²', 'Vista Mar'], preco: 679000, precoLabel: '€ 679.000', pm2: '€3.593/m²', quartos: 3, grad: 'linear-gradient(145deg,#081e1e,#040f0f 60%,#1c4a35 100%)' },
-    { id: 'rev5', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Oeiras', zonaLabel: 'Oeiras · Av. República', tipo: 'Apartamento', titulo: 'T4 Herança com Potencial Premium', specs: ['4 Quartos', '111 m²', 'Exclusividade 6M'], preco: 520000, precoLabel: '€ 520.000', pm2: '€4.685/m²', quartos: 4, grad: 'linear-gradient(145deg,#0a1828,#05090f 60%,#2d4a6a 100%)' },
+    { id: 'rev0', feat: true, badge: 'b-off', bl: 'Off-Market', zona: 'Cascais', zonaLabel: 'Cascais · Quinta da Marinha', tipo: 'Moradia', titulo: 'Villa Contemporânea com Piscina Infinita e Vista Mar', specs: ['5 Quartos', '620 m²', 'Piscina Infinita', 'Vista Mar', '3 Garagens', 'EPC A'], preco: 3800000, precoLabel: '€ 3.800.000', pm2: '€6.129/m²', quartos: 5, grad: 'linear-gradient(145deg,#1c3d28,#0b1a10 55%,#3d8b68 100%)', photo: '/properties/villa-cascais.jpg' },
+    { id: 'rev1', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Lisboa', zonaLabel: 'Lisboa · Chiado', tipo: 'Apartamento', titulo: 'Penthouse com Terraço e Vista Rio Tejo', specs: ['4 Quartos', '280 m²', 'Vista Rio', 'EPC A'], preco: 2100000, precoLabel: '€ 2.100.000', pm2: '€7.500/m²', quartos: 4, grad: 'linear-gradient(145deg,#0c2030,#060e18 60%,#1c4a35 100%)', photo: '/properties/penthouse-lisboa.jpg' },
+    { id: 'rev2', feat: false, badge: 'b-exc', bl: 'Exclusivo', zona: 'Comporta', zonaLabel: 'Comporta · Grândola', tipo: 'Quinta', titulo: 'Herdade Privada nos Arrozais da Comporta', specs: ['6 Quartos', '850 m²', '12 hectares', 'Piscina'], preco: 6500000, precoLabel: '€ 6.500.000', pm2: '€7.647/m²', quartos: 6, grad: 'linear-gradient(145deg,#2e2009,#140e05 60%,#c9a96e 100%)', photo: '/properties/quinta-comporta.jpg' },
+    { id: 'rev3', feat: false, badge: null, bl: null, zona: 'Cascais', zonaLabel: 'Abóboda · Cascais', tipo: 'Moradia', titulo: 'Moradia Contemporânea Nova Construção · Design Premium', specs: ['3 Quartos', '113 m²', 'Nova Construção'], preco: 1400000, precoLabel: '€ 1.400.000', pm2: '€12.389/m²', quartos: 3, grad: 'linear-gradient(145deg,#1a3a26,#081510 60%,#2d6a4f 100%)', photo: '/properties/moradia-cascais.jpg' },
+    { id: 'rev4', feat: false, badge: null, bl: null, zona: 'Ericeira', zonaLabel: "Ericeira · Ribeira d'Ilhas", tipo: 'Apartamento', titulo: 'Duplex Vista Mar · World Surf Reserve · Ericeira', specs: ['3 Quartos', '189 m²', 'Vista Mar'], preco: 679000, precoLabel: '€ 679.000', pm2: '€3.593/m²', quartos: 3, grad: 'linear-gradient(145deg,#081e1e,#040f0f 60%,#1c4a35 100%)', photo: '/properties/duplex-ericeira.jpg' },
+    { id: 'rev5', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Oeiras', zonaLabel: 'Oeiras · Av. República', tipo: 'Apartamento', titulo: 'T4 Reabilitado com Terraço · Potencial Premium', specs: ['4 Quartos', '111 m²', 'Exclusividade 6M'], preco: 520000, precoLabel: '€ 520.000', pm2: '€4.685/m²', quartos: 4, grad: 'linear-gradient(145deg,#0a1828,#05090f 60%,#2d4a6a 100%)', photo: '/properties/apartamento-oeiras.jpg' },
   ]
 
   // ═══ SEARCH STATE ═══
@@ -621,9 +719,9 @@ export default function Home() {
 
   // ═══ SLIDES DATA ═══
   const SLIDES = [
-    { badge:'b-off', label:'Off-Market', titulo:'Villa Contemporânea\nQuinta da Marinha · Cascais', preco:'€ 3.800.000', specs:'5 Qtos · 620m² · Vista Mar', num:'01', grad:'linear-gradient(140deg,#1a3a26,#0b1a10 50%,#2d6a4f 100%)' },
-    { badge:'b-new', label:'Novo', titulo:'Penthouse Panorâmica\nChiado · Lisboa', preco:'€ 2.100.000', specs:'4 Qtos · 280m² · Vista Rio', num:'02', grad:'linear-gradient(140deg,#0c2030,#060e18 50%,#1c4a35 100%)' },
-    { badge:'b-exc', label:'Exclusivo', titulo:'Herdade Privada\nComporta · Grândola', preco:'€ 6.500.000', specs:'6 Qtos · 850m² · 12 ha', num:'03', grad:'linear-gradient(140deg,#2e2009,#150f04 50%,#c9a96e 100%)' },
+    { badge:'b-off', label:'Off-Market', titulo:'Villa Contemporânea\nQuinta da Marinha · Cascais', preco:'€ 3.800.000', specs:'5 Qtos · 620m² · Vista Mar', num:'01', grad:'linear-gradient(140deg,#1a3a26,#0b1a10 50%,#2d6a4f 100%)', photo:'/slides/slide1.jpg' },
+    { badge:'b-new', label:'Novo', titulo:'Penthouse Panorâmica\nChiado · Lisboa', preco:'€ 2.100.000', specs:'4 Qtos · 280m² · Vista Rio', num:'02', grad:'linear-gradient(140deg,#0c2030,#060e18 50%,#1c4a35 100%)', photo:'/slides/slide2.jpg' },
+    { badge:'b-exc', label:'Exclusivo', titulo:'Herdade Privada\nComporta · Grândola', preco:'€ 6.500.000', specs:'6 Qtos · 850m² · 12 ha', num:'03', grad:'linear-gradient(140deg,#2e2009,#150f04 50%,#c9a96e 100%)', photo:'/slides/slide3.jpg' },
   ]
 
   return (
@@ -639,7 +737,7 @@ export default function Home() {
       </div>
 
       {/* CURSOR */}
-      <div id="cur"><div className="c-dot" id="cDot"></div><div className="c-ring" id="cRing"></div></div>
+      <div id="cur"><div className="c-dot" id="cDot"></div><div className="c-ring" id="cRing"><span className="c-txt" id="cTxt"></span></div></div>
       <div id="pgb"></div>
 
       {/* MODAL OFF-MARKET */}
@@ -648,10 +746,10 @@ export default function Home() {
           <button className="modal-x" onClick={closeModal}>✕</button>
           <div className="modal-eye">Acesso Restrito</div>
           <h2 className="modal-h2">Portfolio<br/><em style={{fontStyle:'italic',color:'var(--g)'}}>Off-Market</em></h2>
-          <p className="modal-desc">Imóveis que nunca chegam aos portais. Acesso por convite e referência directa.</p>
-          <input className="modal-inp" type="password" id="offPwd" placeholder="palavra-passe" onKeyDown={e=>{if(e.key==='Enter')checkOff()}}/>
+          <p className="modal-desc">As propriedades mais raras nunca chegam aos portais. Este portfolio existe apenas para quem foi convidado.</p>
+          <input className="modal-inp" type="password" id="offPwd" placeholder="código de acesso" onKeyDown={e=>{if(e.key==='Enter')checkOff()}}/>
           <button className="modal-btn" onClick={checkOff}>Aceder ao Portfolio</button>
-          <div className="modal-err" id="offErr">Palavra-passe incorrecta. Contacte geral@agencygroup.pt</div>
+          <div className="modal-err" id="offErr">Código inválido · Solicitar acesso: geral@agencygroup.pt</div>
         </div>
       </div>
 
@@ -661,7 +759,7 @@ export default function Home() {
           <div style={{background:'#0c1f15',border:'1px solid rgba(201,169,110,.18)',padding:'52px 44px',maxWidth:'420px',width:'100%',position:'relative',boxShadow:'0 40px 100px rgba(0,0,0,.5)'}} onClick={e=>e.stopPropagation()}>
             <button onClick={closeAgModal} style={{position:'absolute',top:'18px',right:'18px',background:'none',border:'none',color:'rgba(244,240,230,.3)',cursor:'pointer',fontSize:'1rem',lineHeight:1,padding:'4px 8px'}}>✕</button>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.28em',textTransform:'uppercase',color:'rgba(201,169,110,.55)',marginBottom:'8px'}}>Acesso Restrito · AMI 22506</div>
-            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.9rem',color:'#f4f0e6',lineHeight:1.1,marginBottom:'6px'}}>Área de<br/><em style={{fontStyle:'italic',color:'#c9a96e'}}>Agentes</em></h2>
+            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.9rem',color:'#f4f0e6',lineHeight:1.1,marginBottom:'6px'}}>Portal do<br/><em style={{fontStyle:'italic',color:'#c9a96e'}}>Consultor</em></h2>
             {!agSent ? (
               <>
                 <p style={{fontSize:'.8rem',color:'rgba(244,240,230,.4)',lineHeight:1.75,margin:'20px 0 24px'}}>Introduz o teu email profissional. Será enviado um pedido de acesso ao administrador.</p>
@@ -717,8 +815,35 @@ export default function Home() {
             ? <a href={(() => { try { const d = JSON.parse(localStorage.getItem('ag_auth')||'{}'); return d.token ? `/portal?token=${encodeURIComponent(d.token)}` : '/portal' } catch { return '/portal' } })()} className="nav-cta">Portal →</a>
             : <a href="#" className="nav-cta" onClick={e=>{e.preventDefault();setAgModal(true)}}>Área Agentes</a>
           }
+          <button
+            className={`nav-burger${menuOpen?' open':''}`}
+            aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={menuOpen}
+            onClick={() => { setMenuOpen(o => !o); document.body.style.overflow = menuOpen ? '' : 'hidden' }}
+          >
+            <span/><span/><span/>
+          </button>
         </div>
       </nav>
+
+      {/* MOBILE DRAWER */}
+      <div className={`nav-drawer${menuOpen?' open':''}`} aria-hidden={!menuOpen}>
+        <div className="nav-drawer-ov" onClick={() => { setMenuOpen(false); document.body.style.overflow = '' }} />
+        <nav className="nav-drawer-panel" aria-label="Menu móvel">
+          <div className="nav-drawer-links">
+            <a href="/imoveis" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Imóveis</a>
+            <a href="#zonas" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Zonas</a>
+            <a href="#simulador" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Crédito</a>
+            <a href="/reports" style={{color:'var(--gold)'}} onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Reports</a>
+            <a href="#" onClick={e=>{e.preventDefault();setMenuOpen(false);document.body.style.overflow='';openModal()}}>Off-Market</a>
+            <a href="#contacto" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Contacto</a>
+          </div>
+          {isAgent
+            ? <a href="/portal" className="nav-drawer-cta">Portal Agentes →</a>
+            : <a href="#" className="nav-drawer-cta" onClick={e=>{e.preventDefault();setMenuOpen(false);document.body.style.overflow='';setAgModal(true)}}>Área Agentes</a>
+          }
+        </nav>
+      </div>
 
       {/* HERO */}
       <section className="hero">
@@ -728,43 +853,36 @@ export default function Home() {
           <div className="hero-content">
             <div className="hero-eyebrow" id="hEye">Lisboa · Portugal · AMI 22506</div>
             <h1 className="hero-h1" id="hTitle">
-              <span className="line"><span className="line-inner">O lugar onde</span></span>
-              <span className="line"><span className="line-inner"><em>Portugal</em></span></span>
-              <span className="line"><span className="line-inner">encontra o mundo.</span></span>
+              <span className="line"><span className="line-inner">Aqui, o mundo</span></span>
+              <span className="line"><span className="line-inner"><em>veio ter</em></span></span>
+              <span className="line"><span className="line-inner">consigo.</span></span>
             </h1>
-            <p className="hero-sub" id="hSub">Mediação imobiliária de luxo. €500K–€10M. Boutique especializada nos mercados mais exclusivos de Portugal e Espanha.</p>
+            <p className="hero-sub" id="hSub">Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem sabe onde procurar.</p>
             <div className="hero-btns" id="hBtns">
-              <a href="#imoveis" className="btn-gold">Ver Portfolio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-              <a href="#avaliacao" className="btn-outline">Avaliar Imóvel</a>
+              <a href="#imoveis" className="btn-gold">Descobrir Portfolio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+              <a href="#avaliacao" className="btn-outline">Avaliação Privada</a>
             </div>
           </div>
           <div className="hero-stats" id="hStats">
-            <div><div className="hs-n">169<em>K</em></div><div className="hs-l">Transacções PT 2025</div></div>
-            <div><div className="hs-n">+17<em>%</em></div><div className="hs-l">Valorização anual</div></div>
-            <div><div className="hs-n">44<em>%</em></div><div className="hs-l">Compradores int.</div></div>
+            <div><div className="hs-n">169<em>K</em></div><div className="hs-l">Transacções · Portugal</div></div>
+            <div><div className="hs-n">+17<em>%</em></div><div className="hs-l">Valorização · 2025</div></div>
+            <div><div className="hs-n">44<em>%</em></div><div className="hs-l">Compradores Internacionais</div></div>
           </div>
           <div className="hero-scroll" id="hScroll">
             <div className="hs-line"></div>
-            <div className="hs-txt">Scroll</div>
+            <div className="hs-txt">↓</div>
           </div>
         </div>
         <aside className="hr">
-          <div id="slides">
-            {SLIDES.map((s,i)=>(
-              <div key={i} className={`hr-slide${slideIdx===i?' on':''}`}>
-                <div className="hr-slide-bg" style={{background:s.grad}}></div>
-                <div className="hr-ov"></div>
-                <div className="hr-info">
-                  <div className={`hr-badge ${s.badge}`}>{s.label}</div>
-                  <div className="hr-title" dangerouslySetInnerHTML={{__html:s.titulo.replace('\n','<br/>')}}></div>
-                  <div className="hr-price">{s.preco}</div>
-                  <div className="hr-specs">{s.specs}</div>
-                  <div className="hr-dots">{SLIDES.map((_,j)=><div key={j} className={`hr-dot${slideIdx===j?' on':''}`} onClick={()=>goSlide(j)}></div>)}</div>
-                </div>
-                <div className="hr-num">{s.num}</div>
-              </div>
-            ))}
-          </div>
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            src="/hero-video.mp4"
+            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
+          />
         </aside>
       </section>
 
@@ -786,33 +904,36 @@ export default function Home() {
 
       {/* SEARCH */}
       <div className="search-wrap">
-        {/* Mode Toggle */}
-        <div style={{display:'flex',justifyContent:'center',marginBottom:'14px'}}>
-          <button onClick={()=>{setSearchMode('filtros');setAiResults(null);setAiSummary('')}} style={{background:searchMode==='filtros'?'#c9a96e':'rgba(255,255,255,.07)',color:searchMode==='filtros'?'#0c1f15':'rgba(244,240,230,.5)',border:'none',padding:'9px 28px',fontFamily:"'Jost',sans-serif",fontSize:'.58rem',fontWeight:600,letterSpacing:'.15em',textTransform:'uppercase',cursor:'pointer',transition:'all .2s',borderRadius:'4px 0 0 4px'}}>⊞ Filtros</button>
-          <button onClick={()=>setSearchMode('ai')} style={{background:searchMode==='ai'?'#c9a96e':'rgba(255,255,255,.07)',color:searchMode==='ai'?'#0c1f15':'rgba(244,240,230,.5)',border:'none',padding:'9px 28px',fontFamily:"'Jost',sans-serif",fontSize:'.58rem',fontWeight:600,letterSpacing:'.15em',textTransform:'uppercase',cursor:'pointer',transition:'all .2s',borderRadius:'0 4px 4px 0'}}>✦ Pesquisa IA</button>
+        <div className="search-box" id="searchBox">
+          {/* Tabs — inside the box, no overlap with marquee */}
+          <div className="search-tabs">
+            <button className={`search-tab${searchMode==='filtros'?' active':''}`} onClick={()=>{setSearchMode('filtros');setAiResults(null);setAiSummary('')}}>⊞ Filtros</button>
+            <button className={`search-tab${searchMode==='ai'?' active':''}`} onClick={()=>setSearchMode('ai')}>✦ Linguagem Natural</button>
+          </div>
+          {/* Fields */}
+          {searchMode==='filtros' ? (
+            <div className="search-fields">
+              <div className="sf" style={{flex:2}}>
+                <label className="sf-lbl">Localização</label>
+                <input className="sf-inp" type="text" id="sfQ" placeholder="Lisboa, Cascais, Comporta..." value={searchZona} onChange={e=>{setSearchZona(e.target.value)}}/>
+              </div>
+              <div className="sf"><label className="sf-lbl">Tipo</label><select className="sf-sel" value={searchTipo} onChange={e=>setSearchTipo(e.target.value)}><option value="">Todos</option><option value="Apartamento">Apartamento</option><option value="Moradia">Moradia</option><option value="Villa">Villa</option><option value="Penthouse">Penthouse</option><option value="Quinta">Quinta</option></select></div>
+              <div className="sf"><label className="sf-lbl">Preço</label><select className="sf-sel" value={searchPreco} onChange={e=>setSearchPreco(e.target.value)}><option value="">Qualquer</option><option value="500-1000">€500K–€1M</option><option value="1000-2500">€1M–€2.5M</option><option value="2500-5000">€2.5M–€5M</option><option value="5000-999999">€5M+</option></select></div>
+              <div className="sf"><label className="sf-lbl">Quartos (mín.)</label><select className="sf-sel" value={searchQuartos} onChange={e=>setSearchQuartos(e.target.value)}><option value="">Todos</option><option value="1">T1+</option><option value="2">T2+</option><option value="3">T3+</option><option value="4">T4+</option><option value="5">T5+</option></select></div>
+              <button className="sf-btn" onClick={doSearch}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Descobrir</button>
+            </div>
+          ) : (
+            <div className="search-fields" style={{gap:'16px',alignItems:'flex-end',padding:'18px 24px'}}>
+              <div style={{flex:1}}>
+                <label className="sf-lbl" style={{letterSpacing:'.12em'}}>Descreve o imóvel que imaginas</label>
+                <input className="sf-inp" type="text" placeholder='"T3 com piscina em Cascais até €2M, vista mar, garagem..."' value={naturalQuery} onChange={e=>setNaturalQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAiSearch()} style={{width:'100%'}}/>
+              </div>
+              <button className="sf-btn" onClick={doAiSearch} disabled={aiLoading} style={{opacity:aiLoading?.65:1,whiteSpace:'nowrap',flexShrink:0}}>
+                {aiLoading ? '✦ A analisar...' : '✦ Descobrir'}
+              </button>
+            </div>
+          )}
         </div>
-        {searchMode==='filtros' ? (
-          <div className="search-box" id="searchBox">
-            <div className="sf" style={{flex:2}}>
-              <label className="sf-lbl">Localização</label>
-              <input className="sf-inp" type="text" id="sfQ" placeholder="Lisboa, Cascais, Comporta..." value={searchZona} onChange={e=>{setSearchZona(e.target.value)}}/>
-            </div>
-            <div className="sf"><label className="sf-lbl">Tipo</label><select className="sf-sel" value={searchTipo} onChange={e=>setSearchTipo(e.target.value)}><option value="">Todos</option><option value="Apartamento">Apartamento</option><option value="Moradia">Moradia</option><option value="Villa">Villa</option><option value="Penthouse">Penthouse</option><option value="Quinta">Quinta</option></select></div>
-            <div className="sf"><label className="sf-lbl">Preço</label><select className="sf-sel" value={searchPreco} onChange={e=>setSearchPreco(e.target.value)}><option value="">Qualquer</option><option value="500-1000">€500K–€1M</option><option value="1000-2500">€1M–€2.5M</option><option value="2500-5000">€2.5M–€5M</option><option value="5000-999999">€5M+</option></select></div>
-            <div className="sf"><label className="sf-lbl">Quartos (mín.)</label><select className="sf-sel" value={searchQuartos} onChange={e=>setSearchQuartos(e.target.value)}><option value="">Todos</option><option value="1">T1+</option><option value="2">T2+</option><option value="3">T3+</option><option value="4">T4+</option><option value="5">T5+</option></select></div>
-            <button className="sf-btn" onClick={doSearch}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Pesquisar</button>
-          </div>
-        ) : (
-          <div className="search-box" id="searchBox" style={{display:'flex',gap:'16px',alignItems:'flex-end'}}>
-            <div style={{flex:1}}>
-              <label className="sf-lbl" style={{color:'rgba(244,240,230,.4)',letterSpacing:'.12em'}}>Descreve o que procuras em linguagem natural</label>
-              <input className="sf-inp" type="text" placeholder='"T3 com piscina em Cascais até €2M, vista mar, garagem..."' value={naturalQuery} onChange={e=>setNaturalQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAiSearch()} style={{width:'100%'}}/>
-            </div>
-            <button className="sf-btn" onClick={doAiSearch} disabled={aiLoading} style={{opacity:aiLoading?.65:1,whiteSpace:'nowrap',background:'#c9a96e',color:'#0c1f15',flexShrink:0}}>
-              {aiLoading ? '✦ A analisar...' : '✦ Pesquisar com IA'}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ZONAS */}
@@ -822,26 +943,26 @@ export default function Home() {
             <div>
               <div className="sec-eye"><span className="clip-reveal" data-reveal="left">9 Zonas · Portugal &amp; Espanha</span></div>
               <h2 className="sec-h2" id="zonasH2">
-                <span className="text-reveal"><span className="text-reveal-inner">Os mercados</span></span>
-                <span className="text-reveal"><span className="text-reveal-inner"><em>que conhecemos</em></span></span>
+                <span className="text-reveal"><span className="text-reveal-inner">Os lugares</span></span>
+                <span className="text-reveal"><span className="text-reveal-inner"><em>que o mundo cobiça</em></span></span>
               </h2>
             </div>
             <a href="#imoveis" className="lnk-sm fade-in">Ver todos →</a>
           </div>
           <div className="zonas-grid">
             {[
-              {c:'z1',nome:'Lisboa',pais:'Portugal',pm2:'€6.538/m²',yoy:'+19%',tag:'The city that reinvented itself'},
-              {c:'z2',nome:'Cascais',pais:'Portugal',pm2:'€6.638/m²',yoy:'+14%',tag:'Where old money meets the Atlantic'},
-              {c:'z3',nome:'Comporta',pais:'Portugal',pm2:'€11.000/m²',yoy:'+28%',tag:"Europe's last unhurried place"},
-              {c:'z4',nome:'Porto',pais:'Portugal',pm2:'€4.528/m²',yoy:'+12%',tag:'The river that seduces everyone'},
-              {c:'z5',nome:'Algarve',pais:'Portugal',pm2:'€5.200/m²',yoy:'+10%',tag:'300 mornings of light'},
-              {c:'z6',nome:'Madeira',pais:'Portugal',pm2:'€3.959/m²',yoy:'+20%',tag:'The island that needs nothing'},
-              {c:'z7',nome:'Sintra',pais:'Portugal',pm2:'€3.600/m²',yoy:'+13%',tag:'Where history forgot to leave'},
-              {c:'z8',nome:'Arrábida',pais:'Portugal',pm2:'€4.500/m²',yoy:'+19%',tag:'The coast nobody found yet'},
-              {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally'},
+              {c:'z1',nome:'Lisboa',pais:'Portugal',pm2:'€6.538/m²',yoy:'+19%',tag:'The city that reinvented itself',photo:'/zones/lisboa.jpg'},
+              {c:'z2',nome:'Cascais',pais:'Portugal',pm2:'€6.638/m²',yoy:'+14%',tag:'Where old money meets the Atlantic',photo:'/zones/cascais.jpg'},
+              {c:'z3',nome:'Comporta',pais:'Portugal',pm2:'€11.000/m²',yoy:'+28%',tag:"Europe's last unhurried place",photo:'/zones/comporta.jpg'},
+              {c:'z4',nome:'Porto',pais:'Portugal',pm2:'€4.528/m²',yoy:'+12%',tag:'The river that seduces everyone',photo:'/zones/porto.jpg'},
+              {c:'z5',nome:'Algarve',pais:'Portugal',pm2:'€5.200/m²',yoy:'+10%',tag:'300 mornings of light',photo:'/zones/algarve.jpg'},
+              {c:'z6',nome:'Madeira',pais:'Portugal',pm2:'€3.760/m²',yoy:'+20%',tag:'The island that needs nothing',photo:'/zones/madeira.jpg'},
+              {c:'z7',nome:'Sintra',pais:'Portugal',pm2:'€3.600/m²',yoy:'+13%',tag:'Where history forgot to leave',photo:'/zones/sintra.jpg'},
+              {c:'z8',nome:'Arrábida',pais:'Portugal',pm2:'€4.500/m²',yoy:'+19%',tag:'The coast nobody found yet',photo:'/zones/arrabida.jpg'},
+              {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally',photo:'/zones/ericeira.jpg'},
             ].map(z=>(
               <div key={z.c} className={`zc ${z.c}`} onClick={()=>filterZ(z.nome)}>
-                <div className="zc-bg"></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
+                <div className="zc-bg" style={{backgroundImage:`url(${z.photo})`}}></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
                 <div className="zc-c">
                   <div className="zc-id">{z.nome} · {z.pais}</div>
                   <h3 className="zc-nm">{z.nome}</h3>
@@ -893,20 +1014,20 @@ export default function Home() {
         <div className="sw">
           <div className="im-head" style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:'48px'}}>
             <div>
-              <div className="sec-eye">Portfolio Seleccionado</div>
+              <div className="sec-eye">Portfolio Exclusivo</div>
               <h2 className="sec-h2" id="imH2">
-                <span className="text-reveal"><span className="text-reveal-inner">Imóveis em</span></span>
-                <span className="text-reveal"><span className="text-reveal-inner"><em>Destaque</em></span></span>
+                <span className="text-reveal"><span className="text-reveal-inner">Cada Imóvel,</span></span>
+                <span className="text-reveal"><span className="text-reveal-inner"><em>Uma História.</em></span></span>
               </h2>
             </div>
             <a href="/imoveis" className="lnk-sm fade-in">Ver todos os imóveis →</a>
           </div>
           {/* Results count + clear filters */}
-          <div className="im-count" style={{ fontFamily: 'Jost, sans-serif', fontSize: '14px', color: '#666', marginBottom: '16px' }}>
+          <div className="im-count" style={{ fontFamily: 'Jost, sans-serif', fontSize: '14px', color: 'rgba(14,14,13,.42)', marginBottom: '16px' }}>
             {displayedProperties.length} imóve{displayedProperties.length !== 1 ? 'is' : 'l'} encontrado{displayedProperties.length !== 1 ? 's' : ''}
             {(searchZona || searchTipo || searchPreco || searchQuartos || (searchMode==='ai'&&aiResults!==null)) && (
               <button onClick={() => { setSearchZona(''); setSearchTipo(''); setSearchPreco(''); setSearchQuartos(''); setAiResults(null); setNaturalQuery(''); setSearchMode('filtros'); setAiSummary('') }}
-                style={{ marginLeft: '12px', background: 'none', border: '1px solid #c9a96e', color: '#c9a96e', padding: '2px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+                style={{ marginLeft: '12px', background: 'none', border: '1px solid #c9a96e', color: '#c9a96e', padding: '2px 10px', borderRadius: '0', cursor: 'pointer', fontSize: '12px' }}>
                 Limpar filtros
               </button>
             )}
@@ -923,12 +1044,12 @@ export default function Home() {
 
           {displayedProperties.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px', color: '#c9a96e', fontFamily: 'Cormorant, serif', fontSize: '24px' }}>
-              <div>Sem resultados para estes filtros</div>
-              <div style={{ fontSize: '16px', fontFamily: 'Jost, sans-serif', color: '#666', marginTop: '12px' }}>
-                Acesse à nossa carteira off-market completa
+              <div>Nenhum imóvel encontrado.</div>
+              <div style={{ fontSize: '16px', fontFamily: 'Jost, sans-serif', color: '#888', marginTop: '12px', fontStyle: 'italic' }}>
+                Os imóveis mais exclusivos não passam por aqui.
               </div>
-              <button onClick={() => setModalOpen(true)} style={{ marginTop: '20px', background: '#1c4a35', color: '#c9a96e', border: 'none', padding: '12px 32px', borderRadius: '8px', fontFamily: 'Jost, sans-serif', cursor: 'pointer' }}>
-                Ver Carteira Off-Market →
+              <button onClick={() => setModalOpen(true)} style={{ marginTop: '24px', background: 'transparent', color: '#c9a96e', border: '1px solid rgba(201,169,110,.45)', padding: '12px 32px', fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.16em', textTransform: 'uppercase', cursor: 'pointer' }}>
+                Aceder ao Portfolio Off-Market →
               </button>
             </div>
           ) : (
@@ -937,7 +1058,7 @@ export default function Home() {
                 <div key={im.id} className={`imc${im.feat?' feat':''}`}>
                   <div className="imc-img">
                     <div className="imc-img-reveal" id={im.id}></div>
-                    <div className="imc-img-inner" style={{background:im.grad}}></div>
+                    <div className="imc-img-inner" style={{backgroundImage:`url(${im.photo})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
                     {im.badge && <span className={`imc-badge ${im.badge}`}>{im.bl}</span>}
                   </div>
                   <div className="imc-body">
@@ -967,7 +1088,7 @@ export default function Home() {
                 textDecoration: 'none', transition: 'background .25s, color .25s',
               }}
             >
-              Ver todos os 20 imóveis
+              Ver o Portfolio Completo
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
           </div>
@@ -981,12 +1102,12 @@ export default function Home() {
             <div>
               <div className="mkt-eye">Dados de Mercado · INE · Savills · Knight Frank</div>
               <h2 className="mkt-h2" id="mktH2">
-                <span className="text-reveal"><span className="text-reveal-inner">Portugal no topo</span></span>
-                <span className="text-reveal"><span className="text-reveal-inner">do luxo <em>mundial</em></span></span>
+                <span className="text-reveal"><span className="text-reveal-inner">O mercado que</span></span>
+                <span className="text-reveal"><span className="text-reveal-inner">o mundo <em>escolheu.</em></span></span>
               </h2>
-              <p className="mkt-desc fade-in">INE Q3 2025. 169.812 transacções. +17.6% valorização. Lisboa Top 5 mundial (Savills 2026). Previsão 2026: +4 a +5.9%.</p>
+              <p className="mkt-desc fade-in">169.812 transacções em 2025. Lisboa no top 5 mundial de luxo (Savills 2026). Valorização +17.6%. Previsão 2026: +4 a +5.9% — INE · Knight Frank.</p>
               <div className="fade-in">
-                {['44% compradores internacionais nos mercados prime','Calibração INE rácio 0.693 por município','55 zonas calibradas · dados Q3 2025 verificados','AVM erro 4–7% com dados live — melhor de Portugal'].map(t=>(
+                {['44% dos compradores nos mercados prime são internacionais','Lisboa entre as 5 cidades de luxo mais valorizadas do mundo','Valorização prevista +4 a +5.9% em 2026 — INE · Savills · Knight Frank','Avaliação proprietária com margem de 4–7%. A mais precisa do mercado.'].map(t=>(
                   <div key={t} className="mkt-feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>{t}</div>
                 ))}
               </div>
@@ -997,13 +1118,13 @@ export default function Home() {
       </section>
 
       {/* BLOCO 2 — Avaliação Privada */}
-      <section style={{background:'#f7f3ec',padding:'120px 0',position:'relative',overflow:'hidden'}}>
-        <div style={{position:'absolute',top:0,left:0,right:0,height:'3px',background:'linear-gradient(90deg, transparent, rgba(201,169,110,.6), transparent)'}}/>
+      <section id="avaliacao" style={{background:'#f4f0e6',padding:'112px 0',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg, transparent, rgba(201,169,110,.6), transparent)'}}/>
         <div className="sw" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'80px',alignItems:'center'}}>
 
           {/* LEFT — Text */}
           <div>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'28px'}}>Avaliação · Reservada a Proprietários</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'28px'}}>Avaliação Privada · Dados Reais · Sem Estimativas</div>
             <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.4rem,4vw,4rem)',fontWeight:300,color:'#0e0e0d',lineHeight:1.08,margin:'0 0 28px',letterSpacing:'-.01em'}}>
               O seu imóvel vale<br/>quanto vale.<br/><em style={{fontStyle:'italic',color:'#1c4a35'}}>Não mais. Não menos.</em>
             </h2>
@@ -1021,7 +1142,7 @@ export default function Home() {
           </div>
 
           {/* RIGHT — Formulário simples */}
-          <div style={{background:'#fff',padding:'48px',boxShadow:'0 2px 40px rgba(14,14,13,.06)'}}>
+          <div style={{background:'#fff',padding:'48px',boxShadow:'0 24px 80px rgba(14,14,13,.10),0 4px 16px rgba(14,14,13,.06)',borderTop:'2px solid var(--g)'}}>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',marginBottom:'28px'}}>Pedido de Avaliação · Confidencial</div>
             <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
               {[{id:'avalNome',label:'Nome',placeholder:'O seu nome'},
@@ -1030,7 +1151,7 @@ export default function Home() {
               ].map(f=>(
                 <div key={f.id}>
                   <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',display:'block',marginBottom:'6px'}}>{f.label}</label>
-                  <input id={f.id} placeholder={f.placeholder} style={{width:'100%',padding:'12px 16px',border:'1px solid rgba(14,14,13,.14)',fontFamily:"'Jost',sans-serif",fontSize:'.88rem',color:'#0e0e0d',outline:'none',background:'#faf8f4',boxSizing:'border-box'}}/>
+                  <input id={f.id} placeholder={f.placeholder} style={{width:'100%',padding:'12px 0',border:'none',borderBottom:'1px solid rgba(14,14,13,.18)',fontFamily:"'Jost',sans-serif",fontSize:'.88rem',color:'#0e0e0d',outline:'none',background:'transparent',boxSizing:'border-box',transition:'border-color .3s'}}/>
                 </div>
               ))}
               <button
@@ -1052,11 +1173,11 @@ export default function Home() {
       </section>
 
       {/* SIMULADOR DE CRÉDITO — versão completa (cenários, amortização, DSTI) */}
-      <section id="simulador" style={{background:'#f9f7f2',padding:'80px 0',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
+      <section id="simulador" style={{background:'#f4f0e6',padding:'112px 0',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
         <div className="sw">
           <div style={{marginBottom:'40px'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Simulador · Crédito Habitação · Portugal</div>
-            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2rem,4vw,3rem)',color:'#0e0e0d',lineHeight:1.1,marginBottom:'12px'}}>Simular <em style={{fontStyle:'italic',color:'#1c4a35'}}>Crédito</em></h2>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Simulação · Crédito Habitação · Portugal</div>
+            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2.2rem,4vw,4rem)',color:'#0e0e0d',lineHeight:1.05,marginBottom:'12px',letterSpacing:'-.012em'}}>A Verdade <em style={{fontStyle:'italic',color:'#1c4a35'}}>Sobre o Crédito</em></h2>
             <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.86rem',lineHeight:1.8,color:'rgba(14,14,13,.5)',maxWidth:'560px'}}>Euribor 6M em tempo real · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização · DSTI Banco de Portugal · IMT + IS incluído</p>
           </div>
           <HomeMortgage />
@@ -1076,7 +1197,7 @@ export default function Home() {
           <div style={{position:'absolute',inset:0,background:'linear-gradient(to top, rgba(12,31,21,.7) 0%, transparent 50%)'}}/>
           <div style={{position:'absolute',bottom:'32px',left:'32px'}}>
             <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.1rem',fontWeight:300,color:'rgba(244,240,230,.6)',fontStyle:'italic'}}>
-              "Uma mesa em Comporta.<br/>Uma vida em Portugal."
+              "Quinta-feira à noite.<br/>Mesa em Comporta.<br/>20% flat. Para sempre."
             </div>
           </div>
         </div>
@@ -1084,15 +1205,15 @@ export default function Home() {
         {/* RIGHT — Text + bullets + CTA */}
         <div style={{display:'flex',flexDirection:'column',justifyContent:'center',padding:'80px 64px'}}>
           <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.37rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'28px'}}>NHR · IFICI · Residência Fiscal · Portugal</div>
-          <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2rem,3.5vw,3.2rem)',fontWeight:300,color:'#f4f0e6',lineHeight:1.1,margin:'0 0 28px',letterSpacing:'-.01em'}}>
-            Viver e Investir<br/>em <em style={{fontStyle:'italic',color:'#c9a96e'}}>Portugal</em>
+          <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.2rem,3.8vw,3.8rem)',fontWeight:300,color:'#f4f0e6',lineHeight:1.05,margin:'0 0 28px',letterSpacing:'-.012em'}}>
+            Dez Anos de<br/>Liberdade Fiscal.<br/><em style={{fontStyle:'italic',color:'#c9a96e'}}>Uma Vida Nova.</em>
           </h2>
           <div style={{width:'36px',height:'1px',background:'rgba(201,169,110,.4)',marginBottom:'28px'}}/>
           <div style={{display:'flex',flexDirection:'column',gap:'18px',marginBottom:'44px'}}>
             {[
-              'NHR / IFICI — 20% de taxa flat durante 10 anos. Para rendimentos qualificados.',
-              'Sem imposto sobre dividendos, mais-valias e rendimentos estrangeiros em muitos casos.',
-              'Portugal no top 5 mundial de qualidade de vida para famílias de alto rendimento.',
+              '20% de taxa flat durante 10 anos — para quem escolhe Portugal como casa.',
+              'Os seus rendimentos internacionais trabalham para si. Não para o Estado.',
+              'A melhor qualidade de vida da Europa. Com a fiscalidade mais competitiva.',
             ].map((t,i)=>(
               <div key={i} style={{display:'flex',gap:'16px',alignItems:'flex-start'}}>
                 <div style={{width:'20px',height:'20px',border:'1px solid rgba(201,169,110,.35)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:'2px'}}>
@@ -1156,7 +1277,7 @@ export default function Home() {
 
             {/* Subtitle */}
             <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.9rem',fontWeight:300,color:'rgba(244,240,230,.38)',lineHeight:1.8,marginBottom:'48px',maxWidth:'340px'}}>
-              Imóveis que nunca chegam ao mercado.<br/>Para clientes e investidores qualificados.<br/>Acesso por referência directa.
+              As propriedades mais extraordinárias<br/>nunca chegam ao mercado público.<br/>Chegam apenas a quem já conhecemos.
             </p>
 
             {/* CTA */}
@@ -1166,7 +1287,7 @@ export default function Home() {
               onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(201,169,110,.09)';(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.75)'}}
               onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent';(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.42)'}}
             >
-              Solicitar Acesso
+              Pedir Acesso Exclusivo
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
 
@@ -1179,10 +1300,10 @@ export default function Home() {
       {/* CREDENCIAIS */}
       <section className="cred-section">
         <div className="cred-grid">
-          <div className="cred-c fade-in"><div className="cred-n">169<sup>K</sup></div><div className="cred-l">Transacções PT 2025</div><div className="cred-d">Máximo histórico absoluto.</div></div>
-          <div className="cred-c fade-in"><div className="cred-n">+17<sup>%</sup></div><div className="cred-l">Valorização 2025</div><div className="cred-d">INE Q3 2025. 4º máximo.</div></div>
-          <div className="cred-c fade-in"><div className="cred-n">44<sup>%</sup></div><div className="cred-l">Compradores Int.</div><div className="cred-d">UK, França, EUA lideram.</div></div>
-          <div className="cred-c fade-in"><div className="cred-n">Top<sup>5</sup></div><div className="cred-l">Luxo Mundial</div><div className="cred-d">Savills World Cities 2026.</div></div>
+          <div className="cred-c fade-in"><div className="cred-n">169<sup>K</sup></div><div className="cred-l">Transacções em Portugal</div><div className="cred-d">O mercado mais activo da história.</div></div>
+          <div className="cred-c fade-in"><div className="cred-n">+17<sup>%</sup></div><div className="cred-l">Valorização 2025</div><div className="cred-d">Quarto máximo histórico consecutivo.</div></div>
+          <div className="cred-c fade-in"><div className="cred-n">44<sup>%</sup></div><div className="cred-l">Compradores Internacionais</div><div className="cred-d">O mundo descobriu Portugal.</div></div>
+          <div className="cred-c fade-in"><div className="cred-n">Top<sup>5</sup></div><div className="cred-l">Luxo Mundial</div><div className="cred-d">Lisboa. As 5 melhores do mundo.</div></div>
         </div>
       </section>
 
@@ -1190,7 +1311,7 @@ export default function Home() {
       <section className="ag-section" id="agentes">
         <div className="ag-inner">
           <div className="ag-eye">Acesso Restrito · AMI 22506</div>
-          <h2 className="ag-h2">Área de Agentes</h2>
+          <h2 className="ag-h2">Portal do Consultor</h2>
           <p className="ag-sub">Pipeline · CRM · Deal Radar · Relatórios · Off-Market.</p>
           <div className="ag-form">
             <input type="email" className="ag-inp" id="agEmail" placeholder="email@agencygroup.pt"/>
@@ -1253,7 +1374,7 @@ export default function Home() {
       <section className="test-section" style={{
         background: '#070f0a',
         borderTop: '1px solid rgba(201,169,110,.08)',
-        padding: '96px 40px',
+        padding: '112px 40px',
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           {/* Header */}
@@ -1262,12 +1383,17 @@ export default function Home() {
               fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
               letterSpacing: '.28em', color: 'rgba(201,169,110,.6)',
               textTransform: 'uppercase', marginBottom: '16px',
-            }}>Clientes · 47 Avaliações · 4.9/5</div>
+            }}>47 Famílias · 14 Nacionalidades · 4.9/5</div>
             <h2 style={{
               fontFamily: "'Cormorant', serif", fontWeight: 300,
               fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#f4f0e6',
+              margin: '0 0 8px',
+            }}>Eles chegaram.</h2>
+            <h2 style={{
+              fontFamily: "'Cormorant', serif", fontWeight: 300, fontStyle: 'italic',
+              fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#c9a96e',
               margin: 0,
-            }}>O Que Dizem os Nossos Clientes</h2>
+            }}>Eles ficaram.</h2>
             <div style={{
               display: 'flex', justifyContent: 'center', gap: '4px',
               marginTop: '16px',
@@ -1292,7 +1418,7 @@ export default function Home() {
                 country: '🇬🇧 Reino Unido',
                 zone: 'Cascais',
                 rating: 5,
-                quote: 'A equipa da Agency Group encontrou a nossa villa de sonho em Cascais em menos de 3 semanas. O processo foi impecável, do primeiro contacto à escritura. Profissionalismo de nível mundial.',
+                quote: 'Três semanas. Villa de sonho. Escritura assinada. Nunca pensámos que seria tão simples — nem que Cascais seria para sempre.',
                 property: 'Villa T5 · Cascais · €2.4M',
                 date: 'Janeiro 2026',
               },
@@ -1301,7 +1427,7 @@ export default function Home() {
                 country: '🇸🇦 Arábia Saudita',
                 zone: 'Lisboa',
                 rating: 5,
-                quote: 'Compramos um penthouse no Príncipe Real como investimento. O retorno já supera as expectativas. A Agency Group conhece o mercado melhor do que qualquer outra imobiliária que consultámos.',
+                quote: 'Penthouse no Príncipe Real como investimento. O retorno superou todas as projecções. Lisboa está a crescer — e nós estamos dentro.',
                 property: 'Penthouse T4 · Lisboa · €3.1M',
                 date: 'Dezembro 2025',
               },
@@ -1310,7 +1436,7 @@ export default function Home() {
                 country: '🇨🇳 China',
                 zone: 'Comporta',
                 rating: 5,
-                quote: 'A Comporta era o nosso sonho. A Agency Group não só encontrou a propriedade certa como nos acompanhou em todo o processo legal e fiscal. Sentimo-nos completamente seguros.',
+                quote: 'A Comporta era o nosso sonho. Encontraram a propriedade certa. Trataram de tudo. No dia da escritura, soubemos que tínhamos chegado.',
                 property: 'Quinta T6 · Comporta · €5.2M',
                 date: 'Novembro 2025',
               },
@@ -1319,7 +1445,7 @@ export default function Home() {
                 country: '🇫🇷 França',
                 zone: 'Porto',
                 rating: 5,
-                quote: 'Investidores há 15 anos, nunca trabalhámos com uma equipa tão dedicada. O conhecimento do mercado do Porto é extraordinário. Rentabilidade de 5.1% no primeiro ano.',
+                quote: 'Investidores há 15 anos. Nunca trabalhámos com uma equipa assim. 5.1% de rentabilidade no primeiro ano. O Porto foi a melhor decisão.',
                 property: 'Apartamento T3 · Porto · €890K',
                 date: 'Outubro 2025',
               },
@@ -1328,7 +1454,7 @@ export default function Home() {
                 country: '🇩🇪 Alemanha',
                 zone: 'Algarve',
                 rating: 5,
-                quote: 'Após comparar 6 imobiliárias, escolhemos a Agency Group pela sua transparência e pelos relatórios de mercado exclusivos. A nossa villa no Algarve é perfeita.',
+                quote: 'Comparámos 6 agências. Escolhemos a Agency Group. A villa no Algarve é exactamente o que imaginámos — e o processo foi impecável.',
                 property: 'Villa T5 · Algarve · €1.8M',
                 date: 'Setembro 2025',
               },
@@ -1337,7 +1463,7 @@ export default function Home() {
                 country: '🇺🇸 Estados Unidos',
                 zone: 'Madeira',
                 rating: 5,
-                quote: 'Relocalizámo-nos para a Madeira com o regime NHR. A Agency Group tratou de tudo: imóvel, advogado, contabilista, escola para os filhos. Um serviço verdadeiramente completo.',
+                quote: 'Viemos para a Madeira com o NHR. Trataram de tudo — imóvel, advogado, escola para os filhos. Hoje dizemos que a vida começou aqui.',
                 property: 'Moradia T4 · Madeira · €1.2M',
                 date: 'Agosto 2025',
               },
@@ -1445,7 +1571,7 @@ export default function Home() {
           </div>
           <a href="https://wa.me/351919948986?text=Bom%20dia%2C%20gostaria%20de%20saber%20mais%20sobre%20im%C3%B3veis%20de%20luxo%20em%20Portugal." target="_blank" rel="noreferrer" className="wa-btn">
             <svg viewBox="0 0 24 24" fill="currentColor" width="15"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a9.88 9.88 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            WhatsApp Agora
+            Falar Agora
           </a>
         </div>
       </div>
@@ -1454,9 +1580,9 @@ export default function Home() {
       <footer>
         <div className="ft-inner">
           <div className="ft-top">
-            <div><div className="ft-la">Agency</div><div className="ft-lg">Group</div><p className="ft-tag">Mediação imobiliária de luxo em Portugal. €500K–€10M.</p></div>
+            <div><div className="ft-la">Agency</div><div className="ft-lg">Group</div><p className="ft-tag">Portugal. Para quem não aceita menos.</p></div>
             <div className="ft-col"><div className="ft-col-h">Zonas</div><ul><li><a href="#">Lisboa</a></li><li><a href="#">Cascais</a></li><li><a href="#">Comporta</a></li><li><a href="#">Porto</a></li><li><a href="#">Algarve</a></li><li><a href="#">Madeira</a></li></ul></div>
-            <div className="ft-col"><div className="ft-col-h">Serviços</div><ul><li><a href="#" onClick={e=>{e.preventDefault();openModal()}}>Off-Market</a></li><li><a href="/portal">Portal Agentes</a></li><li><a href="#contacto">NHR / Vistos</a></li><li><a href="#imt">Simulador IMT</a></li></ul></div>
+            <div className="ft-col"><div className="ft-col-h">Serviços</div><ul><li><a href="#" onClick={e=>{e.preventDefault();openModal()}}>Off-Market</a></li><li><a href="/portal">Portal Agentes</a></li><li><a href="#contacto">NHR / Vistos</a></li><li><a href="#simulador">Simulador IMT</a></li></ul></div>
             <div className="ft-col"><div className="ft-col-h">Empresa</div><ul><li><a href="#contacto">Sobre Nós</a></li><li><a href="#agentes">Agentes</a></li><li><a href="/relatorio-2026" style={{color:'var(--gold)',fontWeight:500}}>Market Report 2026 ↗</a></li><li><a href="mailto:geral@agencygroup.pt">Email</a></li></ul></div>
           </div>
           <div className="ft-bot">

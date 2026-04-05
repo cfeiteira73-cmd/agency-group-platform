@@ -149,7 +149,7 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
         const icon = L.divIcon({
           className: '',
           html: `
-            <div style="background:#0c1f15;border:2px solid ${color};color:${color};font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;padding:5px 10px;white-space:nowrap;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.6);position:relative;">
+            <div style="background:#0c1f15;border:2px solid ${color};color:${color};font-family:var(--font-dm-mono),monospace;font-size:10px;letter-spacing:.08em;padding:5px 10px;white-space:nowrap;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.6);position:relative;">
               ${p.preco >= 1000000 ? '€' + (p.preco / 1000000).toFixed(1).replace('.', ',') + 'M' : '€' + Math.round(p.preco / 1000) + 'K'}
               <div style="position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid ${color};"></div>
             </div>
@@ -159,12 +159,12 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
         })
 
         const popupHtml = `
-          <div style="background:#0e2318;color:#f4f0e6;font-family:'Jost',sans-serif;border:1px solid rgba(201,169,110,.25);padding:16px;min-width:220px;max-width:260px;">
-            <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(201,169,110,.7);margin-bottom:6px;text-transform:uppercase;">${p.zona} · ${p.bairro}</div>
-            <div style="font-family:'Cormorant',serif;font-size:1.1rem;font-weight:300;color:#f4f0e6;margin-bottom:8px;line-height:1.3;">${p.nome}</div>
+          <div style="background:#0e2318;color:#f4f0e6;font-family:var(--font-jost),sans-serif;border:1px solid rgba(201,169,110,.25);padding:16px;min-width:220px;max-width:260px;">
+            <div style="font-family:var(--font-dm-mono),monospace;font-size:10px;letter-spacing:.14em;color:rgba(201,169,110,.7);margin-bottom:6px;text-transform:uppercase;">${p.zona} · ${p.bairro}</div>
+            <div style="font-family:var(--font-cormorant),serif;font-size:1.1rem;font-weight:300;color:#f4f0e6;margin-bottom:8px;line-height:1.3;">${p.nome}</div>
             <div style="font-size:11px;color:rgba(244,240,230,.45);margin-bottom:10px;">${p.area}m² · T${p.quartos} · ${p.casasBanho} WC</div>
-            <div style="font-family:'Cormorant',serif;font-size:1.25rem;color:#c9a96e;margin-bottom:12px;">${formatPriceFull(p.preco)}</div>
-            <a href="/imoveis/${p.id}" style="display:block;background:#c9a96e;color:#0c1f15;text-align:center;padding:8px;font-family:'Jost',sans-serif;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;">Ver Imóvel →</a>
+            <div style="font-family:var(--font-cormorant),serif;font-size:1.25rem;color:#c9a96e;margin-bottom:12px;">${formatPriceFull(p.preco)}</div>
+            <a href="/imoveis/${p.id}" style="display:block;background:#c9a96e;color:#0c1f15;text-align:center;padding:8px;font-family:var(--font-jost),sans-serif;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;">Ver Imóvel →</a>
           </div>
         `
 
@@ -248,10 +248,10 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
       const color = '#c9a96e'
       const icon = L.divIcon({
         className: '',
-        html: `<div style="background:#0c1f15;border:2px solid ${color};color:${color};font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;padding:5px 10px;white-space:nowrap;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.6);position:relative;">${p.preco >= 1000000 ? '€' + (p.preco / 1000000).toFixed(1).replace('.', ',') + 'M' : '€' + Math.round(p.preco / 1000) + 'K'}<div style="position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid ${color};"></div></div>`,
+        html: `<div style="background:#0c1f15;border:2px solid ${color};color:${color};font-family:var(--font-dm-mono),monospace;font-size:10px;letter-spacing:.08em;padding:5px 10px;white-space:nowrap;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.6);position:relative;">${p.preco >= 1000000 ? '€' + (p.preco / 1000000).toFixed(1).replace('.', ',') + 'M' : '€' + Math.round(p.preco / 1000) + 'K'}<div style="position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid ${color};"></div></div>`,
         iconAnchor: [40, 32], popupAnchor: [0, -35],
       })
-      const popupHtml = `<div style="background:#0e2318;color:#f4f0e6;font-family:'Jost',sans-serif;border:1px solid rgba(201,169,110,.25);padding:16px;min-width:220px;max-width:260px;"><div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;color:rgba(201,169,110,.7);margin-bottom:6px;text-transform:uppercase;">${p.zona} · ${p.bairro}</div><div style="font-family:'Cormorant',serif;font-size:1.1rem;font-weight:300;color:#f4f0e6;margin-bottom:8px;line-height:1.3;">${p.nome}</div><div style="font-size:11px;color:rgba(244,240,230,.45);margin-bottom:10px;">${p.area}m² · T${p.quartos}</div><div style="font-family:'Cormorant',serif;font-size:1.25rem;color:#c9a96e;margin-bottom:12px;">${formatPriceFull(p.preco)}</div><a href="/imoveis/${p.id}" style="display:block;background:#c9a96e;color:#0c1f15;text-align:center;padding:8px;font-family:'Jost',sans-serif;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;">Ver Imóvel →</a></div>`
+      const popupHtml = `<div style="background:#0e2318;color:#f4f0e6;font-family:var(--font-jost),sans-serif;border:1px solid rgba(201,169,110,.25);padding:16px;min-width:220px;max-width:260px;"><div style="font-family:var(--font-dm-mono),monospace;font-size:10px;letter-spacing:.14em;color:rgba(201,169,110,.7);margin-bottom:6px;text-transform:uppercase;">${p.zona} · ${p.bairro}</div><div style="font-family:var(--font-cormorant),serif;font-size:1.1rem;font-weight:300;color:#f4f0e6;margin-bottom:8px;line-height:1.3;">${p.nome}</div><div style="font-size:11px;color:rgba(244,240,230,.45);margin-bottom:10px;">${p.area}m² · T${p.quartos}</div><div style="font-family:var(--font-cormorant),serif;font-size:1.25rem;color:#c9a96e;margin-bottom:12px;">${formatPriceFull(p.preco)}</div><a href="/imoveis/${p.id}" style="display:block;background:#c9a96e;color:#0c1f15;text-align:center;padding:8px;font-family:var(--font-jost),sans-serif;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;">Ver Imóvel →</a></div>`
 
       L.marker([p.lat, p.lng], { icon })
         .addTo(map)

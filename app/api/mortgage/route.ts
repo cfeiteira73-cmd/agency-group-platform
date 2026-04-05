@@ -1,4 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const MortgageSchema = z.object({
+  montante:         z.coerce.number().min(10_000, 'Montante mínimo €10.000'),
+  entrada_pct:      z.coerce.number().min(0).max(100).optional().default(20),
+  prazo:            z.coerce.number().int().min(5).max(40).optional().default(30),
+  spread:           z.coerce.number().min(0).max(10).optional().default(1.4),
+  uso:              z.string().optional().default('habitacao_propria'),
+  rendimento_anual: z.coerce.number().min(0).optional().default(0),
+})
 
 // ─── Fallback rates (used only if live fetch fails) ───────────────────────────
 const EURIBOR_6M_FALLBACK  = 0.0295
@@ -111,40 +121,26 @@ function calcIMT(p: number, habitPropria: boolean): number {
 
 export async function POST(req: NextRequest) {
   try {
-    const [body, liveRates] = await Promise.all([
+    const [rawBody, liveRates] = await Promise.all([
       req.json(),
       fetchLiveEuribor(),
     ])
 
+    const parsed = MortgageSchema.safeParse(rawBody)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
+    }
+    const body = parsed.data
+
     const EURIBOR_6M  = liveRates.euribor_6m
     const EURIBOR_12M = liveRates.euribor_12m
 
-    const montante   = parseFloat(body.montante)   || 0
-    const entradaPct = parseFloat(body.entrada_pct) || 20
-    const prazoAnos  = Math.min(Math.max(parseInt(body.prazo) || 30, 5), 40)
-    const spreadPct  = parseFloat(body.spread)     || 1.4
-    const uso        = String(body.uso || 'habitacao_propria')
-    const rendimento = parseFloat(body.rendimento_anual) || 0
-
-    // ── Validation ──────────────────────────────────────────────────────────
-    if (montante < 10_000) {
-      return NextResponse.json(
-        { error: 'Montante mínimo €10.000' },
-        { status: 400 }
-      )
-    }
-    if (entradaPct < 0 || entradaPct > 100) {
-      return NextResponse.json(
-        { error: 'Percentagem de entrada inválida (0–100)' },
-        { status: 400 }
-      )
-    }
-    if (spreadPct < 0 || spreadPct > 10) {
-      return NextResponse.json(
-        { error: 'Spread inválido (0–10%)' },
-        { status: 400 }
-      )
-    }
+    const montante   = body.montante
+    const entradaPct = body.entrada_pct
+    const prazoAnos  = body.prazo
+    const spreadPct  = body.spread
+    const uso        = body.uso
+    const rendimento = body.rendimento_anual
 
     const habitPropria = uso === 'habitacao_propria'
     const entrada      = montante * (entradaPct / 100)

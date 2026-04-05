@@ -1,4 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const NHRSchema = z.object({
+  pais:              z.string().default('UK'),
+  tipo_rendimento:   z.enum(['salario', 'rendas', 'dividendos', 'pensao', 'mais_valias', 'crypto']).default('salario'),
+  rendimento_anual:  z.coerce.number().min(1_000, 'Rendimento mínimo €1.000 para simulação relevante'),
+  regime:            z.enum(['nhr', 'ifici', 'compare']).default('compare'),
+  fonte_estrangeira: z.boolean().default(true),
+})
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -329,37 +338,17 @@ function calcPoupanca10Anos(
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    const raw = await req.json()
+    const parsed = NHRSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
+    }
+    const { pais, tipo_rendimento, rendimento_anual, regime, fonte_estrangeira } = parsed.data
 
-    const pais:             string         = String(body.pais || 'UK')
-    const tipo_rendimento:  TipoRendimento = String(body.tipo_rendimento || 'salario') as TipoRendimento
-    const rendimento_anual: number         = parseFloat(body.rendimento_anual) || 0
-    const regime:           Regime         = String(body.regime || 'compare') as Regime
-    const fonte_estrangeira: boolean       = body.fonte_estrangeira !== false // default true
-
-    // Validation
+    // Validate country exists in our dataset
     if (!COUNTRIES[pais]) {
       return NextResponse.json(
         { error: `País não reconhecido. Use: ${Object.keys(COUNTRIES).join(', ')}` },
-        { status: 400 }
-      )
-    }
-    const tiposValidos: TipoRendimento[] = ['salario', 'rendas', 'dividendos', 'pensao', 'mais_valias', 'crypto']
-    if (!tiposValidos.includes(tipo_rendimento)) {
-      return NextResponse.json(
-        { error: `tipo_rendimento inválido. Use: ${tiposValidos.join(', ')}` },
-        { status: 400 }
-      )
-    }
-    if (rendimento_anual < 0) {
-      return NextResponse.json(
-        { error: 'rendimento_anual deve ser positivo' },
-        { status: 400 }
-      )
-    }
-    if (rendimento_anual < 1_000) {
-      return NextResponse.json(
-        { error: 'Rendimento mínimo €1.000 para simulação relevante' },
         { status: 400 }
       )
     }

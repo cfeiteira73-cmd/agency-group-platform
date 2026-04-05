@@ -1,5 +1,23 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { auth } from '@/auth'
+
+const ContentSchema = z.object({
+  zona:         z.string().min(1, 'Zona é obrigatória'),
+  preco:        z.union([z.string(), z.number()]).refine(v => Number(v) > 0, 'Preço deve ser positivo'),
+  tipo:         z.string().optional(),
+  area:         z.union([z.string(), z.number()]).optional(),
+  quartos:      z.union([z.string(), z.number()]).optional(),
+  features:     z.array(z.string()).optional(),
+  descricao:    z.string().optional(),
+  fotos_count:  z.number().int().min(0).optional(),
+  fotos_base64: z.array(z.string()).optional(),
+  video_url:    z.string().url().optional().or(z.literal('')),
+  listing_url:  z.string().url().optional().or(z.literal('')),
+  persona:      z.string().optional().default('hnwi'),
+  idiomas:      z.array(z.string()).optional().default(['pt', 'en', 'fr']),
+})
 
 
 // Rate limiting
@@ -284,20 +302,23 @@ function generatePostingSchedule(): Record<string, { day: string; time: string; 
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
   if (!checkRate(ip)) return NextResponse.json({ success: false, error: 'Limite de pedidos atingido. Tenta em 1 hora.' }, { status: 429 })
 
   try {
-    const body = await req.json()
+    const raw = await req.json()
+    const parsed = ContentSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
+    }
     const {
       zona, tipo, area, preco, quartos, features, descricao,
       fotos_count, fotos_base64, video_url, listing_url,
-      persona = 'hnwi',
-      idiomas = ['pt', 'en', 'fr'],
-    } = body
-
-    if (!zona || !preco) return NextResponse.json({ success: false, error: 'Zona e preço são obrigatórios.' }, { status: 400 })
+      persona, idiomas,
+    } = parsed.data
 
     const precoNum = Number(preco)
     const precoFormatado = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(precoNum)

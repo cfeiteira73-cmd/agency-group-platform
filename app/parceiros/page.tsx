@@ -56,19 +56,19 @@ export default function ParceirosPage() {
   return (
     <main style={{ background: BG, minHeight: '100vh', color: '#f4f0e6', fontFamily: "'Jost', sans-serif" }}>
       <style>{`
-        .pg-input { background: rgba(255,255,255,.04); border: 1px solid rgba(201,169,110,.2); color: #f4f0e6; padding: 12px 16px; font-family: 'Jost', sans-serif; font-size: .85rem; width: 100%; outline: none; transition: border .2s; box-sizing: border-box; }
+        .pg-input { background: rgba(255,255,255,.04); border: 1px solid rgba(201,169,110,.2); color: #f4f0e6; padding: 12px 16px; font-family: var(--font-jost), sans-serif; font-size: .85rem; width: 100%; outline: none; transition: border .2s; box-sizing: border-box; }
         .pg-input:focus { border-color: rgba(201,169,110,.6); }
         .pg-input::placeholder { color: rgba(244,240,230,.3); }
         .pg-input option { background: #0a1a0e; color: #f4f0e6; }
         .pg-label { font-size: .7rem; letter-spacing: .12em; color: rgba(201,169,110,.7); text-transform: uppercase; margin-bottom: 6px; display: block; }
-        .pg-btn { background: #c9a96e; color: #0c1f15; border: none; padding: 16px 40px; font-family: 'Jost', sans-serif; font-size: .8rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; cursor: pointer; transition: opacity .2s; }
+        .pg-btn { background: #c9a96e; color: #0c1f15; border: none; padding: 16px 40px; font-family: var(--font-jost), sans-serif; font-size: .8rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; cursor: pointer; transition: opacity .2s; }
         .pg-btn:hover { opacity: .88; }
         .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
-        .pg-btn-outline { background: transparent; color: #c9a96e; border: 1px solid rgba(201,169,110,.4); padding: 14px 36px; font-family: 'Jost', sans-serif; font-size: .75rem; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; cursor: pointer; transition: all .2s; }
+        .pg-btn-outline { background: transparent; color: #c9a96e; border: 1px solid rgba(201,169,110,.4); padding: 14px 36px; font-family: var(--font-jost), sans-serif; font-size: .75rem; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; cursor: pointer; transition: all .2s; }
         .pg-btn-outline:hover { background: rgba(201,169,110,.08); border-color: rgba(201,169,110,.7); }
         .fade-in { animation: fadeIn .5s ease; }
         @keyframes fadeIn { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-        .stat-num { font-size: 2.2rem; font-weight: 700; color: #c9a96e; font-family: 'DM Mono', monospace; }
+        .stat-num { font-size: 2.2rem; font-weight: 700; color: #c9a96e; font-family: var(--font-dm-mono), monospace; }
         .check-item::before { content: '✓'; color: #c9a96e; margin-right: 10px; font-weight: 700; }
       `}</style>
 

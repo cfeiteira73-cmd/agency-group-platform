@@ -1,5 +1,15 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+const MessageParamSchema = z.object({
+  role:    z.enum(['user', 'assistant']),
+  content: z.string().min(1),
+})
+
+const JuridicoSchema = z.object({
+  messages: z.array(MessageParamSchema).min(1, 'Mensagem em falta'),
+})
 
 
 // Rate limiting — 30 req/hr por IP
@@ -352,8 +362,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { messages } = await req.json() as { messages: MessageParam[] }
-    if (!messages?.length) return NextResponse.json({ error: 'Mensagem em falta' }, { status: 400 })
+    const raw = await req.json()
+    const parsed = JuridicoSchema.safeParse(raw)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
+    }
+    const { messages } = parsed.data
 
     const ultima = messages[messages.length - 1]?.content?.toLowerCase() ?? ''
     const precisaSearch = /aima|golden visa|ari|nhr|ifici|2025|2026|prazo actual|taxa actual|portaria|decreto|lei n[uú]|novo|recente|alterou|mudou|actualizado|rnal|alojamento local|euribor|spread actual|balcão nacional|bnp\b/i.test(ultima)

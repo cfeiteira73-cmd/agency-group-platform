@@ -1,4 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { avmCache, CacheKeys } from '@/lib/cache'
+
+const AVMSchema = z.object({
+  zona:       z.string().optional().default('Lisboa'),
+  tipo:       z.string().optional().default('T2'),
+  area:       z.coerce.number().positive().max(50000).optional(),
+  andar:      z.coerce.number().int().optional().default(2),
+  orientacao: z.string().optional().default(''),
+  vista:      z.string().optional().default('Interior'),
+  estado:     z.string().optional().default('Bom'),
+  epc:        z.string().optional().default('B-'),
+  piscina:    z.string().optional().default('nao'),
+  garagem:    z.string().optional().default('sem'),
+  terraco:    z.coerce.number().min(0).optional().default(0),
+  anoConstr:  z.coerce.number().int().min(1800).max(2030).optional().default(2000),
+  uso:        z.string().optional().default('habitacao'),
+  casasBanho: z.coerce.number().int().min(0).optional().default(1),
+})
 
 // ─── Zone Market Data ── Portugal Q1 2026 ────────────────────────────────────
 // Sources: INE, AT/Autoridade Tributária, Confidencial Imobiliário, APEMIP
@@ -348,30 +367,42 @@ function methodMomentum(estimativaBase: number, trendYoy: number, trendQtq: numb
 
 export async function POST(req: NextRequest) {
   try {
-    const [body, liveRates] = await Promise.all([req.json(), fetchLiveRates()])
+    const [rawBody, liveRates] = await Promise.all([req.json(), fetchLiveRates()])
+
+    const parsedAVM = AVMSchema.safeParse(rawBody)
+    if (!parsedAVM.success) {
+      return NextResponse.json({ error: 'Dados inválidos', details: parsedAVM.error.flatten() }, { status: 400 })
+    }
+    const body = parsedAVM.data
 
     const {
-      zona = 'Lisboa',
-      tipo = 'T2',
+      zona,
+      tipo,
       area: areaRaw,
-      andar: andarRaw = 2,
-      orientacao = '',
-      vista = 'Interior',
-      estado = 'Bom',
-      epc = 'B-',
-      piscina = 'nao',
-      garagem = 'sem',
-      terraco: terracRaw = 0,
-      anoConstr: anoRaw = 2000,
-      uso = 'habitacao',
-      casasBanho: cbRaw = 1,
+      andar: andarRaw,
+      orientacao,
+      vista,
+      estado,
+      epc,
+      piscina,
+      garagem,
+      terraco: terracRaw,
+      anoConstr: anoRaw,
+      uso,
+      casasBanho: cbRaw,
     } = body
 
-    const area    = Math.max(10, parseFloat(areaRaw) || 80)
-    const andar   = parseInt(String(andarRaw)) || 2
-    const terraco = parseFloat(terracRaw) || 0
-    const ano     = parseInt(String(anoRaw)) || 2000
-    const casasBanho = parseInt(String(cbRaw)) || 1
+    const area    = Math.max(10, areaRaw ?? 80)
+
+    // ── Cache-aside: return cached AVM result if available (30 min TTL) ──
+    const cacheKey = CacheKeys.avm(zona, tipo, area)
+    const cachedAVM = avmCache.get(cacheKey)
+    if (cachedAVM) return NextResponse.json(cachedAVM)
+
+    const andar   = andarRaw ?? 2
+    const terraco = terracRaw ?? 0
+    const ano     = anoRaw ?? 2000
+    const casasBanho = cbRaw ?? 1
 
     if (area > 50000) return NextResponse.json({ error: 'Área inválida' }, { status: 400 })
 
@@ -502,7 +533,7 @@ export async function POST(req: NextRequest) {
     // ── Comparable properties (synthetic) ──
     const comparaveis = generateComparables(zona, tipo, area, pm2)
 
-    return NextResponse.json({
+    const avmResult = {
       success: true,
       estimativa,
       rangeMin,
@@ -548,7 +579,10 @@ export async function POST(req: NextRequest) {
       },
       fonte: `Agency Group AVM v4.0 · Dados INE/AT Q1 2026 · 5 Metodologias RICS · ${new Date().toLocaleDateString('pt-PT')}`,
       data: new Date().toISOString(),
-    })
+    }
+
+    avmCache.set(cacheKey, avmResult, 30 * 60)
+    return NextResponse.json(avmResult)
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Erro interno' }, { status: 500 })
   }
