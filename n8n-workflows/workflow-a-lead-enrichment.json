@@ -1,0 +1,627 @@
+{
+  "name": "Workflow A — Lead Enrichment Automático",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-enrichment",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook — Novo Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "agency-group-lead-enrichment"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalise and validate inbound lead data\nconst body = $input.first().json.body || $input.first().json;\n\nconst normalised = {\n  id: body.id || body.contact_id || null,\n  full_name: (body.full_name || body.name || '').trim(),\n  email: (body.email || '').toLowerCase().trim(),\n  phone: (body.phone || body.phone_number || '').replace(/\\s/g, ''),\n  source: body.source || body.lead_source || 'website',\n  budget: Number(body.budget) || 0,\n  zone_interest: body.zone_interest || body.zone || body.location || '',\n  typology: body.typology || body.property_type || '',\n  timeline: body.timeline || 'unknown',\n  motivation_score: Number(body.motivation_score) || 3,\n  message: body.message || body.notes || '',\n  created_at: body.created_at || new Date().toISOString()\n};\n\n// Basic validation\nif (!normalised.email && !normalised.phone) {\n  throw new Error('Lead sem email nem telefone — descartado');\n}\n\n// Sanitise phone to E.164 (basic PT/ES)\nif (normalised.phone && !normalised.phone.startsWith('+')) {\n  if (normalised.phone.startsWith('9') || normalised.phone.startsWith('2')) {\n    normalised.phone = '+351' + normalised.phone;\n  } else if (normalised.phone.startsWith('6') || normalised.phone.startsWith('7')) {\n    normalised.phone = '+34' + normalised.phone;\n  }\n}\n\nreturn [{ json: normalised }];"
+      },
+      "id": "code-normalise",
+      "name": "Code — Normalizar Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, email, phone, lead_score FROM contacts WHERE email = '{{ $json.email }}' OR phone = '{{ $json.phone }}' LIMIT 1",
+        "options": {}
+      },
+      "id": "supabase-dedup",
+      "name": "Supabase — Dedup Check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "dedup-check",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-is-new-lead",
+      "name": "IF — Lead Novo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"duplicate\", \"message\": \"Lead já existe no CRM\", \"existing_id\": \"{{ $json.id }}\" }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-duplicate",
+      "name": "Respond — Duplicado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 500]
+    },
+    {
+      "parameters": {
+        "url": "https://company.clearbit.com/v2/combined/find",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $('Code — Normalizar Lead').item.json.email }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http-clearbit",
+      "name": "HTTP — Clearbit Enrich",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "clearbit-api-key",
+          "name": "Clearbit API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.hunter.io/v2/email-verifier",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $('Code — Normalizar Lead').item.json.email }}"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $credentials.hunterApiKey }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 5000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "http-hunter",
+      "name": "HTTP — Hunter Email Verify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1340, 200],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "hunter-api-key",
+          "name": "Hunter.io API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lead Scoring Engine — Agency Group\nconst lead = $('Code — Normalizar Lead').item.json;\nconst clearbit = $('HTTP — Clearbit Enrich').item.json || {};\nconst hunter = $('HTTP — Hunter Email Verify').item.json || {};\n\nlet score = 0;\nconst breakdown = {};\n\n// Budget scoring\nif (lead.budget > 1_000_000) {\n  score += 30; breakdown.budget = '+30 (>€1M)';\n} else if (lead.budget > 500_000) {\n  score += 20; breakdown.budget = '+20 (>€500K)';\n} else if (lead.budget > 200_000) {\n  score += 10; breakdown.budget = '+10 (>€200K)';\n} else {\n  breakdown.budget = '+0';\n}\n\n// Timeline scoring\nif (lead.timeline === 'immediate' || lead.timeline === 'imediato') {\n  score += 25; breakdown.timeline = '+25 (imediato)';\n} else if (lead.timeline === '3months' || lead.timeline === '3_months') {\n  score += 15; breakdown.timeline = '+15 (3 meses)';\n} else if (lead.timeline === '6months' || lead.timeline === '6_months') {\n  score += 8; breakdown.timeline = '+8 (6 meses)';\n} else {\n  breakdown.timeline = '+0';\n}\n\n// Motivation scoring\nif (lead.motivation_score >= 4) {\n  score += 15; breakdown.motivation = '+15 (motivação alta)';\n} else if (lead.motivation_score >= 3) {\n  score += 8; breakdown.motivation = '+8 (motivação média)';\n}\n\n// Source scoring\nconst sourceScores = {\n  referral: 20, referido: 20,\n  idealista_premium: 10, idealista: 8,\n  website: 5, portais: 5,\n  cold: 2\n};\nconst srcScore = sourceScores[lead.source?.toLowerCase()] || 3;\nscore += srcScore;\nbreakdown.source = `+${srcScore} (${lead.source})`;\n\n// Contact completeness\nif (lead.email) { score += 5; breakdown.email = '+5'; }\nif (lead.phone) { score += 5; breakdown.phone = '+5'; }\n\n// Clearbit enrichment bonus\nif (clearbit.person?.linkedin?.handle) {\n  score += 5; breakdown.linkedin = '+5';\n}\nif (clearbit.company?.name) {\n  score += 3; breakdown.company = '+3 (empresa identificada)';\n}\n\n// Hunter email quality\nconst hunterStatus = hunter.data?.status;\nif (hunterStatus === 'valid') {\n  score += 3; breakdown.email_verified = '+3';\n} else if (hunterStatus === 'risky') {\n  score -= 5; breakdown.email_verified = '-5 (email arriscado)';\n}\n\nscore = Math.min(100, Math.max(0, score));\n\n// Routing\nlet routing;\nif (score >= 70) routing = 'hot';\nelse if (score >= 40) routing = 'warm';\nelse routing = 'cold';\n\n// Enrich lead data with Clearbit\nconst enriched = {\n  ...lead,\n  lead_score: score,\n  score_breakdown: breakdown,\n  routing,\n  clearbit_person: clearbit.person || null,\n  clearbit_company: clearbit.company || null,\n  email_verified: hunterStatus === 'valid',\n  linkedin_url: clearbit.person?.linkedin?.handle\n    ? `https://linkedin.com/in/${clearbit.person.linkedin.handle}`\n    : null\n};\n\nreturn [{ json: enriched }];"
+      },
+      "id": "code-scoring",
+      "name": "Code — Lead Scoring",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "model": "claude-haiku-3-5",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "Você é um especialista imobiliário da Agency Group (Lisboa, Portugal). Analise este lead e responda APENAS em JSON válido.\n\nDados do lead:\n- Nome: {{ $json.full_name }}\n- Budget: €{{ $json.budget }}\n- Zona interesse: {{ $json.zone_interest }}\n- Tipologia: {{ $json.typology }}\n- Timeline: {{ $json.timeline }}\n- Score calculado: {{ $json.lead_score }}/100\n- Fonte: {{ $json.source }}\n- Mensagem: {{ $json.message }}\n- Empresa (Clearbit): {{ $json.clearbit_company?.name || 'desconhecida' }}\n\nResponda com este JSON exacto (sem markdown):\n{\n  \"intent\": \"buy\" | \"rent\" | \"invest\" | \"unclear\",\n  \"budget_realistic\": true | false,\n  \"urgency\": \"high\" | \"medium\" | \"low\",\n  \"buyer_profile\": \"end_user\" | \"investor\" | \"relocating\" | \"golden_visa\" | \"unclear\",\n  \"language_detected\": \"pt\" | \"en\" | \"fr\" | \"es\" | \"other\",\n  \"score_adjustment\": -10 | -5 | 0 | 5 | 10,\n  \"suggested_first_message\": \"mensagem de boas-vindas personalizada em 1-2 frases no idioma detectado\",\n  \"next_action\": \"call\" | \"email\" | \"whatsapp\" | \"nurture\",\n  \"classification_notes\": \"observação curta (max 15 palavras)\"\n}"
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 500,
+          "temperature": 0.3
+        }
+      },
+      "id": "anthropic-classify",
+      "name": "Claude Haiku — Classificar Intent",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [1780, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-api-key",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude response and merge with lead data\nconst lead = $('Code — Lead Scoring').item.json;\nconst claudeRaw = $input.first().json.text || $input.first().json.content?.[0]?.text || '{}';\n\nlet classification;\ntry {\n  // Strip markdown code blocks if present\n  const cleaned = claudeRaw.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  classification = JSON.parse(cleaned);\n} catch (e) {\n  classification = {\n    intent: 'unclear',\n    budget_realistic: true,\n    urgency: 'medium',\n    buyer_profile: 'unclear',\n    language_detected: 'pt',\n    score_adjustment: 0,\n    suggested_first_message: `Olá ${lead.full_name}, obrigado pelo seu contacto com a Agency Group. Terei todo o gosto em ajudá-lo/a.`,\n    next_action: 'email',\n    classification_notes: 'Classificação automática fallback'\n  };\n}\n\n// Apply score adjustment from Claude\nconst finalScore = Math.min(100, Math.max(0, lead.lead_score + (classification.score_adjustment || 0)));\n\nconst finalLead = {\n  ...lead,\n  lead_score: finalScore,\n  intent: classification.intent,\n  budget_realistic: classification.budget_realistic,\n  urgency: classification.urgency,\n  buyer_profile: classification.buyer_profile,\n  language_detected: classification.language_detected,\n  suggested_first_message: classification.suggested_first_message,\n  next_action: classification.next_action,\n  classification_notes: classification.classification_notes,\n  // Re-evaluate routing with final score\n  routing: finalScore >= 70 ? 'hot' : finalScore >= 40 ? 'warm' : 'cold'\n};\n\nreturn [{ json: finalLead }];"
+      },
+      "id": "code-merge-classification",
+      "name": "Code — Merge Classification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "contacts",
+        "columns": "full_name,email,phone,source,budget,zone_interest,typology,timeline,lead_score,intent,urgency,buyer_profile,language_detected,routing,suggested_first_message,next_action,linkedin_url,email_verified,clearbit_data,status,created_at",
+        "values": "={{ $json.full_name }},={{ $json.email }},={{ $json.phone }},={{ $json.source }},={{ $json.budget }},={{ $json.zone_interest }},={{ $json.typology }},={{ $json.timeline }},={{ $json.lead_score }},={{ $json.intent }},={{ $json.urgency }},={{ $json.buyer_profile }},={{ $json.language_detected }},={{ $json.routing }},={{ $json.suggested_first_message }},={{ $json.next_action }},={{ $json.linkedin_url }},={{ $json.email_verified }},={{ JSON.stringify({person: $json.clearbit_person, company: $json.clearbit_company}) }},lead,={{ $json.created_at }}",
+        "options": {
+          "queryBatching": "independently"
+        }
+      },
+      "id": "supabase-insert",
+      "name": "Supabase — Insert Contact",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2220, 200],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "routing-hot",
+              "leftValue": "={{ $('Code — Merge Classification').item.json.lead_score }}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-hot-lead",
+      "name": "IF — Score >= 70 (Hot)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2440, 200]
+    },
+    {
+      "parameters": {
+        "from": "Agency Group <noreply@agencygroup.pt>",
+        "to": "={{ $('Code — Merge Classification').item.json.email }}",
+        "subject": "Bem-vindo/a à Agency Group — {{ $('Code — Merge Classification').item.json.full_name }}",
+        "html": "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n  <h2 style=\"color: #1a1a2e;\">Obrigado pelo seu contacto</h2>\n  <p>Olá {{ $('Code — Merge Classification').item.json.full_name }},</p>\n  <p>{{ $('Code — Merge Classification').item.json.suggested_first_message }}</p>\n  <p>O nosso especialista irá contactá-lo/a em breve. Entretanto, pode explorar as nossas propriedades em destaque.</p>\n  <a href=\"https://agencygroup.pt/properties\" style=\"background: #1a1a2e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 16px;\">Ver Propriedades</a>\n  <hr style=\"margin-top: 32px;\">\n  <p style=\"font-size: 12px; color: #666;\">Agency Group | AMI 22506 | Lisboa, Portugal</p>\n</div>",
+        "options": {}
+      },
+      "id": "resend-welcome-hot",
+      "name": "Resend — Email Boas-Vindas (Hot)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [2660, 100],
+      "credentials": {
+        "smtp": {
+          "id": "resend-smtp",
+          "name": "Resend SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Code — Merge Classification').item.json.phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $('Code — Merge Classification').item.json.suggested_first_message }} 🏡\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wa-hot-lead",
+      "name": "WhatsApp — Mensagem Hot Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2660, 240],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"channel\": \"#leads-hot\",\n  \"text\": \"🔥 *HOT LEAD* — Score {{ $('Code — Merge Classification').item.json.lead_score }}/100\",\n  \"blocks\": [\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"🔥 *HOT LEAD ENTROU* — Score {{ $('Code — Merge Classification').item.json.lead_score }}/100\\n*Nome:* {{ $('Code — Merge Classification').item.json.full_name }}\\n*Email:* {{ $('Code — Merge Classification').item.json.email }}\\n*Budget:* €{{ $('Code — Merge Classification').item.json.budget }}\\n*Zona:* {{ $('Code — Merge Classification').item.json.zone_interest }}\\n*Urgência:* {{ $('Code — Merge Classification').item.json.urgency }}\\n*Próxima acção:* {{ $('Code — Merge Classification').item.json.next_action }}\"\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "slack-alert-hot",
+      "name": "Slack — Alerta Agente (Hot)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2660, 380],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "slack-bot-token",
+          "name": "Slack Bot Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "Agency Group <noreply@agencygroup.pt>",
+        "to": "={{ $('Code — Merge Classification').item.json.email }}",
+        "subject": "Propriedades seleccionadas para si — Agency Group",
+        "html": "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n  <h2 style=\"color: #1a1a2e;\">Propriedades que podem interessar-lhe</h2>\n  <p>Olá {{ $('Code — Merge Classification').item.json.full_name }},</p>\n  <p>{{ $('Code — Merge Classification').item.json.suggested_first_message }}</p>\n  <p>Seleccionámos algumas propriedades que correspondem ao seu perfil. Clique abaixo para ver as opções disponíveis.</p>\n  <a href=\"https://agencygroup.pt/properties?budget={{ $('Code — Merge Classification').item.json.budget }}&zone={{ $('Code — Merge Classification').item.json.zone_interest }}\" style=\"background: #1a1a2e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 16px;\">Ver Propriedades Matching</a>\n  <hr style=\"margin-top: 32px;\">\n  <p style=\"font-size: 12px; color: #666;\">Agency Group | AMI 22506 | Lisboa, Portugal</p>\n</div>",
+        "options": {}
+      },
+      "id": "resend-nurture",
+      "name": "Resend — Sequência Nurture (Warm/Cold)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [2660, 560],
+      "credentials": {
+        "smtp": {
+          "id": "resend-smtp",
+          "name": "Resend SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "automations_log",
+        "columns": "workflow,contact_email,lead_score,routing,outcome,executed_at",
+        "values": "=workflow-a-lead-enrichment,={{ $('Code — Merge Classification').item.json.email }},={{ $('Code — Merge Classification').item.json.lead_score }},={{ $('Code — Merge Classification').item.json.routing }},enriched_and_routed,={{ new Date().toISOString() }}",
+        "options": {}
+      },
+      "id": "supabase-log",
+      "name": "Supabase — Log Automation",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [2880, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"contact_id\": \"{{ $('Supabase — Insert Contact').item.json.id }}\",\n  \"lead_score\": {{ $('Code — Merge Classification').item.json.lead_score }},\n  \"routing\": \"{{ $('Code — Merge Classification').item.json.routing }}\",\n  \"next_action\": \"{{ $('Code — Merge Classification').item.json.next_action }}\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond — Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [3100, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Novo Lead": {
+      "main": [
+        [
+          {
+            "node": "Code — Normalizar Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Normalizar Lead": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Dedup Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Dedup Check": {
+      "main": [
+        [
+          {
+            "node": "IF — Lead Novo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Lead Novo?": {
+      "main": [
+        [
+          {
+            "node": "HTTP — Clearbit Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond — Duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — Clearbit Enrich": {
+      "main": [
+        [
+          {
+            "node": "HTTP — Hunter Email Verify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP — Hunter Email Verify": {
+      "main": [
+        [
+          {
+            "node": "Code — Lead Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Lead Scoring": {
+      "main": [
+        [
+          {
+            "node": "Claude Haiku — Classificar Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Haiku — Classificar Intent": {
+      "main": [
+        [
+          {
+            "node": "Code — Merge Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Merge Classification": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Insert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Insert Contact": {
+      "main": [
+        [
+          {
+            "node": "IF — Score >= 70 (Hot)?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — Score >= 70 (Hot)?": {
+      "main": [
+        [
+          {
+            "node": "Resend — Email Boas-Vindas (Hot)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WhatsApp — Mensagem Hot Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack — Alerta Agente (Hot)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resend — Sequência Nurture (Warm/Cold)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend — Email Boas-Vindas (Hot)": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Automation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp — Mensagem Hot Lead": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Automation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack — Alerta Agente (Hot)": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Automation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend — Sequência Nurture (Warm/Cold)": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Automation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Log Automation": {
+      "main": [
+        [
+          {
+            "node": "Respond — Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "versionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "agency-group-n8n"
+  },
+  "id": "workflow-a-lead-enrichment",
+  "tags": [
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-automation",
+      "name": "automation"
+    },
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-leads",
+      "name": "leads"
+    }
+  ]
+}

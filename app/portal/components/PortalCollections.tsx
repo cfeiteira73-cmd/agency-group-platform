@@ -1,1461 +1,1098 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { PORTAL_PROPERTIES } from './constants'
-import { useCRMStore } from '../stores/crmStore'
-import { exportToPDF } from './utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type CollectionStatus = 'Activa' | 'Arquivada' | 'Partilhada'
+
+interface CollectionProperty {
+  id: string
+  order: number
+}
 
 interface Collection {
   id: string
   name: string
+  client: string
+  nationality: string
   description: string
-  emoji: string
-  color: string
-  propertyIds: string[]
-  contactId?: number
+  coverColor: string
+  propertyIds: CollectionProperty[]
+  status: CollectionStatus
   createdAt: string
+  updatedAt: string
   shareToken: string
-  isPublic: boolean
   views: number
-  lastViewed?: string
-  tags: string[]
+  lastViewedAt?: string
+  shareDate?: string
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+type CollectionsTab = 'minhas' | 'editor' | 'partilhadas' | 'previa'
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+
+const COVER_COLORS = [
+  { id: 'green',  value: 'linear-gradient(135deg,#1c4a35 0%,#2d7a56 100%)', label: 'Verde AG' },
+  { id: 'gold',   value: 'linear-gradient(135deg,#c9a96e 0%,#b8852a 100%)', label: 'Dourado' },
+  { id: 'navy',   value: 'linear-gradient(135deg,#1a2744 0%,#2a3f6e 100%)', label: 'Azul Navy' },
+  { id: 'black',  value: 'linear-gradient(135deg,#0e0e0d 0%,#2a2a28 100%)', label: 'Preto' },
+  { id: 'slate',  value: 'linear-gradient(135deg,#334155 0%,#475569 100%)', label: 'Ardósia' },
+  { id: 'copper', value: 'linear-gradient(135deg,#7c3d15 0%,#b25a1a 100%)', label: 'Cobre' },
+]
+
+const NATIONALITY_FLAGS: Record<string, string> = {
+  'EUA': '🇺🇸', 'França': '🇫🇷', 'Reino Unido': '🇬🇧', 'China': '🇨🇳',
+  'Brasil': '🇧🇷', 'Alemanha': '🇩🇪', 'EAU': '🇦🇪', 'Portugal': '🇵🇹',
+  'Arábia Saudita': '🇸🇦', 'Suíça': '🇨🇭',
+}
 
 const DEFAULT_COLLECTIONS: Collection[] = [
   {
-    id: 'col-1',
-    name: 'Top Picks para James Mitchell',
-    description: 'Villas premium Cascais · Budget €2-3M · Piscina + Jardim',
-    emoji: '🏰',
-    color: '#c9a96e',
-    propertyIds: ['AG-2026-020', 'AG-2026-021', 'AG-2026-070'],
-    contactId: 1,
-    createdAt: '2026-04-01',
-    shareToken: 'jm2026villa',
-    isPublic: true,
-    views: 7,
-    lastViewed: '2026-04-03',
-    tags: ['Villa', 'Cascais', 'VIP'],
+    id: 'col-1', name: 'Cascais Villas Premium', client: 'James Mitchell',
+    nationality: 'EUA', description: 'Villas exclusivas Cascais · €2M–€4M · Piscina + Jardim + Vista Mar',
+    coverColor: COVER_COLORS[0].value,
+    propertyIds: [
+      { id: 'AG-2026-020', order: 0 }, { id: 'AG-2026-021', order: 1 }, { id: 'AG-2026-070', order: 2 },
+    ],
+    status: 'Partilhada', createdAt: '2026-03-28', updatedAt: '2026-04-03',
+    shareToken: 'jm-cascais-2026', views: 7, lastViewedAt: '2026-04-03T14:23:00Z',
+    shareDate: '2026-04-01',
   },
   {
-    id: 'col-2',
-    name: 'Lisboa Premium — Marie-Claire',
-    description: 'Apartamentos históricos Lisboa · T3/T4 · Vista · Terraço',
-    emoji: '🏛️',
-    color: '#1c4a35',
-    propertyIds: ['AG-2026-010', 'AG-2026-011', 'AG-2026-012'],
-    contactId: 2,
-    createdAt: '2026-04-02',
-    shareToken: 'mc2026lisboa',
-    isPublic: true,
-    views: 12,
-    lastViewed: '2026-04-04',
-    tags: ['Lisboa', 'Apartamento', 'NHR'],
+    id: 'col-2', name: 'Chiado Apartments Sélection', client: 'Pierre Dubois',
+    nationality: 'França', description: 'Apartamentos históricos Lisboa · T3/T4 · Terraço · Vista',
+    coverColor: COVER_COLORS[2].value,
+    propertyIds: [
+      { id: 'AG-2026-010', order: 0 }, { id: 'AG-2026-011', order: 1 }, { id: 'AG-2026-012', order: 2 },
+    ],
+    status: 'Partilhada', createdAt: '2026-04-01', updatedAt: '2026-04-04',
+    shareToken: 'pd-chiado-2026', views: 12, lastViewedAt: '2026-04-04T09:11:00Z',
+    shareDate: '2026-04-02',
   },
   {
-    id: 'col-3',
-    name: 'Portfolio Khalid — Multi-Asset',
-    description: 'Activos premium diversificados · €15M total · Algarve + Comporta + Lisboa',
-    emoji: '💼',
-    color: '#0c1f15',
-    propertyIds: ['AG-2026-030', 'AG-2026-050', 'AG-2026-010'],
-    contactId: 4,
-    createdAt: '2026-03-28',
-    shareToken: 'km2026portfolio',
-    isPublic: false,
-    views: 3,
-    tags: ['Portfolio', 'Family Office', 'Off-Market'],
+    id: 'col-3', name: 'Algarve Golf & Sea', client: 'Sophie Hartmann',
+    nationality: 'Alemanha', description: 'Villas golf resort Algarve · €3M+ · Vale do Lobo · Quinta do Lago',
+    coverColor: COVER_COLORS[1].value,
+    propertyIds: [
+      { id: 'AG-2026-050', order: 0 }, { id: 'AG-2026-030', order: 1 },
+    ],
+    status: 'Activa', createdAt: '2026-04-02', updatedAt: '2026-04-02',
+    shareToken: 'sh-algarve-2026', views: 0,
   },
   {
-    id: 'col-4',
-    name: 'Best Value Portugal 2026',
-    description: 'Melhor ROI potencial · Yield + Valorização · Análise AG',
-    emoji: '📈',
-    color: '#3a7bd5',
-    propertyIds: ['AG-2026-040', 'AG-2026-060', 'AG-2026-021'],
-    contactId: undefined,
-    createdAt: '2026-03-15',
-    shareToken: 'ag2026value',
-    isPublic: true,
-    views: 34,
-    tags: ['Investimento', 'Yield', 'Top Pick'],
+    id: 'col-4', name: 'Portfolio Multi-Activo', client: 'Khalid Al-Rashid',
+    nationality: 'EAU', description: 'Activos diversificados · €12M total · Lisboa + Algarve + Comporta',
+    coverColor: COVER_COLORS[3].value,
+    propertyIds: [
+      { id: 'AG-2026-030', order: 0 }, { id: 'AG-2026-050', order: 1 },
+      { id: 'AG-2026-010', order: 2 }, { id: 'AG-2026-020', order: 3 },
+    ],
+    status: 'Activa', createdAt: '2026-03-20', updatedAt: '2026-04-01',
+    shareToken: 'kar-portfolio-2026', views: 3, lastViewedAt: '2026-03-31T18:44:00Z',
+  },
+  {
+    id: 'col-5', name: 'Madeira & Açores Rising', client: 'Charlotte Blake',
+    nationality: 'Reino Unido', description: 'Ilhas atlânticas · Valorização 44% · Até €1.5M',
+    coverColor: COVER_COLORS[4].value,
+    propertyIds: [
+      { id: 'AG-2026-060', order: 0 }, { id: 'AG-2026-040', order: 1 },
+    ],
+    status: 'Activa', createdAt: '2026-04-03', updatedAt: '2026-04-03',
+    shareToken: 'cb-islands-2026', views: 0,
+  },
+  {
+    id: 'col-6', name: 'Sintra Heritage Estates', client: 'Marco Aurelio Santos',
+    nationality: 'Brasil', description: 'Quintas históricas Sintra · Natureza · Arquitectura única · €2M+',
+    coverColor: COVER_COLORS[5].value,
+    propertyIds: [
+      { id: 'AG-2026-070', order: 0 }, { id: 'AG-2026-012', order: 1 },
+    ],
+    status: 'Arquivada', createdAt: '2026-02-10', updatedAt: '2026-03-01',
+    shareToken: 'mas-sintra-2026', views: 5, lastViewedAt: '2026-03-02T11:30:00Z',
   },
 ]
 
-const EMOJI_OPTIONS = ['🏰', '🏛️', '💼', '📈', '🌊', '🌿', '🏖️', '🏡', '💎', '🔑']
-const COLOR_OPTIONS = [
-  { label: 'Gold', value: '#c9a96e' },
-  { label: 'Green', value: '#1c4a35' },
-  { label: 'Dark', value: '#0c1f15' },
-  { label: 'Blue', value: '#3a7bd5' },
-  { label: 'Slate', value: '#4a5568' },
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtPreco(v: number): string {
+  if (v >= 1_000_000) return `€${(v / 1_000_000).toLocaleString('pt-PT', { minimumFractionDigits: v % 1_000_000 === 0 ? 0 : 1, maximumFractionDigits: 2 })}M`
+  if (v >= 1_000) return `€${(v / 1_000).toFixed(0)}K`
+  return `€${v}`
+}
+
+function fmtDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function timeAgo(isoStr: string): string {
+  const diff = Date.now() - new Date(isoStr).getTime()
+  const h = Math.floor(diff / 3_600_000)
+  const d = Math.floor(diff / 86_400_000)
+  if (h < 1) return 'há poucos minutos'
+  if (h < 24) return `há ${h} hora${h > 1 ? 's' : ''}`
+  return `há ${d} dia${d > 1 ? 's' : ''}`
+}
+
+function getPropertyById(id: string) {
+  return PORTAL_PROPERTIES.find(p => p.id === id)
+}
+
+function collectionTotalValue(col: Collection): number {
+  return col.propertyIds.reduce((sum, cp) => {
+    const p = getPropertyById(cp.id)
+    return sum + (p?.preco ?? 0)
+  }, 0)
+}
+
+function statusBadgeStyle(status: CollectionStatus): { bg: string; color: string; border: string } {
+  if (status === 'Activa') return { bg: 'rgba(28,74,53,.12)', color: '#1c4a35', border: 'rgba(28,74,53,.3)' }
+  if (status === 'Partilhada') return { bg: 'rgba(201,169,110,.15)', color: '#b8852a', border: 'rgba(201,169,110,.4)' }
+  return { bg: 'rgba(14,14,13,.07)', color: 'rgba(14,14,13,.45)', border: 'rgba(14,14,13,.18)' }
+}
+
+function gradientBg(color: string): string {
+  return color
+}
+
+// ─── SVG Icons ────────────────────────────────────────────────────────────────
+
+const IconPlus = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+)
+const IconShare = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+  </svg>
+)
+const IconEdit = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+)
+const IconArchive = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/>
+    <line x1="10" y1="12" x2="14" y2="12"/>
+  </svg>
+)
+const IconEye = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+)
+const IconLink = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+  </svg>
+)
+const IconX = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+const IconDrag = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <circle cx="9" cy="6" r="1" fill="currentColor"/><circle cx="15" cy="6" r="1" fill="currentColor"/>
+    <circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/>
+    <circle cx="9" cy="18" r="1" fill="currentColor"/><circle cx="15" cy="18" r="1" fill="currentColor"/>
+  </svg>
+)
+const IconCheck = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+const IconBell = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 01-3.46 0"/>
+  </svg>
+)
+const IconRevoke = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+  </svg>
+)
+const IconCollection = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+    <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+  </svg>
+)
+const IconPhone = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/>
+  </svg>
+)
+
+// ─── Tabs ──────────────────────────────────────────────────────────────────────
+
+const TABS: { id: CollectionsTab; label: string }[] = [
+  { id: 'minhas', label: 'As Minhas Collections' },
+  { id: 'editor', label: 'Editor de Collection' },
+  { id: 'partilhadas', label: 'Partilhadas' },
+  { id: 'previa', label: 'Prévia do Cliente' },
 ]
 
-const BADGE_COLOR: Record<string, string> = {
-  'Destaque': '#c9a96e',
-  'Off-Market': '#1c4a35',
-  'Exclusivo': '#7c3aed',
-  'Novo': '#0ea5e9',
+// ─── NewCollectionModal ────────────────────────────────────────────────────────
+
+interface NewCollectionModalProps {
+  onClose: () => void
+  onCreate: (col: Collection) => void
 }
 
-function fmtPrice(n: number): string {
-  if (n >= 1_000_000) return `€${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`
-  if (n >= 1_000) return `€${(n / 1_000).toFixed(0)}K`
-  return `€${n}`
-}
+function NewCollectionModal({ onClose, onCreate }: NewCollectionModalProps) {
+  const [name, setName] = useState('')
+  const [client, setClient] = useState('')
+  const [nationality, setNationality] = useState('Portugal')
+  const [description, setDescription] = useState('')
+  const [coverColor, setCoverColor] = useState(COVER_COLORS[0].value)
 
-// ─── Shared styles ────────────────────────────────────────────────────────────
-
-const S = {
-  overlay: {
-    position: 'fixed' as const,
-    inset: 0,
-    background: 'rgba(14,14,13,0.55)',
-    zIndex: 200,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '16px',
-  },
-  modal: {
-    background: '#fff',
-    borderRadius: '14px',
-    padding: '28px',
-    maxWidth: '560px',
-    width: '100%',
-    maxHeight: '88vh',
-    overflowY: 'auto' as const,
-    boxShadow: '0 24px 60px rgba(14,14,13,0.18)',
-  },
-  modalLg: {
-    background: '#f4f0e6',
-    borderRadius: '14px',
-    padding: '0',
-    maxWidth: '860px',
-    width: '100%',
-    maxHeight: '92vh',
-    overflowY: 'auto' as const,
-    boxShadow: '0 24px 60px rgba(14,14,13,0.22)',
-  },
-}
-
-// ─── Component ────────────────────────────────────────────────────────────────
-
-export default function PortalCollections() {
-  const { crmContacts } = useCRMStore()
-
-  const [collections, setCollections] = useState<Collection[]>(DEFAULT_COLLECTIONS)
-  const [openId, setOpenId] = useState<string | null>(null)
-  const [editId, setEditId] = useState<string | null>(null)
-  const [showCreate, setShowCreate] = useState(false)
-  const [showPropertySelector, setShowPropertySelector] = useState(false)
-  const [copiedToken, setCopiedToken] = useState<string | null>(null)
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiSuggestions, setAiSuggestions] = useState<Partial<Collection>[] | null>(null)
-  const [tagInput, setTagInput] = useState('')
-
-  // Create form state
-  const emptyForm = {
-    name: '',
-    description: '',
-    emoji: '🏡',
-    color: '#c9a96e',
-    contactId: undefined as number | undefined,
-    propertyIds: [] as string[],
-    tags: [] as string[],
-    isPublic: true,
-  }
-  const [form, setForm] = useState({ ...emptyForm })
-
-  // Edit form state (inline within collection card)
-  const [editForm, setEditForm] = useState<Partial<Collection>>({})
-
-  const openCollection = useCallback((id: string) => {
-    setCollections(prev =>
-      prev.map(c => c.id === id ? { ...c, views: c.views + 1, lastViewed: '2026-04-05' } : c)
-    )
-    setOpenId(id)
-  }, [])
-
-  const activeCollection = collections.find(c => c.id === openId)
-
-  const removePropertyFromCollection = useCallback((colId: string, propId: string) => {
-    setCollections(prev =>
-      prev.map(c => c.id === colId ? { ...c, propertyIds: c.propertyIds.filter(p => p !== propId) } : c)
-    )
-  }, [])
-
-  const addPropertyToCollection = useCallback((colId: string, propId: string) => {
-    setCollections(prev =>
-      prev.map(c => c.id === colId
-        ? { ...c, propertyIds: c.propertyIds.includes(propId) ? c.propertyIds : [...c.propertyIds, propId] }
-        : c
-      )
-    )
-  }, [])
-
-  const togglePublic = useCallback((colId: string) => {
-    setCollections(prev =>
-      prev.map(c => c.id === colId ? { ...c, isPublic: !c.isPublic } : c)
-    )
-  }, [])
-
-  const deleteCollection = useCallback((colId: string) => {
-    setCollections(prev => prev.filter(c => c.id !== colId))
-    if (openId === colId) setOpenId(null)
-  }, [openId])
-
-  const copyShareLink = useCallback((token: string) => {
-    const url = `https://agencygroup.pt/collections/${token}`
-    navigator.clipboard.writeText(url).catch(() => {})
-    setCopiedToken(token)
-    setTimeout(() => setCopiedToken(null), 2000)
-  }, [])
-
-  const createCollection = useCallback(() => {
-    if (!form.name.trim()) return
-    const newCol: Collection = {
+  function handleCreate() {
+    if (!name.trim()) return
+    const col: Collection = {
       id: `col-${Date.now()}`,
-      name: form.name.trim(),
-      description: form.description.trim(),
-      emoji: form.emoji,
-      color: form.color,
-      propertyIds: form.propertyIds,
-      contactId: form.contactId,
-      createdAt: '2026-04-05',
-      shareToken: form.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 20) + Date.now().toString(36),
-      isPublic: form.isPublic,
+      name: name.trim(),
+      client: client.trim() || 'Sem cliente',
+      nationality,
+      description: description.trim(),
+      coverColor,
+      propertyIds: [],
+      status: 'Activa',
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      shareToken: `ag-${Date.now()}`,
       views: 0,
-      tags: form.tags,
     }
-    setCollections(prev => [newCol, ...prev])
-    setForm({ ...emptyForm })
-    setTagInput('')
-    setShowCreate(false)
-  }, [form, emptyForm])
-
-  const saveEdit = useCallback((colId: string) => {
-    setCollections(prev => prev.map(c => c.id === colId ? { ...c, ...editForm } : c))
-    setEditId(null)
-    setEditForm({})
-  }, [editForm])
-
-  const startEdit = useCallback((col: Collection) => {
-    setEditId(col.id)
-    setEditForm({
-      name: col.name,
-      description: col.description,
-      emoji: col.emoji,
-      color: col.color,
-      tags: [...col.tags],
-      isPublic: col.isPublic,
-    })
-  }, [])
-
-  const handleAISuggest = useCallback(async () => {
-    setAiLoading(true)
-    setAiSuggestions(null)
-    try {
-      const res = await fetch('/api/collections/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contacts: crmContacts, properties: PORTAL_PROPERTIES }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setAiSuggestions(data.suggestions || [])
-      } else {
-        // Fallback mock suggestions
-        setAiSuggestions([
-          {
-            name: 'Seleção Sophie Weber — Porto Investment',
-            description: 'Apartamentos Porto Foz · Yield 4%+ · T3 · Budget €1.2M',
-            emoji: '🏖️',
-            color: '#3a7bd5',
-            propertyIds: ['AG-2026-040'],
-            contactId: 5,
-            tags: ['Porto', 'Investimento', 'Arrendamento'],
-            isPublic: false,
-          },
-          {
-            name: 'Carlos Ferreira — HPP Urgente',
-            description: 'Moradias Cascais + Sintra · Crédito aprovado · Budget €900K',
-            emoji: '🔑',
-            color: '#4a5568',
-            propertyIds: ['AG-2026-021', 'AG-2026-070'],
-            contactId: 3,
-            tags: ['HPP', 'Cascais', 'Urgente'],
-            isPublic: false,
-          },
-        ])
-      }
-    } catch {
-      setAiSuggestions([
-        {
-          name: 'Seleção Sophie Weber — Porto Investment',
-          description: 'Apartamentos Porto Foz · Yield 4%+ · T3 · Budget €1.2M',
-          emoji: '🏖️',
-          color: '#3a7bd5',
-          propertyIds: ['AG-2026-040'],
-          contactId: 5,
-          tags: ['Porto', 'Investimento', 'Arrendamento'],
-          isPublic: false,
-        },
-      ])
-    } finally {
-      setAiLoading(false)
-    }
-  }, [crmContacts])
-
-  const applyAISuggestion = useCallback((s: Partial<Collection>) => {
-    setForm({
-      name: s.name || '',
-      description: s.description || '',
-      emoji: s.emoji || '🏡',
-      color: s.color || '#c9a96e',
-      contactId: s.contactId,
-      propertyIds: s.propertyIds || [],
-      tags: s.tags || [],
-      isPublic: s.isPublic ?? false,
-    })
-    setAiSuggestions(null)
-    setShowCreate(true)
-  }, [])
-
-  // ── KPIs ──────────────────────────────────────────────────────────────────
-  const totalProps = collections.reduce((acc, c) => acc + c.propertyIds.length, 0)
-  const totalViews = collections.reduce((acc, c) => acc + c.views, 0)
-  const publicShares = collections.filter(c => c.isPublic).length
-
-  const contactName = (id?: number) => {
-    if (!id) return null
-    return crmContacts.find(c => c.id === id)?.name || null
+    onCreate(col)
+    onClose()
   }
-
-  const getPropertiesForCollection = (col: Collection) =>
-    PORTAL_PROPERTIES.filter(p => col.propertyIds.includes(p.id))
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ fontFamily: "'Jost',sans-serif", color: '#0e0e0d', minHeight: '100vh' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(14,14,13,.6)', backdropFilter: 'blur(4px)' }} />
+      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 520, zIndex: 1, padding: '2rem', border: '1px solid rgba(201,169,110,.25)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.5rem', color: '#0e0e0d', fontWeight: 600 }}>
+            Nova Collection
+          </h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)', padding: '4px' }}>
+            <IconX />
+          </button>
+        </div>
 
-      {/* ── Header ── */}
-      <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontFamily: "'Cormorant',serif", fontSize: '2rem', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
-              Collections <em style={{ color: '#c9a96e', fontStyle: 'italic' }}>IA</em>
-            </h1>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'rgba(14,14,13,0.55)', fontFamily: "'DM Mono',monospace" }}>
-              Boards curados · Partilha com clientes · Tracking views
-            </p>
+            <label className="p-label">Nome da Collection</label>
+            <input className="p-inp" value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Cascais Villas Premium" style={{ marginTop: '.35rem' }} />
           </div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              onClick={handleAISuggest}
-              disabled={aiLoading}
-              style={{
-                background: aiLoading ? 'rgba(201,169,110,0.4)' : '#c9a96e',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '9px 16px',
-                fontSize: '0.82rem',
-                fontFamily: "'Jost',sans-serif",
-                fontWeight: 600,
-                cursor: aiLoading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              {aiLoading ? (
-                <>
-                  <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⟳</span> A analisar...
-                </>
-              ) : '✨ IA Suggest Collection'}
-            </button>
-            <button
-              onClick={() => setShowCreate(true)}
-              style={{
-                background: '#1c4a35',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '9px 16px',
-                fontSize: '0.82rem',
-                fontFamily: "'Jost',sans-serif",
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              + Nova Collection
-            </button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+            <div>
+              <label className="p-label">Cliente</label>
+              <input className="p-inp" value={client} onChange={e => setClient(e.target.value)} placeholder="Nome do cliente" style={{ marginTop: '.35rem' }} />
+            </div>
+            <div>
+              <label className="p-label">Nacionalidade</label>
+              <select className="p-sel" value={nationality} onChange={e => setNationality(e.target.value)} style={{ marginTop: '.35rem' }}>
+                {Object.keys(NATIONALITY_FLAGS).map(n => <option key={n} value={n}>{NATIONALITY_FLAGS[n]} {n}</option>)}
+              </select>
+            </div>
           </div>
+          <div>
+            <label className="p-label">Descrição</label>
+            <textarea className="p-inp" value={description} onChange={e => setDescription(e.target.value)} placeholder="Briefing rápido do cliente e critérios…" rows={2} style={{ marginTop: '.35rem', resize: 'vertical' }} />
+          </div>
+          <div>
+            <label className="p-label">Cor de Capa</label>
+            <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
+              {COVER_COLORS.map(c => (
+                <button key={c.id} onClick={() => setCoverColor(c.value)} title={c.label}
+                  style={{ width: 36, height: 36, borderRadius: 8, background: c.value, border: coverColor === c.value ? '2.5px solid #c9a96e' : '2px solid transparent', cursor: 'pointer', outline: 'none', flexShrink: 0 }} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '.75rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+          <button onClick={onClose} className="p-btn" style={{ fontSize: '.8rem' }}>Cancelar</button>
+          <button onClick={handleCreate} className="p-btn-gold" disabled={!name.trim()} style={{ fontSize: '.8rem', opacity: name.trim() ? 1 : .5 }}>
+            Criar Collection
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── CollectionCard ────────────────────────────────────────────────────────────
+
+interface CollectionCardProps {
+  col: Collection
+  onView: (col: Collection) => void
+  onEdit: (col: Collection) => void
+  onShare: (col: Collection) => void
+  onArchive: (id: string) => void
+}
+
+function CollectionCard({ col, onView, onEdit, onShare, onArchive }: CollectionCardProps) {
+  const [hovered, setHovered] = useState(false)
+  const status = col.status
+  const bs = statusBadgeStyle(status)
+  const total = collectionTotalValue(col)
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      style={{
+        background: '#fff', borderRadius: 14, border: '1px solid rgba(14,14,13,.08)',
+        overflow: 'hidden', display: 'flex', flexDirection: 'column',
+        boxShadow: hovered ? '0 8px 32px rgba(14,14,13,.1)' : '0 2px 8px rgba(14,14,13,.05)',
+        transition: 'box-shadow .2s, transform .2s',
+        transform: hovered ? 'translateY(-2px)' : 'none',
+      }}
+    >
+      {/* Cover */}
+      <div style={{ height: 110, background: gradientBg(col.coverColor), position: 'relative', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+          <span style={{ background: bs.bg, color: bs.color, border: `1px solid ${bs.border}`, borderRadius: 20, padding: '2px 10px', fontSize: '.68rem', fontFamily: 'var(--font-dm-mono)', fontWeight: 500 }}>
+            {status}
+          </span>
+        </div>
+        <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.25rem', color: '#fff', fontWeight: 600, lineHeight: 1.2, textShadow: '0 1px 4px rgba(0,0,0,.4)' }}>
+          {col.name}
         </div>
       </div>
 
-      {/* ── KPI Row ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px', marginBottom: '28px' }}>
-        {[
-          { label: 'Collections', value: collections.length, icon: '🗂️' },
-          { label: 'Imóveis guardados', value: totalProps, icon: '🏠' },
-          { label: 'Views totais', value: totalViews, icon: '👁️' },
-          { label: 'Shares activos', value: publicShares, icon: '🔗' },
-        ].map(k => (
-          <div key={k.label} style={{
-            background: '#fff',
-            borderRadius: '10px',
-            padding: '14px 16px',
-            boxShadow: '0 1px 4px rgba(14,14,13,0.07)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-          }}>
-            <span style={{ fontSize: '1.4rem' }}>{k.icon}</span>
-            <div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, fontFamily: "'DM Mono',monospace", lineHeight: 1 }}>{k.value}</div>
-              <div style={{ fontSize: '0.72rem', color: 'rgba(14,14,13,0.5)', marginTop: '2px' }}>{k.label}</div>
+      {/* Body */}
+      <div style={{ padding: '1rem 1.25rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
+        {/* Client */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+          <span style={{ fontSize: '1rem' }}>{NATIONALITY_FLAGS[col.nationality] ?? '🌍'}</span>
+          <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: '#0e0e0d', fontWeight: 600 }}>{col.client}</span>
+          <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.4)', marginLeft: 'auto' }}>{col.nationality}</span>
+        </div>
+
+        {/* Description */}
+        {col.description && (
+          <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: 'rgba(14,14,13,.55)', margin: 0, lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {col.description}
+          </p>
+        )}
+
+        {/* Stats */}
+        <div style={{ display: 'flex', gap: '.75rem' }}>
+          <div style={{ background: 'rgba(14,14,13,.04)', borderRadius: 8, padding: '.35rem .6rem', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.4)' }}>IMÓVEIS</div>
+            <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.1rem', color: '#0e0e0d', fontWeight: 600 }}>{col.propertyIds.length}</div>
+          </div>
+          <div style={{ background: 'rgba(201,169,110,.08)', borderRadius: 8, padding: '.35rem .6rem', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.4)' }}>VALOR TOTAL</div>
+            <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.1rem', color: '#c9a96e', fontWeight: 600 }}>{fmtPreco(total)}</div>
+          </div>
+          {col.views > 0 && (
+            <div style={{ background: 'rgba(28,74,53,.06)', borderRadius: 8, padding: '.35rem .6rem', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.4)' }}>VISTAS</div>
+              <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.1rem', color: '#1c4a35', fontWeight: 600 }}>{col.views}</div>
             </div>
+          )}
+        </div>
+
+        {/* Dates */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '.35rem', borderTop: '1px solid rgba(14,14,13,.06)' }}>
+          <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.35)' }}>
+            Criada {fmtDate(col.createdAt)}
+          </span>
+          <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.35)' }}>
+            Actualizada {fmtDate(col.updatedAt)}
+          </span>
+        </div>
+
+        {col.lastViewedAt && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', background: 'rgba(201,169,110,.08)', borderRadius: 8, padding: '.4rem .6rem' }}>
+            <IconBell />
+            <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.76rem', color: '#b8852a' }}>
+              Cliente abriu {timeAgo(col.lastViewedAt)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div style={{ padding: '.75rem 1.25rem', borderTop: '1px solid rgba(14,14,13,.06)', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+        <button onClick={() => onView(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '.35rem', flex: 1 }}>
+          <IconEye /> Ver
+        </button>
+        <button onClick={() => onShare(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <IconShare />
+        </button>
+        <button onClick={() => onEdit(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <IconEdit />
+        </button>
+        {col.status !== 'Arquivada' && (
+          <button onClick={() => onArchive(col.id)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem', color: 'rgba(14,14,13,.4)' }}>
+            <IconArchive />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── ShareLinkModal ────────────────────────────────────────────────────────────
+
+function ShareLinkModal({ col, onClose }: { col: Collection; onClose: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const shareUrl = `https://collections.agencygroup.pt/${col.shareToken}`
+
+  function copy() {
+    navigator.clipboard.writeText(shareUrl).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(14,14,13,.6)', backdropFilter: 'blur(4px)' }} />
+      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 480, zIndex: 1, padding: '2rem', border: '1px solid rgba(201,169,110,.25)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.4rem', color: '#0e0e0d', fontWeight: 600 }}>Partilhar Collection</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}><IconX /></button>
+        </div>
+        <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: 'rgba(14,14,13,.6)', marginBottom: '1rem' }}>
+          Partilhe este link exclusivo com <strong>{col.client}</strong>. Só pessoas com o link podem aceder.
+        </p>
+        <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', background: 'rgba(14,14,13,.04)', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1rem' }}>
+          <IconLink />
+          <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.78rem', color: '#0e0e0d', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shareUrl}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '.75rem' }}>
+          <button onClick={copy} className="p-btn-gold" style={{ flex: 1, fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem' }}>
+            {copied ? <><IconCheck /> Copiado!</> : <><IconLink /> Copiar Link</>}
+          </button>
+          <button onClick={onClose} className="p-btn" style={{ fontSize: '.82rem' }}>Fechar</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: As Minhas Collections ────────────────────────────────────────────────
+
+interface MinhasCollectionsProps {
+  collections: Collection[]
+  onNewCollection: () => void
+  onView: (col: Collection) => void
+  onEdit: (col: Collection) => void
+  onShare: (col: Collection) => void
+  onArchive: (id: string) => void
+}
+
+function MinhasCollections({ collections, onNewCollection, onView, onEdit, onShare, onArchive }: MinhasCollectionsProps) {
+  const [filter, setFilter] = useState<'Todas' | CollectionStatus>('Todas')
+
+  const filtered = filter === 'Todas' ? collections : collections.filter(c => c.status === filter)
+
+  return (
+    <div>
+      {/* Filter Pills */}
+      <div style={{ display: 'flex', gap: '.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        {(['Todas', 'Activa', 'Partilhada', 'Arquivada'] as const).map(f => (
+          <button key={f} onClick={() => setFilter(f)}
+            style={{
+              fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', padding: '5px 14px', borderRadius: 20,
+              border: `1px solid ${filter === f ? '#1c4a35' : 'rgba(14,14,13,.15)'}`,
+              background: filter === f ? '#1c4a35' : 'transparent',
+              color: filter === f ? '#fff' : 'rgba(14,14,13,.55)', cursor: 'pointer',
+            }}>
+            {f === 'Todas' ? `Todas (${collections.length})` : f}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+        {filtered.map(col => (
+          <CollectionCard key={col.id} col={col} onView={onView} onEdit={onEdit} onShare={onShare} onArchive={onArchive} />
+        ))}
+
+        {/* Add New Card */}
+        <button onClick={onNewCollection}
+          style={{
+            background: 'rgba(201,169,110,.05)', borderRadius: 14,
+            border: '1.5px dashed rgba(201,169,110,.4)', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: '.75rem', padding: '2.5rem', minHeight: 220, color: '#c9a96e',
+            transition: 'background .2s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,169,110,.1)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(201,169,110,.05)')}
+        >
+          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(201,169,110,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconPlus />
+          </div>
+          <span style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.1rem', fontWeight: 600 }}>Nova Collection</span>
+          <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: 'rgba(14,14,13,.4)' }}>Criar portfólio personalizado</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: Editor de Collection ─────────────────────────────────────────────────
+
+interface EditorCollectionProps {
+  collections: Collection[]
+  editingCol: Collection | null
+  onSave: (col: Collection) => void
+}
+
+function EditorCollection({ collections, editingCol, onSave }: EditorCollectionProps) {
+  const [name, setName] = useState(editingCol?.name ?? '')
+  const [client, setClient] = useState(editingCol?.client ?? '')
+  const [nationality, setNationality] = useState(editingCol?.nationality ?? 'Portugal')
+  const [description, setDescription] = useState(editingCol?.description ?? '')
+  const [coverColor, setCoverColor] = useState(editingCol?.coverColor ?? COVER_COLORS[0].value)
+  const [selectedIds, setSelectedIds] = useState<string[]>(editingCol?.propertyIds.map(p => p.id) ?? [])
+  const [linkPreview, setLinkPreview] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  function toggleProperty(id: string) {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+  }
+
+  function removeProperty(id: string) {
+    setSelectedIds(prev => prev.filter(i => i !== id))
+  }
+
+  function handleSave() {
+    const col: Collection = {
+      id: editingCol?.id ?? `col-${Date.now()}`,
+      name: name.trim() || 'Nova Collection',
+      client: client.trim() || 'Sem cliente',
+      nationality,
+      description: description.trim(),
+      coverColor,
+      propertyIds: selectedIds.map((id, order) => ({ id, order })),
+      status: editingCol?.status ?? 'Activa',
+      createdAt: editingCol?.createdAt ?? new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      shareToken: editingCol?.shareToken ?? `ag-${Date.now()}`,
+      views: editingCol?.views ?? 0,
+      lastViewedAt: editingCol?.lastViewedAt,
+      shareDate: editingCol?.shareDate,
+    }
+    onSave(col)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const selectedProperties = selectedIds.map(id => getPropertyById(id)).filter(Boolean)
+  const totalValue = selectedProperties.reduce((s, p) => s + (p?.preco ?? 0), 0)
+  const shareUrl = `https://collections.agencygroup.pt/${editingCol?.shareToken ?? 'nova'}`
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 280px', gap: '1.25rem', alignItems: 'start' }}>
+      {/* Settings panel */}
+      <div className="p-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 600, margin: 0 }}>Configurações</h3>
+
+        <div>
+          <label className="p-label">Nome</label>
+          <input className="p-inp" value={name} onChange={e => setName(e.target.value)} placeholder="Nome da collection" style={{ marginTop: '.35rem' }} />
+        </div>
+        <div>
+          <label className="p-label">Cliente</label>
+          <input className="p-inp" value={client} onChange={e => setClient(e.target.value)} placeholder="Nome do cliente" style={{ marginTop: '.35rem' }} />
+        </div>
+        <div>
+          <label className="p-label">Nacionalidade</label>
+          <select className="p-sel" value={nationality} onChange={e => setNationality(e.target.value)} style={{ marginTop: '.35rem' }}>
+            {Object.keys(NATIONALITY_FLAGS).map(n => <option key={n} value={n}>{NATIONALITY_FLAGS[n]} {n}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="p-label">Descrição</label>
+          <textarea className="p-inp" value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="Critérios e notas…" style={{ marginTop: '.35rem', resize: 'vertical' }} />
+        </div>
+        <div>
+          <label className="p-label">Cor de Capa</label>
+          <div style={{ display: 'flex', gap: '.4rem', marginTop: '.5rem', flexWrap: 'wrap' }}>
+            {COVER_COLORS.map(c => (
+              <button key={c.id} onClick={() => setCoverColor(c.value)} title={c.label}
+                style={{ width: 32, height: 32, borderRadius: 6, background: c.value, border: coverColor === c.value ? '2.5px solid #c9a96e' : '2px solid transparent', cursor: 'pointer', outline: 'none' }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Preview cover */}
+        <div style={{ height: 80, borderRadius: 10, background: coverColor, display: 'flex', alignItems: 'flex-end', padding: '.75rem', marginTop: '.25rem' }}>
+          <span style={{ fontFamily: 'var(--font-cormorant)', color: '#fff', fontSize: '.95rem', fontWeight: 600, textShadow: '0 1px 3px rgba(0,0,0,.5)', lineHeight: 1.2 }}>{name || 'Nome da Collection'}</span>
+        </div>
+
+        <button onClick={handleSave} className="p-btn-gold" style={{ fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', marginTop: '.25rem' }}>
+          {saved ? <><IconCheck /> Guardado!</> : 'Guardar Collection'}
+        </button>
+      </div>
+
+      {/* Property grid */}
+      <div>
+        <div style={{ marginBottom: '1rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .25rem' }}>
+            Seleccionar Imóveis
+          </h3>
+          <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', color: 'rgba(14,14,13,.5)', margin: 0 }}>
+            {selectedIds.length} seleccionado{selectedIds.length !== 1 ? 's' : ''} · Clique para adicionar
+          </p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '.75rem' }}>
+          {PORTAL_PROPERTIES.map(p => {
+            const isSelected = selectedIds.includes(p.id)
+            const gradients: Record<string, string> = {
+              'Lisboa': 'linear-gradient(135deg,#1c4a35 0%,#2d6a50 100%)',
+              'Cascais': 'linear-gradient(135deg,#1a3a5c 0%,#2a5a8c 100%)',
+              'Algarve': 'linear-gradient(135deg,#7c3d15 0%,#c9610a 100%)',
+              'Porto': 'linear-gradient(135deg,#4a1a6a 0%,#7a2a9a 100%)',
+              'Madeira': 'linear-gradient(135deg,#1a4a3c 0%,#2a7a5a 100%)',
+              'Comporta': 'linear-gradient(135deg,#5a4a15 0%,#8a7a2a 100%)',
+              'Sintra': 'linear-gradient(135deg,#2a3a4a 0%,#3a5a7a 100%)',
+            }
+            const grad = gradients[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
+
+            return (
+              <div key={p.id} onClick={() => toggleProperty(p.id)}
+                style={{
+                  borderRadius: 10, overflow: 'hidden', cursor: 'pointer',
+                  border: isSelected ? '2px solid #c9a96e' : '1.5px solid rgba(14,14,13,.08)',
+                  boxShadow: isSelected ? '0 0 0 3px rgba(201,169,110,.2)' : 'none',
+                  background: '#fff', position: 'relative', transition: 'all .15s',
+                }}
+              >
+                <div style={{ height: 80, background: grad, position: 'relative' }}>
+                  <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(255,255,255,.8)', position: 'absolute', bottom: '.4rem', left: '.5rem' }}>{p.zona}</span>
+                  {isSelected && (
+                    <div style={{ position: 'absolute', top: '.35rem', right: '.35rem', width: 20, height: 20, borderRadius: '50%', background: '#c9a96e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <IconCheck />
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: '.6rem .75rem' }}>
+                  <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: '#0e0e0d', fontWeight: 600, lineHeight: 1.3, marginBottom: '.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {p.nome}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '.95rem', color: '#c9a96e', fontWeight: 600 }}>{fmtPreco(p.preco)}</div>
+                  <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.15rem' }}>T{p.quartos} · {p.area}m²</div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Selected list */}
+      <div style={{ position: 'sticky', top: '1rem' }}>
+        <div className="p-card" style={{ padding: '1.25rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 1rem' }}>
+            Collection ({selectedIds.length})
+          </h3>
+
+          {selectedIds.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'rgba(14,14,13,.35)' }}>
+              <IconCollection />
+              <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', marginTop: '.5rem' }}>Seleccione imóveis da grelha</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', marginBottom: '1rem' }}>
+              {selectedIds.map((id, idx) => {
+                const p = getPropertyById(id)
+                if (!p) return null
+                return (
+                  <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.5rem .6rem', background: 'rgba(14,14,13,.03)', borderRadius: 8, border: '1px solid rgba(14,14,13,.07)' }}>
+                    <div style={{ color: 'rgba(14,14,13,.3)', cursor: 'grab', flexShrink: 0 }}><IconDrag /></div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.76rem', color: '#0e0e0d', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome}</div>
+                      <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '.88rem', color: '#c9a96e' }}>{fmtPreco(p.preco)}</div>
+                    </div>
+                    <button onClick={() => removeProperty(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.35)', padding: '2px', flexShrink: 0 }}>
+                      <IconX />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {selectedIds.length > 0 && (
+            <div style={{ borderTop: '1px solid rgba(14,14,13,.08)', paddingTop: '.75rem', marginTop: '.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.75rem' }}>
+                <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', color: 'rgba(14,14,13,.45)' }}>VALOR TOTAL</span>
+                <span style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.2rem', color: '#c9a96e', fontWeight: 600 }}>{fmtPreco(totalValue)}</span>
+              </div>
+            </div>
+          )}
+
+          <button onClick={() => setLinkPreview(!linkPreview)} className="p-btn-gold" style={{ width: '100%', fontSize: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem' }}>
+            <IconShare /> Partilhar Collection
+          </button>
+
+          {linkPreview && (
+            <div style={{ marginTop: '1rem', padding: '.75rem', background: 'rgba(28,74,53,.06)', borderRadius: 8, border: '1px solid rgba(28,74,53,.2)' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.45)', marginBottom: '.3rem' }}>LINK PARTILHÁVEL</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: '#1c4a35', wordBreak: 'break-all' }}>{shareUrl}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: Partilhadas ──────────────────────────────────────────────────────────
+
+function Partilhadas({ collections, onRevoke }: { collections: Collection[]; onRevoke: (id: string) => void }) {
+  const shared = collections.filter(c => c.status === 'Partilhada')
+
+  return (
+    <div>
+      {/* Notification banner */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', background: 'rgba(201,169,110,.1)', border: '1px solid rgba(201,169,110,.3)', borderRadius: 10, padding: '.75rem 1rem', marginBottom: '1.5rem' }}>
+        <div style={{ color: '#c9a96e', flexShrink: 0 }}><IconBell /></div>
+        <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.84rem', color: '#b8852a', margin: 0 }}>
+          <strong>James Mitchell</strong> abriu a collection "Cascais Villas Premium" <strong>há 2 horas</strong> — boa altura para fazer follow-up.
+        </p>
+      </div>
+
+      {shared.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '4rem', color: 'rgba(14,14,13,.35)' }}>
+          <IconShare />
+          <p style={{ fontFamily: 'var(--font-jost)', marginTop: '1rem' }}>Nenhuma collection partilhada ainda.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+          {shared.map(col => {
+            const total = collectionTotalValue(col)
+            const shareUrl = `https://collections.agencygroup.pt/${col.shareToken}`
+
+            return (
+              <div key={col.id} className="p-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                {/* Cover mini */}
+                <div style={{ width: 72, height: 56, borderRadius: 8, background: gradientBg(col.coverColor), flexShrink: 0, display: 'flex', alignItems: 'flex-end', padding: '.35rem .45rem' }}>
+                  <span style={{ fontFamily: 'var(--font-cormorant)', color: '#fff', fontSize: '.72rem', fontWeight: 600, lineHeight: 1.2, textShadow: '0 1px 3px rgba(0,0,0,.5)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{col.name}</span>
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.25rem' }}>
+                    <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: '#0e0e0d', fontWeight: 600 }}>{col.name}</span>
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.4)' }}>·</span>
+                    <span style={{ fontSize: '.85rem' }}>{NATIONALITY_FLAGS[col.nationality] ?? '🌍'}</span>
+                    <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: 'rgba(14,14,13,.6)' }}>{col.client}</span>
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.4)', wordBreak: 'break-all', marginBottom: '.4rem' }}>{shareUrl}</div>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.5)' }}>
+                      Partilhado: {col.shareDate ? fmtDate(col.shareDate) : '—'}
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: '#1c4a35', fontWeight: 600 }}>
+                      Link visitado {col.views} {col.views === 1 ? 'vez' : 'vezes'}
+                    </span>
+                    {col.lastViewedAt && (
+                      <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: '#c9a96e' }}>
+                        Última visita: {timeAgo(col.lastViewedAt)}
+                      </span>
+                    )}
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.45)' }}>
+                      {col.propertyIds.length} imóveis · {fmtPreco(total)}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '.5rem', flexShrink: 0 }}>
+                  <button className="p-btn" style={{ fontSize: '.75rem', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+                    <IconEye /> Ver
+                  </button>
+                  <button onClick={() => onRevoke(col.id)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem', color: '#c0392b', borderColor: 'rgba(192,57,43,.3)' }}>
+                    <IconRevoke />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Tab: Prévia do Cliente ────────────────────────────────────────────────────
+
+function PreviaCliente({ collections }: { collections: Collection[] }) {
+  const [selectedColId, setSelectedColId] = useState<string>(collections[0]?.id ?? '')
+  const col = collections.find(c => c.id === selectedColId) ?? collections[0]
+
+  if (!col) return (
+    <div style={{ textAlign: 'center', padding: '4rem', color: 'rgba(14,14,13,.4)' }}>
+      <p style={{ fontFamily: 'var(--font-jost)' }}>Nenhuma collection disponível para prévia.</p>
+    </div>
+  )
+
+  const properties = col.propertyIds
+    .sort((a, b) => a.order - b.order)
+    .map(cp => getPropertyById(cp.id))
+    .filter(Boolean)
+
+  const gradients: Record<string, string> = {
+    'Lisboa': 'linear-gradient(135deg,#0f2318 0%,#1a3d28 100%)',
+    'Cascais': 'linear-gradient(135deg,#0f1e35 0%,#1a3560 100%)',
+    'Algarve': 'linear-gradient(135deg,#3d1a05 0%,#6a300a 100%)',
+    'Porto': 'linear-gradient(135deg,#200f35 0%,#3a1a55 100%)',
+    'Madeira': 'linear-gradient(135deg,#0a2015 0%,#153525 100%)',
+    'Comporta': 'linear-gradient(135deg,#28200a 0%,#3d3015 100%)',
+    'Sintra': 'linear-gradient(135deg,#101520 0%,#1a2535 100%)',
+  }
+
+  return (
+    <div>
+      {/* Collection Selector */}
+      <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        {collections.map(c => (
+          <button key={c.id} onClick={() => setSelectedColId(c.id)}
+            style={{
+              fontFamily: 'var(--font-jost)', fontSize: '.82rem', padding: '6px 16px', borderRadius: 20,
+              border: `1px solid ${selectedColId === c.id ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
+              background: selectedColId === c.id ? 'rgba(201,169,110,.12)' : 'transparent',
+              color: selectedColId === c.id ? '#b8852a' : 'rgba(14,14,13,.55)', cursor: 'pointer',
+            }}>
+            {c.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Client View */}
+      <div style={{ background: '#1c4a35', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(201,169,110,.2)' }}>
+        {/* Banner */}
+        <div style={{ background: 'rgba(201,169,110,.15)', borderBottom: '1px solid rgba(201,169,110,.2)', padding: '.6rem 1.5rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+          <IconEye />
+          <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', color: '#c9a96e' }}>
+            Está a visualizar como cliente — {col.client} {NATIONALITY_FLAGS[col.nationality] ?? ''}
+          </span>
+        </div>
+
+        {/* Header */}
+        <div style={{ padding: '2.5rem 2rem 1.5rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,.1)' }}>
+          <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', color: 'rgba(201,169,110,.7)', letterSpacing: '.12em', marginBottom: '.5rem' }}>
+            AGENCY GROUP · COLECÇÃO EXCLUSIVA
+          </div>
+          <h2 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2.2rem', color: '#fff', fontWeight: 600, margin: '0 0 .5rem' }}>
+            {col.name}
+          </h2>
+          <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: 'rgba(255,255,255,.6)', margin: '0 0 .25rem' }}>
+            {col.description}
+          </p>
+          <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', color: 'rgba(201,169,110,.7)', marginTop: '.5rem' }}>
+            {properties.length} imóveis seleccionados para si
+          </div>
+        </div>
+
+        {/* Property Cards */}
+        <div style={{ padding: '1.5rem 2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+          {properties.map(p => {
+            if (!p) return null
+            const grad = gradients[p.zona] ?? 'linear-gradient(135deg,#1a2a3a 0%,#2a3a4a 100%)'
+            return (
+              <div key={p.id}
+                style={{ background: 'rgba(255,255,255,.05)', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(201,169,110,.15)', backdropFilter: 'blur(8px)' }}>
+                {/* Photo placeholder */}
+                <div style={{ height: 160, background: grad, position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '1rem' }}>
+                  <div>
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(255,255,255,.6)', display: 'block', marginBottom: '.2rem' }}>{p.zona} · {p.bairro}</span>
+                    <span style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.6rem', color: '#c9a96e', fontWeight: 600, display: 'block' }}>{fmtPreco(p.preco)}</span>
+                  </div>
+                  {p.badge && (
+                    <div style={{ position: 'absolute', top: '.75rem', right: '.75rem', background: 'rgba(201,169,110,.9)', borderRadius: 20, padding: '2px 10px' }}>
+                      <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: '#fff' }}>{p.badge}</span>
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: '.9rem 1rem' }}>
+                  <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.88rem', color: '#fff', fontWeight: 600, marginBottom: '.4rem', lineHeight: 1.3 }}>{p.nome}</div>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(255,255,255,.5)' }}>T{p.quartos}</span>
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(255,255,255,.5)' }}>{p.area}m²</span>
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(255,255,255,.5)' }}>€{Math.round(p.preco / p.area).toLocaleString('pt-PT')}/m²</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '.4rem', marginTop: '.5rem', flexWrap: 'wrap' }}>
+                    {p.piscina && <span style={{ background: 'rgba(201,169,110,.15)', color: '#c9a96e', borderRadius: 4, padding: '2px 8px', fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem' }}>Piscina</span>}
+                    {p.jardim && <span style={{ background: 'rgba(201,169,110,.15)', color: '#c9a96e', borderRadius: 4, padding: '2px 8px', fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem' }}>Jardim</span>}
+                    {p.terraco && <span style={{ background: 'rgba(201,169,110,.15)', color: '#c9a96e', borderRadius: 4, padding: '2px 8px', fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem' }}>Terraço</span>}
+                    {p.garagem && <span style={{ background: 'rgba(201,169,110,.15)', color: '#c9a96e', borderRadius: 4, padding: '2px 8px', fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem' }}>Garagem</span>}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Footer / CTA */}
+        <div style={{ padding: '1.5rem 2rem', borderTop: '1px solid rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1rem', color: 'rgba(255,255,255,.7)' }}>Agency Group · AMI 22506</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(255,255,255,.4)' }}>geral@agencygroup.pt · +351 910 000 000</div>
+          </div>
+          <button className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem', padding: '10px 20px' }}>
+            <IconPhone /> Contactar Consultor
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+
+export default function PortalCollections() {
+  const [tab, setTab] = useState<CollectionsTab>('minhas')
+  const [collections, setCollections] = useState<Collection[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_COLLECTIONS
+    try {
+      const stored = localStorage.getItem('ag_collections')
+      return stored ? (JSON.parse(stored) as Collection[]) : DEFAULT_COLLECTIONS
+    } catch {
+      return DEFAULT_COLLECTIONS
+    }
+  })
+  const [showNewModal, setShowNewModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [shareTarget, setShareTarget] = useState<Collection | null>(null)
+  const [editingCol, setEditingCol] = useState<Collection | null>(null)
+
+  useEffect(() => {
+    try { localStorage.setItem('ag_collections', JSON.stringify(collections)) } catch { /* ignore */ }
+  }, [collections])
+
+  const handleCreateCollection = useCallback((col: Collection) => {
+    setCollections(prev => [col, ...prev])
+    setShowNewModal(false)
+    setTab('editor')
+    setEditingCol(col)
+  }, [])
+
+  const handleSaveCollection = useCallback((col: Collection) => {
+    setCollections(prev => {
+      const idx = prev.findIndex(c => c.id === col.id)
+      if (idx >= 0) { const n = [...prev]; n[idx] = col; return n }
+      return [col, ...prev]
+    })
+  }, [])
+
+  const handleArchive = useCallback((id: string) => {
+    setCollections(prev => prev.map(c => c.id === id ? { ...c, status: 'Arquivada' as CollectionStatus } : c))
+  }, [])
+
+  const handleShare = useCallback((col: Collection) => {
+    setShareTarget(col)
+    setShowShareModal(true)
+    setCollections(prev => prev.map(c => c.id === col.id ? { ...c, status: 'Partilhada' as CollectionStatus, shareDate: new Date().toISOString().split('T')[0] } : c))
+  }, [])
+
+  const handleView = useCallback((col: Collection) => {
+    setEditingCol(col)
+    setTab('editor')
+  }, [])
+
+  const handleEdit = useCallback((col: Collection) => {
+    setEditingCol(col)
+    setTab('editor')
+  }, [])
+
+  const handleRevoke = useCallback((id: string) => {
+    setCollections(prev => prev.map(c => c.id === id ? { ...c, status: 'Activa' as CollectionStatus } : c))
+  }, [])
+
+  const activeCount = collections.filter(c => c.status === 'Activa').length
+  const sharedCount = collections.filter(c => c.status === 'Partilhada').length
+  const totalViews = collections.reduce((s, c) => s + c.views, 0)
+
+  return (
+    <div style={{ padding: '0 0 3rem' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .25rem' }}>
+            Collections
+          </h1>
+          <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: 'rgba(14,14,13,.5)', margin: 0 }}>
+            Portfólios exclusivos para clientes seleccionados
+          </p>
+        </div>
+        <button onClick={() => setShowNewModal(true)} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
+          <IconPlus /> Nova Collection
+        </button>
+      </div>
+
+      {/* Stats Strip */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '.75rem', marginBottom: '2rem' }}>
+        {[
+          { label: 'Total Collections', value: collections.length, color: '#0e0e0d' },
+          { label: 'Activas', value: activeCount, color: '#1c4a35' },
+          { label: 'Partilhadas', value: sharedCount, color: '#c9a96e' },
+          { label: 'Visualizações', value: totalViews, color: '#3a7bd5' },
+        ].map(s => (
+          <div key={s.label} className="p-card" style={{ padding: '.9rem 1rem' }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.2rem' }}>{s.label.toUpperCase()}</div>
+            <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.8rem', color: s.color, fontWeight: 600, lineHeight: 1 }}>{s.value}</div>
           </div>
         ))}
       </div>
 
-      {/* ── AI Suggestions Banner ── */}
-      {aiSuggestions && aiSuggestions.length > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg,rgba(201,169,110,0.12),rgba(28,74,53,0.08))',
-          border: '1px solid rgba(201,169,110,0.3)',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '24px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-              ✨ Sugestões IA — {aiSuggestions.length} colecção{aiSuggestions.length !== 1 ? 'ões' : ''} identificada{aiSuggestions.length !== 1 ? 's' : ''}
-            </div>
-            <button
-              onClick={() => setAiSuggestions(null)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: 'rgba(14,14,13,0.4)' }}
-            >✕</button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {aiSuggestions.map((s, i) => (
-              <div key={i} style={{
-                background: '#fff',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px',
-                flexWrap: 'wrap',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '1.4rem' }}>{s.emoji}</span>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{s.name}</div>
-                    <div style={{ fontSize: '0.77rem', color: 'rgba(14,14,13,0.55)' }}>{s.description}</div>
-                    {s.contactId && (
-                      <div style={{ fontSize: '0.72rem', color: '#1c4a35', marginTop: '2px' }}>
-                        → {contactName(s.contactId)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => applyAISuggestion(s)}
-                  style={{
-                    background: '#1c4a35',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '7px 14px',
-                    fontSize: '0.78rem',
-                    fontFamily: "'Jost',sans-serif",
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap' as const,
-                  }}
-                >
-                  Usar → Criar
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Collections Grid ── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))',
-        gap: '20px',
-      }}>
-        {collections.map(col => {
-          const cName = contactName(col.contactId)
-          const props = getPropertiesForCollection(col)
-          const isEditing = editId === col.id
-
-          return (
-            <div key={col.id} style={{
-              background: '#fff',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(14,14,13,0.08)',
-              display: 'flex',
-              flexDirection: 'column',
-              transition: 'box-shadow 0.2s',
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '1.75rem', overflowX: 'auto' }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{
+              fontFamily: 'var(--font-jost)', fontSize: '.875rem', padding: '.75rem 1.25rem',
+              background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+              color: tab === t.id ? '#1c4a35' : 'rgba(14,14,13,.45)',
+              borderBottom: tab === t.id ? '2px solid #1c4a35' : '2px solid transparent',
+              fontWeight: tab === t.id ? 600 : 400, marginBottom: '-1px',
             }}>
-              {/* Card header */}
-              <div style={{
-                background: col.color,
-                padding: '16px 18px',
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'space-between',
-                gap: '8px',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '2rem', lineHeight: 1 }}>{col.emoji}</span>
-                  <div>
-                    {isEditing ? (
-                      <input
-                        value={editForm.name || ''}
-                        onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                        style={{
-                          fontFamily: "'Cormorant',serif",
-                          fontSize: '1rem',
-                          fontWeight: 700,
-                          color: '#fff',
-                          background: 'rgba(255,255,255,0.15)',
-                          border: '1px solid rgba(255,255,255,0.3)',
-                          borderRadius: '4px',
-                          padding: '2px 6px',
-                          width: '100%',
-                        }}
-                      />
-                    ) : (
-                      <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.05rem', fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
-                        {col.name}
-                      </div>
-                    )}
-                    <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.75)', marginTop: '2px' }}>
-                      {col.propertyIds.length} imóveis · {col.createdAt}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                  <span style={{
-                    background: col.isPublic ? 'rgba(20,184,166,0.85)' : 'rgba(107,114,128,0.75)',
-                    color: '#fff',
-                    borderRadius: '20px',
-                    padding: '2px 8px',
-                    fontSize: '0.68rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.03em',
-                  }}>
-                    {col.isPublic ? '🔗 Public' : '🔒 Private'}
-                  </span>
-                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    <span>👁️</span> {col.views}
-                  </span>
-                </div>
-              </div>
-
-              {/* Card body */}
-              <div style={{ padding: '14px 18px', flex: 1 }}>
-                {isEditing ? (
-                  <input
-                    value={editForm.description || ''}
-                    onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                    style={{
-                      fontSize: '0.8rem',
-                      color: 'rgba(14,14,13,0.7)',
-                      background: '#f4f0e6',
-                      border: '1px solid rgba(14,14,13,0.1)',
-                      borderRadius: '4px',
-                      padding: '4px 8px',
-                      width: '100%',
-                      marginBottom: '8px',
-                    }}
-                  />
-                ) : (
-                  <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: 'rgba(14,14,13,0.65)', lineHeight: 1.5 }}>
-                    {col.description}
-                  </p>
-                )}
-
-                {/* Contact badge */}
-                {cName && (
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    background: 'rgba(28,74,53,0.07)',
-                    color: '#1c4a35',
-                    borderRadius: '20px',
-                    padding: '3px 10px',
-                    fontSize: '0.72rem',
-                    fontWeight: 600,
-                    marginBottom: '10px',
-                  }}>
-                    👤 {cName}
-                  </div>
-                )}
-
-                {/* Property mini-cards */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '10px' }}>
-                  {props.slice(0, 3).map(p => (
-                    <div key={p.id} style={{
-                      height: '52px',
-                      background: '#f4f0e6',
-                      borderRadius: '6px',
-                      padding: '0 10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                        <div style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          background: BADGE_COLOR[p.badge] || '#888',
-                          flexShrink: 0,
-                        }} />
-                        <div style={{ overflow: 'hidden' }}>
-                          <div style={{ fontSize: '0.76rem', fontWeight: 600, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {p.nome}
-                          </div>
-                          <div style={{ fontSize: '0.68rem', color: 'rgba(14,14,13,0.5)' }}>{p.zona} · {p.area}m²</div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: '0.78rem', fontWeight: 700, fontFamily: "'DM Mono',monospace", flexShrink: 0, color: '#1c4a35' }}>
-                        {fmtPrice(p.preco)}
-                      </div>
-                    </div>
-                  ))}
-                  {col.propertyIds.length > 3 && (
-                    <div style={{ fontSize: '0.72rem', color: 'rgba(14,14,13,0.4)', textAlign: 'center', padding: '4px' }}>
-                      + {col.propertyIds.length - 3} mais
-                    </div>
-                  )}
-                </div>
-
-                {/* Tags */}
-                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '4px', marginBottom: '12px' }}>
-                  {col.tags.map(tag => (
-                    <span key={tag} style={{
-                      background: 'rgba(201,169,110,0.12)',
-                      color: '#7a5c20',
-                      borderRadius: '20px',
-                      padding: '2px 8px',
-                      fontSize: '0.68rem',
-                      fontWeight: 600,
-                    }}>{tag}</span>
-                  ))}
-                </div>
-
-                {/* Action buttons */}
-                {isEditing ? (
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      onClick={() => saveEdit(col.id)}
-                      style={{
-                        flex: 1,
-                        background: '#1c4a35',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px',
-                        fontSize: '0.78rem',
-                        fontFamily: "'Jost',sans-serif",
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Guardar
-                    </button>
-                    <button
-                      onClick={() => { setEditId(null); setEditForm({}) }}
-                      style={{
-                        background: '#f4f0e6',
-                        color: 'rgba(14,14,13,0.6)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 12px',
-                        fontSize: '0.78rem',
-                        fontFamily: "'Jost',sans-serif",
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
-                    <button
-                      onClick={() => openCollection(col.id)}
-                      style={{
-                        flex: 1,
-                        background: '#1c4a35',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px',
-                        fontSize: '0.78rem',
-                        fontFamily: "'Jost',sans-serif",
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        minWidth: '70px',
-                      }}
-                    >
-                      Abrir
-                    </button>
-                    <button
-                      onClick={() => copyShareLink(col.shareToken)}
-                      style={{
-                        background: copiedToken === col.shareToken ? 'rgba(20,184,166,0.1)' : '#f4f0e6',
-                        color: copiedToken === col.shareToken ? '#0d9488' : 'rgba(14,14,13,0.7)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 12px',
-                        fontSize: '0.78rem',
-                        fontFamily: "'Jost',sans-serif",
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {copiedToken === col.shareToken ? '✓ Copiado' : '🔗 Partilhar'}
-                    </button>
-                    <button
-                      onClick={() => startEdit(col)}
-                      style={{
-                        background: '#f4f0e6',
-                        color: 'rgba(14,14,13,0.7)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 10px',
-                        fontSize: '0.78rem',
-                        cursor: 'pointer',
-                      }}
-                      title="Editar"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => deleteCollection(col.id)}
-                      style={{
-                        background: '#f4f0e6',
-                        color: 'rgba(220,38,38,0.7)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 10px',
-                        fontSize: '0.78rem',
-                        cursor: 'pointer',
-                      }}
-                      title="Apagar"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Last viewed */}
-              {col.lastViewed && (
-                <div style={{
-                  borderTop: '1px solid rgba(14,14,13,0.06)',
-                  padding: '7px 18px',
-                  fontSize: '0.68rem',
-                  color: 'rgba(14,14,13,0.4)',
-                  fontFamily: "'DM Mono',monospace",
-                }}>
-                  Última vista: {col.lastViewed}
-                </div>
-              )}
-            </div>
-          )
-        })}
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* ── Collection Detail Modal ── */}
-      {openId && activeCollection && (
-        <div style={S.overlay} onClick={e => { if (e.target === e.currentTarget) setOpenId(null) }}>
-          <div style={S.modalLg}>
-            {/* Detail header */}
-            <div style={{
-              background: activeCollection.color,
-              padding: '24px 28px',
-              position: 'sticky' as const,
-              top: 0,
-              zIndex: 10,
-              borderRadius: '14px 14px 0 0',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <span style={{ fontSize: '2.4rem' }}>{activeCollection.emoji}</span>
-                  <div>
-                    <h2 style={{ fontFamily: "'Cormorant',serif", fontSize: '1.5rem', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2 }}>
-                      {activeCollection.name}
-                    </h2>
-                    <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'rgba(255,255,255,0.75)' }}>
-                      {activeCollection.description}
-                    </p>
-                    <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' as const }}>
-                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)' }}>
-                        👁️ {activeCollection.views} views
-                      </span>
-                      <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)' }}>
-                        🏠 {activeCollection.propertyIds.length} imóveis
-                      </span>
-                      {activeCollection.lastViewed && (
-                        <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', fontFamily: "'DM Mono',monospace" }}>
-                          Visto: {activeCollection.lastViewed}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setOpenId(null)}
-                  style={{
-                    background: 'rgba(255,255,255,0.15)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    color: '#fff',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >✕</button>
-              </div>
-            </div>
-
-            <div style={{ padding: '24px 28px' }}>
-              {/* Share panel */}
-              <div style={{
-                background: '#fff',
-                borderRadius: '10px',
-                padding: '16px',
-                marginBottom: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap' as const,
-                gap: '10px',
-              }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(14,14,13,0.5)', letterSpacing: '0.05em' }}>
-                    SHARE LINK
-                  </div>
-                  <code style={{
-                    fontSize: '0.78rem',
-                    fontFamily: "'DM Mono',monospace",
-                    color: '#1c4a35',
-                    background: 'rgba(28,74,53,0.06)',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                  }}>
-                    https://agencygroup.pt/collections/{activeCollection.shareToken}
-                  </code>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <button
-                    onClick={() => togglePublic(activeCollection.id)}
-                    style={{
-                      background: activeCollection.isPublic ? 'rgba(20,184,166,0.1)' : 'rgba(107,114,128,0.1)',
-                      color: activeCollection.isPublic ? '#0d9488' : '#6b7280',
-                      border: `1px solid ${activeCollection.isPublic ? 'rgba(20,184,166,0.3)' : 'rgba(107,114,128,0.3)'}`,
-                      borderRadius: '6px',
-                      padding: '6px 12px',
-                      fontSize: '0.78rem',
-                      fontFamily: "'Jost',sans-serif",
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {activeCollection.isPublic ? '🔗 Public' : '🔒 Private'}
-                  </button>
-                  <button
-                    onClick={() => copyShareLink(activeCollection.shareToken)}
-                    style={{
-                      background: copiedToken === activeCollection.shareToken ? '#0d9488' : '#1c4a35',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '6px 14px',
-                      fontSize: '0.78rem',
-                      fontFamily: "'Jost',sans-serif",
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {copiedToken === activeCollection.shareToken ? '✓ Copiado!' : '📋 Copiar Link'}
-                  </button>
-                  <button
-                    onClick={() => exportToPDF?.(`collection-${activeCollection.id}`, activeCollection.name)}
-                    style={{
-                      background: '#f4f0e6',
-                      color: 'rgba(14,14,13,0.7)',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '6px 14px',
-                      fontSize: '0.78rem',
-                      fontFamily: "'Jost',sans-serif",
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    📄 PDF
-                  </button>
-                </div>
-              </div>
-
-              {/* Properties grid */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
-                  Imóveis na Collection
-                </h3>
-                <button
-                  onClick={() => setShowPropertySelector(true)}
-                  style={{
-                    background: 'rgba(28,74,53,0.08)',
-                    color: '#1c4a35',
-                    border: '1px dashed rgba(28,74,53,0.3)',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '0.78rem',
-                    fontFamily: "'Jost',sans-serif",
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  + Adicionar Imóvel
-                </button>
-              </div>
-
-              {getPropertiesForCollection(activeCollection).length === 0 ? (
-                <div style={{
-                  background: '#fff',
-                  borderRadius: '10px',
-                  padding: '32px',
-                  textAlign: 'center' as const,
-                  color: 'rgba(14,14,13,0.4)',
-                  fontSize: '0.85rem',
-                }}>
-                  Nenhum imóvel nesta collection. Adicione um acima.
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(250px,1fr))', gap: '14px' }}>
-                  {getPropertiesForCollection(activeCollection).map(p => (
-                    <div key={p.id} style={{
-                      background: '#fff',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
-                      boxShadow: '0 1px 4px rgba(14,14,13,0.07)',
-                    }}>
-                      {/* Property card header */}
-                      <div style={{
-                        background: 'linear-gradient(135deg,rgba(28,74,53,0.08),rgba(201,169,110,0.08))',
-                        padding: '12px 14px 8px',
-                        borderBottom: '1px solid rgba(14,14,13,0.06)',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '6px' }}>
-                          <div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.3, fontFamily: "'Cormorant',serif" }}>
-                              {p.nome}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'rgba(14,14,13,0.5)', marginTop: '2px' }}>
-                              {p.zona} · {p.bairro}
-                            </div>
-                          </div>
-                          <span style={{
-                            background: BADGE_COLOR[p.badge] || '#888',
-                            color: '#fff',
-                            borderRadius: '4px',
-                            padding: '2px 6px',
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            whiteSpace: 'nowrap' as const,
-                            flexShrink: 0,
-                          }}>
-                            {p.badge}
-                          </span>
-                        </div>
-                      </div>
-                      <div style={{ padding: '10px 14px' }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: "'DM Mono',monospace", color: '#1c4a35', marginBottom: '6px' }}>
-                          {fmtPrice(p.preco)}
-                        </div>
-                        <div style={{ display: 'flex', gap: '10px', fontSize: '0.72rem', color: 'rgba(14,14,13,0.55)', marginBottom: '10px' }}>
-                          <span>📐 {p.area}m²</span>
-                          <span>🛏 {p.quartos}Q</span>
-                          <span>🛁 {p.casasBanho}</span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' as const, marginBottom: '10px' }}>
-                          {p.piscina && <span style={{ background: 'rgba(14,165,233,0.1)', color: '#0369a1', borderRadius: '4px', padding: '1px 5px', fontSize: '0.65rem' }}>Piscina</span>}
-                          {p.jardim && <span style={{ background: 'rgba(34,197,94,0.1)', color: '#16a34a', borderRadius: '4px', padding: '1px 5px', fontSize: '0.65rem' }}>Jardim</span>}
-                          {p.terraco && <span style={{ background: 'rgba(201,169,110,0.12)', color: '#7a5c20', borderRadius: '4px', padding: '1px 5px', fontSize: '0.65rem' }}>Terraço</span>}
-                          {p.garagem && <span style={{ background: 'rgba(107,114,128,0.1)', color: '#374151', borderRadius: '4px', padding: '1px 5px', fontSize: '0.65rem' }}>Garagem</span>}
-                        </div>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          <span style={{
-                            background: '#f4f0e6',
-                            color: 'rgba(14,14,13,0.55)',
-                            borderRadius: '4px',
-                            padding: '2px 7px',
-                            fontSize: '0.68rem',
-                            flex: 1,
-                            textAlign: 'center' as const,
-                          }}>{p.tipo}</span>
-                          <button
-                            onClick={() => removePropertyFromCollection(activeCollection.id, p.id)}
-                            style={{
-                              background: 'rgba(220,38,38,0.07)',
-                              color: 'rgba(220,38,38,0.8)',
-                              border: 'none',
-                              borderRadius: '4px',
-                              padding: '2px 8px',
-                              fontSize: '0.68rem',
-                              fontFamily: "'Jost',sans-serif",
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Remover
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Tags row in detail */}
-              {activeCollection.tags.length > 0 && (
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(14,14,13,0.08)' }}>
-                  {activeCollection.tags.map(tag => (
-                    <span key={tag} style={{
-                      background: 'rgba(201,169,110,0.12)',
-                      color: '#7a5c20',
-                      borderRadius: '20px',
-                      padding: '3px 10px',
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                    }}>{tag}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Tab Content */}
+      {tab === 'minhas' && (
+        <MinhasCollections
+          collections={collections}
+          onNewCollection={() => setShowNewModal(true)}
+          onView={handleView}
+          onEdit={handleEdit}
+          onShare={handleShare}
+          onArchive={handleArchive}
+        />
+      )}
+      {tab === 'editor' && (
+        <EditorCollection collections={collections} editingCol={editingCol} onSave={handleSaveCollection} />
+      )}
+      {tab === 'partilhadas' && (
+        <Partilhadas collections={collections} onRevoke={handleRevoke} />
+      )}
+      {tab === 'previa' && (
+        <PreviaCliente collections={collections} />
       )}
 
-      {/* ── Property Selector Modal (for detail view) ── */}
-      {showPropertySelector && openId && (
-        <div style={{ ...S.overlay, zIndex: 300 }} onClick={e => { if (e.target === e.currentTarget) setShowPropertySelector(false) }}>
-          <div style={{ ...S.modal, maxHeight: '70vh' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>
-                Adicionar Imóvel
-              </h3>
-              <button onClick={() => setShowPropertySelector(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'rgba(14,14,13,0.4)' }}>✕</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {PORTAL_PROPERTIES.filter(p => !activeCollection?.propertyIds.includes(p.id)).map(p => (
-                <div key={p.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  background: '#f4f0e6',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  gap: '10px',
-                }}>
-                  <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{p.nome}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'rgba(14,14,13,0.5)' }}>{p.zona} · {fmtPrice(p.preco)} · {p.area}m²</div>
-                  </div>
-                  <button
-                    onClick={() => { addPropertyToCollection(openId, p.id); setShowPropertySelector(false) }}
-                    style={{
-                      background: '#1c4a35',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '6px 12px',
-                      fontSize: '0.75rem',
-                      fontFamily: "'Jost',sans-serif",
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap' as const,
-                    }}
-                  >
-                    + Adicionar
-                  </button>
-                </div>
-              ))}
-              {PORTAL_PROPERTIES.filter(p => !activeCollection?.propertyIds.includes(p.id)).length === 0 && (
-                <div style={{ textAlign: 'center' as const, padding: '24px', color: 'rgba(14,14,13,0.4)', fontSize: '0.85rem' }}>
-                  Todos os imóveis já foram adicionados.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Modals */}
+      {showNewModal && (
+        <NewCollectionModal onClose={() => setShowNewModal(false)} onCreate={handleCreateCollection} />
       )}
-
-      {/* ── Create Collection Modal ── */}
-      {showCreate && (
-        <div style={S.overlay} onClick={e => { if (e.target === e.currentTarget) { setShowCreate(false); setForm({ ...emptyForm }) } }}>
-          <div style={S.modal}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-              <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 700, margin: 0 }}>
-                Nova Collection
-              </h3>
-              <button onClick={() => { setShowCreate(false); setForm({ ...emptyForm }) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'rgba(14,14,13,0.4)' }}>✕</button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {/* Name */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(14,14,13,0.5)', marginBottom: '5px', letterSpacing: '0.05em' }}>
-                  NOME
-                </label>
-                <input
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Ex: Top Picks para James"
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    border: '1px solid rgba(14,14,13,0.15)',
-                    borderRadius: '7px',
-                    fontSize: '0.85rem',
-                    fontFamily: "'Jost',sans-serif",
-                    outline: 'none',
-                    boxSizing: 'border-box' as const,
-                    background: '#f9f8f4',
-                  }}
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(14,14,13,0.5)', marginBottom: '5px', letterSpacing: '0.05em' }}>
-                  DESCRIÇÃO
-                </label>
-                <input
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Ex: Villas premium Cascais · Budget €2–3M"
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    border: '1px solid rgba(14,14,13,0.15)',
-                    borderRadius: '7px',
-                    fontSize: '0.85rem',
-                    fontFamily: "'Jost',sans-serif",
-                    outline: 'none',
-                    boxSizing: 'border-box' as const,
-                    background: '#f9f8f4',
-                  }}
-                />
-              </div>
-
-              {/* Emoji + Color */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(14,14,13,0.5)', marginBottom: '5px', letterSpacing: '0.05em' }}>
-                    EMOJI
-                  </label>
-                  <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' as const }}>
-                    {EMOJI_OPTIONS.map(em => (
-                      <button
-                        key={em}
-                        onClick={() => setForm(f => ({ ...f, emoji: em }))}
-                        style={{
-                          fontSize: '1.2rem',
-                          background: form.emoji === em ? 'rgba(201,169,110,0.2)' : 'transparent',
-                          border: form.emoji === em ? '2px solid #c9a96e' : '2px solid transparent',
-                          borderRadius: '6px',
-                          padding: '4px 5px',
-                          cursor: 'pointer',
-                          lineHeight: 1,
-                        }}
-                      >
-                        {em}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(14,14,13,0.5)', marginBottom: '5px', letterSpacing: '0.05em' }}>
-                    COR
-                  </label>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
-                    {COLOR_OPTIONS.map(c => (
-                      <button
-                        key={c.value}
-                        onClick={() => setForm(f => ({ ...f, color: c.value }))}
-                        title={c.label}
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          background: c.value,
-                          border: form.color === c.value ? '3px solid #0e0e0d' : '3px solid transparent',
-                          cursor: 'pointer',
-                          outline: 'none',
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact selector */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(14,14,13,0.5)', marginBottom: '5px', letterSpacing: '0.05em' }}>
-                  CLIENTE (OPCIONAL)
-                </label>
-                <select
-                  value={form.contactId ?? ''}
-                  onChange={e => setForm(f => ({ ...f, contactId: e.target.value ? Number(e.target.value) : undefined }))}
-                  style={{
-                    width: '100%',
-                    padding: '9px 12px',
-                    border: '1px solid rgba(14,14,13,0.15)',
-                    borderRadius: '7px',
-                    fontSize: '0.85rem',
-                    fontFamily: "'Jost',sans-serif",
-                    outline: 'none',
-                    background: '#f9f8f4',
-                    color: '#0e0e0d',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">— Sem cliente associado —</option>
-                  {crmContacts.map(c => (
-                    <option key={c.id} value={c.id}>{c.name} · {c.nationality}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Property selector checklist */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(14,14,13,0.5)', marginBottom: '5px', letterSpacing: '0.05em' }}>
-                  IMÓVEIS ({form.propertyIds.length} seleccionados)
-                </label>
-                <div style={{
-                  border: '1px solid rgba(14,14,13,0.12)',
-                  borderRadius: '7px',
-                  maxHeight: '180px',
-                  overflowY: 'auto' as const,
-                  background: '#f9f8f4',
-                }}>
-                  {PORTAL_PROPERTIES.map(p => {
-                    const checked = form.propertyIds.includes(p.id)
-                    return (
-                      <label
-                        key={p.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          borderBottom: '1px solid rgba(14,14,13,0.05)',
-                          background: checked ? 'rgba(28,74,53,0.05)' : 'transparent',
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => setForm(f => ({
-                            ...f,
-                            propertyIds: checked
-                              ? f.propertyIds.filter(id => id !== p.id)
-                              : [...f.propertyIds, p.id],
-                          }))}
-                          style={{ accentColor: '#1c4a35', width: '14px', height: '14px', flexShrink: 0 }}
-                        />
-                        <div style={{ flex: 1, overflow: 'hidden' }}>
-                          <div style={{ fontSize: '0.78rem', fontWeight: 600, whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {p.nome}
-                          </div>
-                          <div style={{ fontSize: '0.68rem', color: 'rgba(14,14,13,0.5)' }}>
-                            {p.zona} · {fmtPrice(p.preco)} · {p.area}m²
-                          </div>
-                        </div>
-                      </label>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(14,14,13,0.5)', marginBottom: '5px', letterSpacing: '0.05em' }}>
-                  TAGS
-                </label>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const, marginBottom: '6px' }}>
-                  {form.tags.map(tag => (
-                    <span key={tag} style={{
-                      background: 'rgba(201,169,110,0.15)',
-                      color: '#7a5c20',
-                      borderRadius: '20px',
-                      padding: '2px 10px',
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}>
-                      {tag}
-                      <button
-                        onClick={() => setForm(f => ({ ...f, tags: f.tags.filter(t => t !== tag) }))}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'rgba(122,92,32,0.6)', fontSize: '0.7rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}
-                      >✕</button>
-                    </span>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <input
-                    value={tagInput}
-                    onChange={e => setTagInput(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && tagInput.trim()) {
-                        e.preventDefault()
-                        setForm(f => ({ ...f, tags: [...f.tags, tagInput.trim()] }))
-                        setTagInput('')
-                      }
-                    }}
-                    placeholder="Adicionar tag..."
-                    style={{
-                      flex: 1,
-                      padding: '7px 10px',
-                      border: '1px solid rgba(14,14,13,0.15)',
-                      borderRadius: '6px',
-                      fontSize: '0.8rem',
-                      fontFamily: "'Jost',sans-serif",
-                      outline: 'none',
-                      background: '#f9f8f4',
-                    }}
-                  />
-                  <button
-                    onClick={() => {
-                      if (tagInput.trim()) {
-                        setForm(f => ({ ...f, tags: [...f.tags, tagInput.trim()] }))
-                        setTagInput('')
-                      }
-                    }}
-                    style={{
-                      background: '#f4f0e6',
-                      border: '1px solid rgba(14,14,13,0.15)',
-                      borderRadius: '6px',
-                      padding: '7px 12px',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      color: '#0e0e0d',
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Visibility toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <button
-                  onClick={() => setForm(f => ({ ...f, isPublic: !f.isPublic }))}
-                  style={{
-                    width: '40px',
-                    height: '22px',
-                    borderRadius: '11px',
-                    background: form.isPublic ? '#1c4a35' : 'rgba(14,14,13,0.15)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    position: 'relative' as const,
-                    transition: 'background 0.2s',
-                    flexShrink: 0,
-                  }}
-                >
-                  <span style={{
-                    position: 'absolute' as const,
-                    top: '2px',
-                    left: form.isPublic ? '20px' : '2px',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    background: '#fff',
-                    transition: 'left 0.2s',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                  }} />
-                </button>
-                <span style={{ fontSize: '0.8rem', color: 'rgba(14,14,13,0.65)' }}>
-                  {form.isPublic ? '🔗 Pública — link de partilha activo' : '🔒 Privada — apenas visível internamente'}
-                </span>
-              </div>
-
-              {/* Preview strip */}
-              <div style={{
-                background: form.color,
-                borderRadius: '8px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}>
-                <span style={{ fontSize: '1.6rem' }}>{form.emoji}</span>
-                <div>
-                  <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', fontWeight: 700, color: '#fff' }}>
-                    {form.name || 'Nome da collection'}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)' }}>
-                    {form.description || 'Descrição da collection'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Create button */}
-              <button
-                onClick={createCollection}
-                disabled={!form.name.trim()}
-                style={{
-                  background: form.name.trim() ? '#1c4a35' : 'rgba(28,74,53,0.3)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  fontSize: '0.88rem',
-                  fontFamily: "'Jost',sans-serif",
-                  fontWeight: 700,
-                  cursor: form.name.trim() ? 'pointer' : 'not-allowed',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                Criar Collection
-              </button>
-            </div>
-          </div>
-        </div>
+      {showShareModal && shareTarget && (
+        <ShareLinkModal col={shareTarget} onClose={() => { setShowShareModal(false); setShareTarget(null) }} />
       )}
-
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-      `}</style>
     </div>
   )
 }

@@ -1,1384 +1,1264 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { PORTAL_PROPERTIES } from './constants'
-import { useCRMStore } from '../stores/crmStore'
-import { useDealStore } from '../stores/dealStore'
-import { exportToPDF } from './utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface DraftResult {
-  subject: string
-  body: string
-  keyTerms: { label: string; value: string }[]
-  urgencyLevel: 'alta' | 'media' | 'baixa'
-  negotiationAdvice: string
-  redFlags: string[]
-  strengths: string[]
-  offerSummary: string
+type OfferType = 'compra' | 'financiamento' | 'venda' | 'arrendamento'
+type OfferStatus = 'Enviada' | 'Vista' | 'Em Análise' | 'Contra-Proposta' | 'Aceite' | 'Recusada'
+type DraftTab = 'nova' | 'activas' | 'historico' | 'templates'
+type WizardStep = 1 | 2 | 3
+
+interface FinancingCondition {
+  enabled: boolean
+  bank: string
+  amount: string
+  deadline: string
 }
 
-interface OfferHistory {
-  id: string
-  date: string
-  propertyRef: string
-  propertyName: string
-  buyerName: string
-  offerPrice: number
-  listPrice: number
-  offerType: string
-  lang: string
-  status: 'pendente' | 'enviada' | 'aceite' | 'recusada'
-  draft: DraftResult
+interface InspectionCondition {
+  enabled: boolean
+  deadline: string
 }
 
 interface OfferConditions {
-  financiamento: boolean
-  inspecao: boolean
-  prazoCondicao: string
-  valorSinal: string
-  dataCPCV: string
-  dataEscritura: string
-  includeMobilia: boolean
-  includeVagaGaragem: boolean
+  financing: FinancingCondition
+  inspection: InspectionCondition
+  subjectToValuation: boolean
+  cpcvRequested: boolean
+  cpcvDate: string
+  escrituraDate: string
+  exclusivity: boolean
+  furnitureIncluded: boolean
+  customConditions: string
 }
 
-// ─── Offer Type Config ────────────────────────────────────────────────────────
+interface TimelineEvent {
+  date: string
+  label: string
+  status: 'done' | 'active' | 'pending'
+}
 
-const OFFER_TYPES = [
-  { id: 'compra',   label: 'Proposta Compra',  emoji: '📋', short: 'Compra' },
-  { id: 'contra',   label: 'Contra-Proposta',  emoji: '↔️', short: 'Contra' },
-  { id: 'loi',      label: 'LOI',              emoji: '📄', short: 'LOI' },
-  { id: 'cpcv',     label: 'CPCV',             emoji: '✍️', short: 'CPCV' },
-  { id: 'offmarket',label: 'Off-Market',       emoji: '🤫', short: 'Off-Mkt' },
-] as const
+interface ActiveOffer {
+  id: string
+  propertyId: string
+  propertyName: string
+  buyerName: string
+  buyerNationality: string
+  buyerNIF?: string
+  offerAmount: number
+  askingPrice: number
+  offerType: OfferType
+  submittedAt: string
+  status: OfferStatus
+  counterOfferAmount?: number
+  counterOfferNote?: string
+  timeline: TimelineEvent[]
+  responseDeadline: string
+}
 
-type OfferTypeId = typeof OFFER_TYPES[number]['id']
+interface HistoricalOffer {
+  id: string
+  propertyName: string
+  buyerName: string
+  offerAmount: number
+  askingPrice: number
+  result: 'Aceite' | 'Recusada'
+  closedAt: string
+  negotiationDays: number
+}
 
-const LANGUAGES = ['PT', 'EN', 'FR', 'DE', 'AR'] as const
-type LangId = typeof LANGUAGES[number]
+interface OfferTemplate {
+  id: string
+  name: string
+  tagline: string
+  whenToUse: string
+  exampleLanguage: string
+  successRate: number
+  discountPct: number
+  color: string
+  textColor: string
+}
 
-const OFFER_TEMPLATES = [
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+
+const OFFER_TEMPLATES: OfferTemplate[] = [
   {
-    id: 'agressiva',
-    name: 'Oferta Agressiva',
-    desc: '15% abaixo da listagem. Sinal 10%. Condições financiamento.',
-    discount: 15,
+    id: 'firme',
+    name: 'Oferta Firme',
+    tagline: 'Abaixo de mercado — leverage alto',
+    whenToUse: 'Imóvel com mais de 120 dias de mercado. Vendedor motivado. Sem outros interessados confirmados.',
+    exampleLanguage: '"Apresentamos uma proposta firme e não condicionada de [X], válida por 72 horas. O nosso cliente demonstra capacidade financeira comprovada e disponibilidade para escritura rápida."',
     successRate: 38,
-    offerType: 'compra' as OfferTypeId,
-    color: '#e05454',
+    discountPct: 12,
+    color: '#fef2f2',
+    textColor: '#b91c1c',
   },
   {
-    id: 'mercado',
-    name: 'Oferta a Mercado',
-    desc: 'Preço de listagem. Condições normais. Alta probabilidade de aceitação.',
-    discount: 0,
-    successRate: 78,
-    offerType: 'compra' as OfferTypeId,
-    color: '#1c4a35',
+    id: 'estrategica',
+    name: 'Oferta Estratégica',
+    tagline: 'A preço de mercado com condições favoráveis',
+    whenToUse: 'Imóvel com 30–90 dias. Vendedor normal. Bom imóvel sem urgência.',
+    exampleLanguage: '"Proposta ao preço solicitado, com condição de financiamento bancário a confirmar em 21 dias. Sinal de 10% na assinatura do CPCV, escritura em 90 dias."',
+    successRate: 72,
+    discountPct: 0,
+    color: '#f0fdf4',
+    textColor: '#15803d',
   },
   {
     id: 'premium',
-    name: 'Proposta Premium',
-    desc: 'Acima do preço de listagem. Sem condições suspensivas. Prazo rápido.',
-    discount: -3,
-    successRate: 92,
-    offerType: 'compra' as OfferTypeId,
-    color: '#c9a96e',
+    name: 'Oferta Premium',
+    tagline: 'Acima de mercado — limpa, rápida',
+    whenToUse: 'Imóvel excepcional com múltiplos interessados. Cliente com capital próprio. Urgência de fecho.',
+    exampleLanguage: '"Proposta acima do preço solicitado, sem condições suspensivas. Sinal de 20% disponível imediatamente. Escritura em 45 dias a conveniência do vendedor."',
+    successRate: 89,
+    discountPct: -5,
+    color: 'rgba(201,169,110,.1)',
+    textColor: '#b8852a',
   },
   {
-    id: 'offmarket_touch',
-    name: 'Off-Market First Touch',
-    desc: 'Primeira abordagem informal. Tom discreto. Sinal de interesse.',
-    discount: 10,
-    successRate: 55,
-    offerType: 'offmarket' as OfferTypeId,
-    color: '#3a7bd5',
+    id: 'escalation',
+    name: 'Multi-Oferta',
+    tagline: 'Cláusula de escalação automática',
+    whenToUse: 'Leilão informal. Múltiplos compradores. Vendedor receptivo a melhor oferta.',
+    exampleLanguage: '"Propomos [X], com cláusula de escalação: se receber oferta superior entre [X] e [MAX], a nossa proposta sobe automaticamente €5.000 acima, até ao máximo de [MAX]."',
+    successRate: 61,
+    discountPct: 0,
+    color: 'rgba(58,123,213,.08)',
+    textColor: '#1d4ed8',
+  },
+  {
+    id: 'cash',
+    name: 'All-Cash',
+    tagline: 'Velocidade como vantagem competitiva',
+    whenToUse: 'Vendedor quer rapidez. Situação de herança ou urgência financeira. Capital próprio disponível.',
+    exampleLanguage: '"Oferta a pronto pagamento, sem financiamento, sem condições. Sinal de 30% na assinatura do CPCV esta semana. Escritura em 30 dias. Zero risco de incumprimento."',
+    successRate: 84,
+    discountPct: 8,
+    color: '#fafaf9',
+    textColor: '#1c4a35',
+  },
+  {
+    id: 'preaprovacao',
+    name: 'Pré-Aprovação Bancária',
+    tagline: 'Financiamento confirmado — credibilidade máxima',
+    whenToUse: 'Comprador com pré-aprovação bancária. Vendedor preocupado com risco de incumprimento.',
+    exampleLanguage: '"Acompanha esta proposta carta de pré-aprovação bancária pelo Banco [X] para [Y]€. O nosso cliente tem aprovação formal e está pronto para avançar imediatamente após aceitação."',
+    successRate: 78,
+    discountPct: 3,
+    color: 'rgba(28,74,53,.06)',
+    textColor: '#1c4a35',
   },
 ]
 
+const MOCK_ACTIVE_OFFERS: ActiveOffer[] = [
+  {
+    id: 'off-001',
+    propertyId: 'AG-2026-020',
+    propertyName: 'Villa Quinta da Marinha',
+    buyerName: 'James Mitchell',
+    buyerNationality: 'EUA',
+    offerAmount: 3610000,
+    askingPrice: 3800000,
+    offerType: 'compra',
+    submittedAt: '2026-04-02T10:30:00Z',
+    status: 'Contra-Proposta',
+    counterOfferAmount: 3700000,
+    counterOfferNote: 'Vendedor aceita mas solicita prazo de escritura mínimo de 90 dias e manutenção de todo o recheio.',
+    timeline: [
+      { date: '02 Abr 10:30', label: 'Proposta enviada — €3.610.000', status: 'done' },
+      { date: '02 Abr 14:15', label: 'Vendedor viu a proposta', status: 'done' },
+      { date: '03 Abr 09:00', label: 'Em análise com advogado vendedor', status: 'done' },
+      { date: '04 Abr 11:20', label: 'Contra-proposta recebida — €3.700.000', status: 'active' },
+      { date: '—', label: 'Aguarda resposta do comprador', status: 'pending' },
+    ],
+    responseDeadline: '2026-04-07',
+  },
+  {
+    id: 'off-002',
+    propertyId: 'AG-2026-010',
+    propertyName: 'Penthouse Príncipe Real',
+    buyerName: 'Pierre Dubois',
+    buyerNationality: 'França',
+    offerAmount: 2750000,
+    askingPrice: 2850000,
+    offerType: 'financiamento',
+    submittedAt: '2026-04-03T09:00:00Z',
+    status: 'Em Análise',
+    timeline: [
+      { date: '03 Abr 09:00', label: 'Proposta enviada — €2.750.000', status: 'done' },
+      { date: '03 Abr 16:45', label: 'Confirmação de recepção', status: 'done' },
+      { date: '04 Abr 10:00', label: 'Em análise — prazo: 72h', status: 'active' },
+      { date: '—', label: 'Resposta esperada até 6 Abr', status: 'pending' },
+    ],
+    responseDeadline: '2026-04-06',
+  },
+  {
+    id: 'off-003',
+    propertyId: 'AG-2026-050',
+    propertyName: 'Villa Vale do Lobo Golf',
+    buyerName: 'Khalid Al-Rashid',
+    buyerNationality: 'EAU',
+    offerAmount: 4200000,
+    askingPrice: 4200000,
+    offerType: 'compra',
+    submittedAt: '2026-04-04T14:00:00Z',
+    status: 'Vista',
+    timeline: [
+      { date: '04 Abr 14:00', label: 'Proposta enviada — €4.200.000', status: 'done' },
+      { date: '04 Abr 18:30', label: 'Vendedor viu a proposta', status: 'active' },
+      { date: '—', label: 'Aguarda resposta formal', status: 'pending' },
+    ],
+    responseDeadline: '2026-04-07',
+  },
+  {
+    id: 'off-004',
+    propertyId: 'AG-2026-040',
+    propertyName: 'Apartamento Foz do Douro',
+    buyerName: 'Charlotte Blake',
+    buyerNationality: 'Reino Unido',
+    offerAmount: 940000,
+    askingPrice: 980000,
+    offerType: 'financiamento',
+    submittedAt: '2026-04-01T11:00:00Z',
+    status: 'Aceite',
+    timeline: [
+      { date: '01 Abr 11:00', label: 'Proposta enviada — €940.000', status: 'done' },
+      { date: '01 Abr 15:20', label: 'Vendedor analisou', status: 'done' },
+      { date: '02 Abr 10:00', label: 'Proposta ACEITE', status: 'done' },
+      { date: '05 Abr', label: 'CPCV previsto', status: 'active' },
+    ],
+    responseDeadline: '2026-04-05',
+  },
+  {
+    id: 'off-005',
+    propertyId: 'AG-2026-060',
+    propertyName: 'Apartamento Funchal Prime',
+    buyerName: 'Marco Aurelio Santos',
+    buyerNationality: 'Brasil',
+    offerAmount: 890000,
+    askingPrice: 980000,
+    offerType: 'compra',
+    submittedAt: '2026-03-28T09:00:00Z',
+    status: 'Enviada',
+    timeline: [
+      { date: '28 Mar 09:00', label: 'Proposta enviada — €890.000', status: 'done' },
+      { date: '—', label: 'Aguarda primeira resposta', status: 'active' },
+    ],
+    responseDeadline: '2026-04-05',
+  },
+]
+
+const MOCK_HISTORICAL: HistoricalOffer[] = [
+  { id: 'h-001', propertyName: 'Moradia Belém com Jardim', buyerName: 'Sophie Hartmann', offerAmount: 3100000, askingPrice: 3200000, result: 'Aceite', closedAt: '2026-03-20', negotiationDays: 8 },
+  { id: 'h-002', propertyName: 'Herdade Comporta Exclusiva', buyerName: 'Ahmed Al-Farsi', offerAmount: 5900000, askingPrice: 6500000, result: 'Recusada', closedAt: '2026-03-10', negotiationDays: 14 },
+  { id: 'h-003', propertyName: 'Quinta Histórica Sintra', buyerName: 'David Chen', offerAmount: 2700000, askingPrice: 2800000, result: 'Aceite', closedAt: '2026-02-28', negotiationDays: 6 },
+  { id: 'h-004', propertyName: 'Moradia Estoril Frente Mar', buyerName: 'Isabelle Martin', offerAmount: 2050000, askingPrice: 2100000, result: 'Aceite', closedAt: '2026-02-15', negotiationDays: 4 },
+  { id: 'h-005', propertyName: 'Apartamento Chiado Premium', buyerName: 'Robert Wilson', offerAmount: 1300000, askingPrice: 1450000, result: 'Recusada', closedAt: '2026-02-05', negotiationDays: 10 },
+  { id: 'h-006', propertyName: 'Villa Vale do Lobo Golf', buyerName: 'Omar Hassan', offerAmount: 3950000, askingPrice: 4200000, result: 'Aceite', closedAt: '2026-01-30', negotiationDays: 12 },
+]
+
+const NATIONALITY_FLAGS: Record<string, string> = {
+  'Portugal': '🇵🇹', 'EUA': '🇺🇸', 'França': '🇫🇷', 'Reino Unido': '🇬🇧',
+  'Alemanha': '🇩🇪', 'Brasil': '🇧🇷', 'China': '🇨🇳', 'EAU': '🇦🇪',
+  'Suíça': '🇨🇭', 'Arábia Saudita': '🇸🇦',
+}
+
+const BANKS = ['Millennium BCP', 'Caixa Geral de Depósitos', 'Novo Banco', 'Santander', 'BPI', 'Bankinter', 'Deutsche Bank', 'BNP Paribas', 'HSBC', 'Outro']
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmtEuro(v: number): string {
-  if (!v || isNaN(v)) return '—'
-  return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
+function fmtPreco(v: number): string {
+  if (v >= 1_000_000) return `€${(v / 1_000_000).toLocaleString('pt-PT', { minimumFractionDigits: v % 1_000_000 === 0 ? 0 : 1, maximumFractionDigits: 2 })}M`
+  if (v >= 1_000) return `€${(v / 1_000).toFixed(0)}K`
+  return `€${v}`
 }
 
-function calcDiscount(list: number, offer: number): number {
-  if (!list || !offer) return 0
-  return ((list - offer) / list) * 100
+function pctDiff(offer: number, asking: number): number {
+  return Math.round(((offer - asking) / asking) * 100)
 }
 
-function discountColor(pct: number): string {
-  if (pct <= 0) return '#1c4a35'
-  if (pct <= 5) return '#1c4a35'
-  if (pct <= 10) return '#c9a96e'
-  if (pct <= 15) return '#d97706'
-  return '#e05454'
+function daysUntil(dateStr: string): number {
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000)
 }
 
-function acceptanceProbability(discountPct: number): number {
-  if (discountPct <= 0) return 92
-  if (discountPct <= 3) return 85
-  if (discountPct <= 5) return 74
-  if (discountPct <= 8) return 60
-  if (discountPct <= 12) return 44
-  if (discountPct <= 15) return 30
-  if (discountPct <= 20) return 18
-  return 8
-}
-
-function probColor(prob: number): string {
-  if (prob >= 70) return '#1c4a35'
-  if (prob >= 45) return '#c9a96e'
-  if (prob >= 25) return '#d97706'
-  return '#e05454'
-}
-
-function statusBadgeStyle(status: OfferHistory['status']): React.CSSProperties {
-  const map: Record<OfferHistory['status'], { bg: string; color: string }> = {
-    pendente:  { bg: 'rgba(14,14,13,.08)',       color: 'rgba(14,14,13,.5)' },
-    enviada:   { bg: 'rgba(58,123,213,.12)',      color: '#3a7bd5' },
-    aceite:    { bg: 'rgba(28,74,53,.12)',        color: '#1c4a35' },
-    recusada:  { bg: 'rgba(224,84,84,.12)',       color: '#e05454' },
+function statusColor(status: OfferStatus): { bg: string; color: string; border: string } {
+  const map: Record<OfferStatus, { bg: string; color: string; border: string }> = {
+    'Enviada': { bg: 'rgba(58,123,213,.1)', color: '#1d4ed8', border: 'rgba(58,123,213,.3)' },
+    'Vista': { bg: 'rgba(201,169,110,.1)', color: '#b8852a', border: 'rgba(201,169,110,.3)' },
+    'Em Análise': { bg: 'rgba(74,156,122,.1)', color: '#2a7a5a', border: 'rgba(74,156,122,.3)' },
+    'Contra-Proposta': { bg: 'rgba(234,179,8,.1)', color: '#b45309', border: 'rgba(234,179,8,.3)' },
+    'Aceite': { bg: 'rgba(28,74,53,.12)', color: '#1c4a35', border: 'rgba(28,74,53,.3)' },
+    'Recusada': { bg: 'rgba(192,57,43,.1)', color: '#c0392b', border: 'rgba(192,57,43,.3)' },
   }
-  const s = map[status]
-  return {
-    display: 'inline-block',
-    padding: '3px 10px',
-    background: s.bg,
-    color: s.color,
-    fontFamily: "'DM Mono',monospace",
-    fontSize: '.48rem',
-    letterSpacing: '.12em',
-    textTransform: 'uppercase',
-    borderRadius: '2px',
-  }
+  return map[status]
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+function generateOfferLetter(
+  property: typeof PORTAL_PROPERTIES[0] | undefined,
+  buyerName: string,
+  offerAmount: number,
+  offerType: OfferType,
+  conditions: OfferConditions,
+  deadline: string,
+  depositAmount: number
+): string {
+  if (!property) return ''
+  const typeLabels: Record<OfferType, string> = {
+    compra: 'Compra Simples',
+    financiamento: 'Compra com Condição de Financiamento',
+    venda: 'Compra Condicionada a Venda',
+    arrendamento: 'Arrendamento com Opção de Compra',
+  }
+  const pct = pctDiff(offerAmount, property.preco)
+  const pctLabel = pct === 0 ? 'ao preço solicitado' : pct > 0 ? `${Math.abs(pct)}% acima do preço solicitado` : `${Math.abs(pct)}% abaixo do preço solicitado`
 
-export default function PortalDraftOffer() {
-  const { crmContacts } = useCRMStore()
-  const { deals } = useDealStore()
+  return `PROPOSTA DE ${offerType === 'arrendamento' ? 'ARRENDAMENTO' : 'AQUISIÇÃO'}
 
-  // Core form state
-  const [offerType, setOfferType] = useState<OfferTypeId>('compra')
-  const [lang, setLang] = useState<LangId>('PT')
-  const [selectedProperty, setSelectedProperty] = useState('')
-  const [selectedContact, setSelectedContact] = useState<number | null>(null)
-  const [offerPrice, setOfferPrice] = useState('')
-  const [listPrice, setListPrice] = useState('')
-  const [conditions, setConditions] = useState<OfferConditions>({
-    financiamento: true,
-    inspecao: false,
-    prazoCondicao: '30',
-    valorSinal: '10',
-    dataCPCV: '',
-    dataEscritura: '',
-    includeMobilia: false,
-    includeVagaGaragem: true,
-  })
+Exmo(a). Senhor(a) Proprietário(a),
 
-  // UI state
-  const [generating, setGenerating] = useState(false)
-  const [draft, setDraft] = useState<DraftResult | null>(null)
-  const [selectedTab, setSelectedTab] = useState<'draft' | 'history' | 'templates'>('draft')
-  const [copySuccess, setCopySuccess] = useState(false)
-  const [history, setHistory] = useState<OfferHistory[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [confetti, setConfetti] = useState(false)
+Venho por este meio, em representação de ${buyerName || '[COMPRADOR]'}, apresentar uma proposta formal de ${typeLabels[offerType].toLowerCase()} para o imóvel:
 
-  // Derived values
-  const listNum = parseFloat(listPrice.replace(/[^\d.]/g, '')) || 0
-  const offerNum = parseFloat(offerPrice.replace(/[^\d.]/g, '')) || 0
-  const discountPct = calcDiscount(listNum, offerNum)
-  const sinalNum = listNum > 0
-    ? offerNum * (parseFloat(conditions.valorSinal) / 100)
-    : 0
-  const acceptanceProb = acceptanceProbability(discountPct)
+REFERÊNCIA: ${property.ref}
+DESIGNAÇÃO: ${property.nome}
+LOCALIZAÇÃO: ${property.bairro}, ${property.zona}
+PREÇO SOLICITADO: ${fmtPreco(property.preco)}
 
-  const selectedPropertyObj = PORTAL_PROPERTIES.find(p => p.id === selectedProperty)
-  const selectedContactObj = crmContacts.find(c => c.id === selectedContact)
+─────────────────────────────────────
 
-  // Auto-fill list price from property
-  const handlePropertyChange = useCallback((id: string) => {
-    setSelectedProperty(id)
-    const prop = PORTAL_PROPERTIES.find(p => p.id === id)
-    if (prop) setListPrice(String(prop.preco))
-  }, [])
+TERMOS DA PROPOSTA
 
-  // Template apply
-  const applyTemplate = useCallback((tpl: typeof OFFER_TEMPLATES[number]) => {
-    setOfferType(tpl.offerType)
-    if (listNum > 0) {
-      const newOffer = Math.round(listNum * (1 - tpl.discount / 100))
-      setOfferPrice(String(newOffer))
+Valor proposto: ${fmtPreco(offerAmount)} (${pctLabel})
+Tipologia: ${typeLabels[offerType]}
+Sinal proposto: ${fmtPreco(depositAmount)} (na assinatura do CPCV)
+${conditions.cpcvRequested && conditions.cpcvDate ? `Data CPCV proposta: ${conditions.cpcvDate}` : ''}
+${conditions.escrituraDate ? `Data de Escritura proposta: ${conditions.escrituraDate}` : ''}
+
+─────────────────────────────────────
+
+CONDIÇÕES${conditions.financing.enabled || conditions.inspection.enabled || conditions.subjectToValuation || conditions.exclusivity ? '' : '\n\nSem condições suspensivas.'}
+
+${conditions.financing.enabled ? `▸ Condição de Financiamento: Crédito bancário junto do ${conditions.financing.bank || '[BANCO]'}, no valor de ${conditions.financing.amount ? fmtPreco(Number(conditions.financing.amount)) : '[VALOR]'}. Prazo para confirmação: ${conditions.financing.deadline || '[PRAZO]'}.` : ''}
+${conditions.inspection.enabled ? `▸ Condição de Vistoria Técnica: Prazo para realização: ${conditions.inspection.deadline || '[PRAZO]'}. Caso a vistoria revele anomalias estruturais graves, o comprador poderá renegociar ou desistir sem penalização.` : ''}
+${conditions.subjectToValuation ? '▸ Sujeito a Avaliação Bancária: Caso a avaliação bancária seja inferior em mais de 5% ao valor proposto, a proposta fica sem efeito, sem penalização para o comprador.' : ''}
+${conditions.exclusivity ? '▸ Exclusividade: Solicitamos que o imóvel seja retirado do mercado após aceitação desta proposta.' : ''}
+${conditions.furnitureIncluded ? '▸ Recheio: A presente proposta inclui o recheio e equipamentos existentes no imóvel, conforme inventário a estabelecer.' : ''}
+${conditions.customConditions ? `▸ Condições Adicionais: ${conditions.customConditions}` : ''}
+
+─────────────────────────────────────
+
+Esta proposta é válida até ${deadline ? new Date(deadline).toLocaleDateString('pt-PT') : '[PRAZO]'}.
+
+Aguardando a vossa resposta com toda a consideração,
+
+Agency Group · AMI 22506
+Em representação de ${buyerName || '[COMPRADOR]'}`
+}
+
+// ─── SVG Icons ────────────────────────────────────────────────────────────────
+
+const IconWizardDot = ({ active, done }: { active: boolean; done: boolean }) => (
+  <div style={{
+    width: 28, height: 28, borderRadius: '50%',
+    background: done ? '#1c4a35' : active ? '#c9a96e' : 'rgba(14,14,13,.1)',
+    border: `2px solid ${done ? '#1c4a35' : active ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    transition: 'all .2s',
+  }}>
+    {done ? (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    ) : (
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: active ? '#fff' : 'rgba(14,14,13,.3)' }} />
+    )}
+  </div>
+)
+
+const IconCopy = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+  </svg>
+)
+const IconMail = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+  </svg>
+)
+const IconWhatsapp = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.38 1.26 4.8L2 22l5.44-1.43a9.87 9.87 0 004.6 1.14h.01c5.45 0 9.9-4.46 9.9-9.91C22 6.45 17.5 2 12.04 2zm5.52 14.19c-.23.64-1.36 1.22-1.86 1.27-.5.05-.97.24-3.26-.68-2.74-1.1-4.5-3.88-4.63-4.06-.13-.18-1.07-1.43-1.07-2.73 0-1.3.68-1.94.93-2.2.25-.26.54-.32.72-.32.18 0 .36.01.52.01.16.01.38-.06.6.46l.86 2.09c.07.18.12.38.01.58-.1.2-.16.32-.31.5-.15.17-.32.38-.45.5-.15.14-.3.29-.13.58.17.28.77 1.27 1.65 2.06.97.87 1.8 1.14 2.06 1.27.27.13.42.11.58-.07.17-.18.7-.82.89-1.1.18-.28.37-.23.62-.14l2.01.95c.24.11.38.17.44.26.06.1.06.55-.17 1.07z"/>
+  </svg>
+)
+const IconPDF = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+  </svg>
+)
+const IconArrow = ({ dir }: { dir: 'left' | 'right' }) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    {dir === 'right' ? <><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></> : <><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>}
+  </svg>
+)
+const IconTrophy = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <polyline points="8 21 12 21 16 21"/><line x1="12" y1="17" x2="12" y2="21"/>
+    <path d="M7 4H17v5a5 5 0 01-10 0V4z"/><path d="M17 5h3v3a3 3 0 01-3 3"/><path d="M7 5H4v3a3 3 0 003 3"/>
+  </svg>
+)
+const IconLightbulb = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/>
+    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0018 8 6 6 0 006 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 018.91 14"/>
+  </svg>
+)
+const IconWarning = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+)
+const IconCheck = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+const IconSlider = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
+    <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
+    <line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+  </svg>
+)
+
+// ─── Toggle Component ─────────────────────────────────────────────────────────
+
+function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.6rem 0' }}>
+      <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.875rem', color: '#0e0e0d' }}>{label}</span>
+      <button onClick={() => onChange(!value)}
+        style={{
+          width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+          background: value ? '#1c4a35' : 'rgba(14,14,13,.15)', padding: 0, position: 'relative',
+          transition: 'background .2s', flexShrink: 0,
+        }}>
+        <div style={{
+          position: 'absolute', top: 3, left: value ? 21 : 3, width: 18, height: 18,
+          borderRadius: '50%', background: '#fff', transition: 'left .2s',
+          boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+        }} />
+      </button>
+    </div>
+  )
+}
+
+// ─── Step 1 ───────────────────────────────────────────────────────────────────
+
+interface Step1Props {
+  selectedPropertyId: string
+  setSelectedPropertyId: (id: string) => void
+  offerPct: number
+  setOfferPct: (v: number) => void
+  offerAmount: number
+  setOfferAmount: (v: number) => void
+  offerType: OfferType
+  setOfferType: (v: OfferType) => void
+  buyerName: string
+  setBuyerName: (v: string) => void
+  buyerNationality: string
+  setBuyerNationality: (v: string) => void
+  buyerNIF: string
+  setBuyerNIF: (v: string) => void
+  responseDeadline: string
+  setResponseDeadline: (v: string) => void
+  depositAmount: number
+  setDepositAmount: (v: number) => void
+  onNext: () => void
+}
+
+function Step1({
+  selectedPropertyId, setSelectedPropertyId, offerPct, setOfferPct,
+  offerAmount, setOfferAmount, offerType, setOfferType,
+  buyerName, setBuyerName, buyerNationality, setBuyerNationality,
+  buyerNIF, setBuyerNIF, responseDeadline, setResponseDeadline,
+  depositAmount, setDepositAmount, onNext,
+}: Step1Props) {
+  const property = PORTAL_PROPERTIES.find(p => p.id === selectedPropertyId)
+  const asking = property?.preco ?? 0
+  const pct = pctDiff(offerAmount, asking)
+
+  function handlePctChange(v: number) {
+    setOfferPct(v)
+    if (asking > 0) {
+      const amt = Math.round(asking * v / 100)
+      setOfferAmount(amt)
+      setDepositAmount(Math.round(amt * 0.1))
     }
-    setSelectedTab('draft')
-  }, [listNum])
+  }
 
-  // Reload history draft
-  const reloadHistoryDraft = useCallback((entry: OfferHistory) => {
-    setSelectedProperty(entry.propertyRef)
-    const prop = PORTAL_PROPERTIES.find(p => p.id === entry.propertyRef)
-    if (prop) setListPrice(String(prop.preco))
-    setOfferPrice(String(entry.offerPrice))
-    setDraft(entry.draft)
-    setSelectedTab('draft')
-  }, [])
+  function handleAmountChange(raw: string) {
+    const v = Number(raw.replace(/\D/g, ''))
+    setOfferAmount(v)
+    if (asking > 0) setOfferPct(Math.round((v / asking) * 100))
+    setDepositAmount(Math.round(v * 0.1))
+  }
 
-  // Copy to clipboard
-  const handleCopy = useCallback(async () => {
-    if (!draft) return
-    try {
-      await navigator.clipboard.writeText(`${draft.subject}\n\n${draft.body}`)
-      setCopySuccess(true)
-      setTimeout(() => setCopySuccess(false), 2500)
-    } catch {
-      setCopySuccess(false)
-    }
-  }, [draft])
-
-  // Email vendor
-  const handleEmailVendedor = useCallback(() => {
-    if (!draft) return
-    const subject = encodeURIComponent(draft.subject)
-    const body = encodeURIComponent(draft.body)
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank')
-  }, [draft])
-
-  // PDF export
-  const handlePDF = useCallback(() => {
-    if (!draft || !selectedPropertyObj) return
-    const html = `
-      <div class="label">Proposta</div>
-      <div class="metric">${draft.subject}</div>
-      <hr class="divider"/>
-      <div style="white-space:pre-wrap;font-size:.85rem;line-height:1.8;font-family:var(--font-jost),sans-serif;margin-top:16px">${draft.body}</div>
-      <hr class="divider"/>
-      <table>
-        <thead><tr>${draft.keyTerms.map(t => `<th>${t.label}</th>`).join('')}</tr></thead>
-        <tbody><tr>${draft.keyTerms.map(t => `<td>${t.value}</td>`).join('')}</tr></tbody>
-      </table>
-      ${draft.negotiationAdvice ? `<div style="margin-top:20px;padding:14px 18px;background:rgba(201,169,110,.1);border-left:3px solid #c9a96e;font-size:.8rem;line-height:1.7"><strong>Conselho de Negociação</strong><br/>${draft.negotiationAdvice}</div>` : ''}
-    `
-    exportToPDF(draft.subject, html)
-  }, [draft, selectedPropertyObj])
-
-  // AI generate
-  const handleGenerate = useCallback(async () => {
-    if (!selectedPropertyObj) { setError('Seleccione um imóvel primeiro.'); return }
-    setError(null)
-    setGenerating(true)
-    setDraft(null)
-
-    try {
-      const res = await fetch('/api/draft-offer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: offerType,
-          lang,
-          property: {
-            nome: selectedPropertyObj.nome,
-            preco: selectedPropertyObj.preco,
-            ref: selectedPropertyObj.ref,
-            zona: selectedPropertyObj.zona,
-            area: selectedPropertyObj.area,
-            quartos: selectedPropertyObj.quartos,
-          },
-          contact: selectedContactObj
-            ? { name: selectedContactObj.name, nationality: selectedContactObj.nationality }
-            : null,
-          offerPrice: offerNum,
-          listPrice: listNum,
-          discountPct: parseFloat(discountPct.toFixed(2)),
-          conditions,
-          agentName: 'Carlos',
-          amiNumber: '22506',
-        }),
-      })
-
-      if (!res.ok) throw new Error(`Erro API: ${res.status}`)
-      const data = await res.json() as DraftResult
-
-      setDraft(data)
-
-      // Save to history
-      const entry: OfferHistory = {
-        id: `of_${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
-        propertyRef: selectedPropertyObj.ref,
-        propertyName: selectedPropertyObj.nome,
-        buyerName: selectedContactObj?.name ?? 'Comprador',
-        offerPrice: offerNum,
-        listPrice: listNum,
-        offerType,
-        lang,
-        status: 'pendente',
-        draft: data,
-      }
-      setHistory(prev => [entry, ...prev.slice(0, 19)])
-
-      // Confetti hint
-      setConfetti(true)
-      setTimeout(() => setConfetti(false), 2500)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido. Tente novamente.')
-    } finally {
-      setGenerating(false)
-    }
-  }, [
-    offerType, lang, selectedPropertyObj, selectedContactObj,
-    offerNum, listNum, discountPct, conditions,
-  ])
-
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const canNext = !!selectedPropertyId && offerAmount > 0 && buyerName.trim().length > 0
 
   return (
-    <div style={{
-      fontFamily: "'Jost',sans-serif",
-      color: '#0e0e0d',
-      background: '#f4f0e6',
-      minHeight: '100vh',
-      padding: '28px 24px',
-    }}>
-
-      {/* ── Header ── */}
-      <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <div style={{
-            fontFamily: "'DM Mono',monospace",
-            fontSize: '.48rem',
-            letterSpacing: '.22em',
-            textTransform: 'uppercase',
-            color: '#c9a96e',
-            marginBottom: '6px',
-          }}>
-            Agency Group · AMI 22506
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Property Selector */}
+      <div>
+        <label className="p-label" style={{ display: 'block', marginBottom: '.5rem' }}>Imóvel</label>
+        <select className="p-sel" value={selectedPropertyId} onChange={e => {
+          setSelectedPropertyId(e.target.value)
+          const p = PORTAL_PROPERTIES.find(pr => pr.id === e.target.value)
+          if (p) {
+            const amt = Math.round(p.preco * offerPct / 100)
+            setOfferAmount(amt)
+            setDepositAmount(Math.round(amt * 0.1))
+          }
+        }}>
+          <option value="">Seleccionar imóvel…</option>
+          {PORTAL_PROPERTIES.map(p => (
+            <option key={p.id} value={p.id}>{p.nome} — {fmtPreco(p.preco)}</option>
+          ))}
+        </select>
+        {property && (
+          <div style={{ display: 'flex', gap: '.75rem', marginTop: '.5rem', padding: '.75rem', background: 'rgba(28,74,53,.05)', borderRadius: 8, border: '1px solid rgba(28,74,53,.12)' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: '#0e0e0d', fontWeight: 600 }}>{property.nome}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.45)' }}>{property.bairro} · T{property.quartos} · {property.area}m²</div>
+            </div>
+            <div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)' }}>PREÇO PEDIDO</div>
+              <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.25rem', color: '#c9a96e', fontWeight: 600 }}>{fmtPreco(property.preco)}</div>
+            </div>
           </div>
-          <h1 style={{
-            fontFamily: "'Cormorant',serif",
-            fontSize: '2.1rem',
-            fontWeight: 300,
-            color: '#0e0e0d',
-            lineHeight: 1.1,
-          }}>
-            Redigir <em style={{ fontStyle: 'italic', color: '#1c4a35' }}>Proposta IA</em>
-          </h1>
-          <p style={{
-            fontFamily: "'DM Mono',monospace",
-            fontSize: '.48rem',
-            letterSpacing: '.1em',
-            color: 'rgba(14,14,13,.4)',
-            marginTop: '6px',
-          }}>
-            Claude · 5 línguas · CPCV · LOI · Off-Market
-          </p>
-        </div>
+        )}
+      </div>
 
-        {/* Tab switcher */}
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {(['draft', 'templates', 'history'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setSelectedTab(tab)}
+      {/* Offer Slider */}
+      {property && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.5rem' }}>
+            <label className="p-label" style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}><IconSlider /> Valor da Oferta</label>
+            <span style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.3rem', color: pct > 0 ? '#1c4a35' : pct < -8 ? '#c0392b' : '#c9a96e', fontWeight: 600 }}>
+              {pct > 0 ? '+' : ''}{pct}% vs. pedido
+            </span>
+          </div>
+          <input type="range" min={70} max={110} value={offerPct} onChange={e => handlePctChange(Number(e.target.value))}
+            style={{ width: '100%', marginBottom: '.5rem', accentColor: '#1c4a35' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.75rem' }}>
+            <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>70% — {fmtPreco(Math.round(asking * 0.7))}</span>
+            <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>110% — {fmtPreco(Math.round(asking * 1.1))}</span>
+          </div>
+          <div>
+            <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Valor Manual</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+              <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.9rem', color: 'rgba(14,14,13,.4)' }}>€</span>
+              <input className="p-inp" value={offerAmount.toLocaleString('pt-PT')}
+                onChange={e => handleAmountChange(e.target.value)}
+                style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.3rem', fontWeight: 600, color: '#0e0e0d' }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Offer Type */}
+      <div>
+        <label className="p-label" style={{ display: 'block', marginBottom: '.5rem' }}>Tipo de Oferta</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '.5rem' }}>
+          {([
+            { id: 'compra' as OfferType, label: 'Compra Simples', sub: 'Sem condições' },
+            { id: 'financiamento' as OfferType, label: 'Com Financiamento', sub: 'Condição de crédito' },
+            { id: 'venda' as OfferType, label: 'Com Venda', sub: 'Condicionada a venda' },
+            { id: 'arrendamento' as OfferType, label: 'Arrendamento', sub: 'Com opção de compra' },
+          ]).map(t => (
+            <button key={t.id} onClick={() => setOfferType(t.id)}
               style={{
-                padding: '8px 18px',
-                fontFamily: "'DM Mono',monospace",
-                fontSize: '.48rem',
-                letterSpacing: '.14em',
-                textTransform: 'uppercase',
-                border: '1px solid',
-                borderColor: selectedTab === tab ? '#1c4a35' : 'rgba(14,14,13,.12)',
-                background: selectedTab === tab ? '#1c4a35' : 'transparent',
-                color: selectedTab === tab ? '#f4f0e6' : 'rgba(14,14,13,.5)',
-                cursor: 'pointer',
-                transition: 'all .18s',
-              }}
-            >
-              {tab === 'draft' ? '✦ Redigir' : tab === 'templates' ? '⊞ Templates' : `⏱ Histórico (${history.length})`}
+                borderRadius: 8, padding: '.6rem .75rem', cursor: 'pointer', textAlign: 'left',
+                border: `1.5px solid ${offerType === t.id ? '#1c4a35' : 'rgba(14,14,13,.12)'}`,
+                background: offerType === t.id ? 'rgba(28,74,53,.06)' : '#fff',
+                transition: 'all .15s',
+              }}>
+              <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', fontWeight: 600, color: offerType === t.id ? '#1c4a35' : '#0e0e0d' }}>{t.label}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.1rem' }}>{t.sub}</div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── TAB: DRAFT ── */}
-      {selectedTab === 'draft' && (
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      {/* Buyer Details */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+        <div style={{ gridColumn: '1/-1' }}>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Nome do Comprador</label>
+          <input className="p-inp" value={buyerName} onChange={e => setBuyerName(e.target.value)} placeholder="Nome completo" />
+        </div>
+        <div>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Nacionalidade</label>
+          <select className="p-sel" value={buyerNationality} onChange={e => setBuyerNationality(e.target.value)}>
+            {Object.entries(NATIONALITY_FLAGS).map(([n, f]) => <option key={n} value={n}>{f} {n}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>NIF (opcional)</label>
+          <input className="p-inp" value={buyerNIF} onChange={e => setBuyerNIF(e.target.value)} placeholder="000 000 000" />
+        </div>
+      </div>
 
-          {/* ── Left Panel ── */}
-          <div style={{ width: '400px', minWidth: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Deadline & Deposit */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+        <div>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Prazo de Resposta</label>
+          <input className="p-inp" type="date" value={responseDeadline} onChange={e => setResponseDeadline(e.target.value)} />
+          <p style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.25rem' }}>
+            {responseDeadline ? `${daysUntil(responseDeadline)} dias a partir de hoje` : 'Padrão: +72 horas'}
+          </p>
+        </div>
+        <div>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Sinal Proposto</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+            <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.85rem', color: 'rgba(14,14,13,.4)' }}>€</span>
+            <input className="p-inp" value={depositAmount.toLocaleString('pt-PT')}
+              onChange={e => setDepositAmount(Number(e.target.value.replace(/\D/g, '')))} />
+          </div>
+          <p style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.25rem' }}>
+            {offerAmount > 0 ? `${Math.round((depositAmount / offerAmount) * 100)}% do valor da oferta` : '10% padrão'}
+          </p>
+        </div>
+      </div>
 
-            {/* Offer type pills */}
-            <div className="p-card" style={{ padding: '20px' }}>
-              <span className="p-label">Tipo de Proposta</span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '2px' }}>
-                {OFFER_TYPES.map(t => (
-                  <button
-                    key={t.id}
-                    onClick={() => setOfferType(t.id)}
-                    style={{
-                      padding: '7px 13px',
-                      border: '1px solid',
-                      borderColor: offerType === t.id ? '#1c4a35' : 'rgba(14,14,13,.12)',
-                      background: offerType === t.id ? '#1c4a35' : '#fff',
-                      color: offerType === t.id ? '#f4f0e6' : 'rgba(14,14,13,.65)',
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.46rem',
-                      letterSpacing: '.1em',
-                      cursor: 'pointer',
-                      transition: 'all .15s',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      borderRadius: '2px',
-                    }}
-                  >
-                    <span>{t.emoji}</span>
-                    <span>{t.short}</span>
-                  </button>
-                ))}
-              </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '.5rem' }}>
+        <button onClick={onNext} className="p-btn-gold" disabled={!canNext}
+          style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem', opacity: canNext ? 1 : .45 }}>
+          Condições <IconArrow dir="right" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Step 2 ───────────────────────────────────────────────────────────────────
+
+function Step2({ conditions, setConditions, onBack, onNext }: {
+  conditions: OfferConditions
+  setConditions: (c: OfferConditions) => void
+  onBack: () => void
+  onNext: () => void
+}) {
+  function update<K extends keyof OfferConditions>(key: K, value: OfferConditions[K]) {
+    setConditions({ ...conditions, [key]: value })
+  }
+
+  function updateFinancing<K extends keyof FinancingCondition>(key: K, value: FinancingCondition[K]) {
+    setConditions({ ...conditions, financing: { ...conditions.financing, [key]: value } })
+  }
+
+  function updateInspection<K extends keyof InspectionCondition>(key: K, value: InspectionCondition[K]) {
+    setConditions({ ...conditions, inspection: { ...conditions.inspection, [key]: value } })
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div className="p-card" style={{ padding: '1rem 1.25rem' }}>
+        <Toggle value={conditions.financing.enabled} onChange={v => updateFinancing('enabled', v)} label="Condição de Financiamento" />
+        {conditions.financing.enabled && (
+          <div style={{ paddingTop: '.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem' }}>
+            <div>
+              <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Banco</label>
+              <select className="p-sel" value={conditions.financing.bank} onChange={e => updateFinancing('bank', e.target.value)}>
+                <option value="">Seleccionar…</option>
+                {BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
             </div>
-
-            {/* Language */}
-            <div className="p-card" style={{ padding: '20px' }}>
-              <span className="p-label">Idioma</span>
-              <div style={{ display: 'flex', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
-                {LANGUAGES.map(l => (
-                  <button
-                    key={l}
-                    onClick={() => setLang(l)}
-                    style={{
-                      width: '46px',
-                      height: '34px',
-                      border: '1px solid',
-                      borderColor: lang === l ? '#c9a96e' : 'rgba(14,14,13,.12)',
-                      background: lang === l ? '#c9a96e' : '#fff',
-                      color: lang === l ? '#0c1f15' : 'rgba(14,14,13,.5)',
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.5rem',
-                      fontWeight: lang === l ? 700 : 400,
-                      letterSpacing: '.1em',
-                      cursor: 'pointer',
-                      transition: 'all .15s',
-                      borderRadius: '2px',
-                    }}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
+            <div>
+              <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Montante</label>
+              <input className="p-inp" value={conditions.financing.amount} onChange={e => updateFinancing('amount', e.target.value)} placeholder="ex: 800000" />
             </div>
-
-            {/* Property + Contact */}
-            <div className="p-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label className="p-label">Imóvel</label>
-                <div style={{ position: 'relative' }}>
-                  <select
-                    className="p-sel"
-                    value={selectedProperty}
-                    onChange={e => handlePropertyChange(e.target.value)}
-                    style={{ paddingRight: '32px' }}
-                  >
-                    <option value="">— Seleccionar imóvel —</option>
-                    {PORTAL_PROPERTIES.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.ref} · {p.nome} · {fmtEuro(p.preco)}
-                      </option>
-                    ))}
-                  </select>
-                  <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'rgba(14,14,13,.35)', fontSize: '.8rem' }}>▾</span>
-                </div>
-                {selectedPropertyObj && (
-                  <div style={{
-                    marginTop: '8px',
-                    padding: '10px 12px',
-                    background: 'rgba(28,74,53,.04)',
-                    borderLeft: '2px solid #1c4a35',
-                    fontSize: '.75rem',
-                    color: 'rgba(14,14,13,.6)',
-                    lineHeight: 1.6,
-                  }}>
-                    {selectedPropertyObj.zona} · {selectedPropertyObj.area}m² · {selectedPropertyObj.quartos} quartos
-                    {selectedPropertyObj.badge && (
-                      <span style={{
-                        marginLeft: '8px',
-                        padding: '2px 7px',
-                        background: 'rgba(201,169,110,.15)',
-                        color: '#c9a96e',
-                        fontFamily: "'DM Mono',monospace",
-                        fontSize: '.42rem',
-                        letterSpacing: '.1em',
-                        textTransform: 'uppercase',
-                      }}>{selectedPropertyObj.badge}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="p-label">Comprador</label>
-                <div style={{ position: 'relative' }}>
-                  <select
-                    className="p-sel"
-                    value={selectedContact ?? ''}
-                    onChange={e => setSelectedContact(e.target.value ? Number(e.target.value) : null)}
-                    style={{ paddingRight: '32px' }}
-                  >
-                    <option value="">— Seleccionar contacto —</option>
-                    {crmContacts.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} · {c.nationality}
-                      </option>
-                    ))}
-                  </select>
-                  <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'rgba(14,14,13,.35)', fontSize: '.8rem' }}>▾</span>
-                </div>
-              </div>
+            <div style={{ gridColumn: '1/-1' }}>
+              <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Prazo para confirmar crédito</label>
+              <input className="p-inp" type="date" value={conditions.financing.deadline} onChange={e => updateFinancing('deadline', e.target.value)} />
             </div>
+          </div>
+        )}
+      </div>
 
-            {/* Valores */}
-            <div className="p-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <span className="p-label" style={{ marginBottom: 0 }}>Valores</span>
-                {discountPct !== 0 && listNum > 0 && offerNum > 0 && (
-                  <span style={{
-                    padding: '3px 10px',
-                    background: discountColor(discountPct) + '18',
-                    color: discountColor(discountPct),
-                    fontFamily: "'DM Mono',monospace",
-                    fontSize: '.48rem',
-                    letterSpacing: '.1em',
-                    fontWeight: 700,
-                    borderRadius: '2px',
-                    border: `1px solid ${discountColor(discountPct)}40`,
-                  }}>
-                    {discountPct > 0 ? `-${discountPct.toFixed(1)}%` : `+${Math.abs(discountPct).toFixed(1)}%`}
-                  </span>
-                )}
-              </div>
+      <div className="p-card" style={{ padding: '1rem 1.25rem' }}>
+        <Toggle value={conditions.inspection.enabled} onChange={v => updateInspection('enabled', v)} label="Condição de Vistoria Técnica" />
+        {conditions.inspection.enabled && (
+          <div style={{ paddingTop: '.75rem' }}>
+            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Prazo para vistoria</label>
+            <input className="p-inp" type="date" value={conditions.inspection.deadline} onChange={e => updateInspection('deadline', e.target.value)} />
+          </div>
+        )}
+      </div>
 
-              <div>
-                <label className="p-label">Valor de Listagem (€)</label>
-                <input
-                  className="p-inp"
-                  type="text"
-                  value={listPrice}
-                  onChange={e => setListPrice(e.target.value)}
-                  placeholder="Ex: 2850000"
-                />
-              </div>
+      <div className="p-card" style={{ padding: '1rem 1.25rem' }}>
+        <Toggle value={conditions.subjectToValuation} onChange={v => update('subjectToValuation', v)} label="Sujeito a Avaliação Bancária (±5%)" />
+      </div>
 
-              <div>
-                <label className="p-label">Valor da Proposta (€)</label>
-                <input
-                  className="p-inp"
-                  type="text"
-                  value={offerPrice}
-                  onChange={e => setOfferPrice(e.target.value)}
-                  placeholder="Ex: 2650000"
-                />
-              </div>
-
-              {/* Sinal */}
-              <div>
-                <label className="p-label">Valor do Sinal (%)</label>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <input
-                    className="p-inp"
-                    type="number"
-                    min={1}
-                    max={30}
-                    value={conditions.valorSinal}
-                    onChange={e => setConditions(c => ({ ...c, valorSinal: e.target.value }))}
-                    style={{ width: '80px', flex: 'none' }}
-                  />
-                  <span style={{ fontSize: '.78rem', color: 'rgba(14,14,13,.5)' }}>%</span>
-                  {sinalNum > 0 && (
-                    <span style={{
-                      fontFamily: "'Cormorant',serif",
-                      fontSize: '1rem',
-                      fontWeight: 600,
-                      color: '#1c4a35',
-                    }}>
-                      = {fmtEuro(sinalNum)}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Acceptance probability meter */}
-              {listNum > 0 && offerNum > 0 && (
-                <div style={{
-                  marginTop: '4px',
-                  padding: '12px 14px',
-                  background: '#fff',
-                  border: '1px solid rgba(14,14,13,.08)',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)' }}>
-                      Prob. Aceitação
-                    </span>
-                    <span style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 600, color: probColor(acceptanceProb) }}>
-                      {acceptanceProb}%
-                    </span>
-                  </div>
-                  <div style={{ height: '4px', background: 'rgba(14,14,13,.08)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <div style={{
-                      height: '100%',
-                      width: `${acceptanceProb}%`,
-                      background: probColor(acceptanceProb),
-                      borderRadius: '2px',
-                      transition: 'width .4s ease',
-                    }} />
-                  </div>
-                </div>
-              )}
+      <div className="p-card" style={{ padding: '1rem 1.25rem' }}>
+        <Toggle value={conditions.cpcvRequested} onChange={v => update('cpcvRequested', v)} label="Solicitar CPCV" />
+        {conditions.cpcvRequested && (
+          <div style={{ paddingTop: '.75rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem' }}>
+            <div>
+              <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Data CPCV proposta</label>
+              <input className="p-inp" type="date" value={conditions.cpcvDate} onChange={e => update('cpcvDate', e.target.value)} />
             </div>
-
-            {/* Condições */}
-            <div className="p-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <span className="p-label">Condições</span>
-
-              {/* Financiamento */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '.8rem', color: 'rgba(14,14,13,.75)' }}>
-                <input
-                  type="checkbox"
-                  checked={conditions.financiamento}
-                  onChange={e => setConditions(c => ({ ...c, financiamento: e.target.checked }))}
-                  style={{ accentColor: '#1c4a35', width: '15px', height: '15px' }}
-                />
-                Sujeito a financiamento
-                {conditions.financiamento && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em' }}>PRAZO</span>
-                    <input
-                      type="number"
-                      value={conditions.prazoCondicao}
-                      onChange={e => setConditions(c => ({ ...c, prazoCondicao: e.target.value }))}
-                      style={{
-                        width: '48px',
-                        border: '1px solid rgba(14,14,13,.12)',
-                        background: '#fff',
-                        padding: '4px 8px',
-                        fontFamily: "'DM Mono',monospace",
-                        fontSize: '.5rem',
-                        color: '#0e0e0d',
-                        outline: 'none',
-                        textAlign: 'center',
-                      }}
-                    />
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.35)' }}>d</span>
-                  </span>
-                )}
-              </label>
-
-              {/* Inspecção */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '.8rem', color: 'rgba(14,14,13,.75)' }}>
-                <input
-                  type="checkbox"
-                  checked={conditions.inspecao}
-                  onChange={e => setConditions(c => ({ ...c, inspecao: e.target.checked }))}
-                  style={{ accentColor: '#1c4a35', width: '15px', height: '15px' }}
-                />
-                Inspecção técnica
-              </label>
-
-              {/* Vaga garagem */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '.8rem', color: 'rgba(14,14,13,.75)' }}>
-                <input
-                  type="checkbox"
-                  checked={conditions.includeVagaGaragem}
-                  onChange={e => setConditions(c => ({ ...c, includeVagaGaragem: e.target.checked }))}
-                  style={{ accentColor: '#1c4a35', width: '15px', height: '15px' }}
-                />
-                Vaga de garagem incluída
-              </label>
-
-              {/* Mobília */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '.8rem', color: 'rgba(14,14,13,.75)' }}>
-                <input
-                  type="checkbox"
-                  checked={conditions.includeMobilia}
-                  onChange={e => setConditions(c => ({ ...c, includeMobilia: e.target.checked }))}
-                  style={{ accentColor: '#1c4a35', width: '15px', height: '15px' }}
-                />
-                Mobília incluída
-              </label>
-
-              {/* Datas */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
-                <div>
-                  <label className="p-label">Data CPCV</label>
-                  <input
-                    className="p-inp"
-                    type="date"
-                    value={conditions.dataCPCV}
-                    onChange={e => setConditions(c => ({ ...c, dataCPCV: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="p-label">Data Escritura</label>
-                  <input
-                    className="p-inp"
-                    type="date"
-                    value={conditions.dataEscritura}
-                    onChange={e => setConditions(c => ({ ...c, dataEscritura: e.target.value }))}
-                  />
-                </div>
-              </div>
+            <div>
+              <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Data Escritura proposta</label>
+              <input className="p-inp" type="date" value={conditions.escrituraDate} onChange={e => update('escrituraDate', e.target.value)} />
             </div>
+          </div>
+        )}
+      </div>
 
-            {/* Error */}
-            {error && (
-              <div style={{
-                padding: '12px 16px',
-                background: 'rgba(224,84,84,.08)',
-                borderLeft: '3px solid #e05454',
-                fontSize: '.78rem',
-                color: '#e05454',
-                lineHeight: 1.6,
-              }}>
-                {error}
-              </div>
-            )}
+      <div className="p-card" style={{ padding: '1rem 1.25rem' }}>
+        <Toggle value={conditions.exclusivity} onChange={v => update('exclusivity', v)} label="Solicitar Exclusividade (retirar do mercado)" />
+      </div>
 
-            {/* Generate button */}
-            <button
-              className="p-btn"
-              onClick={handleGenerate}
-              disabled={generating || !selectedProperty}
-              style={{
-                width: '100%',
-                padding: '15px',
-                fontSize: '.54rem',
-                letterSpacing: '.22em',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                position: 'relative',
-                overflow: 'hidden',
-                background: generating ? '#163d2c' : '#1c4a35',
-              }}
-            >
-              {generating ? (
-                <>
-                  <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', fontSize: '.7rem' }}>⟳</span>
-                  A GERAR PROPOSTA...
-                </>
-              ) : (
-                <>✦ GERAR PROPOSTA IA</>
-              )}
-            </button>
+      <div className="p-card" style={{ padding: '1rem 1.25rem' }}>
+        <Toggle value={conditions.furnitureIncluded} onChange={v => update('furnitureIncluded', v)} label="Recheio Incluído" />
+      </div>
+
+      <div className="p-card" style={{ padding: '1rem 1.25rem' }}>
+        <label className="p-label" style={{ display: 'block', marginBottom: '.5rem' }}>Condições Personalizadas</label>
+        <textarea className="p-inp" value={conditions.customConditions} onChange={e => update('customConditions', e.target.value)}
+          placeholder="Adicione quaisquer condições específicas…" rows={3} style={{ resize: 'vertical' }} />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '.25rem' }}>
+        <button onClick={onBack} className="p-btn" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
+          <IconArrow dir="left" /> Voltar
+        </button>
+        <button onClick={onNext} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
+          Gerar Proposta <IconArrow dir="right" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Step 3 ───────────────────────────────────────────────────────────────────
+
+function Step3({
+  property, buyerName, offerAmount, offerType, conditions, responseDeadline, depositAmount, onBack,
+}: {
+  property: typeof PORTAL_PROPERTIES[0] | undefined
+  buyerName: string
+  offerAmount: number
+  offerType: OfferType
+  conditions: OfferConditions
+  responseDeadline: string
+  depositAmount: number
+  onBack: () => void
+}) {
+  const [copied, setCopied] = useState(false)
+  const letterText = generateOfferLetter(property, buyerName, offerAmount, offerType, conditions, responseDeadline, depositAmount)
+
+  function copy() {
+    navigator.clipboard.writeText(letterText).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (!property) return null
+
+  const pct = pctDiff(offerAmount, property.preco)
+  const dom = Math.floor((Date.now() - new Date(property.listingDate).getTime()) / 86_400_000)
+  const leverage = dom > 120 ? 'ALTO' : dom > 60 ? 'MÉDIO' : 'BAIXO'
+  const leverageColor = dom > 120 ? '#1c4a35' : dom > 60 ? '#c9a96e' : '#c0392b'
+  const marginLow = 5, marginHigh = 8
+  const recommendedPct = Math.max(pct, -7)
+  const recommendedPrice = Math.round(property.preco * (1 + recommendedPct / 100))
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.25rem', alignItems: 'start' }}>
+      {/* Letter preview */}
+      <div>
+        <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.25rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .75rem' }}>
+          Prévia da Proposta
+        </h3>
+        <div style={{ background: '#fff', borderRadius: 10, border: '1px solid rgba(14,14,13,.1)', padding: '1.5rem', fontFamily: 'var(--font-dm-mono)', fontSize: '.78rem', color: '#0e0e0d', lineHeight: 1.8, whiteSpace: 'pre-wrap', maxHeight: 520, overflowY: 'auto' }}>
+          {letterText}
+        </div>
+        <div style={{ display: 'flex', gap: '.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+          <button onClick={copy} className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+            {copied ? <><IconCheck /> Copiado!</> : <><IconCopy /> Copiar Proposta</>}
+          </button>
+          <button className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+            <IconMail /> Enviar por Email
+          </button>
+          <button className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem', color: '#16a34a', borderColor: 'rgba(22,163,74,.3)' }}>
+            <IconWhatsapp /> WhatsApp
+          </button>
+          <button className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem', color: '#c0392b', borderColor: 'rgba(192,57,43,.3)' }}>
+            <IconPDF /> Gerar PDF
+          </button>
+        </div>
+        <div style={{ marginTop: '.75rem' }}>
+          <button onClick={onBack} className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+            <IconArrow dir="left" /> Editar Condições
+          </button>
+        </div>
+      </div>
+
+      {/* Strategy panel */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+        <div className="p-card" style={{ padding: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
+            <IconLightbulb />
+            <h4 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.1rem', color: '#0e0e0d', fontWeight: 600, margin: 0 }}>Estratégia de Negociação</h4>
           </div>
 
-          {/* ── Right Panel: Output ── */}
-          <div style={{ flex: 1, minWidth: '340px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
+            <div style={{ padding: '.7rem .9rem', background: 'rgba(14,14,13,.04)', borderRadius: 8 }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.15rem' }}>MARGEM ESTIMADA NESTA ZONA</div>
+              <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.88rem', color: '#0e0e0d', fontWeight: 600 }}>{marginLow}–{marginHigh}%</div>
+            </div>
 
-            {/* Negotiation Context — always shown if we have prices */}
-            {listNum > 0 && offerNum > 0 && (
-              <div className="p-card" style={{ padding: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)' }}>
-                    Análise de Negociação
-                  </span>
-                  <div style={{ flex: 1, height: '1px', background: 'rgba(14,14,13,.06)' }} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-                  <AnalysisPill label="Listagem" value={fmtEuro(listNum)} sub="preço vendedor" />
-                  <AnalysisPill label="Proposta" value={fmtEuro(offerNum)} sub="valor oferta" />
-                  <AnalysisPill
-                    label="Spread"
-                    value={discountPct === 0 ? '0%' : discountPct > 0 ? `-${discountPct.toFixed(1)}%` : `+${Math.abs(discountPct).toFixed(1)}%`}
-                    sub="desconto"
-                    valueColor={discountColor(discountPct)}
-                  />
-                  <AnalysisPill
-                    label="Aceitação Est."
-                    value={`${acceptanceProb}%`}
-                    sub="probabilidade"
-                    valueColor={probColor(acceptanceProb)}
-                  />
-                  {sinalNum > 0 && <AnalysisPill label="Sinal" value={fmtEuro(sinalNum)} sub={`${conditions.valorSinal}%`} />}
-                  {selectedPropertyObj && (
-                    <AnalysisPill
-                      label="DOM"
-                      value={`${Math.max(1, Math.floor((Date.now() - new Date(selectedPropertyObj.listingDate).getTime()) / 86400000))}d`}
-                      sub="dias no mercado"
-                    />
-                  )}
-                </div>
-                {/* Strategy hint */}
-                <div style={{
-                  marginTop: '14px',
-                  padding: '10px 14px',
-                  background: 'rgba(201,169,110,.07)',
-                  borderLeft: '2px solid #c9a96e',
-                  fontSize: '.77rem',
-                  color: 'rgba(14,14,13,.65)',
-                  lineHeight: 1.65,
-                  fontStyle: 'italic',
-                }}>
-                  {discountPct > 15
-                    ? 'Desconto superior a 15% — possível recusa. Considere aumentar proposta ou reforçar condições de rapidez.'
-                    : discountPct > 8
-                    ? 'Desconto moderado. Justifique com condição do imóvel, prazo de decisão ou ausência de condições suspensivas.'
-                    : discountPct > 0
-                    ? 'Oferta competitiva. Boa probabilidade de contra-proposta favorável. Mantenha flexibilidade.'
-                    : discountPct === 0
-                    ? 'Oferta a mercado. Máxima probabilidade de aceitação directa.'
-                    : 'Oferta acima de listagem. Sinaliza urgência e compromisso — ideal para propriedades com múltiplas propostas.'}
-                </div>
+            <div style={{ padding: '.7rem .9rem', background: leverage === 'ALTO' ? 'rgba(28,74,53,.08)' : leverage === 'MÉDIO' ? 'rgba(201,169,110,.08)' : 'rgba(192,57,43,.06)', borderRadius: 8 }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.15rem' }}>IMÓVEL NO MERCADO HÁ</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.88rem', color: '#0e0e0d', fontWeight: 600 }}>{dom} dias</span>
+                <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', fontWeight: 700, color: leverageColor }}>LEVERAGE: {leverage}</span>
               </div>
-            )}
+            </div>
 
-            {/* Draft output */}
-            {!draft && !generating && (
-              <div className="p-card" style={{
-                padding: '48px 32px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '14px',
-                minHeight: '280px',
-                borderStyle: 'dashed',
-              }}>
-                <div style={{ fontSize: '2rem', opacity: .25 }}>📋</div>
-                <div style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.48rem',
-                  letterSpacing: '.18em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(14,14,13,.25)',
-                }}>
-                  Configure os parâmetros e clique "Gerar Proposta IA"
-                </div>
+            <div style={{ padding: '.7rem .9rem', background: 'rgba(201,169,110,.08)', borderRadius: 8 }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.15rem' }}>OUTROS INTERESSADOS</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.88rem', color: '#0e0e0d', fontWeight: 600 }}>3 reportados</span>
+                <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', fontWeight: 700, color: '#c9a96e' }}>URGÊNCIA: MÉDIA</span>
               </div>
-            )}
+            </div>
 
-            {generating && (
-              <div className="p-card" style={{
-                padding: '48px 32px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '16px',
-                minHeight: '280px',
-              }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  border: '2px solid rgba(28,74,53,.1)',
-                  borderTop: '2px solid #1c4a35',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                }} />
-                <div style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.48rem',
-                  letterSpacing: '.18em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(14,14,13,.35)',
-                }}>
-                  Claude a redigir proposta em {lang}...
-                </div>
+            <div style={{ padding: '.85rem .9rem', background: 'rgba(28,74,53,.06)', borderRadius: 8, border: '1px solid rgba(28,74,53,.15)' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.25rem' }}>PREÇO RECOMENDADO</div>
+              <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.5rem', color: '#1c4a35', fontWeight: 600 }}>{fmtPreco(recommendedPrice)}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.45)', marginTop: '.2rem' }}>
+                {recommendedPct}% vs. pedido · boa chance de aceitação
               </div>
-            )}
-
-            {draft && (
-              <>
-                {/* Confetti animation hint */}
-                {confetti && (
-                  <div style={{
-                    padding: '10px 16px',
-                    background: 'rgba(28,74,53,.08)',
-                    borderLeft: '3px solid #1c4a35',
-                    fontFamily: "'DM Mono',monospace",
-                    fontSize: '.46rem',
-                    letterSpacing: '.14em',
-                    textTransform: 'uppercase',
-                    color: '#1c4a35',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                  }}>
-                    ✓ Proposta gerada e guardada no histórico
-                  </div>
-                )}
-
-                {/* Subject line */}
-                <div className="p-card" style={{ padding: '20px' }}>
-                  <span className="p-label">Assunto</span>
-                  <div style={{
-                    fontFamily: "'Cormorant',serif",
-                    fontSize: '1.15rem',
-                    fontWeight: 600,
-                    color: '#0e0e0d',
-                    lineHeight: 1.3,
-                  }}>
-                    {draft.subject}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
-                    <UrgencyBadge level={draft.urgencyLevel} />
-                    <span style={{
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.44rem',
-                      letterSpacing: '.1em',
-                      color: 'rgba(14,14,13,.35)',
-                    }}>
-                      {draft.offerSummary}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Letter body */}
-                <div className="p-card" style={{ padding: '28px 32px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                    <span className="p-label" style={{ marginBottom: 0 }}>Carta Formal</span>
-                    <div style={{
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.42rem',
-                      letterSpacing: '.12em',
-                      textTransform: 'uppercase',
-                      color: 'rgba(14,14,13,.3)',
-                    }}>
-                      Agency Group · AMI 22506
-                    </div>
-                  </div>
-                  <div style={{
-                    fontFamily: "'Cormorant',serif",
-                    fontSize: '1rem',
-                    lineHeight: 1.9,
-                    color: '#0e0e0d',
-                    maxHeight: '420px',
-                    overflowY: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    borderTop: '1px solid rgba(14,14,13,.06)',
-                    paddingTop: '18px',
-                  }}>
-                    {draft.body}
-                  </div>
-                </div>
-
-                {/* Key Terms table */}
-                <div className="p-card" style={{ padding: '20px' }}>
-                  <span className="p-label">Termos Principais</span>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px' }}>
-                    <thead>
-                      <tr>
-                        {draft.keyTerms.map(t => (
-                          <th key={t.label} style={{
-                            padding: '8px 12px',
-                            background: 'rgba(14,14,13,.03)',
-                            fontFamily: "'DM Mono',monospace",
-                            fontSize: '.42rem',
-                            letterSpacing: '.1em',
-                            textTransform: 'uppercase',
-                            color: 'rgba(14,14,13,.4)',
-                            textAlign: 'left',
-                            borderBottom: '1px solid rgba(14,14,13,.08)',
-                          }}>
-                            {t.label}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        {draft.keyTerms.map(t => (
-                          <td key={t.label} style={{
-                            padding: '10px 12px',
-                            fontSize: '.78rem',
-                            color: '#0e0e0d',
-                            borderBottom: '1px solid rgba(14,14,13,.04)',
-                            fontWeight: 500,
-                          }}>
-                            {t.value}
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Negotiation advice */}
-                {draft.negotiationAdvice && (
-                  <div style={{
-                    padding: '18px 20px',
-                    background: 'rgba(201,169,110,.08)',
-                    border: '1px solid rgba(201,169,110,.25)',
-                    borderLeft: '3px solid #c9a96e',
-                  }}>
-                    <div style={{
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.44rem',
-                      letterSpacing: '.16em',
-                      textTransform: 'uppercase',
-                      color: '#c9a96e',
-                      marginBottom: '8px',
-                    }}>
-                      ✦ Conselho de Negociação
-                    </div>
-                    <div style={{ fontSize: '.8rem', lineHeight: 1.7, color: 'rgba(14,14,13,.7)' }}>
-                      {draft.negotiationAdvice}
-                    </div>
-                  </div>
-                )}
-
-                {/* Red flags */}
-                {draft.redFlags.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {draft.redFlags.map((flag, i) => (
-                      <div key={i} style={{
-                        padding: '12px 16px',
-                        background: 'rgba(224,84,84,.06)',
-                        borderLeft: '3px solid #e05454',
-                        fontSize: '.78rem',
-                        color: 'rgba(14,14,13,.7)',
-                        lineHeight: 1.6,
-                      }}>
-                        <span style={{ color: '#e05454', fontWeight: 700, marginRight: '8px' }}>⚠</span>
-                        {flag}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Strengths */}
-                {draft.strengths.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <span className="p-label">Pontos Fortes da Proposta</span>
-                    {draft.strengths.map((s, i) => (
-                      <div key={i} style={{
-                        padding: '10px 14px',
-                        background: 'rgba(28,74,53,.05)',
-                        borderLeft: '2px solid #1c4a35',
-                        fontSize: '.78rem',
-                        color: 'rgba(14,14,13,.7)',
-                        lineHeight: 1.6,
-                      }}>
-                        <span style={{ color: '#1c4a35', fontWeight: 700, marginRight: '8px' }}>✓</span>
-                        {s}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Action buttons */}
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <button
-                    className="p-btn"
-                    onClick={handleCopy}
-                    style={{ flex: 1, minWidth: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                  >
-                    {copySuccess ? '✓ COPIADO' : '📋 COPIAR'}
-                  </button>
-                  <button
-                    className="p-btn p-btn-gold"
-                    onClick={handlePDF}
-                    style={{ flex: 1, minWidth: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                  >
-                    ⬇ PDF
-                  </button>
-                  <button
-                    className="p-btn"
-                    onClick={handleEmailVendedor}
-                    style={{ flex: 1, minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#163d2c' }}
-                  >
-                    ✉ EMAIL AO VENDEDOR
-                  </button>
-                </div>
-              </>
-            )}
+            </div>
           </div>
         </div>
-      )}
 
-      {/* ── TAB: TEMPLATES ── */}
-      {selectedTab === 'templates' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-          {OFFER_TEMPLATES.map(tpl => (
-            <div key={tpl.id} className="p-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px', borderTop: `3px solid ${tpl.color}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        {pct < -10 && (
+          <div style={{ padding: '.9rem 1rem', background: 'rgba(192,57,43,.06)', borderRadius: 10, border: '1px solid rgba(192,57,43,.2)', display: 'flex', gap: '.6rem' }}>
+            <div style={{ color: '#c0392b', flexShrink: 0, paddingTop: '.1rem' }}><IconWarning /></div>
+            <div>
+              <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: '#c0392b', fontWeight: 600, marginBottom: '.2rem' }}>Oferta muito abaixo</div>
+              <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: 'rgba(14,14,13,.55)', lineHeight: 1.5 }}>
+                Uma oferta {Math.abs(pct)}% abaixo pode ofender o vendedor. Considere aumentar ou reforçar com condições favoráveis.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: Nova Proposta ────────────────────────────────────────────────────────
+
+function NovaPropostaTab() {
+  const [step, setStep] = useState<WizardStep>(1)
+  const [selectedPropertyId, setSelectedPropertyId] = useState('')
+  const [offerPct, setOfferPct] = useState(95)
+  const [offerAmount, setOfferAmount] = useState(0)
+  const [offerType, setOfferType] = useState<OfferType>('compra')
+  const [buyerName, setBuyerName] = useState('')
+  const [buyerNationality, setBuyerNationality] = useState('Portugal')
+  const [buyerNIF, setBuyerNIF] = useState('')
+  const [responseDeadline, setResponseDeadline] = useState('')
+  const [depositAmount, setDepositAmount] = useState(0)
+  const [conditions, setConditions] = useState<OfferConditions>({
+    financing: { enabled: false, bank: '', amount: '', deadline: '' },
+    inspection: { enabled: false, deadline: '' },
+    subjectToValuation: false, cpcvRequested: true,
+    cpcvDate: '', escrituraDate: '', exclusivity: false,
+    furnitureIncluded: false, customConditions: '',
+  })
+
+  useEffect(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 3)
+    setResponseDeadline(d.toISOString().split('T')[0])
+  }, [])
+
+  const property = PORTAL_PROPERTIES.find(p => p.id === selectedPropertyId)
+
+  const STEPS = [
+    { n: 1 as WizardStep, label: 'Dados Básicos' },
+    { n: 2 as WizardStep, label: 'Condições' },
+    { n: 3 as WizardStep, label: 'Gerar & Enviar' },
+  ]
+
+  return (
+    <div>
+      {/* Wizard stepper */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: '2rem' }}>
+        {STEPS.map((s, i) => (
+          <div key={s.n} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: step > s.n ? 'pointer' : 'default' }}
+              onClick={() => { if (step > s.n) setStep(s.n) }}>
+              <IconWizardDot active={step === s.n} done={step > s.n} />
+              <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: step === s.n ? '#0e0e0d' : step > s.n ? '#1c4a35' : 'rgba(14,14,13,.4)', fontWeight: step === s.n ? 600 : 400, whiteSpace: 'nowrap' }}>
+                {s.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div style={{ flex: 1, height: 1, background: step > s.n ? '#1c4a35' : 'rgba(14,14,13,.12)', margin: '0 .75rem', minWidth: 20, transition: 'background .3s' }} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {step === 1 && (
+        <Step1
+          selectedPropertyId={selectedPropertyId} setSelectedPropertyId={setSelectedPropertyId}
+          offerPct={offerPct} setOfferPct={setOfferPct}
+          offerAmount={offerAmount} setOfferAmount={setOfferAmount}
+          offerType={offerType} setOfferType={setOfferType}
+          buyerName={buyerName} setBuyerName={setBuyerName}
+          buyerNationality={buyerNationality} setBuyerNationality={setBuyerNationality}
+          buyerNIF={buyerNIF} setBuyerNIF={setBuyerNIF}
+          responseDeadline={responseDeadline} setResponseDeadline={setResponseDeadline}
+          depositAmount={depositAmount} setDepositAmount={setDepositAmount}
+          onNext={() => setStep(2)}
+        />
+      )}
+      {step === 2 && (
+        <Step2 conditions={conditions} setConditions={setConditions} onBack={() => setStep(1)} onNext={() => setStep(3)} />
+      )}
+      {step === 3 && (
+        <Step3
+          property={property} buyerName={buyerName} offerAmount={offerAmount}
+          offerType={offerType} conditions={conditions} responseDeadline={responseDeadline}
+          depositAmount={depositAmount} onBack={() => setStep(2)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Tab: Propostas Activas ────────────────────────────────────────────────────
+
+function PropostasActivasTab() {
+  const [expandedId, setExpandedId] = useState<string | null>('off-001')
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {MOCK_ACTIVE_OFFERS.map(offer => {
+        const pct = pctDiff(offer.offerAmount, offer.askingPrice)
+        const sc = statusColor(offer.status)
+        const isExpanded = expandedId === offer.id
+        const days = daysUntil(offer.responseDeadline)
+
+        return (
+          <div key={offer.id} className="p-card" style={{ padding: 0, overflow: 'hidden' }}>
+            {/* Header row */}
+            <div style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }}
+              onClick={() => setExpandedId(isExpanded ? null : offer.id)}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.25rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: '#0e0e0d', fontWeight: 600 }}>{offer.propertyName}</span>
+                  <span style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, borderRadius: 20, padding: '2px 10px', fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', fontWeight: 600 }}>{offer.status}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.5)' }}>
+                    {NATIONALITY_FLAGS[offer.buyerNationality] ?? '🌍'} {offer.buyerName}
+                  </span>
+                  <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.5)' }}>
+                    Enviada: {new Date(offer.submittedAt).toLocaleDateString('pt-PT')}
+                  </span>
+                  {days > 0 && days <= 3 && (
+                    <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: '#c0392b', fontWeight: 600 }}>
+                      Prazo em {days} dia{days > 1 ? 's' : ''}!
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.3rem', color: '#c9a96e', fontWeight: 600 }}>{fmtPreco(offer.offerAmount)}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: pct >= 0 ? '#1c4a35' : '#c0392b' }}>
+                  {pct >= 0 ? '+' : ''}{pct}% vs. {fmtPreco(offer.askingPrice)}
+                </div>
+              </div>
+              <div style={{ color: 'rgba(14,14,13,.3)', transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }}>
+                <IconArrow dir="right" />
+              </div>
+            </div>
+
+            {/* Expanded */}
+            {isExpanded && (
+              <div style={{ borderTop: '1px solid rgba(14,14,13,.07)', padding: '1rem 1.25rem', background: 'rgba(14,14,13,.02)' }}>
+                {/* Counter-offer */}
+                {offer.status === 'Contra-Proposta' && offer.counterOfferAmount && (
+                  <div style={{ padding: '.9rem 1rem', background: 'rgba(234,179,8,.08)', border: '1px solid rgba(234,179,8,.25)', borderRadius: 10, marginBottom: '1rem' }}>
+                    <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: '#b45309', marginBottom: '.25rem' }}>CONTRA-PROPOSTA DO VENDEDOR</div>
+                    <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.4rem', color: '#b45309', fontWeight: 600 }}>{fmtPreco(offer.counterOfferAmount)}</div>
+                    {offer.counterOfferNote && (
+                      <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', color: 'rgba(14,14,13,.65)', margin: '.4rem 0 0', lineHeight: 1.5 }}>{offer.counterOfferNote}</p>
+                    )}
+                    <button className="p-btn-gold" style={{ marginTop: '.75rem', fontSize: '.8rem' }}>Responder à Contra-Proposta</button>
+                  </div>
+                )}
+
+                {/* Timeline */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.4)', marginBottom: '.6rem', letterSpacing: '.06em' }}>TIMELINE</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+                    {offer.timeline.map((ev, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem' }}>
+                        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                          <div style={{
+                            width: 10, height: 10, borderRadius: '50%', marginTop: 3,
+                            background: ev.status === 'done' ? '#1c4a35' : ev.status === 'active' ? '#c9a96e' : 'rgba(14,14,13,.2)',
+                            border: `2px solid ${ev.status === 'done' ? '#1c4a35' : ev.status === 'active' ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
+                          }} />
+                          {i < offer.timeline.length - 1 && (
+                            <div style={{ width: 1, flex: 1, minHeight: 16, background: ev.status === 'done' ? 'rgba(28,74,53,.25)' : 'rgba(14,14,13,.1)', margin: '2px 0' }} />
+                          )}
+                        </div>
+                        <div style={{ paddingBottom: '.25rem' }}>
+                          <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', color: ev.status === 'pending' ? 'rgba(14,14,13,.35)' : '#0e0e0d', fontStyle: ev.status === 'pending' ? 'italic' : 'normal' }}>{ev.label}</div>
+                          <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>{ev.date}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {offer.status !== 'Aceite' && offer.status !== 'Recusada' && (
+                  <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                    <button className="p-btn-gold" style={{ fontSize: '.8rem' }}>Responder</button>
+                    <button className="p-btn" style={{ fontSize: '.8rem' }}>Actualizar Estado</button>
+                    <button className="p-btn" style={{ fontSize: '.8rem' }}>Enviar Follow-up</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Tab: Histórico ────────────────────────────────────────────────────────────
+
+function HistoricoTab() {
+  const accepted = MOCK_HISTORICAL.filter(h => h.result === 'Aceite')
+  const rejected = MOCK_HISTORICAL.filter(h => h.result === 'Recusada')
+  const total = MOCK_HISTORICAL.length
+  const winRate = Math.round((accepted.length / total) * 100)
+  const avgDiscount = Math.round(MOCK_HISTORICAL.reduce((s, h) => s + Math.abs(pctDiff(h.offerAmount, h.askingPrice)), 0) / total)
+  const avgDays = Math.round(MOCK_HISTORICAL.reduce((s, h) => s + h.negotiationDays, 0) / total)
+
+  const best = [...MOCK_HISTORICAL].sort((a, b) => Math.abs(pctDiff(b.offerAmount, b.askingPrice)) - Math.abs(pctDiff(a.offerAmount, a.askingPrice)))[0]
+  const worst = [...MOCK_HISTORICAL].filter(h => h.result === 'Recusada').sort((a, b) => pctDiff(a.offerAmount, a.askingPrice) - pctDiff(b.offerAmount, b.askingPrice))[0]
+
+  return (
+    <div>
+      {/* KPI Strip */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '.75rem', marginBottom: '1.75rem' }}>
+        {[
+          { label: 'Taxa de Sucesso', value: `${winRate}%`, sub: `${accepted.length} aceites / ${total} total`, color: '#1c4a35' },
+          { label: 'Desconto Médio', value: `${avgDiscount}%`, sub: 'Média negociada', color: '#c9a96e' },
+          { label: 'Tempo Médio', value: `${avgDays} dias`, sub: 'Do envio ao fecho', color: '#3a7bd5' },
+          { label: 'Recusadas', value: rejected.length.toString(), sub: `${Math.round((rejected.length / total) * 100)}% das propostas`, color: '#c0392b' },
+        ].map(k => (
+          <div key={k.label} className="p-card" style={{ padding: '.9rem 1rem' }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.2rem' }}>{k.label.toUpperCase()}</div>
+            <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.8rem', color: k.color, fontWeight: 600, lineHeight: 1 }}>{k.value}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)', marginTop: '.15rem' }}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Best & Worst */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem', marginBottom: '1.5rem' }}>
+        {best && (
+          <div style={{ padding: '.9rem 1rem', background: 'rgba(28,74,53,.06)', borderRadius: 10, border: '1px solid rgba(28,74,53,.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.4rem' }}>
+              <IconTrophy />
+              <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: '#1c4a35', fontWeight: 600 }}>MELHOR NEGOCIAÇÃO</span>
+            </div>
+            <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: '#0e0e0d', fontWeight: 600 }}>{best.propertyName}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.5)', marginTop: '.15rem' }}>
+              {Math.abs(pctDiff(best.offerAmount, best.askingPrice))}% negociado · {fmtPreco(best.offerAmount)}
+            </div>
+          </div>
+        )}
+        {worst && (
+          <div style={{ padding: '.9rem 1rem', background: 'rgba(192,57,43,.05)', borderRadius: 10, border: '1px solid rgba(192,57,43,.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.4rem' }}>
+              <IconWarning />
+              <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: '#c0392b', fontWeight: 600 }}>MAIS ABAIXO DE MERCADO</span>
+            </div>
+            <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: '#0e0e0d', fontWeight: 600 }}>{worst.propertyName}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.5)', marginTop: '.15rem' }}>
+              {Math.abs(pctDiff(worst.offerAmount, worst.askingPrice))}% abaixo · Recusada
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* History list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+        {MOCK_HISTORICAL.map(h => {
+          const pct = pctDiff(h.offerAmount, h.askingPrice)
+          const isAccepted = h.result === 'Aceite'
+          return (
+            <div key={h.id} className="p-card" style={{ padding: '.9rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                background: isAccepted ? '#1c4a35' : '#c0392b',
+              }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: '#0e0e0d', fontWeight: 600 }}>{h.propertyName}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.45)', marginTop: '.1rem' }}>
+                  {h.buyerName} · {new Date(h.closedAt).toLocaleDateString('pt-PT')} · {h.negotiationDays} dias
+                </div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.1rem', color: isAccepted ? '#1c4a35' : '#c0392b', fontWeight: 600 }}>{fmtPreco(h.offerAmount)}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.45)' }}>
+                  {pct === 0 ? '=' : pct > 0 ? `+${pct}%` : `${pct}%`} vs. pedido
+                </div>
+              </div>
+              <div>
+                <span style={{
+                  fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', fontWeight: 600, padding: '3px 10px', borderRadius: 20,
+                  background: isAccepted ? 'rgba(28,74,53,.12)' : 'rgba(192,57,43,.1)',
+                  color: isAccepted ? '#1c4a35' : '#c0392b',
+                  border: `1px solid ${isAccepted ? 'rgba(28,74,53,.3)' : 'rgba(192,57,43,.3)'}`,
+                }}>
+                  {h.result}
+                </span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Tab: Templates ────────────────────────────────────────────────────────────
+
+function TemplatesTab() {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+      {OFFER_TEMPLATES.map(t => {
+        const isExpanded = expandedId === t.id
+        return (
+          <div key={t.id}
+            style={{
+              background: t.color, borderRadius: 12, border: `1.5px solid ${t.textColor}22`,
+              overflow: 'hidden', transition: 'box-shadow .2s',
+              boxShadow: isExpanded ? `0 8px 24px ${t.textColor}22` : '0 2px 8px rgba(14,14,13,.06)',
+            }}>
+            <div style={{ padding: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '.75rem' }}>
                 <div>
-                  <div style={{
-                    fontFamily: "'Cormorant',serif",
-                    fontSize: '1.15rem',
-                    fontWeight: 600,
-                    color: '#0e0e0d',
-                    lineHeight: 1.2,
-                    marginBottom: '6px',
-                  }}>
-                    {tpl.name}
-                  </div>
-                  <div style={{
-                    fontFamily: "'DM Mono',monospace",
-                    fontSize: '.44rem',
-                    letterSpacing: '.12em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(14,14,13,.35)',
-                  }}>
-                    {OFFER_TYPES.find(t => t.id === tpl.offerType)?.emoji} {tpl.offerType}
-                  </div>
+                  <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.2rem', color: t.textColor, fontWeight: 700, margin: '0 0 .2rem' }}>{t.name}</h3>
+                  <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: 'rgba(14,14,13,.55)', margin: 0 }}>{t.tagline}</p>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.4rem', color: t.textColor, fontWeight: 700, lineHeight: 1 }}>{t.successRate}%</div>
+                  <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.4)' }}>taxa sucesso</div>
                 </div>
               </div>
 
-              <p style={{ fontSize: '.78rem', color: 'rgba(14,14,13,.6)', lineHeight: 1.65 }}>
-                {tpl.desc}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.75rem' }}>
+                <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(14,14,13,.08)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${t.successRate}%`, background: t.textColor, borderRadius: 3, transition: 'width .6s ease' }} />
+                </div>
+                <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: t.textColor, fontWeight: 600, flexShrink: 0 }}>
+                  {t.discountPct === 0 ? 'A preço' : t.discountPct < 0 ? `+${Math.abs(t.discountPct)}% acima` : `${t.discountPct}% abaixo`}
+                </span>
+              </div>
+
+              <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', color: 'rgba(14,14,13,.6)', margin: '0 0 .75rem', lineHeight: 1.5 }}>
+                <strong style={{ color: 'rgba(14,14,13,.75)' }}>Quando usar: </strong>{t.whenToUse}
               </p>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ flex: 1, padding: '10px 12px', background: 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.06)', textAlign: 'center' }}>
-                  <div style={{
-                    fontFamily: "'Cormorant',serif",
-                    fontSize: '1.4rem',
-                    fontWeight: 600,
-                    color: tpl.color,
-                    lineHeight: 1,
-                  }}>
-                    {tpl.discount > 0 ? `-${tpl.discount}%` : tpl.discount < 0 ? `+${Math.abs(tpl.discount)}%` : '0%'}
-                  </div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', color: 'rgba(14,14,13,.35)', marginTop: '4px', textTransform: 'uppercase' }}>
-                    Desconto
-                  </div>
-                </div>
-                <div style={{ flex: 1, padding: '10px 12px', background: 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.06)', textAlign: 'center' }}>
-                  <div style={{
-                    fontFamily: "'Cormorant',serif",
-                    fontSize: '1.4rem',
-                    fontWeight: 600,
-                    color: probColor(tpl.successRate),
-                    lineHeight: 1,
-                  }}>
-                    {tpl.successRate}%
-                  </div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', color: 'rgba(14,14,13,.35)', marginTop: '4px', textTransform: 'uppercase' }}>
-                    Sucesso Est.
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ height: '4px', background: 'rgba(14,14,13,.06)', borderRadius: '2px', overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%',
-                  width: `${tpl.successRate}%`,
-                  background: tpl.color,
-                  borderRadius: '2px',
-                }} />
-              </div>
-
-              <button
-                className="p-btn"
-                onClick={() => applyTemplate(tpl)}
-                style={{
-                  width: '100%',
-                  background: tpl.color,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                }}
-              >
-                ⊞ USAR TEMPLATE
+              <button onClick={() => setExpandedId(isExpanded ? null : t.id)}
+                className="p-btn" style={{ fontSize: '.78rem', color: t.textColor, borderColor: `${t.textColor}44`, width: '100%' }}>
+                {isExpanded ? 'Ocultar Linguagem' : 'Ver Linguagem de Exemplo'}
               </button>
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* ── TAB: HISTORY ── */}
-      {selectedTab === 'history' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {history.length === 0 ? (
-            <div className="p-card" style={{
-              padding: '48px',
-              textAlign: 'center',
-              borderStyle: 'dashed',
+            {isExpanded && (
+              <div style={{ borderTop: `1px solid ${t.textColor}22`, padding: '1rem 1.25rem', background: 'rgba(14,14,13,.03)' }}>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.5rem', letterSpacing: '.06em' }}>LINGUAGEM SUGERIDA</div>
+                <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: '#0e0e0d', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>{t.exampleLanguage}</p>
+                <button className="p-btn-gold" style={{ marginTop: '.75rem', fontSize: '.78rem', width: '100%' }}>
+                  Usar Este Template
+                </button>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+
+const TABS: { id: DraftTab; label: string; badge?: number }[] = [
+  { id: 'nova', label: 'Nova Proposta' },
+  { id: 'activas', label: 'Propostas Activas', badge: MOCK_ACTIVE_OFFERS.filter(o => o.status !== 'Aceite' && o.status !== 'Recusada').length },
+  { id: 'historico', label: 'Histórico' },
+  { id: 'templates', label: 'Templates de Negociação' },
+]
+
+export default function PortalDraftOffer() {
+  const [tab, setTab] = useState<DraftTab>('nova')
+
+  return (
+    <div style={{ padding: '0 0 3rem' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .25rem' }}>
+          Redigir Proposta IA
+        </h1>
+        <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: 'rgba(14,14,13,.5)', margin: 0 }}>
+          Assistente de negociação · Propostas formais · Estratégia de fecho
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '1.75rem', overflowX: 'auto' }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            style={{
+              fontFamily: 'var(--font-jost)', fontSize: '.875rem', padding: '.75rem 1.25rem',
+              background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+              color: tab === t.id ? '#1c4a35' : 'rgba(14,14,13,.45)',
+              borderBottom: tab === t.id ? '2px solid #1c4a35' : '2px solid transparent',
+              fontWeight: tab === t.id ? 600 : 400, marginBottom: '-1px',
+              display: 'flex', alignItems: 'center', gap: '.4rem',
             }}>
-              <div style={{ fontSize: '1.8rem', opacity: .2, marginBottom: '12px' }}>⏱</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(14,14,13,.25)' }}>
-                Nenhuma proposta gerada ainda
-              </div>
-            </div>
-          ) : (
-            history.map(entry => (
-              <div key={entry.id} className="p-card" style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '200px' }}>
-                  <div style={{
-                    fontFamily: "'Cormorant',serif",
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    color: '#0e0e0d',
-                    marginBottom: '4px',
-                  }}>
-                    {entry.propertyName}
-                  </div>
-                  <div style={{ fontSize: '.75rem', color: 'rgba(14,14,13,.5)' }}>
-                    {entry.buyerName} · {OFFER_TYPES.find(t => t.id === entry.offerType)?.emoji} {entry.offerType} · {entry.lang}
-                  </div>
-                </div>
+            {t.label}
+            {t.badge !== undefined && t.badge > 0 && (
+              <span style={{ background: '#c9a96e', color: '#fff', borderRadius: 20, padding: '1px 7px', fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', fontWeight: 700 }}>{t.badge}</span>
+            )}
+          </button>
+        ))}
+      </div>
 
-                <div style={{ textAlign: 'right', minWidth: '120px' }}>
-                  <div style={{
-                    fontFamily: "'Cormorant',serif",
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    color: '#1c4a35',
-                  }}>
-                    {fmtEuro(entry.offerPrice)}
-                  </div>
-                  <div style={{ fontSize: '.72rem', color: 'rgba(14,14,13,.35)', marginTop: '2px' }}>
-                    vs {fmtEuro(entry.listPrice)}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end', minWidth: '100px' }}>
-                  <span style={statusBadgeStyle(entry.status)}>
-                    {entry.status}
-                  </span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.08em' }}>
-                    {entry.date}
-                  </span>
-                </div>
-
-                {/* Status change buttons */}
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {(['enviada', 'aceite', 'recusada'] as OfferHistory['status'][]).map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setHistory(prev => prev.map(h => h.id === entry.id ? { ...h, status: s } : h))}
-                      style={{
-                        padding: '4px 10px',
-                        border: '1px solid',
-                        borderColor: entry.status === s ? '#1c4a35' : 'rgba(14,14,13,.1)',
-                        background: entry.status === s ? '#1c4a35' : 'transparent',
-                        color: entry.status === s ? '#f4f0e6' : 'rgba(14,14,13,.45)',
-                        fontFamily: "'DM Mono',monospace",
-                        fontSize: '.42rem',
-                        letterSpacing: '.1em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        transition: 'all .15s',
-                      }}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                  <button
-                    className="p-btn p-btn-gold"
-                    onClick={() => reloadHistoryDraft(entry)}
-                    style={{ padding: '4px 14px', fontSize: '.42rem', letterSpacing: '.1em' }}
-                  >
-                    VER →
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* CSS keyframes */}
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .p-card { background: #fff; border: 1px solid rgba(14,14,13,.08); padding: 24px; }
-        .p-btn { background: #1c4a35; color: #f4f0e6; border: none; padding: 12px 24px; font-family: 'DM Mono', monospace; font-size: .55rem; letter-spacing: .2em; text-transform: uppercase; cursor: pointer; transition: background .2s; }
-        .p-btn:hover:not(:disabled) { background: #163d2c; }
-        .p-btn:disabled { opacity: .5; cursor: not-allowed; }
-        .p-btn-gold { background: #c9a96e; color: #0c1f15; }
-        .p-btn-gold:hover:not(:disabled) { background: #b8945a; }
-        .p-inp { width: 100%; background: #fff; border: 1px solid rgba(14,14,13,.12); padding: 10px 14px; font-family: 'Jost', sans-serif; font-size: .83rem; color: #0e0e0d; outline: none; transition: border .2s; }
-        .p-inp:focus { border-color: #1c4a35; }
-        .p-sel { width: 100%; background: #fff; border: 1px solid rgba(14,14,13,.12); padding: 10px 14px; font-family: 'Jost', sans-serif; font-size: .83rem; color: #0e0e0d; outline: none; cursor: pointer; appearance: none; }
-        .p-label { font-family: 'DM Mono', monospace; font-size: .5rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(14,14,13,.4); margin-bottom: 6px; display: block; }
-      `}</style>
+      {tab === 'nova' && <NovaPropostaTab />}
+      {tab === 'activas' && <PropostasActivasTab />}
+      {tab === 'historico' && <HistoricoTab />}
+      {tab === 'templates' && <TemplatesTab />}
     </div>
-  )
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function AnalysisPill({
-  label,
-  value,
-  sub,
-  valueColor = '#1c4a35',
-}: {
-  label: string
-  value: string
-  sub: string
-  valueColor?: string
-}) {
-  return (
-    <div style={{
-      padding: '12px 14px',
-      background: 'rgba(14,14,13,.02)',
-      border: '1px solid rgba(14,14,13,.07)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '4px',
-    }}>
-      <span style={{
-        fontFamily: "'DM Mono',monospace",
-        fontSize: '.42rem',
-        letterSpacing: '.12em',
-        textTransform: 'uppercase',
-        color: 'rgba(14,14,13,.35)',
-      }}>
-        {label}
-      </span>
-      <span style={{
-        fontFamily: "'Cormorant',serif",
-        fontSize: '1.2rem',
-        fontWeight: 600,
-        color: valueColor,
-        lineHeight: 1,
-      }}>
-        {value}
-      </span>
-      <span style={{
-        fontFamily: "'DM Mono',monospace",
-        fontSize: '.42rem',
-        color: 'rgba(14,14,13,.3)',
-        letterSpacing: '.06em',
-      }}>
-        {sub}
-      </span>
-    </div>
-  )
-}
-
-function UrgencyBadge({ level }: { level: 'alta' | 'media' | 'baixa' }) {
-  const config = {
-    alta:  { bg: 'rgba(224,84,84,.1)',        color: '#e05454', label: 'Urgência Alta' },
-    media: { bg: 'rgba(201,169,110,.12)',      color: '#c9a96e', label: 'Urgência Média' },
-    baixa: { bg: 'rgba(28,74,53,.08)',         color: '#1c4a35', label: 'Urgência Baixa' },
-  }
-  const c = config[level]
-  return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '5px',
-      padding: '4px 10px',
-      background: c.bg,
-      color: c.color,
-      fontFamily: "'DM Mono',monospace",
-      fontSize: '.44rem',
-      letterSpacing: '.12em',
-      textTransform: 'uppercase',
-      borderRadius: '2px',
-      fontWeight: 600,
-    }}>
-      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: c.color, display: 'inline-block' }} />
-      {c.label}
-    </span>
   )
 }

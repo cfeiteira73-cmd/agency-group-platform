@@ -1,0 +1,444 @@
+{
+  "name": "Workflow B — Daily Market Intelligence Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron — Seg-Sex 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  p.id,\n  p.title,\n  p.address,\n  p.price,\n  p.price_previous,\n  p.tipologia,\n  p.area_m2,\n  p.concelho,\n  p.zone,\n  p.opportunity_score,\n  p.days_on_market,\n  p.created_at,\n  CASE\n    WHEN p.price_previous IS NOT NULL AND p.price_previous > p.price\n    THEN ROUND(((p.price_previous - p.price) / p.price_previous * 100)::numeric, 1)\n    ELSE NULL\n  END AS price_reduction_pct\nFROM market_properties p\nWHERE p.created_at >= NOW() - INTERVAL '24 hours'\n  AND p.status = 'active'\nORDER BY p.opportunity_score DESC NULLS LAST\nLIMIT 20",
+        "options": {}
+      },
+      "id": "supabase-new-properties",
+      "name": "Supabase — Novas Propriedades 24h",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [460, 180],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  p.id,\n  p.title,\n  p.address,\n  p.price AS current_price,\n  p.price_previous AS old_price,\n  p.concelho,\n  p.zone,\n  p.tipologia,\n  p.area_m2,\n  p.days_on_market,\n  p.opportunity_score,\n  ROUND(((p.price_previous - p.price) / p.price_previous * 100)::numeric, 1) AS reduction_pct\nFROM market_properties p\nWHERE p.price_previous IS NOT NULL\n  AND p.price < p.price_previous\n  AND p.updated_at >= NOW() - INTERVAL '24 hours'\n  AND p.status = 'active'\nORDER BY reduction_pct DESC\nLIMIT 15",
+        "options": {}
+      },
+      "id": "supabase-price-reductions",
+      "name": "Supabase — Reduções de Preço 24h",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  d.stage,\n  COUNT(*) AS deal_count,\n  SUM(d.property_price) AS total_value,\n  SUM(d.property_price * (d.probability / 100.0) * 0.05) AS weighted_gci,\n  AVG(EXTRACT(EPOCH FROM (NOW() - d.stage_entered_at)) / 86400) AS avg_days_in_stage\nFROM deals d\nWHERE d.status = 'active'\nGROUP BY d.stage\nORDER BY\n  CASE d.stage\n    WHEN 'lead' THEN 1\n    WHEN 'qualificado' THEN 2\n    WHEN 'visita_agendada' THEN 3\n    WHEN 'visita_realizada' THEN 4\n    WHEN 'proposta' THEN 5\n    WHEN 'negociacao' THEN 6\n    WHEN 'cpcv_assinado' THEN 7\n    WHEN 'escritura' THEN 8\n    ELSE 9\n  END",
+        "options": {}
+      },
+      "id": "supabase-pipeline-metrics",
+      "name": "Supabase — Pipeline Metrics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [460, 420],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  d.id,\n  c.full_name AS contact_name,\n  c.phone,\n  c.email,\n  c.lead_score,\n  d.stage,\n  d.property_price,\n  d.property_price * 0.05 AS potential_gci,\n  EXTRACT(EPOCH FROM (NOW() - a.created_at)) / 86400 AS days_since_last_activity\nFROM deals d\nJOIN contacts c ON c.id = d.contact_id\nLEFT JOIN LATERAL (\n  SELECT created_at FROM activities\n  WHERE contact_id = d.contact_id\n  ORDER BY created_at DESC\n  LIMIT 1\n) a ON TRUE\nWHERE d.status = 'active'\n  AND d.stage IN ('proposta', 'negociacao', 'cpcv_assinado')\n  AND (a.created_at IS NULL OR a.created_at < NOW() - INTERVAL '3 days')\nORDER BY d.property_price DESC\nLIMIT 5",
+        "options": {}
+      },
+      "id": "supabase-at-risk-deals",
+      "name": "Supabase — Deals em Risco",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [460, 540],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all data for Claude\nconst newProperties = $('Supabase — Novas Propriedades 24h').all().map(i => i.json);\nconst priceReductions = $('Supabase — Reduções de Preço 24h').all().map(i => i.json);\nconst pipelineMetrics = $('Supabase — Pipeline Metrics').all().map(i => i.json);\nconst atRiskDeals = $('Supabase — Deals em Risco').all().map(i => i.json);\n\n// Calculate pipeline totals\nconst totalWeightedGCI = pipelineMetrics.reduce((sum, s) => sum + (parseFloat(s.weighted_gci) || 0), 0);\nconst totalDeals = pipelineMetrics.reduce((sum, s) => sum + parseInt(s.deal_count), 0);\nconst totalPipelineValue = pipelineMetrics.reduce((sum, s) => sum + (parseFloat(s.total_value) || 0), 0);\n\n// Top opportunities (score > 70)\nconst topOpportunities = newProperties\n  .filter(p => p.opportunity_score > 70)\n  .slice(0, 5);\n\n// Format date\nconst today = new Date();\nconst dateStr = today.toLocaleDateString('pt-PT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\n\nconst aggregated = {\n  date: today.toISOString().split('T')[0],\n  date_formatted: dateStr,\n  new_properties_count: newProperties.length,\n  price_reductions_count: priceReductions.length,\n  top_opportunities: topOpportunities,\n  top_price_reductions: priceReductions.slice(0, 5),\n  pipeline_metrics: pipelineMetrics,\n  at_risk_deals: atRiskDeals,\n  totals: {\n    weighted_gci: Math.round(totalWeightedGCI),\n    total_deals: totalDeals,\n    total_pipeline_value: Math.round(totalPipelineValue)\n  }\n};\n\nreturn [{ json: aggregated }];"
+      },
+      "id": "code-aggregate",
+      "name": "Code — Agregar Dados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 360]
+    },
+    {
+      "parameters": {
+        "model": "claude-sonnet-4-5",
+        "messages": {
+          "values": [
+            {
+              "role": "user",
+              "content": "Você é o analista de inteligência de mercado da Agency Group (AMI 22506, Lisboa). Gere um relatório diário em PORTUGUÊS europeu, profissional, focado e accionável.\n\nDADOS DE HOJE — {{ $json.date_formatted }}:\n\nMERCADO (últimas 24h):\n- Novas propriedades: {{ $json.new_properties_count }}\n- Reduções de preço: {{ $json.price_reductions_count }}\n\nTOP OPORTUNIDADES (score >70):\n{{ JSON.stringify($json.top_opportunities.map(p => ({title: p.title, price: p.price, zone: p.zone, score: p.opportunity_score, reduction: p.price_reduction_pct})), null, 2) }}\n\nMAIORES REDUÇÕES:\n{{ JSON.stringify($json.top_price_reductions.map(p => ({title: p.title, price: p.current_price, old_price: p.old_price, reduction_pct: p.reduction_pct, zone: p.zone})), null, 2) }}\n\nPIPELINE:\n{{ JSON.stringify($json.pipeline_metrics.map(s => ({stage: s.stage, deals: s.deal_count, weighted_gci: Math.round(s.weighted_gci)})), null, 2) }}\nGCI Ponderado Total: €{{ $json.totals.weighted_gci }}\n\nDEALS EM RISCO (sem actividade >3 dias em fase avançada):\n{{ JSON.stringify($json.at_risk_deals.map(d => ({contact: d.contact_name, stage: d.stage, value: d.property_price, gci: Math.round(d.potential_gci), days_inactive: Math.round(d.days_since_last_activity)})), null, 2) }}\n\nESTRUTURA DO RELATÓRIO (exactamente assim, ~400 palavras total):\n1. HEADLINE (1 linha impactante com os números chave)\n2. MERCADO HOJE (2-3 frases sobre novas oportunidades e reduções)\n3. TOP 3 ACÇÕES PARA HOJE (numeradas, específicas, com nome do contacto se relevante)\n4. PIPELINE STATUS (2 frases com GCI ponderado e deals em risco)\n5. INSIGHT DO DIA (1 observação estratégica sobre o mercado português)\n\nTom: directo, sem rodeios, 80/20, focado em acção."
+            }
+          ]
+        },
+        "options": {
+          "maxTokens": 800,
+          "temperature": 0.4
+        }
+      },
+      "id": "anthropic-report",
+      "name": "Claude Sonnet — Gerar Relatório",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1,
+      "position": [940, 360],
+      "credentials": {
+        "anthropicApi": {
+          "id": "anthropic-api-key",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format report for email HTML\nconst reportText = $input.first().json.text || $input.first().json.content?.[0]?.text || 'Relatório não disponível';\nconst aggregated = $('Code — Agregar Dados').item.json;\n\n// Convert line breaks to HTML\nconst htmlReport = reportText\n  .replace(/\\n\\n/g, '</p><p>')\n  .replace(/\\n/g, '<br>')\n  .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')\n  .replace(/^/, '<p>')\n  .replace(/$/, '</p>');\n\n// WhatsApp summary (first 2 lines + key metric)\nconst lines = reportText.split('\\n').filter(l => l.trim());\nconst waSummary = `📊 Daily Brief ${aggregated.date}\\n${lines[0]}\\nGCI Pipeline: €${(aggregated.totals.weighted_gci/1000).toFixed(0)}K | Risco: ${aggregated.at_risk_deals.length} deals`.slice(0, 300);\n\nreturn [{\n  json: {\n    report_text: reportText,\n    report_html: htmlReport,\n    whatsapp_summary: waSummary,\n    date: aggregated.date,\n    date_formatted: aggregated.date_formatted,\n    totals: aggregated.totals,\n    at_risk_count: aggregated.at_risk_deals.length,\n    new_properties_count: aggregated.new_properties_count\n  }\n}];"
+      },
+      "id": "code-format",
+      "name": "Code — Formatar Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1180, 360]
+    },
+    {
+      "parameters": {
+        "from": "Agency Group Intelligence <noreply@agencygroup.pt>",
+        "to": "carlos@agencygroup.pt",
+        "subject": "Daily Brief — {{ $json.date_formatted }}",
+        "html": "<div style=\"font-family: Arial, sans-serif; max-width: 680px; margin: 0 auto; background: #f8f8f8; padding: 0;\">\n  <div style=\"background: #1a1a2e; padding: 24px 32px; border-radius: 4px 4px 0 0;\">\n    <h1 style=\"color: white; margin: 0; font-size: 22px;\">Daily Intelligence Brief</h1>\n    <p style=\"color: #aaa; margin: 8px 0 0 0; font-size: 14px;\">{{ $json.date_formatted }} — Agency Group</p>\n  </div>\n  <div style=\"background: white; padding: 32px; border-radius: 0 0 4px 4px;\">\n    <div style=\"background: #f0f4ff; border-left: 4px solid #1a1a2e; padding: 16px; margin-bottom: 24px; border-radius: 0 4px 4px 0;\">\n      <p style=\"margin: 0; font-size: 14px; color: #666;\">Pipeline GCI Ponderado</p>\n      <p style=\"margin: 4px 0 0 0; font-size: 28px; font-weight: bold; color: #1a1a2e;\">€{{ ($json.totals.weighted_gci / 1000).toFixed(0) }}K</p>\n    </div>\n    <div style=\"line-height: 1.7; color: #333; font-size: 15px;\">{{ $json.report_html }}</div>\n    <hr style=\"margin: 32px 0; border: none; border-top: 1px solid #eee;\">\n    <p style=\"font-size: 12px; color: #999; margin: 0;\">Agency Group | AMI 22506 | Gerado automaticamente às 08:00</p>\n  </div>\n</div>",
+        "options": {}
+      },
+      "id": "resend-email-report",
+      "name": "Resend — Email Relatório Equipa",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1420, 240],
+      "credentials": {
+        "smtp": {
+          "id": "resend-smtp",
+          "name": "Resend SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $env.CARLOS_PHONE }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{ $('Code — Formatar Report').item.json.whatsapp_summary }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wa-summary-carlos",
+      "name": "WhatsApp — Summary para Carlos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1420, 380],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "databaseId": {
+          "__rl": true,
+          "value": "={{ $env.NOTION_APRENDIZAGENS_DB_ID }}",
+          "mode": "id"
+        },
+        "title": "Daily Brief — {{ $('Code — Formatar Report').item.json.date }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Date",
+              "type": "date",
+              "date": "={{ $('Code — Formatar Report').item.json.date }}"
+            },
+            {
+              "key": "GCI Ponderado",
+              "type": "number",
+              "numberValue": "={{ $('Code — Formatar Report').item.json.totals.weighted_gci }}"
+            },
+            {
+              "key": "Deals em Risco",
+              "type": "number",
+              "numberValue": "={{ $('Code — Formatar Report').item.json.at_risk_count }}"
+            },
+            {
+              "key": "Novas Propriedades",
+              "type": "number",
+              "numberValue": "={{ $('Code — Formatar Report').item.json.new_properties_count }}"
+            }
+          ]
+        },
+        "content": "={{ $('Code — Formatar Report').item.json.report_text }}",
+        "options": {}
+      },
+      "id": "notion-log",
+      "name": "Notion — Log Diário",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [1420, 520],
+      "credentials": {
+        "notionApi": {
+          "id": "notion-api-key",
+          "name": "Notion API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "automations_log",
+        "columns": "workflow,outcome,metadata,executed_at",
+        "values": "=workflow-b-daily-report,report_sent,={{ JSON.stringify({weighted_gci: $('Code — Formatar Report').item.json.totals.weighted_gci, at_risk: $('Code — Formatar Report').item.json.at_risk_count, new_properties: $('Code — Formatar Report').item.json.new_properties_count}) }},={{ new Date().toISOString() }}",
+        "options": {}
+      },
+      "id": "supabase-log-report",
+      "name": "Supabase — Log Execução",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [1660, 380],
+      "credentials": {
+        "postgres": {
+          "id": "supabase-postgres-cred",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron — Seg-Sex 08:00": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Novas Propriedades 24h",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase — Reduções de Preço 24h",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase — Pipeline Metrics",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase — Deals em Risco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Novas Propriedades 24h": {
+      "main": [
+        [
+          {
+            "node": "Code — Agregar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Reduções de Preço 24h": {
+      "main": [
+        [
+          {
+            "node": "Code — Agregar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Pipeline Metrics": {
+      "main": [
+        [
+          {
+            "node": "Code — Agregar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase — Deals em Risco": {
+      "main": [
+        [
+          {
+            "node": "Code — Agregar Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Agregar Dados": {
+      "main": [
+        [
+          {
+            "node": "Claude Sonnet — Gerar Relatório",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Sonnet — Gerar Relatório": {
+      "main": [
+        [
+          {
+            "node": "Code — Formatar Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code — Formatar Report": {
+      "main": [
+        [
+          {
+            "node": "Resend — Email Relatório Equipa",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "WhatsApp — Summary para Carlos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notion — Log Diário",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend — Email Relatório Equipa": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Execução",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp — Summary para Carlos": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Execução",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion — Log Diário": {
+      "main": [
+        [
+          {
+            "node": "Supabase — Log Execução",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Europe/Lisbon"
+  },
+  "versionId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "agency-group-n8n"
+  },
+  "id": "workflow-b-daily-report",
+  "tags": [
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-automation",
+      "name": "automation"
+    },
+    {
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "updatedAt": "2026-04-05T00:00:00.000Z",
+      "id": "tag-reports",
+      "name": "reports"
+    }
+  ]
+}
