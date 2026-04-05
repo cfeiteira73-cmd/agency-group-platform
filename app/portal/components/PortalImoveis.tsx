@@ -1149,12 +1149,55 @@ export default function PortalImoveis() {
       return s ? (JSON.parse(s) as ImovelFull[]) : []
     } catch { return [] }
   })
+  const [liveProperties, setLiveProperties] = useState<ImovelFull[]>([])
 
   useEffect(() => {
     try { localStorage.setItem('ag_imoveis', JSON.stringify(customProperties)) } catch { /* ignore */ }
   }, [customProperties])
 
-  const allProps = [...ALL_PROPERTIES, ...customProperties]
+  useEffect(() => {
+    let cancelled = false
+    async function loadProperties() {
+      try {
+        const res = await fetch('/api/properties')
+        if (res.ok) {
+          const { data } = await res.json()
+          if (!cancelled && data && data.length > 0) {
+            const mapped: ImovelFull[] = data.map((p: {
+              id: string; nome: string; zona: string; bairro?: string; tipo: string;
+              preco: number; area: number; quartos: number; casasBanho?: number;
+              status: string; features?: string[]; gradient?: string;
+            }, i: number) => ({
+              id: p.id,
+              ref: `AG-LIVE-${String(i + 1).padStart(3, '0')}`,
+              nome: p.nome,
+              zona: p.zona,
+              bairro: p.bairro ?? p.zona,
+              tipo: p.tipo,
+              preco: p.preco,
+              area: p.area,
+              quartos: p.quartos,
+              casasBanho: p.casasBanho ?? Math.max(1, p.quartos - 1),
+              badge: '',
+              status: p.status,
+              piscina: p.features?.includes('Piscina') ?? false,
+              garagem: p.features?.includes('Garagem') ?? false,
+              jardim: p.features?.includes('Jardim') ?? false,
+              terraco: p.features?.includes('Terraço') ?? false,
+              listingDate: new Date().toISOString().slice(0, 10),
+              viewsCount: 0,
+            }))
+            setLiveProperties(mapped)
+          }
+        }
+      } catch { /* use static data */ }
+    }
+    loadProperties()
+    return () => { cancelled = true }
+  }, [])
+
+  const baseProperties = liveProperties.length > 0 ? liveProperties : ALL_PROPERTIES
+  const allProps = [...baseProperties, ...customProperties]
 
   const filtered = allProps
     .filter(p => {
@@ -1200,8 +1243,14 @@ export default function PortalImoveis() {
           <h1 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .25rem' }}>
             Imóveis
           </h1>
-          <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: 'rgba(14,14,13,.5)', margin: 0 }}>
+          <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: 'rgba(14,14,13,.5)', margin: 0, display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
             {filtered.length} imóveis · Valor total {fmtPreco(totalValue)}
+            {liveProperties.length > 0 && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.3rem', background: 'rgba(28,74,53,.08)', border: '1px solid rgba(28,74,53,.2)', borderRadius: 20, padding: '1px 9px', fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: '#1c4a35', fontWeight: 600 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1c4a35', display: 'inline-block', animation: 'pulse 2s infinite' }} />
+                LIVE · Supabase
+              </span>
+            )}
           </p>
         </div>
         <button onClick={() => setShowAddModal(true)} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
