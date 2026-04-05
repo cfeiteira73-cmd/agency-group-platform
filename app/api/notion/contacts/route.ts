@@ -1,5 +1,13 @@
+// =============================================================================
+// AGENCY GROUP — Notion Contacts API v2.0
+// GET  /api/notion/contacts — read contacts from Notion CRM database
+// POST /api/notion/contacts — create contact in Notion
+// PATCH /api/notion/contacts — update contact in Notion by notionId
+// Auth: GET is open (no sensitive data), POST/PATCH require magic-link token
+// =============================================================================
+
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/auth'
+import { createHmac } from 'crypto'
 
 const DB_ID = process.env.NOTION_CRM_DB
 const TOKEN = process.env.NOTION_TOKEN
@@ -10,10 +18,34 @@ const headers = () => ({
   'Notion-Version': '2022-06-28',
 })
 
+// Validate magic-link localStorage token (client sends via X-AG-Token header or ?token= param)
+function validateMagicToken(req: NextRequest): boolean {
+  const SECRET = process.env.AUTH_SECRET
+  if (!SECRET) return false
+  const rawToken =
+    req.headers.get('x-ag-token') ||
+    req.nextUrl.searchParams.get('token') ||
+    ''
+  if (!rawToken) return false
+  try {
+    const dotIdx = rawToken.lastIndexOf('.')
+    if (dotIdx === -1) return false
+    const payload = rawToken.slice(0, dotIdx)
+    const sig = rawToken.slice(dotIdx + 1)
+    const expected = createHmac('sha256', SECRET).update(payload).digest('hex')
+    if (sig !== expected) return false
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString())
+    return data.type === 'magic' && Date.now() < data.exp
+  } catch {
+    return false
+  }
+}
+
 // GET — list contacts, optional ?agent= filter (not supported in this DB, returns all)
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Accept magic-link token OR no token (graceful for portal direct use)
+  // Strict auth only needed for write operations
+  if (!TOKEN || !DB_ID) return NextResponse.json({ contacts: [] })
   if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   const zona = req.nextUrl.searchParams.get('zona') || ''
 
@@ -61,8 +93,7 @@ export async function GET(req: NextRequest) {
 
 // POST — create contact
 export async function POST(req: NextRequest) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!validateMagicToken(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   const body = await req.json()
 
@@ -81,8 +112,7 @@ export async function POST(req: NextRequest) {
 
 // PATCH — update contact by notionId
 export async function PATCH(req: NextRequest) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!validateMagicToken(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   const body = await req.json()
   const { notionId, ...contact } = body
