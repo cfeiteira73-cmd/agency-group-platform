@@ -189,7 +189,6 @@ function PropertyCard({
       onMouseLeave={() => setHovered(false)}
       style={{
         background: '#fff',
-        borderLeft,
         border: `1px solid ${hovered ? 'rgba(28,74,53,.25)' : 'rgba(14,14,13,.08)'}`,
         borderLeft: selected ? '3px solid #c9a96e' : `3px solid ${cardBorderColor(imovel.badge)}`,
         padding: '18px 20px',

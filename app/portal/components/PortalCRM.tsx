@@ -455,7 +455,7 @@ export default function PortalCRM() {
                     style={{ background: crmBulkMode && crmSelectedIds.has(c.id) ? 'rgba(28,74,53,.08)' : undefined }}
                     onClick={() => {
                       if (crmBulkMode) {
-                        setCrmSelectedIds(prev => { const next = new Set(prev); next.has(c.id) ? next.delete(c.id) : next.add(c.id); return next })
+                        const next = new Set(crmSelectedIds); next.has(c.id) ? next.delete(c.id) : next.add(c.id); setCrmSelectedIds(next)
                       } else {
                         setActiveCrmId(c.id); setCrmProfileTab('overview')
                       }
@@ -694,13 +694,13 @@ export default function PortalCRM() {
                             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', color: '#c9a96e' }}>{String(crmNextStep.channel || '—').toUpperCase()} · {String(crmNextStep.timing || '—')}</div>
                           </div>
                         </div>
-                        {crmNextStep.messageTemplate && (
+                        {!!crmNextStep.messageTemplate && (
                           <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(244,240,230,.08)', padding: '10px 12px', marginBottom: '10px' }}>
                             <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(244,240,230,.75)', lineHeight: 1.6 }}>{String(crmNextStep.messageTemplate)}</div>
                           </div>
                         )}
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          {crmNextStep.messageTemplate && <button className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.42rem' }} onClick={() => window.open(`https://wa.me/${activeContact.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(String(crmNextStep.messageTemplate || ''))}`)}>💬 Enviar WA</button>}
+                          {!!crmNextStep.messageTemplate && <button className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.42rem' }} onClick={() => window.open(`https://wa.me/${activeContact.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(String(crmNextStep.messageTemplate || ''))}`)}>💬 Enviar WA</button>}
                           <button style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(244,240,230,.12)', color: 'rgba(244,240,230,.6)', padding: '6px 14px', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }} onClick={() => setCrmNextStep(null)}>✕ Fechar</button>
                         </div>
                       </div>

@@ -364,5 +364,3 @@ export default function PortalVisitas() {
   )
 }
 
-// React import needed for useState in this file
-import React from 'react'

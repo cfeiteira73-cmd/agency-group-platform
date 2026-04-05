@@ -72,8 +72,8 @@ const URGENCY_BG: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function PortalVoz() {
-  const { crmContacts, setCrmContacts, updateContact, setSection, setActiveCrmId, setNewContact, setShowNewContact } = useCRMStore()
-  const { section } = useUIStore()
+  const { crmContacts, setCrmContacts, updateContact, setActiveCrmId, setNewContact, setShowNewContact } = useCRMStore()
+  const { section, setSection } = useUIStore()
 
   // Recording state
   const [recording, setRecording] = useState(false)
