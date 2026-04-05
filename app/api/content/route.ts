@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { auth } from '@/auth'
 
 const ContentSchema = z.object({
   zona:         z.string().min(1, 'Zona é obrigatória'),
@@ -302,8 +301,7 @@ function generatePostingSchedule(): Record<string, { day: string; time: string; 
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth()
-  if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  // Rate-limited — no NextAuth required, portal uses magic-link auth
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
   if (!checkRate(ip)) return NextResponse.json({ success: false, error: 'Limite de pedidos atingido. Tenta em 1 hora.' }, { status: 429 })
