@@ -298,11 +298,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .range((page - 1) * limit, page * limit - 1)
 
       if (status) query = query.eq('status', status)
-      // tier filter skipped — no lead_tier column in live schema
-      if (zone)   query = query.contains('zonas', [zone])
+      if (tier)   query = query.eq('lead_tier', tier)
+      if (zone)   query = query.contains('preferred_locations', [zone])
       if (search) {
         query = query.or(
-          `name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`
+          `full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`
         )
       }
 
@@ -311,25 +311,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       if (!error && data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = (data as any[]).map((row) => ({
-          id: row.id,
-          name: row.name || '',
+          id: String(row.id),
+          name: row.full_name || row.name || '',
           email: row.email || '',
           phone: row.phone || '',
           nationality: row.nationality || '',
           budgetMin: row.budget_min || 0,
           budgetMax: row.budget_max || 0,
-          tipos: Array.isArray(row.tipos) ? row.tipos : [],
-          zonas: Array.isArray(row.zonas) ? row.zonas : [],
+          tipos: Array.isArray(row.typologies_wanted) ? row.typologies_wanted : (Array.isArray(row.tipos) ? row.tipos : []),
+          zonas: Array.isArray(row.preferred_locations) ? row.preferred_locations : (Array.isArray(row.zonas) ? row.zonas : []),
           status: row.status || 'lead',
           notes: row.notes || '',
-          lastContact: row.last_contact || '',
-          nextFollowUp: '',
+          lastContact: row.last_contact_at || row.last_contact || '',
+          nextFollowUp: row.next_followup_at || '',
           dealRef: '',
-          origin: row.origin || '',
+          origin: row.source || row.origin || '',
           createdAt: row.created_at || '',
           language: row.language ? (row.language as string).toUpperCase() as CRMContact['language'] : undefined,
           source: row.source || '',
           leadScore: row.lead_score || 0,
+          leadTier: row.lead_tier || null,
+          company: row.company || '',
+          jobTitle: row.job_title || '',
+          aiSummary: row.ai_summary || '',
+          aiSuggestedAction: row.ai_suggested_action || '',
+          tags: Array.isArray(row.tags) ? row.tags : [],
+          agentId: row.agent_id || row.assigned_to || null,
         }))
 
         const response = {
