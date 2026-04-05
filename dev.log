@@ -1,0 +1,38 @@
+node:internal/modules/package_json_reader:116
+  const parsed = modulesBinding.readPackageJSON(
+                                ^
+
+Error: Invalid package config \\?\C:\Program Files\nodejs\node_modules\npm\node_modules\nopt\package.json.
+    at Object.read (node:internal/modules/package_json_reader:116:33)
+    at _readPackage (node:internal/modules/cjs/loader:468:55)
+    at resolveExports (node:internal/modules/cjs/loader:646:15)
+    at Function._findPath (node:internal/modules/cjs/loader:717:31)
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1369:27)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24) {
+  code: 'ERR_INVALID_PACKAGE_CONFIG'
+}
+
+Node.js v22.22.0
+node:internal/modules/package_json_reader:116
+  const parsed = modulesBinding.readPackageJSON(
+                                ^
+
+Error: Invalid package config \\?\C:\Program Files\nodejs\node_modules\npm\node_modules\nopt\package.json.
+    at Object.read (node:internal/modules/package_json_reader:116:33)
+    at _readPackage (node:internal/modules/cjs/loader:468:55)
+    at resolveExports (node:internal/modules/cjs/loader:646:15)
+    at Function._findPath (node:internal/modules/cjs/loader:717:31)
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1369:27)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24) {
+  code: 'ERR_INVALID_PACKAGE_CONFIG'
+}
+
+Node.js v22.22.0

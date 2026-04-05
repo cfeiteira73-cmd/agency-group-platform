@@ -57,6 +57,44 @@ const STATUS_CONFIG = {
   vip:      { label: 'VIP',      bg: 'rgba(201,169,110,.12)', color: '#c9a96e',  avatar: 'rgba(201,169,110,.15)' },
 }
 
+function ScoreCircle({ score, budgetLabel, engagementLabel }: { score: number; budgetLabel?: string; engagementLabel?: string }) {
+  const color = score > 70 ? '#22c55e' : score > 40 ? '#c9a96e' : '#e05252'
+  const r = 12
+  const circumference = 2 * Math.PI * r
+  const dash = (score / 100) * circumference
+  const tooltip = [
+    `Score: ${score}`,
+    budgetLabel ? `Budget: ${budgetLabel}` : '',
+    engagementLabel ? `Engagement: ${engagementLabel}` : '',
+  ].filter(Boolean).join(' · ')
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" aria-label={tooltip} style={{ cursor: 'default', flexShrink: 0 }}>
+      <circle cx="16" cy="16" r={r} fill="none" stroke="rgba(14,14,13,.08)" strokeWidth="2.5" />
+      <circle cx="16" cy="16" r={r} fill="none" stroke={color} strokeWidth="2.5"
+        strokeDasharray={`${dash} ${circumference - dash}`}
+        strokeDashoffset={circumference / 4}
+        strokeLinecap="round" />
+      <text x="16" y="20" textAnchor="middle" fontFamily="DM Mono, monospace" fontSize="8" fill={color}>{score}</text>
+    </svg>
+  )
+}
+
+function TemperatureBadge({ score, lastContactDays }: { score: number; lastContactDays: number | null }) {
+  const days = lastContactDays ?? 999
+  const heat = score > 75 && days < 7 ? 'hot' : score > 45 && days < 21 ? 'warm' : 'cold'
+  const config = {
+    hot:  { icon: '🔥', label: 'Hot',  color: '#e05252', bg: 'rgba(224,82,82,.08)' },
+    warm: { icon: '🌡️', label: 'Warm', color: '#c9a96e', bg: 'rgba(201,169,110,.08)' },
+    cold: { icon: '❄️', label: 'Cold', color: '#6b9fb8', bg: 'rgba(107,159,184,.08)' },
+  }[heat]
+  return (
+    <span title={`Temperatura: ${config.label} · Score ${score} · ${days === 999 ? 'sem contacto' : `${days}d desde contacto`}`}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', padding: '1px 5px', background: config.bg, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: config.color, cursor: 'default' }}>
+      {config.icon}
+    </span>
+  )
+}
+
 export default function PortalCRM() {
   const {
     crmContacts, setCrmContacts,
@@ -98,6 +136,13 @@ export default function PortalCRM() {
 
   const [agentName, setAgentName] = useState('Agente')
   const [agentEmail, setAgentEmail] = useState('')
+  const [quickFilter, setQuickFilter] = useState<string>('todos')
+  const [sortBy, setSortBy] = useState<'score' | 'actividade' | 'nome' | 'budget'>('score')
+  const [showStatsPanel, setShowStatsPanel] = useState(false)
+  const [quickNoteId, setQuickNoteId] = useState<number | null>(null)
+  const [quickNoteText, setQuickNoteText] = useState('')
+  const [showBulkEmailModal, setShowBulkEmailModal] = useState(false)
+  const [showBulkStatusModal, setShowBulkStatusModal] = useState(false)
 
   useEffect(() => {
     try {
@@ -126,8 +171,29 @@ export default function PortalCRM() {
     const natMatch = !crmNatFilter || c.nationality.toLowerCase().includes(crmNatFilter.toLowerCase())
     const zonaMatch = !crmZonaFilter || c.zonas.some(z => z.toLowerCase().includes(crmZonaFilter.toLowerCase()))
     const statusMatch = !crmStatusFilter || c.status === crmStatusFilter
-    return searchMatch && natMatch && zonaMatch && statusMatch
-  }).sort((a, b) => computeLeadScore(b).score - computeLeadScore(a).score)
+    // Quick filter logic
+    const todayStr = new Date().toISOString().split('T')[0]
+    const dSinceContact = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : null
+    const qfMatch = quickFilter === 'todos' ? true
+      : quickFilter === 'lead' ? c.status === 'lead'
+      : quickFilter === 'prospect' ? c.status === 'prospect'
+      : quickFilter === 'cliente' ? c.status === 'cliente'
+      : quickFilter === 'vip' ? c.status === 'vip'
+      : quickFilter === 'followup' ? (!!c.nextFollowUp && c.nextFollowUp <= todayStr)
+      : quickFilter === 'sem_contacto' ? (dSinceContact !== null && dSinceContact >= 14)
+      : true
+    return searchMatch && natMatch && zonaMatch && statusMatch && qfMatch
+  }).sort((a, b) => {
+    if (sortBy === 'score') return computeLeadScore(b).score - computeLeadScore(a).score
+    if (sortBy === 'actividade') {
+      const da = a.lastContact ? new Date(a.lastContact).getTime() : 0
+      const db = b.lastContact ? new Date(b.lastContact).getTime() : 0
+      return db - da
+    }
+    if (sortBy === 'nome') return a.name.localeCompare(b.name)
+    if (sortBy === 'budget') return (Number(b.budgetMax) || 0) - (Number(a.budgetMax) || 0)
+    return 0
+  })
 
   const activeContact = activeCrmId ? crmContacts.find(c => c.id === activeCrmId) : null
   const vipCount = crmContacts.filter(c => c.status === 'vip').length
@@ -396,6 +462,60 @@ export default function PortalCRM() {
         </div>
       )}
 
+      {/* CRM Stats Funnel Panel (collapsible) */}
+      {crmView === 'list' && (
+        <div style={{ marginBottom: '12px' }}>
+          <button
+            onClick={() => setShowStatsPanel(!showStatsPanel)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: showStatsPanel ? 'rgba(28,74,53,.08)' : 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', color: '#1c4a35', cursor: 'pointer', width: '100%', justifyContent: 'space-between' }}>
+            <span>📊 Funil CRM — {crmContacts.length} Contactos</span>
+            <span style={{ fontSize: '.5rem' }}>{showStatsPanel ? '▲' : '▼'}</span>
+          </button>
+          {showStatsPanel && (() => {
+            const leads = crmContacts.filter(c => c.status === 'lead').length
+            const prospects = crmContacts.filter(c => c.status === 'prospect').length
+            const clientes = crmContacts.filter(c => c.status === 'cliente').length
+            const vips = crmContacts.filter(c => c.status === 'vip').length
+            const total = crmContacts.length || 1
+            const oneWeekAgo = new Date(); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+            const newThisWeek = crmContacts.filter(c => c.createdAt && new Date(c.createdAt) >= oneWeekAgo).length
+            const inactive30d = crmContacts.filter(c => {
+              if (!c.lastContact) return true
+              return Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) >= 30
+            }).length
+            const stages = [
+              { label: 'Leads', count: leads, color: '#888', pct: (leads / total) * 100 },
+              { label: 'Prospects', count: prospects, color: '#3a7bd5', pct: (prospects / total) * 100 },
+              { label: 'Clientes', count: clientes, color: '#4a9c7a', pct: (clientes / total) * 100 },
+              { label: 'VIP', count: vips, color: '#c9a96e', pct: (vips / total) * 100 },
+            ]
+            return (
+              <div style={{ background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.08)', borderTop: 'none', padding: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+                  {stages.map((s, i) => (
+                    <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.08em', textTransform: 'uppercase', color: s.color, width: '60px', flexShrink: 0 }}>{s.label}</div>
+                      <div style={{ flex: 1, height: '8px', background: 'rgba(14,14,13,.06)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${s.pct}%`, background: s.color, borderRadius: '4px', transition: 'width .4s', opacity: 0.8 }} />
+                      </div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', fontWeight: 700, color: s.color, width: '24px', textAlign: 'right', flexShrink: 0 }}>{s.count}</div>
+                      {i < stages.length - 1 && stages[i + 1].count > 0 && stages[i].count > 0 && (
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)', width: '36px', flexShrink: 0 }}>→{Math.round((stages[i + 1].count / stages[i].count) * 100)}%</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', borderTop: '1px solid rgba(14,14,13,.07)', paddingTop: '10px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#4a9c7a' }}>+{newThisWeek} esta semana</div>
+                  {inactive30d > 0 && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#e05252' }}>{inactive30d} inactivos 30d+</div>}
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.4)' }}>{crmContacts.length} total</div>
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+      )}
+
       {/* List View */}
       {crmView === 'list' && (
         <div className="crm-layout" style={{ display: 'flex', gap: '0', background: '#fff', border: '1px solid rgba(14,14,13,.08)', minHeight: '500px' }}>
@@ -404,39 +524,124 @@ export default function PortalCRM() {
             <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(14,14,13,.06)' }}>
               <input className="p-inp" placeholder="Pesquisar contacto..." value={crmSearch} onChange={e => setCrmSearch(e.target.value)} style={{ fontSize: '.78rem', padding: '8px 12px' }} />
             </div>
-            <div style={{ display: 'flex', gap: '4px', padding: '8px 12px', borderBottom: '1px solid rgba(14,14,13,.06)', flexWrap: 'wrap', alignItems: 'center' }}>
-              {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                <div key={k} style={{ padding: '3px 8px', background: v.bg, fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', textTransform: 'uppercase', color: v.color, cursor: 'pointer' }}
-                  onClick={() => setCrmSearch(crmSearch === k ? '' : k)}>
-                  {v.label} {crmContacts.filter(c => c.status === k).length}
+
+            {/* Quick Filters */}
+            <div style={{ padding: '8px 10px', borderBottom: '1px solid rgba(14,14,13,.06)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+                {([
+                  ['todos', `Todos (${crmContacts.length})`],
+                  ['lead', `Leads (${crmContacts.filter(c => c.status === 'lead').length})`],
+                  ['prospect', `Prospects (${crmContacts.filter(c => c.status === 'prospect').length})`],
+                  ['cliente', `Clientes (${crmContacts.filter(c => c.status === 'cliente').length})`],
+                  ['vip', `VIP (${crmContacts.filter(c => c.status === 'vip').length})`],
+                ] as [string, string][]).map(([k, l]) => (
+                  <button key={k} onClick={() => setQuickFilter(k)}
+                    style={{ padding: '3px 7px', background: quickFilter === k ? (STATUS_CONFIG[k as keyof typeof STATUS_CONFIG]?.bg || 'rgba(28,74,53,.12)') : 'transparent', border: `1px solid ${quickFilter === k ? (STATUS_CONFIG[k as keyof typeof STATUS_CONFIG]?.color || '#1c4a35') + '50' : 'rgba(14,14,13,.1)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.06em', color: quickFilter === k ? (STATUS_CONFIG[k as keyof typeof STATUS_CONFIG]?.color || '#1c4a35') : 'rgba(14,14,13,.45)', cursor: 'pointer' }}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {([
+                  ['followup', `Follow-up Hoje (${crmContacts.filter(c => c.nextFollowUp && c.nextFollowUp <= today).length})`],
+                  ['sem_contacto', `Sem Contacto 14d+ (${crmContacts.filter(c => { const d = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : null; return d !== null && d >= 14 }).length})`],
+                ] as [string, string][]).map(([k, l]) => (
+                  <button key={k} onClick={() => setQuickFilter(quickFilter === k ? 'todos' : k)}
+                    style={{ padding: '3px 7px', background: quickFilter === k ? 'rgba(224,82,82,.1)' : 'transparent', border: `1px solid ${quickFilter === k ? 'rgba(224,82,82,.3)' : 'rgba(14,14,13,.1)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: quickFilter === k ? '#e05252' : 'rgba(14,14,13,.45)', cursor: 'pointer' }}>
+                    {l}
+                  </button>
+                ))}
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                    style={{ padding: '3px 6px', border: '1px solid rgba(14,14,13,.1)', background: '#fff', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', outline: 'none' }}>
+                    <option value="score">↓ Score</option>
+                    <option value="actividade">↓ Actividade</option>
+                    <option value="nome">↓ Nome</option>
+                    <option value="budget">↓ Budget</option>
+                  </select>
+                  <button onClick={() => { setCrmBulkMode(!crmBulkMode); setCrmSelectedIds(new Set()) }}
+                    style={{ padding: '3px 8px', background: crmBulkMode ? 'rgba(28,74,53,.12)' : 'rgba(14,14,13,.04)', border: `1px solid ${crmBulkMode ? 'rgba(28,74,53,.3)' : 'rgba(14,14,13,.1)'}`, color: crmBulkMode ? '#1c4a35' : 'rgba(14,14,13,.4)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}>
+                    {crmBulkMode ? '✓ Bulk' : '☐ Bulk'}
+                  </button>
                 </div>
-              ))}
-              {crmSearch && <div style={{ padding: '3px 8px', background: 'rgba(14,14,13,.06)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => setCrmSearch('')}>× limpar</div>}
-              <div style={{ marginLeft: 'auto' }}>
-                <button onClick={() => { setCrmBulkMode(!crmBulkMode); setCrmSelectedIds(new Set()) }}
-                  style={{ padding: '3px 8px', background: crmBulkMode ? 'rgba(28,74,53,.12)' : 'rgba(14,14,13,.04)', border: `1px solid ${crmBulkMode ? 'rgba(28,74,53,.3)' : 'rgba(14,14,13,.1)'}`, color: crmBulkMode ? '#1c4a35' : 'rgba(14,14,13,.4)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}>
-                  {crmBulkMode ? '✓ Bulk' : '☐ Bulk'}
-                </button>
               </div>
             </div>
+
+            {/* Enhanced Bulk Actions */}
             {crmBulkMode && crmSelectedIds.size > 0 && (
-              <div style={{ padding: '8px 12px', background: 'rgba(28,74,53,.06)', borderBottom: '1px solid rgba(28,74,53,.12)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#1c4a35', fontWeight: 700 }}>{crmSelectedIds.size} selec.</div>
-                <button style={{ padding: '4px 10px', background: '#25d366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
-                  onClick={() => {
-                    const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
-                    const phones = selected.map(c => c.phone?.replace(/\D/g, '')).filter(Boolean)
-                    if (phones.length === 1) window.open(`https://wa.me/${phones[0]}`)
-                    else { alert(`Campanha WA para ${phones.length} contactos. Abre cada um individualmente.`); phones.forEach((p, i) => setTimeout(() => window.open(`https://wa.me/${p}`), i * 500)) }
-                  }}>💬 WA Campaign</button>
-                <button style={{ padding: '4px 10px', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
-                  onClick={() => {
-                    const d = new Date(); d.setDate(d.getDate() + 3)
-                    const ds = d.toISOString().split('T')[0]
-                    saveCrmContacts(crmContacts.map(c => crmSelectedIds.has(c.id) ? { ...c, nextFollowUp: ds } : c))
-                    setCrmSelectedIds(new Set())
-                  }}>📅 Follow-up +3d</button>
-                <button style={{ padding: '4px 10px', background: 'rgba(14,14,13,.04)', color: 'rgba(14,14,13,.35)', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }} onClick={() => setCrmSelectedIds(new Set())}>× Limpar</button>
+              <div style={{ padding: '8px 10px', background: 'rgba(28,74,53,.06)', borderBottom: '1px solid rgba(28,74,53,.12)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#1c4a35', fontWeight: 700 }}>{crmSelectedIds.size} seleccionados</div>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <button style={{ padding: '4px 8px', background: 'rgba(28,74,53,.1)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}
+                    onClick={() => setShowBulkEmailModal(true)}>📧 Email</button>
+                  <button style={{ padding: '4px 8px', background: '#25d366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}
+                    onClick={() => {
+                      const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
+                      const phones = selected.map(c => c.phone?.replace(/\D/g, '')).filter(Boolean)
+                      if (phones.length === 1) window.open(`https://wa.me/${phones[0]}`)
+                      else { alert(`Campanha WA para ${phones.length} contactos.`); phones.forEach((p, i) => setTimeout(() => window.open(`https://wa.me/${p}`), i * 500)) }
+                    }}>💬 WA</button>
+                  <button style={{ padding: '4px 8px', background: 'rgba(201,169,110,.1)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}
+                    onClick={() => setShowBulkStatusModal(true)}>📊 Status</button>
+                  <button style={{ padding: '4px 8px', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}
+                    onClick={() => {
+                      const d = new Date(); d.setDate(d.getDate() + 3)
+                      saveCrmContacts(crmContacts.map(c => crmSelectedIds.has(c.id) ? { ...c, nextFollowUp: d.toISOString().split('T')[0] } : c))
+                      setCrmSelectedIds(new Set())
+                    }}>📅 +3d</button>
+                  <button style={{ padding: '4px 8px', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}
+                    onClick={() => {
+                      const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
+                      const csv = ['Nome,Email,Telefone,Nacionalidade,Status,Budget Max,Zonas', ...selected.map(c => `"${c.name}","${c.email}","${c.phone}","${c.nationality}","${c.status}","${c.budgetMax}","${(c.zonas || []).join(';')}"`)]
+                      const blob = new Blob([csv.join('\n')], { type: 'text/csv' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a'); a.href = url; a.download = `crm_export_${new Date().toISOString().split('T')[0]}.csv`; a.click()
+                      URL.revokeObjectURL(url)
+                    }}>📤 CSV</button>
+                  <button style={{ padding: '4px 8px', background: 'rgba(224,82,82,.06)', color: '#e05252', border: '1px solid rgba(224,82,82,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }}
+                    onClick={() => {
+                      if (confirm(`Arquivar ${crmSelectedIds.size} contactos?`)) {
+                        saveCrmContacts(crmContacts.filter(c => !crmSelectedIds.has(c.id)))
+                        setCrmSelectedIds(new Set()); setCrmBulkMode(false)
+                      }
+                    }}>🗑️ Arquivar</button>
+                  <button style={{ padding: '4px 8px', background: 'rgba(14,14,13,.04)', color: 'rgba(14,14,13,.35)', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer' }} onClick={() => setCrmSelectedIds(new Set())}>× Limpar</button>
+                </div>
+              </div>
+            )}
+
+            {/* Bulk Status Modal */}
+            {showBulkStatusModal && (
+              <div style={{ padding: '8px 10px', background: 'rgba(201,169,110,.06)', borderBottom: '1px solid rgba(201,169,110,.12)' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#c9a96e', marginBottom: '6px' }}>Alterar status para:</div>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  {(['lead', 'prospect', 'cliente', 'vip'] as const).map(s => (
+                    <button key={s} style={{ padding: '4px 8px', background: STATUS_CONFIG[s].bg, color: STATUS_CONFIG[s].color, border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+                      onClick={() => { saveCrmContacts(crmContacts.map(c => crmSelectedIds.has(c.id) ? { ...c, status: s } : c)); setCrmSelectedIds(new Set()); setShowBulkStatusModal(false) }}>
+                      {s.toUpperCase()}
+                    </button>
+                  ))}
+                  <button style={{ padding: '4px 8px', background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => setShowBulkStatusModal(false)}>× cancelar</button>
+                </div>
+              </div>
+            )}
+
+            {/* Bulk Email Modal */}
+            {showBulkEmailModal && (
+              <div style={{ padding: '10px', background: 'rgba(28,74,53,.04)', borderBottom: '1px solid rgba(28,74,53,.12)' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', marginBottom: '6px' }}>📧 Email em Massa · {crmSelectedIds.size} contactos</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)', lineHeight: 1.5, marginBottom: '6px' }}>
+                  Emails: {crmContacts.filter(c => crmSelectedIds.has(c.id) && c.email).map(c => c.email).join(', ').substring(0, 100)}{crmContacts.filter(c => crmSelectedIds.has(c.id) && c.email).length > 3 ? '...' : ''}
+                </div>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button style={{ padding: '5px 10px', background: '#1c4a35', color: '#c9a96e', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+                    onClick={() => { const emails = crmContacts.filter(c => crmSelectedIds.has(c.id) && c.email).map(c => c.email).join(','); window.open(`mailto:${emails}`); setShowBulkEmailModal(false) }}>
+                    Abrir no Mail
+                  </button>
+                  <button style={{ padding: '5px 8px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => setShowBulkEmailModal(false)}>× Cancelar</button>
+                </div>
               </div>
             )}
             <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -445,52 +650,82 @@ export default function PortalCRM() {
                 const ini = c.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
                 const isOverdue = c.nextFollowUp && c.nextFollowUp < today
                 const ls2 = calcLeadScore({ budgetMax: c.budgetMax, budgetMin: c.budgetMin, phone: c.phone, email: c.email, source: c.origin, notes: c.notes })
-                const barColor = ls2.color === 'emerald' ? '#10b981' : ls2.color === 'yellow' ? '#f59e0b' : ls2.color === 'orange' ? '#f97316' : '#9ca3af'
                 const dSince = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : null
                 const dColor = dSince === null ? '#9ca3af' : dSince > 14 ? '#e05454' : dSince > 7 ? '#f97316' : dSince > 3 ? '#f59e0b' : '#10b981'
                 const dLabel = dSince === null ? '—' : dSince === 0 ? 'hoje' : `${dSince}d`
+                const budgetLabel = Number(c.budgetMax) > 2e6 ? 'Alto' : Number(c.budgetMax) > 800000 ? 'Médio' : 'Base'
+                const engagementLabel = dSince === null ? 'Desconhecido' : dSince < 3 ? 'Muito Alto' : dSince < 7 ? 'Alto' : dSince < 14 ? 'Médio' : 'Baixo'
+                const isQuickNoteOpen = quickNoteId === c.id
                 return (
-                  <div key={c.id}
-                    className={`crm-contact-row${activeCrmId === c.id ? ' active' : ''}`}
-                    style={{ background: crmBulkMode && crmSelectedIds.has(c.id) ? 'rgba(28,74,53,.08)' : undefined }}
-                    onClick={() => {
-                      if (crmBulkMode) {
-                        const next = new Set(crmSelectedIds); next.has(c.id) ? next.delete(c.id) : next.add(c.id); setCrmSelectedIds(next)
-                      } else {
-                        setActiveCrmId(c.id); setCrmProfileTab('overview')
-                      }
-                    }}>
-                    {crmBulkMode && (
-                      <div style={{ flexShrink: 0, width: '18px', height: '18px', border: `2px solid ${crmSelectedIds.has(c.id) ? '#1c4a35' : 'rgba(14,14,13,.2)'}`, background: crmSelectedIds.has(c.id) ? '#1c4a35' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px' }}>
-                        {crmSelectedIds.has(c.id) && <svg width="10" height="10" fill="none" stroke="#fff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div key={c.id}>
+                    <div
+                      className={`crm-contact-row${activeCrmId === c.id ? ' active' : ''}`}
+                      style={{ background: crmBulkMode && crmSelectedIds.has(c.id) ? 'rgba(28,74,53,.08)' : undefined }}
+                      onClick={() => {
+                        if (crmBulkMode) {
+                          const next = new Set(crmSelectedIds); next.has(c.id) ? next.delete(c.id) : next.add(c.id); setCrmSelectedIds(next)
+                        } else {
+                          setActiveCrmId(c.id); setCrmProfileTab('overview')
+                        }
+                      }}>
+                      {crmBulkMode && (
+                        <div style={{ flexShrink: 0, width: '18px', height: '18px', border: `2px solid ${crmSelectedIds.has(c.id) ? '#1c4a35' : 'rgba(14,14,13,.2)'}`, background: crmSelectedIds.has(c.id) ? '#1c4a35' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '3px' }}>
+                          {crmSelectedIds.has(c.id) && <svg width="10" height="10" fill="none" stroke="#fff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        </div>
+                      )}
+                      <div className="crm-avatar" style={{ background: sc.avatar, color: sc.color }}>{ini}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                          <span style={{ fontWeight: 500, fontSize: '.83rem', color: '#0e0e0d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{c.name}</span>
+                          <span className="crm-status" style={{ background: sc.bg, color: sc.color, flexShrink: 0 }}>{sc.label}</span>
+                          <TemperatureBadge score={ls2.score} lastContactDays={dSince} />
+                        </div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '3px' }}>{c.nationality}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#1c4a35' }}>
+                            {(Number(c.budgetMin) || 0) > 0 ? `€${(Number(c.budgetMin) / 1e6).toFixed(1)}M–€${(Number(c.budgetMax) / 1e6).toFixed(1)}M` : 'Budget n/d'}
+                          </span>
+                          {isOverdue && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#e05454', background: 'rgba(224,84,84,.08)', padding: '1px 4px' }}>Follow-up!</span>}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
+                        <ScoreCircle score={ls2.score} budgetLabel={budgetLabel} engagementLabel={engagementLabel} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', fontWeight: 700, color: dColor }}>{dLabel}</div>
+                          <button
+                            title="Nota rápida"
+                            onClick={e => { e.stopPropagation(); setQuickNoteId(isQuickNoteOpen ? null : c.id); setQuickNoteText('') }}
+                            style={{ padding: '2px 5px', background: isQuickNoteOpen ? 'rgba(28,74,53,.12)' : 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', cursor: 'pointer', lineHeight: 1 }}>
+                            📝
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Quick Note inline */}
+                    {isQuickNoteOpen && (
+                      <div style={{ padding: '8px 12px', background: 'rgba(28,74,53,.04)', borderBottom: '1px solid rgba(28,74,53,.1)' }} onClick={e => e.stopPropagation()}>
+                        <textarea
+                          autoFocus
+                          rows={2}
+                          value={quickNoteText}
+                          onChange={e => setQuickNoteText(e.target.value)}
+                          placeholder="Adicionar nota rápida..."
+                          style={{ width: '100%', border: '1px solid rgba(28,74,53,.2)', background: '#fff', fontFamily: "'Jost',sans-serif", fontSize: '.78rem', padding: '6px 8px', resize: 'vertical', outline: 'none', boxSizing: 'border-box', color: '#0e0e0d', lineHeight: 1.5 }}
+                        />
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '5px' }}>
+                          <button
+                            style={{ padding: '4px 12px', background: '#1c4a35', color: '#c9a96e', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+                            disabled={!quickNoteText.trim()}
+                            onClick={() => {
+                              if (!quickNoteText.trim()) return
+                              const act = { id: Date.now(), type: 'note' as const, note: quickNoteText.trim(), date: today }
+                              saveCrmContacts(crmContacts.map(cont => cont.id === c.id ? { ...cont, activities: [act, ...(cont.activities || [])], lastContact: today } : cont))
+                              setQuickNoteId(null); setQuickNoteText('')
+                            }}>Guardar</button>
+                          <button style={{ padding: '4px 10px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => { setQuickNoteId(null); setQuickNoteText('') }}>Cancelar</button>
+                        </div>
                       </div>
                     )}
-                    <div className="crm-avatar" style={{ background: sc.avatar, color: sc.color }}>{ini}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                        <div style={{ flex: 1, height: '3px', background: 'rgba(14,14,13,.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', borderRadius: '2px', background: barColor, width: `${ls2.score}%` }} />
-                        </div>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', fontWeight: 700, color: barColor, flexShrink: 0 }}>{ls2.score}/100</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                        <span style={{ fontWeight: 500, fontSize: '.83rem', color: '#0e0e0d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-                        <span className="crm-status" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
-                      </div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nationality}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#1c4a35' }}>
-                          {(Number(c.budgetMin) || 0) > 0 ? `€${(Number(c.budgetMin) / 1e6).toFixed(1)}M–€${(Number(c.budgetMax) / 1e6).toFixed(1)}M` : 'Budget n/d'}
-                        </span>
-                        {isOverdue && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#e05454', background: 'rgba(224,84,84,.08)', padding: '1px 5px' }}>Follow-up!</span>}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px', flexShrink: 0 }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', fontWeight: 700, color: dColor }}>{dLabel}</div>
-                      <div style={{ width: '32px', height: '3px', background: 'rgba(14,14,13,.08)', borderRadius: '2px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', borderRadius: '2px', background: dColor, width: `${Math.min(100, ((dSince || 0) / 21) * 100)}%` }} />
-                      </div>
-                    </div>
                   </div>
                 )
               })}

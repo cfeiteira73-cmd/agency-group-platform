@@ -30,6 +30,9 @@ export const NAV: NavItem[] = [
   { id:'visitas', label:'Gestão de Visitas', icon:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', group:'MAIS' },
   { id:'collections', label:'Collections IA', icon:'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', group:'MAIS' },
   { id:'draftOffer', label:'Redigir Proposta IA', icon:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', group:'MAIS' },
+  { id:'analytics', label:'Analytics & BI', icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', group:'INTELIGÊNCIA' },
+  { id:'investidores', label:'Motor Investidores', icon:'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', group:'INTELIGÊNCIA' },
+  { id:'outbound', label:'Captação Off-Market', icon:'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', group:'INTELIGÊNCIA' },
 ]
 
 export const PIPELINE_STAGES = ['Angariação','Proposta Enviada','Proposta Aceite','Due Diligence','CPCV Assinado','Financiamento','Escritura Marcada','Escritura Concluída']
@@ -129,6 +132,9 @@ export const SECTION_NAMES: Record<string, string> = {
   voz:'Nota de Voz → CRM',
   collections:'Collections IA · Boards Colaborativos',
   draftOffer:'Redigir Proposta IA',
+  analytics:'Analytics & BI · Dashboard de Performance',
+  investidores:'Motor de Investidores · Deal Flow',
+  outbound:'Captação Off-Market · Prospecção',
 }
 
 export const BUYER_DEMAND = [

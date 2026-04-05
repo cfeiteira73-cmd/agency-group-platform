@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { useRadarStore } from '../stores/radarStore'
 import { HEAT_MAP_ZONES } from './constants'
@@ -9,8 +10,165 @@ interface PortalRadarProps {
   onGerarPDF: (deals: Record<string, unknown>[], filtros: Record<string, unknown>, stats: Record<string, unknown>) => void
 }
 
+interface RadarDimension {
+  name: string
+  score: number
+  weight?: number
+  note?: string
+}
+
+interface FinancialProjection {
+  yieldBruto: number
+  yieldLiquido: number
+  irr5anos: number
+  irr10anos: number
+}
+
+interface Comparable {
+  address: string
+  price: number
+  sqm: number
+  daysOnMarket: number
+}
+
+interface RadarResultTyped {
+  score: number
+  recommendation: string
+  summary: string
+  dimensions?: RadarDimension[]
+  risks?: string[]
+  opportunities?: string[]
+  comparables?: Comparable[]
+  negotiationAdvice?: string
+  exitStrategy?: string
+  financialProjection?: FinancialProjection
+  // legacy fields
+  classificacao?: string
+  analise_narrativa?: string
+}
+
+type ResultTab = 'overview' | 'dimensoes' | 'financeiro' | 'comparaveis'
+
+interface RadarHistoryItem {
+  url: string
+  score: number
+  recommendation: string
+  date: string
+}
+
+const RADAR_HISTORY_KEY = 'ag_radar_history'
+const MAX_HISTORY = 5
+
+function getScoreColor(score: number): string {
+  if (score > 75) return '#22c55e'
+  if (score > 50) return '#c9a96e'
+  return '#e05252'
+}
+
+function getScoreBg(score: number): string {
+  if (score > 75) return 'rgba(34,197,94,.08)'
+  if (score > 50) return 'rgba(201,169,110,.08)'
+  return 'rgba(224,82,82,.08)'
+}
+
+function getRecommendationLabel(rec: string): string {
+  const r = (rec || '').toUpperCase()
+  if (r.includes('COMPRAR') || r === 'BUY') return 'COMPRAR COM CONFIANÇA'
+  if (r.includes('INVESTIGAR') || r.includes('INVESTIG') || r === 'HOLD') return 'INVESTIGAR MAIS'
+  if (r.includes('EVITAR') || r === 'AVOID' || r === 'SELL') return 'EVITAR'
+  return r || 'ANALISAR'
+}
+
+function RadarChart({ dimensions }: { dimensions: RadarDimension[] }) {
+  if (!dimensions || dimensions.length === 0) return null
+  const size = 260
+  const cx = size / 2
+  const cy = size / 2
+  const maxR = 100
+  const n = dimensions.length
+  const toXY = (angle: number, r: number) => ({
+    x: cx + r * Math.cos(angle),
+    y: cy + r * Math.sin(angle),
+  })
+  const angles = dimensions.map((_, i) => (i / n) * 2 * Math.PI - Math.PI / 2)
+
+  // Max polygon points (full 100)
+  const maxPoints = angles.map(a => toXY(a, maxR))
+  const maxPoly = maxPoints.map(p => `${p.x},${p.y}`).join(' ')
+
+  // Score polygon
+  const scorePoints = dimensions.map((d, i) => toXY(angles[i], (d.score / 100) * maxR))
+  const scorePoly = scorePoints.map(p => `${p.x},${p.y}`).join(' ')
+
+  // Grid rings at 25, 50, 75, 100
+  const rings = [25, 50, 75, 100]
+
+  return (
+    <svg width={size} height={size + 40} viewBox={`0 0 ${size} ${size + 40}`} style={{ display: 'block', margin: '0 auto' }}>
+      {/* Grid rings */}
+      {rings.map(pct => {
+        const rpts = angles.map(a => toXY(a, (pct / 100) * maxR))
+        return (
+          <polygon
+            key={pct}
+            points={rpts.map(p => `${p.x},${p.y}`).join(' ')}
+            fill="none"
+            stroke="rgba(14,14,13,.08)"
+            strokeWidth="1"
+          />
+        )
+      })}
+
+      {/* Axis lines */}
+      {angles.map((a, i) => {
+        const end = toXY(a, maxR)
+        return <line key={i} x1={cx} y1={cy} x2={end.x} y2={end.y} stroke="rgba(14,14,13,.07)" strokeWidth="1" />
+      })}
+
+      {/* Max polygon */}
+      <polygon points={maxPoly} fill="rgba(14,14,13,.03)" stroke="rgba(14,14,13,.12)" strokeWidth="1" />
+
+      {/* Score polygon */}
+      <polygon points={scorePoly} fill="rgba(28,74,53,.15)" stroke="#1c4a35" strokeWidth="2" />
+
+      {/* Score dots */}
+      {scorePoints.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r="3" fill="#1c4a35" />
+      ))}
+
+      {/* Labels */}
+      {dimensions.map((d, i) => {
+        const labelR = maxR + 22
+        const lp = toXY(angles[i], labelR)
+        const anchor = lp.x < cx - 5 ? 'end' : lp.x > cx + 5 ? 'start' : 'middle'
+        const name = d.name.length > 12 ? d.name.substring(0, 11) + '…' : d.name
+        return (
+          <g key={i}>
+            <text
+              x={lp.x} y={lp.y - 3}
+              textAnchor={anchor}
+              fontFamily="DM Mono, monospace"
+              fontSize="7"
+              fill="rgba(14,14,13,.5)"
+              letterSpacing=".04em"
+            >{name}</text>
+            <text
+              x={lp.x} y={lp.y + 8}
+              textAnchor={anchor}
+              fontFamily="DM Mono, monospace"
+              fontSize="8"
+              fontWeight="700"
+              fill={getScoreColor(d.score)}
+            >{d.score}</text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
 export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }: PortalRadarProps) {
-  const { darkMode } = useUIStore()
+  const { darkMode, setSection } = useUIStore()
   const {
     radarResult, radarLoading,
     radarUrl, setRadarUrl,
@@ -25,8 +183,41 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
     showHeatMap, setShowHeatMap,
   } = useRadarStore()
 
+  const [resultTab, setResultTab] = useState<ResultTab>('overview')
+  const [radarHistory, setRadarHistory] = useState<RadarHistoryItem[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+
   const TIPOS_IMOVEL = ['apartamento', 'moradia', 'villa', 'penthouse', 'loja', 'escritorio', 'terreno', 'armazem']
   const FONTES = ['idealista', 'imovirtual', 'eleiloes', 'banca', 'century21', 'remax', 'era']
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RADAR_HISTORY_KEY)
+      if (stored) setRadarHistory(JSON.parse(stored))
+    } catch { /* ignore */ }
+  }, [])
+
+  // Save result to history when radarResult changes
+  useEffect(() => {
+    if (!radarResult || !radarUrl) return
+    const typed = radarResult as unknown as RadarResultTyped
+    const score = typed.score ?? Number((radarResult as Record<string, unknown>).score) ?? 0
+    const recommendation = typed.recommendation || String((radarResult as Record<string, unknown>).classificacao || '')
+    if (!score) return
+    const item: RadarHistoryItem = {
+      url: radarUrl,
+      score,
+      recommendation,
+      date: new Date().toLocaleDateString('pt-PT'),
+    }
+    setRadarHistory(prev => {
+      const next = [item, ...prev.filter(h => h.url !== item.url)].slice(0, MAX_HISTORY)
+      try { localStorage.setItem(RADAR_HISTORY_KEY, JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [radarResult])
 
   const toggleTipo = (t: string) => {
     setSearchTipos(searchTipos.includes(t) ? searchTipos.filter(x => x !== t) : [...searchTipos, t])
@@ -36,6 +227,16 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
   }
 
   const searchDeals = searchResults ? (searchResults as Record<string, unknown>).deals as Record<string, unknown>[] | undefined : undefined
+
+  // Typed result for enhanced display
+  const typedResult = radarResult ? radarResult as unknown as RadarResultTyped : null
+  const resultScore = typedResult ? (typedResult.score ?? Number((radarResult as Record<string, unknown>).score) ?? 0) : 0
+  const resultRec = typedResult ? (typedResult.recommendation || String((radarResult as Record<string, unknown>).classificacao || '')) : ''
+  const resultSummary = typedResult ? (typedResult.summary || String((radarResult as Record<string, unknown>).analise_narrativa || '')) : ''
+  const hasDimensions = !!(typedResult?.dimensions && typedResult.dimensions.length > 0)
+  const hasFinancial = !!typedResult?.financialProjection
+  const hasComparables = !!(typedResult?.comparables && typedResult.comparables.length > 0)
+  const hasRisksOrOpps = !!(typedResult?.risks?.length || typedResult?.opportunities?.length)
 
   return (
     <div>
@@ -57,7 +258,46 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
           onClick={() => setShowHeatMap(!showHeatMap)}
           style={{ marginLeft: 'auto' }}
         >🗺 Heat Map</button>
+        {radarHistory.length > 0 && (
+          <button
+            className={`mkt-tab${showHistory ? ' active' : ''}`}
+            onClick={() => setShowHistory(!showHistory)}
+          >🕐 Histórico ({radarHistory.length})</button>
+        )}
       </div>
+
+      {/* Radar History Panel */}
+      {showHistory && radarHistory.length > 0 && (
+        <div className="p-card" style={{ marginBottom: '20px', background: 'rgba(14,14,13,.02)' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Análises Recentes</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {radarHistory.map((h, i) => (
+              <div key={i}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 10px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', cursor: 'pointer', transition: 'background .15s' }}
+                onClick={() => { setRadarUrl(h.url); setRadarMode('url'); setShowHistory(false) }}
+              >
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  background: getScoreBg(h.score),
+                  border: `2px solid ${getScoreColor(h.score)}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: "'Cormorant',serif", fontSize: '.9rem', fontWeight: 300,
+                  color: getScoreColor(h.score), flexShrink: 0,
+                }}>{h.score}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#c9a96e', textTransform: 'uppercase', marginBottom: '2px' }}>{getRecommendationLabel(h.recommendation)}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.url}</div>
+                </div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.3)', flexShrink: 0 }}>{h.date}</div>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => { setRadarHistory([]); try { localStorage.removeItem(RADAR_HISTORY_KEY) } catch { /* ignore */ } }}
+            style={{ marginTop: '8px', padding: '4px 10px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer' }}
+          >Limpar histórico</button>
+        </div>
+      )}
 
       {/* URL Mode */}
       {radarMode === 'url' && (
@@ -142,25 +382,221 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
         </div>
       )}
 
-      {/* URL Analysis Result */}
+      {/* URL Analysis Result — Enhanced */}
       {radarResult && radarMode === 'url' && (
         <div className="p-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+
+          {/* Score Hero */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '24px 20px', marginBottom: '20px',
+            background: getScoreBg(resultScore),
+            border: `1px solid ${getScoreColor(resultScore)}20`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div style={{
+                width: '80px', height: '80px', borderRadius: '50%',
+                background: '#fff',
+                border: `3px solid ${getScoreColor(resultScore)}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: `0 4px 20px ${getScoreColor(resultScore)}30`,
+              }}>
+                <div style={{
+                  fontFamily: "'Cormorant',serif",
+                  fontSize: '2.2rem', fontWeight: 300,
+                  color: getScoreColor(resultScore), lineHeight: 1,
+                }}>{resultScore}</div>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '4px' }}>Score de Oportunidade</div>
+                <div style={{
+                  fontFamily: "'DM Mono',monospace", fontSize: '.56rem',
+                  fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase',
+                  color: getScoreColor(resultScore),
+                }}>{getRecommendationLabel(resultRec)}</div>
+              </div>
+            </div>
+            <button
+              className="p-btn p-btn-gold"
+              style={{ padding: '10px 20px', fontSize: '.48rem', flexShrink: 0 }}
+              onClick={() => setSection('pipeline')}
+            >+ Adicionar ao Pipeline</button>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '20px', overflowX: 'auto', gap: '0' }}>
+            {([
+              ['overview', 'Overview'],
+              ['dimensoes', 'Dimensões'],
+              ['financeiro', 'Financeiro'],
+              ['comparaveis', 'Comparáveis'],
+            ] as [ResultTab, string][]).map(([t, l]) => (
+              <button key={t}
+                onClick={() => setResultTab(t)}
+                style={{
+                  padding: '10px 18px', background: 'none', border: 'none',
+                  borderBottom: `2px solid ${resultTab === t ? '#1c4a35' : 'transparent'}`,
+                  fontFamily: "'DM Mono',monospace", fontSize: '.46rem',
+                  letterSpacing: '.12em', textTransform: 'uppercase',
+                  color: resultTab === t ? '#1c4a35' : 'rgba(14,14,13,.4)',
+                  cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all .2s',
+                }}>{l}</button>
+            ))}
+          </div>
+
+          {/* Tab: Overview */}
+          {resultTab === 'overview' && (
             <div>
-              <div className="p-label">Score de Oportunidade</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: '3rem', fontWeight: 300, color: '#1c4a35', lineHeight: 1 }}>
-                {String((radarResult as Record<string, unknown>).score || '—')}
-              </div>
+              {resultSummary && (
+                <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.87rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.8, marginBottom: '20px' }}>
+                  {resultSummary}
+                </div>
+              )}
+
+              {/* Radar Chart */}
+              {hasDimensions && (
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '12px' }}>Análise 16 Dimensões</div>
+                  <RadarChart dimensions={typedResult!.dimensions!} />
+                </div>
+              )}
+
+              {/* Risks & Opportunities */}
+              {hasRisksOrOpps && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  {typedResult?.risks && typedResult.risks.length > 0 && (
+                    <div style={{ background: 'rgba(224,82,82,.04)', border: '1px solid rgba(224,82,82,.15)', padding: '14px' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#e05252', marginBottom: '10px' }}>Riscos</div>
+                      <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        {typedResult.risks.map((r, i) => (
+                          <li key={i} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.65)', lineHeight: 1.5 }}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {typedResult?.opportunities && typedResult.opportunities.length > 0 && (
+                    <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.15)', padding: '14px' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '10px' }}>Oportunidades</div>
+                      <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        {typedResult.opportunities.map((o, i) => (
+                          <li key={i} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.65)', lineHeight: 1.5 }}>{o}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Fallback if no structured data */}
+              {!resultSummary && !hasDimensions && !hasRisksOrOpps && (
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.4)', textAlign: 'center', padding: '20px' }}>
+                  Análise completa não disponível para esta fonte.
+                </div>
+              )}
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#c9a96e', padding: '4px 10px', background: 'rgba(201,169,110,.1)', border: '1px solid rgba(201,169,110,.2)' }}>
-                {String((radarResult as Record<string, unknown>).classificacao || '—')}
-              </div>
+          )}
+
+          {/* Tab: Dimensoes */}
+          {resultTab === 'dimensoes' && (
+            <div>
+              {hasDimensions ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {typedResult!.dimensions!.map((d, i) => (
+                    <div key={i} style={{ background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', padding: '10px 14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#0e0e0d', fontWeight: 600 }}>{d.name}</span>
+                          {d.weight !== undefined && (
+                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', background: 'rgba(14,14,13,.06)', padding: '1px 5px' }}>peso {d.weight}%</span>
+                          )}
+                        </div>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', fontWeight: 700, color: getScoreColor(d.score) }}>{d.score}</span>
+                      </div>
+                      <div style={{ height: '5px', background: 'rgba(14,14,13,.07)', borderRadius: '3px', overflow: 'hidden', marginBottom: d.note ? '6px' : '0' }}>
+                        <div style={{ height: '100%', width: `${d.score}%`, background: getScoreColor(d.score), borderRadius: '3px', transition: 'width .4s' }} />
+                      </div>
+                      {d.note && <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.76rem', color: 'rgba(14,14,13,.5)', lineHeight: 1.4 }}>{d.note}</div>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.3)' }}>
+                  Dados de dimensões não disponíveis nesta análise.
+                </div>
+              )}
             </div>
-          </div>
-          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.85rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.7 }}>
-            {String((radarResult as Record<string, unknown>).analise_narrativa || '')}
-          </div>
+          )}
+
+          {/* Tab: Financeiro */}
+          {resultTab === 'financeiro' && (
+            <div>
+              {hasFinancial && (
+                <div style={{ marginBottom: '20px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Projecção Financeira</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '16px' }}>
+                    {[
+                      { label: 'Yield Bruto', val: `${typedResult!.financialProjection!.yieldBruto?.toFixed(1)}%` },
+                      { label: 'Yield Líquido', val: `${typedResult!.financialProjection!.yieldLiquido?.toFixed(1)}%` },
+                      { label: 'IRR 5 Anos', val: `${typedResult!.financialProjection!.irr5anos?.toFixed(1)}%` },
+                      { label: 'IRR 10 Anos', val: `${typedResult!.financialProjection!.irr10anos?.toFixed(1)}%` },
+                    ].map(item => (
+                      <div key={item.label} style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)', padding: '14px 16px' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '6px' }}>{item.label}</div>
+                        <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.6rem', color: '#1c4a35', lineHeight: 1 }}>{item.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {typedResult?.negotiationAdvice && (
+                <div style={{ marginBottom: '16px', padding: '14px', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.2)' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#c9a96e', marginBottom: '8px' }}>Estratégia de Negociação</div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.7 }}>{typedResult.negotiationAdvice}</div>
+                </div>
+              )}
+              {typedResult?.exitStrategy && (
+                <div style={{ padding: '14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.15)' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '8px' }}>Exit Strategy</div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.7 }}>{typedResult.exitStrategy}</div>
+                </div>
+              )}
+              {!hasFinancial && !typedResult?.negotiationAdvice && !typedResult?.exitStrategy && (
+                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.3)' }}>
+                  Dados financeiros não disponíveis nesta análise.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab: Comparaveis */}
+          {resultTab === 'comparaveis' && (
+            <div>
+              {hasComparables ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '4px' }}>Imóveis Comparáveis Vendidos</div>
+                  {typedResult!.comparables!.map((comp, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', gap: '16px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{comp.address}</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)' }}>{comp.sqm}m² · {comp.daysOnMarket}d no mercado</div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.2rem', color: '#1c4a35', lineHeight: 1 }}>€{comp.price.toLocaleString('pt-PT')}</div>
+                        {comp.sqm > 0 && (
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)' }}>€{Math.round(comp.price / comp.sqm).toLocaleString('pt-PT')}/m²</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.3)' }}>
+                  Sem comparáveis disponíveis para este imóvel.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

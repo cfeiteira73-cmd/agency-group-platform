@@ -115,3 +115,4 @@ export type SectionId =
   | 'portfolio' | 'documentos' | 'imoveis' | 'campanhas'
   | 'agenda' | 'visitas' | 'imt' | 'comissoes' | 'exitSim'
   | 'pulse' | 'crossCompare' | 'voz' | 'collections' | 'draftOffer'
+  | 'analytics' | 'investidores' | 'outbound'
