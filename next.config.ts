@@ -23,7 +23,7 @@ const securityHeaders = [
   // Mobile app connects from expo-go and production builds via capacitor/native
   { key: 'Access-Control-Allow-Origin', value: process.env.NODE_ENV === 'development' ? '*' : 'https://www.agencygroup.pt' },
   { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
-  { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Requested-With' },
+  { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Requested-With, X-AG-Token' },
   // Content Security Policy — define exactamente de onde podem vir scripts, imagens, fonts
   {
     key: 'Content-Security-Policy',
@@ -33,7 +33,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' blob: data: https://images.unsplash.com https://plus.unsplash.com https://www.google.com https://lh3.googleusercontent.com https://*.supabase.co https:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.resend.com https://graph.facebook.com https://o*.ingest.sentry.io https://api.stability.ai https://api.notion.com https://vercel.live wss://vercel.live https://www.wixapis.com https://accounts.google.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.resend.com https://graph.facebook.com https://o*.ingest.sentry.io https://api.stability.ai https://api.notion.com https://vercel.live wss://vercel.live https://www.wixapis.com https://accounts.google.com https://api.heygen.com https://production-sfo.browserless.io https://www.idealista.pt https://api.twilio.com",
       "frame-src 'none'",
       "object-src 'none'",
       "frame-ancestors 'self'",
