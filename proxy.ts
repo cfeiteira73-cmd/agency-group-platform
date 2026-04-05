@@ -79,8 +79,8 @@ export default auth(async (req) => {
   }
 
   // 2. Protected routes — require NextAuth session
+  // /portal uses its own localStorage magic link auth — NOT NextAuth
   const protectedPaths = [
-    '/portal',
     '/api/crm', '/api/deal', '/api/agent', '/api/reports',
     '/api/contacts', '/api/deals', '/api/visitas/db', '/api/properties/db',
     '/api/radar', '/api/portfolio', '/api/juridico', '/api/financing',
@@ -138,7 +138,7 @@ export default auth(async (req) => {
 
 export const config = {
   matcher: [
-    // Match everything except static files and specific public API routes
-    '/((?!_next/static|_next/image|favicon.ico|api/chat|api/avm|api/properties(?!/db)|api/mortgage|api/imt|api/nhr|api/mais-valias).*)',
+    // Exclude /portal routes — use their own localStorage magic link auth
+    '/((?!_next/static|_next/image|favicon.ico|portal|api/chat|api/avm|api/properties(?!/db)|api/mortgage|api/imt|api/nhr|api/mais-valias).*)',
   ],
 }
