@@ -541,9 +541,11 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 
     const input = body as Record<string, unknown>
     const contactId: string | null = id ?? (typeof input.id === 'string' ? input.id : null)
+    // Support email-based lookup when numeric id unavailable (contacts loaded from Supabase have UUID→parseInt=0)
+    const contactEmail: string | null = typeof input._email === 'string' ? input._email : null
 
-    if (!contactId) {
-      return NextResponse.json({ error: 'id is required (query param or body field)' }, { status: 400, headers: rateLimitHeaders() })
+    if (!contactId && !contactEmail) {
+      return NextResponse.json({ error: 'id or _email is required (query param or body field)' }, { status: 400, headers: rateLimitHeaders() })
     }
 
     // Build update object — only allowed fields
@@ -565,13 +567,16 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Try Supabase
+    // Try Supabase — prefer UUID id, fall back to email lookup
     try {
-      const { data, error } = await contactsTable()
-        .update(updates)
-        .eq('id', contactId)
-        .select()
-        .single()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let query: any = contactsTable().update(updates)
+      if (contactId) {
+        query = query.eq('id', contactId)
+      } else if (contactEmail) {
+        query = query.eq('email', contactEmail)
+      }
+      const { data, error } = await query.select().single()
 
       if (!error && data) {
         return NextResponse.json({ data, source: 'supabase' }, { headers: rateLimitHeaders() })

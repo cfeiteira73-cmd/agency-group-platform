@@ -1258,7 +1258,17 @@ export default function PortalCRM() {
                     {(['lead', 'prospect', 'cliente', 'vip'] as const).map(s => (
                       <button key={s}
                         style={{ padding: '5px 10px', background: activeContact.status === s ? STATUS_CONFIG[s].bg : 'transparent', border: `1px solid ${activeContact.status === s ? STATUS_CONFIG[s].color : 'rgba(14,14,13,.12)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', textTransform: 'uppercase', color: activeContact.status === s ? STATUS_CONFIG[s].color : 'rgba(14,14,13,.4)', cursor: 'pointer' }}
-                        onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, status: s } : c))}>
+                        onClick={() => {
+                          saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, status: s } : c))
+                          // Persist to Supabase (fire-and-forget, email-based lookup)
+                          if (activeContact.email) {
+                            fetch('/api/crm', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ _email: activeContact.email, status: s }),
+                            }).catch(() => {})
+                          }
+                        }}>
                         {s}
                       </button>
                     ))}
