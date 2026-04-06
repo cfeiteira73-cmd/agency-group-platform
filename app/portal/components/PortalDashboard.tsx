@@ -685,15 +685,15 @@ export default function PortalDashboard({
         @keyframes pulseGreen { 0%,100% { opacity:1 } 50% { opacity:.4 } }
         .ticker-inner { animation: ticker 32s linear infinite; display: flex; gap: 48px; white-space: nowrap; }
         .ticker-inner:hover { animation-play-state: paused; }
-        .qa-card:hover { background: rgba(28,74,53,.06) !important; }
+        .qa-card:hover { background: ${darkMode ? 'rgba(28,74,53,.18)' : 'rgba(28,74,53,.06)'} !important; }
         .qa-card:hover .qa-arrow { opacity: 1 !important; transform: translateX(0) !important; }
-        .pipeline-row:hover { background: rgba(28,74,53,.04) !important; cursor: pointer; }
-        .recent-row:hover { background: rgba(28,74,53,.04) !important; cursor: pointer; }
-        .top-deal:hover { background: rgba(201,169,110,.06) !important; cursor: pointer; }
+        .pipeline-row:hover { background: ${darkMode ? 'rgba(28,74,53,.15)' : 'rgba(28,74,53,.04)'} !important; cursor: pointer; }
+        .recent-row:hover { background: ${darkMode ? 'rgba(28,74,53,.15)' : 'rgba(28,74,53,.04)'} !important; cursor: pointer; }
+        .top-deal:hover { background: ${darkMode ? 'rgba(201,169,110,.12)' : 'rgba(201,169,110,.06)'} !important; cursor: pointer; }
         .kpi-card { transition: box-shadow .2s, transform .15s; }
         .kpi-card:hover { box-shadow: 0 4px 24px rgba(28,74,53,.10); transform: translateY(-1px); }
         .alert-item { animation: fadeIn .25s ease; }
-        .sofia-card:hover { background: rgba(28,74,53,.04) !important; }
+        .sofia-card:hover { background: ${darkMode ? 'rgba(28,74,53,.14)' : 'rgba(28,74,53,.04)'} !important; }
         .pulse-dot { animation: pulseGreen 2s ease-in-out infinite; }
         @media (max-width: 768px) {
           .kpi-grid { grid-template-columns: repeat(2,1fr) !important; }
@@ -720,7 +720,7 @@ export default function PortalDashboard({
           <div
             style={{
               fontFamily: "'DM Mono',monospace",
-              fontSize: '.5rem',
+              fontSize: '.52rem',
               letterSpacing: '.2em',
               textTransform: 'uppercase',
               color: mutedText,
@@ -897,7 +897,7 @@ export default function PortalDashboard({
               <div
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.52rem',
                   color: 'rgba(201,169,110,.5)',
                   letterSpacing: '.12em',
                   textTransform: 'uppercase',
@@ -919,7 +919,7 @@ export default function PortalDashboard({
               <div
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.52rem',
                   color: 'rgba(244,240,230,.35)',
                   marginTop: '2px',
                 }}
@@ -935,9 +935,10 @@ export default function PortalDashboard({
                   border: '1px solid rgba(244,240,230,.1)',
                   color: 'rgba(244,240,230,.5)',
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.52rem',
                   cursor: 'pointer',
                   letterSpacing: '.06em',
+                  borderRadius: '4px',
                 }}
                 onClick={() => {
                   const html = `
@@ -957,8 +958,9 @@ export default function PortalDashboard({
                   border: '1px solid rgba(244,240,230,.1)',
                   color: 'rgba(244,240,230,.5)',
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.52rem',
                   cursor: 'pointer',
+                  borderRadius: '4px',
                 }}
                 onClick={onCloseWeeklyReport}
               >
@@ -1024,9 +1026,9 @@ export default function PortalDashboard({
                   gap: '12px',
                   padding: '12px 16px',
                   background: lv.bg,
-                  borderLeft: `3px solid ${lv.border}`,
                   border: `1px solid ${lv.border}30`,
-                  borderLeftWidth: '3px',
+                  borderLeft: `3px solid ${lv.border}`,
+                  borderRadius: '6px',
                 }}
               >
                 <div
@@ -1072,7 +1074,7 @@ export default function PortalDashboard({
                   <div
                     style={{
                       fontFamily: "'DM Mono',monospace",
-                      fontSize: '.38rem',
+                      fontSize: '.52rem',
                       color: mutedText,
                       letterSpacing: '.04em',
                     }}
@@ -1087,11 +1089,12 @@ export default function PortalDashboard({
                     border: `1px solid ${lv.border}60`,
                     color: lv.dot,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.38rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
                     letterSpacing: '.06em',
                     flexShrink: 0,
                     transition: 'all .15s',
+                    borderRadius: '4px',
                   }}
                   onClick={() => onSetSection(a.sec)}
                 >
@@ -1112,6 +1115,7 @@ export default function PortalDashboard({
                     cursor: 'pointer',
                     flexShrink: 0,
                     lineHeight: 1,
+                    borderRadius: '4px',
                   }}
                   onClick={() => setDismissedAlerts(prev => new Set([...prev, a.id]))}
                   title="Dispensar"
@@ -1236,8 +1240,9 @@ export default function PortalDashboard({
                       background: kpi.deltaPositive ? 'rgba(74,156,122,.10)' : 'rgba(220,38,38,.10)',
                       color: kpi.deltaPositive ? '#4a9c7a' : '#dc2626',
                       fontFamily: "'DM Mono',monospace",
-                      fontSize: '.32rem',
+                      fontSize: '.52rem',
                       letterSpacing: '.06em',
+                      borderRadius: '4px',
                     }}
                   >
                     {kpi.deltaPositive ? '▲' : '▼'} {Math.abs(kpi.delta)}%
@@ -1254,9 +1259,10 @@ export default function PortalDashboard({
                       border: `1px solid ${kpi.deltaPositive ? 'rgba(74,156,122,.3)' : 'rgba(220,38,38,.3)'}`,
                       color: kpi.color,
                       fontFamily: "'DM Mono',monospace",
-                      fontSize: '.36rem',
+                      fontSize: '.52rem',
                       cursor: 'pointer',
                       letterSpacing: '.04em',
+                      borderRadius: '4px',
                     }}
                     onClick={kpi.action}
                   >
@@ -1310,7 +1316,7 @@ export default function PortalDashboard({
                 background: 'transparent',
                 border: 'none',
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.38rem',
+                fontSize: '.52rem',
                 color: '#1c4a35',
                 cursor: 'pointer',
                 letterSpacing: '.08em',
@@ -1365,7 +1371,7 @@ export default function PortalDashboard({
                             background: `${color}1a`,
                             borderRadius: '50%',
                             fontFamily: "'DM Mono',monospace",
-                            fontSize: '.36rem',
+                            fontSize: '.52rem',
                             color,
                             flexShrink: 0,
                           }}
@@ -1378,7 +1384,7 @@ export default function PortalDashboard({
                         <div
                           style={{
                             fontFamily: "'DM Mono',monospace",
-                            fontSize: '.32rem',
+                            fontSize: '.52rem',
                             color: velocityOk ? '#4a9c7a' : '#dc2626',
                             letterSpacing: '.04em',
                             marginTop: '2px',
@@ -1434,13 +1440,13 @@ export default function PortalDashboard({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4a9c7a' }} />
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: mutedText }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: mutedText }}>
                 Dentro do alvo de velocidade
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }} />
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: mutedText }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: mutedText }}>
                 Acima do alvo — acção requerida
               </span>
             </div>
@@ -1477,6 +1483,7 @@ export default function PortalDashboard({
                 width: '28px',
                 height: '28px',
                 background: '#1c4a35',
+                borderRadius: '6px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1517,11 +1524,12 @@ export default function PortalDashboard({
               border: '1px solid rgba(28,74,53,.2)',
               color: '#1c4a35',
               fontFamily: "'DM Mono',monospace",
-              fontSize: '.36rem',
+              fontSize: '.52rem',
               cursor: sofiaRefreshing ? 'not-allowed' : 'pointer',
               letterSpacing: '.06em',
               opacity: sofiaRefreshing ? 0.5 : 1,
               transition: 'all .15s',
+              borderRadius: '4px',
             }}
             disabled={sofiaRefreshing}
             onClick={() => {
@@ -1621,7 +1629,7 @@ export default function PortalDashboard({
             <div
               style={{
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.38rem',
+                fontSize: '.52rem',
                 color: cardText,
                 lineHeight: 1.9,
                 whiteSpace: 'pre-line',
@@ -1681,9 +1689,10 @@ export default function PortalDashboard({
                   border: '1px solid rgba(28,74,53,.2)',
                   color: '#1c4a35',
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.36rem',
+                  fontSize: '.52rem',
                   cursor: 'pointer',
                   letterSpacing: '.06em',
+                  borderRadius: '4px',
                 }}
                 onClick={() => onSetSection('pipeline')}
               >
@@ -1738,7 +1747,7 @@ export default function PortalDashboard({
                 <div
                   style={{
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.38rem',
+                    fontSize: '.52rem',
                     color: mutedText,
                     whiteSpace: 'pre-line',
                     lineHeight: 1.7,
@@ -1754,9 +1763,10 @@ export default function PortalDashboard({
                     border: '1px solid rgba(220,38,38,.25)',
                     color: '#dc2626',
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.36rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
                     letterSpacing: '.06em',
+                    borderRadius: '4px',
                   }}
                   onClick={() => onSetSection('pipeline')}
                 >
@@ -1767,7 +1777,7 @@ export default function PortalDashboard({
               <div
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.52rem',
                   color: '#4a9c7a',
                   lineHeight: 1.7,
                   whiteSpace: 'pre-line',
@@ -1824,7 +1834,7 @@ export default function PortalDashboard({
                 background: 'transparent',
                 border: 'none',
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.38rem',
+                fontSize: '.52rem',
                 color: '#1c4a35',
                 cursor: 'pointer',
                 letterSpacing: '.08em',
@@ -1839,7 +1849,7 @@ export default function PortalDashboard({
               <div
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.42rem',
+                  fontSize: '.52rem',
                   color: mutedText,
                   padding: '16px 0',
                   textAlign: 'center',
@@ -1898,7 +1908,7 @@ export default function PortalDashboard({
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: "'DM Mono',monospace",
-                      fontSize: '.42rem',
+                      fontSize: '.52rem',
                       color: sColor,
                       flexShrink: 0,
                       letterSpacing: '.04em',
@@ -1934,7 +1944,7 @@ export default function PortalDashboard({
                           background: `${sColor}18`,
                           color: sColor,
                           fontFamily: "'DM Mono',monospace",
-                          fontSize: '.34rem',
+                          fontSize: '.52rem',
                           letterSpacing: '.08em',
                           textTransform: 'uppercase',
                           flexShrink: 0,
@@ -1946,7 +1956,7 @@ export default function PortalDashboard({
                     <div
                       style={{
                         fontFamily: "'DM Mono',monospace",
-                        fontSize: '.38rem',
+                        fontSize: '.52rem',
                         color: mutedText,
                         letterSpacing: '.04em',
                       }}
@@ -1992,7 +2002,7 @@ export default function PortalDashboard({
                 background: 'transparent',
                 border: 'none',
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.38rem',
+                fontSize: '.52rem',
                 color: '#1c4a35',
                 cursor: 'pointer',
                 letterSpacing: '.08em',
@@ -2007,7 +2017,7 @@ export default function PortalDashboard({
               <div
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.42rem',
+                  fontSize: '.52rem',
                   color: mutedText,
                   padding: '16px 0',
                   textAlign: 'center',
@@ -2051,7 +2061,7 @@ export default function PortalDashboard({
                         <span
                           style={{
                             fontFamily: "'DM Mono',monospace",
-                            fontSize: '.36rem',
+                            fontSize: '.52rem',
                             color: mutedText,
                             letterSpacing: '.08em',
                           }}
@@ -2064,8 +2074,9 @@ export default function PortalDashboard({
                             background: `${color}1a`,
                             color,
                             fontFamily: "'DM Mono',monospace",
-                            fontSize: '.34rem',
+                            fontSize: '.52rem',
                             letterSpacing: '.06em',
+                            borderRadius: '4px',
                           }}
                         >
                           {d.fase}
@@ -2087,7 +2098,7 @@ export default function PortalDashboard({
                       <div
                         style={{
                           fontFamily: "'DM Mono',monospace",
-                          fontSize: '.38rem',
+                          fontSize: '.52rem',
                           color: mutedText,
                           marginTop: '2px',
                         }}
@@ -2130,7 +2141,7 @@ export default function PortalDashboard({
                   <div
                     style={{
                       fontFamily: "'DM Mono',monospace",
-                      fontSize: '.36rem',
+                      fontSize: '.52rem',
                       color: mutedText,
                       marginTop: '4px',
                       textAlign: 'right',
@@ -2153,7 +2164,7 @@ export default function PortalDashboard({
         <div
           style={{
             fontFamily: "'DM Mono',monospace",
-            fontSize: '.48rem',
+            fontSize: '.52rem',
             letterSpacing: '.18em',
             textTransform: 'uppercase',
             color: mutedText,
@@ -2211,6 +2222,7 @@ export default function PortalDashboard({
                     width: '38px',
                     height: '38px',
                     background: `${a.color}14`,
+                    borderRadius: '6px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -2278,7 +2290,7 @@ export default function PortalDashboard({
                   <div
                     style={{
                       fontFamily: "'DM Mono',monospace",
-                      fontSize: '.38rem',
+                      fontSize: '.52rem',
                       color: mutedText,
                       letterSpacing: '.04em',
                       overflow: 'hidden',
@@ -2319,6 +2331,7 @@ export default function PortalDashboard({
           padding: '10px 0',
           overflow: 'hidden',
           marginTop: '8px',
+          borderRadius: '8px',
         }}
       >
         <div className="ticker-inner">
@@ -2349,14 +2362,13 @@ export default function PortalDashboard({
             display: flex;
             position: fixed;
             bottom: 0; left: 0; right: 0;
-            background: #fff;
             border-top: 1px solid rgba(14,14,13,.08);
             z-index: 100;
             padding: 6px 0 env(safe-area-inset-bottom, 6px);
           }
         }
       `}</style>
-      <div className="mobile-tabs">
+      <div className="mobile-tabs" style={{ background: darkMode ? '#0f1e16' : '#ffffff' }}>
         {([
           { label: 'Dashboard', sec: 'dashboard' as SectionId, svg: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z' },
           { label: 'CRM', sec: 'crm' as SectionId, svg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
@@ -2382,7 +2394,7 @@ export default function PortalDashboard({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
               <path d={tab.svg} />
             </svg>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', letterSpacing: '.06em', color: '#0e0e0d' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>
               {tab.label}
             </span>
           </button>
