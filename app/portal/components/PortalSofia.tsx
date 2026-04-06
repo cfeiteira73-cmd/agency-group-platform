@@ -160,7 +160,7 @@ export default function PortalSofia({
     if (!content || chatLoading) return
 
     const now = new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
-    const userMsg: ChatMessage = { id: Date.now(), role: 'user', content, timestamp: now }
+    const userMsg: ChatMessage = { id: Date.now() * 1000 + Math.floor(Math.random() * 1000), role: 'user', content, timestamp: now }
 
     // Snapshot history before adding the new user message (avoid stale closure)
     const historySnapshot = chatMessages
@@ -172,7 +172,8 @@ export default function PortalSofia({
     setChatLoading(true)
 
     // Placeholder assistant message that will be updated as chunks arrive
-    const assistantId = Date.now() + 1
+    // Use a sufficiently unique ID: timestamp * 1000 + random to avoid collisions
+    const assistantId = Date.now() * 1000 + Math.floor(Math.random() * 1000)
     const placeholderMsg: ChatMessage = {
       id: assistantId,
       role: 'assistant',
@@ -210,36 +211,44 @@ export default function PortalSofia({
       const decoder = new TextDecoder()
       let accumulated = ''
       let buffer = ''
+      let streamDone = false
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+      try {
+        while (!streamDone) {
+          const { done, value } = await reader.read()
+          if (done) break
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        // Keep the last potentially incomplete line in the buffer
-        buffer = lines.pop() ?? ''
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          // Keep the last potentially incomplete line in the buffer
+          buffer = lines.pop() ?? ''
 
-        for (const line of lines) {
-          const trimmed = line.trim()
-          if (!trimmed.startsWith('data: ')) continue
-          const payload = trimmed.slice(6)
-          if (payload === '[DONE]') break
-          try {
-            const parsed = JSON.parse(payload) as { text?: string; error?: string }
-            if (parsed.error) {
-              accumulated = parsed.error
-            } else if (parsed.text) {
-              accumulated += parsed.text
+          for (const line of lines) {
+            const trimmed = line.trim()
+            if (!trimmed.startsWith('data: ')) continue
+            const payload = trimmed.slice(6)
+            if (payload === '[DONE]') {
+              streamDone = true
+              break
             }
-            // Update message content in real-time
-            setChatMessages(prev => prev.map(m =>
-              m.id === assistantId ? { ...m, content: accumulated } : m
-            ))
-          } catch {
-            // Ignore malformed SSE chunks
+            try {
+              const parsed = JSON.parse(payload) as { text?: string; error?: string }
+              if (parsed.error) {
+                accumulated = parsed.error
+              } else if (parsed.text) {
+                accumulated += parsed.text
+              }
+              // Update message content in real-time
+              setChatMessages(prev => prev.map(m =>
+                m.id === assistantId ? { ...m, content: accumulated } : m
+              ))
+            } catch {
+              // Ignore malformed SSE chunks
+            }
           }
         }
+      } finally {
+        reader.cancel().catch(() => {/* ignore cancel errors */})
       }
 
       // Mark streaming done

@@ -9,7 +9,7 @@ interface DealState {
   newDeal: { imovel: string; valor: string }
   pipelineView: 'lista' | 'kanban'
   pipelineSearch: string
-  dealTab: 'checklist' | 'investor' | 'dealroom' | 'timeline' | 'nego'
+  dealTab: 'checklist' | 'investor' | 'dealroom' | 'timeline' | 'nego' | 'documentos'
   dealRiskLoading: boolean
   dealRiskAnalysis: Record<string, unknown> | null
   dealNegoLoading: boolean
@@ -30,7 +30,7 @@ interface DealState {
   setNewDeal: (d: { imovel: string; valor: string }) => void
   setPipelineView: (v: 'lista' | 'kanban') => void
   setPipelineSearch: (s: string) => void
-  setDealTab: (t: 'checklist' | 'investor' | 'dealroom' | 'timeline' | 'nego') => void
+  setDealTab: (t: 'checklist' | 'investor' | 'dealroom' | 'timeline' | 'nego' | 'documentos') => void
   setDealRiskLoading: (v: boolean) => void
   setDealRiskAnalysis: (v: Record<string, unknown> | null) => void
   setDealNegoLoading: (v: boolean) => void
@@ -80,7 +80,7 @@ export const useDealStore = create<DealState>((set) => ({
   setNewDeal: (d) => set({ newDeal: d }),
   setPipelineView: (v) => set({ pipelineView: v }),
   setPipelineSearch: (s) => set({ pipelineSearch: s }),
-  setDealTab: (t) => set({ dealTab: t }),
+  setDealTab: (t: 'checklist' | 'investor' | 'dealroom' | 'timeline' | 'nego' | 'documentos') => set({ dealTab: t }),
   setDealRiskLoading: (v) => set({ dealRiskLoading: v }),
   setDealRiskAnalysis: (v) => set({ dealRiskAnalysis: v }),
   setDealNegoLoading: (v) => set({ dealNegoLoading: v }),

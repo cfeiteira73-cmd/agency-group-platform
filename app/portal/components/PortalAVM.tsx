@@ -516,20 +516,30 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
 
   const res = avmResult as Record<string, unknown> | null
 
-  const valorCentral = Number(res?.valor_central ?? res?.valorEstimado ?? 0)
-  const valorMin = Number(res?.valor_min ?? res?.valorMin ?? 0)
-  const valorMax = Number(res?.valor_max ?? res?.valorMax ?? 0)
-  const precoM2 = Number(res?.preco_m2 ?? res?.precoM2 ?? 0)
-  const confianca = Number(res?.confianca ?? res?.confidenceScore ?? 0)
-  const yieldBruto = res?.yield_bruto ?? res?.yieldEstimado ?? '—'
-  const liquidez = String(res?.liquidez ?? res?.tempoVenda ?? '—')
-  const rendaEstimada = Number(res?.renda_estimada ?? res?.rendaEstimada ?? 0)
+  // API returns: estimativa, rangeMin, rangeMax, pm2, score_confianca (number),
+  // investimento.renda_mensal_estimada, investimento.yield_bruta_pct,
+  // mercado.liquidez, metodologias[], comparaveis[]
+  const valorCentral = Number(res?.estimativa ?? res?.valor_central ?? res?.valorEstimado ?? 0)
+  const valorMin = Number(res?.rangeMin ?? res?.valor_min ?? res?.valorMin ?? 0)
+  const valorMax = Number(res?.rangeMax ?? res?.valor_max ?? res?.valorMax ?? 0)
+  const precoM2 = Number(res?.pm2 ?? res?.preco_m2 ?? res?.precoM2 ?? 0)
+  // confianca: API returns numeric score_confianca, string confianca label
+  const confianca = Number(res?.score_confianca ?? res?.confianca ?? res?.confidenceScore ?? 0)
+  const investimento = res?.investimento as Record<string, unknown> | undefined
+  const mercado = res?.mercado as Record<string, unknown> | undefined
+  const yieldBruto = investimento?.yield_bruta_pct
+    ? `${investimento.yield_bruta_pct}%`
+    : (res?.yield_bruto ?? res?.yieldEstimado ?? '—')
+  const liquidez = String(mercado?.liquidez ?? res?.liquidez ?? res?.tempoVenda ?? '—')
+  const rendaEstimada = Number(investimento?.renda_mensal_estimada ?? res?.renda_estimada ?? res?.rendaEstimada ?? 0)
 
   const metodologias = (res?.metodologias ?? res?.methodologies ?? []) as Array<{
-    nome: string; valor: number; peso: number
+    nome?: string; label?: string; valor: number; peso: number; descricao?: string
   }>
+  // API comparaveis shape: { ref, zona, tipo, area, andar, estado, valor, pm2, meses_mercado }
   const comparaveis = (res?.comparaveis ?? res?.comparables ?? []) as Array<{
-    morada: string; area: number; valor: number; distancia: number; ajuste: number
+    ref?: string; morada?: string; zona?: string; area: number; valor: number
+    distancia?: number; ajuste?: number; pm2?: number; estado?: string; meses_mercado?: number
   }>
 
   const confidenceLabel = confianca > 80 ? 'Alta Confiança' : confianca > 60 ? 'Confiança Moderada' : 'Confiança Baixa'
@@ -810,17 +820,22 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Breakdown de Metodologias</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {metodologias.map((m, i) => {
-                      const contrib = (m.valor * m.peso) / 100
+                      // API returns peso as decimal (0.35), valor as full integer
+                      const pesoDecimal = m.peso > 1 ? m.peso / 100 : m.peso
+                      const contrib = Math.round(m.valor * pesoDecimal)
+                      const pesoDisplay = m.peso > 1 ? m.peso : Math.round(m.peso * 100)
                       return (
                         <div key={i}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.7)' }}>{m.nome}</div>
+                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.7)' }}>
+                              {m.label ?? m.nome ?? `Metodologia ${i + 1}`}
+                            </div>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)' }}>peso {m.peso}%</span>
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)' }}>peso {pesoDisplay}%</span>
                               <span style={{ fontFamily: "'Cormorant',serif", fontSize: '.9rem', color: '#1c4a35', fontWeight: 500 }}>€{contrib.toLocaleString('pt-PT')}</span>
                             </div>
                           </div>
-                          <InlineBar pct={m.peso / 100} color="#1c4a35" />
+                          <InlineBar pct={pesoDecimal} color="#1c4a35" />
                         </div>
                       )
                     })}
@@ -843,8 +858,12 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {comparaveis.slice(0, 5).map((c, i) => {
-                      const badge = comparavelBadge(c.ajuste ?? 0)
-                      const pm2 = c.area > 0 ? Math.round(c.valor / c.area) : 0
+                      // API shape: { ref, zona, tipo, area, andar, estado, valor, pm2, meses_mercado }
+                      // Compute delta vs zone base pm2 if available; fallback to computed
+                      const cPm2 = c.pm2 ?? (c.area > 0 ? Math.round(c.valor / c.area) : 0)
+                      const deltaVsBase = precoM2 > 0 && cPm2 > 0 ? Math.round(((cPm2 / precoM2) - 1) * 100) : (c.ajuste ?? 0)
+                      const badge = comparavelBadge(deltaVsBase)
+                      const displayName = c.morada ?? c.zona ?? c.ref ?? `Comparável ${i + 1}`
                       return (
                         <div key={i} style={{
                           display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px',
@@ -853,20 +872,20 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                           borderRadius: '2px',
                         }}>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.76rem', color: 'rgba(14,14,13,.75)', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.morada}</div>
+                            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.76rem', color: 'rgba(14,14,13,.75)', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                               <span style={{ fontFamily: "'Cormorant',serif", fontSize: '.9rem', color: '#1c4a35' }}>€{c.valor.toLocaleString('pt-PT')}</span>
-                              {c.distancia > 0 && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)', alignSelf: 'center' }}>{c.distancia}km</span>}
+                              {c.estado && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)', alignSelf: 'center' }}>{c.estado}</span>}
                             </div>
                           </div>
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.area}m²</div>
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.5)', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                            {pm2 > 0 ? `€${pm2.toLocaleString('pt-PT')}` : '—'}
+                            {cPm2 > 0 ? `€${cPm2.toLocaleString('pt-PT')}` : '—'}
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ display: 'inline-block', padding: '2px 8px', background: badge.bg, borderRadius: '10px' }}>
                               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: badge.color, letterSpacing: '.04em', whiteSpace: 'nowrap' }}>
-                                {c.ajuste !== 0 ? `${c.ajuste > 0 ? '+' : ''}${c.ajuste}%` : badge.label}
+                                {deltaVsBase !== 0 ? `${deltaVsBase > 0 ? '+' : ''}${deltaVsBase}%` : badge.label}
                               </span>
                             </div>
                           </div>

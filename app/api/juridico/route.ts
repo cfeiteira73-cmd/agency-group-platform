@@ -380,7 +380,7 @@ export async function POST(req: NextRequest) {
     if (precisaSearch) {
       // Use web search via raw API
       const body = {
-        model: 'claude-opus-4-6',
+        model: 'claude-opus-4-5',
         max_tokens: 4096,
         system: SYSTEM,
         messages: msgSlice,
@@ -411,7 +411,7 @@ export async function POST(req: NextRequest) {
 
     } else {
       const message = await client.messages.create({
-        model: 'claude-opus-4-6',
+        model: 'claude-opus-4-5',
         max_tokens: 4096,
         system: SYSTEM,
         messages: msgSlice,

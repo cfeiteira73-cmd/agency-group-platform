@@ -264,24 +264,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const data = body as Record<string, unknown>
 
-    if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
+    // Support both flat { name, budget, ... } and wrapped { contact: { name, ... } }
+    // The CRM component sends { contact: activeContact } so we unwrap if needed
+    const raw = (typeof data.contact === 'object' && data.contact !== null)
+      ? (data.contact as Record<string, unknown>)
+      : data
+
+    // Re-validate name after potential unwrap
+    const nameValue = raw.name ?? raw.full_name
+    if (!nameValue || typeof nameValue !== 'string' || String(nameValue).trim().length === 0) {
       return NextResponse.json(
-        { error: 'Field "name" is required' },
+        { error: 'Field "name" is required (or "contact.name" when wrapping)' },
         { status: 400 }
       )
     }
 
+    // Budget: CRM contacts use budgetMax as the primary budget signal
+    const budgetRaw = raw.budget ?? raw.budgetMax ?? raw.budget_max
+    const budgetValue = typeof budgetRaw === 'number' ? budgetRaw
+                      : typeof budgetRaw === 'string' ? parseFloat(budgetRaw) || undefined
+                      : undefined
+
     const leadData: LeadScoreRequest = {
-      name: String(data.name).trim(),
-      email: typeof data.email === 'string' ? data.email.trim() : undefined,
-      phone: typeof data.phone === 'string' ? data.phone.trim() : undefined,
-      source: typeof data.source === 'string' ? data.source.trim() : undefined,
-      message: typeof data.message === 'string' ? data.message.trim() : undefined,
-      budget: typeof data.budget === 'number' ? data.budget :
-              typeof data.budget === 'string' ? parseFloat(data.budget) || undefined : undefined,
-      nationality: typeof data.nationality === 'string' ? data.nationality.trim().toUpperCase() : undefined,
-      language: typeof data.language === 'string' ? data.language.trim().toLowerCase() : undefined,
-      timeline: typeof data.timeline === 'string' ? data.timeline.trim().toLowerCase() : undefined,
+      name: String(nameValue).trim(),
+      email: typeof raw.email === 'string' ? raw.email.trim() : undefined,
+      phone: typeof raw.phone === 'string' ? raw.phone.trim() : undefined,
+      source: typeof raw.source === 'string' ? raw.source.trim()
+            : typeof raw.origin === 'string' ? raw.origin.trim() : undefined,
+      message: typeof raw.message === 'string' ? raw.message.trim()
+             : typeof raw.notes === 'string' ? raw.notes.trim() : undefined,
+      budget: budgetValue,
+      nationality: typeof raw.nationality === 'string' ? raw.nationality.trim().toUpperCase() : undefined,
+      language: typeof raw.language === 'string' ? raw.language.trim().toLowerCase() : undefined,
+      timeline: typeof raw.timeline === 'string' ? raw.timeline.trim().toLowerCase() : undefined,
     }
 
     const result = scoreLeadRequest(leadData)

@@ -136,13 +136,14 @@ export default function PortalMaisvalias() {
 
   const eur = (n: number) => '€ ' + Math.abs(Math.round(n)).toLocaleString('pt-PT')
 
-  // AT Coefficient for devaluation (approximate multiplier by year)
+  // AT Coefficient for devaluation — matches API COEFICIENTES exactly (artigo 47º CIRS 2026)
+  // Source: Portaria AT publicada anualmente — valores 2026
   const atCoeff: Record<number, number> = {
-    2000: 1.73, 2001: 1.70, 2002: 1.65, 2003: 1.61, 2004: 1.58, 2005: 1.55,
-    2006: 1.52, 2007: 1.48, 2008: 1.44, 2009: 1.43, 2010: 1.41, 2011: 1.39,
-    2012: 1.37, 2013: 1.36, 2014: 1.35, 2015: 1.34, 2016: 1.33, 2017: 1.32,
-    2018: 1.30, 2019: 1.28, 2020: 1.26, 2021: 1.22, 2022: 1.12, 2023: 1.06,
-    2024: 1.03, 2025: 1.01, 2026: 1.00,
+    2000: 1.72, 2001: 1.66, 2002: 1.62, 2003: 1.59, 2004: 1.57, 2005: 1.54,
+    2006: 1.51, 2007: 1.47, 2008: 1.42, 2009: 1.42, 2010: 1.40, 2011: 1.37,
+    2012: 1.33, 2013: 1.32, 2014: 1.32, 2015: 1.32, 2016: 1.31, 2017: 1.30,
+    2018: 1.28, 2019: 1.26, 2020: 1.25, 2021: 1.23, 2022: 1.15, 2023: 1.05,
+    2024: 1.02, 2025: 1.01, 2026: 1.00,
   }
 
   async function calcular() {

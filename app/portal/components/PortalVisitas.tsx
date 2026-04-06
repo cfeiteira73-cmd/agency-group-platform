@@ -37,10 +37,7 @@ type ProximasFilter = 'hoje' | 'semana' | 'todas'
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
-const TODAY = (() => {
-  const d = new Date('2026-04-05')
-  return d
-})()
+const TODAY = new Date()
 
 const fmtDate = (d: Date) => d.toISOString().split('T')[0]
 
@@ -183,7 +180,7 @@ function WeekCalendar({
   const todayColIdx = (() => {
     for (let i = 0; i < 7; i++) {
       const d = addDays(weekStart, i)
-      if (isToday(fmtDate(d), TODAY)) return i
+      if (isToday(fmtDate(d), now)) return i
     }
     return -1
   })()
@@ -195,7 +192,7 @@ function WeekCalendar({
         <div style={{ width: `${LABEL_W}px`, flexShrink: 0 }} />
         {Array.from({ length: 7 }).map((_, i) => {
           const d = addDays(weekStart, i)
-          const isT = isToday(fmtDate(d), TODAY)
+          const isT = isToday(fmtDate(d), new Date())
           return (
             <div
               key={i}
@@ -510,13 +507,13 @@ export default function PortalVisitas() {
   const [visits, setVisits] = useState<Visit[]>(INITIAL_VISITS)
   const [activeTab, setActiveTab] = useState<VisitTab>('proximas')
   const [proximasFilter, setProximasFilter] = useState<ProximasFilter>('hoje')
-  const [weekStart, setWeekStart] = useState(() => getWeekStart(TODAY))
+  const [weekStart, setWeekStart] = useState(() => getWeekStart(new Date()))
   const [quickSlot, setQuickSlot] = useState<{ date: string; time: string } | null>(null)
 
   // Schedule form
   const [schedProp,  setSchedProp]  = useState('')
   const [schedBuyer, setSchedBuyer] = useState('')
-  const [schedDate,  setSchedDate]  = useState(fmtDate(TODAY))
+  const [schedDate,  setSchedDate]  = useState(fmtDate(new Date()))
   const [schedTime,  setSchedTime]  = useState('10:00')
   const [schedDur,   setSchedDur]   = useState<VisitDuration>(60)
   const [schedType,  setSchedType]  = useState<VisitType>('Presencial')
@@ -642,8 +639,9 @@ export default function PortalVisitas() {
   const weekVisits    = visits.filter(v => isSameWeek(v.date, TODAY) && v.status !== 'cancelada')
   const confirmed     = visits.filter(v => v.status === 'confirmada').length
   const realised      = visits.filter(v => v.status === 'realizada')
-  const avgInterest   = realised.filter(v => v.feedbackInterest).length
-    ? realised.filter(v => v.feedbackInterest).reduce((s, v) => s + (v.feedbackInterest || 0), 0) / realised.filter(v => v.feedbackInterest).length
+  const realisedWithFeedback = realised.filter(v => v.feedbackInterest)
+  const avgInterest = realisedWithFeedback.length
+    ? realisedWithFeedback.reduce((s, v) => s + (v.feedbackInterest || 0), 0) / realisedWithFeedback.length
     : 0
 
   const proximas = (() => {
@@ -759,12 +757,11 @@ export default function PortalVisitas() {
           </div>
 
           <WeekCalendar
-            visits={visits.filter(v => isSameWeek(v.date, weekStart) || (() => {
-              // also show visits in the displayed week
+            visits={visits.filter(v => {
               const ws = fmtDate(weekStart)
               const we = fmtDate(addDays(weekStart, 6))
               return v.date >= ws && v.date <= we
-            })())}
+            })}
             weekStart={weekStart}
             onSlotClick={(date, time) => {
               setQuickSlot({ date, time })

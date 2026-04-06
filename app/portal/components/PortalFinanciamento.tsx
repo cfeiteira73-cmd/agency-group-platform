@@ -15,8 +15,8 @@ interface FinResult {
   }
   prestacoes?: {
     cenario_tipico: number
-    cenario_otimista?: number
-    cenario_pessimista?: number
+    melhor_cenario?: number
+    pior_cenario?: number
   }
   acessibilidade?: { dsti_ok: boolean; nota: string }
   notas?: string[]
@@ -158,7 +158,7 @@ export default function PortalFinanciamento() {
     const ltv = countryProfile.ltv / 100
     const loanAmount = principal * ltv
     const entrada = principal * (1 - ltv)
-    const euribor = 3.15 // Current 6M Euribor 2026
+    const euribor = 2.95 // Euribor 6M — alinhado com API (BCE Março 2026)
     const spread = 1.5 // Mid spread
     const annualRate = euribor + spread
     const monthlyRate = annualRate / 100 / 12
@@ -213,7 +213,7 @@ export default function PortalFinanciamento() {
         <div class="card"><div class="label">Total Pago</div><div class="metric">${eur(localCalc.totalPaid)}</div></div>
         ${localCalc.dsti > 0 ? `<div class="card"><div class="label">DSTI</div><div class="metric">${localCalc.dsti.toFixed(1)}%</div></div>` : ''}
       </div>
-      <div style="margin-top:16px;font-size:.8rem;color:rgba(14,14,13,.45)">Baseado em Euribor 6M 3.15% + Spread 1.5%. Simulação indicativa — confirmar com banco.</div>
+      <div style="margin-top:16px;font-size:.8rem;color:rgba(14,14,13,.45)">Baseado em Euribor 6M 2.95% + Spread 1.5%. Simulação indicativa — confirmar com banco.</div>
     `
     exportToPDF(`Simulação Crédito — ${countryProfile.flag} ${countryProfile.label}`, html)
   }
@@ -229,7 +229,7 @@ export default function PortalFinanciamento() {
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '6px' }}>
-          Euribor 6M 3.15% · 11 Países · LTV · Islamic Finance · DSTI
+          Euribor 6M 2.95% · 11 Países · LTV · Islamic Finance · DSTI
         </div>
         <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: '#0e0e0d' }}>
           Crédito <em style={{ color: '#1c4a35' }}>para Estrangeiros</em>

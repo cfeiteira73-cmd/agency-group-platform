@@ -306,7 +306,11 @@ function calcYield(prop: PortalProperty): number {
 function calcIRR(prop: PortalProperty, horizonYears: number): number {
   const yld = calcYield(prop)
   const appreciation = prop.zona === 'Lisboa' ? 0.07 : prop.zona === 'Cascais' ? 0.06 : 0.05
-  return parseFloat((yld + appreciation * 0.8 * horizonYears / horizonYears).toFixed(1))
+  // Annualised IRR estimate: net yield + capital appreciation blended over horizon
+  // Uses holding-period return formula: IRR ≈ yield + appreciation (both annualised)
+  // The appreciation contributes more over longer horizons through compounding
+  const compoundedAppreciation = (Math.pow(1 + appreciation, horizonYears) - 1) / horizonYears
+  return parseFloat((yld + compoundedAppreciation * 100 * 0.8).toFixed(1))
 }
 
 function matchInvestorToProperties(investor: Investor, properties: PortalProperty[]): Match[] {

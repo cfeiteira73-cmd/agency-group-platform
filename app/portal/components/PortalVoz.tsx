@@ -450,9 +450,13 @@ function TabDitado() {
   async function handleProcess() {
     if (!transcript.trim()) return
     setProcessing(true)
-    const res = await mockProcessVoz(transcript)
-    setResult(res)
-    setProcessing(false)
+    let res: AIProcessResult
+    try {
+      res = await mockProcessVoz(transcript)
+    } finally {
+      setProcessing(false)
+    }
+    setResult(res!)
 
     const entry: VozTranscript = {
       id: `tr${Date.now()}`,
@@ -604,11 +608,11 @@ function TabDitado() {
           <p style={{ fontFamily: 'Jost', fontSize: 14, color: C.text, lineHeight: 1.6, margin: '0 0 16px' }}>
             <strong>Resumo:</strong> {result.summary}
           </p>
-          {result.actionItems.length > 0 && (
+          {(result.actionItems ?? []).length > 0 && (
             <div>
               <div style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted, marginBottom: 8 }}>PRÓXIMOS PASSOS</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {result.actionItems.map((item, i) => (
+                {(result.actionItems ?? []).map((item, i) => (
                   <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                     <span style={{ color: C.green, fontSize: 13, flexShrink: 0, marginTop: 1 }}>✓</span>
                     <span style={{ fontFamily: 'Jost', fontSize: 13, color: C.text }}>{item}</span>
@@ -710,10 +714,10 @@ function TabVisitas() {
       date: formDate,
       time: formTime,
       transcript: noteTranscript,
-      reaction: ai.summary,
-      objections: ai.actionItems.slice(0, 2).map(a => a.replace(/^(rever|confirmar|actualizar)\s/i, '')),
+      reaction: ai.summary ?? '',
+      objections: (ai.actionItems ?? []).slice(0, 2).map(a => a.replace(/^(rever|confirmar|actualizar)\s/i, '')),
       interest: ai.sentiment === 'positivo' ? 4 : ai.sentiment === 'neutro' ? 3 : 2,
-      nextStep: ai.actionItems[0] ?? 'A definir',
+      nextStep: (ai.actionItems ?? [])[0] ?? 'A definir',
       createdAt: new Date().toISOString(),
     }
     setVisitNotes(prev => [note, ...prev])
@@ -1114,7 +1118,7 @@ function TabTranscricoes() {
     navigator.clipboard.writeText(t.text).then(() => {
       setCopied(t.id)
       setTimeout(() => setCopied(null), 2000)
-    })
+    }).catch(() => {})
   }
 
   function exportPDF(t: VozTranscript) {

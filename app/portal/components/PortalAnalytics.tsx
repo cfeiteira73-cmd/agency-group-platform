@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useCRMStore } from '../stores/crmStore'
 import { useDealStore } from '../stores/dealStore'
-import { useUIStore } from '../stores/uiStore'
 import { exportToPDF } from '../utils/export'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -185,10 +184,6 @@ function scoreCell(score: number): string {
   return '#f8d7da'
 }
 
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t
-}
-
 // ─── SVG CHART COMPONENTS ──────────────────────────────────────────────────────
 
 function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop = 3, highlightColor = '#c9a96e', showTrend = true }: BarChartProps) {
@@ -198,7 +193,7 @@ function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop 
   const PAD = { top: 10, right: 10, bottom: 24, left: 10 }
   const chartW = W - PAD.left - PAD.right
   const chartH = H - PAD.top - PAD.bottom
-  const max = Math.max(...data) * 1.1
+  const max = Math.max(...data) * 1.1 || 1  // guard against division-by-zero on empty/zero data
   const barW = chartW / data.length
   const barPad = barW * 0.18
 
@@ -289,7 +284,7 @@ function DonutChart({ segments, size = 160, thickness = 36, centerLabel }: Donut
   const [mounted, setMounted] = useState(false)
   useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t) }, [])
 
-  const total = segments.reduce((s, seg) => s + seg.value, 0)
+  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1  // guard against division-by-zero
   const cx = size / 2
   const cy = size / 2
   const r = (size - thickness) / 2
@@ -350,9 +345,11 @@ function LineChart({ series, labels, height = 100, showGrid = true, yPrefix = ''
   const allVals = series.flatMap(s => s.data)
   const minV = Math.min(...allVals) * 0.95
   const maxV = Math.max(...allVals) * 1.05
-  const range = maxV - minV
+  const range = maxV - minV || 1  // guard against division-by-zero when all values are equal
 
-  const getX = (i: number) => PAD.left + (i / (labels.length - 1)) * chartW
+  const getX = (i: number) => labels.length <= 1
+    ? PAD.left + chartW / 2
+    : PAD.left + (i / (labels.length - 1)) * chartW
   const getY = (v: number) => PAD.top + chartH - ((v - minV) / range) * chartH
 
   return (
@@ -507,7 +504,7 @@ function TabOverview() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
             {FUNIL.map((f, i) => {
               const pct = (f.valor / maxFunil) * 100
-              const convPct = i > 0 ? ((f.valor / FUNIL[i - 1].valor) * 100).toFixed(1) : null
+              const convPct = i > 0 && FUNIL[i - 1].valor > 0 ? ((f.valor / FUNIL[i - 1].valor) * 100).toFixed(1) : null
               return (
                 <div key={f.stage}>
                   {convPct && (
@@ -698,7 +695,7 @@ function TabMercado() {
               const maxV = 400
               const dH = (DEMAND_DATA[i] / maxV) * 90
               const sH = (SUPPLY_DATA[i] / maxV) * 90
-              const ratio = (DEMAND_DATA[i] / SUPPLY_DATA[i]).toFixed(2)
+              const ratio = (SUPPLY_DATA[i] > 0 ? DEMAND_DATA[i] / SUPPLY_DATA[i] : 0).toFixed(2)
               return (
                 <g key={label}>
                   {/* Demand bar */}
@@ -959,7 +956,6 @@ function TabEquipa() {
 export default function PortalAnalytics() {
   const { crmContacts } = useCRMStore()
   const { deals } = useDealStore()
-  const { } = useUIStore()
 
   const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [period, setPeriod] = useState<PeriodId>('ano')

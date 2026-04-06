@@ -75,13 +75,13 @@ function dealHealthScore(deal: DealWithMeta): { score: number; issues: string[];
 
   if (daysSinceCreated > 90) { score -= 20; issues.push('Deal aberto há 90+ dias') }
   if (!deal.comprador) { score -= 15; issues.push('Comprador não identificado') }
-  const val = parseFloat(deal.valor.replace(/[^0-9.]/g, '')) || 0
+  const val = parseDealValue(deal.valor)
   if (!deal.valor || val === 0) { score -= 20; issues.push('Valor não definido') }
-  if (!deal.cpcvDate && STAGE_PCT[deal.fase] >= 70) {
+  if (!deal.cpcvDate && (STAGE_PCT[deal.fase] ?? 0) >= 70) {
     score -= 10; issues.push('Data CPCV em falta')
     badges.push({ label: 'Docs em falta', severity: 'amber' })
   }
-  if (daysSinceCreated > 30 && deal.fase === 'Angariação') {
+  if (daysSinceCreated > 30 && (deal.fase ?? '') === 'Angariação') {
     score -= 15; issues.push('30+ dias sem avançar de Angariação')
     badges.push({ label: 'Em negociação 30d+', severity: 'red' })
   }
@@ -119,7 +119,8 @@ function healthLabel(score: number): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function parseDealValue(valor: string): number {
+function parseDealValue(valor: string | undefined | null): number {
+  if (!valor) return 0
   return parseFloat(valor.replace(/[^0-9.]/g, '')) || 0
 }
 
@@ -284,7 +285,7 @@ function AtRiskBanner({ deals, darkMode }: { deals: Deal[]; darkMode: boolean })
                 borderRadius: '2px',
                 fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#dc2626',
               }}>
-                {d.ref} · {d.fase} · {days}d
+                {d.ref ?? '—'} · {d.fase ?? '—'} · {days}d
               </span>
             )
           })}
@@ -341,7 +342,7 @@ function ActivityTimelineBanner({ moves, darkMode }: { moves: PipelineMove[]; da
 function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolean }) {
   const pipelineWeighted = deals.reduce((sum, d) => {
     const val = parseDealValue(d.valor)
-    const prob = STAGE_PROB[d.fase] || 0.1
+    const prob = STAGE_PROB[d.fase ?? ''] ?? 0.1
     const { score } = dealHealthScore(d as DealWithMeta)
     // Risk-adjust by health score
     const healthAdj = score / 100
@@ -361,17 +362,17 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
 
   // 90d: all stages weighted by probability
   const forecast90 = deals
-    .filter(d => STAGE_PCT[d.fase] >= 35)
-    .reduce((sum, d) => sum + parseDealValue(d.valor) * (STAGE_PROB[d.fase] || 0.1) * COMMISSION_RATE, 0)
+    .filter(d => (STAGE_PCT[d.fase ?? ''] ?? 0) >= 35)
+    .reduce((sum, d) => sum + parseDealValue(d.valor) * (STAGE_PROB[d.fase ?? ''] ?? 0.1) * COMMISSION_RATE, 0)
 
   // Annual: extrapolate — weighted pipeline × 4 quarters
   const forecastAnnual = deals
-    .reduce((sum, d) => sum + parseDealValue(d.valor) * (STAGE_PROB[d.fase] || 0.1) * COMMISSION_RATE, 0) * 4
+    .reduce((sum, d) => sum + parseDealValue(d.valor) * (STAGE_PROB[d.fase ?? ''] ?? 0.1) * COMMISSION_RATE, 0) * 4
 
   const totalPipeline = deals.reduce((sum, d) => sum + parseDealValue(d.valor), 0)
 
   const stageDist = PIPELINE_STAGES.map(s => {
-    const stageVal = deals.filter(d => d.fase === s).reduce((sum, d) => sum + parseDealValue(d.valor), 0)
+    const stageVal = deals.filter(d => (d.fase ?? '') === s).reduce((sum, d) => sum + parseDealValue(d.valor), 0)
     return { stage: s, pct: totalPipeline > 0 ? (stageVal / totalPipeline) * 100 : 0, color: STAGE_COLOR[s] || '#888' }
   }).filter(s => s.pct > 0)
 
@@ -464,8 +465,8 @@ function DealCard({
   isDragTarget?: boolean
   justMoved?: boolean
 }) {
-  const pct = STAGE_PCT[deal.fase] || 10
-  const color = STAGE_COLOR[deal.fase] || '#888'
+  const pct = STAGE_PCT[deal.fase ?? ''] ?? 10
+  const color = STAGE_COLOR[deal.fase ?? ''] || '#888'
   const days = dealDays(deal)
   const isStale = days > STALE_DAYS
   const isVeryStale = days > 30
@@ -499,7 +500,7 @@ function DealCard({
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.06em' }}>{deal.ref}</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.06em' }}>{deal.ref ?? '—'}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {isStale && (
             <span style={{
@@ -516,12 +517,12 @@ function DealCard({
       </div>
 
       <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', fontWeight: 500, color: darkMode ? 'rgba(244,240,230,.85)' : '#0e0e0d', marginBottom: '3px', lineHeight: 1.3 }}>
-        {deal.imovel}
+        {deal.imovel ?? '—'}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
         <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.05rem', color: '#c9a96e', fontWeight: 300 }}>
-          {deal.valor}
+          {deal.valor ?? '—'}
         </div>
         {commission > 0 && (
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)' }}>
@@ -531,7 +532,7 @@ function DealCard({
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
-        <StageBadge fase={deal.fase} />
+        <StageBadge fase={deal.fase ?? '—'} />
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: isStale ? '#dc2626' : 'rgba(14,14,13,.28)' }}>
           {days}d
         </span>
@@ -539,11 +540,11 @@ function DealCard({
 
       <DealHealthBadges badges={badges} />
 
-      {deal.comprador && (
+      {deal.comprador ? (
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.38)', marginTop: '5px' }}>
           👤 {deal.comprador}
         </div>
-      )}
+      ) : null}
 
       <ProgressBar pct={pct} color={color} />
 
@@ -1021,7 +1022,7 @@ function DealDetailPanel({
   const { score, issues } = dealHealthScore(deal)
   const days = dealDays(deal)
   const hColor = healthColor(score)
-  const prob = STAGE_PROB[deal.fase] || 0.1
+  const prob = STAGE_PROB[deal.fase ?? ''] ?? 0.1
   const val = parseDealValue(deal.valor)
   const expectedGCI = val * prob * COMMISSION_RATE
 
@@ -1038,7 +1039,7 @@ function DealDetailPanel({
       {/* Header */}
       <div style={{ marginBottom: '16px' }}>
         <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.4rem', color: darkMode ? '#f4f0e6' : '#0e0e0d', fontWeight: 300, marginBottom: '4px', lineHeight: 1.2 }}>
-          {deal.imovel}
+          {deal.imovel ?? '—'}
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
           <span style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', color: '#c9a96e', fontWeight: 300 }}>{deal.valor}</span>
@@ -1124,7 +1125,7 @@ function DealDetailPanel({
       {/* Checklist */}
       {dealTab === 'checklist' && (
         <div>
-          {Object.entries(deal.checklist).map(([fase, items]) => {
+          {Object.entries(deal.checklist ?? {}).map(([fase, items]) => {
             const doneCount = (items as boolean[]).filter(Boolean).length
             const total = (CHECKLISTS[fase] || []).length
             return (
@@ -1374,12 +1375,12 @@ function buildPipelineHTML(deals: Deal[]): string {
   const gci = totalVal * COMMISSION_RATE
   const rows = deals.map(d => `
     <tr>
-      <td>${d.ref}</td>
-      <td>${d.imovel}</td>
-      <td>${d.valor}</td>
+      <td>${d.ref ?? '—'}</td>
+      <td>${d.imovel ?? '—'}</td>
+      <td>${d.valor ?? '—'}</td>
       <td>${d.comprador || '—'}</td>
-      <td>${d.fase}</td>
-      <td>${STAGE_PCT[d.fase] || 0}%</td>
+      <td>${d.fase ?? '—'}</td>
+      <td>${STAGE_PCT[d.fase ?? ''] ?? 0}%</td>
     </tr>`).join('')
   return `
     <h2 style="font-family:Georgia,serif;color:#1c4a35;">Pipeline CPCV — Agency Group</h2>
@@ -1480,10 +1481,11 @@ export default function PortalPipeline({
     const thirtyDaysAgo = now - 30 * 86400000
     return deals.filter(d => {
       // Search filter
+      const q = pipelineSearch.toLowerCase()
       const searchOk = !pipelineSearch ||
-        d.imovel.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-        d.comprador.toLowerCase().includes(pipelineSearch.toLowerCase()) ||
-        d.ref.toLowerCase().includes(pipelineSearch.toLowerCase())
+        (d.imovel ?? '').toLowerCase().includes(q) ||
+        (d.comprador ?? '').toLowerCase().includes(q) ||
+        (d.ref ?? '').toLowerCase().includes(q)
       if (!searchOk) return false
       // Chip filter
       if (activeFilter === 'todos') return true
@@ -1530,9 +1532,7 @@ export default function PortalPipeline({
 
   const handleSetDealTab = useCallback((t: DealTabId) => {
     setExtDealTab(t)
-    if (t !== 'documentos') {
-      setDealTab(t as 'checklist' | 'investor' | 'dealroom' | 'timeline' | 'nego')
-    }
+    setDealTab(t)
   }, [setDealTab])
 
   const fmtM = (v: number) => v >= 1e6 ? `€${(v / 1e6).toFixed(1)}M` : `€${Math.round(v / 1000)}k`

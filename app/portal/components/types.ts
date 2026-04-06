@@ -52,6 +52,8 @@ export interface Deal {
   cpcvDate: string
   escrituraDate: string
   checklist: Record<string, boolean[]>
+  notas?: string
+  propertyId?: string | null
 }
 
 export interface Drip {

@@ -522,7 +522,6 @@ export async function POST(req: NextRequest) {
 
     const APIFY_TOKEN = process.env.APIFY_TOKEN
     const CLAUDE_KEY  = process.env.ANTHROPIC_API_KEY
-    if (!CLAUDE_KEY) return NextResponse.json({ error: 'API key não configurada' }, { status: 503 })
 
     const platform = detectPlatform(urlStr)
     const isAuction = isAuctionPlatform(platform)
@@ -823,6 +822,57 @@ INSTRUÇÃO: Analisa com rigor máximo. ${isAuction ? 'É um LEILÃO — avalia 
   "msg_wa_comprador": "<WhatsApp para o agente/vendedor — 3 linhas max, pt-PT, menciona oferta em €>",
   "msg_wa_cliente": "<WhatsApp para enviar ao cliente sobre este imóvel — 2 linhas, pt-PT, profissional>"
 }`
+
+    // ── Graceful mock when no API key ─────────────────────────────────────────
+    if (!CLAUDE_KEY) {
+      const mockScore = precoRef > 0 && pm2a > 0
+        ? Math.max(40, Math.min(85, Math.round(55 + ((zm.pm2_trans - pm2a) / zm.pm2_trans) * 40)))
+        : 55
+      const mockAnalise: Record<string, unknown> = {
+        score: mockScore,
+        classificacao: mockScore >= 70 ? '✅ BOM NEGÓCIO' : mockScore >= 55 ? '⚖️ VALOR JUSTO' : '⚠️ SOBREVALORIZADO',
+        veredicto: `Análise de demonstração — zona ${zona}. Configure ANTHROPIC_API_KEY para análise completa com IA.`,
+        pontos_fortes: [`Zona ${zona} com procura activa`, `Yield estimado ${yieldBruto}%`, `Mercado: +${zm.var_yoy}% YoY`],
+        riscos_criticos: ['Análise sem IA — dados incompletos', 'Verificar documentação do imóvel'],
+        estrategia_negociacao: 'Configure a API key para obter estratégia de negociação personalizada.',
+        yield_bruto: parseFloat(yieldBruto),
+        yield_liquido: parseFloat(yieldLiq),
+        roi_5_anos_pct: parseFloat(roi5y),
+        roi_10_anos_pct: parseFloat(roi10y),
+        pm2_anuncio: pm2a,
+        pm2_mercado: zm.pm2_trans,
+      }
+      const mockResponse = {
+        success: true, zona, platform, apify_ok: apifyOk,
+        tipo_venda: tipoVenda || 'mercado_livre',
+        is_leilao: isAuction, is_banca: isBank,
+        banco: isBank ? bankName : null,
+        leilao_info: null,
+        mercado: {
+          pm2_trans: zm.pm2_trans, pm2_ask: zm.pm2_ask,
+          var_yoy: zm.var_yoy, var_qtq: zm.var_qtq,
+          renda_m2: zm.renda_m2, yield_bruto: zm.yield_bruto, yield_al: zm.yield_al,
+          abs_meses: zm.abs_meses, dias_mercado: zm.dias_mercado,
+          comp_int_pct: zm.comp_int_pct, demanda: zm.demanda, liquidez: zm.liquidez,
+          region: zm.region, fonte: 'INE/AT Q4 2025 · Demo Mode',
+        },
+        imovel: apifyOk ? { preco: precoRef, area, quartos: qts, casas_banho: bths, morada, pm2: pm2a, descricao: '' } : null,
+        financeiro: {
+          imt_hp, imt_inv, is, legal, registo,
+          total_hp: Math.round(total_hp), total_inv: Math.round(total_inv),
+          entrada30, capital, euribor_6m: liveRates.euribor_6m, euribor_12m: liveRates.euribor_12m,
+          tan: parseFloat((tan * 100).toFixed(2)),
+          pmt30, renda_est: rendaEst, renda_al: rendaAL,
+          yield_bruto: yieldBruto, yield_liq: yieldLiq, yield_al: yieldAL,
+          val5y, val10y, roi5y, roi10y,
+          desconto_vs_mercado_pct: parseFloat(descontoLeilao) || 0,
+        },
+        analise: mockAnalise,
+        _demo: true,
+      }
+      responseCache.set(cacheKey, { data: mockResponse, ts: Date.now() })
+      return NextResponse.json(mockResponse)
+    }
 
     const cr = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

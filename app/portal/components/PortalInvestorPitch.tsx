@@ -15,13 +15,31 @@ type CapitalOption = '500K' | '1M' | '2M' | '5M' | '10M+'
 type YieldFocus = 'growth' | 'income' | 'balanced'
 
 interface IpResultShape {
+  // API returns camelCase — keep both for forward compat
   title?: unknown
-  executive_summary?: unknown
-  key_metrics?: unknown
-  investment_highlights?: unknown
+  tagline?: unknown
+  // executive summary — API returns camelCase
+  executiveSummary?: unknown
+  executive_summary?: unknown    // legacy fallback
+  // investment thesis
+  investmentThesis?: unknown
+  investment_thesis?: unknown
+  // highlights — API returns uniqueSellingPoints
+  uniqueSellingPoints?: unknown
+  investment_highlights?: unknown // legacy fallback
+  // financial model
+  financialModel?: unknown
+  key_metrics?: unknown          // legacy fallback
+  // projections inside financialModel
   projections?: unknown
-  risk_score?: unknown
-  market_context?: unknown
+  // risk score
+  confidenceScore?: unknown
+  risk_score?: unknown           // legacy fallback
+  // market context
+  marketPosition?: unknown
+  market_context?: unknown       // legacy fallback
+  // risk matrix
+  riskMatrix?: unknown
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -80,7 +98,8 @@ function ReturnChart({ initialPrice, projections, irr, horizon }: ReturnChartPro
 
   const vals: { year: number; value: number }[] = uniqueYears.map(y => {
     if (y === 0) return { year: 0, value: initialPrice }
-    const fromProj = projections[`year_${y}`] ?? projections[String(y)]
+    // API returns projectedValue3Y / projectedValue5Y / projectedValue10Y — check multiple key formats
+    const fromProj = projections[`projectedValue${y}Y`] ?? projections[`year_${y}`] ?? projections[String(y)]
     if (fromProj !== undefined) return { year: y, value: asNumber(fromProj, initialPrice) }
     // fallback: compound at irr/100
     return { year: y, value: Math.round(initialPrice * Math.pow(1 + irr / 100, y)) }
@@ -422,15 +441,36 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
   const selectedProp = propList.find(p => String(p.id) === ipProperty)
   const selectedPrice = selectedProp ? asNumber(selectedProp.preco) : 0
 
-  // Parse result
+  // Parse result — API returns camelCase fields, fall back to legacy snake_case
   const res = ipResult ? (ipResult as IpResultShape) : null
   const pitchTitle = res ? asString(res.title) || 'Investor Pitch' : ''
-  const execSummary = res ? asString(res.executive_summary) : ''
-  const keyMetrics = res ? asRecord(res.key_metrics) : {}
-  const highlights = res ? asArray(res.investment_highlights) : []
-  const projections = res ? asRecord(res.projections) : {}
-  const riskScore = res ? asNumber(res.risk_score, 5) : 5
-  const marketContext = res ? asString(res.market_context) : ''
+  // executive summary: API returns executiveSummary
+  const execSummary = res ? (asString(res.executiveSummary) || asString(res.executive_summary)) : ''
+  // key_metrics: built from financialModel if present, else legacy key_metrics
+  const financialModel = res ? asRecord(res.financialModel) : {}
+  const keyMetrics = Object.keys(financialModel).length > 0
+    ? financialModel
+    : (res ? asRecord(res.key_metrics) : {})
+  // highlights: API returns uniqueSellingPoints (string[]) — wrap into display shape
+  const rawUsps = res ? asArray(res.uniqueSellingPoints) : []
+  const rawHighlights = res ? asArray(res.investment_highlights) : []
+  const highlights = rawUsps.length > 0
+    ? rawUsps.map((usp, i) => ({ icon: '◆', label: `USP ${i + 1}`, value: asString(usp) }))
+    : rawHighlights
+  // projections: inside financialModel
+  const projections = Object.keys(financialModel).length > 0
+    ? financialModel
+    : (res ? asRecord(res.projections) : {})
+  // risk score: API returns confidenceScore (1-100), normalise to 1-10
+  const rawConf = res ? asNumber(res.confidenceScore, 0) : 0
+  const riskScore = rawConf > 0
+    ? Math.round(rawConf / 10)
+    : (res ? asNumber(res.risk_score, 5) : 5)
+  // market context: API returns marketPosition object
+  const mp = res ? asRecord(res.marketPosition) : {}
+  const marketContext = Object.keys(mp).length > 0
+    ? [asString(mp.headline), asString(mp.marketMomentum)].filter(Boolean).join(' — ')
+    : (res ? asString(res.market_context) : '')
 
   // Actions
   function handleCopy() {
@@ -851,14 +891,21 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: col.muted }}>Valor Final Estimado</div>
                       <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', color: col.green, fontWeight: 300 }}>
-                        {formatPrice(Math.round(selectedPrice * Math.pow(1 + ipIrr / 100, ipHorizon)))}
+                        {(() => {
+                          // Prefer API-confirmed projected value, fall back to compound at IRR target
+                          const apiProjected = asNumber(financialModel[`projectedValue${ipHorizon}Y`], 0)
+                          const basePrice = selectedPrice > 0 ? selectedPrice : asNumber(financialModel.acquisitionCost, 0)
+                          const confirmedIrr = asNumber(financialModel.irr, ipIrr)
+                          const estimated = apiProjected > 0 ? apiProjected : Math.round(basePrice * Math.pow(1 + confirmedIrr / 100, ipHorizon))
+                          return formatPrice(estimated)
+                        })()}
                       </div>
                     </div>
                   </div>
                   <ReturnChart
-                    initialPrice={selectedPrice}
+                    initialPrice={selectedPrice > 0 ? selectedPrice : asNumber(financialModel.acquisitionCost, selectedPrice)}
                     projections={projections}
-                    irr={ipIrr}
+                    irr={asNumber(financialModel.irr, ipIrr)}
                     horizon={ipHorizon}
                   />
                   <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>

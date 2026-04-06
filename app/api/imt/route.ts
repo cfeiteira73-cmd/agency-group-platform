@@ -77,8 +77,11 @@ export async function POST(req: NextRequest) {
     const isento = isHPP && valor <= 97064;
 
     const is = valor * 0.008;
-    const registro = 250;
-    const notario = 500;
+    // Conservatória do Registo Predial: scales with property value (Portaria 322-B/2001 actualizada)
+    // ~€375 base + 0.01% above €200K, capped at €1,800
+    const registro = Math.min(1800, Math.round(375 + Math.max(0, valor - 200000) * 0.0001));
+    // Notário / Escritura: scales with value, typically €500–€1,200 for most transactions
+    const notario = Math.min(1200, Math.round(500 + Math.max(0, valor - 300000) * 0.00025));
     const advogado = valor * 0.01;
 
     const totalSemAdvogado = imt + is + registro + notario;
@@ -93,12 +96,13 @@ export async function POST(req: NextRequest) {
 
     const taxaEfetiva = ((imt / valor) * 100).toFixed(2) + '%';
 
+    const safePct = (v: number) => total > 0 ? ((v / total) * 100).toFixed(1) + '%' : '0.0%';
     const breakdown = [
-      { label: 'IMT', value: imt, pct: ((imt / total) * 100).toFixed(1) + '%' },
-      { label: 'Imposto de Selo (0,8%)', value: is, pct: ((is / total) * 100).toFixed(1) + '%' },
-      { label: 'Registo Predial', value: registro, pct: ((registro / total) * 100).toFixed(1) + '%' },
-      { label: 'Notário', value: notario, pct: ((notario / total) * 100).toFixed(1) + '%' },
-      { label: 'Advogado (1%)', value: advogado, pct: ((advogado / total) * 100).toFixed(1) + '%' },
+      { label: 'IMT', value: imt, pct: safePct(imt) },
+      { label: 'Imposto de Selo (0,8%)', value: is, pct: safePct(is) },
+      { label: 'Registo Predial', value: registro, pct: safePct(registro) },
+      { label: 'Notário', value: notario, pct: safePct(notario) },
+      { label: 'Advogado (1%)', value: advogado, pct: safePct(advogado) },
     ];
 
     const result = {

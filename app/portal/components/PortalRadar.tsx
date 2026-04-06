@@ -330,9 +330,10 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
   // Save result to history when radarResult changes
   useEffect(() => {
     if (!radarResult || !radarUrl) return
-    const typed = radarResult as unknown as RadarResultTyped
-    const score = typed.score ?? Number((radarResult as Record<string, unknown>).score) ?? 0
-    const recommendation = typed.recommendation || String((radarResult as Record<string, unknown>).classificacao || '')
+    const raw = radarResult as Record<string, unknown>
+    const analiseH = (raw.analise as Record<string, unknown> | undefined) ?? {}
+    const score = Number(analiseH.score ?? raw.score ?? 0)
+    const recommendation = String(analiseH.classificacao ?? analiseH.recommendation ?? raw.classificacao ?? raw.recommendation ?? '')
     if (!score) return
     const item: RadarHistoryItem = {
       url: radarUrl,
@@ -355,15 +356,74 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
     setSearchFontes(searchFontes.includes(f) ? searchFontes.filter(x => x !== f) : [...searchFontes, f])
   }
 
-  const searchDeals = searchResults ? (searchResults as Record<string, unknown>).deals as Record<string, unknown>[] | undefined : undefined
+  // Search API returns { success, results: Deal[], ... } — field is "results", not "deals"
+  const searchDeals = searchResults
+    ? ((searchResults as Record<string, unknown>).results
+        ?? (searchResults as Record<string, unknown>).deals) as Record<string, unknown>[] | undefined
+    : undefined
 
-  // Typed result for enhanced display
-  const typedResult = radarResult ? radarResult as unknown as RadarResultTyped : null
-  const resultScore = typedResult ? (typedResult.score ?? Number((radarResult as Record<string, unknown>).score) ?? 0) : 0
-  const resultRec = typedResult ? (typedResult.recommendation || String((radarResult as Record<string, unknown>).classificacao || '')) : ''
-  const resultSummary = typedResult ? (typedResult.summary || String((radarResult as Record<string, unknown>).analise_narrativa || '')) : ''
+  // ── Typed result for enhanced display ──────────────────────────────────────
+  // The radar API wraps AI analysis inside `analise` sub-object.
+  // Fields map: analise.score → score, analise.clasificacao → recommendation,
+  // analise.veredicto → summary, analise.20_dimensoes → dimensions,
+  // analise.riscos_criticos → risks, analise.pontos_fortes → opportunities,
+  // analise.estrategia_negociacao → negotiationAdvice
+  // We also support top-level legacy fields for cached/old responses.
+  const analise = radarResult
+    ? (radarResult.analise as Record<string, unknown> | undefined) ?? {}
+    : {}
+
+  const typedResult = radarResult ? ((): RadarResultTyped => {
+    const raw = radarResult as Record<string, unknown>
+    // Score: prefer analise.score, then top-level score
+    const score = Number(analise.score ?? raw.score ?? 0)
+    // Recommendation: analise.clasificacao (PT) or analise.recommendation (EN) or top-level
+    const recommendation = String(
+      analise.classificacao ?? analise.recommendation ?? raw.classificacao ?? raw.recommendation ?? ''
+    )
+    // Summary: analise.veredicto or analise.summary or legacy
+    const summary = String(
+      analise.veredicto ?? analise.summary ?? raw.veredicto ?? raw.analise_narrativa ?? raw.summary ?? ''
+    )
+    // Dimensions: analise["20_dimensoes"] object → convert to RadarDimension[]
+    const rawDims = analise['20_dimensoes'] as Record<string, { s: number; n: string }> | undefined
+    const dimensions: RadarDimension[] | undefined = rawDims
+      ? Object.entries(rawDims).map(([key, val]) => ({
+          name: (val?.n ?? key).substring(0, 30),
+          score: Math.round(((val?.s ?? 0) / 10) * 100), // convert 0-10 to 0-100
+          note: undefined,
+        }))
+      : undefined
+    // Risks: analise.riscos_criticos or top-level risks
+    const risksRaw = analise.riscos_criticos ?? analise.risks ?? raw.risks
+    const risks: string[] | undefined = Array.isArray(risksRaw) ? risksRaw as string[] : undefined
+    // Opportunities: analise.pontos_fortes or top-level opportunities
+    const oppsRaw = analise.pontos_fortes ?? analise.opportunities ?? raw.opportunities
+    const opportunities: string[] | undefined = Array.isArray(oppsRaw) ? oppsRaw as string[] : undefined
+    // Negotiation advice
+    const negotiationAdvice = String(
+      analise.estrategia_negociacao ?? analise.negotiationAdvice ?? raw.negotiationAdvice ?? ''
+    ) || undefined
+    // Exit strategy (not provided by API currently, keep undefined)
+    const exitStrategy = String(analise.exitStrategy ?? raw.exitStrategy ?? '') || undefined
+    // Financial projection: build from financeiro sub-object
+    const fin = raw.financeiro as Record<string, unknown> | undefined
+    const financialProjection = fin ? {
+      yieldBruto:  Number(analise.yield_bruto  ?? fin.yield_bruto  ?? 0),
+      yieldLiquido: Number(analise.yield_liquido ?? fin.yield_liq   ?? 0),
+      irr5anos:    Number(analise.roi_5_anos_pct  ?? fin.roi5y       ?? 0),
+      irr10anos:   Number(analise.roi_10_anos_pct ?? fin.roi10y      ?? 0),
+    } : undefined
+
+    return { score, recommendation, summary, dimensions, risks, opportunities, negotiationAdvice, exitStrategy, financialProjection }
+  })() : null
+
+  const resultScore   = typedResult?.score   ?? 0
+  const resultRec     = typedResult?.recommendation ?? ''
+  const resultSummary = typedResult?.summary ?? ''
   const hasDimensions = !!(typedResult?.dimensions && typedResult.dimensions.length > 0)
-  const hasFinancial = !!typedResult?.financialProjection
+  const hasFinancial  = !!(typedResult?.financialProjection &&
+    (typedResult.financialProjection.yieldBruto > 0 || typedResult.financialProjection.irr5anos > 0))
   const hasComparables = !!(typedResult?.comparables && typedResult.comparables.length > 0)
   const hasRisksOrOpps = !!(typedResult?.risks?.length || typedResult?.opportunities?.length)
 
@@ -574,7 +634,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                   const riskText = typedResult?.risks?.join('\n') ?? ''
                   const oppText  = typedResult?.opportunities?.join('\n') ?? ''
                   const report = `DEAL RADAR 16D — Agency Group\n\nURL: ${radarUrl}\nScore: ${resultScore}/100\nRecomendação: ${getRecommendationLabel(resultRec)}\n\n${resultSummary}\n\nDIMENSÕES:\n${dimText}\n\nOPORTUNIDADES:\n${oppText}\n\nRISCOS:\n${riskText}`
-                  navigator.clipboard.writeText(report)
+                  navigator.clipboard.writeText(report).catch(() => {})
                 }}
               >↗ Copiar Relatório</button>
               <button

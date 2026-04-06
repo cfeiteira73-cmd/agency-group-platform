@@ -134,7 +134,7 @@ export default function PortalIMT() {
             <div style={{ padding: '20px 24px', border: '1px solid rgba(14,14,13,.08)', background: '#fff' }}>
               <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Valor Total c/ Imóvel</div>
               <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.8rem', fontWeight: 600, color: '#0e0e0d', lineHeight: 1 }}>{fmt(valor + r.total)}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>{((r.total / valor) * 100).toFixed(1)}% do valor do imóvel</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>{valor > 0 ? ((r.total / valor) * 100).toFixed(1) : '0.0'}% do valor do imóvel</div>
             </div>
           </div>
 
@@ -155,7 +155,7 @@ export default function PortalIMT() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 600, color: row.value === 0 ? '#4a9c7a' : '#0e0e0d' }}>{row.value === 0 ? 'ISENTO' : fmt(row.value)}</div>
-                  {row.value > 0 && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)' }}>{((row.value / valor) * 100).toFixed(2)}%</div>}
+                  {row.value > 0 && valor > 0 && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)' }}>{((row.value / valor) * 100).toFixed(2)}%</div>}
                 </div>
               </div>
             ))}

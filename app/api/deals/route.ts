@@ -203,13 +203,24 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const total  = filtered.length
     const sliced = filtered.slice((page - 1) * limit, page * limit)
 
+    // Normalise v2 stage names → v1 portal stage names so kanban columns always match
+    const STAGE_V2_TO_V1: Record<string, string> = {
+      'Contacto':    'Angariação',
+      'Qualificado': 'Angariação',
+      'Visita':      'Proposta Enviada',
+      'Proposta':    'Proposta Enviada',
+      'Negociação':  'Proposta Aceite',
+      'CPCV':        'CPCV Assinado',
+      'Escritura':   'Escritura Marcada',
+    }
+
     // Map mock data to the Deal interface expected by the portal
     const mappedMock = sliced.map((d, i) => ({
       id: i + 1,  // sequential numeric ID for mock deals
       ref: d.id,
       imovel: d.property,
       valor: `€ ${Number(d.asking).toLocaleString('pt-PT')}`,
-      fase: d.stage,
+      fase: STAGE_V2_TO_V1[d.stage] ?? d.stage,
       comprador: d.contact,
       cpcvDate: '',
       escrituraDate: '',

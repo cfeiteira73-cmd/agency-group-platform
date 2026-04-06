@@ -414,10 +414,26 @@ export default function Portal() {
     if (items.length < 2) { toast('Introduz pelo menos 2 imóveis.'); return }
     setPortLoading(true); setPortResult(null)
     try {
-      const res = await fetch('/api/portfolio', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ properties: items.map(url => ({ url })) }) })
+      const res = await fetch('/api/portfolio', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ properties: items.map(url => ({ url, zona: 'Lisboa', area: 100, preco: 1, tipologia: 'T2', estado: 'usado_bom' })) }) })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-      if (data.success) setPortResult(data)
-      else toast(data.error || 'Erro')
+      if (data.success) {
+        // Map API response shape → ComparisonResult display shape
+        const ranking = Array.isArray(data.ranking) ? data.ranking : []
+        const mapped = {
+          properties: ranking.map((r: Record<string, unknown>) => ({
+            name: String(r.zona_match ?? r.zona ?? `Imóvel ${r.id}`),
+            price: Number(r.preco_pedido ?? 0),
+            yield: Number((r.avaliacao as Record<string, unknown>)?.yield_real_ajustado_pct ?? 0),
+            score: Number(r.score_total ?? 0),
+          })),
+          winner: ranking.length > 0 ? String(ranking[0].zona_match ?? ranking[0].zona ?? '') : undefined,
+          recommendation: data.melhor_pick ? `Score ${data.melhor_pick.score}/100 — ${data.melhor_pick.classificacao}. Yield ${(data.melhor_pick as Record<string, unknown>).yield_real_pct ?? ''}% · ROI 5 anos ${(data.melhor_pick as Record<string, unknown>).roi_5_anos_pct ?? ''}%` : undefined,
+          summary: data.resumo_portfolio ? `Portfolio: ${data.properties_analisadas} imóveis · Total ${data.resumo_portfolio.total_investimento ? `€${(data.resumo_portfolio.total_investimento / 1e6).toFixed(2)}M` : '—'} · Yield ${data.resumo_portfolio.yield_portfolio_pct ?? '—'}%` : undefined,
+          _raw: data,
+        }
+        setPortResult(mapped)
+      } else toast(data.error || 'Erro')
     } catch { toast('Erro de ligação.') }
     finally { setPortLoading(false) }
   }
@@ -498,12 +514,16 @@ export default function Portal() {
     setIpLoading(true); setIpResult(null); setIpError(null)
     try {
       const property = (PORTAL_PROPERTIES as Record<string, unknown>[]).find(p => String(p.id) === ipProperty)
-      if (!property) { setIpError('Imóvel não encontrado'); return }
-      const res = await fetch('/api/investor-pitch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ property, investor_type: ipInvestorType, horizon: ipHorizon, irr_target: ipIrr, language: ipLang }) })
-      const data = await res.json()
-      if (data.success) setIpResult(data.pitch)
-      else setIpError(data.error || 'Erro')
-    } catch { setIpError('Erro de ligação.') }
+      if (!property) {
+        setIpError('Imóvel não encontrado')
+      } else {
+        const res = await fetch('/api/investor-pitch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ property, investorType: ipInvestorType, horizon: ipHorizon, irrTarget: ipIrr, language: ipLang }) })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+        if (data.success) setIpResult(data.pitch)
+        else setIpError(data.error || 'Erro ao gerar pitch')
+      }
+    } catch (err) { setIpError(err instanceof Error ? err.message : 'Erro de ligação.') }
     finally { setIpLoading(false) }
   }
 
@@ -519,15 +539,17 @@ export default function Portal() {
     try {
       const res = await fetch('/api/juridico', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: novas.map(m => ({ role: m.role, content: m.content })) }) })
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || `Erro HTTP ${res.status}`)
       if (data.success) {
         setJurWebSearch(data.webSearch ?? false)
         setJurMsgs(prev => [...prev, { role: 'assistant', content: data.resposta, webSearch: data.webSearch, ts: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }])
       } else {
-        setJurMsgs(prev => [...prev, { role: 'assistant', content: `Erro: ${data.error}`, ts: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }])
+        setJurMsgs(prev => [...prev, { role: 'assistant', content: `Erro: ${data.error || 'Resposta inválida do servidor'}`, ts: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }])
       }
-    } catch {
-      setJurMsgs(prev => [...prev, { role: 'assistant', content: 'Erro de ligação. Tenta novamente.', ts: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }])
-    } finally { setJurLoading(false); setJurWebSearch(false) }
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      setJurMsgs(prev => [...prev, { role: 'assistant', content: `Erro de ligação: ${errMsg}. Tenta novamente.`, ts: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) }])
+    } finally { setJurLoading(false) }
   }
 
   function exportarJuridico() {

@@ -151,10 +151,29 @@ export async function POST(req: NextRequest) {
   // ── Anthropic streaming ───────────────────────────────────────────────────
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return new Response(
-      JSON.stringify({ error: 'Serviço IA não configurado.' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } }
-    )
+    // Return a graceful SSE mock response so the UI renders instead of crashing
+    const mockText =
+      'Olá! Sou a Sofia, assistente IA da Agency Group. ' +
+      'Neste momento o serviço de IA não está configurado (ANTHROPIC_API_KEY em falta). ' +
+      'Contacte o administrador para activar o assistente completo.'
+    const encoder = new TextEncoder()
+    const readable = new ReadableStream({
+      start(controller) {
+        // Send the mock message as a single SSE chunk so the client renders it normally
+        const payload = JSON.stringify({ text: mockText })
+        controller.enqueue(encoder.encode(`data: ${payload}\n\n`))
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        controller.close()
+      },
+    })
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      },
+    })
   }
 
   const client = new Anthropic({ apiKey })
@@ -162,7 +181,7 @@ export async function POST(req: NextRequest) {
   try {
     // Use create() with stream:true — AsyncIterable approach works in edge runtime
     const stream = await client.messages.create({
-      model: 'claude-haiku-3-5-20241022',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 1024,
       stream: true,
       system: systemPrompt,

@@ -402,7 +402,10 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
     const totalRental = portfolioProperties.reduce((s, p) => s + (p.currentValue * p.rentalYield / 100), 0)
     const value5y = portfolioProperties.reduce((s, p) => s + p.currentValue * Math.pow(1 + p.appreciation / 100, 5), 0)
     const value10y = portfolioProperties.reduce((s, p) => s + p.currentValue * Math.pow(1 + p.appreciation / 100, 10), 0)
-    const roi10y = ((value10y - totalValue) / totalValue * 100)
+    // Total return over 10 years = capital gains + cumulative rental income
+    const rentalCumulative10y = totalRental * 10
+    const totalReturn10y = (value10y - totalValue) + rentalCumulative10y
+    const roi10y = totalValue > 0 ? (totalReturn10y / totalValue * 100) : 0
     return { totalValue, totalEquity, totalRental, value5y, value10y, roi10y }
   }, [portfolioProperties])
 

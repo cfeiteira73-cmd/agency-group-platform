@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
-
-const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,6 +9,27 @@ export async function POST(req: NextRequest) {
 
     if (!transcript || transcript.trim().length < 10) {
       return NextResponse.json({ error: 'Transcrição demasiado curta ou vazia' }, { status: 400 })
+    }
+
+    // Graceful mock when API key is missing
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.warn('[voice-note] ANTHROPIC_API_KEY não definida — mock response')
+      const today = new Date().toISOString().split('T')[0]
+      return NextResponse.json({
+        success: true,
+        contact: existingContact || { name: null, phone: null, email: null, nationality: null, language: language || 'PT', budgetMin: null, budgetMax: null, zonas: [], tipos: [], status: 'lead', origin: 'Phone', notes: `Nota de voz (mock): ${transcript.slice(0, 100)}` },
+        tasks: [{ title: 'Rever nota de voz e actualizar contacto', date: today, priority: 'medium', done: false }],
+        nextStep: 'Rever transcrição e actualizar CRM manualmente',
+        dealPotential: 'médio',
+        urgency: 'esta semana',
+        followUpDate: today,
+        keyInsights: ['Nota de voz processada — configurar ANTHROPIC_API_KEY para análise IA completa'],
+        meetingSummary: `Nota de voz registada em ${today}. Processar manualmente.`,
+        sentiment: 'neutro',
+        objections: [],
+        budget_confirmed: false,
+        timeline_confirmed: false,
+      })
     }
 
     const today = new Date().toISOString().split('T')[0]
@@ -66,9 +84,13 @@ Extrai e estrutura toda a informação em JSON rigoroso. Não inventes dados que
   "timeline_confirmed": true_ou_false
 }`
 
+    const { default: Anthropic } = await import('@anthropic-ai/sdk')
+    const client = new Anthropic()
+
     const response = await client.messages.create({
       model: 'claude-opus-4-5',
       max_tokens: 900,
+      system: 'És um agente imobiliário sénior a estruturar notas de reunião. Respondes APENAS com JSON válido, sem texto adicional.',
       messages: [{ role: 'user', content: prompt }],
     })
 

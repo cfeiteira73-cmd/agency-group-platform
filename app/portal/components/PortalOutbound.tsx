@@ -476,12 +476,14 @@ function SignalDrawer({
   const [lang, setLang] = useState<'PT' | 'EN' | 'FR'>('PT')
   const [generating, setGenerating] = useState(false)
   const [generatedMsg, setGeneratedMsg] = useState<{ subject?: string; message: string } | null>(null)
+  const [generateError, setGenerateError] = useState('')
   const [copied, setCopied] = useState(false)
   const [editNotes, setEditNotes] = useState(signal.notes)
 
   async function handleGenerate() {
     setGenerating(true)
     setGeneratedMsg(null)
+    setGenerateError('')
     try {
       const res = await fetch('/api/outbound/generate', {
         method: 'POST',
@@ -497,11 +499,16 @@ function SignalDrawer({
         })
       })
       const data = await res.json()
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `Erro HTTP ${res.status}`)
+      }
       setGeneratedMsg(data)
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido'
+      setGenerateError(`Erro ao gerar: ${msg}. A usar template de emergência.`)
       setGeneratedMsg({
         subject: 'Proposta de Avaliação Gratuita — Agency Group',
-        message: `Exmo(a). Sr(a). ${signal.proprietario || 'Proprietário'},\n\nGostaríamos de apresentar os nossos serviços de mediação imobiliária para o imóvel localizado em ${signal.address}.\n\nCom base na nossa análise de mercado, estimamos um valor de mercado de ${fmtCurrency(signal.avmEstimate)} para a sua propriedade.\n\nEstamos disponíveis para uma avaliação gratuita e sem compromisso.\n\nCom os melhores cumprimentos,\nAgency Group`
+        message: `Exmo(a). Sr(a). ${signal.proprietario || 'Proprietário'},\n\nGostaríamos de apresentar os nossos serviços de mediação imobiliária para o imóvel localizado em ${signal.address}.\n\nCom base na nossa análise de mercado, estimamos um valor de mercado de ${fmtCurrency(signal.avmEstimate)} para a sua propriedade.\n\nEstamos disponíveis para uma avaliação gratuita e sem compromisso.\n\nCom os melhores cumprimentos,\nAgency Group — AMI 22506`
       })
     } finally {
       setGenerating(false)
@@ -741,6 +748,13 @@ function SignalDrawer({
                   </select>
                 </div>
               </div>
+              {generateError && (
+                <div style={{
+                  background: '#dc262215', border: '1px solid #dc262240',
+                  borderRadius: 8, padding: '8px 12px',
+                  fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#dc2626'
+                }}>{generateError}</div>
+              )}
               <button
                 onClick={handleGenerate}
                 disabled={generating}
@@ -1283,9 +1297,11 @@ function TabGerador() {
         })
       })
       const data = await res.json()
-      if (data.error) throw new Error(data.error)
+      if (!res.ok || data.error) throw new Error(data.error || `Erro HTTP ${res.status}`)
       setResult(data)
-    } catch {
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Erro desconhecido'
+      setError(`Erro ao gerar via IA: ${errMsg}. A usar template de base.`)
       // Fallback template
       const greet = lang === 'EN' ? 'Dear' : lang === 'FR' ? 'Cher(e)' : 'Exmo(a). Sr(a).'
       const closing = lang === 'EN' ? 'Kind regards' : lang === 'FR' ? 'Cordialement' : 'Com os melhores cumprimentos'
