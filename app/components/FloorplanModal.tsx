@@ -122,7 +122,7 @@ export default function FloorplanModal({ propertyName, area, quartos, casasBanho
         {/* Header */}
         <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(201,169,110,.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '4px' }}>Planta Baixa · Esquemática</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '4px' }}>Planta Baixa · Esquemática</div>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.4rem', color: '#f4f0e6', margin: 0 }}>{propertyName}</h2>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(244,240,230,.4)', cursor: 'pointer', fontSize: '1.2rem' }}>✕</button>
@@ -137,7 +137,7 @@ export default function FloorplanModal({ propertyName, area, quartos, casasBanho
             ['Tipologia', tipo],
           ].map(([label, val], i) => (
             <div key={label} style={{ paddingRight: '24px', marginRight: '24px', borderRight: i < 3 ? '1px solid rgba(201,169,110,.1)' : 'none' }}>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.12em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '3px' }}>{label}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.12em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '3px' }}>{label}</div>
               <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.1rem', color: '#c9a96e', fontWeight: 300 }}>{val}</div>
             </div>
           ))}

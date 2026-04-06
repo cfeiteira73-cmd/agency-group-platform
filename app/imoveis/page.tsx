@@ -176,7 +176,7 @@ export default function ImoveisPage() {
           <div style={{
             marginTop: '28px', display: 'flex', justifyContent: 'center',
             gap: '8px', fontFamily: "'DM Mono', monospace",
-            fontSize: '.48rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.3)',
+            fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.3)',
           }}>
             <Link href="/" style={{ color: 'rgba(201,169,110,.55)', textDecoration: 'none' }}>Início</Link>
             <span>/</span>
@@ -326,7 +326,7 @@ export default function ImoveisPage() {
               </div>
 
               <span style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.12em', color: 'rgba(244,240,230,.3)',
               }}>ORDENAR</span>
               <select
@@ -544,7 +544,7 @@ function PropertyCard({
             {/* Ref badge */}
             <div style={{
               position: 'absolute', top: '14px', left: '42px',
-              fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.18em', color: 'rgba(244,240,230,.45)',
               background: 'rgba(12,31,21,.6)', padding: '4px 10px',
               backdropFilter: 'blur(8px)',
@@ -555,7 +555,7 @@ function PropertyCard({
               <div style={{
                 position: 'absolute', top: '14px', right: '52px',
                 ...BADGE_COLORS[p.badge],
-                fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.16em', textTransform: 'uppercase',
                 padding: '5px 12px',
               }}>{p.badge}</div>
@@ -602,7 +602,7 @@ function PropertyCard({
             {/* Energia label */}
             <div style={{
               position: 'absolute', bottom: '14px', right: '14px',
-              fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.12em', color: '#c9a96e',
               background: 'rgba(12,31,21,.55)', padding: '3px 8px',
             }}>EPC {p.energia}</div>
@@ -611,7 +611,7 @@ function PropertyCard({
           {/* Body */}
           <div style={{ padding: '20px 20px 22px' }}>
             <div style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.18em', color: 'rgba(201,169,110,.65)',
               marginBottom: '8px', textTransform: 'uppercase',
             }}>
@@ -626,7 +626,7 @@ function PropertyCard({
 
             <div style={{
               display: 'flex', gap: '16px',
-              fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.1em', color: 'rgba(244,240,230,.4)',
               marginBottom: '16px',
             }}>
@@ -649,13 +649,13 @@ function PropertyCard({
                 </div>
                 {currency !== 'EUR' && (
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.08em', color: 'rgba(201,169,110,.5)',
                     marginTop: '2px',
                   }}>{formatConverted(p.preco)}</div>
                 )}
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.1em', color: 'rgba(244,240,230,.3)',
                 }}>€{pm2.toLocaleString('pt-PT')}/m²</div>
               </div>

@@ -82,7 +82,7 @@ export default function AlertSubscribe({ onClose }: { onClose: () => void }) {
         }}>
           <div>
             <div style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.18em', color: 'rgba(201,169,110,.6)',
               textTransform: 'uppercase', marginBottom: '6px',
             }}>Alertas de Imóveis</div>
@@ -248,7 +248,7 @@ export default function AlertSubscribe({ onClose }: { onClose: () => void }) {
 
 const labelStyle: CSSProperties = {
   display: 'block',
-  fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
   letterSpacing: '.12em', color: 'rgba(201,169,110,.6)',
   textTransform: 'uppercase', marginBottom: '6px',
 }

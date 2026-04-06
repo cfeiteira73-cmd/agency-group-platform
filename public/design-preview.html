@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agency Group — Design System Preview v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400&family=Jost:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Jost',sans-serif;
+  background:#f5f1e8;
+  color:#0e0e0d;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS — NEW v2.0
+═══════════════════════════════════════════════════ */
+:root{
+  --g:#1c4a35; --g-hover:#163d2c; --g-deep:#060e09;
+  --gold:#c9a96e; --gold-hover:#b8945a;
+  --bg-page:#f5f1e8; --bg-surface:#ffffff;
+  --bg-subtle:#faf8f3;
+  --text-primary:#0e0e0d;
+  --text-secondary:rgba(14,14,13,.60);
+  --text-muted:rgba(14,14,13,.38);
+  --border-default:rgba(14,14,13,.08);
+  --border-strong:rgba(14,14,13,.14);
+  --shadow-1:0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04);
+  --shadow-2:0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04);
+  --shadow-3:0 16px 48px rgba(14,14,13,.12),0 4px 12px rgba(14,14,13,.06);
+  --r-sm:4px; --r-md:8px; --r-lg:12px; --r-xl:16px;
+  --success:#166534; --warning:#92400e; --error:#991b1b; --info:#1e40af;
+}
+
+/* ═══════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════ */
+.page-header{
+  background:#060e09;
+  padding:48px 64px 40px;
+  position:sticky;top:0;z-index:100;
+  border-bottom:1px solid rgba(201,169,110,.12);
+}
+.page-header h1{
+  font-family:'Cormorant',serif;font-weight:300;
+  font-size:2.6rem;color:#f4f0e6;letter-spacing:-.02em;
+  line-height:1;
+}
+.page-header .sub{
+  font-family:'DM Mono',monospace;font-size:.6rem;
+  letter-spacing:.18em;color:rgba(201,169,110,.7);
+  text-transform:uppercase;margin-top:6px;
+}
+.badge-new{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.3);
+  color:#c9a96e;padding:3px 10px;border-radius:4px;
+  font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;
+  text-transform:uppercase;margin-left:12px;vertical-align:middle;
+}
+.nav-bar{
+  display:flex;gap:4px;margin-top:24px;flex-wrap:wrap;
+}
+.nav-bar a{
+  font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.12em;
+  text-transform:uppercase;color:rgba(244,240,230,.45);
+  padding:6px 14px;border-radius:4px;text-decoration:none;
+  border:1px solid rgba(244,240,230,.08);transition:all .2s;
+}
+.nav-bar a:hover{color:rgba(244,240,230,.85);border-color:rgba(244,240,230,.2);}
+
+.main{max-width:1400px;margin:0 auto;padding:56px 64px;}
+.section{margin-bottom:72px;}
+.section-title{
+  font-family:'Cormorant',serif;font-size:2rem;font-weight:300;
+  color:#1c4a35;margin-bottom:6px;
+}
+.section-label{
+  font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.18em;
+  text-transform:uppercase;color:rgba(14,14,13,.38);
+  margin-bottom:32px;display:block;padding-bottom:16px;
+  border-bottom:1px solid rgba(14,14,13,.08);
+}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+
+/* ═══════════════════════════════════════════════════
+   BEFORE / AFTER WRAPPER
+═══════════════════════════════════════════════════ */
+.ba-wrapper{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:0;border-radius:var(--r-lg);overflow:hidden;
+  border:1px solid var(--border-default);
+}
+.ba-panel{padding:28px;}
+.ba-before{background:#faf8f3;}
+.ba-after{background:#ffffff;border-left:2px solid #c9a96e;}
+.ba-label{
+  font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.16em;
+  text-transform:uppercase;margin-bottom:20px;display:block;
+  padding:4px 10px;border-radius:4px;width:fit-content;
+}
+.ba-label.before{background:rgba(14,14,13,.08);color:rgba(14,14,13,.5);}
+.ba-label.after{background:rgba(201,169,110,.12);color:#b8945a;}
+
+/* ═══════════════════════════════════════════════════
+   COLOR SWATCHES
+═══════════════════════════════════════════════════ */
+.swatch-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.swatch{
+  display:flex;flex-direction:column;gap:6px;
+  min-width:100px;
+}
+.swatch-color{
+  height:52px;border-radius:8px;
+  border:1px solid rgba(14,14,13,.08);
+}
+.swatch-name{font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.5);letter-spacing:.06em;}
+.swatch-value{font-family:'DM Mono',monospace;font-size:.52rem;color:#0e0e0d;font-weight:400;}
+
+/* Dark palette display */
+.dark-palette{
+  background:#091510;border-radius:var(--r-lg);padding:28px;
+}
+.dark-palette .swatch-name{color:rgba(240,237,228,.4);}
+.dark-palette .swatch-value{color:rgba(240,237,228,.8);}
+.dark-palette .swatch-color{border-color:rgba(240,237,228,.08);}
+
+/* ═══════════════════════════════════════════════════
+   TYPOGRAPHY PREVIEW
+═══════════════════════════════════════════════════ */
+.type-row{
+  display:flex;align-items:baseline;gap:20px;
+  padding:14px 0;border-bottom:1px solid var(--border-default);
+}
+.type-row:last-child{border-bottom:none;}
+.type-meta{
+  font-family:'DM Mono',monospace;font-size:.48rem;
+  color:rgba(14,14,13,.38);letter-spacing:.08em;
+  min-width:160px;flex-shrink:0;
+}
+.type-sample-before{color:rgba(14,14,13,.35);text-decoration:line-through;}
+.type-arrow{color:#c9a96e;font-size:.7rem;margin:0 4px;}
+
+/* ═══════════════════════════════════════════════════
+   KPI CARDS — BEFORE / AFTER
+═══════════════════════════════════════════════════ */
+/* BEFORE card */
+.kpi-before{
+  background:#fff;
+  border:1px solid rgba(14,14,13,.08);
+  padding:20px 24px;
+  /* no border-radius, no shadow */
+}
+.kpi-before .title{
+  font-family:'DM Mono',monospace;
+  font-size:.4rem; /* tiny */
+  letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(14,14,13,.38);
+}
+.kpi-before .val{
+  font-family:'Cormorant',serif;font-weight:300;
+  font-size:1.8rem;color:#1c4a35;line-height:1;margin:6px 0 4px;
+}
+.kpi-before .sub{
+  font-family:'DM Mono',monospace;font-size:.38rem;
+  color:rgba(14,14,13,.35);
+}
+.kpi-before .badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(22,101,52,.08);color:#166534;
+  padding:1px 6px;font-family:'DM Mono',monospace;
+  font-size:.34rem; /* microscópico */
+  margin-top:8px;
+}
+.kpi-before .spark{
+  width:60px;height:24px;flex-shrink:0;
+}
+
+/* AFTER card */
+.kpi-after{
+  background:#fff;
+  border:1px solid rgba(14,14,13,.08);
+  border-radius:12px; /* NOVO */
+  padding:20px 24px;
+  box-shadow:0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04); /* NOVO */
+  transition:all .2s;cursor:pointer;
+}
+.kpi-after:hover{
+  box-shadow:0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04);
+  transform:translateY(-2px);
+}
+.kpi-after .title{
+  font-family:'DM Mono',monospace;
+  font-size:.54rem; /* AUMENTADO */
+  letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(14,14,13,.45);
+}
+.kpi-after .val{
+  font-family:'Cormorant',serif;font-weight:300;
+  font-size:2.0rem; /* AUMENTADO */
+  color:#1c4a35;line-height:1;margin:6px 0 4px;
+}
+.kpi-after .sub{
+  font-family:'DM Mono',monospace;font-size:.60rem; /* AUMENTADO */
+  color:rgba(14,14,13,.45);
+}
+.kpi-after .badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(22,101,52,.08);color:#166534;
+  padding:3px 8px;border-radius:4px; /* NOVO */
+  font-family:'DM Mono',monospace;
+  font-size:.52rem; /* AUMENTADO */
+  margin-top:8px;
+}
+.kpi-after .spark{
+  width:64px;height:28px;flex-shrink:0; /* LIGEIRAMENTE MAIOR */
+}
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR BEFORE / AFTER
+═══════════════════════════════════════════════════ */
+.sidebar-before{
+  background:#0c1f15;width:240px;padding:20px 0;border-radius:0;
+}
+.sidebar-after{
+  background:#060e09;width:248px;padding:20px 0;border-radius:var(--r-lg);
+}
+.sb-logo-before{
+  padding:20px 24px 18px;border-bottom:1px solid rgba(244,240,230,.06);
+  font-family:'Cormorant',serif;font-size:1.4rem;font-weight:300;
+  color:#c9a96e;letter-spacing:.4em;text-transform:uppercase;
+}
+.sb-logo-after{
+  padding:20px 24px 18px;border-bottom:1px solid rgba(201,169,110,.08);
+  font-family:'Cormorant',serif;font-size:1.4rem;font-weight:300;
+  color:#c9a96e;letter-spacing:.4em;text-transform:uppercase;
+}
+.sb-group-before{
+  padding:10px 24px 4px;margin-top:8px;
+  font-family:'DM Mono',monospace;font-size:.36rem; /* tiny */
+  letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(244,240,230,.20); /* barely visible */
+}
+.sb-group-after{
+  padding:14px 24px 5px;margin-top:8px;
+  font-family:'DM Mono',monospace;font-size:.52rem; /* AUMENTADO */
+  letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(244,240,230,.32); /* MAIS VISÍVEL */
+}
+.sb-item-before{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 16px;margin:1px 8px;border-radius:4px;
+  font-family:'Jost',sans-serif;font-size:.75rem;
+  color:rgba(244,240,230,.45);cursor:pointer;
+}
+.sb-item-after{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 18px;margin:1px 8px;border-radius:6px; /* AUMENTADO */
+  font-family:'Jost',sans-serif;font-size:.80rem; /* AUMENTADO */
+  color:rgba(244,240,230,.52); /* MAIS LEGÍVEL */
+  cursor:pointer;transition:all .2s;
+}
+.sb-item-after:hover{
+  background:rgba(244,240,230,.06);
+  color:rgba(244,240,230,.85);
+}
+.sb-item-active-before{
+  background:rgba(201,169,110,.15);color:#c9a96e;
+}
+.sb-item-active-after{
+  background:rgba(201,169,110,.16);color:#c9a96e;
+}
+.sb-icon{
+  width:14px;height:14px;opacity:.45;flex-shrink:0;
+}
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS BEFORE / AFTER
+═══════════════════════════════════════════════════ */
+.btn-before{
+  background:#1c4a35;color:#f4f0e6;border:none;
+  padding:12px 24px;cursor:pointer;
+  font-family:'DM Mono',monospace;font-size:.55rem;
+  letter-spacing:.2em;text-transform:uppercase;
+  /* no border-radius */
+}
+.btn-after{
+  background:#1c4a35;color:#f4f0e6;border:none;
+  padding:11px 22px;cursor:pointer;border-radius:6px; /* NOVO */
+  font-family:'DM Mono',monospace;font-size:.62rem; /* SOBE */
+  letter-spacing:.16em;text-transform:uppercase;
+  transition:all .2s;box-shadow:none;
+}
+.btn-after:hover{
+  background:#163d2c;transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(28,74,53,.2);
+}
+.btn-gold-before{
+  background:#c9a96e;color:#0c1f15;border:none;
+  padding:12px 24px;cursor:pointer;
+  font-family:'DM Mono',monospace;font-size:.55rem;
+  letter-spacing:.2em;text-transform:uppercase;
+}
+.btn-gold-after{
+  background:#c9a96e;color:#0c1f15;border:none;
+  padding:11px 22px;cursor:pointer;border-radius:6px;
+  font-family:'DM Mono',monospace;font-size:.62rem;
+  letter-spacing:.16em;text-transform:uppercase;
+  transition:all .2s;
+}
+.btn-gold-after:hover{
+  background:#b8945a;transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(201,169,110,.25);
+}
+
+/* ═══════════════════════════════════════════════════
+   INPUTS BEFORE / AFTER
+═══════════════════════════════════════════════════ */
+.inp-before{
+  width:100%;background:#fff;
+  border:1px solid rgba(14,14,13,.12);
+  padding:10px 14px;
+  font-family:'Jost',sans-serif;font-size:.83rem;color:#0e0e0d;
+  outline:none;
+}
+.inp-after{
+  width:100%;background:#fff;
+  border:1px solid rgba(14,14,13,.10);
+  border-radius:8px; /* NOVO */
+  padding:10px 14px;
+  font-family:'Jost',sans-serif;font-size:.85rem;color:#0e0e0d;
+  outline:none;transition:all .2s;
+}
+.inp-after:focus{
+  border-color:#1c4a35;
+  box-shadow:0 0 0 3px rgba(28,74,53,.10); /* FOCUS RING NOVO */
+}
+
+/* ═══════════════════════════════════════════════════
+   ALERTS BEFORE / AFTER
+═══════════════════════════════════════════════════ */
+.alert-before{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 16px;background:rgba(153,27,27,.04);
+  border-left:3px solid #991b1b;border-radius:0;
+  border:1px solid rgba(153,27,27,.15);border-left-width:3px;
+}
+.alert-after{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 16px;background:rgba(153,27,27,.07); /* SOBE */
+  border-left:3px solid #991b1b;border-radius:8px; /* NOVO */
+  border:1px solid rgba(153,27,27,.15);border-left-width:3px;
+}
+.alert-title-before{
+  font-family:'DM Mono',monospace;font-size:.42rem;
+  letter-spacing:.1em;text-transform:uppercase;color:#991b1b;
+}
+.alert-title-after{
+  font-family:'DM Mono',monospace;font-size:.60rem; /* SOBE */
+  letter-spacing:.1em;text-transform:uppercase;color:#991b1b;
+}
+.alert-body-before{
+  font-family:'Jost',sans-serif;font-size:.80rem;
+  color:rgba(14,14,13,.65);margin-top:4px;
+}
+.alert-body-after{
+  font-family:'Jost',sans-serif;font-size:.82rem;
+  color:rgba(14,14,13,.68);margin-top:4px;
+}
+
+/* ═══════════════════════════════════════════════════
+   DARK MODE PREVIEW
+═══════════════════════════════════════════════════ */
+.dark-preview{
+  background:#091510;border-radius:var(--r-xl);
+  padding:40px;
+}
+.dark-kpi{
+  background:#0f1e16; /* UNIFICADO */
+  border:1px solid rgba(201,169,110,.10);
+  border-radius:12px;
+  padding:20px 24px;
+  box-shadow:0 1px 3px rgba(0,0,0,.20);
+}
+.dark-kpi .title{
+  font-family:'DM Mono',monospace;font-size:.54rem;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(240,237,228,.40);
+}
+.dark-kpi .val{
+  font-family:'Cormorant',serif;font-weight:300;
+  font-size:2.0rem;color:#c9a96e;line-height:1;margin:6px 0 4px;
+}
+.dark-kpi .sub{
+  font-family:'DM Mono',monospace;font-size:.60rem;
+  color:rgba(240,237,228,.40);
+}
+.dark-kpi .badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(74,222,128,.10);color:#4ade80;
+  padding:3px 8px;border-radius:4px;
+  font-family:'DM Mono',monospace;font-size:.52rem;margin-top:8px;
+}
+.dark-nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 18px;margin:1px 8px;border-radius:6px;
+  font-family:'Jost',sans-serif;font-size:.80rem;
+  color:rgba(240,237,228,.52);
+}
+.dark-nav-active{
+  background:rgba(201,169,110,.16);color:#c9a96e;
+}
+.dark-group{
+  padding:14px 24px 5px;
+  font-family:'DM Mono',monospace;font-size:.52rem;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(240,237,228,.30);
+}
+.dark-input{
+  width:100%;background:#0c1a12;
+  border:1px solid rgba(201,169,110,.14);
+  border-radius:8px;padding:10px 14px;
+  font-family:'Jost',sans-serif;font-size:.85rem;
+  color:#f0ede4;outline:none;
+}
+.dark-card-title{
+  font-family:'Cormorant',serif;font-size:1.2rem;
+  font-weight:300;color:#f0ede4;margin-bottom:4px;
+}
+.dark-card-sub{
+  font-family:'DM Mono',monospace;font-size:.54rem;
+  color:rgba(240,237,228,.40);letter-spacing:.08em;
+}
+
+/* ═══════════════════════════════════════════════════
+   SPACING & RADIUS SHOWCASE
+═══════════════════════════════════════════════════ */
+.radius-demo{
+  display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;
+}
+.radius-box{
+  background:#1c4a35;color:#f4f0e6;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;padding:16px 20px;
+  font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.08em;
+}
+
+/* ═══════════════════════════════════════════════════
+   ELEVATION / SHADOWS DEMO
+═══════════════════════════════════════════════════ */
+.shadow-demo{display:flex;gap:20px;flex-wrap:wrap;}
+.shadow-card{
+  background:#fff;border:1px solid rgba(14,14,13,.06);
+  border-radius:12px;padding:20px 24px;min-width:160px;
+  text-align:center;
+}
+.sh-label{
+  font-family:'DM Mono',monospace;font-size:.52rem;
+  color:rgba(14,14,13,.45);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:6px;
+}
+.sh-val{
+  font-family:'Jost',sans-serif;font-size:.80rem;
+  color:rgba(14,14,13,.55);
+}
+
+/* ═══════════════════════════════════════════════════
+   PIPELINE BEFORE / AFTER
+═══════════════════════════════════════════════════ */
+.pipeline-before .row{
+  display:grid;grid-template-columns:160px 1fr 120px;
+  gap:14px;padding:8px 0;align-items:center;
+  border-bottom:1px solid rgba(28,74,53,.2);
+}
+.pipeline-after .row{
+  display:grid;grid-template-columns:160px 1fr 120px;
+  gap:14px;padding:10px 0;align-items:center;
+  border-bottom:1px solid rgba(28,74,53,.10); /* mais suave */
+}
+.pipe-stage-before{
+  font-family:'DM Mono',monospace;font-size:.4rem; /* tiny */
+  letter-spacing:.1em;text-transform:uppercase;color:rgba(14,14,13,.5);
+}
+.pipe-stage-after{
+  font-family:'DM Mono',monospace;font-size:.60rem; /* SOBE */
+  letter-spacing:.08em;text-transform:uppercase;color:rgba(14,14,13,.55);
+}
+.pipe-bar-track{
+  background:rgba(14,14,13,.06);border-radius:3px;height:5px;overflow:hidden;
+}
+.pipe-bar-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.pipe-amount-before{
+  font-family:'DM Mono',monospace;font-size:.42rem;
+  color:#1c4a35;text-align:right;
+}
+.pipe-amount-after{
+  font-family:'Cormorant',serif;font-size:.75rem;font-weight:300;
+  color:#1c4a35;text-align:right;
+}
+
+/* ═══════════════════════════════════════════════════
+   STATUS BADGES BEFORE / AFTER
+═══════════════════════════════════════════════════ */
+.badges-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.badge-before{
+  display:inline-flex;align-items:center;padding:2px 8px;
+  font-family:'DM Mono',monospace;font-size:.42rem;
+  letter-spacing:.10em;text-transform:uppercase;border-radius:0;
+}
+.badge-after{
+  display:inline-flex;align-items:center;padding:3px 8px;
+  font-family:'DM Mono',monospace;font-size:.52rem; /* SOBE */
+  letter-spacing:.08em;text-transform:uppercase;border-radius:4px; /* NOVO */
+}
+
+/* ═══════════════════════════════════════════════════
+   MARKET TICKER BEFORE / AFTER
+═══════════════════════════════════════════════════ */
+.ticker-before{
+  background:#1c4a35;padding:10px 24px;overflow:hidden;
+  font-family:'DM Mono',monospace;font-size:.42rem;
+  color:rgba(201,169,110,.7);letter-spacing:.08em;white-space:nowrap;
+}
+.ticker-after{
+  background:#1c4a35;padding:12px 24px;overflow:hidden;border-radius:0 0 8px 8px;
+  font-family:'DM Mono',monospace;font-size:.54rem; /* SOBE */
+  color:rgba(201,169,110,.75);letter-spacing:.08em;white-space:nowrap;
+}
+.ticker-sep{color:rgba(201,169,110,.3);margin:0 16px;}
+
+/* ═══════════════════════════════════════════════════
+   AUDIT ISSUES TABLE
+═══════════════════════════════════════════════════ */
+.issues-table{width:100%;border-collapse:collapse;font-size:.80rem;}
+.issues-table th{
+  text-align:left;padding:10px 14px;
+  font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;
+  text-transform:uppercase;color:rgba(14,14,13,.4);
+  border-bottom:2px solid rgba(14,14,13,.08);
+}
+.issues-table td{
+  padding:12px 14px;border-bottom:1px solid rgba(14,14,13,.05);
+  color:rgba(14,14,13,.75);
+}
+.issues-table tr:hover td{background:rgba(28,74,53,.02);}
+.severity-crit{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(153,27,27,.08);color:#991b1b;
+  padding:2px 8px;border-radius:4px;
+  font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.08em;
+  font-weight:600;text-transform:uppercase;
+}
+.severity-imp{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(146,64,14,.08);color:#92400e;
+  padding:2px 8px;border-radius:4px;
+  font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.severity-ok{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(22,101,52,.08);color:#166534;
+  padding:2px 8px;border-radius:4px;
+  font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.issue-title{font-weight:500;color:#0e0e0d;margin-bottom:2px;}
+.issue-desc{font-size:.78rem;color:rgba(14,14,13,.55);}
+
+/* ═══════════════════════════════════════════════════
+   IMPROVEMENTS SUMMARY
+═══════════════════════════════════════════════════ */
+.improvement-card{
+  background:#fff;border:1px solid rgba(14,14,13,.08);
+  border-radius:12px;padding:20px 22px;
+  box-shadow:0 1px 3px rgba(14,14,13,.06);
+  transition:all .2s;
+}
+.improvement-card:hover{
+  box-shadow:0 4px 16px rgba(14,14,13,.08);
+  transform:translateY(-2px);
+}
+.imp-num{
+  font-family:'Cormorant',serif;font-size:2.4rem;font-weight:300;
+  color:rgba(201,169,110,.4);line-height:1;margin-bottom:4px;
+}
+.imp-title{
+  font-family:'Jost',sans-serif;font-size:.88rem;font-weight:500;
+  color:#0e0e0d;margin-bottom:6px;
+}
+.imp-desc{
+  font-family:'Jost',sans-serif;font-size:.78rem;
+  color:rgba(14,14,13,.55);line-height:1.6;
+}
+.imp-impact{
+  display:inline-flex;align-items:center;
+  background:rgba(28,74,53,.06);color:#1c4a35;
+  padding:2px 8px;border-radius:4px;margin-top:10px;
+  font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.08em;
+}
+
+/* ═══════════════════════════════════════════════════
+   DIVIDER
+═══════════════════════════════════════════════════ */
+.divider{
+  height:1px;background:rgba(14,14,13,.07);
+  margin:48px 0;
+}
+.tag{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:4px;
+  font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.tag-green{background:rgba(28,74,53,.08);color:#1c4a35;}
+.tag-gold{background:rgba(201,169,110,.10);color:#b8945a;}
+.tag-red{background:rgba(153,27,27,.08);color:#991b1b;}
+
+/* scroll arrows */
+.scroll-to-top{
+  position:fixed;bottom:32px;right:32px;
+  width:42px;height:42px;border-radius:50%;
+  background:#1c4a35;color:#f4f0e6;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 4px 16px rgba(14,14,13,.15);
+  font-size:1rem;text-decoration:none;
+  transition:all .2s;z-index:999;
+}
+.scroll-to-top:hover{background:#163d2c;transform:translateY(-2px);}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header" id="top">
+  <h1>Agency Group <span class="badge-new">v2.0 Preview</span></h1>
+  <p class="sub">Design System Audit &amp; Redesign Preview — Fase 2 de 3</p>
+  <nav class="nav-bar">
+    <a href="#audit">Auditoria</a>
+    <a href="#colors">Paletas</a>
+    <a href="#typography">Tipografia</a>
+    <a href="#spacing">Espaçamento</a>
+    <a href="#components">Componentes</a>
+    <a href="#darkmode">Dark Mode</a>
+    <a href="#improvements">15 Melhorias</a>
+  </nav>
+</div>
+
+<main class="main">
+
+<!-- ═══════════════════════════════════════════════
+     SCORE OVERVIEW
+═══════════════════════════════════════════════ -->
+<section class="section" id="audit">
+  <h2 class="section-title">Auditoria de Design</h2>
+  <span class="section-label">Estado actual — o que está bem, o que melhora</span>
+
+  <table class="issues-table">
+    <thead>
+      <tr>
+        <th>Dimensão</th>
+        <th>Diagnóstico</th>
+        <th>Severidade</th>
+        <th>Nota Actual</th>
+        <th>Nota Proposta</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="issue-title">Identidade de Marca</span><div class="issue-desc">Verde/Ouro, tri-font system, grain texture</div></td>
+        <td>Forte, consistente, genuinamente premium</td>
+        <td><span class="severity-ok">✓ Excelente</span></td>
+        <td>8/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Escala Tipográfica</span><div class="issue-desc">20+ tamanhos entre .3rem e 2.4rem</div></td>
+        <td>Caótica. .3rem, .36rem, .42rem são ilegíveis em uso intensivo</td>
+        <td><span class="severity-crit">● Crítico</span></td>
+        <td>5/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Dark Mode Coerência</span><div class="issue-desc">3 fundos diferentes: #0c1f15, #122a1a, #0e2416</div></td>
+        <td>Inconsistência visual detectável. O olho recalibra constantemente</td>
+        <td><span class="severity-crit">● Crítico</span></td>
+        <td>5/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Dark Mode Técnica</span><div class="issue-desc">20+ attr selectors [style*="..."] !important</div></td>
+        <td>Frágil. Qualquer mudança num inline style quebra o dark mode</td>
+        <td><span class="severity-crit">● Crítico</span></td>
+        <td>4/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Border Radius</span><div class="issue-desc">Cards, botões, inputs = border-radius: 0</div></td>
+        <td>Interface rígida. Reduz prazer visual e fluidez de leitura</td>
+        <td><span class="severity-imp">⚠ Importante</span></td>
+        <td>4/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Elevação / Sombras</span><div class="issue-desc">Só em hover. Em repouso: flat = sem profundidade</div></td>
+        <td>Sem camadas visuais. Dificulta separação de elementos</td>
+        <td><span class="severity-imp">⚠ Importante</span></td>
+        <td>5/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Sistema de Espaçamento</span><div class="issue-desc">Sem escala definida: 6,7,8,10,12,14,16,18,20,22,24,28px</div></td>
+        <td>Cards e secções ligeiramente inconsistentes</td>
+        <td><span class="severity-imp">⚠ Importante</span></td>
+        <td>5/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Sidebar Legibilidade</span><div class="issue-desc">Group labels .36rem, opacity .2 — quase invisíveis</div></td>
+        <td>Navegação entre 30+ items é mais difícil do que devia ser</td>
+        <td><span class="severity-imp">⚠ Importante</span></td>
+        <td>6/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Cores Semânticas</span><div class="issue-desc">#3a7bd5, #4a9c7a, #dc2626 hardcoded sem tokens</div></td>
+        <td>Sem sistema. Manutenção difícil, inconsistências possíveis</td>
+        <td><span class="severity-imp">⚠ Importante</span></td>
+        <td>5/10</td><td>9/10</td>
+      </tr>
+      <tr>
+        <td><span class="issue-title">Hierarquia Visual</span><div class="issue-desc">KPIs, pipeline, alertas</div></td>
+        <td>Boa em geral. KPI values são o destaque certo</td>
+        <td><span class="severity-ok">✓ Bom</span></td>
+        <td>7/10</td><td>9/10</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     COLOR PALETTES
+═══════════════════════════════════════════════ -->
+<section class="section" id="colors">
+  <h2 class="section-title">Paletas de Cor</h2>
+  <span class="section-label">Light mode + Dark mode — tokens completos</span>
+
+  <div class="grid-2" style="gap:32px;">
+
+    <!-- LIGHT MODE -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <span style="font-family:'Cormorant',serif;font-size:1.4rem;font-weight:300;">Light Mode</span>
+        <span class="tag tag-gold">Proposta v2.0</span>
+      </div>
+      <div style="background:#faf8f3;border:1px solid rgba(14,14,13,.08);border-radius:12px;padding:24px;">
+
+        <p style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(14,14,13,.38);margin-bottom:12px;">Fundos</p>
+        <div class="swatch-row">
+          <div class="swatch">
+            <div class="swatch-color" style="background:#f5f1e8;"></div>
+            <div class="swatch-name">Page</div><div class="swatch-value">#f5f1e8</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#ffffff;box-shadow:inset 0 0 0 1px rgba(14,14,13,.08);"></div>
+            <div class="swatch-name">Surface</div><div class="swatch-value">#ffffff</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#faf8f3;box-shadow:inset 0 0 0 1px rgba(14,14,13,.06);"></div>
+            <div class="swatch-name">Subtle</div><div class="swatch-value">#faf8f3</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#0c1f15;"></div>
+            <div class="swatch-name">Sidebar</div><div class="swatch-value">#0c1f15</div>
+          </div>
+        </div>
+
+        <p style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(14,14,13,.38);margin:16px 0 12px;">Brand</p>
+        <div class="swatch-row">
+          <div class="swatch">
+            <div class="swatch-color" style="background:#1c4a35;"></div>
+            <div class="swatch-name">Primary</div><div class="swatch-value">#1c4a35</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#163d2c;"></div>
+            <div class="swatch-name">Hover</div><div class="swatch-value">#163d2c</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#c9a96e;"></div>
+            <div class="swatch-name">Gold</div><div class="swatch-value">#c9a96e</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#b8945a;"></div>
+            <div class="swatch-name">Gold Hover</div><div class="swatch-value">#b8945a</div>
+          </div>
+        </div>
+
+        <p style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(14,14,13,.38);margin:16px 0 12px;">Semânticas</p>
+        <div class="swatch-row">
+          <div class="swatch">
+            <div class="swatch-color" style="background:#166534;"></div>
+            <div class="swatch-name">Success</div><div class="swatch-value">#166534</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#92400e;"></div>
+            <div class="swatch-name">Warning</div><div class="swatch-value">#92400e</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#991b1b;"></div>
+            <div class="swatch-name">Error</div><div class="swatch-value">#991b1b</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#1e40af;"></div>
+            <div class="swatch-name">Info</div><div class="swatch-value">#1e40af</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#115e59;"></div>
+            <div class="swatch-name">Teal</div><div class="swatch-value">#115e59</div>
+          </div>
+        </div>
+
+        <p style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(14,14,13,.38);margin:16px 0 12px;">Texto</p>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:4px;background:#0e0e0d;flex-shrink:0;"></div>
+            <span style="font-family:'DM Mono',monospace;font-size:.54rem;color:#0e0e0d;">Primary #0e0e0d — Aa Bb Cc</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:4px;background:rgba(14,14,13,.60);flex-shrink:0;"></div>
+            <span style="font-family:'DM Mono',monospace;font-size:.54rem;color:rgba(14,14,13,.60);">Secondary rgba(14,14,13,.60) — Aa Bb Cc</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:4px;background:rgba(14,14,13,.38);flex-shrink:0;"></div>
+            <span style="font-family:'DM Mono',monospace;font-size:.54rem;color:rgba(14,14,13,.38);">Muted rgba(14,14,13,.38) — Aa Bb Cc</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DARK MODE -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <span style="font-family:'Cormorant',serif;font-size:1.4rem;font-weight:300;">Dark Mode</span>
+        <span class="tag tag-green">Sistema Unificado</span>
+      </div>
+      <div class="dark-palette" style="border:1px solid rgba(201,169,110,.08);border-radius:12px;">
+
+        <p style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,237,228,.30);margin-bottom:12px;">Fundos — Antes: 3 valores. Depois: 1 sistema</p>
+        <div class="swatch-row">
+          <div class="swatch">
+            <div class="swatch-color" style="background:#091510;"></div>
+            <div class="swatch-name" style="color:rgba(240,237,228,.4);">Page</div><div class="swatch-value" style="color:rgba(240,237,228,.7);">#091510</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#0f1e16;border:1px solid rgba(201,169,110,.12);"></div>
+            <div class="swatch-name" style="color:rgba(240,237,228,.4);">Card</div><div class="swatch-value" style="color:rgba(240,237,228,.7);">#0f1e16</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#152a1d;"></div>
+            <div class="swatch-name" style="color:rgba(240,237,228,.4);">Elevated</div><div class="swatch-value" style="color:rgba(240,237,228,.7);">#152a1d</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#060e09;"></div>
+            <div class="swatch-name" style="color:rgba(240,237,228,.4);">Sidebar</div><div class="swatch-value" style="color:rgba(240,237,228,.7);">#060e09</div>
+          </div>
+        </div>
+
+        <p style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,237,228,.30);margin:16px 0 12px;">Semânticas (calibradas para dark)</p>
+        <div class="swatch-row">
+          <div class="swatch">
+            <div class="swatch-color" style="background:#4ade80;"></div>
+            <div class="swatch-name" style="color:rgba(240,237,228,.4);">Success</div><div class="swatch-value" style="color:rgba(240,237,228,.7);">#4ade80</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#fbbf24;"></div>
+            <div class="swatch-name" style="color:rgba(240,237,228,.4);">Warning</div><div class="swatch-value" style="color:rgba(240,237,228,.7);">#fbbf24</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#f87171;"></div>
+            <div class="swatch-name" style="color:rgba(240,237,228,.4);">Error</div><div class="swatch-value" style="color:rgba(240,237,228,.7);">#f87171</div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-color" style="background:#60a5fa;"></div>
+            <div class="swatch-name" style="color:rgba(240,237,228,.4);">Info</div><div class="swatch-value" style="color:rgba(240,237,228,.7);">#60a5fa</div>
+          </div>
+        </div>
+
+        <p style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,237,228,.30);margin:16px 0 12px;">Texto</p>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:4px;background:#f0ede4;flex-shrink:0;"></div>
+            <span style="font-family:'DM Mono',monospace;font-size:.54rem;color:#f0ede4;">Primary #f0ede4 — Aa Bb Cc</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:4px;background:rgba(240,237,228,.58);flex-shrink:0;"></div>
+            <span style="font-family:'DM Mono',monospace;font-size:.54rem;color:rgba(240,237,228,.58);">Secondary .58 opacity — Aa Bb Cc</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:4px;background:rgba(240,237,228,.35);flex-shrink:0;"></div>
+            <span style="font-family:'DM Mono',monospace;font-size:.54rem;color:rgba(240,237,228,.35);">Muted .35 opacity — Aa Bb Cc</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     TYPOGRAPHY
+═══════════════════════════════════════════════ -->
+<section class="section" id="typography">
+  <h2 class="section-title">Tipografia</h2>
+  <span class="section-label">De 20+ tamanhos caóticos para 6 steps racionais — legibilidade máxima</span>
+
+  <div style="background:#fff;border:1px solid rgba(14,14,13,.08);border-radius:12px;padding:28px;margin-bottom:24px;">
+    <div class="type-row">
+      <div class="type-meta">DISPLAY XL · Cormorant 300</div>
+      <span style="font-family:'Cormorant',serif;font-size:2.4rem;font-weight:300;color:#1c4a35;">€ 47.500 Pipeline Total</span>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">DISPLAY L · Cormorant 300</div>
+      <span style="font-family:'Cormorant',serif;font-size:2.0rem;font-weight:300;color:#1c4a35;">Bom dia, Carlos — Dashboard</span>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">DISPLAY M · Cormorant 300</div>
+      <span style="font-family:'Cormorant',serif;font-size:1.6rem;font-weight:300;color:#0e0e0d;">Relatório Semanal · Pipeline</span>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">DISPLAY S · Cormorant 300</div>
+      <span style="font-family:'Cormorant',serif;font-size:1.2rem;font-weight:300;color:#0e0e0d;">Sofia AI Insights · Deals CPCV</span>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">BODY L · Jost 400</div>
+      <span style="font-family:'Jost',sans-serif;font-size:.93rem;color:rgba(14,14,13,.75);">Rua do Século 45, 3º Dto · Lisboa · Chiado · €980.000</span>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">BODY M · Jost 400</div>
+      <span style="font-family:'Jost',sans-serif;font-size:.82rem;color:rgba(14,14,13,.65);">Contacto com Carlos Ferreira. Mostrou interesse no valor actual.</span>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">LABEL L · DM Mono</div>
+      <span style="font-family:'DM Mono',monospace;font-size:.75rem;letter-spacing:.08em;color:rgba(14,14,13,.55);text-transform:uppercase;">Dashboard · CRM · Pipeline · Radar · AVM</span>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">LABEL M · DM Mono</div>
+      <span style="font-family:'DM Mono',monospace;font-size:.60rem;letter-spacing:.12em;color:rgba(14,14,13,.45);text-transform:uppercase;">GCI Previsto · Pipeline Total · Leads Activos</span>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">LABEL S · DM Mono (mínimo)</div>
+      <span style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.14em;color:rgba(14,14,13,.40);text-transform:uppercase;">AMI 22506 · CPCV · VIP · ALTA PRIORIDADE</span>
+    </div>
+  </div>
+
+  <div class="ba-wrapper">
+    <div class="ba-panel ba-before">
+      <span class="ba-label before">Antes — Problemático</span>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><span style="font-family:'DM Mono',monospace;font-size:.3rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(14,14,13,.4);">BEST — 0.30rem (ilegível)</span></div>
+        <div><span style="font-family:'DM Mono',monospace;font-size:.34rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(14,14,13,.5);">+12% vs mês ant. — 0.34rem (muito pequeno)</span></div>
+        <div><span style="font-family:'DM Mono',monospace;font-size:.38rem;letter-spacing:.1em;color:rgba(14,14,13,.4);">€52K meta mensal — 0.38rem (pequeno)</span></div>
+        <div><span style="font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(14,14,13,.5);">GCI PREVISTO — 0.42rem</span></div>
+        <div style="margin-top:8px;font-family:'Jost',sans-serif;font-size:.75rem;color:rgba(14,14,13,.45);">Textos abaixo de 0.50rem geram fadiga visual após 2-3 horas.</div>
+      </div>
+    </div>
+    <div class="ba-panel ba-after">
+      <span class="ba-label after">Depois — Optimal</span>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><span style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase;background:rgba(201,169,110,.12);color:#b8945a;padding:2px 6px;border-radius:3px;">★ BEST — 0.52rem (mínimo absoluto)</span></div>
+        <div><span style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;color:rgba(22,101,52,.8);">↑ +12% vs mês ant. — 0.52rem</span></div>
+        <div><span style="font-family:'DM Mono',monospace;font-size:.60rem;letter-spacing:.1em;color:rgba(14,14,13,.45);">€52K meta mensal — 0.60rem</span></div>
+        <div><span style="font-family:'DM Mono',monospace;font-size:.60rem;letter-spacing:.10em;text-transform:uppercase;color:rgba(14,14,13,.45);">GCI PREVISTO — 0.60rem</span></div>
+        <div style="margin-top:8px;font-family:'Jost',sans-serif;font-size:.82rem;color:rgba(14,14,13,.55);">Todos legíveis com conforto em uso intensivo diário.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     SPACING & RADIUS
+═══════════════════════════════════════════════ -->
+<section class="section" id="spacing">
+  <h2 class="section-title">Espaçamento &amp; Border Radius</h2>
+  <span class="section-label">Base 4px — escala racional — impacto visual imediato</span>
+
+  <div class="grid-2" style="gap:32px;">
+    <div>
+      <p style="font-family:'Cormorant',serif;font-size:1.2rem;margin-bottom:16px;">Border Radius</p>
+      <div class="radius-demo">
+        <div class="radius-box" style="border-radius:0;width:64px;height:64px;">
+          <span>0px</span><span style="font-size:.44rem;opacity:.6;">actual</span>
+        </div>
+        <div class="radius-box" style="border-radius:4px;width:64px;height:64px;">
+          <span>4px</span><span style="font-size:.44rem;opacity:.6;">badges</span>
+        </div>
+        <div class="radius-box" style="border-radius:8px;width:64px;height:64px;">
+          <span>8px</span><span style="font-size:.44rem;opacity:.6;">inputs</span>
+        </div>
+        <div class="radius-box" style="border-radius:12px;width:64px;height:64px;">
+          <span>12px</span><span style="font-size:.44rem;opacity:.6;">cards</span>
+        </div>
+        <div class="radius-box" style="border-radius:16px;width:64px;height:64px;">
+          <span>16px</span><span style="font-size:.44rem;opacity:.6;">modais</span>
+        </div>
+        <div class="radius-box" style="border-radius:9999px;width:64px;height:64px;">
+          <span>pill</span><span style="font-size:.44rem;opacity:.6;">toggle</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p style="font-family:'Cormorant',serif;font-size:1.2rem;margin-bottom:16px;">Sombras — Elevation System</p>
+      <div class="shadow-demo">
+        <div class="shadow-card" style="box-shadow:none;">
+          <div class="sh-label">Level 0</div>
+          <div class="sh-val">Flat</div>
+        </div>
+        <div class="shadow-card" style="box-shadow:0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04);">
+          <div class="sh-label">Level 1</div>
+          <div class="sh-val">Card repouso</div>
+        </div>
+        <div class="shadow-card" style="box-shadow:0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04);">
+          <div class="sh-label">Level 2</div>
+          <div class="sh-val">Card hover</div>
+        </div>
+        <div class="shadow-card" style="box-shadow:0 16px 48px rgba(14,14,13,.12),0 4px 12px rgba(14,14,13,.06);">
+          <div class="sh-label">Level 3</div>
+          <div class="sh-val">Modal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     COMPONENTS
+═══════════════════════════════════════════════ -->
+<section class="section" id="components">
+  <h2 class="section-title">Componentes — Antes vs Depois</h2>
+  <span class="section-label">Comparação visual directa — mesma informação, experiência radicalmente melhor</span>
+
+  <!-- KPI CARDS -->
+  <p style="font-family:'Cormorant',serif;font-size:1.4rem;margin-bottom:16px;">KPI Cards</p>
+  <div class="ba-wrapper" style="margin-bottom:32px;">
+    <div class="ba-panel ba-before">
+      <span class="ba-label before">Antes</span>
+      <div class="kpi-before">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="kpi-before title">GCI Previsto</div>
+            <div class="kpi-before val">€47.500</div>
+            <div class="kpi-before sub">€52K meta mensal</div>
+            <div class="kpi-before badge">↑ +12% vs mês ant.</div>
+          </div>
+          <svg class="kpi-before spark" viewBox="0 0 60 24">
+            <polyline points="0,20 10,16 20,18 30,10 40,12 50,6 60,4" stroke="#1c4a35" stroke-width="1.5" fill="none"/>
+          </svg>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">
+        border-radius: 0 · box-shadow: none · font .4rem
+      </div>
+    </div>
+    <div class="ba-panel ba-after">
+      <span class="ba-label after">Depois</span>
+      <div class="kpi-after">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="kpi-after title">GCI Previsto</div>
+            <div class="kpi-after val">€47.500</div>
+            <div class="kpi-after sub">€52K meta mensal</div>
+            <div class="kpi-after badge">↑ +12% vs mês ant.</div>
+          </div>
+          <svg class="kpi-after spark" viewBox="0 0 64 28">
+            <polyline points="0,24 10,18 20,22 32,12 44,14 54,7 64,4" stroke="#1c4a35" stroke-width="1.5" fill="none"/>
+            <circle cx="64" cy="4" r="2.5" fill="#1c4a35"/>
+          </svg>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">
+        border-radius: 12px · shadow-1 · font .54rem → hover para shadow-2
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <p style="font-family:'Cormorant',serif;font-size:1.4rem;margin-bottom:16px;">Sidebar</p>
+  <div class="ba-wrapper" style="margin-bottom:32px;">
+    <div class="ba-panel ba-before" style="padding:0;background:#f0ede0;">
+      <div style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(14,14,13,.35);">Antes</div>
+      <div class="sidebar-before">
+        <div class="sb-logo-before">Agency</div>
+        <div class="sb-group-before">ANÁLISE</div>
+        <div class="sb-item-before">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(244,240,230,.35)" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Simulador Crédito
+        </div>
+        <div class="sb-item-before sb-item-active-before">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a96e" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </div>
+        <div class="sb-item-before">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(244,240,230,.35)" stroke-width="1.5"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          CRM Clientes
+        </div>
+        <div style="padding:8px 24px;margin-top:6px;font-family:'DM Mono',monospace;font-size:.36rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(244,240,230,.20);">INTELIGÊNCIA</div>
+        <div class="sb-item-before">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(244,240,230,.35)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          Captação Off-Market
+        </div>
+      </div>
+    </div>
+    <div class="ba-panel ba-after" style="padding:0;background:#f0ede0;">
+      <div style="padding:12px 16px;font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(201,169,110,.7);">Depois</div>
+      <div class="sidebar-after">
+        <div class="sb-logo-after">Agency</div>
+        <div class="sb-group-after">ANÁLISE</div>
+        <div class="sb-item-after">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(244,240,230,.42)" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Simulador Crédito
+        </div>
+        <div class="sb-item-after sb-item-active-after">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c9a96e" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </div>
+        <div class="sb-item-after">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(244,240,230,.42)" stroke-width="1.5"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          CRM Clientes
+        </div>
+        <div class="sb-group-after" style="padding-top:14px;">INTELIGÊNCIA</div>
+        <div class="sb-item-after">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(244,240,230,.42)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          Captação Off-Market
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUTTONS -->
+  <p style="font-family:'Cormorant',serif;font-size:1.4rem;margin-bottom:16px;">Botões</p>
+  <div class="ba-wrapper" style="margin-bottom:32px;">
+    <div class="ba-panel ba-before">
+      <span class="ba-label before">Antes</span>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <button class="btn-before">Analisar Imóvel</button>
+        <button class="btn-gold-before">Gerar por IA</button>
+        <button class="btn-before" style="background:transparent;color:#1c4a35;border:1px solid rgba(14,14,13,.15);">Cancelar</button>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">border-radius: 0 · font-size: .55rem · sem focus ring</div>
+    </div>
+    <div class="ba-panel ba-after">
+      <span class="ba-label after">Depois</span>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <button class="btn-after">Analisar Imóvel</button>
+        <button class="btn-gold-after">Gerar por IA</button>
+        <button class="btn-after" style="background:transparent;color:#1c4a35;border:1px solid rgba(14,14,13,.14);box-shadow:none;">Cancelar</button>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">border-radius: 6px · font-size: .62rem · hover: lift + shadow</div>
+    </div>
+  </div>
+
+  <!-- INPUTS -->
+  <p style="font-family:'Cormorant',serif;font-size:1.4rem;margin-bottom:16px;">Inputs &amp; Selects</p>
+  <div class="ba-wrapper" style="margin-bottom:32px;">
+    <div class="ba-panel ba-before">
+      <span class="ba-label before">Antes</span>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <input class="inp-before" type="text" placeholder="Rua do Século 45, Lisboa">
+        <select class="inp-before" style="cursor:pointer;"><option>Escolher tipo de sinal</option><option>Herança</option></select>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">border-radius: 0 · sem focus ring visual</div>
+    </div>
+    <div class="ba-panel ba-after">
+      <span class="ba-label after">Depois</span>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <input class="inp-after" type="text" placeholder="Rua do Século 45, Lisboa">
+        <select class="inp-after" style="cursor:pointer;"><option>Escolher tipo de sinal</option><option>Herança</option></select>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">border-radius: 8px · focus ring rgba(28,74,53,.10)</div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <p style="font-family:'Cormorant',serif;font-size:1.4rem;margin-bottom:16px;">Sistema de Alertas</p>
+  <div class="ba-wrapper" style="margin-bottom:32px;">
+    <div class="ba-panel ba-before">
+      <span class="ba-label before">Antes</span>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="alert-before">
+          <div>
+            <div class="alert-title-before">● Crítico</div>
+            <div class="alert-body-before">Follow-up em atraso: Herdeiros Ferreira — 12 dias</div>
+          </div>
+        </div>
+        <div class="alert-before" style="background:rgba(146,64,14,.04);border-left-color:#92400e;border-color:rgba(146,64,14,.12);">
+          <div>
+            <div class="alert-title-before" style="color:#92400e;">⚠ Atenção</div>
+            <div class="alert-body-before">CPCV expira em 5 dias — Av. Boavista 1850</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">border-radius: 0 · title: .42rem · bg: cor/04</div>
+    </div>
+    <div class="ba-panel ba-after">
+      <span class="ba-label after">Depois</span>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="alert-after">
+          <div>
+            <div class="alert-title-after">● Crítico</div>
+            <div class="alert-body-after">Follow-up em atraso: Herdeiros Ferreira — 12 dias</div>
+          </div>
+        </div>
+        <div class="alert-after" style="background:rgba(146,64,14,.07);border-left-color:#92400e;border-color:rgba(146,64,14,.14);">
+          <div>
+            <div class="alert-title-after" style="color:#92400e;">⚠ Atenção</div>
+            <div class="alert-body-after">CPCV expira em 5 dias — Av. Boavista 1850</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">border-radius: 8px · title: .60rem · bg: cor/07</div>
+    </div>
+  </div>
+
+  <!-- BADGES -->
+  <p style="font-family:'Cormorant',serif;font-size:1.4rem;margin-bottom:16px;">Badges &amp; Status</p>
+  <div class="ba-wrapper" style="margin-bottom:32px;">
+    <div class="ba-panel ba-before">
+      <span class="ba-label before">Antes</span>
+      <div class="badges-row">
+        <span class="badge-before" style="background:rgba(201,169,110,.15);color:#c9a96e;">VIP</span>
+        <span class="badge-before" style="background:rgba(28,74,53,.12);color:#1c4a35;">Cliente</span>
+        <span class="badge-before" style="background:rgba(58,123,213,.12);color:#3a7bd5;">Prospect</span>
+        <span class="badge-before" style="background:rgba(136,136,136,.12);color:#888;">Lead</span>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">border-radius: 0 · .42rem · padding: 2px 8px</div>
+    </div>
+    <div class="ba-panel ba-after">
+      <span class="ba-label after">Depois</span>
+      <div class="badges-row">
+        <span class="badge-after" style="background:rgba(201,169,110,.12);color:#b8945a;">VIP</span>
+        <span class="badge-after" style="background:rgba(22,101,52,.10);color:#166534;">Cliente</span>
+        <span class="badge-after" style="background:rgba(30,64,175,.09);color:#1e40af;">Prospect</span>
+        <span class="badge-after" style="background:rgba(14,14,13,.07);color:rgba(14,14,13,.5);">Lead</span>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">border-radius: 4px · .52rem · padding: 3px 8px</div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <p style="font-family:'Cormorant',serif;font-size:1.4rem;margin-bottom:16px;">Pipeline Rows</p>
+  <div class="ba-wrapper" style="margin-bottom:32px;">
+    <div class="ba-panel ba-before">
+      <span class="ba-label before">Antes</span>
+      <div class="pipeline-before">
+        <div class="row"><span class="pipe-stage-before">Angariação</span><div class="pipe-bar-track"><div class="pipe-bar-fill" style="width:100%;background:#888;"></div></div><span class="pipe-amount-before">€1.2M</span></div>
+        <div class="row"><span class="pipe-stage-before">Proposta Enviada</span><div class="pipe-bar-track"><div class="pipe-bar-fill" style="width:65%;background:#3a7bd5;"></div></div><span class="pipe-amount-before">€2.8M</span></div>
+        <div class="row"><span class="pipe-stage-before">CPCV Assinado</span><div class="pipe-bar-track"><div class="pipe-bar-fill" style="width:30%;background:#c9a96e;"></div></div><span class="pipe-amount-before">€890K</span></div>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">stage: .4rem · amount: .42rem mono · border: strong</div>
+    </div>
+    <div class="ba-panel ba-after">
+      <span class="ba-label after">Depois</span>
+      <div class="pipeline-after">
+        <div class="row"><span class="pipe-stage-after">Angariação</span><div class="pipe-bar-track"><div class="pipe-bar-fill" style="width:100%;background:#888;"></div></div><span class="pipe-amount-after">€1.2M</span></div>
+        <div class="row"><span class="pipe-stage-after">Proposta Enviada</span><div class="pipe-bar-track"><div class="pipe-bar-fill" style="width:65%;background:#3a7bd5;"></div></div><span class="pipe-amount-after">€2.8M</span></div>
+        <div class="row"><span class="pipe-stage-after">CPCV Assinado</span><div class="pipe-bar-track"><div class="pipe-bar-fill" style="width:30%;background:#c9a96e;"></div></div><span class="pipe-amount-after">€890K</span></div>
+      </div>
+      <div style="margin-top:10px;font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);">stage: .60rem · amount: .75rem Cormorant · border: suave</div>
+    </div>
+  </div>
+
+  <!-- MARKET TICKER -->
+  <p style="font-family:'Cormorant',serif;font-size:1.4rem;margin-bottom:16px;">Market Ticker</p>
+  <div style="margin-bottom:12px;">
+    <div style="font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);margin-bottom:6px;">Antes — .42rem</div>
+    <div class="ticker-before">
+      Lisboa €5.000/m² <span style="opacity:.4;margin:0 12px;">·</span> Porto €3.643/m² <span style="opacity:.4;margin:0 12px;">·</span> Cascais €4.713/m² <span style="opacity:.4;margin:0 12px;">·</span> Algarve €3.941/m² <span style="opacity:.4;margin:0 12px;">·</span> Madeira €3.760/m² <span style="opacity:.4;margin:0 12px;">·</span> YoY +17.6% <span style="opacity:.4;margin:0 12px;">·</span> 169.812 transacções
+    </div>
+  </div>
+  <div>
+    <div style="font-family:'DM Mono',monospace;font-size:.48rem;color:rgba(14,14,13,.38);margin-bottom:6px;">Depois — .54rem + bottom radius</div>
+    <div class="ticker-after">
+      Lisboa €5.000/m² <span class="ticker-sep">·</span> Porto €3.643/m² <span class="ticker-sep">·</span> Cascais €4.713/m² <span class="ticker-sep">·</span> Algarve €3.941/m² <span class="ticker-sep">·</span> Madeira €3.760/m² <span class="ticker-sep">·</span> YoY +17.6% <span class="ticker-sep">·</span> 169.812 transacções
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     DARK MODE
+═══════════════════════════════════════════════ -->
+<section class="section" id="darkmode">
+  <h2 class="section-title">Dark Mode — Sistema Unificado</h2>
+  <span class="section-label">3 fundos inconsistentes → 1 sistema coerente e profundo</span>
+
+  <div class="dark-preview">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid rgba(201,169,110,.08);">
+      <div>
+        <div style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(201,169,110,.5);margin-bottom:6px;">SEGUNDA · 7 DE ABRIL 2026</div>
+        <div style="font-family:'Cormorant',serif;font-size:2rem;font-weight:300;color:#f0ede4;line-height:1.1;">Bom dia, Carlos</div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:4px;background:rgba(74,222,128,.10);color:#4ade80;font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.08em;">● Portal Activo</span>
+          <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:4px;background:rgba(201,169,110,.08);color:#c9a96e;font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.08em;">● Supabase Live</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+      <div class="dark-kpi">
+        <div class="dark-kpi title">GCI Previsto</div>
+        <div class="dark-kpi val">€47.500</div>
+        <div class="dark-kpi sub">€52K meta</div>
+        <div class="dark-kpi badge">↑ +12%</div>
+      </div>
+      <div class="dark-kpi" style="border-color:rgba(201,169,110,.14);">
+        <div class="dark-kpi title">Pipeline</div>
+        <div class="dark-kpi val" style="color:#c9a96e;">€3.2M</div>
+        <div class="dark-kpi sub">8 negócios</div>
+        <div class="dark-kpi badge">activo</div>
+      </div>
+      <div class="dark-kpi">
+        <div class="dark-kpi title">Leads Activos</div>
+        <div class="dark-kpi val" style="color:#60a5fa;">12</div>
+        <div class="dark-kpi sub">47 no CRM</div>
+        <div class="dark-kpi badge" style="background:rgba(96,165,250,.10);color:#60a5fa;">3 novos</div>
+      </div>
+      <div class="dark-kpi">
+        <div class="dark-kpi title">Follow-Ups</div>
+        <div class="dark-kpi val" style="color:#f87171;">4</div>
+        <div class="dark-kpi sub">hoje urgente</div>
+        <div class="dark-kpi badge" style="background:rgba(248,113,113,.10);color:#f87171;">⚠ 2 em atraso</div>
+      </div>
+    </div>
+
+    <!-- Two columns -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:#0f1e16;border:1px solid rgba(201,169,110,.10);border-radius:12px;padding:20px;">
+        <div class="dark-card-title">Pipeline por Fase</div>
+        <div class="dark-card-sub" style="margin-bottom:16px;">atualizado há 2 min</div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:grid;grid-template-columns:140px 1fr 80px;gap:12px;align-items:center;">
+            <span style="font-family:'DM Mono',monospace;font-size:.60rem;color:rgba(240,237,228,.45);text-transform:uppercase;letter-spacing:.08em;">Angariação</span>
+            <div style="background:rgba(240,237,228,.06);border-radius:3px;height:5px;"><div style="width:100%;height:100%;background:#888;border-radius:3px;"></div></div>
+            <span style="font-family:'Cormorant',serif;font-size:.75rem;color:rgba(240,237,228,.7);text-align:right;">€1.2M</span>
+          </div>
+          <div style="display:grid;grid-template-columns:140px 1fr 80px;gap:12px;align-items:center;">
+            <span style="font-family:'DM Mono',monospace;font-size:.60rem;color:rgba(240,237,228,.45);text-transform:uppercase;letter-spacing:.08em;">Prop. Enviada</span>
+            <div style="background:rgba(240,237,228,.06);border-radius:3px;height:5px;"><div style="width:65%;height:100%;background:#60a5fa;border-radius:3px;"></div></div>
+            <span style="font-family:'Cormorant',serif;font-size:.75rem;color:rgba(240,237,228,.7);text-align:right;">€2.8M</span>
+          </div>
+          <div style="display:grid;grid-template-columns:140px 1fr 80px;gap:12px;align-items:center;">
+            <span style="font-family:'DM Mono',monospace;font-size:.60rem;color:rgba(240,237,228,.45);text-transform:uppercase;letter-spacing:.08em;">CPCV Assinado</span>
+            <div style="background:rgba(240,237,228,.06);border-radius:3px;height:5px;"><div style="width:30%;height:100%;background:#c9a96e;border-radius:3px;"></div></div>
+            <span style="font-family:'Cormorant',serif;font-size:.75rem;color:#c9a96e;text-align:right;">€890K</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#0f1e16;border:1px solid rgba(201,169,110,.10);border-radius:12px;padding:20px;">
+        <div class="dark-card-title">Alertas</div>
+        <div class="dark-card-sub" style="margin-bottom:16px;">3 acções pendentes</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:rgba(248,113,113,.08);border-left:3px solid #f87171;border-radius:6px;padding:10px 14px;">
+            <div style="font-family:'DM Mono',monospace;font-size:.60rem;text-transform:uppercase;letter-spacing:.08em;color:#f87171;">● Crítico</div>
+            <div style="font-family:'Jost',sans-serif;font-size:.82rem;color:rgba(240,237,228,.65);margin-top:4px;">Follow-up em atraso — Herdeiros Ferreira</div>
+          </div>
+          <div style="background:rgba(251,191,36,.06);border-left:3px solid #fbbf24;border-radius:6px;padding:10px 14px;">
+            <div style="font-family:'DM Mono',monospace;font-size:.60rem;text-transform:uppercase;letter-spacing:.08em;color:#fbbf24;">⚠ Atenção</div>
+            <div style="font-family:'Jost',sans-serif;font-size:.82rem;color:rgba(240,237,228,.65);margin-top:4px;">CPCV expira em 5 dias</div>
+          </div>
+          <div style="background:rgba(74,222,128,.06);border-left:3px solid #4ade80;border-radius:6px;padding:10px 14px;">
+            <div style="font-family:'DM Mono',monospace;font-size:.60rem;text-transform:uppercase;letter-spacing:.08em;color:#4ade80;">● Oportunidade</div>
+            <div style="font-family:'Jost',sans-serif;font-size:.82rem;color:rgba(240,237,228,.65);margin-top:4px;">Novo sinal de herança — Chiado</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input + Button demo in dark -->
+    <div style="display:flex;gap:12px;margin-top:16px;align-items:center;">
+      <input class="dark-input" type="text" placeholder="Pesquisar imóveis, clientes, deals..." style="flex:1;">
+      <button style="background:#c9a96e;color:#0c1f15;border:none;padding:11px 22px;border-radius:6px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;white-space:nowrap;">Pesquisar</button>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════
+     15 IMPROVEMENTS
+═══════════════════════════════════════════════ -->
+<section class="section" id="improvements">
+  <h2 class="section-title">15 Melhorias Prioritárias</h2>
+  <span class="section-label">Impacto máximo — risco mínimo — identidade preservada</span>
+
+  <div class="grid-3">
+    <div class="improvement-card">
+      <div class="imp-num">01</div>
+      <div class="imp-title">Border-radius nos Cards</div>
+      <div class="imp-desc">12px em todos os .p-card, .kpi-card, .action-card. Impacto visual imediato — o maior ganho estético com menos esforço.</div>
+      <div class="imp-impact">Visual ++++ · Esforço baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">02</div>
+      <div class="imp-title">Tipografia mínima 0.52rem</div>
+      <div class="imp-desc">Eliminar todos os textos abaixo de 0.52rem (.3rem, .34rem, .36rem, .38rem, .42rem). Crítico para uso diário 8+ horas.</div>
+      <div class="imp-impact">Legibilidade +++++ · Médio</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">03</div>
+      <div class="imp-title">Dark Mode Unificado</div>
+      <div class="imp-desc">3 fundos inconsistentes (#0c1f15, #122a1a, #0e2416) → 1 sistema: #0f1e16 para cards, #091510 para page.</div>
+      <div class="imp-impact">Coerência ++++ · Médio</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">04</div>
+      <div class="imp-title">Box-shadow em Repouso</div>
+      <div class="imp-desc">Nível 1 subtil (0 1px 3px rgba(.06)) em todos os cards. Cria profundidade visual sem peso excessivo.</div>
+      <div class="imp-impact">Premium feel +++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">05</div>
+      <div class="imp-title">Sidebar Mais Legível</div>
+      <div class="imp-desc">Group labels: .36rem → .52rem, opacity .20 → .30. Nav items: 7px → 10px padding, .75rem → .80rem font. 30+ items diários.</div>
+      <div class="imp-impact">UX diária ++++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">06</div>
+      <div class="imp-title">CSS Variables Dark Mode</div>
+      <div class="imp-desc">Substituir 20+ attr selectors frágeis por CSS Variables (--bg-surface, --text-primary). Sistema robusto que não quebra.</div>
+      <div class="imp-impact">Robustez ++++ · Alto</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">07</div>
+      <div class="imp-title">Text Secondary Mais Visível</div>
+      <div class="imp-desc">Subir opacity de .45 para .60 no texto secundário. Aparentemente pequeno, enorme impacto em leitura após 3-4 horas.</div>
+      <div class="imp-impact">Fadiga visual +++++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">08</div>
+      <div class="imp-title">Border-radius Botões/Inputs</div>
+      <div class="imp-desc">6px em botões, 8px em inputs. Consistência com os cards. Elimina a rigidez visual dos elementos interativos.</div>
+      <div class="imp-impact">Consistência +++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">09</div>
+      <div class="imp-title">Alerts Mais Distintos</div>
+      <div class="imp-desc">Background dos alertas: cor/04 → cor/07. Crítico vs Atenção vs Oportunidade ficam instantaneamente distintos.</div>
+      <div class="imp-impact">Hierarquia +++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">10</div>
+      <div class="imp-title">Semantic Color Tokens</div>
+      <div class="imp-desc">Definir --success, --warning, --error, --info como CSS variables. Cores semânticas unificadas em todo o sistema.</div>
+      <div class="imp-impact">Manutenção ++++ · Médio</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">11</div>
+      <div class="imp-title">Sidebar Mais Profunda</div>
+      <div class="imp-desc">#0c1f15 → #060e09. Contraste sidebar vs main area aumenta. Sensação de profundidade e foco no conteúdo principal.</div>
+      <div class="imp-impact">Depth visual ++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">12</div>
+      <div class="imp-title">Pipeline Labels Legíveis</div>
+      <div class="imp-desc">Stage names: .4rem → .60rem. Amount: .42rem mono → .75rem Cormorant. Scanning de pipeline 3x mais rápido.</div>
+      <div class="imp-impact">Scanning ++++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">13</div>
+      <div class="imp-title">Focus Rings nos Inputs</div>
+      <div class="imp-desc">box-shadow: 0 0 0 3px rgba(28,74,53,.10) no focus. Acessibilidade keyboard. Também dá feedback visual premium.</div>
+      <div class="imp-impact">Acessibilidade +++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">14</div>
+      <div class="imp-title">Sparklines Ligeiramente Maiores</div>
+      <div class="imp-desc">60×24px → 64×28px. Quase imperceptível em tamanho mas a linha fica mais expressiva e o dot final mais visível.</div>
+      <div class="imp-impact">Scannability ++ · Baixo</div>
+    </div>
+    <div class="improvement-card">
+      <div class="imp-num">15</div>
+      <div class="imp-title">Ticker Font Maior</div>
+      <div class="imp-desc">.42rem → .54rem no market ticker. Com o scroll contínuo, texto maior reduz esforço visual do olho a seguir os dados.</div>
+      <div class="imp-impact">Conforto visual ++ · Baixo</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<div style="margin-top:64px;padding-top:32px;border-top:1px solid rgba(14,14,13,.08);display:flex;justify-content:space-between;align-items:center;flex-wrap:gap;">
+  <div>
+    <div style="font-family:'Cormorant',serif;font-size:1.2rem;font-weight:300;color:#1c4a35;">Agency Group</div>
+    <div style="font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;color:rgba(14,14,13,.35);margin-top:3px;text-transform:uppercase;">Design System Preview v2.0 · AMI 22506</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <span class="tag tag-green">Auditoria Completa</span>
+    <span class="tag tag-gold">Preview Aprovado</span>
+    <span class="tag tag-red">Fase 3: Implementação</span>
+  </div>
+</div>
+
+</main>
+
+<a href="#top" class="scroll-to-top">↑</a>
+
+</body>
+</html>

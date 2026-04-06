@@ -95,7 +95,7 @@ export default function FrPage() {
             {[['+ 500 M€','Valeur Portefeuille'],['127','Transactions'],['4,9 ★','Note Clients'],['30 +','Nationalités']].map(([val, label], i) => (
               <div key={label} style={{ paddingRight: '40px', marginRight: '40px', borderRight: i < 3 ? '1px solid rgba(201,169,110,.08)' : 'none' }}>
                 <div style={{ fontFamily: "'Cormorant', serif", fontSize: '2.2rem', color: '#c9a96e', fontWeight: 300, lineHeight: 1 }}>{val}</div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginTop: '4px' }}>{label}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginTop: '4px' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -104,7 +104,7 @@ export default function FrPage() {
 
       {/* MARKET DATA */}
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '96px 60px' }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
           Intelligence Marché · 2026
         </div>
         <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 3.5vw, 3rem)', color: '#f4f0e6', margin: '0 0 48px', lineHeight: 1.15 }}>
@@ -114,10 +114,10 @@ export default function FrPage() {
           {ZONES.map(z => (
             <div key={z.name} style={{ background: `linear-gradient(135deg, ${z.color}, #060d08)`, border: '1px solid rgba(201,169,110,.1)', padding: '28px' }}>
               <div style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.3rem', color: '#f4f0e6', marginBottom: '6px' }}>{z.name}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.55)', marginBottom: '16px', textTransform: 'uppercase' }}>{z.tag}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.55)', marginBottom: '16px', textTransform: 'uppercase' }}>{z.tag}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.6rem', color: '#c9a96e', fontWeight: 300 }}>{z.pm2}</div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', color: '#4a9c7a', background: 'rgba(28,74,53,.3)', padding: '3px 8px', border: '1px solid rgba(28,74,53,.5)' }}>{z.yoy}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', color: '#4a9c7a', background: 'rgba(28,74,53,.3)', padding: '3px 8px', border: '1px solid rgba(28,74,53,.5)' }}>{z.yoy}</div>
               </div>
             </div>
           ))}
@@ -127,7 +127,7 @@ export default function FrPage() {
       {/* POURQUOI LE PORTUGAL */}
       <div style={{ background: 'rgba(201,169,110,.03)', borderTop: '1px solid rgba(201,169,110,.08)', borderBottom: '1px solid rgba(201,169,110,.08)', padding: '96px 60px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px', textAlign: 'center' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px', textAlign: 'center' }}>
             Pourquoi le Portugal
           </div>
           <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 3.5vw, 3rem)', color: '#f4f0e6', margin: '0 0 48px', lineHeight: 1.15, textAlign: 'center' }}>
@@ -147,7 +147,7 @@ export default function FrPage() {
 
       {/* PARCOURS D'ACQUISITION */}
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '96px 60px' }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
           Comment Acheter
         </div>
         <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 3.5vw, 3rem)', color: '#f4f0e6', margin: '0 0 48px', lineHeight: 1.15 }}>
@@ -165,11 +165,11 @@ export default function FrPage() {
 
         {/* Frais d'acquisition */}
         <div style={{ marginTop: '48px', background: 'rgba(201,169,110,.04)', border: '1px solid rgba(201,169,110,.12)', padding: '32px' }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.2em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '20px' }}>Frais de Transaction Estimés</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.2em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '20px' }}>Frais de Transaction Estimés</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
             {[['IMT (Taxe de Mutation)', '0 – 7,5 %'],['Droit de Timbre', '0,8 %'],['Honoraires Juridiques', '~1 500 – 3 000 €'],['Commission Agence', '5 % (à charge du vendeur)']].map(([label, val]) => (
               <div key={label}>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
                 <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.3rem', color: '#c9a96e', fontWeight: 300 }}>{val}</div>
               </div>
             ))}
@@ -180,16 +180,16 @@ export default function FrPage() {
       {/* TÉMOIGNAGES */}
       <div style={{ background: 'rgba(201,169,110,.03)', borderTop: '1px solid rgba(201,169,110,.08)', padding: '96px 60px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px', textAlign: 'center' }}>Témoignages Clients</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px', textAlign: 'center' }}>Témoignages Clients</div>
           <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 3.5vw, 3rem)', color: '#f4f0e6', margin: '0 0 48px', lineHeight: 1.15, textAlign: 'center' }}>Ce que disent nos clients</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
             {TESTIMONIALS.map((t, i) => (
               <div key={i} style={{ background: 'linear-gradient(135deg, rgba(201,169,110,.06) 0%, rgba(12,31,21,.3) 100%)', border: '1px solid rgba(201,169,110,.12)', padding: '32px' }}>
                 <div style={{ color: '#c9a96e', fontSize: '1rem', marginBottom: '16px' }}>★★★★★</div>
                 <p style={{ fontFamily: "'Cormorant', serif", fontSize: '1.1rem', lineHeight: 1.75, color: 'rgba(244,240,230,.75)', fontWeight: 300, fontStyle: 'italic', margin: '0 0 20px' }}>&ldquo;{t.text}&rdquo;</p>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.45)', marginBottom: '14px', background: 'rgba(201,169,110,.05)', padding: '6px 10px', textTransform: 'uppercase' }}>🏠 {t.property}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.45)', marginBottom: '14px', background: 'rgba(201,169,110,.05)', padding: '6px 10px', textTransform: 'uppercase' }}>🏠 {t.property}</div>
                 <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.82rem', color: '#f4f0e6', fontWeight: 600 }}>{t.author}</div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.35)' }}>{t.country}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.35)' }}>{t.country}</div>
               </div>
             ))}
           </div>
@@ -200,7 +200,7 @@ export default function FrPage() {
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '96px 60px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center' }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
               Fiscalité · Résidence Portugaise
             </div>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 3.5vw, 3rem)', color: '#f4f0e6', margin: '0 0 24px', lineHeight: 1.15 }}>
@@ -225,7 +225,7 @@ export default function FrPage() {
               { c: 'Luxembourg', from: '36–42 %', to: '20 %' },
             ].map(n => (
               <div key={n.c} style={{ background: 'rgba(201,169,110,.04)', border: '1px solid rgba(201,169,110,.12)', padding: '24px' }}>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '8px' }}>{n.c}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '8px' }}>{n.c}</div>
                 <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.6rem', fontWeight: 300, color: 'rgba(244,240,230,.6)', lineHeight: 1 }}>{n.from}</div>
                 <div style={{ fontSize: '.85rem', color: '#c9a96e', margin: '6px 0' }}>↓ Portugal NHR</div>
                 <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.6rem', fontWeight: 300, color: '#c9a96e', lineHeight: 1 }}>{n.to}</div>
@@ -237,7 +237,7 @@ export default function FrPage() {
 
       {/* CTA FINAL */}
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '96px 60px', textAlign: 'center' }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>Commencer Votre Projet</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>Commencer Votre Projet</div>
         <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#f4f0e6', margin: '0 0 16px' }}>Prêt à investir au Portugal ?</h2>
         <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.9rem', color: 'rgba(244,240,230,.45)', maxWidth: '500px', margin: '0 auto 40px', lineHeight: 1.7 }}>
           Consultation privée. Réponse en moins de 2 heures. Aucun engagement requis.
@@ -257,10 +257,10 @@ export default function FrPage() {
       {/* FOOTER */}
       <div style={{ borderTop: '1px solid rgba(201,169,110,.1)', padding: '28px 60px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.1rem', color: '#c9a96e' }}>Agency<span style={{ color: '#f4f0e6' }}>Group</span></div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.25)', textTransform: 'uppercase' }}>AMI 22506 · Lisbonne, Portugal · Agence Immobilière Agréée</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.25)', textTransform: 'uppercase' }}>AMI 22506 · Lisbonne, Portugal · Agence Immobilière Agréée</div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <Link href="/" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textDecoration: 'none', textTransform: 'uppercase' }}>🇵🇹 PT</Link>
-          <Link href="/en" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textDecoration: 'none', textTransform: 'uppercase' }}>🇬🇧 EN</Link>
+          <Link href="/" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textDecoration: 'none', textTransform: 'uppercase' }}>🇵🇹 PT</Link>
+          <Link href="/en" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textDecoration: 'none', textTransform: 'uppercase' }}>🇬🇧 EN</Link>
         </div>
       </div>
     </div>

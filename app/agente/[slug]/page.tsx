@@ -132,7 +132,7 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
 
           {/* Info */}
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.28em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '12px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.28em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '12px' }}>
               {agent.ami} · Consultor de Luxo
             </div>
             <h1 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#f4f0e6', margin: '0 0 8px', lineHeight: 1.1 }}>
@@ -143,7 +143,7 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '28px' }}>
               {agent.linguas.map(l => (
-                <span key={l} style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.7)', background: 'rgba(201,169,110,.08)', border: '1px solid rgba(201,169,110,.2)', padding: '4px 12px' }}>{l}</span>
+                <span key={l} style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.7)', background: 'rgba(201,169,110,.08)', border: '1px solid rgba(201,169,110,.2)', padding: '4px 12px' }}>{l}</span>
               ))}
             </div>
 
@@ -156,7 +156,7 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
                 ['Rating', agent.stats.rating],
               ].map(([label, val], i) => (
                 <div key={label} style={{ paddingRight: '32px', marginRight: '32px', borderRight: i < 3 ? '1px solid rgba(201,169,110,.1)' : 'none' }}>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
                   <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.8rem', color: '#c9a96e', fontWeight: 300 }}>{val}</div>
                 </div>
               ))}
@@ -169,11 +169,11 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 60px 0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px' }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '20px' }}>Sobre</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '20px' }}>Sobre</div>
             <p style={{ fontFamily: "'Cormorant', serif", fontSize: '1.2rem', lineHeight: 1.8, color: 'rgba(244,240,230,.75)', fontWeight: 300, margin: 0 }}>{agent.bio}</p>
           </div>
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '20px' }}>Especialidades</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '20px' }}>Especialidades</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {agent.especialidades.map((e, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', border: '1px solid rgba(201,169,110,.1)', background: 'rgba(201,169,110,.03)' }}>
@@ -188,16 +188,16 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
 
       {/* TRACK RECORD */}
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 60px 0' }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
           Track Record · Selecção de Transacções
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
           {agent.track_record.map((t, i) => (
             <div key={i} style={{ background: '#0a1a10', border: '1px solid rgba(201,169,110,.1)', padding: '24px' }}>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', marginBottom: '8px' }}>{t.zona} · {t.ano}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', marginBottom: '8px' }}>{t.zona} · {t.ano}</div>
               <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1rem', fontWeight: 300, color: '#f4f0e6', marginBottom: '10px', lineHeight: 1.3 }}>{t.nome}</div>
               <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.5rem', color: '#c9a96e', fontWeight: 300 }}>{t.preco}</div>
-              <div style={{ marginTop: '12px', display: 'inline-block', background: 'rgba(28,74,53,.4)', border: '1px solid rgba(28,74,53,.6)', color: '#4a9c7a', fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.12em', padding: '3px 10px', textTransform: 'uppercase' }}>Vendido</div>
+              <div style={{ marginTop: '12px', display: 'inline-block', background: 'rgba(28,74,53,.4)', border: '1px solid rgba(28,74,53,.6)', color: '#4a9c7a', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.12em', padding: '3px 10px', textTransform: 'uppercase' }}>Vendido</div>
             </div>
           ))}
         </div>
@@ -205,7 +205,7 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
 
       {/* TESTEMUNHOS */}
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 60px 0' }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
           Testemunhos de Clientes
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
@@ -217,7 +217,7 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
                 <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(201,169,110,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant', serif", fontSize: '.9rem', color: '#c9a96e' }}>{t.autor[0]}</div>
                 <div>
                   <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.78rem', color: '#f4f0e6', fontWeight: 600 }}>{t.autor}</div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.35)' }}>{t.flag} {t.pais} · {t.data}</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.35)' }}>{t.flag} {t.pais} · {t.data}</div>
                 </div>
               </div>
             </div>
@@ -227,7 +227,7 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
 
       {/* SERVIÇOS */}
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 60px 0' }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '24px' }}>Serviços</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '24px' }}>Serviços</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
           {agent.servicos.map((s, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', border: '1px solid rgba(201,169,110,.1)', background: 'rgba(201,169,110,.03)' }}>
@@ -248,7 +248,7 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
           padding: '64px', textAlign: 'center',
           marginBottom: '80px',
         }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>Disponível para nova consulta</div>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>Disponível para nova consulta</div>
           <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#f4f0e6', margin: '0 0 12px' }}>Pronto para encontrar a sua propriedade ideal?</h2>
           <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.82rem', color: 'rgba(244,240,230,.45)', maxWidth: '500px', margin: '0 auto 36px', lineHeight: 1.7 }}>
             Serviço completamente personalizado. Resposta em menos de 2 horas. Sem compromisso.
@@ -269,8 +269,8 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
       {/* FOOTER */}
       <div style={{ borderTop: '1px solid rgba(201,169,110,.1)', padding: '28px 60px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.1rem', color: '#c9a96e' }}>Agency<span style={{ color: '#f4f0e6' }}>Group</span></div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.25)', textTransform: 'uppercase' }}>{agent.ami} · Lisboa, Portugal</div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)' }}>{agent.telefone}</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.25)', textTransform: 'uppercase' }}>{agent.ami} · Lisboa, Portugal</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)' }}>{agent.telefone}</div>
       </div>
     </div>
   )

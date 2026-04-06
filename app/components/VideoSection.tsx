@@ -33,14 +33,14 @@ export default function VideoSection({ propertyName, propertyRef, videoUrl, zona
         background: 'rgba(255,255,255,.02)',
       }}>
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.2em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '4px' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.2em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '4px' }}>
             Tour Cinematográfico
           </div>
           <div style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.3rem', color: '#f4f0e6' }}>
             Vídeo Premium do Imóvel
           </div>
         </div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>
           4K · Drone · Áudio
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function VideoSection({ propertyName, propertyRef, videoUrl, zona
             </svg>
           </div>
 
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '12px', position: 'relative', zIndex: 1 }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '12px', position: 'relative', zIndex: 1 }}>
             Produção Cinematográfica
           </div>
           <h3 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.8rem', color: '#f4f0e6', margin: '0 0 12px', position: 'relative', zIndex: 1, maxWidth: '500px' }}>
@@ -102,7 +102,7 @@ export default function VideoSection({ propertyName, propertyRef, videoUrl, zona
           {/* Features */}
           <div style={{ display: 'flex', gap: '24px', marginBottom: '36px', position: 'relative', zIndex: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
             {['🎬 Drone 4K', '🎙️ Áudio HD', '✂️ Edição Pro', '📱 Versão Reel'].map(f => (
-              <div key={f} style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.45)', textTransform: 'uppercase' }}>{f}</div>
+              <div key={f} style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.45)', textTransform: 'uppercase' }}>{f}</div>
             ))}
           </div>
 

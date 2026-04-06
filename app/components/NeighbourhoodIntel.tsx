@@ -319,7 +319,7 @@ export default function NeighbourhoodIntel({ lat, lng, zona, bairro }: Props) {
   }, [zona, lat, lng])
 
   if (loading) return (
-    <div style={{ padding: '32px', textAlign: 'center', color: 'rgba(244,240,230,.4)', fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.15em' }}>
+    <div style={{ padding: '32px', textAlign: 'center', color: 'rgba(244,240,230,.4)', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.15em' }}>
       A carregar dados da zona...
     </div>
   )
@@ -347,7 +347,7 @@ export default function NeighbourhoodIntel({ lat, lng, zona, bairro }: Props) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.2em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '8px' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.2em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '8px' }}>
             Neighbourhood Intelligence
           </div>
           <h3 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.6rem', color: '#f4f0e6', margin: 0 }}>
@@ -358,7 +358,7 @@ export default function NeighbourhoodIntel({ lat, lng, zona, bairro }: Props) {
           <div style={{ fontFamily: "'Cormorant', serif", fontSize: '2.8rem', fontWeight: 300, color: scoreColor(avgScore), lineHeight: 1 }}>
             {avgScore}
           </div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.4)', textTransform: 'uppercase', marginTop: '4px' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.4)', textTransform: 'uppercase', marginTop: '4px' }}>
             Score Geral
           </div>
         </div>
@@ -380,7 +380,7 @@ export default function NeighbourhoodIntel({ lat, lng, zona, bairro }: Props) {
             <div style={{ width: '100%', height: '3px', background: 'rgba(255,255,255,.06)', marginTop: '8px', marginBottom: '6px' }}>
               <div style={{ width: `${score}%`, height: '100%', background: scoreColor(score), transition: 'width 1s ease' }} />
             </div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.4)', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.4)', textTransform: 'uppercase' }}>
               {SCORE_LABELS[key]}
             </div>
           </div>
@@ -422,11 +422,11 @@ export default function NeighbourhoodIntel({ lat, lng, zona, bairro }: Props) {
               <span style={{ fontSize: '1.1rem' }}>{poi.icon}</span>
               <div>
                 <div style={{ fontFamily: "'Jost', sans-serif", fontWeight: 500, fontSize: '.72rem', color: '#f4f0e6' }}>{poi.name}</div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.38)', textTransform: 'uppercase', marginTop: '2px' }}>{poi.type}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.38)', textTransform: 'uppercase', marginTop: '2px' }}>{poi.type}</div>
               </div>
             </div>
             <div style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               color: poi.distance < 500 ? '#27ae60' : poi.distance < 1500 ? '#c9a96e' : 'rgba(244,240,230,.4)',
               letterSpacing: '.06em', whiteSpace: 'nowrap',
             }}>
@@ -436,7 +436,7 @@ export default function NeighbourhoodIntel({ lat, lng, zona, bairro }: Props) {
         ))}
       </div>
 
-      <div style={{ marginTop: '20px', fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.2)', textTransform: 'uppercase' }}>
+      <div style={{ marginTop: '20px', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.2)', textTransform: 'uppercase' }}>
         Dados: OpenStreetMap contributors · Distâncias aproximadas a partir do imóvel
       </div>
     </section>

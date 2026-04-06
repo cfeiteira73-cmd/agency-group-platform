@@ -191,7 +191,7 @@ export default function ImovelClient({ id }: { id: string }) {
         <div style={{
           maxWidth: '1280px', margin: '0 auto', padding: '20px 40px 0',
           display: 'flex', gap: '8px', alignItems: 'center',
-          fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
           letterSpacing: '.12em', color: 'rgba(244,240,230,.3)',
           flexWrap: 'wrap',
         }}>
@@ -254,7 +254,7 @@ export default function ImovelClient({ id }: { id: string }) {
             {/* Photo label */}
             <div style={{
               position: 'absolute', top: '20px', left: '20px', zIndex: 5,
-              fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.16em', color: 'rgba(244,240,230,.55)',
               background: 'rgba(12,31,21,.6)', backdropFilter: 'blur(8px)',
               padding: '5px 12px',
@@ -265,7 +265,7 @@ export default function ImovelClient({ id }: { id: string }) {
               <button
                 onClick={e => { e.stopPropagation(); setFloorplanOpen(true) }}
                 style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.14em', color: '#c9a96e',
                   background: 'rgba(12,31,21,.7)', backdropFilter: 'blur(8px)',
                   padding: '5px 12px', border: '1px solid rgba(201,169,110,.3)',
@@ -274,7 +274,7 @@ export default function ImovelClient({ id }: { id: string }) {
                 📐 Planta
               </button>
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.16em', color: 'rgba(244,240,230,.55)',
                 background: 'rgba(12,31,21,.6)', backdropFilter: 'blur(8px)',
                 padding: '5px 12px', cursor: 'pointer', border: 'none',
@@ -302,7 +302,7 @@ export default function ImovelClient({ id }: { id: string }) {
               {/* Ref + Badge row */}
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px' }}>
                 <span style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.2em', color: 'rgba(244,240,230,.45)',
                   background: 'rgba(12,31,21,.5)', padding: '5px 12px',
                   backdropFilter: 'blur(8px)',
@@ -310,7 +310,7 @@ export default function ImovelClient({ id }: { id: string }) {
                 {property.badge && (
                   <span style={{
                     ...BADGE_STYLE[property.badge],
-                    fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.16em', textTransform: 'uppercase',
                     padding: '5px 14px',
                   }}>{property.badge}</span>
@@ -341,7 +341,7 @@ export default function ImovelClient({ id }: { id: string }) {
               }}>{formatPriceFull(property.preco)}</div>
               {currency !== 'EUR' && (
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.1em', color: 'rgba(201,169,110,.6)',
                   marginTop: '6px',
                 }}>{formatConverted(property.preco)}</div>
@@ -368,7 +368,7 @@ export default function ImovelClient({ id }: { id: string }) {
                   minWidth: '80px', textAlign: 'center',
                 }}>
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.14em', color: 'rgba(244,240,230,.35)',
                     marginBottom: '4px', textTransform: 'uppercase',
                   }}>{label}</div>
@@ -478,7 +478,7 @@ export default function ImovelClient({ id }: { id: string }) {
                 }}/>
                 <div style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0,
-                  fontFamily: "'DM Mono', monospace", fontSize: '.32rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.06em', color: 'rgba(244,240,230,.7)',
                   background: 'rgba(0,0,0,.5)', padding: '2px 4px',
                   textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -515,7 +515,7 @@ export default function ImovelClient({ id }: { id: string }) {
                     fontSize: '1.25rem', color: '#f4f0e6',
                   }}>{property.nome}</div>
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.14em', color: 'rgba(201,169,110,.6)',
                   }}>{galleryFrames[galleryIdx].label} · {galleryIdx + 1} / {galleryFrames.length}</div>
                 </div>
@@ -523,7 +523,7 @@ export default function ImovelClient({ id }: { id: string }) {
                   background: 'none', border: '1px solid rgba(244,240,230,.2)',
                   color: 'rgba(244,240,230,.6)', padding: '8px 16px',
                   cursor: 'pointer', fontFamily: "'DM Mono', monospace",
-                  fontSize: '.46rem', letterSpacing: '.1em',
+                  fontSize: '.52rem', letterSpacing: '.1em',
                 }}>FECHAR ✕</button>
               </div>
 
@@ -615,7 +615,7 @@ export default function ImovelClient({ id }: { id: string }) {
                     }}/>
                     <div style={{
                       position: 'absolute', bottom: 0, left: 0, right: 0,
-                      fontFamily: "'DM Mono', monospace", fontSize: '.32rem',
+                      fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                       letterSpacing: '.04em', color: 'rgba(244,240,230,.8)',
                       background: 'rgba(0,0,0,.6)', padding: '3px 6px', textAlign: 'center', zIndex: 2,
                     }}>{frame.label}</div>
@@ -645,7 +645,7 @@ export default function ImovelClient({ id }: { id: string }) {
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '28px' }}>
               {[property.zona, property.bairro, property.tipo].map(tag => (
                 <span key={tag} style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.16em', color: 'rgba(201,169,110,.7)',
                   background: 'rgba(201,169,110,.08)', border: '1px solid rgba(201,169,110,.2)',
                   padding: '6px 14px', textTransform: 'uppercase',
@@ -663,7 +663,7 @@ export default function ImovelClient({ id }: { id: string }) {
             {/* ── Features grid ── */}
             <div style={{ marginBottom: '48px' }}>
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.22em', textTransform: 'uppercase',
                 color: 'rgba(201,169,110,.55)', marginBottom: '20px',
               }}>Características</div>
@@ -695,12 +695,12 @@ export default function ImovelClient({ id }: { id: string }) {
               padding: '32px', marginBottom: '48px',
             }}>
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.22em', textTransform: 'uppercase',
                 color: 'rgba(201,169,110,.55)', marginBottom: '6px',
               }}>Análise de Investimento</div>
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.4rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.12em', color: 'rgba(244,240,230,.25)',
                 marginBottom: '24px',
               }}>60% LTV · Euribor 6M 2,95% + spread · 30 anos</div>
@@ -727,7 +727,7 @@ export default function ImovelClient({ id }: { id: string }) {
                     padding: '14px 16px',
                   }}>
                     <div style={{
-                      fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                      fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                       letterSpacing: '.12em', color: 'rgba(244,240,230,.3)',
                       marginBottom: '5px', textTransform: 'uppercase',
                     }}>{label}</div>
@@ -752,7 +752,7 @@ export default function ImovelClient({ id }: { id: string }) {
                 em 2025. Previsão 2026: forte procura internacional mantém valorização.
               </div>
               <div style={{
-                marginTop: '10px', fontFamily: "'DM Mono', monospace", fontSize: '.38rem',
+                marginTop: '10px', fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.1em', color: 'rgba(244,240,230,.2)',
               }}>
                 * Estimativas indicativas. Não constituem aconselhamento financeiro. Consulte o seu banco e consultor fiscal.
@@ -762,7 +762,7 @@ export default function ImovelClient({ id }: { id: string }) {
             {/* ── Location section ── */}
             <div style={{ marginBottom: '48px' }}>
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.22em', textTransform: 'uppercase',
                 color: 'rgba(201,169,110,.55)', marginBottom: '16px',
               }}>Sobre {property.zona}</div>
@@ -788,7 +788,7 @@ export default function ImovelClient({ id }: { id: string }) {
               padding: '24px 28px', marginBottom: '48px',
             }}>
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.18em', color: 'rgba(201,169,110,.5)',
                 marginBottom: '12px', textTransform: 'uppercase',
               }}>Contexto de Mercado · {property.zona} 2026</div>
@@ -847,7 +847,7 @@ export default function ImovelClient({ id }: { id: string }) {
             }}>
               <div>
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.2em', color: 'rgba(201,169,110,.5)',
                   marginBottom: '6px', textTransform: 'uppercase',
                 }}>Deal Radar 16D</div>
@@ -888,7 +888,7 @@ export default function ImovelClient({ id }: { id: string }) {
 
             {/* ── Price History Chart ── */}
             <div style={{ marginTop: '32px' }}>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.22em', textTransform: 'uppercase', color: 'rgba(201,169,110,.55)', marginBottom: '16px' }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.22em', textTransform: 'uppercase', color: 'rgba(201,169,110,.55)', marginBottom: '16px' }}>
                 Evolução do Mercado · {property.zona}
               </div>
               <PriceHistoryChart zona={property.zona} currentPm2={Math.round(property.preco / property.area)} />
@@ -900,11 +900,11 @@ export default function ImovelClient({ id }: { id: string }) {
                 <span style={{ fontFamily: "'Cormorant', serif", fontSize: '1.4rem', color: '#c9a96e', fontWeight: 300 }}>CF</span>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.16em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', marginBottom: '4px' }}>Consultor Responsável</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.16em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', marginBottom: '4px' }}>Consultor Responsável</div>
                 <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.2rem', fontWeight: 300, color: '#f4f0e6', marginBottom: '2px' }}>Carlos Feiteira</div>
                 <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.72rem', color: 'rgba(244,240,230,.4)' }}>AMI 22506 · €45M+ vendidos · 127 transacções · 4.9★</div>
               </div>
-              <Link href="/agente/carlos" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.6)', textDecoration: 'none', border: '1px solid rgba(201,169,110,.2)', padding: '8px 16px', textTransform: 'uppercase', flexShrink: 0 }}>
+              <Link href="/agente/carlos" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.6)', textDecoration: 'none', border: '1px solid rgba(201,169,110,.2)', padding: '8px 16px', textTransform: 'uppercase', flexShrink: 0 }}>
                 Ver Perfil →
               </Link>
             </div>
@@ -913,7 +913,7 @@ export default function ImovelClient({ id }: { id: string }) {
             {similar.length > 0 && (
               <div>
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.22em', textTransform: 'uppercase',
                   color: 'rgba(201,169,110,.55)', marginBottom: '20px',
                 }}>Imóveis Semelhantes em {property.zona}</div>
@@ -938,7 +938,7 @@ export default function ImovelClient({ id }: { id: string }) {
                             <span style={{
                               position: 'absolute', top: '10px', right: '10px',
                               ...BADGE_STYLE[p.badge],
-                              fontFamily: "'DM Mono', monospace", fontSize: '.4rem',
+                              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                               letterSpacing: '.12em', textTransform: 'uppercase',
                               padding: '3px 8px',
                             }}>{p.badge}</span>
@@ -946,7 +946,7 @@ export default function ImovelClient({ id }: { id: string }) {
                         </div>
                         <div style={{ padding: '14px' }}>
                           <div style={{
-                            fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                            fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                             letterSpacing: '.14em', color: 'rgba(201,169,110,.55)',
                             marginBottom: '5px',
                           }}>{p.bairro}</div>
@@ -978,7 +978,7 @@ export default function ImovelClient({ id }: { id: string }) {
               {/* Header */}
               <div style={{ marginBottom: '24px' }}>
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.2em', color: 'rgba(201,169,110,.5)',
                   marginBottom: '6px', textTransform: 'uppercase',
                 }}>Agency Group · AMI 22506</div>
@@ -989,13 +989,13 @@ export default function ImovelClient({ id }: { id: string }) {
                 }}>{formatPriceFull(property.preco)}</div>
                 {currency !== 'EUR' && (
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.08em', color: 'rgba(201,169,110,.55)',
                     marginTop: '3px',
                   }}>{formatConverted(property.preco)}</div>
                 )}
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.12em', color: 'rgba(244,240,230,.3)',
                   marginTop: '4px',
                 }}>€{Math.round(property.preco / property.area).toLocaleString('pt-PT')}/m²</div>
@@ -1095,7 +1095,7 @@ export default function ImovelClient({ id }: { id: string }) {
 
               {/* Contact form */}
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.14em', color: 'rgba(244,240,230,.35)',
                 marginBottom: '12px', textTransform: 'uppercase',
               }}>Pedir informação</div>
@@ -1152,7 +1152,7 @@ export default function ImovelClient({ id }: { id: string }) {
             {/* AMI disclaimer */}
             <div style={{
               marginTop: '16px', padding: '0 4px',
-              fontFamily: "'DM Mono', monospace", fontSize: '.38rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.1em', color: 'rgba(244,240,230,.18)',
               lineHeight: 1.65, textTransform: 'uppercase',
             }}>
@@ -1188,7 +1188,7 @@ export default function ImovelClient({ id }: { id: string }) {
             }}>
               <div>
                 <span style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.16em', color: 'rgba(201,169,110,.6)',
                 }}>TOUR VIRTUAL 3D</span>
                 <span style={{

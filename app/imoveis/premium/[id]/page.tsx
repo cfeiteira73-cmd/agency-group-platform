@@ -71,7 +71,7 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
         <Link href="/" style={{ fontFamily: "'Cormorant', serif", fontSize: '1.3rem', fontWeight: 300, color: '#f4f0e6', textDecoration: 'none', letterSpacing: '.08em' }}>
           Agency<span style={{ color: '#c9a96e' }}>Group</span>
         </Link>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.18em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.18em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase' }}>
           {property.ref} · Propriedade Exclusiva
         </div>
         <a
@@ -109,7 +109,7 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
         {property.badge && (
           <div style={{
             position: 'absolute', top: '100px', left: '60px',
-            fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+            fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
             letterSpacing: '.22em', color: '#c9a96e',
             background: 'rgba(201,169,110,.1)', border: '1px solid rgba(201,169,110,.3)',
             padding: '6px 16px', textTransform: 'uppercase',
@@ -147,7 +147,7 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
                 padding: '20px 28px', textAlign: 'center',
                 borderRight: i < 3 ? '1px solid rgba(201,169,110,.1)' : 'none',
               }}>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase', marginBottom: '6px' }}>{label}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase', marginBottom: '6px' }}>{label}</div>
                 <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.4rem', color: '#f4f0e6', fontWeight: 300 }}>{val}</div>
               </div>
             ))}
@@ -157,7 +157,7 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
         {/* Scroll indicator */}
         <div style={{
           position: 'absolute', bottom: '28px', left: '50%', transform: 'translateX(-50%)',
-          fontFamily: "'DM Mono', monospace", fontSize: '.38rem',
+          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
           letterSpacing: '.2em', color: 'rgba(201,169,110,.4)', textTransform: 'uppercase',
         }}>↓ Descobrir</div>
       </div>
@@ -186,7 +186,7 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
                 />
               <div style={{
                 position: 'absolute', bottom: '16px', left: '20px',
-                fontFamily: "'DM Mono', monospace", fontSize: '.38rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.12em', color: 'rgba(244,240,230,.7)',
                 background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)',
                 padding: '4px 10px', textTransform: 'uppercase',
@@ -200,7 +200,7 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '96px 60px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'start' }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '24px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '24px' }}>
               Sobre esta Propriedade
             </div>
             <p style={{ fontFamily: "'Cormorant', serif", fontSize: '1.25rem', lineHeight: 1.8, color: 'rgba(244,240,230,.75)', fontWeight: 300, margin: 0 }}>
@@ -209,12 +209,12 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
             {property.vista && (
               <div style={{ marginTop: '32px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ width: '32px', height: '1px', background: '#c9a96e' }} />
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.16em', color: 'rgba(201,169,110,.7)', textTransform: 'uppercase' }}>Vista {property.vista}</span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.16em', color: 'rgba(201,169,110,.7)', textTransform: 'uppercase' }}>Vista {property.vista}</span>
               </div>
             )}
           </div>
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '24px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '24px' }}>
               Características Exclusivas
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -242,7 +242,7 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
         padding: '64px',
         textAlign: 'center',
       }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>
           Propriedade de Representação Exclusiva
         </div>
         <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#f4f0e6', margin: '0 0 16px' }}>
@@ -287,10 +287,10 @@ export default async function PremiumPropertyPage({ params }: { params: Promise<
         <div style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.1rem', color: '#c9a96e' }}>
           Agency<span style={{ color: '#f4f0e6' }}>Group</span>
         </div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.25)', textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.25)', textTransform: 'uppercase' }}>
           AMI 22506 · {property.ref} · Lisboa
         </div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>
           +351 919 948 986
         </div>
       </div>

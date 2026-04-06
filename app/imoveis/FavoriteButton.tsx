@@ -161,7 +161,7 @@ export function FavoritesDrawer() {
                   fontSize: '1.25rem', color: '#f4f0e6',
                 }}>Favoritos</div>
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.14em', color: 'rgba(201,169,110,.6)',
                   marginTop: '4px',
                 }}>{count} imóve{count !== 1 ? 'is' : 'l'} guardado{count !== 1 ? 's' : ''}</div>
@@ -189,7 +189,7 @@ export function FavoritesDrawer() {
                   }} />
                   <div style={{ padding: '12px', flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                      fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                       letterSpacing: '.14em', color: 'rgba(201,169,110,.6)',
                       marginBottom: '4px',
                     }}>{p.zona} · {p.ref}</div>

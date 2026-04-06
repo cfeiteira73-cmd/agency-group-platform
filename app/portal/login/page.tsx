@@ -76,7 +76,7 @@ export default function PortalLogin() {
         {/* Logo */}
         <div style={{
           fontFamily: "'DM Mono', monospace",
-          fontSize: '.44rem',
+          fontSize: '.52rem',
           letterSpacing: '.28em',
           textTransform: 'uppercase',
           color: 'rgba(201,169,110,.55)',
@@ -169,7 +169,7 @@ export default function PortalLogin() {
           paddingTop: '16px',
           borderTop: '1px solid rgba(244,240,230,.05)',
           fontFamily: "'DM Mono', monospace",
-          fontSize: '.42rem',
+          fontSize: '.52rem',
           color: 'rgba(244,240,230,.18)',
           letterSpacing: '.1em',
           textTransform: 'uppercase',

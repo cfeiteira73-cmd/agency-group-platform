@@ -31,7 +31,7 @@ export default function ReviewsWidget() {
         {/* Header */}
         <div className="reviews-header" style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'flex-end', marginBottom: '48px', gap: '32px' }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
               Testemunhos · Clientes Verificados
             </div>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 3.5vw, 3rem)', color: '#f4f0e6', margin: 0, lineHeight: 1.15 }}>
@@ -41,10 +41,10 @@ export default function ReviewsWidget() {
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontFamily: "'Cormorant', serif", fontSize: '3.5rem', color: '#c9a96e', fontWeight: 300, lineHeight: 1 }}>4.9</div>
             <div style={{ color: '#c9a96e', fontSize: '.9rem', letterSpacing: '.08em', margin: '4px 0' }}>★★★★★</div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>47 avaliações</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>47 avaliações</div>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.36rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.25)', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', padding: '3px 8px' }}>● Google</span>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.36rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.25)', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', padding: '3px 8px' }}>★ Trustpilot</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.25)', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', padding: '3px 8px' }}>● Google</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.25)', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', padding: '3px 8px' }}>★ Trustpilot</span>
             </div>
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function ReviewsWidget() {
               {/* Stars + verified */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#c9a96e', fontSize: '.85rem', letterSpacing: '.1em' }}>{'★'.repeat(r.rating)}</span>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.36rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.5)', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.15)', padding: '2px 8px', textTransform: 'uppercase' }}>✓ Verificado</span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.5)', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.15)', padding: '2px 8px', textTransform: 'uppercase' }}>✓ Verificado</span>
               </div>
 
               {/* Text */}
@@ -70,13 +70,13 @@ export default function ReviewsWidget() {
                 "{r.texto}"
               </p>
               {r.texto.length > 200 && (
-                <button onClick={() => setExpanded(expanded === i ? null : i)} style={{ background: 'none', border: 'none', color: 'rgba(201,169,110,.5)', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.1em', textAlign: 'left', padding: 0, textTransform: 'uppercase' }}>
+                <button onClick={() => setExpanded(expanded === i ? null : i)} style={{ background: 'none', border: 'none', color: 'rgba(201,169,110,.5)', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', textAlign: 'left', padding: 0, textTransform: 'uppercase' }}>
                   {expanded === i ? '↑ Ver menos' : '↓ Ver mais'}
                 </button>
               )}
 
               {/* Property */}
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.45)', background: 'rgba(201,169,110,.04)', border: '1px solid rgba(201,169,110,.1)', padding: '6px 10px', textTransform: 'uppercase' }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.45)', background: 'rgba(201,169,110,.04)', border: '1px solid rgba(201,169,110,.1)', padding: '6px 10px', textTransform: 'uppercase' }}>
                 🏠 {r.imovel}
               </div>
 
@@ -87,7 +87,7 @@ export default function ReviewsWidget() {
                 </div>
                 <div>
                   <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.8rem', color: '#f4f0e6', fontWeight: 600 }}>{r.autor}</div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.3)' }}>{r.flag} {r.pais} · {r.data}</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.3)' }}>{r.flag} {r.pais} · {r.data}</div>
                 </div>
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function ReviewsWidget() {
         {/* CTA */}
         <div style={{ textAlign: 'center', marginTop: '40px' }}>
           <a href="https://g.page/agencygroup" target="_blank" rel="noopener noreferrer"
-            style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.16em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', textDecoration: 'none', borderBottom: '1px solid rgba(201,169,110,.2)', paddingBottom: '2px' }}>
+            style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.16em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', textDecoration: 'none', borderBottom: '1px solid rgba(201,169,110,.2)', paddingBottom: '2px' }}>
             Ver todas as 47 avaliações →
           </a>
         </div>

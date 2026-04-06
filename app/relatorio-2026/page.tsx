@@ -257,15 +257,15 @@ export default function Relatorio2026() {
             <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'.65rem',letterSpacing:'.6em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginTop:'2px'}}>Group</div>
           </Link>
           <div style={{display:'flex',gap:'16px',alignItems:'center'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(244,240,230,.3)'}}>AMI 22506</div>
-            <button className="r-btn" style={{padding:'10px 20px',fontSize:'.48rem'}} onClick={()=>window.print()}>↓ Download PDF</button>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(244,240,230,.3)'}}>AMI 22506</div>
+            <button className="r-btn" style={{padding:'10px 20px',fontSize:'.52rem'}} onClick={()=>window.print()}>↓ Download PDF</button>
           </div>
         </nav>
 
         <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'80px 64px',textAlign:'center'}}>
           <div style={{display:'flex',alignItems:'center',gap:'24px',marginBottom:'40px'}}>
             <div style={{width:'80px',height:'1px',background:'rgba(201,169,110,.3)'}}/>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.48rem',letterSpacing:'.3em',textTransform:'uppercase',color:'rgba(201,169,110,.5)'}}>IPRI™ Research · Portugal · 2026</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.3em',textTransform:'uppercase',color:'rgba(201,169,110,.5)'}}>IPRI™ Research · Portugal · 2026</div>
             <div style={{width:'80px',height:'1px',background:'rgba(201,169,110,.3)'}}/>
           </div>
 
@@ -283,7 +283,7 @@ export default function Relatorio2026() {
             {[['169.812','Transacções'],['€8.500/m²','Lisboa Prime'],['+17,6%','Crescimento YoY'],['Top 5','Mundial Luxo']].map(([v,l])=>(
               <div key={l} style={{textAlign:'center'}}>
                 <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.9rem',color:'#c9a96e',lineHeight:1}}>{v}</div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(244,240,230,.25)',marginTop:'8px'}}>{l}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(244,240,230,.25)',marginTop:'8px'}}>{l}</div>
               </div>
             ))}
           </div>
@@ -292,12 +292,12 @@ export default function Relatorio2026() {
             {['Executive Summary','Zone Intelligence','Buyer Atlas','Investment Calculator','NHR/IFICI Guide','Development Pipeline'].map((s,i)=>(
               <div key={s} style={{display:'flex',alignItems:'center',gap:'8px'}}>
                 <div style={{width:'5px',height:'5px',borderRadius:'50%',background:'rgba(201,169,110,.4)'}}/>
-                <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.3)'}}>{s}</span>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.3)'}}>{s}</span>
               </div>
             ))}
           </div>
 
-          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(244,240,230,.15)'}}>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(244,240,230,.15)'}}>
             Agency Group · AMI 22506 · agencygroup.pt · Março 2026
           </div>
         </div>
@@ -325,11 +325,11 @@ export default function Relatorio2026() {
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:'12px',marginBottom:'32px'}}>
             {IPRI.map((m,i)=>(
               <div key={m.market} className={`ipri-tier-${m.tier.toLowerCase()}`} style={{padding:'18px 20px',position:'relative'}}>
-                {m.hot && <div style={{position:'absolute',top:'12px',right:'12px',background:'#c9a96e',color:'#0c1f15',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.08em',padding:'2px 6px',textTransform:'uppercase'}}>HOT</div>}
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'8px'}}>{m.tier} · #{i+1}</div>
+                {m.hot && <div style={{position:'absolute',top:'12px',right:'12px',background:'#c9a96e',color:'#0c1f15',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.08em',padding:'2px 6px',textTransform:'uppercase'}}>HOT</div>}
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'8px'}}>{m.tier} · #{i+1}</div>
                 <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2.2rem',color:'#0e0e0d',lineHeight:1}}>{m.idx}</div>
                 <div style={{fontSize:'.88rem',fontWeight:500,color:'#0e0e0d',marginTop:'6px',marginBottom:'4px'}}>{m.market}</div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',color:m.yoy.startsWith('+')?'#1c4a35':'#c94a4a'}}>{m.yoy} YoY</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:m.yoy.startsWith('+')?'#1c4a35':'#c94a4a'}}>{m.yoy} YoY</div>
                 <div style={{height:'3px',background:'rgba(14,14,13,.06)',borderRadius:'2px',overflow:'hidden',marginTop:'12px'}}>
                   <div style={{height:'100%',background:'#c9a96e',width:`${Math.min(m.idx/1.7,100)}%`,borderRadius:'2px'}}/>
                 </div>
@@ -338,11 +338,11 @@ export default function Relatorio2026() {
           </div>
 
           <div style={{background:'#0c1f15',padding:'20px 24px',display:'flex',gap:'32px',flexWrap:'wrap',alignItems:'center'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.35)'}}>IPRI™ Methodology:</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.35)'}}>IPRI™ Methodology:</div>
             {['Preço €/m²','Volume de transacções','Procura internacional','Tempo médio de venda','Liquidez off-market','Yield prime'].map(f=>(
               <div key={f} style={{display:'flex',alignItems:'center',gap:'6px'}}>
                 <div style={{width:'4px',height:'4px',borderRadius:'50%',background:'rgba(201,169,110,.5)',flexShrink:0}}/>
-                <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(244,240,230,.35)',letterSpacing:'.04em'}}>{f}</span>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.35)',letterSpacing:'.04em'}}>{f}</span>
               </div>
             ))}
           </div>
@@ -385,8 +385,8 @@ export default function Relatorio2026() {
               ].map(f=>(
                 <div key={f.label} style={{background:'rgba(244,240,230,.04)',border:'1px solid rgba(244,240,230,.06)',padding:'18px 20px'}}>
                   <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.8rem',color:f.color,lineHeight:1}}>{f.val}</div>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.3)',marginTop:'4px'}}>{f.label}</div>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:f.color,marginTop:'4px',opacity:.7}}>{f.change}</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.3)',marginTop:'4px'}}>{f.label}</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:f.color,marginTop:'4px',opacity:.7}}>{f.change}</div>
                 </div>
               ))}
             </div>
@@ -401,7 +401,7 @@ export default function Relatorio2026() {
             ].map(c=>(
               <div key={c.title} style={{background:'rgba(201,169,110,.07)',border:'1px solid rgba(201,169,110,.12)',padding:'20px'}}>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'2rem',color:'#c9a96e',lineHeight:1,marginBottom:'10px'}}>{c.icon}</div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.6)',marginBottom:'8px'}}>{c.title}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.6)',marginBottom:'8px'}}>{c.title}</div>
                 <p style={{fontSize:'.85rem',lineHeight:1.7,color:'rgba(244,240,230,.45)'}}>{c.body}</p>
               </div>
             ))}
@@ -435,7 +435,7 @@ export default function Relatorio2026() {
               <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'3.2rem',color:'#1c4a35',lineHeight:1,marginBottom:'4px'}}>
                 €{zone.preco.toLocaleString('pt-PT')}<span style={{fontSize:'1.2rem',opacity:.4,fontFamily:"'DM Mono',monospace"}}>/m²</span>
               </div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',marginBottom:'8px'}}>Preço médio · 2026</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',marginBottom:'8px'}}>Preço médio · 2026</div>
               <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',color:'#c9a96e',letterSpacing:'.06em',marginBottom:'20px'}}>Prime: €{zone.primePraco.toLocaleString('pt-PT')}/m²</div>
               <p style={{fontSize:'.9rem',lineHeight:1.85,color:'rgba(14,14,13,.65)',marginBottom:'24px'}}>{zone.desc}</p>
 
@@ -447,22 +447,22 @@ export default function Relatorio2026() {
                 ].map(m=>(
                   <div key={m.l} style={{background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.1)',padding:'14px'}}>
                     <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',color:m.c,lineHeight:1}}>{m.v}</div>
-                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginTop:'4px'}}>{m.l}</div>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.4)',letterSpacing:'.1em',textTransform:'uppercase',marginTop:'4px'}}>{m.l}</div>
                   </div>
                 ))}
               </div>
 
               <div style={{marginBottom:'16px'}}>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Bairros Prime:</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Bairros Prime:</div>
                 <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
                   {zone.bairros.map(b=>(
-                    <span key={b} style={{background:'#fff',border:'1px solid rgba(14,14,13,.12)',padding:'5px 12px',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.6)',letterSpacing:'.06em'}}>{b}</span>
+                    <span key={b} style={{background:'#fff',border:'1px solid rgba(14,14,13,.12)',padding:'5px 12px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.6)',letterSpacing:'.06em'}}>{b}</span>
                   ))}
                 </div>
               </div>
 
               <div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'8px'}}>Drivers de Procura:</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'8px'}}>Drivers de Procura:</div>
                 {zone.drivers.map((d,i)=>(
                   <div key={i} style={{display:'flex',gap:'8px',marginBottom:'6px',alignItems:'flex-start'}}>
                     <div style={{width:'4px',height:'4px',borderRadius:'50%',background:'#c9a96e',marginTop:'7px',flexShrink:0}}/>
@@ -472,19 +472,19 @@ export default function Relatorio2026() {
               </div>
 
               <div style={{marginTop:'16px',background:'rgba(201,169,110,.08)',border:'1px solid rgba(201,169,110,.2)',padding:'12px 16px',display:'inline-block'}}>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.4)',letterSpacing:'.06em',marginBottom:'4px'}}>Previsão 2027</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.4)',letterSpacing:'.06em',marginBottom:'4px'}}>Previsão 2027</div>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.3rem',color:'#c9a96e'}}>{zone.forecast}</div>
               </div>
             </div>
 
             <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>Comparação de Mercados — €/m²</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'4px'}}>Comparação de Mercados — €/m²</div>
               {ZONES.map(z=>(
                 <div key={z.nome} style={{cursor:'pointer'}} onClick={()=>setActiveZone(z.nome)}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'4px'}}>
                     <span style={{fontFamily:"'Jost',sans-serif",fontSize:'.88rem',color:activeZone===z.nome?'#1c4a35':'rgba(14,14,13,.55)',fontWeight:activeZone===z.nome?500:400}}>{z.emoji} {z.nome}</span>
                     <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
-                      <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.4)'}}>+{z.yoy}%</span>
+                      <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.4)'}}>+{z.yoy}%</span>
                       <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',color:activeZone===z.nome?'#1c4a35':'rgba(14,14,13,.6)',fontWeight:activeZone===z.nome?400:300}}>€{z.preco.toLocaleString('pt-PT')}</span>
                     </div>
                   </div>
@@ -493,20 +493,20 @@ export default function Relatorio2026() {
                   </div>
                 </div>
               ))}
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.25)',marginTop:'8px',letterSpacing:'.04em'}}>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.25)',marginTop:'8px',letterSpacing:'.04em'}}>
                 Fonte: INE · AT · Idealista · Imovirtual · Agency Group IPRI™ Q1 2026
               </div>
 
               {/* Volume chart */}
               <div style={{marginTop:'20px',background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'16px 20px'}}>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'12px'}}>Volume Transacções 2026</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'12px'}}>Volume Transacções 2026</div>
                 {ZONES.map(z=>(
                   <div key={z.nome} style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'8px'}}>
-                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.4)',width:'60px',flexShrink:0}}>{z.nome}</div>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.4)',width:'60px',flexShrink:0}}>{z.nome}</div>
                     <div style={{flex:1,height:'6px',background:'rgba(14,14,13,.04)',borderRadius:'3px',overflow:'hidden'}}>
                       <div style={{height:'100%',background:activeZone===z.nome?'#c9a96e':'rgba(201,169,110,.35)',width:`${(z.vol/20000*100)}%`,borderRadius:'3px',transition:'width .5s'}}/>
                     </div>
-                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(14,14,13,.5)',width:'50px',textAlign:'right'}}>{(z.vol/1000).toFixed(1)}K</div>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',width:'50px',textAlign:'right'}}>{(z.vol/1000).toFixed(1)}K</div>
                   </div>
                 ))}
               </div>
@@ -551,31 +551,31 @@ export default function Relatorio2026() {
               <p style={{fontSize:'.88rem',lineHeight:1.8,color:'rgba(244,240,230,.55)',marginBottom:'20px'}}>{buyer.perfil}</p>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
                 <div style={{background:'rgba(201,169,110,.08)',padding:'12px 14px'}}>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'4px'}}>Ticket Médio</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'4px'}}>Ticket Médio</div>
                   <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',color:'#c9a96e'}}>{buyer.avg}</div>
                 </div>
                 <div style={{background:'rgba(201,169,110,.08)',padding:'12px 14px'}}>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'4px'}}>Ciclo de Decisão</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'4px'}}>Ciclo de Decisão</div>
                   <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',color:'rgba(244,240,230,.6)',marginTop:'4px'}}>{buyer.tempo}</div>
                 </div>
               </div>
             </div>
             <div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.4)',marginBottom:'16px'}}>Driver principal</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.4)',marginBottom:'16px'}}>Driver principal</div>
               <div style={{background:'rgba(201,169,110,.1)',border:'1px solid rgba(201,169,110,.2)',padding:'16px 20px',marginBottom:'20px'}}>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.3rem',color:'#c9a96e',fontStyle:'italic'}}>{buyer.driver}</div>
               </div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.4)',marginBottom:'12px'}}>Zonas Preferidas</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.4)',marginBottom:'12px'}}>Zonas Preferidas</div>
               {buyer.zonas.map((z,i)=>(
                 <div key={i} style={{display:'flex',gap:'10px',alignItems:'flex-start',marginBottom:'10px'}}>
                   <div style={{width:'20px',height:'20px',borderRadius:'50%',background:'rgba(201,169,110,.15)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                    <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'#c9a96e'}}>{i+1}</span>
+                    <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#c9a96e'}}>{i+1}</span>
                   </div>
                   <span style={{fontSize:'.88rem',color:'rgba(244,240,230,.55)',lineHeight:1.5}}>{z}</span>
                 </div>
               ))}
               <div style={{marginTop:'24px',background:'rgba(28,74,53,.4)',padding:'14px 16px'}}>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.4)',marginBottom:'6px'}}>Segmento de Preço</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.4)',marginBottom:'6px'}}>Segmento de Preço</div>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',color:'#4a9c7a'}}>{buyer.seg}</div>
               </div>
             </div>
@@ -583,7 +583,7 @@ export default function Relatorio2026() {
 
           {/* All buyers bar chart */}
           <div style={{background:'rgba(244,240,230,.03)',border:'1px solid rgba(244,240,230,.06)',padding:'24px'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(244,240,230,.3)',marginBottom:'20px'}}>Quota de Mercado — Compradores Internacionais 2026</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(244,240,230,.3)',marginBottom:'20px'}}>Quota de Mercado — Compradores Internacionais 2026</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}} className="grid-2">
               {BUYERS.map(b=>(
                 <div key={b.nac} style={{display:'flex',alignItems:'center',gap:'12px'}}>
@@ -591,7 +591,7 @@ export default function Relatorio2026() {
                   <div style={{flex:1,height:'5px',background:'rgba(244,240,230,.06)',borderRadius:'3px',overflow:'hidden'}}>
                     <div style={{height:'100%',background:'#c9a96e',width:`${b.pct*4}%`,borderRadius:'3px'}}/>
                   </div>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',color:'#c9a96e',width:'32px'}}>{b.pct}%</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#c9a96e',width:'32px'}}>{b.pct}%</div>
                 </div>
               ))}
             </div>
@@ -646,7 +646,7 @@ export default function Relatorio2026() {
                 <label className="calc-label">Tipo de Arrendamento</label>
                 <div style={{display:'flex',gap:'8px'}}>
                   {(['longa','turistica'] as const).map(t=>(
-                    <button key={t} onClick={()=>setCalcTipoRenda(t)} style={{flex:1,padding:'10px',border:`1px solid ${calcTipoRenda===t?'#1c4a35':'rgba(14,14,13,.12)'}`,background:calcTipoRenda===t?'rgba(28,74,53,.06)':'transparent',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.08em',textTransform:'uppercase',color:calcTipoRenda===t?'#1c4a35':'rgba(14,14,13,.45)',cursor:'pointer',transition:'all .2s'}}>
+                    <button key={t} onClick={()=>setCalcTipoRenda(t)} style={{flex:1,padding:'10px',border:`1px solid ${calcTipoRenda===t?'#1c4a35':'rgba(14,14,13,.12)'}`,background:calcTipoRenda===t?'rgba(28,74,53,.06)':'transparent',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.08em',textTransform:'uppercase',color:calcTipoRenda===t?'#1c4a35':'rgba(14,14,13,.45)',cursor:'pointer',transition:'all .2s'}}>
                       {t==='longa'?'Longa Duração':'Turístico'}
                     </button>
                   ))}
@@ -655,7 +655,7 @@ export default function Relatorio2026() {
 
               {/* Acquisition costs breakdown */}
               <div style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'16px 20px'}}>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'12px'}}>Custos de Aquisição</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'12px'}}>Custos de Aquisição</div>
                 {[
                   ['Preço do Imóvel', fmtEur(parseFloat(calcBudget)||0)],
                   ['IMT (6,5%)', fmtEur(calcMetrics.imt)],
@@ -675,30 +675,30 @@ export default function Relatorio2026() {
             <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
                 <div className="calc-metric">
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'6px'}}>Yield Bruto</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'6px'}}>Yield Bruto</div>
                   <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2.2rem',color:'#c9a96e',lineHeight:1}}>
                     {(ZONES.find(z=>z.nome===calcZone)||ZONES[0])[calcTipoRenda==='turistica'?'yieldTur':'yield'].toFixed(1)}%
                   </div>
                 </div>
                 <div className="calc-metric">
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'6px'}}>Yield Líquido</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'6px'}}>Yield Líquido</div>
                   <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2.2rem',color:'#1c4a35',lineHeight:1}}>
                     {Math.max(0,(ZONES.find(z=>z.nome===calcZone)||ZONES[0])[calcTipoRenda==='turistica'?'yieldTur':'yield'] - 1.2).toFixed(1)}%
                   </div>
                 </div>
                 <div className="calc-metric-green">
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'6px'}}>IRR Projectado</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'6px'}}>IRR Projectado</div>
                   <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2.2rem',color:'#1c4a35',lineHeight:1}}>{calcMetrics.irr.toFixed(1)}%</div>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(14,14,13,.35)',marginTop:'4px'}}>em {calcHorizonte} anos</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.35)',marginTop:'4px'}}>em {calcHorizonte} anos</div>
                 </div>
                 <div className="calc-metric-green">
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.4rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'6px'}}>Cash-on-Cash</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'6px'}}>Cash-on-Cash</div>
                   <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2.2rem',color:'#c9a96e',lineHeight:1}}>{calcMetrics.cashOnCash.toFixed(1)}%</div>
                 </div>
               </div>
 
               <div style={{background:'#0c1f15',padding:'20px 22px'}}>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.35)',marginBottom:'14px'}}>Projecção {calcHorizonte} Anos</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.35)',marginBottom:'14px'}}>Projecção {calcHorizonte} Anos</div>
                 {[
                   ['Renda Bruta Anual', fmtEur(calcMetrics.rendaBruta), '#c9a96e'],
                   ['Renda Líquida Anual', fmtEur(calcMetrics.rendaLiquida), '#4a9c7a'],
@@ -751,8 +751,8 @@ export default function Relatorio2026() {
             ].map(m=>(
               <div key={m.title} style={{background:'rgba(244,240,230,.05)',border:'1px solid rgba(244,240,230,.08)',padding:'20px'}}>
                 <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'2rem',color:'#c9a96e',lineHeight:1,marginBottom:'6px'}}>{m.val}</div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.5)'}}>{m.title}</div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(244,240,230,.3)',marginTop:'4px',marginBottom:'10px'}}>{m.sub}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.5)'}}>{m.title}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.3)',marginTop:'4px',marginBottom:'10px'}}>{m.sub}</div>
                 <p style={{fontSize:'.8rem',lineHeight:1.6,color:'rgba(244,240,230,.35)'}}>{m.detail}</p>
               </div>
             ))}
@@ -762,7 +762,7 @@ export default function Relatorio2026() {
           <div style={{background:'rgba(244,240,230,.04)',border:'1px solid rgba(244,240,230,.08)',padding:'24px',marginBottom:'24px'}}>
             <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.4rem',color:'#f4f0e6',marginBottom:'16px'}}>Poupança Anual Estimada — Rendimento €300.000</div>
             <div style={{overflowX:'auto'}}>
-              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:"'DM Mono',monospace",fontSize:'.46rem'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:"'DM Mono',monospace",fontSize:'.52rem'}}>
                 <thead>
                   <tr>
                     {['País','Taxa Marginal','Imposto Estimado','Poupança vs NHR'].map(h=>(
@@ -790,7 +790,7 @@ export default function Relatorio2026() {
           </div>
 
           <div style={{background:'rgba(201,169,110,.1)',border:'1px solid rgba(201,169,110,.2)',padding:'20px 24px'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(201,169,110,.7)',marginBottom:'8px'}}>Agency Group — NHR Concierge Service</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(201,169,110,.7)',marginBottom:'8px'}}>Agency Group — NHR Concierge Service</div>
             <p style={{fontSize:'.9rem',lineHeight:1.7,color:'rgba(244,240,230,.65)'}}>
               A Agency Group acompanha o processo completo: advogado fiscal, número de contribuinte, conta bancária, licença de condução, inscrição no NHR/IFICI e apoio na mudança. Calculamos a poupança exacta para cada cliente antes da decisão de compra — o NHR/IFICI pode valer mais do que a mais-valia do próprio imóvel ao longo de 10 anos.
             </p>
@@ -832,7 +832,7 @@ export default function Relatorio2026() {
           <div style={{background:'#0c1f15',padding:'32px'}}>
             <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.5rem',color:'#f4f0e6',marginBottom:'20px'}}>Portugal vs. Principais <em style={{color:'#c9a96e'}}>Mercados Alternativos</em> — 2026</div>
             <div style={{overflowX:'auto'}}>
-              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:"'DM Mono',monospace",fontSize:'.46rem'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontFamily:"'DM Mono',monospace",fontSize:'.52rem'}}>
                 <thead>
                   <tr>
                     {['Mercado','Preço Prime','YoY','Yield','IPRI™','NHR Equiv.','Golden Visa','Qualidade de Vida'].map(h=>(
@@ -882,8 +882,8 @@ export default function Relatorio2026() {
             {PIPELINE.map(p=>(
               <div key={p.nome} style={{background:'rgba(244,240,230,.03)',border:'1px solid rgba(244,240,230,.07)',padding:'20px'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'10px'}}>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.08em',textTransform:'uppercase',color:'rgba(201,169,110,.5)'}}>{p.zona} · {p.tipo}</div>
-                  <div style={{background:p.sold>=80?'rgba(201,169,110,.2)':p.sold>=60?'rgba(74,156,122,.15)':'rgba(244,240,230,.06)',padding:'3px 8px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:p.sold>=80?'#c9a96e':p.sold>=60?'#4a9c7a':'rgba(244,240,230,.4)',letterSpacing:'.08em'}}>{p.sold}% vendido</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.08em',textTransform:'uppercase',color:'rgba(201,169,110,.5)'}}>{p.zona} · {p.tipo}</div>
+                  <div style={{background:p.sold>=80?'rgba(201,169,110,.2)':p.sold>=60?'rgba(74,156,122,.15)':'rgba(244,240,230,.06)',padding:'3px 8px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:p.sold>=80?'#c9a96e':p.sold>=60?'#4a9c7a':'rgba(244,240,230,.4)',letterSpacing:'.08em'}}>{p.sold}% vendido</div>
                 </div>
                 <div style={{fontSize:'.95rem',fontWeight:500,color:'#f4f0e6',marginBottom:'6px'}}>{p.nome}</div>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',color:'#c9a96e',marginBottom:'12px'}}>{p.preco}</div>
@@ -891,20 +891,20 @@ export default function Relatorio2026() {
                   <div className="pipe-progress-fill" style={{width:`${p.sold}%`,background:p.sold>=80?'#c9a96e':'#4a9c7a'}}/>
                 </div>
                 <div style={{display:'flex',justifyContent:'space-between',marginTop:'12px'}}>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(244,240,230,.35)'}}>Entrega: {p.delivery}</div>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(244,240,230,.25)'}}>{p.units} unidades</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.35)'}}>Entrega: {p.delivery}</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.25)'}}>{p.units} unidades</div>
                 </div>
-                <div style={{marginTop:'8px',fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:'rgba(244,240,230,.2)',borderTop:'1px solid rgba(244,240,230,.05)',paddingTop:'8px'}}>{p.dev}</div>
+                <div style={{marginTop:'8px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.2)',borderTop:'1px solid rgba(244,240,230,.05)',paddingTop:'8px'}}>{p.dev}</div>
               </div>
             ))}
           </div>
 
           <div style={{marginTop:'24px',background:'rgba(201,169,110,.07)',border:'1px solid rgba(201,169,110,.15)',padding:'20px 24px',display:'flex',gap:'24px',flexWrap:'wrap',alignItems:'center'}}>
             <div style={{flex:1,minWidth:'200px'}}>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'6px'}}>Acesso Privilegiado</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'6px'}}>Acesso Privilegiado</div>
               <p style={{fontSize:'.88rem',lineHeight:1.65,color:'rgba(244,240,230,.55)'}}>A Agency Group tem acesso a units em pré-lançamento com condições especiais. Contacte-nos para lista de disponibilidade actualizada.</p>
             </div>
-            <a href="https://wa.me/351919948986" style={{background:'#c9a96e',color:'#0c1f15',textDecoration:'none',padding:'12px 24px',fontFamily:"'DM Mono',monospace",fontSize:'.48rem',letterSpacing:'.14em',textTransform:'uppercase',whiteSpace:'nowrap',display:'inline-block'}}>
+            <a href="https://wa.me/351919948986" style={{background:'#c9a96e',color:'#0c1f15',textDecoration:'none',padding:'12px 24px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.14em',textTransform:'uppercase',whiteSpace:'nowrap',display:'inline-block'}}>
               WhatsApp →
             </a>
           </div>
@@ -935,7 +935,7 @@ export default function Relatorio2026() {
             ].map(c=>(
               <div key={c.num} style={{background:'#fff',border:'1px solid rgba(14,14,13,.08)',padding:'24px'}}>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'2.5rem',color:'rgba(201,169,110,.25)',lineHeight:1,marginBottom:'12px'}}>{c.num}</div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.48rem',letterSpacing:'.1em',textTransform:'uppercase',color:'#1c4a35',marginBottom:'10px'}}>{c.title}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'#1c4a35',marginBottom:'10px'}}>{c.title}</div>
                 <p style={{fontSize:'.86rem',lineHeight:1.75,color:'rgba(14,14,13,.55)'}}>{c.desc}</p>
               </div>
             ))}
@@ -955,7 +955,7 @@ export default function Relatorio2026() {
                 { label:'Portal', val:'agencygroup.pt/portal', link:'/portal' },
               ].map(c=>(
                 <a key={c.label} href={c.link} style={{textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',border:'1px solid rgba(244,240,230,.08)',background:'rgba(244,240,230,.03)',transition:'border-color .2s'}}>
-                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.35)'}}>{c.label}</span>
+                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(244,240,230,.35)'}}>{c.label}</span>
                   <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',color:'#c9a96e'}}>{c.val} →</span>
                 </a>
               ))}
@@ -976,7 +976,7 @@ export default function Relatorio2026() {
           <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.5rem',color:'#c9a96e',marginBottom:'12px',fontStyle:'italic'}}>
             {unlocked ? '↓ Imprima ou guarde como PDF' : 'Portugal Luxury Market Report 2026'}
           </div>
-          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.12em',color:'rgba(244,240,230,.25)',marginBottom:'36px'}}>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.12em',color:'rgba(244,240,230,.25)',marginBottom:'36px'}}>
             {unlocked ? 'CTRL+P → Guardar como PDF' : 'IPRI™ Index · Zone Intelligence · Investment Calculator · NHR Guide · Pipeline'}
           </div>
 
@@ -997,13 +997,13 @@ export default function Relatorio2026() {
                 </button>
               </div>
               {emailError && (
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'#e05a5a',marginTop:'8px',letterSpacing:'.06em'}}>{emailError}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#e05a5a',marginTop:'8px',letterSpacing:'.06em'}}>{emailError}</div>
               )}
             </div>
           ) : (
             <div>
               <div style={{background:'rgba(201,169,110,.1)',border:'1px solid rgba(201,169,110,.25)',padding:'20px',marginBottom:'20px'}}>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.48rem',letterSpacing:'.12em',color:'#c9a96e',marginBottom:'8px',textTransform:'uppercase'}}>✓ Acesso concedido</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.12em',color:'#c9a96e',marginBottom:'8px',textTransform:'uppercase'}}>✓ Acesso concedido</div>
                 <div style={{fontSize:'.88rem',color:'rgba(244,240,230,.55)',lineHeight:1.65}}>
                   Clique em "Descarregar Relatório PDF" ou use Ctrl+P → Guardar como PDF. O relatório está optimizado para impressão A4.
                 </div>
@@ -1019,7 +1019,7 @@ export default function Relatorio2026() {
             </div>
           )}
 
-          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(244,240,230,.15)',marginTop:'24px',letterSpacing:'.08em'}}>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.15)',marginTop:'24px',letterSpacing:'.08em'}}>
             A Agency Group nunca partilha dados pessoais com terceiros · RGPD compliant
           </div>
         </div>
@@ -1029,15 +1029,15 @@ export default function Relatorio2026() {
       <footer style={{background:'#0c1f15',borderTop:'1px solid rgba(201,169,110,.1)',padding:'32px 64px',display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:'16px'}}>
         <div>
           <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.1rem',letterSpacing:'.3em',textTransform:'uppercase',color:'#c9a96e'}}>Agency Group</div>
-          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.1em',color:'rgba(244,240,230,.2)',marginTop:'4px',textTransform:'uppercase'}}>AMI 22506 · IPRI™ Research · agencygroup.pt</div>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',color:'rgba(244,240,230,.2)',marginTop:'4px',textTransform:'uppercase'}}>AMI 22506 · IPRI™ Research · agencygroup.pt</div>
         </div>
         <div style={{display:'flex',gap:'24px'}}>
-          <Link href="/" style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.1em',color:'rgba(244,240,230,.3)',textDecoration:'none',textTransform:'uppercase'}}>Website</Link>
-          <Link href="/portal" style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.1em',color:'rgba(244,240,230,.3)',textDecoration:'none',textTransform:'uppercase'}}>Portal</Link>
-          <Link href="/blog" style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.1em',color:'rgba(244,240,230,.3)',textDecoration:'none',textTransform:'uppercase'}}>Blog</Link>
-          <a href="https://wa.me/351919948986" style={{fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.1em',color:'#c9a96e',textDecoration:'none',textTransform:'uppercase'}}>WhatsApp</a>
+          <Link href="/" style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',color:'rgba(244,240,230,.3)',textDecoration:'none',textTransform:'uppercase'}}>Website</Link>
+          <Link href="/portal" style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',color:'rgba(244,240,230,.3)',textDecoration:'none',textTransform:'uppercase'}}>Portal</Link>
+          <Link href="/blog" style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',color:'rgba(244,240,230,.3)',textDecoration:'none',textTransform:'uppercase'}}>Blog</Link>
+          <a href="https://wa.me/351919948986" style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',color:'#c9a96e',textDecoration:'none',textTransform:'uppercase'}}>WhatsApp</a>
         </div>
-        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(244,240,230,.15)',letterSpacing:'.06em'}}>© 2026 Agency Group · Todos os direitos reservados</div>
+        <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.15)',letterSpacing:'.06em'}}>© 2026 Agency Group · Todos os direitos reservados</div>
       </footer>
     </>
   )

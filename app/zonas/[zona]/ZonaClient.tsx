@@ -308,11 +308,11 @@ export default function ZonaClient({ zona }: { zona: string }) {
           <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '.6rem', letterSpacing: '.6em', textTransform: 'uppercase', color: 'rgba(201,169,110,.5)', marginTop: '2px' }}>Group</div>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-          <Link href="/zonas/lisboa" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'lisboa' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }}>Lisboa</Link>
-          <Link href="/zonas/cascais" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'cascais' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }}>Cascais</Link>
-          <Link href="/zonas/algarve" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'algarve' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }}>Algarve</Link>
-          <Link href="/zonas/porto" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'porto' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }}>Porto</Link>
-          <Link href="/zonas/madeira" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'madeira' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }} className="mob-hide">Madeira</Link>
+          <Link href="/zonas/lisboa" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'lisboa' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }}>Lisboa</Link>
+          <Link href="/zonas/cascais" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'cascais' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }}>Cascais</Link>
+          <Link href="/zonas/algarve" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'algarve' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }}>Algarve</Link>
+          <Link href="/zonas/porto" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'porto' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }}>Porto</Link>
+          <Link href="/zonas/madeira" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: zona === 'madeira' ? C.gold : 'rgba(244,240,230,.45)', textDecoration: 'none' }} className="mob-hide">Madeira</Link>
           <a
             href="https://wa.me/351919948986"
             target="_blank"
@@ -321,7 +321,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
               background: C.gold,
               color: C.dark,
               fontFamily: "'DM Mono',monospace",
-              fontSize: '.42rem',
+              fontSize: '.52rem',
               letterSpacing: '.15em',
               textTransform: 'uppercase',
               padding: '10px 20px',
@@ -355,15 +355,15 @@ export default function ZonaClient({ zona }: { zona: string }) {
 
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '40px' }}>
-          <Link href="/" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(244,240,230,.3)', textDecoration: 'none' }}>Agency Group</Link>
+          <Link href="/" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(244,240,230,.3)', textDecoration: 'none' }}>Agency Group</Link>
           <span style={{ color: 'rgba(244,240,230,.2)', fontSize: '.7rem' }}>›</span>
-          <Link href="/zonas" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(244,240,230,.3)', textDecoration: 'none' }}>Zonas</Link>
+          <Link href="/zonas" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(244,240,230,.3)', textDecoration: 'none' }}>Zonas</Link>
           <span style={{ color: 'rgba(244,240,230,.2)', fontSize: '.7rem' }}>›</span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.gold }}>{z.nome}</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.gold }}>{z.nome}</span>
         </div>
 
         <div style={{ maxWidth: '900px' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', letterSpacing: '.25em', textTransform: 'uppercase', color: C.gold, marginBottom: '16px' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.25em', textTransform: 'uppercase', color: C.gold, marginBottom: '16px' }}>
             Guia de Mercado 2026
           </div>
           <h1 style={{
@@ -399,9 +399,9 @@ export default function ZonaClient({ zona }: { zona: string }) {
               { label: 'Previsão 2027', value: z.forecast, sub: 'Conservador' },
             ].map((s) => (
               <div key={s.label} style={{ borderLeft: `2px solid ${C.gold}`, paddingLeft: '20px' }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(244,240,230,.4)', marginBottom: '6px' }}>{s.label}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(244,240,230,.4)', marginBottom: '6px' }}>{s.label}</div>
                 <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: C.gold, lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.3)', marginTop: '4px' }}>{s.sub}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.3)', marginTop: '4px' }}>{s.sub}</div>
               </div>
             ))}
           </div>
@@ -413,7 +413,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: C.light, padding: '80px 64px' }} className="mob-p">
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>01 — Dados de Mercado</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>01 — Dados de Mercado</div>
           <h2 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', color: C.dark, marginBottom: '48px' }}>
             {z.nome} em Números
           </h2>
@@ -454,9 +454,9 @@ export default function ZonaClient({ zona }: { zona: string }) {
                 borderTop: `3px solid ${card.accent}`,
                 padding: '28px 24px',
               }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>{card.label}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>{card.label}</div>
                 <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '2.4rem', color: card.accent, lineHeight: 1, marginBottom: '8px' }}>{card.value}</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: C.muted }}>{card.sub}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted }}>{card.sub}</div>
               </div>
             ))}
           </div>
@@ -468,7 +468,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: '#f9f6ef', padding: '80px 64px', borderTop: `1px solid ${C.border}` }} className="mob-p">
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>02 — Microzonas</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>02 — Microzonas</div>
           <h2 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', color: C.dark, marginBottom: '12px' }}>
             Bairros de {z.nome}
           </h2>
@@ -500,11 +500,11 @@ export default function ZonaClient({ zona }: { zona: string }) {
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: C.gold }}>0{i + 1}</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.gold }}>0{i + 1}</span>
                 </div>
                 <div>
                   <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 400, fontSize: '1.1rem', color: C.dark, marginBottom: '6px' }}>{bairro}</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.08em', color: C.muted }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em', color: C.muted }}>
                     €{fmt(Math.round(z.preco * (0.9 + i * 0.04)))}/m² est.
                   </div>
                 </div>
@@ -519,7 +519,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: C.dark, padding: '80px 64px' }} className="mob-p">
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>03 — Investment Case</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>03 — Investment Case</div>
           <h2 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', color: C.light, marginBottom: '48px' }}>
             Por que Investir em {z.nome}?
           </h2>
@@ -567,7 +567,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
             alignItems: 'center',
             gap: '24px',
           }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.15em', textTransform: 'uppercase', color: C.gold }}>Previsão</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: C.gold }}>Previsão</div>
             <div style={{ width: '1px', height: '32px', background: 'rgba(201,169,110,.2)' }} />
             <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.6rem', color: C.gold }}>{z.forecast}</div>
             <div style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: '.85rem', color: 'rgba(244,240,230,.5)', marginLeft: 'auto' }} className="mob-hide">
@@ -582,7 +582,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: C.light, padding: '80px 64px', borderTop: `1px solid ${C.border}` }} className="mob-p">
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>04 — Compradores</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>04 — Compradores</div>
           <h2 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', color: C.dark, marginBottom: '12px' }}>
             Quem Compra em {z.nome}?
           </h2>
@@ -618,7 +618,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
             background: C.goldAlpha,
             border: `1px solid rgba(201,169,110,.25)`,
             fontFamily: "'DM Mono',monospace",
-            fontSize: '.42rem',
+            fontSize: '.52rem',
             letterSpacing: '.12em',
             textTransform: 'uppercase',
             color: C.green,
@@ -633,7 +633,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: '#f9f6ef', padding: '80px 64px', borderTop: `1px solid ${C.border}` }} className="mob-p">
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>05 — Simulador</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>05 — Simulador</div>
           <h2 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', color: C.dark, marginBottom: '12px' }}>
             Calculadora de Investimento
           </h2>
@@ -647,8 +647,8 @@ export default function ZonaClient({ zona }: { zona: string }) {
               {/* Budget */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted }}>Orçamento</label>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: C.green, letterSpacing: '.06em' }}>{fmtEur(budget)}</span>
+                  <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted }}>Orçamento</label>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.green, letterSpacing: '.06em' }}>{fmtEur(budget)}</span>
                 </div>
                 <input
                   type="range"
@@ -659,16 +659,16 @@ export default function ZonaClient({ zona }: { zona: string }) {
                   onChange={(e) => setBudget(parseInt(e.target.value))}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted }}>€100K</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted }}>€5M</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted }}>€100K</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted }}>€5M</span>
                 </div>
               </div>
 
               {/* LTV */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted }}>Financiamento (LTV)</label>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: C.green, letterSpacing: '.06em' }}>{ltv}%</span>
+                  <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted }}>Financiamento (LTV)</label>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.green, letterSpacing: '.06em' }}>{ltv}%</span>
                 </div>
                 <input
                   type="range"
@@ -679,16 +679,16 @@ export default function ZonaClient({ zona }: { zona: string }) {
                   onChange={(e) => setLtv(parseInt(e.target.value))}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted }}>0% — cash</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted }}>80%</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted }}>0% — cash</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted }}>80%</span>
                 </div>
               </div>
 
               {/* Horizon */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted }}>Horizonte</label>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: C.green, letterSpacing: '.06em' }}>{horizon} anos</span>
+                  <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted }}>Horizonte</label>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.green, letterSpacing: '.06em' }}>{horizon} anos</span>
                 </div>
                 <input
                   type="range"
@@ -699,14 +699,14 @@ export default function ZonaClient({ zona }: { zona: string }) {
                   onChange={(e) => setHorizon(parseInt(e.target.value))}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted }}>1 ano</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted }}>15 anos</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted }}>1 ano</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted }}>15 anos</span>
                 </div>
               </div>
 
               {/* Tipo Renda */}
               <div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>Tipo de Rendimento</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>Tipo de Rendimento</div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   {(['longa', 'turistica'] as const).map((tipo) => (
                     <button
@@ -715,7 +715,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
                       style={{
                         padding: '10px 20px',
                         fontFamily: "'DM Mono',monospace",
-                        fontSize: '.42rem',
+                        fontSize: '.52rem',
                         letterSpacing: '.1em',
                         textTransform: 'uppercase',
                         border: `1px solid ${tipoRenda === tipo ? C.green : C.border}`,
@@ -736,7 +736,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Capital structure */}
               <div style={{ background: '#fff', border: `1px solid ${C.border}`, padding: '20px 24px', borderLeft: `3px solid ${C.gold}` }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.1em', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>Estrutura de Capital</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>Estrutura de Capital</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   {[
                     { label: 'Capital próprio', value: fmtEur(calc.equity) },
@@ -745,7 +745,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
                     { label: 'Total investido', value: fmtEur(calc.totalInvestido) },
                   ].map((r) => (
                     <div key={r.label}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted, marginBottom: '3px' }}>{r.label}</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted, marginBottom: '3px' }}>{r.label}</div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.56rem', color: C.text }}>{r.value}</div>
                     </div>
                   ))}
@@ -754,7 +754,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
 
               {/* Income */}
               <div style={{ background: '#fff', border: `1px solid ${C.border}`, padding: '20px 24px', borderLeft: `3px solid ${C.green}` }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.1em', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>Rendimento Estimado</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: C.muted, marginBottom: '12px' }}>Rendimento Estimado</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   {[
                     { label: 'Renda bruta/ano', value: fmtEur(calc.rendaBruta) },
@@ -763,7 +763,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
                     { label: 'Cash flow/mês', value: fmtEur(calc.cashFlowMensal) },
                   ].map((r) => (
                     <div key={r.label}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted, marginBottom: '3px' }}>{r.label}</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted, marginBottom: '3px' }}>{r.label}</div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.56rem', color: calc.cashFlowMensal < 0 && r.label === 'Cash flow/mês' ? '#c0392b' : C.text }}>{r.value}</div>
                     </div>
                   ))}
@@ -772,7 +772,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
 
               {/* Returns */}
               <div style={{ background: C.dark, border: `1px solid rgba(201,169,110,.2)`, padding: '20px 24px' }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(244,240,230,.4)', marginBottom: '12px' }}>Retorno em {horizon} Anos</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(244,240,230,.4)', marginBottom: '12px' }}>Retorno em {horizon} Anos</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   {[
                     { label: 'Valor final estimado', value: fmtEur(calc.valorFinal) },
@@ -781,14 +781,14 @@ export default function ZonaClient({ zona }: { zona: string }) {
                     { label: 'Cash-on-cash', value: `${calc.cashOnCash.toFixed(1)}%` },
                   ].map((r) => (
                     <div key={r.label}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: 'rgba(244,240,230,.35)', marginBottom: '3px' }}>{r.label}</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.35)', marginBottom: '3px' }}>{r.label}</div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.56rem', color: C.gold }}>{r.value}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted, lineHeight: 1.6 }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted, lineHeight: 1.6 }}>
                 * Simulação meramente indicativa. TAN hipoteca: 3.5%. Apreciação: {(calc.apreciacaoAnual * 100).toFixed(1)}%/ano (50% YoY actual). Não inclui IRS, gestão ou seguros.
               </div>
             </div>
@@ -801,7 +801,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: C.light, padding: '80px 64px', borderTop: `1px solid ${C.border}` }} className="mob-p">
         <div style={{ maxWidth: '780px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>06 — FAQ</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.gold, marginBottom: '8px' }}>06 — FAQ</div>
           <h2 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', color: C.dark, marginBottom: '48px' }}>
             Perguntas Frequentes<br />
             <em style={{ fontStyle: 'italic', color: C.gold }}>sobre {z.nome}</em>
@@ -859,7 +859,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: '#f9f6ef', padding: '60px 64px', borderTop: `1px solid ${C.border}` }} className="mob-p">
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.muted, marginBottom: '32px' }}>Explorar outras zonas</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: C.muted, marginBottom: '32px' }}>Explorar outras zonas</div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {Object.entries(ZONES)
               .filter(([key]) => key !== zona)
@@ -881,7 +881,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
                   <span style={{ fontSize: '1rem' }}>{z2.emoji}</span>
                   <div>
                     <div style={{ fontFamily: "'Jost',sans-serif", fontWeight: 400, fontSize: '.85rem', color: C.text }}>{z2.nome}</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: C.muted }}>€{fmt(z2.preco)}/m² · +{z2.yoy}%</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: C.muted }}>€{fmt(z2.preco)}/m² · +{z2.yoy}%</div>
                   </div>
                 </Link>
               ))}
@@ -894,7 +894,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: C.dark, padding: '100px 64px' }} className="mob-p">
         <div style={{ maxWidth: '760px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.25em', textTransform: 'uppercase', color: C.gold, marginBottom: '16px' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.25em', textTransform: 'uppercase', color: C.gold, marginBottom: '16px' }}>
             Agency Group · AMI 22506
           </div>
           <h2 style={{
@@ -930,7 +930,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
                 background: C.gold,
                 color: C.dark,
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.48rem',
+                fontSize: '.52rem',
                 letterSpacing: '.2em',
                 textTransform: 'uppercase',
                 padding: '18px 40px',
@@ -947,7 +947,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
                 color: C.gold,
                 border: `1px solid ${C.gold}`,
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.48rem',
+                fontSize: '.52rem',
                 letterSpacing: '.2em',
                 textTransform: 'uppercase',
                 padding: '18px 40px',
@@ -990,7 +990,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
       }}>
         <div>
           <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.1rem', letterSpacing: '.35em', textTransform: 'uppercase', color: C.gold }}>Agency Group</div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.2)', marginTop: '6px', letterSpacing: '.08em' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.2)', marginTop: '6px', letterSpacing: '.08em' }}>
             AMI 22506 · geral@agencygroup.pt · +351 919 948 986
           </div>
         </div>
@@ -1001,7 +1001,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
               href={`/zonas/${key}`}
               style={{
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.38rem',
+                fontSize: '.52rem',
                 letterSpacing: '.1em',
                 textTransform: 'uppercase',
                 color: key === zona ? C.gold : 'rgba(244,240,230,.25)',
@@ -1012,7 +1012,7 @@ export default function ZonaClient({ zona }: { zona: string }) {
             </Link>
           ))}
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: 'rgba(244,240,230,.15)', letterSpacing: '.06em' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.15)', letterSpacing: '.06em' }}>
           © 2026 Agency Group. Todos os direitos reservados.
         </div>
       </footer>

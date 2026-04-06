@@ -76,7 +76,7 @@ export default function PriceHistoryChart({ zona, currentPm2 }: PriceHistoryChar
     <div style={{ background: '#0a1a10', border: '1px solid rgba(201,169,110,.12)', padding: '28px 24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.2em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.2em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '6px' }}>
             Histórico de Preços · {zona}
           </div>
           <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.1rem', fontWeight: 300, color: '#f4f0e6' }}>
@@ -89,7 +89,7 @@ export default function PriceHistoryChart({ zona, currentPm2 }: PriceHistoryChar
             ['Projeção 2027', `€${Math.round(lastVal*1.12).toLocaleString('pt-PT')}/m²`],
           ].map(([label, val]) => (
             <div key={label} style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.12em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>{label}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.12em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>{label}</div>
               <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1rem', color: '#c9a96e', fontWeight: 300 }}>{val}</div>
             </div>
           ))}
@@ -156,7 +156,7 @@ export default function PriceHistoryChart({ zona, currentPm2 }: PriceHistoryChar
         })}
       </svg>
 
-      <div style={{ marginTop: '8px', fontFamily: "'DM Mono', monospace", fontSize: '.36rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.2)', textAlign: 'right' }}>
+      <div style={{ marginTop: '8px', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.2)', textAlign: 'right' }}>
         Fonte: Agency Group / INE / Confidencial Imobiliário 2026 · Projeção 2027 estimada (+12%)
       </div>
     </div>

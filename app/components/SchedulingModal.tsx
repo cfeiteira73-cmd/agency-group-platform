@@ -80,7 +80,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
         {/* Header */}
         <div style={{ padding: '28px 32px 20px', borderBottom: '1px solid rgba(201,169,110,.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '6px' }}>{propertyRef}</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '6px' }}>{propertyRef}</div>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.5rem', color: '#f4f0e6', margin: '0 0 4px' }}>Agendar Visita Privada</h2>
             <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.78rem', color: 'rgba(244,240,230,.35)' }}>{propertyName} · {propertyPreco}</div>
           </div>
@@ -116,7 +116,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
             </div>
           ) : step === 1 ? (
             <>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.18em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>Escolher Data</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.18em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>Escolher Data</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
                 {days.map((d, i) => (
                   <button key={i} disabled={d.disabled}
@@ -128,16 +128,16 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
                       padding: '8px 4px', cursor: d.disabled ? 'not-allowed' : 'pointer',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
                     }}>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.36rem', opacity: .7 }}>{d.dayName}</span>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', opacity: .7 }}>{d.dayName}</span>
                     <span style={{ fontFamily: "'Cormorant', serif", fontSize: '1.1rem', fontWeight: 300 }}>{d.dayNum}</span>
-                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.34rem', opacity: .6 }}>{d.month}</span>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', opacity: .6 }}>{d.month}</span>
                   </button>
                 ))}
               </div>
             </>
           ) : step === 2 ? (
             <>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.18em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '6px' }}>Escolher Hora</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.18em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '6px' }}>Escolher Hora</div>
               {selectedDayObj && <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.78rem', color: 'rgba(244,240,230,.45)', marginBottom: '16px' }}>{selectedDayObj.dayName}, {selectedDayObj.dayNum} de {selectedDayObj.month}</div>}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
                 {TIME_SLOTS.map(t => (
@@ -152,7 +152,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
                 ))}
               </div>
               <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', marginBottom: '10px' }}>Tipo de Visita</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', marginBottom: '10px' }}>Tipo de Visita</div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   {VISIT_TYPES.map(vt => (
                     <button key={vt.key} onClick={() => setVisitType(vt.key)}
@@ -166,12 +166,12 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
                   ))}
                 </div>
               </div>
-              <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: 'rgba(201,169,110,.5)', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase' }}>← Voltar</button>
+              <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: 'rgba(201,169,110,.5)', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase' }}>← Voltar</button>
             </>
           ) : (
             <>
-              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.18em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>Os seus dados</div>
-              <div style={{ background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.12)', padding: '14px', marginBottom: '20px', fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.7)' }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.18em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>Os seus dados</div>
+              <div style={{ background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.12)', padding: '14px', marginBottom: '20px', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.7)' }}>
                 📅 {selectedDayObj?.dayName} {selectedDayObj?.dayNum} {selectedDayObj?.month} · {selectedTime} · {visitType === 'presencial' ? 'Presencial' : 'Virtual'}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
@@ -189,7 +189,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
                   fontFamily: "'Jost', sans-serif", fontSize: '.68rem', fontWeight: 700,
                   letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: '10px',
                 }}>Confirmar Agendamento →</button>
-              <button onClick={() => setStep(2)} style={{ background: 'none', border: 'none', color: 'rgba(201,169,110,.5)', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase' }}>← Voltar</button>
+              <button onClick={() => setStep(2)} style={{ background: 'none', border: 'none', color: 'rgba(201,169,110,.5)', cursor: 'pointer', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase' }}>← Voltar</button>
             </>
           )}
         </div>

@@ -249,7 +249,7 @@ function QRCodeSVG({ url }: { url: string }) {
       </div>
       <div style={{
         fontFamily: "'DM Mono', monospace",
-        fontSize: '.44rem',
+        fontSize: '.52rem',
         letterSpacing: '.12em',
         color: 'rgba(244,240,230,.3)',
         textAlign: 'center',
@@ -290,7 +290,7 @@ function StatBox({ label, value }: { label: string; value: string }) {
       padding: '20px 18px',
     }}>
       <div style={{
-        fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+        fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
         letterSpacing: '.18em', textTransform: 'uppercase',
         color: 'rgba(244,240,230,.3)', marginBottom: '8px',
       }}>
@@ -510,7 +510,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <span style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.16em', color: 'rgba(201,169,110,.45)',
             }}>AMI 22506</span>
             <a
@@ -583,7 +583,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
             {/* Breadcrumb */}
             <nav aria-label="breadcrumb" style={{
               display: 'flex', gap: '8px', alignItems: 'center',
-              fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.14em', color: 'rgba(244,240,230,.35)',
             }}>
               <Link href="/"        style={{ color: 'rgba(201,169,110,.5)', textDecoration: 'none' }}>Início</Link>
@@ -643,7 +643,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
             padding: '22px 30px', textAlign: 'right',
           }}>
             <div style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.2em', textTransform: 'uppercase',
               color: 'rgba(201,169,110,.45)', marginBottom: '8px',
             }}>Preço de Venda</div>
@@ -654,7 +654,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
               {formatPriceFull(p.preco)}
             </div>
             <div style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.12em', color: 'rgba(244,240,230,.28)',
               marginTop: '8px',
             }}>
@@ -798,7 +798,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                           fontSize: '2rem', color: '#c9a96e', lineHeight: 1, marginBottom: '10px',
                         }}>{value}</div>
                         <div style={{
-                          fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                           letterSpacing: '.16em', textTransform: 'uppercase',
                           color: 'rgba(244,240,230,.35)',
                         }}>{label}</div>
@@ -807,7 +807,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                   </div>
 
                   <p style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.43rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.1em', color: 'rgba(244,240,230,.22)', marginTop: '12px',
                   }}>
                     Fonte: Agency Group Research / INE 2026. Dados indicativos — não constitui garantia de rendimento.
@@ -898,7 +898,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
 
                   <div style={{
                     position: 'absolute', bottom: '14px', right: '16px',
-                    fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.12em', color: 'rgba(244,240,230,.18)',
                     border: '1px solid rgba(244,240,230,.05)', padding: '4px 10px',
                   }}>
@@ -920,7 +920,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                   padding: '30px 26px',
                 }}>
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.24em', textTransform: 'uppercase',
                     color: 'rgba(201,169,110,.45)', marginBottom: '20px',
                     paddingBottom: '16px', borderBottom: '1px solid rgba(201,169,110,.08)',
@@ -952,7 +952,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                         Carlos Feiteira
                       </div>
                       <div style={{
-                        fontFamily: "'DM Mono', monospace", fontSize: '.43rem',
+                        fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                         letterSpacing: '.13em', color: 'rgba(201,169,110,.55)',
                         textTransform: 'uppercase',
                       }}>
@@ -1025,7 +1025,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                   <div style={{
                     marginTop: '18px', paddingTop: '14px',
                     borderTop: '1px solid rgba(201,169,110,.07)',
-                    fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.14em', color: 'rgba(244,240,230,.25)',
                     textAlign: 'center',
                   }}>
@@ -1039,7 +1039,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                   padding: '22px 22px',
                 }}>
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.22em', textTransform: 'uppercase',
                     color: 'rgba(201,169,110,.42)', marginBottom: '14px',
                   }}>
@@ -1059,7 +1059,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                       borderBottom: '1px solid rgba(244,240,230,.04)',
                     }}>
                       <span style={{
-                        fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                        fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                         letterSpacing: '.12em', textTransform: 'uppercase',
                         color: 'rgba(244,240,230,.3)',
                       }}>{k}</span>
@@ -1138,7 +1138,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
             </div>
 
             <p style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.14em', color: 'rgba(244,240,230,.22)', marginTop: '28px',
             }}>
               Confidencialidade garantida · RGPD compliant · Sem spam
@@ -1265,7 +1265,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                         }} />
                         <div style={{
                           position: 'absolute', bottom: '12px', left: '12px',
-                          fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                           letterSpacing: '.14em', color: 'rgba(244,240,230,.45)',
                           background: 'rgba(12,31,21,.55)', padding: '3px 8px',
                           backdropFilter: 'blur(8px)',
@@ -1274,7 +1274,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                           <div style={{
                             position: 'absolute', top: '10px', right: '10px',
                             ...BADGE_CSS[rel.badge],
-                            fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                            fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                             letterSpacing: '.12em', textTransform: 'uppercase',
                             padding: '3px 8px',
                           }}>{rel.badge}</div>
@@ -1282,7 +1282,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                       </div>
                       <div style={{ padding: '16px 16px 18px' }}>
                         <div style={{
-                          fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                           letterSpacing: '.14em', color: 'rgba(201,169,110,.55)',
                           marginBottom: '6px',
                         }}>{rel.bairro}</div>
@@ -1299,7 +1299,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                             fontSize: '1.1rem', color: '#c9a96e',
                           }}>{formatPriceFull(rel.preco)}</span>
                           <span style={{
-                            fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                            fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                             letterSpacing: '.1em', color: 'rgba(244,240,230,.32)',
                           }}>{rel.area}m² · T{rel.quartos}</span>
                         </div>
@@ -1331,7 +1331,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                   Agency<span style={{ color: '#c9a96e' }}>Group</span>
                 </div>
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.2em', color: 'rgba(201,169,110,.45)',
                   marginBottom: '12px',
                 }}>
@@ -1349,7 +1349,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
               <div style={{ display: 'flex', gap: '48px', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.18em', textTransform: 'uppercase',
                     color: 'rgba(201,169,110,.4)', marginBottom: '14px',
                   }}>Menu</div>
@@ -1370,7 +1370,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                 </div>
                 <div>
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     letterSpacing: '.18em', textTransform: 'uppercase',
                     color: 'rgba(201,169,110,.4)', marginBottom: '14px',
                   }}>Contacto</div>
@@ -1393,13 +1393,13 @@ function PropertyShowcase({ property: p }: { property: Property }) {
               flexWrap: 'wrap', gap: '10px',
             }}>
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.43rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.13em', color: 'rgba(244,240,230,.18)',
               }}>
                 © 2026 Agency Group – Mediação Imobiliária Lda · Todos os direitos reservados
               </div>
               <div style={{
-                fontFamily: "'DM Mono', monospace", fontSize: '.43rem',
+                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                 letterSpacing: '.13em', color: 'rgba(244,240,230,.18)',
               }}>
                 AMI 22506 · RGPD · Política de Privacidade

@@ -37,7 +37,7 @@ export default function ReportsPage() {
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '128px 40px 96px' }}>
         {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.28em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.28em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '16px' }}>
             Inteligência de Mercado · 2026
           </div>
           <h1 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2.4rem, 5vw, 4rem)', color: '#f4f0e6', margin: '0 0 20px', lineHeight: 1.1 }}>
@@ -51,7 +51,7 @@ export default function ReportsPage() {
             {[['12', 'Relatórios'], ['2026', 'Dados Actualizados'], ['Gratuito', 'Para Clientes']].map(([val, label]) => (
               <div key={label} style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.8rem', color: '#c9a96e', fontWeight: 300 }}>{val}</div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase' }}>{label}</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase' }}>{label}</div>
               </div>
             ))}
           </div>
@@ -59,7 +59,7 @@ export default function ReportsPage() {
 
         {/* Zone Reports */}
         <div style={{ marginBottom: '80px' }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
             Relatórios por Zona
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
@@ -71,7 +71,7 @@ export default function ReportsPage() {
 
         {/* Thematic Reports */}
         <div>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
             Relatórios Temáticos
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
@@ -95,7 +95,7 @@ function ReportCard({ report, type }: { report: typeof ZONE_REPORTS[0], type: st
       overflow: 'hidden',
     }}>
       <div style={{ fontSize: '2rem', marginBottom: '12px' }}>{report.emoji}</div>
-      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '6px' }}>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '6px' }}>
         Relatório de Zona
       </div>
       <h3 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.5rem', color: '#f4f0e6', margin: '0 0 16px' }}>
@@ -109,7 +109,7 @@ function ReportCard({ report, type }: { report: typeof ZONE_REPORTS[0], type: st
         ))}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid rgba(201,169,110,.1)' }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>
           {report.pages} pág · {report.updated}
         </div>
         <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.1rem', color: '#c9a96e' }}>{report.key_stat}</div>
@@ -140,15 +140,15 @@ function ThematicCard({ report }: { report: typeof THEMATIC_REPORTS[0] }) {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
         <div style={{ fontSize: '2rem' }}>{report.icon}</div>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', letterSpacing: '.12em', color: 'rgba(201,169,110,.7)', textTransform: 'uppercase', background: 'rgba(201,169,110,.08)', padding: '4px 10px', border: '1px solid rgba(201,169,110,.2)' }}>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.12em', color: 'rgba(201,169,110,.7)', textTransform: 'uppercase', background: 'rgba(201,169,110,.08)', padding: '4px 10px', border: '1px solid rgba(201,169,110,.2)' }}>
           {report.tag}
         </div>
       </div>
       <h3 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.3rem', color: '#f4f0e6', margin: '0 0 6px' }}>{report.title}</h3>
-      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', marginBottom: '16px' }}>{report.subtitle}</div>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', marginBottom: '16px' }}>{report.subtitle}</div>
       <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.68rem', color: 'rgba(244,240,230,.55)', lineHeight: 1.65, margin: '0 0 20px' }}>{report.desc}</p>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid rgba(201,169,110,.1)', marginBottom: '20px' }}>
-        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>{report.pages} páginas</div>
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', letterSpacing: '.1em' }}>{report.pages} páginas</div>
       </div>
       <a
         href={`https://wa.me/351919948986?text=${encodeURIComponent(`Olá, gostaria de receber o relatório "${report.title}" da Agency Group.`)}`}

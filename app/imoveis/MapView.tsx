@@ -299,7 +299,7 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
             border: `1px solid ${drawMode === 'polygon' ? '#c9a96e' : 'rgba(201,169,110,.35)'}`,
             color: drawMode === 'polygon' ? '#0c1f15' : '#c9a96e',
             padding: '8px 14px',
-            fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+            fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
             letterSpacing: '.12em', textTransform: 'uppercase',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
             backdropFilter: 'blur(12px)',
@@ -318,7 +318,7 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
             border: `1px solid ${drawMode === 'circle' ? '#c9a96e' : 'rgba(201,169,110,.35)'}`,
             color: drawMode === 'circle' ? '#0c1f15' : '#c9a96e',
             padding: '8px 14px',
-            fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+            fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
             letterSpacing: '.12em', textTransform: 'uppercase',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
             backdropFilter: 'blur(12px)',
@@ -337,7 +337,7 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
               border: '1px solid rgba(244,240,230,.15)',
               color: 'rgba(244,240,230,.5)',
               padding: '8px 14px',
-              fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.12em', textTransform: 'uppercase',
               cursor: 'pointer', backdropFilter: 'blur(12px)',
             }}
@@ -373,7 +373,7 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
         border: '1px solid rgba(201,169,110,.2)',
         padding: '12px 16px',
         fontFamily: "'DM Mono', monospace",
-        fontSize: '.44rem', letterSpacing: '.14em',
+        fontSize: '.52rem', letterSpacing: '.14em',
         color: 'rgba(244,240,230,.5)',
       }}>
         <div style={{ color: '#c9a96e', marginBottom: '4px' }}>AGENCY GROUP</div>

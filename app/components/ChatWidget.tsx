@@ -209,7 +209,7 @@ export default function ChatWidget() {
                   background: streaming ? '#f39c12' : '#27ae60',
                 }}/>
                 <span style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.1em', color: 'rgba(244,240,230,.45)',
                 }}>{streaming ? 'A escrever...' : 'Online'}</span>
               </div>

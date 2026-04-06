@@ -291,7 +291,7 @@ export default function AvatarWidget() {
               <div style={{ fontFamily: "'Jost', sans-serif", fontWeight: 600, fontSize: '.75rem', color: '#f4f0e6' }}>Sofia — Agency Group</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: avatarSpeaking ? '#f39c12' : streaming ? '#f39c12' : '#27ae60' }}/>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.45)' }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.45)' }}>
                   {avatarSpeaking ? 'A falar...' : streaming ? 'A escrever...' : avatarLoading ? 'A iniciar avatar...' : 'Online'}
                 </span>
               </div>
@@ -308,7 +308,7 @@ export default function AvatarWidget() {
                 background: mode === 'avatar' ? 'rgba(201,169,110,.15)' : 'rgba(255,255,255,.05)',
                 border: `1px solid ${mode === 'avatar' ? 'rgba(201,169,110,.4)' : 'rgba(255,255,255,.1)'}`,
                 color: mode === 'avatar' ? G : 'rgba(244,240,230,.4)',
-                padding: '4px 8px', cursor: 'pointer', fontSize: '.45rem', letterSpacing: '.08em',
+                padding: '4px 8px', cursor: 'pointer', fontSize: '.52rem', letterSpacing: '.08em',
                 fontFamily: "'Jost', sans-serif", flexShrink: 0,
               }}
             >

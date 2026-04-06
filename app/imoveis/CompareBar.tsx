@@ -52,7 +52,7 @@ export default function CompareBar({ selected, properties, onRemove, onClear }: 
       }}>
         {/* Label */}
         <div style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
           letterSpacing: '.18em', color: 'rgba(201,169,110,.7)',
           textTransform: 'uppercase', flexShrink: 0,
         }}>
@@ -88,7 +88,7 @@ export default function CompareBar({ selected, properties, onRemove, onClear }: 
               width: '120px',
               border: '1px dashed rgba(244,240,230,.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
               letterSpacing: '.1em', color: 'rgba(244,240,230,.2)',
               height: '32px',
             }}>+ imóvel</div>
@@ -160,7 +160,7 @@ export default function CompareBar({ selected, properties, onRemove, onClear }: 
                   fontSize: '1.5rem', color: '#f4f0e6',
                 }}>Comparação de Imóveis</div>
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.14em', color: 'rgba(201,169,110,.6)',
                   marginTop: '4px',
                 }}>{selProps.length} imóveis selecionados</div>
@@ -204,13 +204,13 @@ export default function CompareBar({ selected, properties, onRemove, onClear }: 
                             <div style={{
                               position: 'absolute', top: '8px', right: '8px',
                               background: '#c9a96e', color: '#0c1f15',
-                              fontFamily: "'DM Mono', monospace", fontSize: '.4rem',
+                              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                               letterSpacing: '.14em', padding: '3px 8px',
                             }}>{p.badge}</div>
                           )}
                         </div>
                         <div style={{
-                          fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                           letterSpacing: '.12em', color: 'rgba(201,169,110,.6)',
                           marginBottom: '4px',
                         }}>{p.ref}</div>
@@ -246,7 +246,7 @@ export default function CompareBar({ selected, properties, onRemove, onClear }: 
                       <td style={{
                         padding: '12px 24px',
                         borderRight: '1px solid rgba(201,169,110,.1)',
-                        fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                        fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                         letterSpacing: '.1em', color: 'rgba(244,240,230,.4)',
                         textTransform: 'uppercase',
                         borderBottom: '1px solid rgba(255,255,255,.04)',

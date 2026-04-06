@@ -201,7 +201,7 @@ export default function ArticleNHR() {
 
         <h2 className="s">Tipos de Rendimento: O que está coberto?</h2>
         <table style={{width:'100%',borderCollapse:'collapse',margin:'24px 0',fontSize:'.85rem'}}>
-          <thead><tr style={{background:'#1c4a35'}}><th style={{padding:'12px 16px',textAlign:'left',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.48rem',letterSpacing:'.15em',textTransform:'uppercase',fontWeight:400}}>Tipo Rendimento</th><th style={{padding:'12px 16px',textAlign:'left',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.48rem',letterSpacing:'.15em',textTransform:'uppercase',fontWeight:400}}>NHR Clássico</th><th style={{padding:'12px 16px',textAlign:'left',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.48rem',letterSpacing:'.15em',textTransform:'uppercase',fontWeight:400}}>IFICI 2024</th></tr></thead>
+          <thead><tr style={{background:'#1c4a35'}}><th style={{padding:'12px 16px',textAlign:'left',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.15em',textTransform:'uppercase',fontWeight:400}}>Tipo Rendimento</th><th style={{padding:'12px 16px',textAlign:'left',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.15em',textTransform:'uppercase',fontWeight:400}}>NHR Clássico</th><th style={{padding:'12px 16px',textAlign:'left',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.15em',textTransform:'uppercase',fontWeight:400}}>IFICI 2024</th></tr></thead>
           <tbody>
             {[
               ['Salário (actividade qualificada PT)','20% flat','20% flat'],
