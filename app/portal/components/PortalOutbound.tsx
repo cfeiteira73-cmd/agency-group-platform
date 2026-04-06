@@ -60,6 +60,40 @@ interface OutreachSequence {
   stats: { sent: number; responded: number; converted: number }
 }
 
+// ─── NORMALISER ───────────────────────────────────────────────────────────────
+// Converts raw Supabase / unknown API shapes into a valid ProspectSignal so that
+// the render never crashes on missing fields (e.g. outreachHistory undefined).
+
+function normalizeSignal(raw: Record<string, unknown>): ProspectSignal {
+  const VALID_TYPES: SignalType[] = [
+    'heranca','divorcio','insolvencia','tempo_mercado','multiplos_imoveis',
+    'emigrante','obra_parada','renda_antiga','preco_reduzido','manual'
+  ]
+  const VALID_STATUS = ['novo','contactado','interesse','reuniao','exclusividade','arquivo']
+  const VALID_PRIORITY = ['alta','media','baixa']
+
+  return {
+    id:              (raw.id as number) ?? Date.now(),
+    type:            VALID_TYPES.includes(raw.type as SignalType) ? (raw.type as SignalType) : 'manual',
+    address:         String(raw.address ?? raw.title ?? raw.morada ?? '—'),
+    zona:            String(raw.zona ?? raw.zone ?? raw.area ?? ''),
+    proprietario:    (raw.proprietario ?? raw.owner_name ?? raw.owner ?? null) as string | null,
+    contacto:        (raw.contacto ?? raw.contact ?? raw.phone ?? null) as string | null,
+    avmEstimate:     (typeof raw.avmEstimate === 'number' ? raw.avmEstimate
+                      : typeof raw.avm_estimate === 'number' ? raw.avm_estimate
+                      : null) as number | null,
+    probability:     typeof raw.probability === 'number' ? raw.probability : 50,
+    priority:        VALID_PRIORITY.includes(raw.priority as string) ? (raw.priority as 'alta' | 'media' | 'baixa') : 'media',
+    source:          String(raw.source ?? 'API'),
+    status:          VALID_STATUS.includes(raw.status as string) ? (raw.status as ProspectSignal['status']) : 'novo',
+    lastContact:     (raw.lastContact ?? raw.last_contact ?? null) as string | null,
+    nextAction:      (raw.nextAction ?? raw.next_action ?? null) as string | null,
+    notes:           String(raw.notes ?? raw.description ?? ''),
+    outreachHistory: Array.isArray(raw.outreachHistory) ? (raw.outreachHistory as OutreachRecord[]) : [],
+    createdAt:       String(raw.createdAt ?? raw.created_at ?? new Date().toISOString().split('T')[0]),
+  }
+}
+
 // ─── SCORING ──────────────────────────────────────────────────────────────────
 
 function calcSignalProbability(signal: ProspectSignal): number {
@@ -71,8 +105,9 @@ function calcSignalProbability(signal: ProspectSignal): number {
   }
   let score = typeScores[signal.type] ?? 50
   if (signal.contacto) score += 10
-  if (signal.outreachHistory.some(o => o.response === 'positivo')) score += 20
-  if (signal.outreachHistory.some(o => o.response === 'negativo')) score -= 30
+  const history = signal.outreachHistory ?? []
+  if (history.some(o => o.response === 'positivo')) score += 20
+  if (history.some(o => o.response === 'negativo')) score -= 30
   return Math.max(0, Math.min(100, score))
 }
 
@@ -584,7 +619,7 @@ function SignalDrawer({
           </div>
           <div style={{ display: 'flex', gap: 0, marginTop: 8 }}>
             {tabBtn('detalhes', 'Detalhes')}
-            {tabBtn('outreach', `Outreach (${signal.outreachHistory.length})`)}
+            {tabBtn('outreach', `Outreach (${(signal.outreachHistory ?? []).length})`)}
             {tabBtn('mensagem', 'Gerar Mensagem')}
           </div>
         </div>
@@ -658,7 +693,7 @@ function SignalDrawer({
                   </div>
                 </div>
               )}
-              {signal.outreachHistory.length === 0 ? (
+              {(signal.outreachHistory ?? []).length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: '#6b7280', fontFamily: "'Jost',sans-serif", fontSize: 14 }}>
                   Sem histórico de outreach ainda.
                 </div>
@@ -668,7 +703,7 @@ function SignalDrawer({
                     position: 'absolute', left: 20, top: 0, bottom: 0,
                     width: 2, background: '#e5e0d5'
                   }} />
-                  {signal.outreachHistory.map((rec) => {
+                  {(signal.outreachHistory ?? []).map((rec) => {
                     const resp = RESPONSE_LABELS[rec.response]
                     return (
                       <div key={rec.id} style={{ display: 'flex', gap: 16, marginBottom: 24, position: 'relative' }}>
@@ -791,7 +826,7 @@ function SignalDrawer({
                     <button
                       onClick={() => onUpdate({
                         ...signal,
-                        outreachHistory: [...signal.outreachHistory, {
+                        outreachHistory: [...(signal.outreachHistory ?? []), {
                           id: Date.now(),
                           date: new Date().toISOString().split('T')[0],
                           channel: msgType as 'email' | 'carta' | 'whatsapp',
@@ -1122,7 +1157,7 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
               </div>
               <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280', textAlign: 'right' }}>
                 {signal.lastContact ? `Contacto ${fmtDate(signal.lastContact)}` : 'Sem contacto'}<br />
-                {signal.outreachHistory.length} interacções
+                {(signal.outreachHistory ?? []).length} interacções
               </div>
             </div>
           </div>
@@ -1686,11 +1721,18 @@ export default function PortalOutbound() {
   useEffect(() => {
     fetch('/api/signals')
       .then(r => { if (!r.ok) throw new Error('not ok'); return r.json() })
-      .then((data: { signals?: ProspectSignal[] }) => {
-        if (Array.isArray(data.signals) && data.signals.length > 0) {
-          setSignals(data.signals)
+      .then((data: { signals?: Record<string, unknown>[]; data?: Record<string, unknown>[] }) => {
+        const raw = data.signals ?? data.data ?? []
+        if (Array.isArray(raw) && raw.length > 0) {
+          try {
+            setSignals(raw.map(normalizeSignal))
+            setLiveSource('live')
+          } catch {
+            setLiveSource('demo')
+          }
+        } else {
+          setLiveSource('demo')
         }
-        setLiveSource('live')
       })
       .catch(() => setLiveSource('demo'))
   }, [])
