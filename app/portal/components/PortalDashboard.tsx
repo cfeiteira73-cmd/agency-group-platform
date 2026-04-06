@@ -614,9 +614,9 @@ export default function PortalDashboard({
   ]
 
   // ── Styles ───────────────────────────────────────────────────────────────────
-  const cardBg = darkMode ? '#0c1f15' : '#ffffff'
+  const cardBg = darkMode ? '#0f1e16' : '#ffffff'
   const cardText = darkMode ? '#f4f0e6' : '#0e0e0d'
-  const mutedText = darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.35)'
+  const mutedText = darkMode ? 'rgba(240,237,228,.42)' : 'rgba(14,14,13,.42)'
   const borderCol = darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.07)'
 
   const greeting =
@@ -699,7 +699,7 @@ export default function PortalDashboard({
           <div
             style={{
               fontFamily: "'DM Mono',monospace",
-              fontSize: '.42rem',
+              fontSize: '.52rem',
               color: mutedText,
               marginTop: '6px',
               letterSpacing: '.08em',
@@ -728,7 +728,7 @@ export default function PortalDashboard({
               <span
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.52rem',
                   color: '#c9a96e',
                   letterSpacing: '.1em',
                   textTransform: 'uppercase',
@@ -752,10 +752,11 @@ export default function PortalDashboard({
               border: `1px solid ${weeklyReport ? 'rgba(201,169,110,.3)' : 'rgba(28,74,53,.2)'}`,
               color: weeklyReport ? '#c9a96e' : '#1c4a35',
               fontFamily: "'DM Mono',monospace",
-              fontSize: '.42rem',
+              fontSize: '.52rem',
               letterSpacing: '.08em',
               cursor: 'pointer',
               transition: 'all .15s',
+              borderRadius: '4px',
             }}
             disabled={weeklyReportLoading}
             onClick={weeklyReport ? onCloseWeeklyReport : onWeeklyReport}
@@ -773,6 +774,7 @@ export default function PortalDashboard({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
+              borderRadius: '4px',
             }}
           >
             <div
@@ -786,7 +788,7 @@ export default function PortalDashboard({
             <span
               style={{
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.44rem',
+                fontSize: '.52rem',
                 letterSpacing: '.12em',
                 color: '#f4f0e6',
                 textTransform: 'uppercase',
@@ -800,12 +802,13 @@ export default function PortalDashboard({
               background: 'rgba(201,169,110,.1)',
               border: '1px solid rgba(201,169,110,.25)',
               padding: '6px 14px',
+              borderRadius: '4px',
             }}
           >
             <span
               style={{
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.44rem',
+                fontSize: '.52rem',
                 letterSpacing: '.1em',
                 color: '#c9a96e',
                 textTransform: 'uppercase',
@@ -827,6 +830,7 @@ export default function PortalDashboard({
             padding: '20px 24px',
             marginBottom: '24px',
             border: '1px solid rgba(201,169,110,.15)',
+            borderRadius: '12px',
           }}
         >
           <div
@@ -944,7 +948,7 @@ export default function PortalDashboard({
           <div
             style={{
               fontFamily: "'DM Mono',monospace",
-              fontSize: '.42rem',
+              fontSize: '.60rem',
               letterSpacing: '.14em',
               textTransform: 'uppercase',
               color: mutedText,
@@ -955,9 +959,9 @@ export default function PortalDashboard({
           </div>
           {visibleAlerts.map(a => {
             const lvlMap = {
-              critico: { border: '#dc2626', bg: 'rgba(220,38,38,.04)', dot: '#dc2626', label: 'CRÍTICO' },
-              atencao: { border: '#f59e0b', bg: 'rgba(245,158,11,.04)', dot: '#f59e0b', label: 'ATENÇÃO' },
-              oportunidade: { border: '#22c55e', bg: 'rgba(34,197,94,.04)', dot: '#22c55e', label: 'OPORTUNIDADE' },
+              critico: { border: '#dc2626', bg: 'rgba(220,38,38,.07)', dot: '#dc2626', label: 'CRÍTICO' },
+              atencao: { border: '#f59e0b', bg: 'rgba(245,158,11,.07)', dot: '#f59e0b', label: 'ATENÇÃO' },
+              oportunidade: { border: '#22c55e', bg: 'rgba(34,197,94,.07)', dot: '#22c55e', label: 'OPORTUNIDADE' },
             }
             const lv = lvlMap[a.level]
             return (
@@ -996,7 +1000,7 @@ export default function PortalDashboard({
                     <span
                       style={{
                         fontFamily: "'DM Mono',monospace",
-                        fontSize: '.34rem',
+                        fontSize: '.52rem',
                         letterSpacing: '.1em',
                         color: lv.dot,
                         textTransform: 'uppercase',
@@ -1092,6 +1096,7 @@ export default function PortalDashboard({
               padding: '18px 20px',
               position: 'relative',
               overflow: 'hidden',
+              borderRadius: '12px',
             }}
           >
             {/* Best month indicator */}
@@ -1104,7 +1109,7 @@ export default function PortalDashboard({
                   background: kpi.color,
                   color: '#fff',
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.3rem',
+                  fontSize: '.52rem',
                   letterSpacing: '.08em',
                   padding: '2px 7px',
                   textTransform: 'uppercase',
@@ -1118,7 +1123,7 @@ export default function PortalDashboard({
                 <div
                   style={{
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.4rem',
+                    fontSize: '.54rem',
                     letterSpacing: '.14em',
                     textTransform: 'uppercase',
                     color: mutedText,
@@ -1142,7 +1147,7 @@ export default function PortalDashboard({
                 <div
                   style={{
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.38rem',
+                    fontSize: '.60rem',
                     color: mutedText,
                     marginBottom: '8px',
                   }}
@@ -1157,8 +1162,9 @@ export default function PortalDashboard({
                       background: kpi.badgeBg,
                       color: kpi.badgeColor,
                       fontFamily: "'DM Mono',monospace",
-                      fontSize: '.34rem',
+                      fontSize: '.52rem',
                       letterSpacing: '.06em',
+                      borderRadius: '4px',
                     }}
                   >
                     {kpi.badge}
@@ -1220,6 +1226,7 @@ export default function PortalDashboard({
             border: `1px solid ${borderCol}`,
             padding: '22px 24px',
             marginBottom: '24px',
+            borderRadius: '12px',
           }}
         >
           <div
@@ -1283,7 +1290,7 @@ export default function PortalDashboard({
                         <span
                           style={{
                             fontFamily: "'DM Mono',monospace",
-                            fontSize: '.4rem',
+                            fontSize: '.60rem',
                             color: cardText,
                             letterSpacing: '.04em',
                           }}
@@ -1344,8 +1351,8 @@ export default function PortalDashboard({
                   </div>
                   <div
                     style={{
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.4rem',
+                      fontFamily: "'Cormorant',serif",
+                      fontSize: '.75rem',
                       color,
                       textAlign: 'right',
                       letterSpacing: '.04em',
@@ -1388,10 +1395,11 @@ export default function PortalDashboard({
       ══════════════════════════════════════════════════════════════════════ */}
       <div
         style={{
-          background: darkMode ? '#0c1f15' : 'linear-gradient(135deg,#fafaf8,#f4f0e6)',
+          background: darkMode ? '#0f1e16' : 'linear-gradient(135deg,#fafaf8,#f4f0e6)',
           border: `1px solid ${borderCol}`,
           marginBottom: '24px',
           overflow: 'hidden',
+          borderRadius: '12px',
         }}
       >
         {/* Header */}
@@ -1423,7 +1431,7 @@ export default function PortalDashboard({
               <div
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.42rem',
+                  fontSize: '.54rem',
                   letterSpacing: '.14em',
                   textTransform: 'uppercase',
                   color: '#1c4a35',
@@ -1435,7 +1443,7 @@ export default function PortalDashboard({
               <div
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.34rem',
+                  fontSize: '.54rem',
                   color: mutedText,
                   marginTop: '1px',
                 }}
@@ -1500,7 +1508,7 @@ export default function PortalDashboard({
               <span
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.54rem',
                   letterSpacing: '.1em',
                   textTransform: 'uppercase',
                   color: '#c9a96e',
@@ -1543,7 +1551,7 @@ export default function PortalDashboard({
               <span
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.54rem',
                   letterSpacing: '.1em',
                   textTransform: 'uppercase',
                   color: '#3a7bd5',
@@ -1586,7 +1594,7 @@ export default function PortalDashboard({
               <span
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.54rem',
                   letterSpacing: '.1em',
                   textTransform: 'uppercase',
                   color: '#1c4a35',
@@ -1646,7 +1654,7 @@ export default function PortalDashboard({
               <span
                 style={{
                   fontFamily: "'DM Mono',monospace",
-                  fontSize: '.38rem',
+                  fontSize: '.54rem',
                   letterSpacing: '.1em',
                   textTransform: 'uppercase',
                   color: stalledDeals.length > 0 ? '#dc2626' : '#4a9c7a',
@@ -1732,6 +1740,7 @@ export default function PortalDashboard({
             background: cardBg,
             border: `1px solid ${borderCol}`,
             padding: '22px 24px',
+            borderRadius: '12px',
           }}
         >
           <div
@@ -1899,6 +1908,7 @@ export default function PortalDashboard({
             background: cardBg,
             border: `1px solid ${borderCol}`,
             padding: '22px 24px',
+            borderRadius: '12px',
           }}
         >
           <div
@@ -2118,6 +2128,7 @@ export default function PortalDashboard({
                   alignItems: 'center',
                   gap: '14px',
                   position: 'relative',
+                  borderRadius: '8px',
                 }}
                 onClick={() => onSetSection(a.sec)}
               >
@@ -2177,7 +2188,7 @@ export default function PortalDashboard({
                           background: a.badgeRed ? 'rgba(220,38,38,.1)' : 'rgba(28,74,53,.08)',
                           color: a.badgeRed ? '#dc2626' : '#1c4a35',
                           fontFamily: "'DM Mono',monospace",
-                          fontSize: '.3rem',
+                          fontSize: '.54rem',
                           letterSpacing: '.06em',
                           borderRadius: '2px',
                           flexShrink: 0,
@@ -2194,7 +2205,7 @@ export default function PortalDashboard({
                           background: 'rgba(220,38,38,.1)',
                           color: '#dc2626',
                           fontFamily: "'DM Mono',monospace",
-                          fontSize: '.3rem',
+                          fontSize: '.54rem',
                           letterSpacing: '.06em',
                           borderRadius: '2px',
                           flexShrink: 0,
@@ -2255,7 +2266,7 @@ export default function PortalDashboard({
               key={i}
               style={{
                 fontFamily: "'DM Mono',monospace",
-                fontSize: '.42rem',
+                fontSize: '.54rem',
                 color: '#c9a96e',
                 letterSpacing: '.1em',
                 flexShrink: 0,
