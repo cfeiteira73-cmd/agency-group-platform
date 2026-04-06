@@ -1076,7 +1076,7 @@ export default function Home() {
               <div style={{ fontSize: '16px', fontFamily: 'Jost, sans-serif', color: '#888', marginTop: '12px', fontStyle: 'italic' }}>
                 Os imóveis mais exclusivos não passam por aqui.
               </div>
-              <button onClick={() => setModalOpen(true)} style={{ marginTop: '24px', background: 'transparent', color: '#c9a96e', border: '1px solid rgba(201,169,110,.45)', padding: '12px 32px', fontFamily: "'DM Mono', monospace", fontSize: '.44rem', letterSpacing: '.16em', textTransform: 'uppercase', cursor: 'pointer' }}>
+              <button onClick={() => setModalOpen(true)} style={{ marginTop: '24px', background: 'transparent', color: '#c9a96e', border: '1px solid rgba(201,169,110,.45)', padding: '12px 32px', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer' }}>
                 Aceder ao Portfolio Off-Market →
               </button>
             </div>
@@ -1431,8 +1431,8 @@ export default function Home() {
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
             <div style={{
-              fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
-              letterSpacing: '.28em', color: 'rgba(201,169,110,.6)',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
+              letterSpacing: '.24em', color: 'rgba(201,169,110,.7)',
               textTransform: 'uppercase', marginBottom: '16px',
             }}>47 Famílias · 14 Nacionalidades · 4.9/5</div>
             <h2 style={{
