@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Investir em Imobiliário em Portugal 2026: Yields, ROI e Zonas · Agency Group',
+  title: 'Investir em Imobiliário em Portugal 2026: Yields e ROI',
   description: 'Comporta +28%, Quinta do Lago yield 2.8%, Lisboa yield 3.8%. Análise completa zona a zona. Onde investir em 2026 para maximizar retorno. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -37,8 +37,25 @@ export default function ArticleInvestir() {
         '@context': 'https://schema.org', '@type': 'Article',
         headline: 'Investir em Imobiliário em Portugal 2026: Yields, ROI e Zonas',
         description: 'Comporta +28%, Quinta do Lago yield 2.8%, Lisboa yield 3.8%. Análise completa zona a zona.',
-        author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-        publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+        image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+        publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
         datePublished: '2026-01-20', dateModified: '2026-03-30',
         url: 'https://www.agencygroup.pt/blog/investir-imoveis-portugal',
         inLanguage: 'pt-PT',

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Capital Gains Tax on Property in Portugal 2026: Complete Guide · Agency Group',
+  title: 'Capital Gains Tax on Property in Portugal 2026',
   description: 'How capital gains tax works on Portuguese property in 2026. Residents vs. non-residents, reinvestment exemption, inflation coefficients, and strategies to minimize tax. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -25,8 +25,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Capital Gains Tax on Property in Portugal 2026: Complete Guide',
   description: 'How capital gains tax works on Portuguese property in 2026. Residents vs. non-residents, exemptions, and strategies.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-02',
   dateModified: '2026-04-02',
   url: 'https://www.agencygroup.pt/blog/capital-gains-property-portugal-2026',

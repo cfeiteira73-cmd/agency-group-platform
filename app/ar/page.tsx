@@ -5,18 +5,18 @@ export const metadata: Metadata = {
   description: 'أفضل العقارات الفاخرة في البرتغال: لشبونة، كاشكايش، الألغارفي. استشارة عربية متخصصة. مزايا ضريبية NHR. تقييم مجاني.',
   robots: 'index, follow, max-image-preview:large',
   alternates: {
-    canonical: 'https://agencygroup.pt/ar',
+    canonical: 'https://www.agencygroup.pt/ar',
     languages: {
-      'ar': 'https://agencygroup.pt/ar',
-      'en': 'https://agencygroup.pt/en',
-      'pt-PT': 'https://agencygroup.pt',
+      'ar': 'https://www.agencygroup.pt/ar',
+      'en': 'https://www.agencygroup.pt/en',
+      'pt-PT': 'https://www.agencygroup.pt',
     },
   },
   openGraph: {
     title: 'عقارات فاخرة في البرتغال 2026 | Agency Group · AMI 22506',
     description: 'أفضل العقارات الفاخرة في البرتغال: لشبونة، كاشكايش، الألغارفي. استشارة عربية متخصصة.',
     type: 'website',
-    url: 'https://agencygroup.pt/ar',
+    url: 'https://www.agencygroup.pt/ar',
     locale: 'ar_AE',
   },
 }
@@ -24,10 +24,10 @@ export const metadata: Metadata = {
 const schemaLocalBusiness = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
-  '@id': 'https://agencygroup.pt/#localbusiness-ar',
+  '@id': 'https://www.agencygroup.pt/#localbusiness-ar',
   name: 'Agency Group – وكالة عقارية مرخصة',
   description: 'وكالة عقارية متخصصة في الفخامة في البرتغال. خبراء في لشبونة، كاشكايش، كومبورتا، الألغارفي وماديرا. AMI 22506.',
-  url: 'https://agencygroup.pt/ar',
+  url: 'https://www.agencygroup.pt/ar',
   telephone: '+351919948986',
   email: 'geral@agencygroup.pt',
   address: {

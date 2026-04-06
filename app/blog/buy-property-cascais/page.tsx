@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Buy Property in Cascais 2026: Prices, Zones & Expat Guide · Agency Group',
+  title: 'Buy Property in Cascais 2026: Prices, Zones & Expat Guide',
   description: 'Complete guide to buying property in Cascais 2026. Quinta da Marinha, Estoril, Birre prices. International schools, golf, expat community. Villas €1.5M–€8M. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -28,8 +28,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Buy Property in Cascais 2026: Prices, Zones & Expat Guide',
   description: 'Complete guide to buying property in Cascais. Quinta da Marinha, Estoril, Birre. International schools, golf, expat community.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/buy-property-cascais',

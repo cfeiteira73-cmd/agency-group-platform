@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Algarve Golden Triangle 2026: Vale do Lobo, Vilamoura & Quinta do Lago · Agency Group',
+  title: 'Algarve Golden Triangle 2026: Vale do Lobo & Vilamoura',
   description: 'Complete guide to the Algarve Golden Triangle in 2026. Prices, rental yields, golf, investment data for Vale do Lobo, Quinta do Lago and Vilamoura. AMI 22506.',
   keywords: 'algarve golden triangle property, vale do lobo property 2026, vilamoura property, quinta do lago property 2026, algarve luxury real estate',
   robots: 'index, follow',
@@ -26,8 +26,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Algarve Golden Triangle 2026: Vale do Lobo, Vilamoura & Quinta do Lago',
   description: 'Investment and lifestyle guide to the Algarve Golden Triangle — Vale do Lobo, Quinta do Lago and Vilamoura. Prices, yields and market data 2026.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/algarve-golden-triangle-2026',

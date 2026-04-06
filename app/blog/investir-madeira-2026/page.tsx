@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Investir na Madeira em 2026: O Mercado Que Não Para de Crescer · Agency Group',
+  title: 'Investir na Madeira 2026: Mercado em Crescimento',
   description: 'Madeira €3.760/m², +28% YoY — o mercado de crescimento mais rápido de Portugal. IFICI+, Zona Franca, yields 5.2%. Análise completa por zona. AMI 22506.',
   keywords: 'investir madeira 2026, imóveis funchal, madeira mercado imobiliário, ifici madeira, zona franca madeira, funchal imobiliário',
   robots: 'index, follow',
@@ -26,8 +26,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Investir na Madeira em 2026: O Mercado Que Não Para de Crescer',
   description: 'Análise completa do mercado imobiliário da Madeira em 2026. IFICI+, Zona Franca, yields, zonas e comparação com Canárias.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/investir-madeira-2026',

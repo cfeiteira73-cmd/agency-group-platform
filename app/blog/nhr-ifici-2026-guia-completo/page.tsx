@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'NHR → IFICI 2026: Guia Completo do Regime Fiscal para Novos Residentes · Agency Group',
+  title: 'NHR IFICI 2026: Guia do Regime Fiscal para Novos Residentes',
   description: 'Guia completo IFICI 2026 (sucessor do NHR). Quem pode candidatar, taxa de 20%, isenções de rendimentos estrangeiros, processo de candidatura e combinação com imobiliário. AMI 22506.',
   robots: 'index, follow',
   alternates: { canonical: 'https://www.agencygroup.pt/blog/nhr-ifici-2026-guia-completo' },
@@ -20,8 +20,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'NHR → IFICI 2026: Guia Completo do Regime Fiscal para Novos Residentes em Portugal',
   description: 'Guia completo IFICI 2026. Taxa flat 20%, isenções, elegibilidade, candidatura.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/nhr-ifici-2026-guia-completo',

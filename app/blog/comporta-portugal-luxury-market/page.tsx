@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: "Comporta Portugal Luxury Real Estate 2026: Europe's Last Unspoiled Paradise · Agency Group",
+  title: 'Comporta Portugal Luxury Real Estate 2026',
   description: 'Comporta property market 2026: prices €4,200–€8,000/m², +22% YoY appreciation, rental yields 4.5–6.2%, traditional palheiros and eco-villas. Complete guide for luxury buyers. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -25,8 +25,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: "Comporta Portugal Luxury Real Estate 2026: Europe's Last Unspoiled Paradise",
   description: 'Complete guide to Comporta luxury property 2026. Prices €4,200–€8,000/m², key areas, rental yields 4.5–6.2%, legal restrictions, investment case and buying process.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/comporta-portugal-luxury-market',

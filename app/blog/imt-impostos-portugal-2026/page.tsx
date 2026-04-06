@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'IMT, IMI, IS em Portugal 2026: Guia Completo de Impostos na Compra de Imóvel · Agency Group',
+  title: 'IMT, IMI e IS em Portugal 2026: Guia de Impostos',
   description: 'Tabelas IMT 2026 completas para habitação própria e investimento. Imposto de Selo 0,8%, IMI, AIMI, retenção na fonte. Exemplos práticos com imóveis de €300K, €500K e €1M. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -26,8 +26,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'IMT, IMI, IS em Portugal 2026: Guia Completo de Impostos na Compra de Imóvel',
   description: 'Tabelas IMT 2026 completas para habitação própria e investimento. Imposto de Selo 0,8%, IMI, AIMI, retenção na fonte. Exemplos práticos com imóveis de €300K, €500K e €1M.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-03-15',
   dateModified: '2026-04-01',
   url: 'https://www.agencygroup.pt/blog/imt-impostos-portugal-2026',

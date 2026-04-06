@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Vender Imóvel em Portugal em 2026: Guia Completo para Proprietários · Agency Group',
+  title: 'Vender Imóvel em Portugal 2026: Guia para Proprietários',
   description: 'Guia completo para vender casa em Portugal 2026. Mais-valias, isenções, homestaging, CPCV, documentos, IMI, AVM gratuito. Processo passo a passo para proprietários. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -24,8 +24,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Vender Imóvel em Portugal em 2026: Guia Completo para Proprietários',
   description: 'Guia completo para vender casa em Portugal 2026. Mais-valias, processo, documentos e como maximizar o preço de venda.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-01',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/vender-imovel-portugal-2026',

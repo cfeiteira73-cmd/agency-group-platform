@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Sintra Luxury Property 2026: UNESCO Heritage Meets Elite Real Estate · Agency Group',
+  title: 'Sintra Luxury Property 2026: UNESCO & Elite Real Estate',
   description: 'Complete guide to buying luxury property in Sintra 2026. Historic quintas, palace apartments, countryside villas. Prices €3,500–€6,500/m². 30 minutes from Lisbon. AMI 22506.',
   robots: 'index, follow',
   alternates: { canonical: 'https://www.agencygroup.pt/blog/sintra-luxury-property-2026' },
@@ -20,8 +20,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Sintra Luxury Property 2026: UNESCO World Heritage Meets Elite Real Estate',
   description: 'Complete guide to buying luxury property in Sintra 2026. Historic quintas, palace apartments, countryside villas.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/sintra-luxury-property-2026',

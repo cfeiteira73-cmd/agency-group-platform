@@ -6,18 +6,18 @@ export const metadata: Metadata = {
   description: '葡萄牙顶级房产：里斯本、卡斯凯什、阿尔加维。华语专业服务。NHR税务优化。免费房产估价AVM。',
   robots: 'index, follow, max-image-preview:large',
   alternates: {
-    canonical: 'https://agencygroup.pt/zh',
+    canonical: 'https://www.agencygroup.pt/zh',
     languages: {
-      'zh-Hans': 'https://agencygroup.pt/zh',
-      'pt-PT':   'https://agencygroup.pt',
-      'en':      'https://agencygroup.pt/en',
+      'zh-Hans': 'https://www.agencygroup.pt/zh',
+      'pt-PT':   'https://www.agencygroup.pt',
+      'en':      'https://www.agencygroup.pt/en',
     },
   },
   openGraph: {
     title: '葡萄牙顶级房产 2026 · Agency Group · AMI 22506',
     description: '里斯本、卡斯凯什、阿尔加维顶级房产。华语专业顾问。NHR税务优化。AMI 22506。',
     type: 'website',
-    url: 'https://agencygroup.pt/zh',
+    url: 'https://www.agencygroup.pt/zh',
   },
 }
 
@@ -52,10 +52,10 @@ const FAQ = [
 const schemaLD = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
-  '@id': 'https://agencygroup.pt/zh#localbusiness',
+  '@id': 'https://www.agencygroup.pt/zh#localbusiness',
   name: 'Agency Group – Mediação Imobiliária Lda',
   description: '葡萄牙顶级房产顾问。提供中文专业服务。里斯本、卡斯凯什、阿尔加维、马德拉豪华房产。AMI 22506执照。',
-  url: 'https://agencygroup.pt/zh',
+  url: 'https://www.agencygroup.pt/zh',
   telephone: '+351919948986',
   email: 'geral@agencygroup.pt',
   address: {

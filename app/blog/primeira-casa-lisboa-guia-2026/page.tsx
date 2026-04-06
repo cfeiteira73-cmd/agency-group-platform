@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Comprar a Primeira Casa em Lisboa em 2026: Guia Completo · Agency Group',
+  title: 'Comprar a Primeira Casa em Lisboa 2026: Guia Completo',
   description: 'Isenção total de IMT para jovens até 35 anos, garantia pública, Euribor 2.3%. Zonas acessíveis, simulador de prestação e processo CPCV→Escritura. AMI 22506.',
   keywords: 'comprar primeira casa lisboa 2026, crédito habitação jovens, imt isenção primeira habitação, primeira casa lisboa, apoios habitação 2026',
   robots: 'index, follow',
@@ -26,8 +26,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Comprar a Primeira Casa em Lisboa em 2026: Guia Completo',
   description: 'Guia para compra de primeira habitação em Lisboa em 2026: apoios fiscais, crédito habitação, zonas acessíveis e processo passo a passo.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/primeira-casa-lisboa-guia-2026',

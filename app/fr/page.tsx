@@ -5,11 +5,11 @@ export const metadata: Metadata = {
   title: "Agency Group · L'Immobilier de Luxe au Portugal · AMI 22506",
   description: "Achetez un bien de prestige au Portugal. Lisbonne €6 200/m², Cascais €4 713/m², Comporta €8 500/m². Régime fiscal NHR/IFICI. Estimation AVM gratuite. AMI 22506.",
   robots: "index, follow, max-image-preview:large",
-  alternates: { canonical: "https://agencygroup.pt/fr" },
+  alternates: { canonical: "https://www.agencygroup.pt/fr" },
   openGraph: {
     title: "Agency Group · L'Immobilier de Luxe au Portugal",
     description: "L'agence de référence pour l'immobilier de prestige au Portugal. Lisbonne, Cascais, Comporta, Porto, Algarve, Madère. AMI 22506.",
-    type: "website", url: "https://agencygroup.pt/fr",
+    type: "website", url: "https://www.agencygroup.pt/fr",
   },
 }
 

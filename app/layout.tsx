@@ -81,9 +81,9 @@ const schemaRealEstateAgent = {
   '@context': 'https://schema.org',
   '@type': 'RealEstateAgent',
   name: 'Agency Group – Mediação Imobiliária Lda',
-  url: 'https://agencygroup.pt',
-  logo: 'https://agencygroup.pt/logo.png',
-  image: 'https://agencygroup.pt/og-image.jpg',
+  url: 'https://www.agencygroup.pt',
+  logo: 'https://www.agencygroup.pt/logo.png',
+  image: 'https://www.agencygroup.pt/og-image.jpg',
   telephone: '+351919948986',
   email: 'geral@agencygroup.pt',
   address: {
@@ -117,10 +117,10 @@ const schemaRealEstateAgent = {
 const schemaLocalBusiness = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
-  '@id': 'https://agencygroup.pt/#localbusiness',
+  '@id': 'https://www.agencygroup.pt/#localbusiness',
   name: 'Agency Group – Mediação Imobiliária Lda',
   description: 'Boutique imobiliária de luxo em Portugal. Especialistas em Lisboa, Cascais, Comporta, Porto, Algarve e Madeira. AMI 22506.',
-  url: 'https://agencygroup.pt',
+  url: 'https://www.agencygroup.pt',
   telephone: '+351919948986',
   email: 'geral@agencygroup.pt',
   address: {
@@ -152,11 +152,11 @@ const schemaLocalBusiness = {
 const schemaWebSite = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  url: 'https://agencygroup.pt',
+  url: 'https://www.agencygroup.pt',
   name: 'Agency Group',
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://agencygroup.pt/imoveis?q={search_term_string}',
+    target: 'https://www.agencygroup.pt/imoveis?q={search_term_string}',
     'query-input': 'required name=search_term_string',
   },
 }
@@ -169,7 +169,7 @@ const schemaServiceAVM = {
   provider: {
     '@type': 'RealEstateAgent',
     name: 'Agency Group',
-    url: 'https://agencygroup.pt',
+    url: 'https://www.agencygroup.pt',
   },
   serviceType: 'Property Valuation',
   areaServed: 'Portugal',
@@ -179,7 +179,7 @@ const schemaServiceAVM = {
     priceCurrency: 'EUR',
     description: 'AVM gratuito — sem registo necessário',
   },
-  url: 'https://agencygroup.pt/avm',
+  url: 'https://www.agencygroup.pt/avm',
 }
 
 
@@ -273,7 +273,7 @@ const schemaServicesExtra = [
     '@type': 'Service',
     name: 'Simulador de Crédito Habitação',
     description: 'Calculadora gratuita de crédito habitação para Portugal. Prestação mensal, TAEG, DSTI, IMT, amortização completa. Euribor 6M em tempo real.',
-    provider: { '@type': 'RealEstateAgent', name: 'Agency Group', url: 'https://agencygroup.pt' },
+    provider: { '@type': 'RealEstateAgent', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
     serviceType: 'Mortgage Calculator',
     areaServed: 'Portugal',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
@@ -283,7 +283,7 @@ const schemaServicesExtra = [
     '@type': 'Service',
     name: 'Calculadora NHR / IFICI Portugal',
     description: 'Calculadora gratuita do regime NHR (Residente Não Habitual) e IFICI para Portugal. Comparativo de poupança fiscal por tipo de rendimento e país de origem.',
-    provider: { '@type': 'RealEstateAgent', name: 'Agency Group', url: 'https://agencygroup.pt' },
+    provider: { '@type': 'RealEstateAgent', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
     serviceType: 'Tax Planning Tool',
     areaServed: 'Portugal',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
@@ -293,7 +293,7 @@ const schemaServicesExtra = [
     '@type': 'Service',
     name: 'Simulador de Mais-Valias Imobiliárias Portugal',
     description: 'Calculadora gratuita de mais-valias imobiliárias segundo o CIRS 2026. Coeficientes AT, isenção HPP, reinvestimento, taxa 28% não residentes.',
-    provider: { '@type': 'RealEstateAgent', name: 'Agency Group', url: 'https://agencygroup.pt' },
+    provider: { '@type': 'RealEstateAgent', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
     serviceType: 'Capital Gains Calculator',
     areaServed: 'Portugal',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
@@ -303,7 +303,7 @@ const schemaServicesExtra = [
     '@type': 'Service',
     name: 'Crédito Habitação para Estrangeiros — 10 Países',
     description: 'Ferramenta gratuita para calcular elegibilidade a crédito habitação em Portugal para não residentes de 10 países. LTV, spread, prestação estimada.',
-    provider: { '@type': 'RealEstateAgent', name: 'Agency Group', url: 'https://agencygroup.pt' },
+    provider: { '@type': 'RealEstateAgent', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
     serviceType: 'Foreign Mortgage Eligibility',
     areaServed: 'Portugal',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
@@ -313,7 +313,7 @@ const schemaServicesExtra = [
 const schemaAggregateRatingExpanded = {
   '@context': 'https://schema.org',
   '@type': 'RealEstateAgent',
-  '@id': 'https://agencygroup.pt/#organization',
+  '@id': 'https://www.agencygroup.pt/#organization',
   name: 'Agency Group – Mediação Imobiliária Lda',
   aggregateRating: {
     '@type': 'AggregateRating',

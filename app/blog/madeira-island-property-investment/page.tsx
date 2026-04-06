@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Madeira Property Investment 2026: Funchal Prices, IFICI & Returns · Agency Group',
+  title: 'Madeira Property Investment 2026: Prices & IFICI Returns',
   description: "Complete guide to buying property in Madeira in 2026. Funchal prices €3,760/m² (+28% YoY), IFICI tax regime, best zones, German and British communities, and step-by-step buying process. AMI 22506.",
   robots: 'index, follow',
   alternates: {
@@ -25,8 +25,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Madeira Property Investment 2026: Funchal Prices, IFICI & Returns',
   description: "Madeira is Portugal's fastest-growing property market. €3,760/m², +28% YoY, IFICI eligible. Complete investment guide 2026.",
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/madeira-island-property-investment',

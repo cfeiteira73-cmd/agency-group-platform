@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Investir em Imóveis na Comporta 2026: Preços, Off-Market e Guia Completo · Agency Group',
+  title: 'Investir em Imóveis na Comporta 2026: Guia Completo',
   description: 'Guia completo para investir em imóveis na Comporta 2026. Herdades €2M–10M+, preços €5.000–6.500/m², off-market, compradores internacionais, yields e processo de compra. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -26,8 +26,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Investir em Imóveis na Comporta 2026: Preços, Off-Market e Guia Completo',
   description: 'Guia completo para investir em imóveis na Comporta 2026. Herdades, preços, off-market e processo de compra.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-01',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/investir-imoveis-comporta-2026',

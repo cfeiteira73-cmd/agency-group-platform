@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Golden Visa Portugal 2026: Best Alternatives After Real Estate Exclusion · Agency Group',
+  title: 'Golden Visa Portugal 2026: Best Alternatives',
   description: 'Golden visa portugal 2026 complete guide. Real estate route closed — investment funds, D7, D8 & low-density areas still open. Portugal investment visa 2026: costs, timelines, IFICI tax benefits. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -25,8 +25,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Golden Visa Portugal 2026: Best Alternatives After Real Estate Exclusion',
   description: 'Complete guide to golden visa portugal alternatives 2026. Investment funds, D7, D8, low-density real estate, NHR/IFICI+ tax benefits. Portugal investment visa 2026 comparison.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/golden-visa-portugal-alternatives-2026',

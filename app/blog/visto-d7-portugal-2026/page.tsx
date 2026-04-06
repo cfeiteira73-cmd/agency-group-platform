@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Visto D7 Portugal 2026: Rendimento Passivo e Residência · Agency Group',
+  title: 'Visto D7 Portugal 2026: Rendimento Passivo e Residência',
   description: 'Guia completo do Visto D7 Portugal 2026. Requisitos, rendimento mínimo €820/mês, documentos, processo passo a passo. Compatível com NHR/IFICI.',
   robots: 'index, follow',
   alternates: {
@@ -24,8 +24,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Visto D7 Portugal 2026: Rendimento Passivo e Residência',
   description: 'Guia completo do Visto D7 Portugal 2026. Requisitos, rendimento mínimo €820/mês, documentos, processo passo a passo. Compatível com NHR/IFICI.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-03-20',
   dateModified: '2026-04-02',
   url: 'https://www.agencygroup.pt/blog/visto-d7-portugal-2026',

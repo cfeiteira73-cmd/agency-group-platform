@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Propriedades de Luxo em Lisboa 2026: Preços, Zonas e Guia de Investimento · Agency Group',
+  title: 'Propriedades de Luxo Lisboa 2026: Preços e Investimento',
   description: 'Guia completo de propriedades de luxo em Lisboa 2026. Chiado, Príncipe Real, Estrela, Santos, Parque das Nações. Preços por zona, perfil do comprador, yields e processo de compra. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -26,8 +26,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Propriedades de Luxo em Lisboa 2026: Preços, Zonas e Guia de Investimento',
   description: 'Guia completo de propriedades de luxo em Lisboa 2026. Chiado, Príncipe Real, Estrela, Santos, Parque das Nações.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-01',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/propriedades-luxo-lisboa-2026',

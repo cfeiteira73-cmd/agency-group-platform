@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Mercado Imobiliário do Porto 2026: Preços, Zonas Premium e Investimento · Agency Group',
+  title: 'Mercado Imobiliário Porto 2026: Zonas Premium',
   description: 'Guia completo do mercado imobiliário do Porto 2026. Foz do Douro, Boavista, Cedofeita, Bonfim, Matosinhos. Yields 4,8–5,5%, Porto vs Lisboa análise, NHR/IFICI. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -26,8 +26,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Mercado Imobiliário do Porto 2026: Preços, Zonas Premium e Investimento',
   description: 'Guia completo do mercado imobiliário do Porto 2026. Preços por zona, yields, Porto vs Lisboa e processo de compra.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-01',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/mercado-imoveis-porto-2026',

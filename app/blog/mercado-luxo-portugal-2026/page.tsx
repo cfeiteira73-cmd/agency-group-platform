@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial · Agency Group',
+  title: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial',
   description: 'Lisboa Top 5 mundial Savills. Cascais €12.000/m². Comporta +28%. Análise completa do mercado prime 2026. Compradores internacionais, zonas emergentes e previsões. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -46,8 +46,25 @@ export default function ArticleLuxo() {
         '@context': 'https://schema.org', '@type': 'Article',
         headline: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial',
         description: 'Lisboa Top 5 mundial Savills. Cascais €12.000/m². Comporta +28%. Análise completa do mercado prime 2026.',
-        author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-        publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+        image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+        publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
         datePublished: '2026-02-15', dateModified: '2026-03-30',
         url: 'https://www.agencygroup.pt/blog/mercado-luxo-portugal-2026',
         inLanguage: 'pt-PT',

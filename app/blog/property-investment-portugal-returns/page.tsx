@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Property Investment in Portugal 2026: ROI, Yields & Market Analysis · Agency Group',
+  title: 'Property Investment Portugal 2026: ROI & Yields Analysis',
   description: 'Complete analysis of property investment returns in Portugal 2026. Rental yields by zone, capital appreciation data, AL short-term rental returns, tax considerations and ROI examples. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -27,8 +27,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Property Investment in Portugal 2026: ROI, Yields & Market Analysis',
   description: 'Complete analysis of property investment returns in Portugal. Rental yields, capital appreciation, AL returns, tax, ROI examples.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/property-investment-portugal-returns',

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'IMT and Property Taxes in Portugal 2026: What Foreign Buyers Must Know · Agency Group',
+  title: 'IMT & Property Taxes Portugal 2026: Foreign Buyers Guide',
   description: 'Complete guide to IMT, stamp duty, IMI and AIMI property taxes in Portugal 2026. Tax calculation examples for €500K, €1M and €3M properties. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -27,8 +27,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'IMT and Property Taxes in Portugal 2026: What Foreign Buyers Must Know',
   description: 'Complete guide to IMT, stamp duty, IMI and AIMI property taxes in Portugal 2026.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-02',
   dateModified: '2026-04-02',
   url: 'https://www.agencygroup.pt/blog/taxes-imt-portugal-2026',

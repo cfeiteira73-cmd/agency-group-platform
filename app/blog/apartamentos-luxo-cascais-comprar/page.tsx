@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Apartamentos e Moradias de Luxo em Cascais: Guia de Compra 2026 · Agency Group',
+  title: 'Moradias de Luxo em Cascais: Guia de Compra 2026',
   description: 'Guia completo para comprar apartamentos e moradias de luxo em Cascais 2026. Quinta da Marinha, Estoril, Centro. Escolas internacionais, golfe, comunidade internacional, NHR. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -27,8 +27,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Apartamentos e Moradias de Luxo em Cascais: Guia de Compra 2026',
   description: 'Guia completo para comprar apartamentos e moradias de luxo em Cascais 2026. Zonas, preços, escolas, golfe e processo de compra.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-01',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/apartamentos-luxo-cascais-comprar',

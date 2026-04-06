@@ -2,14 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'NHR vs IFICI 2024: Guia Completo para Estrangeiros em Portugal · Agency Group',
+  title: 'NHR vs IFICI 2024: Guia Completo para Estrangeiros',
   description: 'NHR clássico vs IFICI 2024 — diferenças, elegibilidade, poupança fiscal. Como se candidatar. Comparação com UK, EUA, França. AMI 22506.',
   robots: 'index, follow',
   alternates: {
-    canonical: 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
+    canonical: 'https://www.agencygroup.pt/blog/nhr-ifici-2026-guia-completo',
     languages: {
       'en': 'https://www.agencygroup.pt/blog/nhr-portugal-2026-guide',
-      'pt': 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
+      'pt': 'https://www.agencygroup.pt/blog/nhr-ifici-2026-guia-completo',
       'x-default': 'https://www.agencygroup.pt/blog/nhr-portugal-2026-guide',
     },
   },
@@ -27,8 +27,14 @@ export default function ArticleNHR() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({
         '@context': 'https://schema.org', '@type': 'Article',
         headline: 'NHR vs IFICI 2024: Guia Completo para Estrangeiros em Portugal',
-        author: { '@type': 'Organization', name: 'Agency Group' },
-        publisher: { '@type': 'Organization', name: 'Agency Group' },
+        image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
+  author: { '@type': 'Organization', name: 'Agency Group' },
+        publisher: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt', logo: { '@type': 'ImageObject', url: 'https://www.agencygroup.pt/logo.png', width: 200, height: 60 } },
         datePublished: '2026-02-15', dateModified: '2026-03-30',
         url: 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
         inLanguage: 'pt-PT',

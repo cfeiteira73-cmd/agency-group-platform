@@ -6,18 +6,18 @@ export const metadata: Metadata = {
   description: 'Premium-Immobilien in Portugal: Lissabon, Cascais, Algarve, Porto. Deutschsprachige Beratung. NHR/IFICI Steuervorteile. AVM-Bewertung kostenlos.',
   robots: 'index, follow, max-image-preview:large',
   alternates: {
-    canonical: 'https://agencygroup.pt/de',
+    canonical: 'https://www.agencygroup.pt/de',
     languages: {
-      'de':    'https://agencygroup.pt/de',
-      'pt-PT': 'https://agencygroup.pt',
-      'en':    'https://agencygroup.pt/en',
+      'de':    'https://www.agencygroup.pt/de',
+      'pt-PT': 'https://www.agencygroup.pt',
+      'en':    'https://www.agencygroup.pt/en',
     },
   },
   openGraph: {
     title: 'Immobilien Portugal 2026 · Agency Group',
     description: 'Luxusimmobilien: Lissabon, Cascais, Algarve. Steuervorteile NHR. AMI 22506.',
     type: 'website',
-    url: 'https://agencygroup.pt/de',
+    url: 'https://www.agencygroup.pt/de',
   },
 }
 
@@ -52,10 +52,10 @@ const FAQ = [
 const schemaLD = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
-  '@id': 'https://agencygroup.pt/de#localbusiness',
+  '@id': 'https://www.agencygroup.pt/de#localbusiness',
   name: 'Agency Group – Mediação Imobiliária Lda',
   description: 'Deutschsprachige Immobilienberatung in Portugal. Luxusimmobilien in Lissabon, Cascais, Algarve und Madeira. AMI 22506.',
-  url: 'https://agencygroup.pt/de',
+  url: 'https://www.agencygroup.pt/de',
   telephone: '+351919948986',
   email: 'geral@agencygroup.pt',
   address: {

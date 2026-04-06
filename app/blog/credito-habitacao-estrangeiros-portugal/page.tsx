@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Crédito Habitação para Estrangeiros em Portugal 2026 · Agency Group',
+  title: 'Crédito Habitação para Estrangeiros em Portugal 2026',
   description: 'O que os bancos portugueses financiam a não residentes. LTV por país, spread, documentos, Islamic Finance. Guia completo 2026.',
   robots: 'index, follow',
   alternates: {
@@ -24,8 +24,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Crédito Habitação para Estrangeiros em Portugal 2026',
   description: 'O que os bancos portugueses financiam a não residentes. LTV por país, spread, documentos, Islamic Finance. Guia completo 2026.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-03-25',
   dateModified: '2026-04-02',
   url: 'https://www.agencygroup.pt/blog/credito-habitacao-estrangeiros-portugal',

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Portugal vs Spain for Tax Residency in 2026: The Definitive Comparison · Agency Group',
+  title: 'Portugal vs Spain for Tax Residency 2026: Comparison',
   description: 'IFICI+ (Portugal, 20% flat) vs Beckham Law (Spain, 24% flat). Cost of living, safety, education, property costs. Which country wins by profile in 2026? AMI 22506.',
   keywords: 'portugal vs spain tax residency 2026, portugal spain comparison expats, where to live portugal spain, ifici vs beckham law, portugal spain property',
   robots: 'index, follow',
@@ -26,8 +26,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Portugal vs Spain for Tax Residency in 2026: The Definitive Comparison',
   description: 'IFICI+ vs Beckham Law, property prices, cost of living, safety, education and verdict by expat profile for 2026.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/portugal-vs-spain-tax-residency-2026',

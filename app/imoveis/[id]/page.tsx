@@ -103,12 +103,12 @@ export async function generateMetadata(
     title,
     description: desc,
     robots: p.badge === 'Off-Market' ? 'noindex, nofollow' : 'index, follow, max-image-preview:large',
-    alternates: { canonical: `https://agencygroup.pt/imoveis/${id}` },
+    alternates: { canonical: `https://www.agencygroup.pt/imoveis/${id}` },
     openGraph: {
       title,
       description: desc,
       type: 'website',
-      url: `https://agencygroup.pt/imoveis/${id}`,
+      url: `https://www.agencygroup.pt/imoveis/${id}`,
       siteName: 'Agency Group',
       locale: 'pt_PT',
     },
@@ -333,7 +333,7 @@ function buildJsonLd(p: Property) {
     '@type': 'RealEstateListing',
     name: p.nome,
     description: p.desc,
-    url: `https://agencygroup.pt/imoveis/${p.id}`,
+    url: `https://www.agencygroup.pt/imoveis/${p.id}`,
     identifier: p.ref,
     offers: {
       '@type': 'Offer',
@@ -343,7 +343,7 @@ function buildJsonLd(p: Property) {
       seller: {
         '@type': 'RealEstateAgent',
         name: 'Agency Group',
-        telephone: '+351919191919',
+        telephone: '+351919948986',
         identifier: { '@type': 'PropertyValue', name: 'AMI', value: '22506' },
       },
     },
@@ -364,7 +364,7 @@ function buildJsonLd(p: Property) {
 function PropertyShowcase({ property: p }: { property: Property }) {
   const pm2 = Math.round(p.preco / p.area)
   const yieldData = ZONE_YIELDS[p.zona]
-  const pageUrl   = `https://agencygroup.pt/imoveis/${p.id}`
+  const pageUrl   = `https://www.agencygroup.pt/imoveis/${p.id}`
 
   const waMsg = encodeURIComponent(
     `Olá Carlos, tenho interesse no imóvel ${p.nome} (${p.ref}), preço ${formatPriceFull(p.preco)}. Podemos agendar uma visita privada?`

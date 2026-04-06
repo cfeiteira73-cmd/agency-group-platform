@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Portugal vs Spain: Which Country for Property Investment in 2026? · Agency Group',
+  title: 'Portugal vs Spain: Property Investment in 2026',
   description: 'Portugal vs Spain property investment comparison 2026. Prices, taxes, NHR vs Beckham Law, rental yields, Golden Visa, quality of life. Clear verdict for international buyers. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -27,8 +27,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Portugal vs Spain: Which Country for Property Investment in 2026?',
   description: 'Direct comparison: Portugal vs Spain property investment. Prices, taxes, yields, quality of life. Verdict for international buyers.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/portugal-vs-spain-property-2026',

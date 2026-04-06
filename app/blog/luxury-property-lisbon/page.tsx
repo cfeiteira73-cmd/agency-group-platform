@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Luxury Property in Lisbon 2026: Prices, Zones & Investment Guide · Agency Group',
+  title: 'Luxury Property Lisbon 2026: Prices, Zones & Investment',
   description: 'Complete guide to luxury property in Lisbon 2026. Chiado, Príncipe Real, Estrela, Santos. Prices, rental yields, buying process and market outlook for foreign investors. AMI 22506.',
   robots: 'index, follow',
   alternates: {
@@ -27,8 +27,25 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Luxury Property in Lisbon 2026: Prices, Zones & Investment Guide',
   description: 'Complete guide to luxury property in Lisbon. Chiado, Príncipe Real, Estrela, Santos. Prices, yields, buying process.',
+  image: {
+    '@type': 'ImageObject',
+    url: 'https://www.agencygroup.pt/og-image.jpg',
+    width: 1200,
+    height: 630,
+  },
   author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Agency Group',
+    url: 'https://www.agencygroup.pt',
+    '@id': 'https://www.agencygroup.pt',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agencygroup.pt/logo.png',
+      width: 200,
+      height: 60,
+    },
+  },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
   url: 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
