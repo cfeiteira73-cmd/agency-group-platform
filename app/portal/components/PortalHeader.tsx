@@ -64,9 +64,9 @@ export default function PortalHeader({
   const totalAlerts = overdueFU.length + stalePropsN.length
 
   return (
-    <header style={{ height: '56px', background: darkMode ? '#0c1f15' : '#f4f0e6', borderBottom: `1px solid ${darkMode ? 'rgba(201,169,110,.12)' : 'rgba(14,14,13,.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 20px', flexShrink: 0, backdropFilter: 'blur(12px)' }}>
+    <header role="banner" style={{ height: '56px', background: darkMode ? '#0c1f15' : '#f4f0e6', borderBottom: `1px solid ${darkMode ? 'rgba(201,169,110,.12)' : 'rgba(14,14,13,.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 20px', flexShrink: 0, backdropFilter: 'blur(12px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <button className="hamburger" aria-label={sidebarOpen ? 'Fechar menu' : 'Abrir menu'} onClick={() => setSidebarOpen(!sidebarOpen)}>
           <span /><span /><span />
         </button>
         {section !== 'dashboard' && (
@@ -79,7 +79,21 @@ export default function PortalHeader({
             ← voltar
           </button>
         )}
-        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.05rem', color: darkMode ? '#f4f0e6' : '#0e0e0d', letterSpacing: '.01em' }}>{SECTION_NAMES[section]}</div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.05rem', color: darkMode ? '#f4f0e6' : '#0e0e0d', letterSpacing: '.01em' }}>{SECTION_NAMES[section]}</div>
+          <span style={{
+            fontFamily: 'var(--font-dm-mono),monospace',
+            fontSize: '.52rem',
+            letterSpacing: '.08em',
+            color: darkMode ? 'rgba(240,237,228,.28)' : 'rgba(14,14,13,.28)',
+            background: darkMode ? 'rgba(240,237,228,.06)' : 'rgba(14,14,13,.05)',
+            border: `1px solid ${darkMode ? 'rgba(240,237,228,.10)' : 'rgba(14,14,13,.08)'}`,
+            borderRadius: 4,
+            padding: '2px 7px',
+            marginLeft: 8,
+            cursor: 'pointer',
+          }}>⌘K</span>
+        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -99,6 +113,10 @@ export default function PortalHeader({
         {/* Notification Bell */}
         <div style={{ position: 'relative' }}>
           <button
+            aria-label={`Alertas${totalAlerts > 0 ? ` — ${totalAlerts} activo${totalAlerts !== 1 ? 's' : ''}` : ''}`}
+            aria-expanded={showNotifPanel}
+            aria-haspopup="true"
+            tabIndex={0}
             onClick={() => setShowNotifPanel(!showNotifPanel)}
             style={{ position: 'relative', background: showNotifPanel ? 'rgba(201,169,110,.12)' : 'none', border: `1px solid ${showNotifPanel ? 'rgba(201,169,110,.3)' : darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: darkMode ? 'rgba(244,240,230,.6)' : 'rgba(14,14,13,.5)', transition: 'all .2s', display: 'flex', alignItems: 'center' }}
           >
@@ -188,6 +206,8 @@ export default function PortalHeader({
 
         {/* Dark mode toggle */}
         <button
+          aria-label={darkMode ? 'Activar modo claro' : 'Activar modo escuro'}
+          tabIndex={0}
           onClick={() => setDarkMode(!darkMode)}
           style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, cursor: 'pointer', fontSize: '.78rem', background: 'transparent', color: darkMode ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.4)', transition: 'all .2s', flexShrink: 0 }}
           title={darkMode ? 'Modo claro' : 'Modo escuro'}

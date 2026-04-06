@@ -54,6 +54,7 @@ const PortalDraftOffer    = dynamic(() => import('./components/PortalDraftOffer'
 const PortalAnalytics     = dynamic(() => import('./components/PortalAnalytics'),     { ssr: false })
 const PortalInvestidores  = dynamic(() => import('./components/PortalInvestidores'),  { ssr: false })
 const PortalOutbound      = dynamic(() => import('./components/PortalOutbound'),      { ssr: false })
+const PortalCommandPalette = dynamic(() => import('./components/PortalCommandPalette'), { ssr: false })
 
 export default function Portal() {
   // localStorage auth — no NextAuth
@@ -769,8 +770,8 @@ export default function Portal() {
         .mkt-tab{padding:8px 16px;font-family:var(--font-dm-mono),monospace;font-size:.48rem;letter-spacing:.14em;text-transform:uppercase;border:1px solid rgba(14,14,13,.12);background:none;cursor:pointer;transition:all .2s;color:rgba(14,14,13,.5)}
         .mkt-tab.active{background:#1c4a35;color:#f4f0e6;border-color:#1c4a35}
         .mkt-result{background:#fff;border:1px solid rgba(14,14,13,.1);padding:20px;min-height:120px;font-size:.83rem;line-height:1.8;color:#0e0e0d;white-space:pre-wrap;font-family:var(--font-jost),sans-serif}
-        .deal-card{background:#fff;border:1px solid rgba(14,14,13,.08);padding:16px 20px;cursor:pointer;transition:border .2s}
-        .deal-card:hover{border-color:#1c4a35}.deal-card.active{border-color:#c9a96e;border-width:2px}
+        .deal-card{background:#fff;border:1px solid rgba(14,14,13,.08);padding:16px 20px;cursor:pointer;transition:all .2s;border-radius:10px;box-shadow:0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)}
+        .deal-card:hover{border-color:#1c4a35;box-shadow:0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04)}.deal-card.active{border-color:#c9a96e;border-width:2px}
         .check-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(14,14,13,.05);font-size:.8rem;color:rgba(14,14,13,.7);cursor:pointer;transition:color .2s}
         .check-item:hover{color:#0e0e0d}.check-item.done{color:rgba(14,14,13,.35);text-decoration:line-through}
         .doc-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(14,14,13,.06)}
@@ -845,6 +846,15 @@ export default function Portal() {
 
         {/* Main */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: darkMode ? '#0f2518' : '#f4f0e6' }}>
+
+          {/* Command Palette — Cmd+K / Ctrl+K */}
+          {ready && (
+            <PortalCommandPalette
+              onSetSection={setSection}
+              darkMode={darkMode}
+              agentName={agentName}
+            />
+          )}
 
           {/* Header */}
           <PortalHeader

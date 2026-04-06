@@ -1315,7 +1315,7 @@ export default function PortalCRM() {
                             </div>
                             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 300, color: activeContact.nextFollowUp <= today ? '#e05454' : '#c9a96e', lineHeight: 1 }}>{activeContact.nextFollowUp}</div>
                           </div>
-                          <button className="p-btn" style={{ padding: '5px 10px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)' }}
+                          <button className="p-btn" style={{ padding: '5px 10px', fontSize: '.52rem', background: '#1c4a35', color: '#f4f0e6' }}
                             onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today, nextFollowUp: '' } : c))}>
                             ✓ Feito
                           </button>

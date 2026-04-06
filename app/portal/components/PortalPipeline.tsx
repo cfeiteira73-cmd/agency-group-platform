@@ -390,7 +390,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: '#c9a96e' }}>
           GCI Forecast · Comissão Prevista
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.3)' }}>
           AMI 22506 · 5% comissão
         </div>
       </div>
@@ -411,7 +411,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
             borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
           }}>
             <GCIGauge pct={m.pct} label={m.label} value={m.value} />
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '4px', textAlign: 'center' }}>{m.sub}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.3)', marginTop: '4px', textAlign: 'center' }}>{m.sub}</div>
           </div>
         ))}
       </div>
@@ -419,7 +419,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
       {/* Pipeline total bar */}
       <div style={{ marginBottom: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em' }}>PIPELINE TOTAL</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.45)' : 'rgba(14,14,13,.4)', letterSpacing: '.06em' }}>PIPELINE TOTAL</span>
           <span style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: darkMode ? '#f4f0e6' : '#0e0e0d', fontWeight: 300 }}>{fmtK(totalPipeline)}</span>
         </div>
       </div>
@@ -427,7 +427,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
       {/* Stage distribution */}
       {stageDist.length > 0 && (
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginBottom: '6px', letterSpacing: '.06em' }}>DISTRIBUIÇÃO POR STAGE</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.3)', marginBottom: '6px', letterSpacing: '.06em' }}>DISTRIBUIÇÃO POR STAGE</div>
           <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', gap: '1px' }}>
             {stageDist.map(s => (
               <div key={s.stage} style={{ flex: s.pct, background: s.color, minWidth: '2px', transition: 'flex .5s ease' }} />
@@ -435,7 +435,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: '7px' }}>
             {stageDist.map(s => (
-              <span key={s.stage} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span key={s.stage} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.45)' : 'rgba(14,14,13,.4)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color, display: 'inline-block', flexShrink: 0 }} />
                 {s.stage} {s.pct.toFixed(0)}%
               </span>
@@ -1642,16 +1642,16 @@ export default function PortalPipeline({
                   display: 'inline-flex', alignItems: 'center', gap: '6px',
                   padding: '5px 12px',
                   background: activeFilter === chip.key ? '#1c4a35' : 'transparent',
-                  color: activeFilter === chip.key ? '#c9a96e' : 'rgba(14,14,13,.5)',
-                  border: `1px solid ${activeFilter === chip.key ? '#1c4a35' : 'rgba(14,14,13,.12)'}`,
+                  color: activeFilter === chip.key ? '#c9a96e' : darkMode ? 'rgba(244,240,230,.55)' : 'rgba(14,14,13,.5)',
+                  border: `1px solid ${activeFilter === chip.key ? '#1c4a35' : darkMode ? 'rgba(244,240,230,.15)' : 'rgba(14,14,13,.12)'}`,
                   fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
                   cursor: 'pointer', borderRadius: '6px', transition: 'all .2s',
                   ...(chip.key === 'atrisk' && activeFilter !== 'atrisk' ? { color: '#dc2626', borderColor: 'rgba(220,38,38,.2)' } : {}),
                 }}>
                 {chip.label}
                 <span style={{
-                  background: activeFilter === chip.key ? 'rgba(201,169,110,.25)' : 'rgba(14,14,13,.06)',
-                  color: activeFilter === chip.key ? '#c9a96e' : 'rgba(14,14,13,.4)',
+                  background: activeFilter === chip.key ? 'rgba(201,169,110,.25)' : darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.06)',
+                  color: activeFilter === chip.key ? '#c9a96e' : darkMode ? 'rgba(244,240,230,.45)' : 'rgba(14,14,13,.4)',
                   padding: '1px 6px', borderRadius: '10px', fontSize: '.52rem', fontFamily: "'DM Mono',monospace",
                   ...(chip.key === 'atrisk' ? { color: '#dc2626', background: 'rgba(220,38,38,.08)' } : {}),
                 }}>

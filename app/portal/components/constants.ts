@@ -453,6 +453,82 @@ export const PORTAL_STYLES = `
   html.dark .portal-main [style*="border:1px solid rgba(14,14,13"]{border-color:rgba(201,169,110,.14)!important}
   html.dark .portal-main [style*="borderBottom:1px solid rgba(14,14,13"]{border-bottom-color:rgba(240,237,228,.08)!important}
   html.dark .portal-main [style*="borderTop:1px solid rgba(14,14,13"]{border-top-color:rgba(240,237,228,.08)!important}
+
+  /* ═══ ENTRANCE ANIMATIONS ═══ */
+  @keyframes fadeSlideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+  @keyframes scaleIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+  .animate-fade-up{animation:fadeSlideUp .45s ease both}
+  .animate-fade-in{animation:fadeIn .35s ease both}
+  .animate-scale-in{animation:scaleIn .35s ease both}
+  .stagger-1{animation-delay:.06s}
+  .stagger-2{animation-delay:.12s}
+  .stagger-3{animation-delay:.18s}
+  .stagger-4{animation-delay:.24s}
+  .stagger-5{animation-delay:.30s}
+  .stagger-6{animation-delay:.36s}
+  /* Shimmer skeleton base */
+  .skeleton{background:linear-gradient(90deg,rgba(14,14,13,.06) 25%,rgba(14,14,13,.10) 50%,rgba(14,14,13,.06) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px}
+  html.dark .skeleton{background:linear-gradient(90deg,rgba(240,237,228,.04) 25%,rgba(240,237,228,.08) 50%,rgba(240,237,228,.04) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite}
+  /* ═══ MOBILE IMPROVEMENTS ═══ */
+  /* Focus visible — accessibility */
+  :focus-visible{outline:2px solid #c9a96e!important;outline-offset:2px}
+  button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid #c9a96e!important;outline-offset:2px;border-radius:4px}
+  /* Touch targets — minimum 44px */
+  .nav-item{min-height:44px}
+  .p-btn{min-height:40px}
+  /* Smooth scrolling */
+  .portal-main{scroll-behavior:smooth}
+  /* Better text selection */
+  ::selection{background:rgba(201,169,110,.25);color:inherit}
+  /* Scrollbar improvements */
+  *{scrollbar-width:thin;scrollbar-color:rgba(14,14,13,.15) transparent}
+  html.dark *{scrollbar-color:rgba(240,237,228,.10) transparent}
+  /* Print styles */
+  @media print{
+    .portal-sidebar,.portal-header{display:none!important}
+    .portal-main{margin:0!important;padding:20px!important}
+    .p-card,.kpi-card{box-shadow:none!important;border:1px solid #ddd!important}
+  }
+  @media (max-width:1200px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr)!important}
+  }
+  @media (max-width:900px){
+    .portal-main-content{padding:16px!important}
+    .kpi-grid{grid-template-columns:1fr 1fr!important}
+    .p-card{padding:16px!important}
+    .kpi-card{padding:16px 18px!important}
+    .kpi-val{font-size:1.6rem!important}
+    .section-header{padding:16px 20px!important}
+  }
+  @media (max-width:600px){
+    .kpi-grid{grid-template-columns:1fr!important}
+    .kpi-card{padding:14px 16px!important}
+    .p-card{padding:14px!important}
+    .kpi-val{font-size:1.4rem!important}
+    .p-btn{width:100%!important;justify-content:center!important}
+    .crm-layout{flex-direction:column!important}
+    .crm-list{width:100%!important;max-height:300px!important;border-right:none!important;border-bottom:1px solid rgba(14,14,13,.08)!important}
+    html.dark .crm-list{border-bottom-color:rgba(240,237,228,.08)!important}
+    .actions-grid{grid-template-columns:1fr 1fr!important}
+    .p-two-col{grid-template-columns:1fr!important}
+    .mkt-grid{grid-template-columns:1fr!important}
+    .comparison-table{font-size:.60rem!important}
+    .comparison-table td,.comparison-table th{padding:6px 8px!important}
+  }
+  /* ═══ DARK MODE SCROLLBAR ═══ */
+  html.dark ::-webkit-scrollbar-thumb{background:rgba(240,237,228,.12);border-radius:2px}
+  html.dark ::-webkit-scrollbar-track{background:transparent}
+  /* ═══ REDUCED MOTION ═══ */
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  }
+  /* ═══ HIGH CONTRAST ═══ */
+  @media (forced-colors:active){
+    .p-btn{forced-color-adjust:none;background:ButtonText;color:ButtonFace}
+    .kpi-card{forced-color-adjust:none;border:2px solid ButtonText}
+  }
 `
 
 // SECTION_NAMES is defined above (line ~115) — no duplicate needed

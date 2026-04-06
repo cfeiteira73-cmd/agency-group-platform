@@ -1,10 +1,12 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { useDealStore } from '../stores/dealStore'
 import { useCRMStore } from '../stores/crmStore'
 import type { SectionId } from './types'
 import { PIPELINE_STAGES, STAGE_PCT, STAGE_COLOR } from './constants'
+import { useStaggerIn, useFadeIn } from '../hooks/useGSAPAnimations'
+import { SkeletonDashboard, SkeletonKPIGrid } from './PortalSkeleton'
 
 interface PortalDashboardProps {
   agentName: string
@@ -238,6 +240,15 @@ export default function PortalDashboard({
     contactCount: number
     source: 'live' | 'demo'
   }>({ pipeline: 0, deals: 0, commission: 0, closingNow: 0, contactCount: 0, source: 'demo' })
+
+  // ── GSAP animation refs ──────────────────────────────────────────────────────
+  const pageRef = useRef<HTMLDivElement>(null)
+  const kpiGridRef = useRef<HTMLDivElement>(null)
+  const actionsGridRef = useRef<HTMLDivElement>(null)
+
+  useFadeIn(pageRef, { duration: 0.4 })
+  useStaggerIn(kpiGridRef, '[data-stagger]', { delay: 0.1 })
+  useStaggerIn(actionsGridRef, '[data-stagger]', { delay: 0.3 })
 
   useEffect(() => {
     const t = setInterval(() => setCurrentTime(new Date()), 60000)
@@ -627,7 +638,7 @@ export default function PortalDashboard({
       : 'Boa noite'
 
   return (
-    <div style={{ fontFamily: "'Jost',sans-serif" }}>
+    <div ref={pageRef} style={{ fontFamily: "'Jost',sans-serif" }}>
       {/* ── CSS Animations ── */}
       <style>{`
         @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
@@ -748,9 +759,9 @@ export default function PortalDashboard({
               padding: '6px 14px',
               background: weeklyReport
                 ? 'rgba(201,169,110,.12)'
-                : 'rgba(28,74,53,.06)',
-              border: `1px solid ${weeklyReport ? 'rgba(201,169,110,.3)' : 'rgba(28,74,53,.2)'}`,
-              color: weeklyReport ? '#c9a96e' : '#1c4a35',
+                : darkMode ? 'rgba(28,74,53,.35)' : 'rgba(28,74,53,.06)',
+              border: `1px solid ${weeklyReport ? 'rgba(201,169,110,.3)' : 'rgba(28,74,53,.4)'}`,
+              color: weeklyReport ? '#c9a96e' : darkMode ? '#a8d4b8' : '#1c4a35',
               fontFamily: "'DM Mono',monospace",
               fontSize: '.52rem',
               letterSpacing: '.08em',
@@ -1077,7 +1088,13 @@ export default function PortalDashboard({
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 3 — KPI GRID 4×2 COM SPARKLINES + DELTA
       ══════════════════════════════════════════════════════════════════════ */}
+      {isLoadingKPIs ? (
+        <div style={{ marginBottom: '28px' }}>
+          <SkeletonKPIGrid darkMode={darkMode} />
+        </div>
+      ) : (
       <div
+        ref={kpiGridRef}
         className="kpi-grid"
         style={{
           display: 'grid',
@@ -1089,7 +1106,8 @@ export default function PortalDashboard({
         {kpiCards.map((kpi, idx) => (
           <div
             key={idx}
-            className="kpi-card"
+            data-stagger=""
+            className={`kpi-card animate-fade-up stagger-${idx + 1}`}
             style={{
               background: cardBg,
               border: `1px solid ${kpi.highlight ? kpi.color + '40' : borderCol}`,
@@ -1214,6 +1232,7 @@ export default function PortalDashboard({
           </div>
         ))}
       </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 4 — PIPELINE VISUAL + VELOCIDADE
@@ -2105,6 +2124,7 @@ export default function PortalDashboard({
           Ferramentas &amp; Módulos
         </div>
         <div
+          ref={actionsGridRef}
           className="qa-grid"
           style={{
             display: 'grid',
@@ -2117,6 +2137,7 @@ export default function PortalDashboard({
             return (
               <div
                 key={a.label}
+                data-stagger=""
                 className="qa-card"
                 style={{
                   background: cardBg,

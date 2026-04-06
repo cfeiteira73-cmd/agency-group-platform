@@ -51,7 +51,7 @@ export default function PortalSidebar({
       </div>
 
       {/* Nav — grouped */}
-      <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '10px 0', minHeight: 0, position: 'relative', top: 'auto', left: 'auto', right: 'auto', zIndex: 'auto' as unknown as number, width: 'auto', background: 'transparent', display: 'flex', flexDirection: 'column' }}>
+      <nav role="navigation" aria-label="Portal navigation" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '10px 0', minHeight: 0, position: 'relative', top: 'auto', left: 'auto', right: 'auto', zIndex: 'auto' as unknown as number, width: 'auto', background: 'transparent', display: 'flex', flexDirection: 'column' }}>
         {(() => {
           const rendered: React.ReactNode[] = []
           let lastGroup = '__start__'
@@ -65,7 +65,14 @@ export default function PortalSidebar({
               lastGroup = item.group
             }
             rendered.push(
-              <div key={item.id} className={`nav-item${section === item.id ? ' active' : ''}`} onClick={() => { setSection(item.id); setSidebarOpen(false) }}>
+              <div
+                key={item.id}
+                role="menuitem"
+                tabIndex={0}
+                className={`nav-item${section === item.id ? ' active' : ''}`}
+                onClick={() => { setSection(item.id); setSidebarOpen(false) }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSection(item.id); setSidebarOpen(false) } }}
+              >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" style={{ flexShrink: 0 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                 </svg>
