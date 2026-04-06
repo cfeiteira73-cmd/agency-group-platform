@@ -1,4 +1,4 @@
-import { MetadataRoute } from 'next'
+import type { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -6,10 +6,22 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/portal', '/api/', '/deal/'],
+        disallow: [
+          '/portal/',
+          '/api/',
+          '/_next/',
+          '/admin/',
+          '/deal/',
+        ],
+      },
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+        disallow: ['/portal/', '/api/', '/deal/'],
+        crawlDelay: 1,
       },
     ],
-    sitemap: 'https://agencygroup.pt/sitemap.xml',
-    host: 'https://agencygroup.pt',
+    sitemap: 'https://www.agencygroup.pt/sitemap.xml',
+    host: 'https://www.agencygroup.pt',
   }
 }

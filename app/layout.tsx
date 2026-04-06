@@ -339,6 +339,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`}>
       <head>
         <meta name="author" content="Agency Group – Mediação Imobiliária Lda" />
+        {/* Resource hints — preconnect to critical origins */}
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://vercel.live" />
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"
