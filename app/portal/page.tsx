@@ -53,8 +53,12 @@ const PortalCollections   = dynamic(() => import('./components/PortalCollections
 const PortalDraftOffer    = dynamic(() => import('./components/PortalDraftOffer'),    { ssr: false })
 const PortalAnalytics     = dynamic(() => import('./components/PortalAnalytics'),     { ssr: false })
 const PortalInvestidores  = dynamic(() => import('./components/PortalInvestidores'),  { ssr: false })
-const PortalOutbound      = dynamic(() => import('./components/PortalOutbound'),      { ssr: false })
+const PortalOutbound       = dynamic(() => import('./components/PortalOutbound'),      { ssr: false })
 const PortalCommandPalette = dynamic(() => import('./components/PortalCommandPalette'), { ssr: false })
+const PortalVideoStudio    = dynamic(
+  () => import('./components/PortalVideoStudio').then(m => ({ default: m.PortalVideoStudio })),
+  { ssr: false },
+)
 
 export default function Portal() {
   // localStorage auth — no NextAuth
@@ -1088,6 +1092,10 @@ export default function Portal() {
 
             {section === 'outbound' && (
               <PortalOutbound />
+            )}
+
+            {section === 'videoStudio' && (
+              <PortalVideoStudio />
             )}
 
             {/* Price history modal */}
