@@ -5,7 +5,7 @@ const MortgageSchema = z.object({
   montante:         z.coerce.number().min(10_000, 'Montante mínimo €10.000'),
   entrada_pct:      z.coerce.number().min(0).max(100).optional().default(20),
   prazo:            z.coerce.number().int().min(5).max(40).optional().default(30),
-  spread:           z.coerce.number().min(0).max(10).optional().default(1.4),
+  spread:           z.coerce.number().min(0).max(10, 'Spread inválido: máximo 10%').optional().default(1.4),
   uso:              z.string().optional().default('habitacao_propria'),
   rendimento_anual: z.coerce.number().min(0).optional().default(0),
 })
@@ -128,7 +128,10 @@ export async function POST(req: NextRequest) {
 
     const parsed = MortgageSchema.safeParse(rawBody)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Dados inválidos', details: parsed.error.flatten() }, { status: 400 })
+      const fieldErrors = parsed.error.flatten().fieldErrors
+      const firstFieldError = Object.values(fieldErrors).find(msgs => msgs && msgs.length > 0)
+      const errorMessage = firstFieldError ? firstFieldError[0] : 'Dados inválidos'
+      return NextResponse.json({ error: errorMessage, details: parsed.error.flatten() }, { status: 400 })
     }
     const body = parsed.data
 
