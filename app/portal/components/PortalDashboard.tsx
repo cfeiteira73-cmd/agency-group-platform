@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { useDealStore } from '../stores/dealStore'
 import { useCRMStore } from '../stores/crmStore'
@@ -132,6 +132,14 @@ function statusColor(status: string): string {
     lead: '#888',
   }
   return map[status] ?? '#888'
+}
+
+// ─── Portuguese currency parser (for Zustand store strings) ───────────────────
+function parseValorLocal(s: string | undefined): number {
+  if (!s) return 0
+  // Strip €, spaces, then remove thousand-separator dots, then parse
+  const cleaned = s.replace(/[€\s]/g, '').replace(/\.(?=\d{3}(?:[,.]|$))/g, '').replace(',', '.')
+  return parseFloat(cleaned) || 0
 }
 
 // ─── Ticker data ──────────────────────────────────────────────────────────────
@@ -268,7 +276,7 @@ export default function PortalDashboard({
   const [currentTime, setCurrentTime] = useState(new Date())
   const [isLoadingKPIs, setIsLoadingKPIs] = useState(true)
   const [supabaseConnected, setSupabaseConnected] = useState(false)
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => new Set())
   const [sofiaRefreshing, setSofiaRefreshing] = useState(false)
   const [sofiaTs, setSofiaTs] = useState(new Date())
   const [liveKPIs, setLiveKPIs] = useState<{
@@ -333,7 +341,7 @@ export default function PortalDashboard({
         try {
           const dealsData = await dealsRes.value.json()
           const rawDeals: { valor?: string; escrituraDate?: string; cpcvDate?: string }[] =
-            dealsData?.data ?? []
+            Array.isArray(dealsData?.data) ? dealsData.data : []
 
           // Parse Portuguese-formatted currency strings: €1.250.000 → 1250000
           const parseValor = (s?: string): number => {
@@ -383,12 +391,14 @@ export default function PortalDashboard({
   const today = new Date().toISOString().split('T')[0]
 
   const pipelineTotal = deals.reduce((s, d) => {
-    const v = parseFloat(d.valor.replace(/[^0-9.]/g, '')) || 0
+    const v = parseValorLocal(d.valor)
     return s + v
   }, 0)
 
-  const closedDeals = deals.filter(d => d.fase === 'Escritura Concluída')
-  const cpcvDeals = deals.filter(d => d.fase === 'CPCV Assinado')
+  const { closedDeals, cpcvDeals } = useMemo(() => ({
+    closedDeals: deals.filter(d => d.fase === 'Escritura Concluída'),
+    cpcvDeals: deals.filter(d => d.fase === 'CPCV Assinado'),
+  }), [deals])
 
   const followUpsHoje = crmContacts.filter(
     c => c.nextFollowUp && c.nextFollowUp <= today
@@ -437,7 +447,7 @@ export default function PortalDashboard({
     return diffDays > 5 && diffDays <= 14
   })
   const stalledGCI = stalledDeals.reduce((s, d) => {
-    const v = parseFloat(d.valor.replace(/[^0-9.]/g, '')) || 0
+    const v = parseValorLocal(d.valor)
     return s + v * 0.05
   }, 0)
 
@@ -510,42 +520,44 @@ export default function PortalDashboard({
   const visibleAlerts = allAlerts.filter(a => !dismissedAlerts.has(a.id))
 
   // ── Pipeline by stage ────────────────────────────────────────────────────────
-  const stageBreakdown = PIPELINE_STAGES.map(stage => {
+  const stageBreakdown = useMemo(() => PIPELINE_STAGES.map(stage => {
     const stageDeals = deals.filter(d => d.fase === stage)
-    const stageVal = stageDeals.reduce((s, d) => {
-      return s + (parseFloat(d.valor.replace(/[^0-9.]/g, '')) || 0)
-    }, 0)
+    const stageVal = stageDeals.reduce((s, d) => s + parseValorLocal(d.valor), 0)
     return { stage, count: stageDeals.length, value: stageVal }
-  }).filter(s => s.count > 0)
+  }).filter(s => s.count > 0), [deals])
 
   const maxStageVal = Math.max(...stageBreakdown.map(s => s.value), 1)
 
   // ── Top contacts (5 most recent) ─────────────────────────────────────────────
-  const recentContacts = [...crmContacts]
+  const recentContacts = useMemo(() => [...crmContacts]
     .sort((a, b) => {
       const da = new Date(a.lastContact || a.createdAt || '2000-01-01').getTime()
       const db = new Date(b.lastContact || b.createdAt || '2000-01-01').getTime()
       return db - da
     })
-    .slice(0, 5)
+    .slice(0, 5), [crmContacts])
 
   // ── Top 3 deals by value ─────────────────────────────────────────────────────
-  const topDeals = [...deals]
+  const topDeals = useMemo(() => [...deals]
     .filter(d => d.fase !== 'Escritura Concluída')
     .sort((a, b) => {
-      const va = parseFloat(a.valor.replace(/[^0-9.]/g, '')) || 0
-      const vb = parseFloat(b.valor.replace(/[^0-9.]/g, '')) || 0
+      const va = parseValorLocal(a.valor)
+      const vb = parseValorLocal(b.valor)
       return vb - va
     })
-    .slice(0, 3)
+    .slice(0, 3), [deals])
 
   // ── Sofia Insights (smart analysis from current state) ───────────────────────
   const sofiaInsights = {
     opportunity: silentVIPs.length > 0
       ? `"${silentVIPs[0]?.name ?? 'Cliente VIP'} está em silêncio há ${
-          silentVIPs[0]?.lastContact
-            ? Math.floor((Date.now() - new Date(silentVIPs[0].lastContact).getTime()) / 86400000)
-            : 18
+          (() => {
+            const lc = silentVIPs[0]?.lastContact
+            if (!lc) return 18
+            const d = new Date(lc)
+            if (isNaN(d.getTime())) return 18
+            return Math.floor((Date.now() - d.getTime()) / 86400000)
+          })()
         } dias. Momento ideal para contacto com nova propriedade em linha com o seu perfil."`
       : `"Pipeline sólido com €${(pipelineTotal / 1e6).toFixed(1)}M activo. Foco em acelerar ${
           stageBreakdown[0]?.stage ?? 'fase inicial'
@@ -666,7 +678,7 @@ export default function PortalDashboard({
   // ── Styles ───────────────────────────────────────────────────────────────────
   const cardBg = darkMode ? '#0f1e16' : '#ffffff'
   const cardText = darkMode ? '#f4f0e6' : '#0e0e0d'
-  const mutedText = darkMode ? 'rgba(240,237,228,.42)' : 'rgba(14,14,13,.42)'
+  const mutedText = darkMode ? 'rgba(240,237,228,.55)' : 'rgba(14,14,13,.50)'
   const borderCol = darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.07)'
 
   const greeting =
@@ -683,16 +695,18 @@ export default function PortalDashboard({
         @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
         @keyframes pulseGreen { 0%,100% { opacity:1 } 50% { opacity:.4 } }
-        .ticker-inner { animation: ticker 32s linear infinite; display: flex; gap: 48px; white-space: nowrap; }
+        .ticker-inner { animation: ticker 40s linear infinite; display: flex; gap: 48px; white-space: nowrap; }
         .ticker-inner:hover { animation-play-state: paused; }
         .qa-card:hover { background: ${darkMode ? 'rgba(28,74,53,.18)' : 'rgba(28,74,53,.06)'} !important; }
         .qa-card:hover .qa-arrow { opacity: 1 !important; transform: translateX(0) !important; }
         .pipeline-row:hover { background: ${darkMode ? 'rgba(28,74,53,.15)' : 'rgba(28,74,53,.04)'} !important; cursor: pointer; }
         .recent-row:hover { background: ${darkMode ? 'rgba(28,74,53,.15)' : 'rgba(28,74,53,.04)'} !important; cursor: pointer; }
         .top-deal:hover { background: ${darkMode ? 'rgba(201,169,110,.12)' : 'rgba(201,169,110,.06)'} !important; cursor: pointer; }
-        .kpi-card { transition: box-shadow .2s, transform .15s; }
-        .kpi-card:hover { box-shadow: 0 4px 24px rgba(28,74,53,.10); transform: translateY(-1px); }
+        .kpi-card { transition: box-shadow .2s ease-out, transform .15s cubic-bezier(.4,0,.2,1); }
+        .kpi-card:hover { box-shadow: 0 6px 32px rgba(28,74,53,.14); transform: translateY(-2px); }
         .alert-item { animation: fadeIn .25s ease; }
+        .alert-item:hover { opacity: 0.95; }
+        .alert-item button:hover { opacity: 0.75; }
         .sofia-card:hover { background: ${darkMode ? 'rgba(28,74,53,.14)' : 'rgba(28,74,53,.04)'} !important; }
         .pulse-dot { animation: pulseGreen 2s ease-in-out infinite; }
         @media (max-width: 768px) {
@@ -701,6 +715,14 @@ export default function PortalDashboard({
           .side-panels { grid-template-columns: 1fr !important; }
           .pipeline-section { display: none !important; }
         }
+        @media (max-width: 480px) {
+          .kpi-grid { grid-template-columns: repeat(2,1fr) !important; }
+          .qa-grid { grid-template-columns: 1fr !important; }
+          .side-panels { grid-template-columns: 1fr !important; }
+        }
+        .pipeline-row { transition: background .15s ease; }
+        .recent-row { transition: background .15s ease; }
+        .top-deal { transition: background .15s ease; }
       `}</style>
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -744,7 +766,7 @@ export default function PortalDashboard({
             }}
           >
             {greeting},{' '}
-            <em style={{ fontStyle: 'italic', color: '#c9a96e' }}>{agentName}</em>.
+            <em style={{ fontStyle: 'italic', color: '#c9a96e' }}>{agentName || 'Agente'}</em>.
           </div>
           <div
             style={{
@@ -876,7 +898,7 @@ export default function PortalDashboard({
       {!!weeklyReport && (
         <div
           style={{
-            background: 'linear-gradient(135deg,#0c1f15,#1a3d2a)',
+            background: darkMode ? 'linear-gradient(135deg,#0c1f15,#1a3d2a)' : 'linear-gradient(135deg,#f8f7f4,#eaf0eb)',
             padding: '20px 24px',
             marginBottom: '24px',
             border: '1px solid rgba(201,169,110,.15)',
@@ -910,7 +932,7 @@ export default function PortalDashboard({
                 style={{
                   fontFamily: "'Cormorant',serif",
                   fontSize: '1.2rem',
-                  color: '#f4f0e6',
+                  color: darkMode ? '#f4f0e6' : '#0e0e0d',
                   fontWeight: 300,
                 }}
               >
@@ -920,7 +942,7 @@ export default function PortalDashboard({
                 style={{
                   fontFamily: "'DM Mono',monospace",
                   fontSize: '.52rem',
-                  color: 'rgba(244,240,230,.35)',
+                  color: darkMode ? 'rgba(244,240,230,.35)' : 'rgba(14,14,13,.4)',
                   marginTop: '2px',
                 }}
               >
@@ -963,6 +985,7 @@ export default function PortalDashboard({
                   borderRadius: '4px',
                 }}
                 onClick={onCloseWeeklyReport}
+                aria-label="Fechar relatório"
               >
                 × Fechar
               </button>
@@ -972,7 +995,7 @@ export default function PortalDashboard({
             style={{
               fontFamily: "'Jost',sans-serif",
               fontSize: '.82rem',
-              color: 'rgba(244,240,230,.7)',
+              color: darkMode ? 'rgba(244,240,230,.7)' : 'rgba(14,14,13,.75)',
               lineHeight: 1.7,
               marginBottom: '16px',
               padding: '12px 14px',
@@ -1119,6 +1142,7 @@ export default function PortalDashboard({
                   }}
                   onClick={() => setDismissedAlerts(prev => new Set([...prev, a.id]))}
                   title="Dispensar"
+                  aria-label="Dispensar alerta"
                 >
                   ×
                 </button>
@@ -1146,11 +1170,11 @@ export default function PortalDashboard({
           marginBottom: '28px',
         }}
       >
-        {kpiCards.map((kpi, idx) => (
+        {kpiCards.map((kpi) => (
           <div
-            key={idx}
+            key={kpi.title}
             data-stagger=""
-            className={`kpi-card animate-fade-up stagger-${idx + 1}`}
+            className={`kpi-card animate-fade-up`}
             style={{
               background: cardBg,
               border: `1px solid ${kpi.highlight ? kpi.color + '40' : borderCol}`,
@@ -1317,9 +1341,10 @@ export default function PortalDashboard({
                 border: 'none',
                 fontFamily: "'DM Mono',monospace",
                 fontSize: '.52rem',
-                color: '#1c4a35',
+                color: darkMode ? '#6fcf97' : '#1c4a35',
                 cursor: 'pointer',
                 letterSpacing: '.08em',
+                transition: 'opacity .15s ease',
               }}
               onClick={() => onSetSection('pipeline')}
             >
@@ -1339,11 +1364,11 @@ export default function PortalDashboard({
                   className="pipeline-row"
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '160px 1fr 120px',
+                    gridTemplateColumns: 'minmax(80px, 160px) 1fr minmax(60px, 120px)',
                     alignItems: 'center',
                     gap: '12px',
                     padding: '6px 8px',
-                    borderRadius: '2px',
+                    borderRadius: '6px',
                     transition: 'background .15s',
                   }}
                   onClick={() => onSetSection('pipeline')}
@@ -1357,6 +1382,10 @@ export default function PortalDashboard({
                             fontSize: '.60rem',
                             color: cardText,
                             letterSpacing: '.04em',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '100%',
                           }}
                         >
                           {s.stage}
@@ -1499,7 +1528,7 @@ export default function PortalDashboard({
                   fontSize: '.54rem',
                   letterSpacing: '.14em',
                   textTransform: 'uppercase',
-                  color: '#1c4a35',
+                  color: darkMode ? '#6fcf97' : '#1c4a35',
                   fontWeight: 600,
                 }}
               >
@@ -1521,8 +1550,8 @@ export default function PortalDashboard({
             style={{
               padding: '5px 14px',
               background: 'transparent',
-              border: '1px solid rgba(28,74,53,.2)',
-              color: '#1c4a35',
+              border: `1px solid ${darkMode ? 'rgba(111,207,151,.2)' : 'rgba(28,74,53,.2)'}`,
+              color: darkMode ? '#6fcf97' : '#1c4a35',
               fontFamily: "'DM Mono',monospace",
               fontSize: '.52rem',
               cursor: sofiaRefreshing ? 'not-allowed' : 'pointer',
@@ -1685,9 +1714,9 @@ export default function PortalDashboard({
                 style={{
                   marginTop: '12px',
                   padding: '4px 12px',
-                  background: 'rgba(28,74,53,.06)',
-                  border: '1px solid rgba(28,74,53,.2)',
-                  color: '#1c4a35',
+                  background: darkMode ? 'rgba(28,74,53,.25)' : 'rgba(28,74,53,.06)',
+                  border: `1px solid ${darkMode ? 'rgba(111,207,151,.25)' : 'rgba(28,74,53,.2)'}`,
+                  color: darkMode ? '#6fcf97' : '#1c4a35',
                   fontFamily: "'DM Mono',monospace",
                   fontSize: '.52rem',
                   cursor: 'pointer',
@@ -1835,9 +1864,10 @@ export default function PortalDashboard({
                 border: 'none',
                 fontFamily: "'DM Mono',monospace",
                 fontSize: '.52rem',
-                color: '#1c4a35',
+                color: darkMode ? '#6fcf97' : '#1c4a35',
                 cursor: 'pointer',
                 letterSpacing: '.08em',
+                transition: 'opacity .15s ease',
               }}
               onClick={() => onSetSection('crm')}
             >
@@ -1961,7 +1991,7 @@ export default function PortalDashboard({
                         letterSpacing: '.04em',
                       }}
                     >
-                      {c.nationality || '—'} · €{(c.budgetMax / 1000).toFixed(0)}K max · {timeAgo}
+                      {c.nationality || '—'} · €{((c.budgetMax ?? 0) / 1000).toFixed(0)}K max · {timeAgo}
                     </div>
                   </div>
                 </div>
@@ -2003,9 +2033,10 @@ export default function PortalDashboard({
                 border: 'none',
                 fontFamily: "'DM Mono',monospace",
                 fontSize: '.52rem',
-                color: '#1c4a35',
+                color: darkMode ? '#6fcf97' : '#1c4a35',
                 cursor: 'pointer',
                 letterSpacing: '.08em',
+                transition: 'opacity .15s ease',
               }}
               onClick={() => onSetSection('pipeline')}
             >
@@ -2027,7 +2058,7 @@ export default function PortalDashboard({
               </div>
             )}
             {topDeals.map(d => {
-              const val = parseFloat(d.valor.replace(/[^0-9.]/g, '')) || 0
+              const val = parseValorLocal(d.valor)
               const pct = STAGE_PCT[d.fase] ?? 0
               const color = STAGE_COLOR[d.fase] ?? '#888'
               return (
@@ -2047,6 +2078,8 @@ export default function PortalDashboard({
                       justifyContent: 'space-between',
                       alignItems: 'flex-start',
                       marginBottom: '8px',
+                      flexWrap: 'wrap',
+                      gap: '4px',
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -2199,7 +2232,7 @@ export default function PortalDashboard({
                   alignItems: 'center',
                   gap: '14px',
                   position: 'relative',
-                  borderRadius: '8px',
+                  borderRadius: '12px',
                 }}
                 onClick={() => onSetSection(a.sec)}
               >
@@ -2309,7 +2342,7 @@ export default function PortalDashboard({
                     color: a.color,
                     opacity: 0,
                     transform: 'translateX(-4px)',
-                    transition: 'all .15s',
+                    transition: 'opacity .15s ease, transform .15s ease',
                     flexShrink: 0,
                   }}
                 >
@@ -2331,13 +2364,13 @@ export default function PortalDashboard({
           padding: '10px 0',
           overflow: 'hidden',
           marginTop: '8px',
-          borderRadius: '8px',
+          borderRadius: '12px',
         }}
       >
         <div className="ticker-inner">
           {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
             <span
-              key={i}
+              key={`t-${i}`}
               style={{
                 fontFamily: "'DM Mono',monospace",
                 fontSize: '.54rem',
@@ -2387,7 +2420,7 @@ export default function PortalDashboard({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: '#1c4a35',
+              color: darkMode ? '#6fcf97' : '#1c4a35',
             }}
             onClick={() => onSetSection(tab.sec)}
           >
