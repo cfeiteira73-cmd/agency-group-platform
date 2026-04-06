@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, type CSSProperties } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { useMarketingStore } from '../stores/marketingStore'
 import { FORMATS, PERSONAS } from './constants'
@@ -373,7 +373,7 @@ function PerformancePreview({ text, format, darkMode }: { text: string; format: 
 }
 
 // ─── Copy Button with feedback ────────────────────────────────────────────────
-function CopyButton({ text, label = 'Copiar', style: btnStyle = {} }: { text: string; label?: string; style?: React.CSSProperties }) {
+function CopyButton({ text, label = 'Copiar', style: btnStyle = {} }: { text: string; label?: string; style?: CSSProperties }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback(async () => {

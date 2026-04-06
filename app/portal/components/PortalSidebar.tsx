@@ -1,5 +1,6 @@
 'use client'
 
+import { type ReactNode } from 'react'
 import Link from 'next/link'
 import { NAV, SECTION_NAMES } from './constants'
 import type { SectionId } from './types'
@@ -54,7 +55,7 @@ export default function PortalSidebar({
       {/* Nav — grouped */}
       <nav role="navigation" aria-label="Portal navigation" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '10px 0', minHeight: 0, position: 'relative', top: 'auto', left: 'auto', right: 'auto', zIndex: 'auto' as unknown as number, width: 'auto', background: 'transparent', display: 'flex', flexDirection: 'column' }}>
         {(() => {
-          const rendered: React.ReactNode[] = []
+          const rendered: ReactNode[] = []
           let lastGroup = '__start__'
           NAV.forEach(item => {
             if (item.group !== lastGroup) {

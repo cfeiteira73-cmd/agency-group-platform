@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 
 export default function PortalLogin() {
   const [email, setEmail] = useState('')
@@ -31,7 +31,7 @@ export default function PortalLogin() {
       .catch(() => setError('Erro de rede. Tenta novamente.'))
   }, [])
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: FormEvent) {
     e.preventDefault()
     if (!email || !email.includes('@')) { setError('Introduz um email válido.'); return }
     setSending(true)

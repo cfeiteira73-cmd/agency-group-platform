@@ -6,7 +6,7 @@ import { useCRMStore } from '../stores/crmStore'
 import type { SectionId } from './types'
 import { PIPELINE_STAGES, STAGE_PCT, STAGE_COLOR } from './constants'
 import { useStaggerIn, useFadeIn } from '../hooks/useGSAPAnimations'
-import { SkeletonDashboard, SkeletonKPIGrid } from './PortalSkeleton'
+import { SkeletonKPIGrid } from './PortalSkeleton'
 import Tooltip from './Tooltip'
 
 interface PortalDashboardProps {

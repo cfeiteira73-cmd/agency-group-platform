@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type TouchEvent } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -254,7 +254,7 @@ function BeforeAfterSlider({
     return () => { window.removeEventListener('mouseup', up); window.removeEventListener('mousemove', move) }
   }, [dragging, updateSlider])
 
-  const handleTouch = (e: React.TouchEvent) => {
+  const handleTouch = (e: TouchEvent) => {
     e.preventDefault()
     const t = e.touches[0]
     if (t) updateSlider(t.clientX)

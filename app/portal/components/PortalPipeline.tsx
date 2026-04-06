@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect, type DragEvent } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { useDealStore } from '../stores/dealStore'
 import { PIPELINE_STAGES, STAGE_PCT, STAGE_COLOR, CHECKLISTS } from './constants'
@@ -600,7 +600,7 @@ function KanbanView({
     return '#1c4a35'
   }
 
-  const handleDragStart = useCallback((e: React.DragEvent, dealId: number) => {
+  const handleDragStart = useCallback((e: DragEvent, dealId: number) => {
     setDraggingId(dealId)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', String(dealId))
@@ -612,25 +612,25 @@ function KanbanView({
     dragCounter.current = {}
   }, [])
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
   }, [])
 
-  const handleDragEnter = useCallback((e: React.DragEvent, stage: string) => {
+  const handleDragEnter = useCallback((e: DragEvent, stage: string) => {
     e.preventDefault()
     dragCounter.current[stage] = (dragCounter.current[stage] || 0) + 1
     setDragOverStage(stage)
   }, [])
 
-  const handleDragLeave = useCallback((e: React.DragEvent, stage: string) => {
+  const handleDragLeave = useCallback((e: DragEvent, stage: string) => {
     dragCounter.current[stage] = Math.max(0, (dragCounter.current[stage] || 1) - 1)
     if (dragCounter.current[stage] === 0) {
       setDragOverStage(prev => prev === stage ? null : prev)
     }
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent, stage: string) => {
+  const handleDrop = useCallback((e: DragEvent, stage: string) => {
     e.preventDefault()
     const id = parseInt(e.dataTransfer.getData('text/plain'))
     if (!isNaN(id)) {

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type ReactNode, type RefObject } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { PORTAL_PROPERTIES } from './constants'
 
@@ -13,7 +13,7 @@ interface PortalSofiaProps {
   sofiaScriptLoading: boolean
   sofiaPropSel: string
   sofiaLang: 'PT' | 'EN' | 'FR' | 'AR'
-  sofiaVideoRef: React.RefObject<HTMLVideoElement | null>
+  sofiaVideoRef: RefObject<HTMLVideoElement | null>
   setSofiaText: (s: string) => void
   setSofiaPropSel: (s: string) => void
   setSofiaLang: (l: 'PT' | 'EN' | 'FR' | 'AR') => void
@@ -58,9 +58,9 @@ const CONVERSATION_STARTERS = [
   { icon: '🔎', text: 'Que zonas de Portugal têm maior potencial de valorização nos próximos 3 anos?' },
 ]
 
-function renderMarkdown(text: string): React.ReactNode[] {
+function renderMarkdown(text: string): ReactNode[] {
   const lines = text.split('\n')
-  const result: React.ReactNode[] = []
+  const result: ReactNode[] = []
   let keyIdx = 0
 
   for (let i = 0; i < lines.length; i++) {
@@ -105,7 +105,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
   return result
 }
 
-function inlineFormat(text: string): React.ReactNode {
+function inlineFormat(text: string): ReactNode {
   // Bold **text**
   const parts = text.split(/(\*\*[^*]+\*\*)/g)
   return parts.map((part, i) => {
@@ -342,7 +342,7 @@ export default function PortalSofia({
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1f15', position: 'relative' }}>
             {sofiaConnected ? (
               <video
-                ref={sofiaVideoRef as React.RefObject<HTMLVideoElement>}
+                ref={sofiaVideoRef as RefObject<HTMLVideoElement>}
                 autoPlay
                 playsInline
                 style={{ width: '100%', maxWidth: '500px', height: 'auto', borderRadius: '4px' }}

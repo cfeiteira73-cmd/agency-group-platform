@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, type ReactNode } from 'react'
 import { PORTAL_PROPERTIES } from './constants'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1149,7 +1149,7 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
   )
 }
 
-function MemoSection({ title, children }: { title: string; children: React.ReactNode }) {
+function MemoSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div style={{ marginBottom: 24 }}>
       <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 16, fontWeight: 300, color: G, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
