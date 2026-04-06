@@ -140,7 +140,7 @@ function fmtK(v: number): string {
 
 // ─── SVG Gauge ────────────────────────────────────────────────────────────────
 
-function GCIGauge({ pct, label, value }: { pct: number; label: string; value: string }) {
+function GCIGauge({ pct, label, value, darkMode = false }: { pct: number; label: string; value: string; darkMode?: boolean }) {
   const r = 36
   const cx = 44
   const cy = 46
@@ -154,7 +154,7 @@ function GCIGauge({ pct, label, value }: { pct: number; label: string; value: st
     <svg width="88" height="56" viewBox="0 0 88 56" aria-label={`${label}: ${value}`} style={{ overflow: 'visible' }}>
       <path
         d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
-        fill="none" stroke="rgba(14,14,13,.07)" strokeWidth="7" strokeLinecap="round"
+        fill="none" stroke={darkMode ? 'rgba(240,237,228,.08)' : 'rgba(14,14,13,.07)'} strokeWidth="7" strokeLinecap="round"
       />
       <path
         d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
@@ -163,7 +163,7 @@ function GCIGauge({ pct, label, value }: { pct: number; label: string; value: st
         style={{ transition: 'stroke-dasharray .7s cubic-bezier(.4,0,.2,1), stroke .4s ease' }}
       />
       <text x={cx} y={cy - 10} textAnchor="middle" style={{ fontFamily: "'Cormorant',serif", fontSize: '12px', fill: color, fontWeight: 600 }}>{value}</text>
-      <text x={cx} y={cy + 4} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '5.5px', fill: 'rgba(14,14,13,.35)', letterSpacing: '.08em', textTransform: 'uppercase' }}>{label}</text>
+      <text x={cx} y={cy + 4} textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '5.5px', fill: darkMode ? 'rgba(240,237,228,.45)' : 'rgba(14,14,13,.35)', letterSpacing: '.08em', textTransform: 'uppercase' }}>{label}</text>
     </svg>
   )
 }
@@ -327,7 +327,7 @@ function ActivityTimelineBanner({ moves, darkMode }: { moves: PipelineMove[]; da
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: fromColor, padding: '1px 5px', background: fromColor + '15', borderRadius: '2px' }}>{m.fromFase}</span>
                 <svg width="12" height="8" viewBox="0 0 12 8" aria-label="avançou para">
-                  <path d="M0 4h9M6 1l3 3-3 3" stroke="rgba(14,14,13,.3)" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M0 4h9M6 1l3 3-3 3" stroke={darkMode ? 'rgba(240,237,228,.30)' : 'rgba(14,14,13,.3)'} strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: toColor, padding: '1px 5px', background: toColor + '15', borderRadius: '2px' }}>{m.toFase}</span>
               </div>
@@ -410,7 +410,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
           }}>
-            <GCIGauge pct={m.pct} label={m.label} value={m.value} />
+            <GCIGauge pct={m.pct} label={m.label} value={m.value} darkMode={darkMode} />
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.3)', marginTop: '4px', textAlign: 'center' }}>{m.sub}</div>
           </div>
         ))}
@@ -1068,7 +1068,7 @@ function DealDetailPanel({
           <div style={{ flexShrink: 0 }}>
             {/* Mini health gauge */}
             <svg width="52" height="34" viewBox="0 0 52 34" aria-label={`Health score: ${score}%`} style={{ overflow: 'visible' }}>
-              <path d={`M 6 30 A 20 20 0 0 1 46 30`} fill="none" stroke="rgba(14,14,13,.07)" strokeWidth="5" strokeLinecap="round" />
+              <path d={`M 6 30 A 20 20 0 0 1 46 30`} fill="none" stroke={darkMode ? 'rgba(240,237,228,.08)' : 'rgba(14,14,13,.07)'} strokeWidth="5" strokeLinecap="round" />
               <path
                 d={`M 6 30 A 20 20 0 0 1 46 30`}
                 fill="none" stroke={hColor} strokeWidth="5" strokeLinecap="round"

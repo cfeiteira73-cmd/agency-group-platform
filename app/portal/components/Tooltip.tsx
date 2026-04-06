@@ -1,9 +1,9 @@
 'use client'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type ReactNode, type MouseEvent } from 'react'
 
 interface TooltipProps {
   content: string
-  children: React.ReactNode
+  children: ReactNode
   position?: 'top' | 'bottom' | 'left' | 'right'
   delay?: number
   darkMode?: boolean
@@ -122,7 +122,7 @@ export function useTooltip() {
     shortcut?: string
   }>({ content: '', x: 0, y: 0, visible: false })
 
-  const show = useCallback((e: React.MouseEvent, content: string, shortcut?: string) => {
+  const show = useCallback((e: MouseEvent, content: string, shortcut?: string) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     setTooltip({
       content,

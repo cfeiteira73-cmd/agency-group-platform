@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useCRMStore } from '../stores/crmStore'
 import { useDealStore } from '../stores/dealStore'
+import { useUIStore } from '../stores/uiStore'
 import { exportToPDF } from '../utils/export'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ interface BarChartProps {
   highlightTop?: number
   highlightColor?: string
   showTrend?: boolean
+  darkMode?: boolean
 }
 
 interface DonutSegment {
@@ -31,6 +33,7 @@ interface DonutChartProps {
   size?: number
   thickness?: number
   centerLabel?: string
+  darkMode?: boolean
 }
 
 interface LineSeries {
@@ -45,6 +48,7 @@ interface LineChartProps {
   height?: number
   showGrid?: boolean
   yPrefix?: string
+  darkMode?: boolean
 }
 
 interface AgentData {
@@ -186,7 +190,7 @@ function scoreCell(score: number): string {
 
 // ─── SVG CHART COMPONENTS ──────────────────────────────────────────────────────
 
-function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop = 3, highlightColor = '#c9a96e', showTrend = true }: BarChartProps) {
+function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop = 3, highlightColor = '#c9a96e', showTrend = true, darkMode = false }: BarChartProps) {
   const [tooltip, setTooltip] = useState<{ idx: number; x: number; y: number } | null>(null)
   const W = 600, H = height + 40
   const PAD = { top: 10, right: 8, bottom: 32, left: 8 }
@@ -234,7 +238,7 @@ function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop 
           <line key={t}
             x1={PAD.left} y1={PAD.top + chartH * (1 - t)}
             x2={W - PAD.right} y2={PAD.top + chartH * (1 - t)}
-            stroke="rgba(14,14,13,.06)" strokeWidth="1" strokeDasharray="2,4"
+            stroke={darkMode ? 'rgba(240,237,228,.06)' : 'rgba(14,14,13,.06)'} strokeWidth="1" strokeDasharray="2,4"
           />
         ))}
 
@@ -256,7 +260,7 @@ function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop 
                 x={x + 1} y={y + 2}
                 width={bw} height={bh}
                 rx={3} ry={3}
-                fill="rgba(14,14,13,.06)"
+                fill={darkMode ? 'rgba(240,237,228,.04)' : 'rgba(14,14,13,.06)'}
               />
               {/* Main bar */}
               <rect
@@ -285,7 +289,7 @@ function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop 
                 <text
                   x={PAD.left + i * barW + barW / 2} y={H - 8}
                   textAnchor="middle"
-                  fill="rgba(14,14,13,.38)"
+                  fill={darkMode ? 'rgba(240,237,228,.38)' : 'rgba(14,14,13,.38)'}
                   fontSize="8"
                   fontFamily="DM Mono, monospace"
                 >
@@ -316,12 +320,12 @@ function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop 
               x={Math.min(tooltip.x - 28, W - 70)}
               y={tooltip.y - 28}
               width={64} height={20} rx={4}
-              fill="#0e0e0d" opacity="0.85"
+              fill={darkMode ? 'rgba(240,237,228,.90)' : '#0e0e0d'} opacity="0.85"
             />
             <text
               x={Math.min(tooltip.x - 28, W - 70) + 32}
               y={tooltip.y - 14}
-              textAnchor="middle" fontSize="8.5" fill="#f4f0e6"
+              textAnchor="middle" fontSize="8.5" fill={darkMode ? '#0e0e0d' : '#f4f0e6'}
               fontFamily="DM Mono, monospace"
             >{fmt(data[tooltip.idx])}</text>
           </g>
@@ -331,7 +335,7 @@ function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop 
   )
 }
 
-function DonutChart({ segments, size = 160, thickness = 36, centerLabel }: DonutChartProps) {
+function DonutChart({ segments, size = 160, thickness = 36, centerLabel, darkMode = false }: DonutChartProps) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t) }, [])
 
@@ -372,7 +376,7 @@ function DonutChart({ segments, size = 160, thickness = 36, centerLabel }: Donut
         <circle
           cx={cx} cy={cy} r={r}
           fill="none"
-          stroke="rgba(14,14,13,.06)"
+          stroke={darkMode ? 'rgba(240,237,228,.08)' : 'rgba(14,14,13,.06)'}
           strokeWidth={thickness}
         />
 
@@ -382,22 +386,22 @@ function DonutChart({ segments, size = 160, thickness = 36, centerLabel }: Donut
             key={i}
             d={arc.path}
             fill={`url(#donut-grad-${i})`}
-            stroke="rgba(255,255,255,.08)"
+            stroke={darkMode ? 'rgba(0,0,0,.20)' : 'rgba(255,255,255,.08)'}
             strokeWidth="1"
           />
         ))}
 
         {/* Center hole cutout */}
-        <circle cx={cx} cy={cy} r={r - thickness / 2} fill="white" />
+        <circle cx={cx} cy={cy} r={r - thickness / 2} fill={darkMode ? '#0f1e16' : 'white'} />
 
         {/* Center label */}
         {centerLabel && (
           <>
-            <text x={cx} y={cy - 4} textAnchor="middle" fill="#1c4a35"
+            <text x={cx} y={cy - 4} textAnchor="middle" fill={darkMode ? '#c9a96e' : '#1c4a35'}
               fontSize="20" fontFamily="Cormorant, serif" fontWeight="300">
               {centerLabel}
             </text>
-            <text x={cx} y={cy + 12} textAnchor="middle" fill="rgba(14,14,13,.40)"
+            <text x={cx} y={cy + 12} textAnchor="middle" fill={darkMode ? 'rgba(240,237,228,.40)' : 'rgba(14,14,13,.40)'}
               fontSize="7" fontFamily="DM Mono, monospace" letterSpacing="1">
               TOTAL
             </text>
@@ -408,7 +412,7 @@ function DonutChart({ segments, size = 160, thickness = 36, centerLabel }: Donut
         {segments.map((seg, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: seg.color, flexShrink: 0 }} />
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#0e0e0d' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: darkMode ? 'rgba(240,237,228,.85)' : '#0e0e0d' }}>
               {seg.label} <strong>{seg.value}%</strong>
             </span>
           </div>
@@ -418,7 +422,7 @@ function DonutChart({ segments, size = 160, thickness = 36, centerLabel }: Donut
   )
 }
 
-function LineChart({ series, labels, height = 100, showGrid = true, yPrefix = '' }: LineChartProps) {
+function LineChart({ series, labels, height = 100, showGrid = true, yPrefix = '', darkMode = false }: LineChartProps) {
   const [tooltip, setTooltip] = useState<{ si: number; di: number; x: number; y: number } | null>(null)
   const W = 600
   const H = height
@@ -466,13 +470,13 @@ function LineChart({ series, labels, height = 100, showGrid = true, yPrefix = ''
           <line key={t}
             x1={PAD.left} y1={PAD.top + chartH * (1 - t)}
             x2={W - PAD.right} y2={PAD.top + chartH * (1 - t)}
-            stroke="rgba(14,14,13,.06)" strokeWidth="1" strokeDasharray="2,4"
+            stroke={darkMode ? 'rgba(240,237,228,.06)' : 'rgba(14,14,13,.06)'} strokeWidth="1" strokeDasharray="2,4"
           />
         ))}
 
         {labels.map((lbl, i) => (
           <text key={i} x={getX(i)} y={H - 4}
-            textAnchor="middle" fontSize="8" fill="rgba(14,14,13,.38)"
+            textAnchor="middle" fontSize="8" fill={darkMode ? 'rgba(240,237,228,.38)' : 'rgba(14,14,13,.38)'}
             fontFamily="'DM Mono',monospace"
           >{lbl}</text>
         ))}
@@ -528,12 +532,12 @@ function LineChart({ series, labels, height = 100, showGrid = true, yPrefix = ''
               x={Math.min(tooltip.x - 32, W - 74)}
               y={tooltip.y - 26}
               width={70} height={18} rx={3}
-              fill="#0e0e0d" opacity="0.85"
+              fill={darkMode ? 'rgba(240,237,228,.90)' : '#0e0e0d'} opacity="0.85"
             />
             <text
               x={Math.min(tooltip.x - 32, W - 74) + 35}
               y={tooltip.y - 13}
-              textAnchor="middle" fontSize="8" fill="#f4f0e6"
+              textAnchor="middle" fontSize="8" fill={darkMode ? '#0e0e0d' : '#f4f0e6'}
               fontFamily="'DM Mono',monospace"
             >{yPrefix}{series[tooltip.si].data[tooltip.di].toLocaleString('pt-PT')}</text>
           </g>
@@ -543,7 +547,7 @@ function LineChart({ series, labels, height = 100, showGrid = true, yPrefix = ''
         {series.map((s, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 20, height: 3, background: s.color, borderRadius: 2 }} />
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b6b5e' }}>{s.label}</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: darkMode ? 'rgba(240,237,228,.55)' : '#6b6b5e' }}>{s.label}</span>
           </div>
         ))}
       </div>
@@ -601,7 +605,7 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
 
 // ─── TAB: OVERVIEW ─────────────────────────────────────────────────────────────
 
-function TabOverview() {
+function TabOverview({ darkMode = false }: { darkMode?: boolean }) {
   const gciMensal = GCI_12M[GCI_12M.length - 1]
   const gciYTD = GCI_12M.slice(-12).reduce((a, b) => a + b, 0)
   const pipelineAtivo = PIPELINE_STAGES.reduce((acc, s) => acc + s.valor * (s.prob / 100), 0)
@@ -631,6 +635,7 @@ function TabOverview() {
           highlightTop={3}
           highlightColor="#c9a96e"
           showTrend
+          darkMode={darkMode}
         />
       </div>
 
@@ -698,7 +703,7 @@ function TabOverview() {
 
 // ─── TAB: PIPELINE ─────────────────────────────────────────────────────────────
 
-function TabPipeline() {
+function TabPipeline({ darkMode = false }: { darkMode?: boolean }) {
   const totalPipeline = PIPELINE_STAGES.reduce((a, s) => a + s.valor, 0)
 
   return (
@@ -733,7 +738,7 @@ function TabPipeline() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div className="p-card">
           <SectionHeader title="Forecast GCI (3 meses)" sub="Pessimista · Base · Optimista" />
-          <LineChart series={FORECAST_SERIES} labels={FORECAST_LABELS} height={130} yPrefix="€" />
+          <LineChart series={FORECAST_SERIES} labels={FORECAST_LABELS} height={130} yPrefix="€" darkMode={darkMode} />
         </div>
 
         <div className="p-card">
@@ -777,7 +782,7 @@ function TabPipeline() {
       {/* Tipologia Donut */}
       <div className="p-card">
         <SectionHeader title="Pipeline por Tipologia" sub="Distribuição do valor de pipeline por tipo de imóvel" />
-        <DonutChart segments={TIPOLOGIA_SEGMENTS} size={150} thickness={38} centerLabel="4 tipos" />
+        <DonutChart segments={TIPOLOGIA_SEGMENTS} size={150} thickness={38} centerLabel="4 tipos" darkMode={darkMode} />
       </div>
     </div>
   )
@@ -785,7 +790,7 @@ function TabPipeline() {
 
 // ─── TAB: MERCADO ──────────────────────────────────────────────────────────────
 
-function TabMercado() {
+function TabMercado({ darkMode = false }: { darkMode?: boolean }) {
   const metricLabels = ['Preço/m²', 'Var. YoY', 'Volume', 'Dias Mkt']
 
   return (
@@ -841,16 +846,16 @@ function TabMercado() {
                   <rect x={x} y={108 - dH} width={42} height={dH} fill="#1c4a35" rx="2" opacity="0.85" />
                   {/* Supply bar */}
                   <rect x={x + 46} y={108 - sH} width={42} height={sH} fill="#c9a96e" rx="2" opacity="0.85" />
-                  <text x={x + 44} y={120} textAnchor="middle" fontSize="8" fill="#6b6b5e" fontFamily="'DM Mono',monospace">{label}</text>
-                  <text x={x + 44} y={108 - Math.max(dH, sH) - 4} textAnchor="middle" fontSize="8" fill="#0e0e0d" fontFamily="'DM Mono',monospace">×{ratio}</text>
+                  <text x={x + 44} y={120} textAnchor="middle" fontSize="8" fill={darkMode ? 'rgba(240,237,228,.55)' : '#6b6b5e'} fontFamily="'DM Mono',monospace">{label}</text>
+                  <text x={x + 44} y={108 - Math.max(dH, sH) - 4} textAnchor="middle" fontSize="8" fill={darkMode ? 'rgba(240,237,228,.85)' : '#0e0e0d'} fontFamily="'DM Mono',monospace">×{ratio}</text>
                 </g>
               )
             })}
             {/* Legend */}
             <rect x={10} y={4} width={10} height={8} fill="#1c4a35" rx="1" />
-            <text x={24} y={12} fontSize="8" fill="#6b6b5e" fontFamily="'DM Mono',monospace">Compradores</text>
+            <text x={24} y={12} fontSize="8" fill={darkMode ? 'rgba(240,237,228,.55)' : '#6b6b5e'} fontFamily="'DM Mono',monospace">Compradores</text>
             <rect x={100} y={4} width={10} height={8} fill="#c9a96e" rx="1" />
-            <text x={114} y={12} fontSize="8" fill="#6b6b5e" fontFamily="'DM Mono',monospace">Disponíveis</text>
+            <text x={114} y={12} fontSize="8" fill={darkMode ? 'rgba(240,237,228,.55)' : '#6b6b5e'} fontFamily="'DM Mono',monospace">Disponíveis</text>
           </svg>
         </div>
       </div>
@@ -859,12 +864,12 @@ function TabMercado() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div className="p-card">
           <SectionHeader title="Compradores por Nacionalidade" sub="Segmento €500K–€3M" />
-          <DonutChart segments={NATIONALITY_SEGMENTS} size={140} thickness={34} centerLabel="7 nac." />
+          <DonutChart segments={NATIONALITY_SEGMENTS} size={140} thickness={34} centerLabel="7 nac." darkMode={darkMode} />
         </div>
 
         <div className="p-card">
           <SectionHeader title="Evolução Preço/m²" sub="Últimos 8 trimestres — Lisboa · Cascais · Algarve" />
-          <LineChart series={PRICE_TREND_SERIES} labels={PRICE_TREND_LABELS} height={130} yPrefix="€" />
+          <LineChart series={PRICE_TREND_SERIES} labels={PRICE_TREND_LABELS} height={130} yPrefix="€" darkMode={darkMode} />
         </div>
       </div>
     </div>
@@ -1095,6 +1100,7 @@ function TabEquipa() {
 export default function PortalAnalytics() {
   const { crmContacts } = useCRMStore()
   const { deals } = useDealStore()
+  const { darkMode } = useUIStore()
 
   const [activeTab, setActiveTab] = useState<TabId>('overview')
   const [period, setPeriod] = useState<PeriodId>('ano')
@@ -1284,9 +1290,9 @@ export default function PortalAnalytics() {
 
         {/* Tab Content */}
         <div style={{ maxWidth: 1280 }}>
-          {activeTab === 'overview' && <TabOverview />}
-          {activeTab === 'pipeline' && <TabPipeline />}
-          {activeTab === 'mercado'  && <TabMercado />}
+          {activeTab === 'overview' && <TabOverview darkMode={darkMode} />}
+          {activeTab === 'pipeline' && <TabPipeline darkMode={darkMode} />}
+          {activeTab === 'mercado'  && <TabMercado darkMode={darkMode} />}
           {activeTab === 'equipa'   && <TabEquipa />}
         </div>
 
