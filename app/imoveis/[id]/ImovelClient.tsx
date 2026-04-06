@@ -7,6 +7,7 @@ import FavoriteButton from '../FavoriteButton'
 import { getPropertyPhotos } from '../photos'
 import VideoSection from '../../components/VideoSection'
 import NeighbourhoodIntel from '../../components/NeighbourhoodIntel'
+import { NeighborhoodIntel } from '../../components/NeighborhoodIntel'
 import Matterport3DTour from '@/app/components/Matterport3DTour'
 import { CurrencySelector, useCurrency } from '../../components/CurrencyWidget'
 import dynamic from 'next/dynamic'
@@ -902,6 +903,14 @@ export default function ImovelClient({ id }: { id: string }) {
                 Evolução do Mercado · {property.zona}
               </div>
               <PriceHistoryChart zona={property.zona} currentPm2={Math.round(property.preco / property.area)} />
+            </div>
+
+            {/* ── Neighborhood Intelligence (detailed scores) ── */}
+            <div style={{ marginTop: '32px' }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.22em', textTransform: 'uppercase', color: 'rgba(201,169,110,.55)', marginBottom: '16px' }}>
+                Neighborhood Intelligence · {property.zona}
+              </div>
+              <NeighborhoodIntel area={property.bairro} zone={property.zona} />
             </div>
 
             {/* ── Agent Card ── */}

@@ -22,6 +22,7 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/track-view':   { max: 200, window: 3_600_000 },
   '/api/mais-valias':  { max: 100, window: 3_600_000 },
   '/api/financing':    { max: 100, window: 3_600_000 },
+  '/api/neighborhood': { max: 100, window: 3_600_000 },
 }
 
 // ─── Bot blacklist (User-Agent) ──────────────────────────────────────────────
