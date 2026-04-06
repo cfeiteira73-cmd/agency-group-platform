@@ -52,6 +52,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/blog/lisbon-vs-porto-investment-2026`,        lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/portugal-retirement-haven-2026`,         lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/acores-investimento-imobiliario-2026`,   lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    // ── Wave 6 EN+PT SEO blog articles ───────────────────────────────────────────
+    { url: `${BASE}/blog/buying-property-portugal-guide-2026`,    lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/algarve-golden-triangle-2026`,           lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/investir-madeira-2026`,                  lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/primeira-casa-lisboa-guia-2026`,         lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/portugal-vs-spain-tax-residency-2026`,   lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     // /portal is disallowed in robots.txt — excluded from sitemap
   ]
 
