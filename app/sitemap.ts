@@ -33,6 +33,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/blog/mercado-imoveis-porto-2026`,         lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/apartamentos-luxo-cascais-comprar`,  lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/vender-imovel-portugal-2026`,        lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    // ── EN SEO blog articles ──────────────────────────────────────────────────────
+    { url: `${BASE}/blog/luxury-property-lisbon`,                 lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/nhr-portugal-2026-guide`,                lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/buy-property-cascais`,                   lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/property-investment-portugal-returns`,   lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/golden-visa-portugal-alternatives-2026`, lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/buying-property-portugal-2026`,          lastModified: new Date('2026-04-02'), changeFrequency: 'monthly', priority: 0.82 },
+    // ── Wave 4 EN+FR SEO blog articles ───────────────────────────────────────────
+    { url: `${BASE}/blog/luxury-villas-algarve-2026`,             lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/madeira-island-property-investment`,     lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/portugal-vs-spain-property-2026`,       lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/acheter-appartement-lisbonne-guide`,     lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/comporta-portugal-luxury-market`,        lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     // /portal is disallowed in robots.txt — excluded from sitemap
   ]
 
