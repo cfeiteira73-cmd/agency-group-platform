@@ -188,16 +188,16 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
   return (
     <div>
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Regime Fiscal de Residência</div>
-        <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: col }}>NHR / IFICI Analyser</div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>NHR até 2023 · IFICI 2024+ · Comparação regimes · Taxa 20% / 10%</div>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Regime Fiscal de Residência</div>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.8rem', color: col }}>NHR / IFICI Analyser</div>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>NHR até 2023 · IFICI 2024+ · Comparação regimes · Taxa 20% / 10%</div>
       </div>
 
       {/* Persona presets */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {PERSONAS_NHR.map(p => (
           <button key={p.label}
-            style={{ padding: '6px 14px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer' }}
+            style={{ padding: '6px 14px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
             onClick={() => onRunNHR(p)}
           >{p.label}</button>
         ))}
@@ -225,7 +225,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <input type="checkbox" id="nhrFonte" checked={nhrFonte} onChange={e => setNhrFonte(e.target.checked)} />
-              <label htmlFor="nhrFonte" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}>Fonte estrangeira (rendimento auferido fora de Portugal)</label>
+              <label htmlFor="nhrFonte" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}>Fonte estrangeira (rendimento auferido fora de Portugal)</label>
             </div>
             <button className="p-btn" onClick={() => onRunNHR()} disabled={nhrLoading || !nhrRend}>
               {nhrLoading ? '✦ A calcular...' : '✦ Analisar NHR / IFICI'}
@@ -268,9 +268,10 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                         background: regime === b || (b === 'NHR' && regime !== 'IFICI') ? 'rgba(28,74,53,.1)' : 'transparent',
                         border: `1px solid ${regime === b || (b === 'NHR' && regime !== 'IFICI') ? 'rgba(28,74,53,.3)' : 'rgba(14,14,13,.1)'}`,
                         fontFamily: "'DM Mono',monospace",
-                        fontSize: '.4rem',
+                        fontSize: '.52rem',
                         color: regime === b || (b === 'NHR' && regime !== 'IFICI') ? '#1c4a35' : 'rgba(14,14,13,.3)',
                         letterSpacing: '.06em',
+                        borderRadius: '4px',
                       }}>
                         {b === 'NHR' ? 'NHR (pré-2024)' : b === 'IFICI' ? 'IFICI 2024+' : 'Ambos aplicáveis'}
                       </div>
@@ -285,8 +286,8 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                       { label: 'Poupança Anual', val: `€${poupanca.toLocaleString('pt-PT')}`, accent: '#4a9c7a' },
                       { label: 'Taxa Efectiva', val: `${taxaEfetiva}%`, accent: '#c9a96e' },
                     ].map(({ label, val, accent }) => (
-                      <div key={label} style={{ padding: '14px', background: cardBg, border: `1px solid ${borderCol}` }}>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em', marginBottom: '6px' }}>{label.toUpperCase()}</div>
+                      <div key={label} style={{ padding: '14px', background: cardBg, border: `1px solid ${borderCol}`, borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em', marginBottom: '6px' }}>{label.toUpperCase()}</div>
                         <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.5rem', fontWeight: 300, color: accent, lineHeight: 1 }}>{val}</div>
                       </div>
                     ))}
@@ -296,8 +297,8 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                   {poupancaPct > 0 && (
                     <div style={{ marginBottom: '14px', padding: '12px', background: 'rgba(74,156,122,.04)', border: '1px solid rgba(74,156,122,.12)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)' }}>POUPANÇA VS REGIME GERAL</span>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#4a9c7a' }}>{poupancaPct}%</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>POUPANÇA VS REGIME GERAL</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a' }}>{poupancaPct}%</span>
                       </div>
                       <div style={{ height: '6px', background: 'rgba(14,14,13,.08)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${Math.min(poupancaPct, 100)}%`, background: '#4a9c7a', borderRadius: '3px', transition: 'width .4s ease' }} />
@@ -309,15 +310,15 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                   )}
 
                   {/* Breakdown */}
-                  <div style={{ padding: '12px', background: cardBg, border: `1px solid ${borderCol}` }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '10px' }}>BREAKDOWN POR TIPO</div>
+                  <div style={{ padding: '12px', background: cardBg, border: `1px solid ${borderCol}`, borderRadius: '10px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '10px' }}>BREAKDOWN POR TIPO</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${borderCol}` }}>
                       <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: col }}>{tipoLabel}</span>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#1c4a35' }}>€{impostoNHR.toLocaleString('pt-PT')}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35' }}>€{impostoNHR.toLocaleString('pt-PT')}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
                       <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.4)' }}>Sem NHR/IFICI</span>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', textDecoration: 'line-through' }}>€{impostoGeral.toLocaleString('pt-PT')}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textDecoration: 'line-through' }}>€{impostoGeral.toLocaleString('pt-PT')}</span>
                     </div>
                   </div>
                 </div>
@@ -326,7 +327,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
               {/* ── PROCESSO ── */}
               {nhrSubTab === 'processo' && (
                 <div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.35)', marginBottom: '16px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginBottom: '16px' }}>
                     Clique num passo para ver detalhes · Clique no estado para actualizar progresso
                   </div>
                   {NHR_STEPS.map((s) => {
@@ -354,25 +355,26 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                           {status === 'concluido' ? (
                             <span style={{ color: '#f4f0e6', fontSize: '.6rem', fontWeight: 700 }}>✓</span>
                           ) : (
-                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: status === 'em_curso' ? '#0e0e0d' : '#f4f0e6', fontWeight: 600 }}>{s.step}</span>
+                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: status === 'em_curso' ? '#0e0e0d' : '#f4f0e6', fontWeight: 600 }}>{s.step}</span>
                           )}
                         </div>
                         {/* Step card */}
-                        <div style={{ background: cardBg, border: `1px solid ${isExpanded ? 'rgba(28,74,53,.2)' : borderCol}` }}>
+                        <div style={{ background: cardBg, border: `1px solid ${isExpanded ? 'rgba(28,74,53,.2)' : borderCol}`, borderRadius: '10px' }}>
                           <div
                             onClick={() => toggleStep(s.step)}
                             style={{ padding: '12px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                           >
                             <div>
                               <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.88rem', fontWeight: 500, color: col, marginBottom: '2px' }}>{s.title}</div>
-                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)' }}>{s.duration} · {s.cost}</div>
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>{s.duration} · {s.cost}</div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{
-                                fontFamily: "'DM Mono',monospace", fontSize: '.32rem',
+                                fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                                 color: STATUS_COLOR[status],
                                 background: `${STATUS_COLOR[status]}14`,
                                 padding: '2px 8px',
+                                borderRadius: '4px',
                               }}>{STATUS_LABEL[status]}</span>
                               <span style={{ color: 'rgba(14,14,13,.3)', fontSize: '.7rem' }}>{isExpanded ? '▲' : '▼'}</span>
                             </div>
@@ -381,7 +383,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                             <div style={{ padding: '0 14px 14px', borderTop: `1px solid ${borderCol}` }}>
                               <div style={{ marginTop: '10px', fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: 'rgba(14,14,13,.6)', marginBottom: '10px' }}>{s.desc}</div>
                               <div style={{ marginBottom: '10px' }}>
-                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '6px' }}>DOCUMENTOS NECESSÁRIOS</div>
+                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '6px' }}>DOCUMENTOS NECESSÁRIOS</div>
                                 {s.docs.map((doc, di) => (
                                   <div key={di} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
                                     <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#1c4a35', flexShrink: 0 }} />
@@ -390,7 +392,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                                 ))}
                               </div>
                               <div style={{ padding: '8px 10px', background: 'rgba(201,169,110,.05)', border: '1px solid rgba(201,169,110,.15)' }}>
-                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#c9a96e', letterSpacing: '.06em', marginBottom: '3px' }}>NOTA</div>
+                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', letterSpacing: '.06em', marginBottom: '3px' }}>NOTA</div>
                                 <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.55)' }}>{s.notes}</div>
                               </div>
                             </div>
@@ -406,10 +408,10 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
               {nhrSubTab === 'share' && (
                 <div style={{ display: 'grid', gap: '14px' }}>
                   {/* Summary preview */}
-                  <div style={{ padding: '14px', background: cardBg, border: `1px solid ${borderCol}` }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '10px' }}>RESUMO DA SIMULAÇÃO</div>
+                  <div style={{ padding: '14px', background: cardBg, border: `1px solid ${borderCol}`, borderRadius: '10px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '10px' }}>RESUMO DA SIMULAÇÃO</div>
                     <pre style={{
-                      fontFamily: "'DM Mono',monospace", fontSize: '.42rem',
+                      fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                       color: 'rgba(14,14,13,.6)', whiteSpace: 'pre-wrap',
                       lineHeight: 1.7, margin: 0,
                     }}>{buildResumo()}</pre>
@@ -425,7 +427,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                       {copied ? '✓ Copiado!' : 'Copiar Resumo'}
                     </button>
                     <button
-                      style={{ padding: '8px 18px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer' }}
+                      style={{ padding: '8px 18px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                       onClick={() => {
                         const w = window.open('', '_blank')
                         if (w) {
@@ -439,27 +441,27 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
 
                   {/* Deep link */}
                   <div style={{ padding: '12px 14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.1)' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '6px' }}>LINK DE SIMULAÇÃO</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '6px' }}>LINK DE SIMULAÇÃO</div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <code style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#1c4a35', flex: 1, wordBreak: 'break-all' }}>{buildDeepLink()}</code>
+                      <code style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', flex: 1, wordBreak: 'break-all' }}>{buildDeepLink()}</code>
                       <button
-                        style={{ padding: '4px 10px', background: 'transparent', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', cursor: 'pointer', flexShrink: 0 }}
+                        style={{ padding: '4px 10px', background: 'transparent', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', flexShrink: 0, borderRadius: '6px' }}
                         onClick={() => navigator.clipboard.writeText(buildDeepLink()).catch(() => {})}
                       >Copiar</button>
                     </div>
                   </div>
 
                   {/* Email template */}
-                  <div style={{ padding: '14px', background: cardBg, border: `1px solid ${borderCol}` }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '10px' }}>TEMPLATE EMAIL</div>
+                  <div style={{ padding: '14px', background: cardBg, border: `1px solid ${borderCol}`, borderRadius: '10px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '10px' }}>TEMPLATE EMAIL</div>
                     <pre style={{
-                      fontFamily: "'DM Mono',monospace", fontSize: '.4rem',
+                      fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                       color: 'rgba(14,14,13,.55)', whiteSpace: 'pre-wrap',
                       lineHeight: 1.65, margin: '0 0 10px',
                       maxHeight: '220px', overflowY: 'auto',
                     }}>{buildEmailTemplate()}</pre>
                     <button
-                      style={{ padding: '5px 12px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', color: 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+                      style={{ padding: '5px 12px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', color: 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px' }}
                       onClick={() => navigator.clipboard.writeText(buildEmailTemplate()).catch(() => {})}
                     >Copiar Email</button>
                   </div>
@@ -472,7 +474,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
 
       {/* NHR vs IFICI Comparison Table */}
       <div style={{ marginTop: '32px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '14px' }}>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '14px' }}>
           Comparação NHR vs IFICI 2024
         </div>
         <div style={{ overflowX: 'auto' }}>
@@ -484,7 +486,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                     padding: '10px 14px',
                     textAlign: i === 0 ? 'left' : 'center',
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.38rem',
+                    fontSize: '.52rem',
                     letterSpacing: '.08em',
                     color: 'rgba(14,14,13,.4)',
                     background: i === 0 ? 'rgba(14,14,13,.02)' : i === 1 ? 'rgba(28,74,53,.04)' : 'rgba(201,169,110,.04)',
@@ -496,7 +498,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
             <tbody>
               {COMPARISON_ROWS.map((row, ri) => (
                 <tr key={ri} style={{ borderBottom: `1px solid ${borderCol}` }}>
-                  <td style={{ padding: '9px 14px', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.5)', background: 'rgba(14,14,13,.01)' }}>{row.criteria}</td>
+                  <td style={{ padding: '9px 14px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', background: 'rgba(14,14,13,.01)' }}>{row.criteria}</td>
                   <td style={{ padding: '9px 14px', textAlign: 'center', fontSize: '.84rem', color: col, fontWeight: 500, background: 'rgba(28,74,53,.02)' }}>{row.nhr}</td>
                   <td style={{ padding: '9px 14px', textAlign: 'center', fontSize: '.84rem', color: col, fontWeight: 500, background: 'rgba(201,169,110,.02)' }}>{row.ifici}</td>
                 </tr>

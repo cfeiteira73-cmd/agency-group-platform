@@ -608,7 +608,7 @@ export default function PortalPulse() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <div className="flex items-center gap-3">
-              <h1 style={{ fontFamily: 'Cormorant, serif', fontSize: 28, color: '#f4f0e6', fontWeight: 700, margin: 0 }}>
+              <h1 style={{ fontFamily: 'Cormorant, serif', fontSize: 28, color: '#f4f0e6', fontWeight: 300, margin: 0 }}>
                 Market Pulse
               </h1>
               <div className="flex items-center gap-2 px-3 py-1 rounded-full" style={{
@@ -678,7 +678,7 @@ export default function PortalPulse() {
                 { label: 'Compradores Est.', value: '45%', sub: '+3.2% YoY', color: '#1c4a35', icon: '✈️' },
                 { label: 'Índice Luxo', value: '#5 Mundial', sub: 'Savills 2025', color: '#c9a96e', icon: '🏆' },
               ].map((kpi) => (
-                <div key={kpi.label} className="p-card rounded-xl" style={{ background: '#fff', border: '1px solid rgba(28,74,53,0.1)', padding: '18px 20px' }}>
+                <div key={kpi.label} className="p-card rounded-xl" style={{ background: '#fff', border: '1px solid rgba(28,74,53,0.1)', padding: '18px 20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                   <div className="flex items-start justify-between">
                     <div>
                       <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#888', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{kpi.label}</div>
@@ -692,9 +692,9 @@ export default function PortalPulse() {
             </div>
 
             {/* Heatmap */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <div className="flex items-center justify-between mb-4">
-                <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, margin: 0 }}>
+                <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 300, margin: 0 }}>
                   Mapa de Pressão de Preços — Portugal
                 </h2>
                 <div className="flex items-center gap-3">
@@ -732,8 +732,8 @@ export default function PortalPulse() {
             </div>
 
             {/* Zone Table */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-              <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 300, marginBottom: 16 }}>
                 Top Zonas · Ranking
               </h2>
               <div className="overflow-x-auto">
@@ -808,7 +808,7 @@ export default function PortalPulse() {
             <div style={{ background: '#1c4a35', borderRadius: 16, padding: '20px 24px' }}>
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 26, color: '#f4f0e6', fontWeight: 700, margin: 0 }}>{selectedZone.name}</h2>
+                  <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 26, color: '#f4f0e6', fontWeight: 300, margin: 0 }}>{selectedZone.name}</h2>
                   <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 12, color: 'rgba(244,240,230,0.6)', marginTop: 4 }}>Análise de mercado detalhada · Q2 2026</div>
                 </div>
                 <div className="flex gap-6 flex-wrap">
@@ -831,8 +831,8 @@ export default function PortalPulse() {
             <div className="grid grid-cols-2 gap-4">
 
               {/* Price Trend */}
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 600, marginBottom: 12 }}>Evolução de Preço 2020–2026</h3>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 300, marginBottom: 12 }}>Evolução de Preço 2020–2026</h3>
                 <LineTrend
                   data={selectedZone.trend}
                   color="#1c4a35"
@@ -842,20 +842,20 @@ export default function PortalPulse() {
               </div>
 
               {/* Supply/Demand */}
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 600, marginBottom: 12 }}>Oferta vs Procura · Últimos 6M</h3>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 300, marginBottom: 12 }}>Oferta vs Procura · Últimos 6M</h3>
                 <BarChart supply={selectedZone.supply} demand={selectedZone.demand} months={['Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar']} />
               </div>
 
               {/* Nationality Donut */}
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 600, marginBottom: 12 }}>Perfil de Compradores</h3>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 300, marginBottom: 12 }}>Perfil de Compradores</h3>
                 <DonutChart data={selectedZone.nationalities} />
               </div>
 
               {/* Micro Intel */}
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>Micro-Intel da Zona</h3>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 300, marginBottom: 16 }}>Micro-Intel da Zona</h3>
                 <div className="space-y-4">
                   {selectedZone.microIntel.map((intel, i) => (
                     <div key={i} className="flex gap-3">
@@ -868,7 +868,7 @@ export default function PortalPulse() {
             </div>
 
             {/* Heat indicator */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '18px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '18px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <div className="flex items-center justify-between">
                 <div>
                   <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Índice de Pressão</div>
@@ -897,15 +897,15 @@ export default function PortalPulse() {
 
             {/* Nationality breakdown */}
             <div className="grid grid-cols-2 gap-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, marginBottom: 20 }}>Compradores por Nacionalidade</h2>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 300, marginBottom: 20 }}>Compradores por Nacionalidade</h2>
                 <BuyerBars buyers={BUYERS} />
               </div>
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>Detalhes de Perfil</h2>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 300, marginBottom: 16 }}>Detalhes de Perfil</h2>
                 <div className="space-y-3">
                   {BUYERS.map((b) => (
-                    <div key={b.country} style={{ background: 'rgba(28,74,53,0.04)', borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(28,74,53,0.08)' }}>
+                    <div key={b.country} style={{ background: 'rgba(28,74,53,0.04)', borderRadius: 10, padding: '12px 16px', border: '1px solid rgba(28,74,53,0.08)', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span style={{ fontSize: 18 }}>{b.flag}</span>
@@ -931,8 +931,8 @@ export default function PortalPulse() {
 
             {/* Budget + Motivation donuts */}
             <div className="grid grid-cols-2 gap-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 12 }}>Distribuição de Budget</h3>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 12 }}>Distribuição de Budget</h3>
                 <DonutChart data={[
                   { label: '< €500K', pct: 38, color: '#95d5b2' },
                   { label: '€500K–€1M', pct: 29, color: '#52b788' },
@@ -940,8 +940,8 @@ export default function PortalPulse() {
                   { label: '€3M+', pct: 11, color: '#c9a96e' },
                 ]} />
               </div>
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 12 }}>Motivação de Compra</h3>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 12 }}>Motivação de Compra</h3>
                 <DonutChart data={[
                   { label: 'Residência Principal', pct: 31, color: '#1c4a35' },
                   { label: 'Investimento/Renda', pct: 26, color: '#c9a96e' },
@@ -953,8 +953,8 @@ export default function PortalPulse() {
             </div>
 
             {/* Seasonal Chart */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>Sazonalidade da Procura — Índice Relativo</h3>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 16 }}>Sazonalidade da Procura — Índice Relativo</h3>
               <SeasonalChart data={SEASONAL_DEMAND} months={MONTHS} />
               <p style={{ fontSize: 12, color: '#888', marginTop: 8 }}>Índice 100 = Julho pico. 70% das visitas ocorre entre Março e Setembro.</p>
             </div>
@@ -962,7 +962,7 @@ export default function PortalPulse() {
             {/* Hot Profile */}
             <div style={{ background: 'linear-gradient(135deg, #c9a96e, #b8913d)', borderRadius: 16, padding: '22px 28px' }}>
               <div style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>Hot Profile do Mês · Março 2026</div>
-              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 24, color: '#1c4a35', fontWeight: 700, margin: '0 0 12px' }}>
+              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 24, color: '#1c4a35', fontWeight: 300, margin: '0 0 12px' }}>
                 🇺🇸 Comprador Norte-Americano — NHR 2.0
               </h3>
               <div className="grid grid-cols-3 gap-4">
@@ -990,15 +990,15 @@ export default function PortalPulse() {
 
             {/* Top row: Affordability + Momentum */}
             <div className="grid grid-cols-2 gap-4">
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 8 }}>Índice de Acessibilidade</h3>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 8 }}>Índice de Acessibilidade</h3>
                 <p style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>Relação rendimento médio vs preço imóvel. 100 = acessível, 0 = inacessível.</p>
                 <AffordabilityGauge value={34} />
                 <p style={{ fontSize: 12, color: '#e05454', marginTop: 8, fontFamily: 'DM Mono, monospace' }}>⚠ Lisboa abaixo do limiar crítico de 40. Mercado premium acessível apenas a 18% da pop. local.</p>
               </div>
 
-              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 8 }}>Índices de Mercado</h3>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 8 }}>Índices de Mercado</h3>
                 <div className="grid grid-cols-2 gap-3 mt-4">
                   <div className="flex flex-col items-center">
                     <GaugeArc value={7.8} max={10} label="Confiança" color="#1c4a35" />
@@ -1017,20 +1017,20 @@ export default function PortalPulse() {
             </div>
 
             {/* Rental Yields */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 20 }}>Yield de Arrendamento por Zona — Bruto</h3>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 20 }}>Yield de Arrendamento por Zona — Bruto</h3>
               <RentalYieldBars data={RENTAL_YIELDS} />
             </div>
 
             {/* Transaction Velocity */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 8 }}>Velocidade de Transacção — Deals/Mês</h3>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 8 }}>Velocidade de Transacção — Deals/Mês</h3>
               <VelocityLine months={MONTHS} />
             </div>
 
             {/* International Comparison Table */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>Lisboa vs Mercados Europeus</h3>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 16 }}>Lisboa vs Mercados Europeus</h3>
               <div className="overflow-x-auto">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
@@ -1078,8 +1078,8 @@ export default function PortalPulse() {
             </div>
 
             {/* Previsões */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
-              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>Previsões de Mercado</h3>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 300, marginBottom: 16 }}>Previsões de Mercado</h3>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { periodo: 'Q2 2026', expectativa: '+4.2%', confianca: 'Alta', nota: 'Procura forte · Oferta limitada', color: '#1c4a35' },
@@ -1087,7 +1087,7 @@ export default function PortalPulse() {
                   { periodo: 'Q4 2026', expectativa: '+2.9%', confianca: 'Média', nota: 'Possível abrandamento BCE', color: '#c9a96e' },
                   { periodo: 'H1 2027', expectativa: '+6–9%', confianca: 'Baixa', nota: 'Incerteza macro europeia', color: '#888' },
                 ].map((p) => (
-                  <div key={p.periodo} style={{ border: `1.5px solid ${p.color}30`, borderRadius: 12, padding: '16px 18px' }}>
+                  <div key={p.periodo} style={{ border: `1.5px solid ${p.color}30`, borderRadius: 12, padding: '16px 18px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                     <div className="flex items-center justify-between mb-2">
                       <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, color: '#888' }}>{p.periodo}</span>
                       <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 11, padding: '2px 8px', borderRadius: 4, background: `${p.color}18`, color: p.color, fontWeight: 600 }}>{p.confianca}</span>

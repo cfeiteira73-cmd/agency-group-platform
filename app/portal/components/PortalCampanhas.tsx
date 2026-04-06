@@ -297,7 +297,7 @@ function BarChart({ data }: { data: typeof CHANNEL_PERF }) {
           <g key={i}>
             <rect x={cx - barW - 2} y={openY} width={barW} height={openH} fill={C.green} rx={3} fillOpacity={0.85} />
             <rect x={cx + 2} y={clickY} width={barW} height={clickH} fill={C.gold} rx={3} fillOpacity={0.85} />
-            <text x={cx} y={h - 4} textAnchor="middle" fontSize={9} fill={C.muted} fontFamily="DM Mono">{d.channel}</text>
+            <text x={cx} y={h - 4} textAnchor="middle" fontSize={11} fill={C.muted} fontFamily="DM Mono">{d.channel}</text>
           </g>
         )
       })}
@@ -335,7 +335,7 @@ function DonutChart({ data }: { data: typeof SEGMENT_DONUT }) {
         <g key={i}>
           <rect x={185} y={18 + i * 34} width={10} height={10} rx={2} fill={a.color} />
           <text x={200} y={28 + i * 34} fontSize={10} fill={C.text} fontFamily="DM Mono">{a.label}</text>
-          <text x={200} y={40 + i * 34} fontSize={9} fill={C.muted} fontFamily="DM Mono">{a.pct}%</text>
+          <text x={200} y={40 + i * 34} fontSize={11} fill={C.muted} fontFamily="DM Mono">{a.pct}%</text>
         </g>
       ))}
     </svg>
@@ -350,12 +350,12 @@ function HeatmapGrid() {
         {/* Header */}
         <div />
         {HEATMAP_HOURS.map(h => (
-          <div key={h} style={{ textAlign: 'center', fontSize: 9, color: C.muted, fontFamily: 'DM Mono', paddingBottom: 4 }}>{h}</div>
+          <div key={h} style={{ textAlign: 'center', fontSize: 11, color: C.muted, fontFamily: 'var(--font-dm-mono),monospace', paddingBottom: 4 }}>{h}</div>
         ))}
         {/* Rows */}
         {HEATMAP_DAYS.map((day, di) => (
           <>
-            <div key={`d${di}`} style={{ fontSize: 10, color: C.muted, fontFamily: 'DM Mono', display: 'flex', alignItems: 'center' }}>{day}</div>
+            <div key={`d${di}`} style={{ fontSize: 10, color: C.muted, fontFamily: 'var(--font-dm-mono),monospace', display: 'flex', alignItems: 'center' }}>{day}</div>
             {HEATMAP_DATA[di].map((val, hi) => {
               const intensity = val / maxVal
               const bg = intensity > 0.75 ? C.green : intensity > 0.5 ? '#2d7a57' : intensity > 0.25 ? '#5a9e7e' : intensity > 0.1 ? '#a8d4bc' : '#e8f4ee'
@@ -385,7 +385,7 @@ function StatusBadge({ status }: { status: CampaignStatus }) {
       background: STATUS_COLORS[status] + '18',
       color: STATUS_COLORS[status],
       border: `1px solid ${STATUS_COLORS[status]}40`,
-      fontSize: 10, fontFamily: 'DM Mono', fontWeight: 600,
+      fontSize: 10, fontFamily: 'var(--font-dm-mono),monospace', fontWeight: 600,
       padding: '2px 8px', borderRadius: 99, whiteSpace: 'nowrap',
     }}>
       {status === 'sending' && <span style={{ display: 'inline-block', width: 6, height: 6, background: STATUS_COLORS[status], borderRadius: '50%', marginRight: 5, animation: 'pulse 1.2s infinite' }} />}
@@ -402,7 +402,7 @@ function ChannelPill({ type }: { type: CampaignType }) {
     <span style={{
       background: CHANNEL_COLORS[type] + '18',
       color: CHANNEL_COLORS[type],
-      fontSize: 10, fontFamily: 'DM Mono',
+      fontSize: 10, fontFamily: 'var(--font-dm-mono),monospace',
       padding: '2px 8px', borderRadius: 99,
     }}>
       {icons[type]} {CHANNEL_LABELS[type]}
@@ -415,8 +415,8 @@ function ProgressBar({ sent, total, color = C.green }: { sent: number; total: nu
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontSize: 10, fontFamily: 'DM Mono', color: C.muted }}>{sent}/{total} envios</span>
-        <span style={{ fontSize: 10, fontFamily: 'DM Mono', color }}>{pct}%</span>
+        <span style={{ fontSize: 10, fontFamily: 'var(--font-dm-mono),monospace', color: C.muted }}>{sent}/{total} envios</span>
+        <span style={{ fontSize: 10, fontFamily: 'var(--font-dm-mono),monospace', color }}>{pct}%</span>
       </div>
       <div style={{ background: C.border, borderRadius: 99, height: 5, overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 99, transition: 'width 0.6s ease' }} />
@@ -428,8 +428,8 @@ function ProgressBar({ sent, total, color = C.green }: { sent: number; total: nu
 function MetricChip({ label, value, color = C.green }: { label: string; value: string; color?: string }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 16, fontWeight: 700, color, fontFamily: 'Cormorant' }}>{value}</div>
-      <div style={{ fontSize: 9, color: C.muted, fontFamily: 'DM Mono', marginTop: 1 }}>{label}</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color, fontFamily: 'var(--font-cormorant),serif' }}>{value}</div>
+      <div style={{ fontSize: 11, color: C.muted, fontFamily: 'var(--font-dm-mono),monospace', marginTop: 1 }}>{label}</div>
     </div>
   )
 }
@@ -517,7 +517,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
                 key={t}
                 onClick={() => setType(t)}
                 style={{
-                  padding: '8px 18px', borderRadius: 8, fontFamily: 'DM Mono', fontSize: 13, cursor: 'pointer',
+                  padding: '8px 18px', borderRadius: 8, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 13, cursor: 'pointer',
                   border: `2px solid ${active ? CHANNEL_COLORS[t] : C.border}`,
                   background: active ? CHANNEL_COLORS[t] + '15' : 'transparent',
                   color: active ? CHANNEL_COLORS[t] : C.muted,
@@ -543,7 +543,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
                 key={seg}
                 onClick={() => toggleSegment(seg)}
                 style={{
-                  padding: '6px 14px', borderRadius: 99, fontFamily: 'DM Mono', fontSize: 12, cursor: 'pointer',
+                  padding: '6px 14px', borderRadius: 99, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer',
                   border: `1.5px solid ${active ? C.green : C.border}`,
                   background: active ? C.green : 'transparent',
                   color: active ? '#fff' : C.muted,
@@ -560,7 +560,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
           <div style={{
             background: C.green + '0f', border: `1px solid ${C.green}30`,
             borderRadius: 8, padding: '10px 16px',
-            fontFamily: 'DM Mono', fontSize: 13, color: C.green,
+            fontFamily: 'var(--font-dm-mono),monospace', fontSize: 13, color: C.green,
           }}>
             Esta campanha chegará a <strong>~{totalContacts} contactos</strong>
           </div>
@@ -584,12 +584,12 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
                   transition: 'all .15s',
                 }}
               >
-                <div style={{ fontFamily: 'DM Mono', fontSize: 12, fontWeight: 600, color: active ? C.green : C.text, marginBottom: 4 }}>{tpl.name}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, fontWeight: 600, color: active ? C.green : C.text, marginBottom: 4 }}>{tpl.name}</div>
                 <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.4 }}>{tpl.preview.slice(0, 60)}...</div>
                 <div style={{ marginTop: 6 }}>
                   <span style={{
                     background: CATEGORY_COLORS[tpl.category] + '18', color: CATEGORY_COLORS[tpl.category],
-                    fontSize: 9, fontFamily: 'DM Mono', padding: '2px 6px', borderRadius: 99,
+                    fontSize: 11, fontFamily: 'var(--font-dm-mono),monospace', padding: '2px 6px', borderRadius: 99,
                   }}>
                     {CATEGORY_LABELS[tpl.category]}
                   </span>
@@ -604,13 +604,13 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
             marginTop: 12, padding: 16, borderRadius: 10,
             border: `1.5px solid ${C.green}30`, background: '#fff',
           }}>
-            <div style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted, marginBottom: 4 }}>PREVIEW — {selectedTemplate.name}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted, marginBottom: 4 }}>PREVIEW — {selectedTemplate.name}</div>
             {selectedTemplate.subject && (
-              <div style={{ fontFamily: 'Jost', fontWeight: 600, fontSize: 14, color: C.text, marginBottom: 8 }}>
+              <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontWeight: 600, fontSize: 14, color: C.text, marginBottom: 8 }}>
                 Assunto: {selectedTemplate.subject}
               </div>
             )}
-            <div style={{ fontFamily: 'Jost', fontSize: 13, color: C.muted, lineHeight: 1.7 }}>
+            <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.muted, lineHeight: 1.7 }}>
               {selectedTemplate.preview}
               <br /><br />
               [Conteúdo personalizado do template será inserido aqui com os dados do contacto, incluindo nome, imóvel de interesse, budget e histórico de interacções.]
@@ -631,7 +631,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
           <button
             onClick={() => setShowAISuggestions(!showAISuggestions)}
             style={{
-              fontFamily: 'DM Mono', fontSize: 11, color: C.gold,
+              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.gold,
               background: C.gold + '15', border: `1px solid ${C.gold}40`,
               borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
             }}
@@ -655,10 +655,10 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
                 style={{
                   textAlign: 'left', padding: '8px 12px', borderRadius: 8,
                   border: `1px solid ${C.gold}40`, background: C.gold + '08',
-                  fontFamily: 'Jost', fontSize: 13, color: C.text, cursor: 'pointer',
+                  fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.text, cursor: 'pointer',
                 }}
               >
-                <span style={{ color: C.gold, marginRight: 8, fontFamily: 'DM Mono', fontSize: 10 }}>#{i + 1}</span>
+                <span style={{ color: C.gold, marginRight: 8, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10 }}>#{i + 1}</span>
                 {s}
               </button>
             ))}
@@ -682,7 +682,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
             transition: 'left .2s',
           }} />
         </button>
-        <span style={{ fontFamily: 'DM Mono', fontSize: 12, color: C.text }}>Teste A/B</span>
+        <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: C.text }}>Teste A/B</span>
       </div>
       {abEnabled && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -706,11 +706,12 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
               key={m}
               onClick={() => setScheduleMode(m)}
               style={{
-                padding: '8px 20px', borderRadius: 8, fontFamily: 'DM Mono', fontSize: 12, cursor: 'pointer',
+                padding: '8px 20px', borderRadius: 8, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer',
                 border: `2px solid ${scheduleMode === m ? C.green : C.border}`,
                 background: scheduleMode === m ? C.green + '12' : 'transparent',
                 color: scheduleMode === m ? C.green : C.muted,
                 fontWeight: scheduleMode === m ? 700 : 400,
+                transition: 'all .2s',
               }}
             >
               {m === 'imediato' ? '⚡ Imediato' : '🗓 Agendar'}
@@ -770,16 +771,16 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
       {/* KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         <div className="p-card" style={{ padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'Cormorant', fontSize: 28, fontWeight: 700, color: C.green }}>{totalSentMonth.toLocaleString('pt-PT')}</div>
-          <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginTop: 2 }}>ENVIOS ESTE MÊS</div>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 28, fontWeight: 700, color: C.green }}>{totalSentMonth.toLocaleString('pt-PT')}</div>
+          <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginTop: 2 }}>ENVIOS ESTE MÊS</div>
         </div>
         <div className="p-card" style={{ padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'Cormorant', fontSize: 28, fontWeight: 700, color: C.gold }}>{avgOpenRate}%</div>
-          <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginTop: 2 }}>TAXA ABERTURA MÉDIA</div>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 28, fontWeight: 700, color: C.gold }}>{avgOpenRate}%</div>
+          <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginTop: 2 }}>TAXA ABERTURA MÉDIA</div>
         </div>
         <div className="p-card" style={{ padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'Cormorant', fontSize: 14, fontWeight: 700, color: C.text, lineHeight: 1.3 }}>{best?.name ?? '—'}</div>
-          <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginTop: 4 }}>MELHOR CAMPANHA ({best?.openRate ?? 0}% open)</div>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 14, fontWeight: 700, color: C.text, lineHeight: 1.3 }}>{best?.name ?? '—'}</div>
+          <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginTop: 4 }}>MELHOR CAMPANHA ({best?.openRate ?? 0}% open)</div>
         </div>
       </div>
 
@@ -794,18 +795,18 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-                  <span style={{ fontFamily: 'Jost', fontWeight: 600, fontSize: 15, color: C.text }}>{camp.name}</span>
+                  <span style={{ fontFamily: 'var(--font-jost),sans-serif', fontWeight: 600, fontSize: 15, color: C.text }}>{camp.name}</span>
                   <StatusBadge status={camp.status} />
                   <ChannelPill type={camp.type} />
                 </div>
-                <div style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted }}>{camp.subject}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>{camp.subject}</div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => pauseToggle(camp.id)}
                   style={{
-                    fontFamily: 'DM Mono', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
-                    border: `1px solid ${C.border}`, background: 'transparent', color: C.muted,
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                    border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, transition: 'all .2s',
                   }}
                 >
                   {camp.status === 'paused' ? '▶ Retomar' : '⏸ Pausar'}
@@ -813,8 +814,8 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
                 <button
                   onClick={() => setViewingId(viewingId === camp.id ? null : camp.id)}
                   style={{
-                    fontFamily: 'DM Mono', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
-                    border: `1px solid ${C.green}40`, background: C.green + '0a', color: C.green,
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                    border: `1px solid ${C.green}40`, background: C.green + '0a', color: C.green, transition: 'all .2s',
                   }}
                 >
                   Ver Resultados
@@ -822,8 +823,8 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
                 <button
                   onClick={() => duplicate(camp)}
                   style={{
-                    fontFamily: 'DM Mono', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
-                    border: `1px solid ${C.gold}40`, background: C.gold + '0a', color: C.gold,
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                    border: `1px solid ${C.gold}40`, background: C.gold + '0a', color: C.gold, transition: 'all .2s',
                   }}
                 >
                   Duplicar
@@ -842,7 +843,7 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
             )}
 
             {camp.scheduledAt && (
-              <div style={{ marginTop: 10, fontFamily: 'DM Mono', fontSize: 11, color: C.muted }}>
+              <div style={{ marginTop: 10, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>
                 📅 Agendada: {new Date(camp.scheduledAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
@@ -858,12 +859,12 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
                     { l: 'Respondidos', v: Math.round(camp.sent * camp.replyRate / 100) },
                   ].map(m => (
                     <div key={m.l} style={{ textAlign: 'center', padding: 12, background: C.bg, borderRadius: 8 }}>
-                      <div style={{ fontFamily: 'Cormorant', fontSize: 22, fontWeight: 700, color: C.text }}>{m.v}</div>
-                      <div style={{ fontFamily: 'DM Mono', fontSize: 9, color: C.muted }}>{m.l}</div>
+                      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 700, color: C.text }}>{m.v}</div>
+                      <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>{m.l}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: 12, fontFamily: 'Jost', fontSize: 13, color: C.muted }}>
+                <div style={{ marginTop: 12, fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.muted }}>
                   Campanha criada em {new Date(camp.createdAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </div>
               </div>
@@ -900,12 +901,12 @@ function TabAnalytics({ campaigns }: { campaigns: Campaign[] }) {
       {/* Line chart */}
       <div className="p-card" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ fontFamily: 'Cormorant', fontSize: 18, fontWeight: 600, color: C.text, margin: 0 }}>Aberturas & Cliques — 7 dias</h3>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: C.text, margin: 0 }}>Aberturas & Cliques — 7 dias</h3>
           <div style={{ display: 'flex', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'DM Mono', fontSize: 11, color: C.green }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.green }}>
               <div style={{ width: 12, height: 3, background: C.green, borderRadius: 99 }} /> Aberturas
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'DM Mono', fontSize: 11, color: C.gold }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.gold }}>
               <div style={{ width: 12, height: 3, background: C.gold, borderRadius: 99 }} /> Cliques
             </div>
           </div>
@@ -916,26 +917,26 @@ function TabAnalytics({ campaigns }: { campaigns: Campaign[] }) {
       {/* Bar chart + Donut */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div className="p-card" style={{ padding: '20px' }}>
-          <h3 style={{ fontFamily: 'Cormorant', fontSize: 18, fontWeight: 600, color: C.text, margin: '0 0 16px' }}>Performance por Canal</h3>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: C.text, margin: '0 0 16px' }}>Performance por Canal</h3>
           <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'DM Mono', fontSize: 10, color: C.green }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.green }}>
               <div style={{ width: 10, height: 10, background: C.green, borderRadius: 2 }} /> Abertura
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'DM Mono', fontSize: 10, color: C.gold }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.gold }}>
               <div style={{ width: 10, height: 10, background: C.gold, borderRadius: 2 }} /> Cliques
             </div>
           </div>
           <BarChart data={CHANNEL_PERF} />
         </div>
         <div className="p-card" style={{ padding: '20px' }}>
-          <h3 style={{ fontFamily: 'Cormorant', fontSize: 18, fontWeight: 600, color: C.text, margin: '0 0 16px' }}>Segmentos de Audiência</h3>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: C.text, margin: '0 0 16px' }}>Segmentos de Audiência</h3>
           <DonutChart data={SEGMENT_DONUT} />
         </div>
       </div>
 
       {/* Top subjects */}
       <div className="p-card" style={{ padding: '20px' }}>
-        <h3 style={{ fontFamily: 'Cormorant', fontSize: 18, fontWeight: 600, color: C.text, margin: '0 0 16px' }}>Melhores Assuntos por Taxa de Abertura</h3>
+        <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: C.text, margin: '0 0 16px' }}>Melhores Assuntos por Taxa de Abertura</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {TOP_SUBJECTS.map((s, i) => (
             <div
@@ -945,16 +946,16 @@ function TabAnalytics({ campaigns }: { campaigns: Campaign[] }) {
                 borderBottom: i < TOP_SUBJECTS.length - 1 ? `1px solid ${C.border}` : 'none',
               }}
             >
-              <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted, width: 20, textAlign: 'right' }}>#{i + 1}</span>
+              <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted, width: 20, textAlign: 'right' }}>#{i + 1}</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'Jost', fontSize: 13, color: C.text }}>{s.subject}</div>
-                <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginTop: 2 }}>
+                <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.text }}>{s.subject}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginTop: 2 }}>
                   {s.sent} enviados · {s.clicks} cliques
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontFamily: 'DM Mono', fontSize: 14, fontWeight: 700, color: C.green }}>{s.openRate}%</div>
-                <div style={{ fontFamily: 'DM Mono', fontSize: 9, color: C.muted }}>abertura</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 14, fontWeight: 700, color: C.green }}>{s.openRate}%</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>abertura</div>
               </div>
               <div style={{ width: 80 }}>
                 <div style={{ background: C.border, borderRadius: 99, height: 4, overflow: 'hidden' }}>
@@ -969,8 +970,8 @@ function TabAnalytics({ campaigns }: { campaigns: Campaign[] }) {
       {/* Heatmap */}
       <div className="p-card" style={{ padding: '20px' }}>
         <div style={{ marginBottom: 16 }}>
-          <h3 style={{ fontFamily: 'Cormorant', fontSize: 18, fontWeight: 600, color: C.text, margin: '0 0 4px' }}>Melhor Hora para Enviar</h3>
-          <p style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted, margin: 0 }}>Engagement por dia da semana e hora — mais escuro = mais interacções</p>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: C.text, margin: '0 0 4px' }}>Melhor Hora para Enviar</h3>
+          <p style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted, margin: 0 }}>Engagement por dia da semana e hora — mais escuro = mais interacções</p>
         </div>
         <HeatmapGrid />
         <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -983,7 +984,7 @@ function TabAnalytics({ campaigns }: { campaigns: Campaign[] }) {
           ].map((item, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 14, height: 14, background: item.color, borderRadius: 3 }} />
-              {item.label && <span style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted }}>{item.label}</span>}
+              {item.label && <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted }}>{item.label}</span>}
             </div>
           ))}
         </div>
@@ -1126,40 +1127,40 @@ function TabTemplates() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'Jost', fontWeight: 600, fontSize: 14, color: C.text, marginBottom: 4 }}>{tpl.name}</div>
+                <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontWeight: 600, fontSize: 14, color: C.text, marginBottom: 4 }}>{tpl.name}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <span style={{
                     background: CATEGORY_COLORS[tpl.category] + '18', color: CATEGORY_COLORS[tpl.category],
-                    fontSize: 9, fontFamily: 'DM Mono', padding: '2px 7px', borderRadius: 99,
+                    fontSize: 11, fontFamily: 'var(--font-dm-mono),monospace', padding: '2px 7px', borderRadius: 99,
                   }}>{CATEGORY_LABELS[tpl.category]}</span>
                   <span style={{
                     background: CHANNEL_COLORS[tpl.channel] + '18', color: CHANNEL_COLORS[tpl.channel],
-                    fontSize: 9, fontFamily: 'DM Mono', padding: '2px 7px', borderRadius: 99,
+                    fontSize: 11, fontFamily: 'var(--font-dm-mono),monospace', padding: '2px 7px', borderRadius: 99,
                   }}>{CHANNEL_LABELS[tpl.channel]}</span>
                 </div>
               </div>
             </div>
 
-            <p style={{ fontFamily: 'Jost', fontSize: 12, color: C.muted, lineHeight: 1.5, margin: 0, flexGrow: 1 }}>
+            <p style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, color: C.muted, lineHeight: 1.5, margin: 0, flexGrow: 1 }}>
               {tpl.preview.slice(0, 80)}...
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted }}>
                 {tpl.useCount}× usado · {tpl.lastUsed !== '—' ? new Date(tpl.lastUsed).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) : '—'}
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button
                   onClick={() => setEditingId(editingId === tpl.id ? null : tpl.id)}
-                  style={{ fontFamily: 'DM Mono', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, cursor: 'pointer', transition: 'all .2s' }}
                 >Editar</button>
                 <button
                   onClick={() => duplicateTemplate(tpl)}
-                  style={{ fontFamily: 'DM Mono', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.gold}40`, background: C.gold + '0a', color: C.gold, cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.gold}40`, background: C.gold + '0a', color: C.gold, cursor: 'pointer', transition: 'all .2s' }}
                 >Dup.</button>
                 <button
                   onClick={() => deleteTemplate(tpl.id)}
-                  style={{ fontFamily: 'DM Mono', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.red}40`, background: C.red + '0a', color: C.red, cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.red}40`, background: C.red + '0a', color: C.red, cursor: 'pointer', transition: 'all .2s' }}
                 >Del.</button>
               </div>
             </div>
@@ -1173,9 +1174,9 @@ function TabTemplates() {
           position: 'fixed', inset: 0, background: 'rgba(14,14,13,.6)', zIndex: 100,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
         }}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 600, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 600, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(14,14,13,.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ fontFamily: 'Cormorant', fontSize: 22, fontWeight: 700, color: C.text, margin: 0 }}>
+              <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: C.text, margin: 0 }}>
                 ✦ Criar Template com IA
               </h2>
               <button onClick={() => setShowCreateModal(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.muted }}>×</button>
@@ -1230,7 +1231,7 @@ function TabTemplates() {
                     value={generatedPreview}
                     onChange={e => setGeneratedPreview(e.target.value)}
                     rows={8}
-                    style={{ width: '100%', fontFamily: 'Jost', fontSize: 13, resize: 'vertical' }}
+                    style={{ width: '100%', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, resize: 'vertical' }}
                   />
                   <button
                     className="p-btn-gold"
@@ -1273,13 +1274,13 @@ export default function PortalCampanhas() {
   ]
 
   return (
-    <div style={{ fontFamily: 'Jost', color: C.text }}>
+    <div style={{ fontFamily: 'var(--font-jost),sans-serif', color: C.text }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'Cormorant', fontSize: 32, fontWeight: 700, color: C.text, margin: '0 0 6px' }}>
+        <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 32, fontWeight: 300, color: C.text, margin: '0 0 6px' }}>
           Campanhas
         </h1>
-        <p style={{ fontFamily: 'DM Mono', fontSize: 12, color: C.muted, margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: C.muted, margin: 0 }}>
           Motor de campanhas multi-canal · Agency Group AMI 22506
         </p>
       </div>
@@ -1289,6 +1290,7 @@ export default function PortalCampanhas() {
         display: 'flex', gap: 4, marginBottom: 24,
         background: '#fff', borderRadius: 12, padding: 4,
         border: `1px solid ${C.border}`,
+        boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
       }}>
         {TABS.map(tab => (
           <button
@@ -1298,7 +1300,7 @@ export default function PortalCampanhas() {
               flex: 1, padding: '10px 16px', borderRadius: 9, border: 'none', cursor: 'pointer',
               background: activeTab === tab.id ? C.green : 'transparent',
               color: activeTab === tab.id ? '#fff' : C.muted,
-              fontFamily: 'DM Mono', fontSize: 12, fontWeight: activeTab === tab.id ? 700 : 400,
+              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, fontWeight: activeTab === tab.id ? 700 : 400,
               transition: 'all .2s', position: 'relative',
             }}
           >
@@ -1307,7 +1309,7 @@ export default function PortalCampanhas() {
               <span style={{
                 position: 'absolute', top: 6, right: 6,
                 background: activeTab === tab.id ? C.gold : C.green,
-                color: '#fff', fontSize: 9, fontFamily: 'DM Mono', fontWeight: 700,
+                color: '#fff', fontSize: 11, fontFamily: 'var(--font-dm-mono),monospace', fontWeight: 700,
                 width: 16, height: 16, borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>{tab.count}</span>
@@ -1329,6 +1331,7 @@ export default function PortalCampanhas() {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.4; transform: scale(0.85); }
         }
+        .p-card { background: #fff; border: 1px solid #e5e0d5; border-radius: 12px; box-shadow: 0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04); }
       `}</style>
     </div>
   )

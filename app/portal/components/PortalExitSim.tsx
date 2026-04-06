@@ -438,7 +438,7 @@ export default function PortalExitSim() {
 
           {/* ── LEFT PANEL — Inputs ─────────────────────────────────── */}
           <div style={{ width: 280, flexShrink: 0 }}>
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px', position: 'sticky', top: 20 }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px', position: 'sticky', top: 20, boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 18 }}>Parâmetros do Imóvel</h2>
 
               <div className="space-y-4">
@@ -602,18 +602,18 @@ export default function PortalExitSim() {
 
                 {/* Charts */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+                  <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                     <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 600, marginBottom: 12 }}>IRR vs Ano de Saída</h3>
                     <IrrLineChart points={yearSeries} highlightYear={inputs.anoSaida} />
                   </div>
-                  <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+                  <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                     <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 17, color: '#0e0e0d', fontWeight: 600, marginBottom: 12 }}>Montante Líquido vs Ano</h3>
                     <NetProceedsChart points={yearSeries} highlightYear={inputs.anoSaida} />
                   </div>
                 </div>
 
                 {/* Timing Optimizer */}
-                <div style={{ background: '#fff', borderRadius: 16, border: '2px solid rgba(201,169,110,0.4)', padding: '20px 24px' }}>
+                <div style={{ background: '#fff', borderRadius: 16, border: '2px solid rgba(201,169,110,0.4)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                   <div className="flex items-center gap-3 mb-4">
                     <div style={{ background: '#c9a96e', borderRadius: 8, padding: '4px 12px' }}>
                       <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 10, color: '#1c4a35', fontWeight: 700, letterSpacing: '0.1em' }}>TIMING OPTIMIZER</span>
@@ -644,7 +644,7 @@ export default function PortalExitSim() {
             {activeTab === 'analise' && (
               <>
                 {/* AT Coeficients breakdown */}
-                <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+                <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                   <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>
                     Cálculo de Mais-Valias · Coeficientes AT 2026
                   </h2>
@@ -691,7 +691,7 @@ export default function PortalExitSim() {
                 </div>
 
                 {/* Tax Regime Comparison */}
-                <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+                <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                   <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>
                     Comparação por Regime Fiscal
                   </h2>
@@ -740,7 +740,7 @@ export default function PortalExitSim() {
             {/* ── Tab: Reinvestimento ───────────────────────────────── */}
             {activeTab === 'reinvestimento' && (
               <>
-                <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+                <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                   <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, marginBottom: 8 }}>
                     Cenários de Reinvestimento
                   </h2>
@@ -777,7 +777,7 @@ export default function PortalExitSim() {
                 </div>
 
                 {/* Reinvestment Bar Chart SVG */}
-                <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+                <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                   <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>Projecção Visual · 10 anos</h3>
                   <svg viewBox="0 0 480 140" style={{ width: '100%', height: 140 }}>
                     {reinvestTable.map((r, i) => {

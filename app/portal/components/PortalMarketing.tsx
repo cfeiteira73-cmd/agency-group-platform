@@ -148,22 +148,22 @@ function CharCount({ current, max, platform }: { current: number; max: number | 
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           {platform && (
             <span style={{
-              fontFamily: "'DM Mono',monospace", fontSize: '.28rem',
+              fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
               color: FORMAT_COLORS[platform] || '#888',
               background: (FORMAT_COLORS[platform] || '#888') + '14',
-              padding: '1px 5px', borderRadius: '2px',
+              padding: '1px 5px', borderRadius: '4px',
               textTransform: 'uppercase', letterSpacing: '.08em',
             }}>{platform}</span>
           )}
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)' }}>caracteres</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>caracteres</span>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {!over && (
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
               {remaining.toLocaleString('pt-PT')} restantes
             </span>
           )}
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: over ? '#e05252' : 'rgba(14,14,13,.45)', fontWeight: over ? 700 : 400 }}>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: over ? '#e05252' : 'rgba(14,14,13,.45)', fontWeight: over ? 700 : 400 }}>
             {current.toLocaleString('pt-PT')} / {max.toLocaleString('pt-PT')}
           </span>
         </div>
@@ -187,8 +187,8 @@ function PlatformLimitsBar({ text }: { text: string }) {
   if (charCount === 0) return null
 
   return (
-    <div style={{ marginTop: '10px', padding: '10px 12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', borderRadius: '2px' }}>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
+    <div style={{ marginTop: '10px', padding: '10px 12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', borderRadius: '8px' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
         Compatibilidade com Plataformas
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -201,16 +201,16 @@ function PlatformLimitsBar({ text }: { text: string }) {
           return (
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ width: '56px', flexShrink: 0 }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: FORMAT_COLORS[p.id] || '#888' }}>{p.name}</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: FORMAT_COLORS[p.id] || '#888' }}>{p.name}</span>
               </div>
               <div style={{ flex: 1, height: '3px', background: 'rgba(14,14,13,.06)', borderRadius: '2px', overflow: 'hidden' }}>
                 <div style={{ height: '100%', width: `${Math.min(pct * 100, 100)}%`, background: color, transition: 'width .3s ease' }} />
               </div>
               <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color }}>
                   {fits ? '✓' : '✗'}
                 </span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: 'rgba(14,14,13,.3)' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                   {p.limit.toLocaleString('pt-PT')}
                 </span>
               </div>
@@ -268,12 +268,12 @@ function PostingScheduleGrid({ schedule }: { schedule: Record<string, { day: str
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
         {WEEKDAYS.map(day => (
           <div key={day} style={{ textAlign: 'center' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.4)', marginBottom: '4px', letterSpacing: '.05em' }}>{day}</div>
-            <div style={{ minHeight: '52px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.05)', borderRadius: '2px', padding: '3px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginBottom: '4px', letterSpacing: '.05em' }}>{day}</div>
+            <div style={{ minHeight: '52px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.05)', borderRadius: '4px', padding: '3px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {dayMap[day]?.map((item, i) => (
                 <div key={i} style={{ padding: '2px 3px', background: `${item.color}18`, borderLeft: `2px solid ${item.color}`, borderRadius: '1px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: item.color, fontWeight: 700, lineHeight: 1.2, textTransform: 'capitalize' }}>{item.fmt}</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.26rem', color: 'rgba(14,14,13,.4)', lineHeight: 1.2 }}>{item.time}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: item.color, fontWeight: 700, lineHeight: 1.2, textTransform: 'capitalize' }}>{item.fmt}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', lineHeight: 1.2 }}>{item.time}</div>
                 </div>
               ))}
             </div>
@@ -285,7 +285,7 @@ function PostingScheduleGrid({ schedule }: { schedule: Record<string, { day: str
         {Object.entries(PLATFORM_COLORS).map(([platform, color]) => (
           <div key={platform} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: color }} />
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: 'rgba(14,14,13,.4)', textTransform: 'capitalize' }}>{platform}</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textTransform: 'capitalize' }}>{platform}</span>
           </div>
         ))}
       </div>
@@ -331,14 +331,14 @@ function PerformancePreview({ text, format, darkMode }: { text: string; format: 
   const scoreLabel = score >= 75 ? 'Excelente' : score >= 50 ? 'Bom' : 'A Melhorar'
 
   return (
-    <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(28,74,53,.03)', border: '1px solid rgba(28,74,53,.08)' }}>
+    <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(28,74,53,.03)', border: '1px solid rgba(28,74,53,.08)', borderRadius: '10px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
           Previsão de Performance
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: 'rgba(14,14,13,.3)' }}>Engagement Est.</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>Engagement Est.</div>
             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '.9rem', color: '#c9a96e' }}>{estimatedEngagement}%</div>
           </div>
           <div style={{ textAlign: 'center' }}>
@@ -350,7 +350,7 @@ function PerformancePreview({ text, format, darkMode }: { text: string; format: 
                 style={{ transition: 'stroke-dasharray .6s ease' }} />
               <text x="22" y="20" textAnchor="middle" style={{ fontFamily: "'DM Mono',monospace", fontSize: '7px', fill: scoreColor, fontWeight: 700 }}>{score}</text>
             </svg>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.26rem', color: scoreColor, marginTop: '-2px' }}>{scoreLabel}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: scoreColor, marginTop: '-2px' }}>{scoreLabel}</div>
           </div>
         </div>
       </div>
@@ -360,9 +360,9 @@ function PerformancePreview({ text, format, darkMode }: { text: string; format: 
           <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <span style={{ fontSize: '.55rem', color: f.met ? '#22c55e' : 'rgba(14,14,13,.2)', flexShrink: 0 }}>{f.met ? '✓' : '○'}</span>
             <div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: f.met ? 'rgba(14,14,13,.6)' : 'rgba(14,14,13,.3)' }}>{f.label}</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: f.met ? 'rgba(14,14,13,.6)' : 'rgba(14,14,13,.3)' }}>{f.label}</div>
               {!f.met && (
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.26rem', color: '#c9a96e', lineHeight: 1.3 }}>{f.tip}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', lineHeight: 1.3 }}>{f.tip}</div>
               )}
             </div>
           </div>
@@ -403,10 +403,10 @@ function CopyButton({ text, label = 'Copiar', style: btnStyle = {} }: { text: st
         border: `1px solid ${copied ? 'rgba(34,197,94,.3)' : 'rgba(14,14,13,.1)'}`,
         color: copied ? '#22c55e' : 'rgba(14,14,13,.5)',
         fontFamily: "'DM Mono',monospace",
-        fontSize: '.32rem',
+        fontSize: '.52rem',
         cursor: 'pointer',
         letterSpacing: '.05em',
-        borderRadius: '2px',
+        borderRadius: '6px',
         transition: 'all .2s ease',
         flexShrink: 0,
         ...btnStyle,
@@ -445,7 +445,7 @@ function SectionedContent({ content, darkMode }: { content: string; darkMode: bo
           padding: '10px 12px',
           background: 'rgba(14,14,13,.02)',
           border: '1px solid rgba(14,14,13,.06)',
-          borderRadius: '2px',
+          borderRadius: '10px',
           position: 'relative',
         }}>
           <div style={{
@@ -556,9 +556,9 @@ export default function PortalMarketing({
   return (
     <div>
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Conteúdo Multi-Formato</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Conteúdo Multi-Formato</div>
         <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Marketing AI</div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>Idealista · Instagram · LinkedIn · WhatsApp · Email · +6 formatos</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>Idealista · Instagram · LinkedIn · WhatsApp · Email · +6 formatos</div>
       </div>
 
       <div className="mkt-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
@@ -624,8 +624,8 @@ export default function PortalMarketing({
                 onClick={() => fileInputRef.current?.click()}
               >
                 <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📸</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.4)' }}>Arrastar fotos ou clicar para selecionar</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.3)', marginTop: '4px' }}>Máx. 10 fotos · JPG, PNG, WebP</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>Arrastar fotos ou clicar para selecionar</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '4px' }}>Máx. 10 fotos · JPG, PNG, WebP</div>
               </div>
               <input ref={fileInputRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => onPhotoUpload(e.target.files)} />
               {mktPhotos.length > 0 && (
@@ -665,8 +665,8 @@ export default function PortalMarketing({
           {/* ── Template Library ─────────────────────────────────────────── */}
           <div className="p-card" style={{ marginTop: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Biblioteca de Templates</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)' }}>{TEMPLATES.length} templates</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Biblioteca de Templates</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>{TEMPLATES.length} templates</div>
             </div>
 
             {/* Category filter */}
@@ -680,7 +680,7 @@ export default function PortalMarketing({
                     background: templateFilter === cat ? '#1c4a35' : 'transparent',
                     border: `1px solid ${templateFilter === cat ? '#1c4a35' : 'rgba(14,14,13,.1)'}`,
                     color: templateFilter === cat ? '#f4f0e6' : 'rgba(14,14,13,.4)',
-                    fontFamily: "'DM Mono',monospace", fontSize: '.3rem', cursor: 'pointer', borderRadius: '2px',
+                    fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px',
                   }}
                 >
                   {cat}
@@ -697,7 +697,7 @@ export default function PortalMarketing({
                     display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px',
                     background: activeTemplate === tpl.nome ? `${tpl.color}10` : 'rgba(14,14,13,.02)',
                     border: `1px solid ${activeTemplate === tpl.nome ? tpl.color + '40' : 'rgba(14,14,13,.06)'}`,
-                    borderRadius: '2px', cursor: 'pointer', textAlign: 'left', width: '100%',
+                    borderRadius: '10px', cursor: 'pointer', textAlign: 'left', width: '100%',
                     transition: 'all .15s',
                   }}
                 >
@@ -706,14 +706,14 @@ export default function PortalMarketing({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
                       <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.76rem', color: 'rgba(14,14,13,.75)', fontWeight: 500 }}>{tpl.nome}</span>
                       <span style={{
-                        padding: '1px 6px', borderRadius: '10px', fontFamily: "'DM Mono',monospace", fontSize: '.28rem',
+                        padding: '1px 6px', borderRadius: '10px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                         background: `${tpl.color}18`, color: tpl.color, letterSpacing: '.04em', flexShrink: 0,
                       }}>{tpl.categoria}</span>
                     </div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.preview}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.preview}</div>
                   </div>
                   {activeTemplate === tpl.nome && (
-                    <span style={{ flexShrink: 0, fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: tpl.color }}>✓ Activo</span>
+                    <span style={{ flexShrink: 0, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: tpl.color }}>✓ Activo</span>
                   )}
                 </button>
               ))}
@@ -726,16 +726,16 @@ export default function PortalMarketing({
               onClick={() => setShowSchedule(v => !v)}
               style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0' }}
             >
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
                 Calendário de Publicação
               </div>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.3)' }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                 {showSchedule ? '▲ Fechar' : '▼ Ver horários ideais'}
               </span>
             </button>
             {showSchedule && (
               <div style={{ marginTop: '12px' }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
                   {mktPostingSchedule ? 'Calendário gerado pelo AI' : 'Melhores horários por plataforma · Dados 2026'}
                 </div>
                 <PostingScheduleGrid schedule={mktPostingSchedule} />
@@ -757,7 +757,7 @@ export default function PortalMarketing({
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
               {LANGS.map(l => (
                 <button key={l.v} onClick={() => toggleLang(l.v)}
-                  style={{ padding: '4px 10px', background: mktLangs.includes(l.v) ? '#1c4a35' : 'transparent', border: `1px solid ${mktLangs.includes(l.v) ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: mktLangs.includes(l.v) ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
+                  style={{ padding: '4px 10px', background: mktLangs.includes(l.v) ? '#1c4a35' : 'transparent', border: `1px solid ${mktLangs.includes(l.v) ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: mktLangs.includes(l.v) ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
                   {l.l}
                 </button>
               ))}
@@ -777,7 +777,7 @@ export default function PortalMarketing({
             <div style={{
               position: 'absolute', top: '-12px', right: '0', zIndex: 10,
               padding: '6px 14px', background: '#1c4a35', color: '#f4f0e6',
-              borderRadius: '2px', fontFamily: "'DM Mono',monospace", fontSize: '.38rem',
+              borderRadius: '6px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
               display: 'flex', alignItems: 'center', gap: '6px',
               boxShadow: '0 4px 12px rgba(0,0,0,.15)',
             }}>
@@ -810,7 +810,7 @@ export default function PortalMarketing({
               {/* Language tabs */}
               <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
                 {mktLangs.map(l => (
-                  <button key={l} className={`mkt-tab${mktLang === l ? ' active' : ''}`} onClick={() => setMktLang(l)} style={{ fontSize: '.38rem' }}>
+                  <button key={l} className={`mkt-tab${mktLang === l ? ' active' : ''}`} onClick={() => setMktLang(l)} style={{ fontSize: '.52rem' }}>
                     {l.toUpperCase()}
                   </button>
                 ))}
@@ -818,10 +818,10 @@ export default function PortalMarketing({
 
               {/* ── SEO Score ────────────────────────────────────────────── */}
               {mktSeoScore !== null && (
-                <div style={{ marginBottom: '12px', padding: '12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div style={{ marginBottom: '12px', padding: '12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', borderRadius: '10px', display: 'flex', gap: '16px', alignItems: 'center' }}>
                   <SeoGauge score={mktSeoScore} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)', marginBottom: '8px', letterSpacing: '.1em', textTransform: 'uppercase' }}>SEO Score</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginBottom: '8px', letterSpacing: '.1em', textTransform: 'uppercase' }}>SEO Score</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
                       {seoBreakdown.map(item => {
                         const ok = seoDetails?.[item.key] !== false
@@ -858,7 +858,7 @@ export default function PortalMarketing({
                     onClick={() => setShowPerformance(v => !v)}
                     style={{
                       background: 'transparent', border: 'none', cursor: 'pointer',
-                      fontFamily: "'DM Mono',monospace", fontSize: '.32rem',
+                      fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                       color: 'rgba(14,14,13,.4)', letterSpacing: '.08em', padding: '4px 0',
                     }}
                   >
@@ -870,12 +870,12 @@ export default function PortalMarketing({
 
               {/* Hashtags sugeridas */}
               {mktFormat === 'hashtags' && currentContent && (
-                <div style={{ marginTop: '10px', padding: '10px 12px', background: 'rgba(28,74,53,.03)', border: '1px solid rgba(28,74,53,.07)' }}>
+                <div style={{ marginTop: '10px', padding: '10px 12px', background: 'rgba(28,74,53,.03)', border: '1px solid rgba(28,74,53,.07)', borderRadius: '10px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em' }}>SUGESTÃO · 20 HASHTAGS</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em' }}>SUGESTÃO · 20 HASHTAGS</div>
                     <CopyButton text="#realestate #luxuryrealestate #portugal #lisboa #investimento #imoveis #propriedade #casasdesonho #mercadoimobiliario #agencygroup #casas #apartamento #moradia #penthouse #cascais #algarve #porto #imobiliaria #comprarcasa #luxuryhomes" label="Copiar hashtags" />
                   </div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#1c4a35', lineHeight: 1.8, wordBreak: 'break-word' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', lineHeight: 1.8, wordBreak: 'break-word' }}>
                     #realestate #luxuryrealestate #portugal #lisboa #investimento #imoveis #propriedade #casasdesonho #mercadoimobiliario #agencygroup #casas #apartamento #moradia #penthouse #cascais #algarve #porto #imobiliaria #comprarcasa #luxuryhomes
                   </div>
                 </div>
@@ -888,7 +888,7 @@ export default function PortalMarketing({
               </div>
 
               {mktPhotoInsights && (
-                <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.08)' }}>
+                <div style={{ marginTop: '12px', padding: '10px 12px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.08)', borderRadius: '10px' }}>
                   <div className="p-label" style={{ marginBottom: '6px' }}>Insights das Fotos</div>
                   <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.65)', lineHeight: 1.6 }}>{mktPhotoInsights}</div>
                 </div>
@@ -896,7 +896,7 @@ export default function PortalMarketing({
 
               {/* ── Posting Schedule (in output panel when AI provides one) ── */}
               {mktPostingSchedule && (
-                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(201,169,110,.04)', border: '1px solid rgba(201,169,110,.1)' }}>
+                <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(201,169,110,.04)', border: '1px solid rgba(201,169,110,.1)', borderRadius: '10px' }}>
                   <div className="p-label" style={{ marginBottom: '10px' }}>Calendário de Publicação · AI</div>
                   <PostingScheduleGrid schedule={mktPostingSchedule} />
                 </div>
@@ -910,7 +910,7 @@ export default function PortalMarketing({
               <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', color: 'rgba(14,14,13,.4)', marginBottom: '12px' }}>Aguarda geração de conteúdo</div>
               {/* Show static schedule when no content yet */}
               <div style={{ textAlign: 'left', marginTop: '24px' }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.25)', marginBottom: '10px' }}>Melhores horários para publicar</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.25)', marginBottom: '10px' }}>Melhores horários para publicar</div>
                 <PostingScheduleGrid schedule={null} />
               </div>
             </div>

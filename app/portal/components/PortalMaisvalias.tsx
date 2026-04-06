@@ -218,10 +218,10 @@ export default function PortalMaisvalias() {
 
   return (
     <div>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>
+      <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '8px' }}>
         CIRS 2026 · Coeficientes AT · Isenções automáticas · Englobamento 50%
       </div>
-      <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: '#0e0e0d', marginBottom: '24px' }}>
+      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.8rem', color: '#0e0e0d', marginBottom: '24px' }}>
         Simulador <em style={{ color: '#1c4a35' }}>Mais-Valias</em>
       </div>
 
@@ -287,12 +287,12 @@ export default function PortalMaisvalias() {
           )}
 
           {/* AT Coefficient reference */}
-          <div style={{ marginTop: '4px', padding: '10px 12px', background: 'rgba(201,169,110,.04)', border: '1px solid rgba(201,169,110,.12)' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '5px' }}>Coeficiente AT seleccionado</div>
+          <div style={{ marginTop: '4px', padding: '10px 12px', background: 'rgba(201,169,110,.04)', border: '1px solid rgba(201,169,110,.12)', borderRadius: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '5px' }}>Coeficiente AT seleccionado</div>
             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', color: '#c9a96e', fontWeight: 600 }}>
               ×{(atCoeff[anoCompra] || 1).toFixed(2)} <span style={{ fontSize: '.7rem', color: 'rgba(14,14,13,.4)' }}>({anoCompra})</span>
             </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)', marginTop: '3px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '3px' }}>
               Compra ajustada: €{precoCompra ? Math.round(parseFloat(precoCompra) * (atCoeff[anoCompra] || 1)).toLocaleString('pt-PT') : '—'}
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function PortalMaisvalias() {
             <div className="p-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📊</div>
               <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', color: 'rgba(14,14,13,.35)' }}>Preenche os dados e calcula</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.2)', marginTop: '6px' }}>Resultado em tempo real com coeficientes AT 2026</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.2)', marginTop: '6px' }}>Resultado em tempo real com coeficientes AT 2026</div>
             </div>
           )}
 
@@ -330,8 +330,8 @@ export default function PortalMaisvalias() {
                   { label: 'Taxa Efectiva', val: `${result.taxa_efetiva?.toFixed(1)}%`, color: '#0e0e0d', bg: '#fff', textOnDark: false },
                   { label: 'Líquido Final', val: eur(result.liquido_apos_imposto), color: '#4a9c7a', bg: 'rgba(74,156,122,.06)', textOnDark: false },
                 ].map(m => (
-                  <div key={m.label} style={{ padding: '14px 16px', background: m.bg, border: `1px solid ${m.textOnDark ? m.bg : 'rgba(14,14,13,.08)'}` }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: m.textOnDark ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.35)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{m.label}</div>
+                  <div key={m.label} style={{ padding: '14px 16px', background: m.bg, border: `1px solid ${m.textOnDark ? m.bg : 'rgba(14,14,13,.08)'}`, borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: m.textOnDark ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.35)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{m.label}</div>
                     <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 600, color: m.color, lineHeight: 1 }}>{m.val}</div>
                   </div>
                 ))}
@@ -341,7 +341,7 @@ export default function PortalMaisvalias() {
               {(result.poupanca_reinvestimento || 0) > 0 && (
                 <div style={{ padding: '12px 16px', background: 'rgba(74,156,122,.06)', border: '1px solid rgba(74,156,122,.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '3px' }}>Poupança c/ Reinvestimento HPP</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '3px' }}>Poupança c/ Reinvestimento HPP</div>
                     <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.5)' }}>Isenção total ou parcial ao reinvestir em nova HPP</div>
                   </div>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 700, color: '#22c55e' }}>+{eur(result.poupanca_reinvestimento || 0)}</div>
@@ -351,7 +351,7 @@ export default function PortalMaisvalias() {
               {/* Waterfall chart */}
               {waterfallBars && (
                 <div className="p-card" style={{ padding: '16px 18px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '12px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '12px' }}>
                     Fluxo de Cálculo — Cascata Fiscal
                   </div>
                   <WaterfallChart bars={waterfallBars} />
@@ -364,7 +364,7 @@ export default function PortalMaisvalias() {
                     ].map(l => (
                       <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                         <div style={{ width: '10px', height: '10px', background: l.color }} />
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)' }}>{l.label}</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>{l.label}</span>
                       </div>
                     ))}
                   </div>
@@ -379,7 +379,7 @@ export default function PortalMaisvalias() {
               {/* Breakdown details */}
               {result.breakdown && result.breakdown.length > 0 && (
                 <div className="p-card" style={{ padding: '14px 16px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px' }}>Desdobramento Detalhado</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px' }}>Desdobramento Detalhado</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     {result.breakdown.map((b, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.78rem', padding: '6px 10px', background: 'rgba(14,14,13,.02)', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
@@ -395,8 +395,8 @@ export default function PortalMaisvalias() {
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="p-btn p-btn-gold" style={{ fontSize: '.44rem', padding: '9px 20px' }} onClick={handleExportPDF}>⬇ Exportar PDF</button>
-                <button className="p-btn" style={{ fontSize: '.44rem', padding: '9px 20px' }} onClick={() => navigator.clipboard.writeText(`Mais-Valia: ${eur(result.ganho_bruto || 0)} | Imposto: ${eur(result.imposto_estimado)} | Líquido: ${eur(result.liquido_apos_imposto)}`)}>📋 Copiar</button>
+                <button className="p-btn p-btn-gold" style={{ fontSize: '.52rem', padding: '9px 20px' }} onClick={handleExportPDF}>⬇ Exportar PDF</button>
+                <button className="p-btn" style={{ fontSize: '.52rem', padding: '9px 20px' }} onClick={() => navigator.clipboard.writeText(`Mais-Valia: ${eur(result.ganho_bruto || 0)} | Imposto: ${eur(result.imposto_estimado)} | Líquido: ${eur(result.liquido_apos_imposto)}`)}>📋 Copiar</button>
               </div>
             </>
           )}
@@ -404,7 +404,7 @@ export default function PortalMaisvalias() {
           {/* Legal reference (always visible on right) */}
           {!result && (
             <div className="p-card" style={{ padding: '16px' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.28)', marginBottom: '10px' }}>Referência Legal</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.28)', marginBottom: '10px' }}>Referência Legal</div>
               {[
                 { art: 'Art. 47º CIRS', desc: 'Coeficientes de desvalorização monetária AT 2026' },
                 { art: 'Art. 10º/5 CIRS', desc: 'Isenção HPP + reinvestimento total/parcial' },
@@ -413,7 +413,7 @@ export default function PortalMaisvalias() {
                 { art: 'Art. 51º CIRS', desc: 'Dedução obras c/ factura (últimos 12 anos)' },
               ].map(r => (
                 <div key={r.art} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '6px 0', borderBottom: '1px solid rgba(14,14,13,.05)' }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#1c4a35', flexShrink: 0, marginTop: '1px' }}>{r.art}</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', flexShrink: 0, marginTop: '1px' }}>{r.art}</span>
                   <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.5)', lineHeight: 1.5 }}>{r.desc}</span>
                 </div>
               ))}

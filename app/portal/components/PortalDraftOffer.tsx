@@ -510,7 +510,7 @@ function Step1({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Property Selector */}
       <div>
-        <label className="p-label" style={{ display: 'block', marginBottom: '.5rem' }}>Imóvel</label>
+        <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Imóvel</label>
         <select className="p-sel" value={selectedPropertyId} onChange={e => {
           setSelectedPropertyId(e.target.value)
           const p = PORTAL_PROPERTIES.find(pr => pr.id === e.target.value)
@@ -526,7 +526,7 @@ function Step1({
           ))}
         </select>
         {property && (
-          <div style={{ display: 'flex', gap: '.75rem', marginTop: '.5rem', padding: '.75rem', background: 'rgba(28,74,53,.05)', borderRadius: 8, border: '1px solid rgba(28,74,53,.12)' }}>
+          <div style={{ display: 'flex', gap: '.75rem', marginTop: '.15rem', padding: '.75rem', background: 'rgba(28,74,53,.05)', borderRadius: '10px', border: '1px solid rgba(28,74,53,.12)' }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: '#0e0e0d', fontWeight: 600 }}>{property.nome}</div>
               <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(14,14,13,.45)' }}>{property.bairro} · T{property.quartos} · {property.area}m²</div>
@@ -542,21 +542,21 @@ function Step1({
       {/* Offer Slider */}
       {property && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.3rem' }}>
             <label className="p-label" style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}><IconSlider /> Valor da Oferta</label>
             <span style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.3rem', color: pct > 0 ? '#1c4a35' : pct < -8 ? '#c0392b' : '#c9a96e', fontWeight: 600 }}>
               {pct > 0 ? '+' : ''}{pct}% vs. pedido
             </span>
           </div>
           <input type="range" min={70} max={110} value={offerPct} onChange={e => handlePctChange(Number(e.target.value))}
-            style={{ width: '100%', marginBottom: '.5rem', accentColor: '#1c4a35' }} />
+            style={{ width: '100%', marginBottom: '.3rem', accentColor: '#1c4a35' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.75rem' }}>
             <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>70% — {fmtPreco(Math.round(asking * 0.7))}</span>
             <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>110% — {fmtPreco(Math.round(asking * 1.1))}</span>
           </div>
           <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Valor Manual</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Valor Manual</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
               <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.9rem', color: 'rgba(14,14,13,.4)' }}>€</span>
               <input className="p-inp" value={offerAmount.toLocaleString('pt-PT')}
                 onChange={e => handleAmountChange(e.target.value)}
@@ -568,8 +568,8 @@ function Step1({
 
       {/* Offer Type */}
       <div>
-        <label className="p-label" style={{ display: 'block', marginBottom: '.5rem' }}>Tipo de Oferta</label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '.5rem' }}>
+        <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Tipo de Oferta</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '.4rem' }}>
           {([
             { id: 'compra' as OfferType, label: 'Compra Simples', sub: 'Sem condições' },
             { id: 'financiamento' as OfferType, label: 'Com Financiamento', sub: 'Condição de crédito' },
@@ -584,7 +584,7 @@ function Step1({
                 transition: 'all .15s',
               }}>
               <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', fontWeight: 600, color: offerType === t.id ? '#1c4a35' : '#0e0e0d' }}>{t.label}</div>
-              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.1rem' }}>{t.sub}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.15rem' }}>{t.sub}</div>
             </button>
           ))}
         </div>
@@ -593,17 +593,17 @@ function Step1({
       {/* Buyer Details */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
         <div style={{ gridColumn: '1/-1' }}>
-          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Nome do Comprador</label>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Nome do Comprador</label>
           <input className="p-inp" value={buyerName} onChange={e => setBuyerName(e.target.value)} placeholder="Nome completo" />
         </div>
         <div>
-          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Nacionalidade</label>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Nacionalidade</label>
           <select className="p-sel" value={buyerNationality} onChange={e => setBuyerNationality(e.target.value)}>
             {Object.entries(NATIONALITY_FLAGS).map(([n, f]) => <option key={n} value={n}>{f} {n}</option>)}
           </select>
         </div>
         <div>
-          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>NIF (opcional)</label>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>NIF (opcional)</label>
           <input className="p-inp" value={buyerNIF} onChange={e => setBuyerNIF(e.target.value)} placeholder="000 000 000" />
         </div>
       </div>
@@ -611,28 +611,28 @@ function Step1({
       {/* Deadline & Deposit */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
         <div>
-          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Prazo de Resposta</label>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Prazo de Resposta</label>
           <input className="p-inp" type="date" value={responseDeadline} onChange={e => setResponseDeadline(e.target.value)} />
-          <p style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.25rem' }}>
+          <p style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.15rem' }}>
             {responseDeadline ? `${daysUntil(responseDeadline)} dias a partir de hoje` : 'Padrão: +72 horas'}
           </p>
         </div>
         <div>
-          <label className="p-label" style={{ display: 'block', marginBottom: '.35rem' }}>Sinal Proposto</label>
+          <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Sinal Proposto</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
             <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.85rem', color: 'rgba(14,14,13,.4)' }}>€</span>
             <input className="p-inp" value={depositAmount.toLocaleString('pt-PT')}
               onChange={e => setDepositAmount(Number(e.target.value.replace(/\D/g, '')))} />
           </div>
-          <p style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.25rem' }}>
+          <p style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginTop: '.15rem' }}>
             {offerAmount > 0 ? `${Math.round((depositAmount / offerAmount) * 100)}% do valor da oferta` : '10% padrão'}
           </p>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '.25rem' }}>
         <button onClick={onNext} className="p-btn-gold" disabled={!canNext}
-          style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem', opacity: canNext ? 1 : .45 }}>
+          style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem', opacity: canNext ? 1 : .45 }}>
           Condições <IconArrow dir="right" />
         </button>
       </div>
@@ -724,16 +724,16 @@ function Step2({ conditions, setConditions, onBack, onNext }: {
       </div>
 
       <div className="p-card" style={{ padding: '1rem 1.25rem' }}>
-        <label className="p-label" style={{ display: 'block', marginBottom: '.5rem' }}>Condições Personalizadas</label>
+        <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Condições Personalizadas</label>
         <textarea className="p-inp" value={conditions.customConditions} onChange={e => update('customConditions', e.target.value)}
           placeholder="Adicione quaisquer condições específicas…" rows={3} style={{ resize: 'vertical' }} />
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '.25rem' }}>
-        <button onClick={onBack} className="p-btn" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
+        <button onClick={onBack} className="p-btn" style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
           <IconArrow dir="left" /> Voltar
         </button>
-        <button onClick={onNext} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
+        <button onClick={onNext} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
           Gerar Proposta <IconArrow dir="right" />
         </button>
       </div>
@@ -778,13 +778,13 @@ function Step3({
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.25rem', alignItems: 'start' }}>
       {/* Letter preview */}
       <div>
-        <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.25rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .75rem' }}>
+        <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.25rem', color: '#0e0e0d', fontWeight: 300, margin: '0 0 .75rem' }}>
           Prévia da Proposta
         </h3>
-        <div style={{ background: '#fff', borderRadius: 10, border: '1px solid rgba(14,14,13,.1)', padding: '1.5rem', fontFamily: 'var(--font-dm-mono)', fontSize: '.78rem', color: '#0e0e0d', lineHeight: 1.8, whiteSpace: 'pre-wrap', maxHeight: 520, overflowY: 'auto' }}>
+        <div style={{ background: '#fff', borderRadius: '10px', border: '1px solid rgba(14,14,13,.1)', padding: '1.5rem', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)', fontFamily: 'var(--font-dm-mono)', fontSize: '.78rem', color: '#0e0e0d', lineHeight: 1.8, whiteSpace: 'pre-wrap', maxHeight: 520, overflowY: 'auto' }}>
           {letterText}
         </div>
-        <div style={{ display: 'flex', gap: '.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '.4rem', marginTop: '1rem', flexWrap: 'wrap' }}>
           <button onClick={copy} className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
             {copied ? <><IconCheck /> Copiado!</> : <><IconCopy /> Copiar Proposta</>}
           </button>
@@ -808,19 +808,19 @@ function Step3({
       {/* Strategy panel */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
         <div className="p-card" style={{ padding: '1.25rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '1rem' }}>
             <IconLightbulb />
-            <h4 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.1rem', color: '#0e0e0d', fontWeight: 600, margin: 0 }}>Estratégia de Negociação</h4>
+            <h4 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.1rem', color: '#0e0e0d', fontWeight: 300, margin: 0 }}>Estratégia de Negociação</h4>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
             <div style={{ padding: '.7rem .9rem', background: 'rgba(14,14,13,.04)', borderRadius: 8 }}>
-              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.15rem' }}>MARGEM ESTIMADA NESTA ZONA</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.3rem' }}>MARGEM ESTIMADA NESTA ZONA</div>
               <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.88rem', color: '#0e0e0d', fontWeight: 600 }}>{marginLow}–{marginHigh}%</div>
             </div>
 
             <div style={{ padding: '.7rem .9rem', background: leverage === 'ALTO' ? 'rgba(28,74,53,.08)' : leverage === 'MÉDIO' ? 'rgba(201,169,110,.08)' : 'rgba(192,57,43,.06)', borderRadius: 8 }}>
-              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.15rem' }}>IMÓVEL NO MERCADO HÁ</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.3rem' }}>IMÓVEL NO MERCADO HÁ</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.88rem', color: '#0e0e0d', fontWeight: 600 }}>{dom} dias</span>
                 <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', fontWeight: 700, color: leverageColor }}>LEVERAGE: {leverage}</span>
@@ -828,7 +828,7 @@ function Step3({
             </div>
 
             <div style={{ padding: '.7rem .9rem', background: 'rgba(201,169,110,.08)', borderRadius: 8 }}>
-              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.15rem' }}>OUTROS INTERESSADOS</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.3rem' }}>OUTROS INTERESSADOS</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.88rem', color: '#0e0e0d', fontWeight: 600 }}>3 reportados</span>
                 <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', fontWeight: 700, color: '#c9a96e' }}>URGÊNCIA: MÉDIA</span>
@@ -836,9 +836,9 @@ function Step3({
             </div>
 
             <div style={{ padding: '.85rem .9rem', background: 'rgba(28,74,53,.06)', borderRadius: 8, border: '1px solid rgba(28,74,53,.15)' }}>
-              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.25rem' }}>PREÇO RECOMENDADO</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.3rem' }}>PREÇO RECOMENDADO</div>
               <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.5rem', color: '#1c4a35', fontWeight: 600 }}>{fmtPreco(recommendedPrice)}</div>
-              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.45)', marginTop: '.2rem' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.45)', marginTop: '.15rem' }}>
                 {recommendedPct}% vs. pedido · boa chance de aceitação
               </div>
             </div>
@@ -847,9 +847,9 @@ function Step3({
 
         {pct < -10 && (
           <div style={{ padding: '.9rem 1rem', background: 'rgba(192,57,43,.06)', borderRadius: 10, border: '1px solid rgba(192,57,43,.2)', display: 'flex', gap: '.6rem' }}>
-            <div style={{ color: '#c0392b', flexShrink: 0, paddingTop: '.1rem' }}><IconWarning /></div>
+            <div style={{ color: '#c0392b', flexShrink: 0, paddingTop: '.25rem' }}><IconWarning /></div>
             <div>
-              <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: '#c0392b', fontWeight: 600, marginBottom: '.2rem' }}>Oferta muito abaixo</div>
+              <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: '#c0392b', fontWeight: 600, marginBottom: '.3rem' }}>Oferta muito abaixo</div>
               <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: 'rgba(14,14,13,.55)', lineHeight: 1.5 }}>
                 Uma oferta {Math.abs(pct)}% abaixo pode ofender o vendedor. Considere aumentar ou reforçar com condições favoráveis.
               </div>
@@ -902,7 +902,7 @@ function NovaPropostaTab() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: '2rem' }}>
         {STEPS.map((s, i) => (
           <div key={s.n} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: step > s.n ? 'pointer' : 'default' }}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', cursor: step > s.n ? 'pointer' : 'default' }}
               onClick={() => { if (step > s.n) setStep(s.n) }}>
               <IconWizardDot active={step === s.n} done={step > s.n} />
               <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: step === s.n ? '#0e0e0d' : step > s.n ? '#1c4a35' : 'rgba(14,14,13,.4)', fontWeight: step === s.n ? 600 : 400, whiteSpace: 'nowrap' }}>
@@ -963,7 +963,7 @@ function PropostasActivasTab() {
             <div style={{ padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }}
               onClick={() => setExpandedId(isExpanded ? null : offer.id)}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.25rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.3rem', flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: '#0e0e0d', fontWeight: 600 }}>{offer.propertyName}</span>
                   <span style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`, borderRadius: 20, padding: '2px 10px', fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', fontWeight: 600 }}>{offer.status}</span>
                 </div>
@@ -998,7 +998,7 @@ function PropostasActivasTab() {
                 {/* Counter-offer */}
                 {offer.status === 'Contra-Proposta' && offer.counterOfferAmount && (
                   <div style={{ padding: '.9rem 1rem', background: 'rgba(234,179,8,.08)', border: '1px solid rgba(234,179,8,.25)', borderRadius: 10, marginBottom: '1rem' }}>
-                    <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: '#b45309', marginBottom: '.25rem' }}>CONTRA-PROPOSTA DO VENDEDOR</div>
+                    <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: '#b45309', marginBottom: '.3rem' }}>CONTRA-PROPOSTA DO VENDEDOR</div>
                     <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.4rem', color: '#b45309', fontWeight: 600 }}>{fmtPreco(offer.counterOfferAmount)}</div>
                     {offer.counterOfferNote && (
                       <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', color: 'rgba(14,14,13,.65)', margin: '.4rem 0 0', lineHeight: 1.5 }}>{offer.counterOfferNote}</p>
@@ -1010,7 +1010,7 @@ function PropostasActivasTab() {
                 {/* Timeline */}
                 <div style={{ marginBottom: '1rem' }}>
                   <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.4)', marginBottom: '.6rem', letterSpacing: '.06em' }}>TIMELINE</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
                     {offer.timeline.map((ev, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem' }}>
                         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
@@ -1033,7 +1033,7 @@ function PropostasActivasTab() {
                 </div>
 
                 {offer.status !== 'Aceite' && offer.status !== 'Recusada' && (
-                  <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
                     <button className="p-btn-gold" style={{ fontSize: '.8rem' }}>Responder</button>
                     <button className="p-btn" style={{ fontSize: '.8rem' }}>Actualizar Estado</button>
                     <button className="p-btn" style={{ fontSize: '.8rem' }}>Enviar Follow-up</button>
@@ -1072,7 +1072,7 @@ function HistoricoTab() {
           { label: 'Recusadas', value: rejected.length.toString(), sub: `${Math.round((rejected.length / total) * 100)}% das propostas`, color: '#c0392b' },
         ].map(k => (
           <div key={k.label} className="p-card" style={{ padding: '.9rem 1rem' }}>
-            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.2rem' }}>{k.label.toUpperCase()}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.3rem' }}>{k.label.toUpperCase()}</div>
             <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.8rem', color: k.color, fontWeight: 600, lineHeight: 1 }}>{k.value}</div>
             <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)', marginTop: '.15rem' }}>{k.sub}</div>
           </div>
@@ -1083,7 +1083,7 @@ function HistoricoTab() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem', marginBottom: '1.5rem' }}>
         {best && (
           <div style={{ padding: '.9rem 1rem', background: 'rgba(28,74,53,.06)', borderRadius: 10, border: '1px solid rgba(28,74,53,.15)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.3rem' }}>
               <IconTrophy />
               <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: '#1c4a35', fontWeight: 600 }}>MELHOR NEGOCIAÇÃO</span>
             </div>
@@ -1095,7 +1095,7 @@ function HistoricoTab() {
         )}
         {worst && (
           <div style={{ padding: '.9rem 1rem', background: 'rgba(192,57,43,.05)', borderRadius: 10, border: '1px solid rgba(192,57,43,.15)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.3rem' }}>
               <IconWarning />
               <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: '#c0392b', fontWeight: 600 }}>MAIS ABAIXO DE MERCADO</span>
             </div>
@@ -1108,7 +1108,7 @@ function HistoricoTab() {
       </div>
 
       {/* History list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
         {MOCK_HISTORICAL.map(h => {
           const pct = pctDiff(h.offerAmount, h.askingPrice)
           const isAccepted = h.result === 'Aceite'
@@ -1120,7 +1120,7 @@ function HistoricoTab() {
               }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: '#0e0e0d', fontWeight: 600 }}>{h.propertyName}</div>
-                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.45)', marginTop: '.1rem' }}>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', color: 'rgba(14,14,13,.45)', marginTop: '.15rem' }}>
                   {h.buyerName} · {new Date(h.closedAt).toLocaleDateString('pt-PT')} · {h.negotiationDays} dias
                 </div>
               </div>
@@ -1176,7 +1176,7 @@ function TemplatesTab() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.75rem' }}>
                 <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(14,14,13,.08)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${t.successRate}%`, background: t.textColor, borderRadius: 3, transition: 'width .6s ease' }} />
                 </div>
@@ -1197,7 +1197,7 @@ function TemplatesTab() {
 
             {isExpanded && (
               <div style={{ borderTop: `1px solid ${t.textColor}22`, padding: '1rem 1.25rem', background: 'rgba(14,14,13,.03)' }}>
-                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.5rem', letterSpacing: '.06em' }}>LINGUAGEM SUGERIDA</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.3rem', letterSpacing: '.06em' }}>LINGUAGEM SUGERIDA</div>
                 <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: '#0e0e0d', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>{t.exampleLanguage}</p>
                 <button className="p-btn-gold" style={{ marginTop: '.75rem', fontSize: '.78rem', width: '100%' }}>
                   Usar Este Template
@@ -1227,7 +1227,7 @@ export default function PortalDraftOffer() {
     <div style={{ padding: '0 0 3rem' }}>
       {/* Header */}
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .25rem' }}>
+        <h1 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2rem', color: '#0e0e0d', fontWeight: 300, margin: '0 0 .25rem' }}>
           Redigir Proposta IA
         </h1>
         <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: 'rgba(14,14,13,.5)', margin: 0 }}>

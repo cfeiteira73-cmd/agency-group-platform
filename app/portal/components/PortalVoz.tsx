@@ -307,7 +307,7 @@ function InterestArc({ level }: { level: number }) {
       <path d={arcPath(startAngle, bgEnd)} fill="none" stroke={C.border} strokeWidth={5} strokeLinecap="round" />
       <path d={arcPath(startAngle, endAngle)} fill="none" stroke={col} strokeWidth={5} strokeLinecap="round" />
       <text x={cx} y={cy + 5} textAnchor="middle" fontSize={14} fontWeight="bold" fill={col} fontFamily="Cormorant">{level}</text>
-      <text x={cx} y={cy + 17} textAnchor="middle" fontSize={7} fill={C.muted} fontFamily="DM Mono">/5</text>
+      <text x={cx} y={cy + 17} textAnchor="middle" fontSize={11} fill={C.muted} fontFamily="DM Mono">/5</text>
     </svg>
   )
 }
@@ -478,17 +478,18 @@ function TabDitado() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Language selector */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted }}>Idioma:</span>
+        <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>Idioma:</span>
         {LANGUAGE_OPTIONS.map(opt => (
           <button
             key={opt.value}
             onClick={() => setLang(opt.value)}
             style={{
-              padding: '6px 14px', borderRadius: 8, fontFamily: 'DM Mono', fontSize: 12, cursor: 'pointer',
+              padding: '6px 14px', borderRadius: 8, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer',
               border: `1.5px solid ${lang === opt.value ? C.green : C.border}`,
               background: lang === opt.value ? C.green + '12' : 'transparent',
               color: lang === opt.value ? C.green : C.muted,
               fontWeight: lang === opt.value ? 700 : 400,
+              transition: 'all .2s',
             }}
           >
             {opt.flag} {opt.label}
@@ -504,7 +505,7 @@ function TabDitado() {
         </div>
 
         {/* Timer */}
-        <div style={{ fontFamily: 'DM Mono', fontSize: 13, color: C.muted, marginBottom: 24 }}>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 13, color: C.muted, marginBottom: 24 }}>
           {recording ? (
             <span style={{ color: C.red }}>● {formatDuration(seconds)}</span>
           ) : seconds > 0 ? (
@@ -532,12 +533,12 @@ function TabDitado() {
           {recording ? '⏹' : '🎙'}
         </button>
 
-        <div style={{ marginTop: 14, fontFamily: 'DM Mono', fontSize: 11, color: C.muted }}>
+        <div style={{ marginTop: 14, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>
           {recording ? 'Clique para parar' : 'Clique para gravar'}
         </div>
 
         {error && (
-          <div style={{ marginTop: 16, padding: '10px 16px', background: C.red + '10', border: `1px solid ${C.red}30`, borderRadius: 8, fontFamily: 'DM Mono', fontSize: 12, color: C.red }}>
+          <div style={{ marginTop: 16, padding: '10px 16px', background: C.red + '10', border: `1px solid ${C.red}30`, borderRadius: 8, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: C.red }}>
             {error}
           </div>
         )}
@@ -547,8 +548,8 @@ function TabDitado() {
       {(transcript || interim) && (
         <div className="p-card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 style={{ fontFamily: 'Cormorant', fontSize: 18, fontWeight: 600, color: C.text, margin: 0 }}>Transcrição</h3>
-            <span style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted }}>
+            <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: C.text, margin: 0 }}>Transcrição</h3>
+            <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted }}>
               {transcript.split(/\s+/).filter(Boolean).length} palavras
             </span>
           </div>
@@ -556,7 +557,7 @@ function TabDitado() {
             ref={transcriptAreaRef}
             style={{
               minHeight: 80, maxHeight: 200, overflowY: 'auto',
-              fontFamily: 'Jost', fontSize: 14, color: C.text, lineHeight: 1.7,
+              fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, color: C.text, lineHeight: 1.7,
               padding: '12px', background: C.bg, borderRadius: 8,
             }}
           >
@@ -587,42 +588,42 @@ function TabDitado() {
       {result && (
         <div className="p-card" style={{ padding: '20px', border: `1.5px solid ${INTENT_COLORS[result.intent]}30` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-            <h3 style={{ fontFamily: 'Cormorant', fontSize: 20, fontWeight: 700, color: C.text, margin: 0 }}>
+            <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, fontWeight: 300, color: C.text, margin: 0 }}>
               Análise IA
             </h3>
             <div style={{ display: 'flex', gap: 8 }}>
               <span style={{
                 background: INTENT_COLORS[result.intent] + '18', color: INTENT_COLORS[result.intent],
-                fontFamily: 'DM Mono', fontSize: 10, padding: '3px 10px', borderRadius: 99,
+                fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 10px', borderRadius: 99,
               }}>{INTENT_LABELS[result.intent]}</span>
               <span style={{
                 background: URGENCY_COLORS[result.urgency] + '18', color: URGENCY_COLORS[result.urgency],
-                fontFamily: 'DM Mono', fontSize: 10, padding: '3px 10px', borderRadius: 99,
+                fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 10px', borderRadius: 99,
               }}>Urgência: {result.urgency}</span>
               <span style={{
                 background: SENTIMENT_COLORS[result.sentiment] + '18', color: SENTIMENT_COLORS[result.sentiment],
-                fontFamily: 'DM Mono', fontSize: 10, padding: '3px 10px', borderRadius: 99,
+                fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 10px', borderRadius: 99,
               }}>{result.sentiment}</span>
             </div>
           </div>
-          <p style={{ fontFamily: 'Jost', fontSize: 14, color: C.text, lineHeight: 1.6, margin: '0 0 16px' }}>
+          <p style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, color: C.text, lineHeight: 1.6, margin: '0 0 16px' }}>
             <strong>Resumo:</strong> {result.summary}
           </p>
           {(result.actionItems ?? []).length > 0 && (
             <div>
-              <div style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted, marginBottom: 8 }}>PRÓXIMOS PASSOS</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted, marginBottom: 8 }}>PRÓXIMOS PASSOS</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {(result.actionItems ?? []).map((item, i) => (
                   <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                     <span style={{ color: C.green, fontSize: 13, flexShrink: 0, marginTop: 1 }}>✓</span>
-                    <span style={{ fontFamily: 'Jost', fontSize: 13, color: C.text }}>{item}</span>
+                    <span style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.text }}>{item}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
           {result.followUpDate && (
-            <div style={{ marginTop: 12, fontFamily: 'DM Mono', fontSize: 11, color: C.gold }}>
+            <div style={{ marginTop: 12, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.gold }}>
               📅 Follow-up: {new Date(result.followUpDate).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long' })}
             </div>
           )}
@@ -730,8 +731,8 @@ function TabVisitas() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontFamily: 'Cormorant', fontSize: 22, fontWeight: 700, color: C.text, margin: '0 0 4px' }}>Notas de Visita</h2>
-          <p style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted, margin: 0 }}>{visitNotes.length} notas gravadas</p>
+          <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: C.text, margin: '0 0 4px' }}>Notas de Visita</h2>
+          <p style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted, margin: 0 }}>{visitNotes.length} notas gravadas</p>
         </div>
         <button
           className="p-btn-gold"
@@ -745,7 +746,7 @@ function TabVisitas() {
       {/* New note form */}
       {showForm && (
         <div className="p-card" style={{ padding: '20px' }}>
-          <h3 style={{ fontFamily: 'Cormorant', fontSize: 18, fontWeight: 600, color: C.text, margin: '0 0 16px' }}>Nova Nota de Visita</h3>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: C.text, margin: '0 0 16px' }}>Nova Nota de Visita</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
             <div>
               <label className="p-label" style={{ display: 'block', marginBottom: 5 }}>Imóvel Visitado</label>
@@ -783,13 +784,13 @@ function TabVisitas() {
               <div>
                 <WaveformSVG recording={recording} animated={recording} />
               </div>
-              <div style={{ fontFamily: 'DM Mono', fontSize: 12, color: recording ? C.red : C.muted }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: recording ? C.red : C.muted }}>
                 {recording ? `● ${formatDuration(noteSeconds)}` : noteSeconds > 0 ? formatDuration(noteSeconds) : 'Gravar nota de voz'}
               </div>
             </div>
             {(noteTranscript || noteInterim) && (
               <div style={{
-                fontFamily: 'Jost', fontSize: 13, color: C.text, lineHeight: 1.6,
+                fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.text, lineHeight: 1.6,
                 padding: '10px 12px', background: '#fff', borderRadius: 7, maxHeight: 120, overflowY: 'auto',
               }}>
                 {noteTranscript}
@@ -826,17 +827,17 @@ function TabVisitas() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
                   <div>
-                    <div style={{ fontFamily: 'Jost', fontWeight: 600, fontSize: 15, color: C.text }}>{note.propertyName}</div>
-                    <div style={{ fontFamily: 'DM Mono', fontSize: 11, color: C.muted, marginTop: 2 }}>
+                    <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontWeight: 600, fontSize: 15, color: C.text }}>{note.propertyName}</div>
+                    <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted, marginTop: 2 }}>
                       {note.buyerName} · {new Date(note.date).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })} {note.time}
                     </div>
                   </div>
                   <button
                     onClick={() => setExpandedId(expandedId === note.id ? null : note.id)}
                     style={{
-                      fontFamily: 'DM Mono', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                      fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
                       border: `1px solid ${C.green}30`, background: expandedId === note.id ? C.green + '12' : 'transparent',
-                      color: C.green,
+                      color: C.green, transition: 'all .2s',
                     }}
                   >
                     {expandedId === note.id ? '▲ Fechar' : '▼ Ver Detalhe'}
@@ -848,7 +849,7 @@ function TabVisitas() {
                   {note.objections.map((obj, i) => (
                     <span key={i} style={{
                       background: C.red + '12', color: C.red, border: `1px solid ${C.red}30`,
-                      fontSize: 10, fontFamily: 'DM Mono', padding: '2px 8px', borderRadius: 99,
+                      fontSize: 10, fontFamily: 'var(--font-dm-mono),monospace', padding: '2px 8px', borderRadius: 99,
                     }}>{obj}</span>
                   ))}
                 </div>
@@ -859,17 +860,17 @@ function TabVisitas() {
             {expandedId === note.id && (
               <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${C.border}`, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
-                  <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginBottom: 5 }}>REACÇÃO DO COMPRADOR</div>
-                  <p style={{ fontFamily: 'Jost', fontSize: 13, color: C.text, lineHeight: 1.6, margin: 0 }}>{note.reaction}</p>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginBottom: 5 }}>REACÇÃO DO COMPRADOR</div>
+                  <p style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.text, lineHeight: 1.6, margin: 0 }}>{note.reaction}</p>
                 </div>
                 <div>
-                  <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginBottom: 5 }}>PRÓXIMO PASSO</div>
-                  <p style={{ fontFamily: 'Jost', fontSize: 13, color: C.text, lineHeight: 1.6, margin: 0 }}>{note.nextStep}</p>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginBottom: 5 }}>PRÓXIMO PASSO</div>
+                  <p style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.text, lineHeight: 1.6, margin: 0 }}>{note.nextStep}</p>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginBottom: 5 }}>TRANSCRIÇÃO COMPLETA</div>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginBottom: 5 }}>TRANSCRIÇÃO COMPLETA</div>
                   <div style={{
-                    fontFamily: 'Jost', fontSize: 12, color: C.muted, lineHeight: 1.6,
+                    fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, color: C.muted, lineHeight: 1.6,
                     padding: '10px 12px', background: C.bg, borderRadius: 7,
                   }}>{note.transcript}</div>
                 </div>
@@ -991,7 +992,7 @@ function TabComandos() {
               animation: listening ? 'micPulse 1s infinite' : 'none',
               display: 'inline-block',
             }} />
-            <span style={{ fontFamily: 'DM Mono', fontSize: 12, color: listening ? C.red : C.green }}>
+            <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: listening ? C.red : C.green }}>
               {listening ? 'A ouvir...' : 'Aguardando comando'}
             </span>
           </div>
@@ -1014,7 +1015,7 @@ function TabComandos() {
 
         {liveText && (
           <div style={{
-            fontFamily: 'Jost', fontSize: 14, color: C.text,
+            fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, color: C.text,
             padding: '10px 16px', background: C.bg, borderRadius: 8,
             margin: '0 auto', maxWidth: 400,
           }}>
@@ -1025,7 +1026,7 @@ function TabComandos() {
 
       {/* Command cards */}
       <div>
-        <h3 style={{ fontFamily: 'Cormorant', fontSize: 20, fontWeight: 600, color: C.text, margin: '0 0 14px' }}>
+        <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, fontWeight: 300, color: C.text, margin: '0 0 14px' }}>
           Comandos Disponíveis
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
@@ -1034,16 +1035,16 @@ function TabComandos() {
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <span style={{ fontSize: 22, flexShrink: 0 }}>{cmd.icon}</span>
                 <div>
-                  <div style={{ fontFamily: 'DM Mono', fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 3 }}>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 3 }}>
                     {cmd.command}
                   </div>
-                  <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginBottom: 6 }}>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginBottom: 6 }}>
                     Sintaxe: <span style={{ color: C.green }}>{cmd.pattern}</span>
                   </div>
-                  <div style={{ fontFamily: 'Jost', fontSize: 12, color: C.muted, marginBottom: 4 }}>
+                  <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, color: C.muted, marginBottom: 4 }}>
                     Ex: {cmd.example}
                   </div>
-                  <div style={{ fontFamily: 'Jost', fontSize: 11, color: C.blue }}>
+                  <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 11, color: C.blue }}>
                     → {cmd.action}
                   </div>
                 </div>
@@ -1055,7 +1056,7 @@ function TabComandos() {
 
       {/* Command history */}
       <div>
-        <h3 style={{ fontFamily: 'Cormorant', fontSize: 20, fontWeight: 600, color: C.text, margin: '0 0 14px' }}>
+        <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, fontWeight: 300, color: C.text, margin: '0 0 14px' }}>
           Histórico de Comandos
         </h3>
         <div className="p-card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -1071,20 +1072,20 @@ function TabComandos() {
               <div style={{ flexShrink: 0, marginTop: 2 }}>
                 <span style={{
                   background: C.green + '18', color: C.green,
-                  fontFamily: 'DM Mono', fontSize: 9, padding: '2px 7px', borderRadius: 99,
+                  fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '2px 7px', borderRadius: 99,
                 }}>{h.matched}</span>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'DM Mono', fontSize: 12, color: C.text, marginBottom: 3 }}>"{h.raw}"</div>
-                <div style={{ fontFamily: 'Jost', fontSize: 12, color: C.muted }}>→ {h.result}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: C.text, marginBottom: 3 }}>"{h.raw}"</div>
+                <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, color: C.muted }}>→ {h.result}</div>
               </div>
-              <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, flexShrink: 0, marginTop: 2 }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, flexShrink: 0, marginTop: 2 }}>
                 {new Date(h.executedAt).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           ))}
           {history.length === 0 && (
-            <div style={{ padding: '24px', textAlign: 'center', fontFamily: 'DM Mono', fontSize: 12, color: C.muted }}>
+            <div style={{ padding: '24px', textAlign: 'center', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: C.muted }}>
               Nenhum comando executado ainda
             </div>
           )}
@@ -1168,8 +1169,8 @@ function TabTranscricoes() {
             const count = transcripts.filter(t => t.type === type).length
             return (
               <div key={type} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Cormorant', fontSize: 20, fontWeight: 700, color: TYPE_COLORS[type] }}>{count}</div>
-                <div style={{ fontFamily: 'DM Mono', fontSize: 9, color: C.muted }}>{TYPE_LABELS[type].toUpperCase()}</div>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, fontWeight: 700, color: TYPE_COLORS[type] }}>{count}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>{TYPE_LABELS[type].toUpperCase()}</div>
               </div>
             )
           })}
@@ -1179,7 +1180,7 @@ function TabTranscricoes() {
       {/* Transcript list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'DM Mono', fontSize: 12, color: C.muted }}>
+          <div style={{ textAlign: 'center', padding: '40px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: C.muted }}>
             {search ? `Nenhuma transcrição contém "${search}"` : 'Nenhuma transcrição ainda'}
           </div>
         )}
@@ -1194,33 +1195,33 @@ function TabTranscricoes() {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
                   <span style={{
                     background: TYPE_COLORS[t.type] + '18', color: TYPE_COLORS[t.type],
-                    fontFamily: 'DM Mono', fontSize: 9, padding: '2px 8px', borderRadius: 99,
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '2px 8px', borderRadius: 99,
                   }}>{TYPE_LABELS[t.type]}</span>
-                  <span style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted }}>{fmtDate(t.date)}</span>
-                  <span style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted }}>
+                  <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted }}>{fmtDate(t.date)}</span>
+                  <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted }}>
                     {formatDuration(t.duration)} · {t.wordCount} palavras
                   </span>
                   {t.aiResult && (
                     <span style={{
                       background: INTENT_COLORS[t.aiResult.intent] + '18', color: INTENT_COLORS[t.aiResult.intent],
-                      fontFamily: 'DM Mono', fontSize: 9, padding: '2px 7px', borderRadius: 99,
+                      fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '2px 7px', borderRadius: 99,
                     }}>{INTENT_LABELS[t.aiResult.intent]}</span>
                   )}
                 </div>
-                <p style={{ fontFamily: 'Jost', fontSize: 13, color: C.text, lineHeight: 1.5, margin: 0 }}>
+                <p style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.text, lineHeight: 1.5, margin: 0 }}>
                   {expandedId === t.id ? t.text : t.text.slice(0, 120) + (t.text.length > 120 ? '...' : '')}
                 </p>
                 {t.aiResult && expandedId === t.id && (
                   <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
-                    <div style={{ fontFamily: 'DM Mono', fontSize: 10, color: C.muted, marginBottom: 6 }}>ANÁLISE IA</div>
-                    <p style={{ fontFamily: 'Jost', fontSize: 13, color: C.text, lineHeight: 1.6, margin: '0 0 8px' }}>
+                    <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: C.muted, marginBottom: 6 }}>ANÁLISE IA</div>
+                    <p style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: C.text, lineHeight: 1.6, margin: '0 0 8px' }}>
                       <strong>Resumo:</strong> {t.aiResult.summary}
                     </p>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {t.aiResult.actionItems.map((a, i) => (
                         <span key={i} style={{
                           background: C.green + '0f', color: C.green,
-                          fontFamily: 'DM Mono', fontSize: 10, padding: '3px 9px', borderRadius: 99,
+                          fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 9px', borderRadius: 99,
                         }}>✓ {a}</span>
                       ))}
                     </div>
@@ -1232,29 +1233,29 @@ function TabTranscricoes() {
                 <button
                   onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
                   style={{
-                    fontFamily: 'DM Mono', fontSize: 10, padding: '4px 10px', borderRadius: 5,
-                    border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, cursor: 'pointer',
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '4px 10px', borderRadius: 5,
+                    border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, cursor: 'pointer', transition: 'all .2s',
                   }}
                 >{expandedId === t.id ? '▲' : '▼'}</button>
                 <button
                   onClick={() => copyText(t)}
                   style={{
-                    fontFamily: 'DM Mono', fontSize: 10, padding: '4px 10px', borderRadius: 5,
-                    border: `1px solid ${C.green}30`, background: C.green + '08', color: C.green, cursor: 'pointer',
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '4px 10px', borderRadius: 5,
+                    border: `1px solid ${C.green}30`, background: C.green + '08', color: C.green, cursor: 'pointer', transition: 'all .2s',
                   }}
                 >{copied === t.id ? '✓' : 'Copiar'}</button>
                 <button
                   onClick={() => exportPDF(t)}
                   style={{
-                    fontFamily: 'DM Mono', fontSize: 10, padding: '4px 10px', borderRadius: 5,
-                    border: `1px solid ${C.gold}30`, background: C.gold + '08', color: C.gold, cursor: 'pointer',
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '4px 10px', borderRadius: 5,
+                    border: `1px solid ${C.gold}30`, background: C.gold + '08', color: C.gold, cursor: 'pointer', transition: 'all .2s',
                   }}
                 >Export</button>
                 <button
                   onClick={() => deleteTranscript(t.id)}
                   style={{
-                    fontFamily: 'DM Mono', fontSize: 10, padding: '4px 10px', borderRadius: 5,
-                    border: `1px solid ${C.red}30`, background: C.red + '08', color: C.red, cursor: 'pointer',
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '4px 10px', borderRadius: 5,
+                    border: `1px solid ${C.red}30`, background: C.red + '08', color: C.red, cursor: 'pointer', transition: 'all .2s',
                   }}
                 >Del.</button>
               </div>
@@ -1278,13 +1279,13 @@ export default function PortalVoz() {
   ]
 
   return (
-    <div style={{ fontFamily: 'Jost', color: C.text }}>
+    <div style={{ fontFamily: 'var(--font-jost),sans-serif', color: C.text }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'Cormorant', fontSize: 32, fontWeight: 700, color: C.text, margin: '0 0 6px' }}>
+        <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 32, fontWeight: 300, color: C.text, margin: '0 0 6px' }}>
           Voz Inteligente
         </h1>
-        <p style={{ fontFamily: 'DM Mono', fontSize: 12, color: C.muted, margin: 0 }}>
+        <p style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: C.muted, margin: 0 }}>
           Reconhecimento de voz · Notas automáticas · Comandos IA · Agency Group AMI 22506
         </p>
       </div>
@@ -1294,6 +1295,7 @@ export default function PortalVoz() {
         display: 'flex', gap: 4, marginBottom: 24,
         background: '#fff', borderRadius: 12, padding: 4,
         border: `1px solid ${C.border}`,
+        boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
       }}>
         {TABS.map(tab => (
           <button
@@ -1303,7 +1305,7 @@ export default function PortalVoz() {
               flex: 1, padding: '10px 12px', borderRadius: 9, border: 'none', cursor: 'pointer',
               background: activeTab === tab.id ? C.green : 'transparent',
               color: activeTab === tab.id ? '#fff' : C.muted,
-              fontFamily: 'DM Mono', fontSize: 11, fontWeight: activeTab === tab.id ? 700 : 400,
+              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, fontWeight: activeTab === tab.id ? 700 : 400,
               transition: 'all .2s',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
             }}
@@ -1324,6 +1326,7 @@ export default function PortalVoz() {
       </div>
 
       <style>{`
+        .p-card { background: #fff; border: 1px solid #e5e0d5; border-radius: 12px; box-shadow: 0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04); }
         @keyframes micPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(28,74,53,.4); }
           50% { box-shadow: 0 0 0 16px rgba(28,74,53,0); }

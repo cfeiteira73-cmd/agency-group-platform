@@ -472,7 +472,7 @@ function SignalBadge({ type }: { type: SignalType }) {
       background: SIGNAL_COLORS[type] + '22', color: SIGNAL_COLORS[type],
       border: `1px solid ${SIGNAL_COLORS[type]}44`,
       borderRadius: 4, padding: '2px 8px', fontSize: 11,
-      fontFamily: "'DM Mono',monospace", fontWeight: 600, whiteSpace: 'nowrap'
+      fontFamily: 'var(--font-dm-mono),monospace', fontWeight: 600, whiteSpace: 'nowrap'
     }}>
       {SIGNAL_LABELS[type].toUpperCase()}
     </span>
@@ -489,7 +489,7 @@ function StatusBadge({ status }: { status: string }) {
     <span style={{
       background: c + '22', color: c, border: `1px solid ${c}44`,
       borderRadius: 4, padding: '2px 8px', fontSize: 11,
-      fontFamily: "'DM Mono',monospace", fontWeight: 600
+      fontFamily: 'var(--font-dm-mono),monospace', fontWeight: 600
     }}>
       {STATUS_LABELS[status] || status}
     </span>
@@ -567,7 +567,7 @@ function SignalDrawer({
         padding: '8px 16px', border: 'none', cursor: 'pointer',
         borderBottom: tab === key ? '2px solid #1c4a35' : '2px solid transparent',
         background: 'transparent', color: tab === key ? '#1c4a35' : '#6b7280',
-        fontFamily: "'DM Mono',monospace", fontSize: 12, fontWeight: tab === key ? 700 : 400
+        fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, fontWeight: tab === key ? 700 : 400
       }}
     >{label}</button>
   )
@@ -592,10 +592,10 @@ function SignalDrawer({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
             <div>
               <SignalBadge type={signal.type} />
-              <h2 style={{ fontFamily: "'Cormorant',serif", fontSize: 22, color: '#0e0e0d', margin: '8px 0 4px' }}>
+              <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, color: '#0e0e0d', margin: '8px 0 4px' }}>
                 {signal.address}
               </h2>
-              <p style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#6b7280', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280', margin: 0 }}>
                 {signal.zona} · AVM {fmtCurrency(signal.avmEstimate)}
               </p>
             </div>
@@ -610,8 +610,8 @@ function SignalDrawer({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280' }}>PROBABILIDADE</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#1c4a35', fontWeight: 700 }}>{signal.probability}%</span>
+                <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280' }}>PROBABILIDADE</span>
+                <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#1c4a35', fontWeight: 700 }}>{signal.probability}%</span>
               </div>
               <ProbabilityBar value={signal.probability} />
             </div>
@@ -640,7 +640,7 @@ function SignalDrawer({
                   ['Próxima Acção', signal.nextAction || '—']
                 ].map(([label, value]) => (
                   <div key={label} style={{ background: '#ede9dc', borderRadius: 8, padding: '10px 12px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280', marginBottom: 4 }}>{label}</div>
+                    <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280', marginBottom: 4 }}>{label}</div>
                     <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#0e0e0d', fontWeight: 500 }}>{value}</div>
                   </div>
                 ))}
@@ -667,7 +667,7 @@ function SignalDrawer({
                     onClick={() => onUpdate({ ...signal, status: s })}
                     style={{
                       flex: 1, padding: '6px 4px', border: 'none', borderRadius: 6,
-                      cursor: 'pointer', fontSize: 10, fontFamily: "'DM Mono',monospace",
+                      cursor: 'pointer', fontSize: 10, fontFamily: 'var(--font-dm-mono),monospace',
                       background: signal.status === s ? '#1c4a35' : '#ede9dc',
                       color: signal.status === s ? '#f4f0e6' : '#6b7280',
                       fontWeight: signal.status === s ? 700 : 400, transition: 'all 0.2s'
@@ -688,7 +688,7 @@ function SignalDrawer({
                 }}>
                   <span style={{ fontSize: 16 }}>📅</span>
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#1c4a35' }}>PRÓXIMA ACÇÃO</div>
+                    <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#1c4a35' }}>PRÓXIMA ACÇÃO</div>
                     <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#0e0e0d', fontWeight: 600 }}>{signal.nextAction}</div>
                   </div>
                 </div>
@@ -717,16 +717,16 @@ function SignalDrawer({
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#1c4a35', fontWeight: 700 }}>
+                            <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#1c4a35', fontWeight: 700 }}>
                               {rec.channel.replace('_', ' ').toUpperCase()}
                             </span>
-                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280' }}>{fmtDate(rec.date)}</span>
+                            <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280' }}>{fmtDate(rec.date)}</span>
                           </div>
                           <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#0e0e0d', margin: '0 0 6px', lineHeight: 1.5 }}>
                             {rec.content}
                           </p>
                           <span style={{
-                            fontFamily: "'DM Mono',monospace", fontSize: 10,
+                            fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10,
                             color: resp.color, fontWeight: 700
                           }}>
                             RESPOSTA: {resp.label}
@@ -787,7 +787,7 @@ function SignalDrawer({
                 <div style={{
                   background: '#dc262215', border: '1px solid #dc262240',
                   borderRadius: 8, padding: '8px 12px',
-                  fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#dc2626'
+                  fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#dc2626'
                 }}>{generateError}</div>
               )}
               <button
@@ -803,7 +803,7 @@ function SignalDrawer({
                 <div style={{ background: '#ede9dc', borderRadius: 10, padding: 20 }}>
                   {generatedMsg.subject && (
                     <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #d4cfc4' }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280' }}>ASSUNTO: </span>
+                      <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280' }}>ASSUNTO: </span>
                       <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#0e0e0d', fontWeight: 600 }}>
                         {generatedMsg.subject}
                       </span>
@@ -886,7 +886,7 @@ function AddSignalModal({ onClose, onAdd }: { onClose: () => void; onAdd: (s: Pr
         width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 20px 60px rgba(0,0,0,0.25)'
       }}>
-        <h2 style={{ fontFamily: "'Cormorant',serif", fontSize: 24, color: '#0e0e0d', margin: '0 0 24px' }}>
+        <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 24, color: '#0e0e0d', margin: '0 0 24px' }}>
           Adicionar Sinal Manual
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1008,19 +1008,19 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
           { label: 'CONTACTADOS SEMANA', value: kpis.contactadosSemana, icon: '📞' },
           { label: 'TAXA CONVERSÃO', value: `${kpis.taxa}%`, icon: '✅' }
         ].map(({ label, value, icon }) => (
-          <div key={label} className="p-card" style={{ padding: '18px 20px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280', marginBottom: 6 }}>{label}</div>
+          <div key={label} className="p-card" style={{ padding: '18px 20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280', marginBottom: 6 }}>{label}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 22 }}>{icon}</span>
-              <span style={{ fontFamily: "'Cormorant',serif", fontSize: 32, color: '#1c4a35', fontWeight: 700, lineHeight: 1 }}>{value}</span>
+              <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 32, color: '#1c4a35', fontWeight: 700, lineHeight: 1 }}>{value}</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Zone Heatmap */}
-      <div className="p-card" style={{ padding: '20px', marginBottom: 24 }}>
-        <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: 18, color: '#0e0e0d', margin: '0 0 16px' }}>
+      <div className="p-card" style={{ padding: '20px', marginBottom: 24, borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+        <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: '#0e0e0d', margin: '0 0 16px' }}>
           Mapa de Calor por Zona
         </h3>
         <div style={{ overflowX: 'auto' }}>
@@ -1030,7 +1030,7 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
                 {['Zona', 'Sinais', 'Alta Prior.', 'AVM Total', 'Score'].map(h => (
                   <th key={h} style={{
                     padding: '8px 12px', textAlign: 'left',
-                    fontFamily: "'DM Mono',monospace", fontSize: 10,
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11,
                     color: '#6b7280', fontWeight: 600
                   }}>{h}</th>
                 ))}
@@ -1048,7 +1048,7 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
                         background: stats.alta > 0 ? '#dc262622' : '#f3f4f6',
                         color: stats.alta > 0 ? '#dc2626' : '#6b7280',
                         padding: '2px 8px', borderRadius: 4,
-                        fontFamily: "'DM Mono',monospace", fontSize: 11, fontWeight: 700
+                        fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, fontWeight: 700
                       }}>{stats.alta}</span>
                     </td>
                     <td style={{ padding: '10px 12px', color: '#1c4a35', fontWeight: 600 }}>{fmtCurrency(stats.avm)}</td>
@@ -1060,7 +1060,7 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
                             background: score > 60 ? '#059669' : score > 30 ? '#d97706' : '#dc2626'
                           }} />
                         </div>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280', minWidth: 28 }}>{score}%</span>
+                        <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280', minWidth: 28 }}>{score}%</span>
                       </div>
                     </td>
                   </tr>
@@ -1092,7 +1092,7 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
           {zonas.map(z => <option key={z} value={z}>{z}</option>)}
         </select>
         <div style={{ flex: 1 }} />
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#6b7280' }}>
+        <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280' }}>
           {filtered.length} sinais
         </span>
         <button onClick={() => setShowAdd(true)} className="p-btn-gold" style={{ padding: '8px 18px' }}>
@@ -1110,7 +1110,9 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
             style={{
               padding: '16px 20px', cursor: 'pointer',
               transition: 'transform 0.15s, box-shadow 0.15s',
-              borderLeft: `4px solid ${SIGNAL_COLORS[signal.type]}`
+              borderLeft: `4px solid ${SIGNAL_COLORS[signal.type]}`,
+              borderRadius: '12px',
+              boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)'
             }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLElement).style.transform = 'translateX(4px)'
@@ -1128,34 +1130,34 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
                     <span style={{
                       background: '#dc262622', color: '#dc2626',
                       border: '1px solid #dc262644', borderRadius: 4,
-                      padding: '2px 8px', fontSize: 10,
-                      fontFamily: "'DM Mono',monospace", fontWeight: 700
+                      padding: '2px 8px', fontSize: 11,
+                      fontFamily: 'var(--font-dm-mono),monospace', fontWeight: 700
                     }}>ALTA PRIORIDADE</span>
                   )}
                 </div>
                 <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 15, color: '#0e0e0d', fontWeight: 600, marginBottom: 2 }}>
                   {signal.address}
                 </div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#6b7280' }}>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280' }}>
                   {signal.zona} · {signal.proprietario || 'Proprietário desconhecido'}
                 </div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontFamily: "'Cormorant',serif", fontSize: 20, color: '#1c4a35', fontWeight: 700, lineHeight: 1 }}>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, color: '#1c4a35', fontWeight: 700, lineHeight: 1 }}>
                   {fmtCurrency(signal.avmEstimate)}
                 </div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280', marginTop: 2 }}>AVM ESTIMATE</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280', marginTop: 2 }}>AVM ESTIMATE</div>
               </div>
             </div>
             <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280' }}>PROBABILIDADE CONVERSÃO</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#1c4a35', fontWeight: 700 }}>{signal.probability}%</span>
+                  <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280' }}>PROBABILIDADE CONVERSÃO</span>
+                  <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#1c4a35', fontWeight: 700 }}>{signal.probability}%</span>
                 </div>
                 <ProbabilityBar value={signal.probability} />
               </div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280', textAlign: 'right' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280', textAlign: 'right' }}>
                 {signal.lastContact ? `Contacto ${fmtDate(signal.lastContact)}` : 'Sem contacto'}<br />
                 {(signal.outreachHistory ?? []).length} interacções
               </div>
@@ -1202,7 +1204,7 @@ function TabSequencias({ sequences, onToggle }: {
         const isOpen = expanded === seq.id
 
         return (
-          <div key={seq.id} className="p-card" style={{ padding: 0, overflow: 'hidden' }}>
+          <div key={seq.id} className="p-card" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
             <div
               style={{
                 padding: '20px 24px', display: 'flex', justifyContent: 'space-between',
@@ -1212,13 +1214,13 @@ function TabSequencias({ sequences, onToggle }: {
             >
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-                  <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: 20, color: '#0e0e0d', margin: 0 }}>{seq.name}</h3>
+                  <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, fontWeight: 300, color: '#0e0e0d', margin: 0 }}>{seq.name}</h3>
                   <span style={{
                     background: seq.active ? '#05996922' : '#6b728022',
                     color: seq.active ? '#059669' : '#6b7280',
                     border: `1px solid ${seq.active ? '#05996944' : '#6b728044'}`,
                     borderRadius: 4, padding: '2px 8px',
-                    fontFamily: "'DM Mono',monospace", fontSize: 10, fontWeight: 700
+                    fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, fontWeight: 700
                   }}>{seq.active ? 'ACTIVA' : 'INACTIVA'}</span>
                 </div>
                 <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#6b7280', margin: '0 0 12px' }}>{seq.description}</p>
@@ -1230,8 +1232,8 @@ function TabSequencias({ sequences, onToggle }: {
                     { label: 'STEPS', value: seq.steps.length },
                   ].map(({ label, value }) => (
                     <div key={label}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#6b7280' }}>{label}</div>
-                      <div style={{ fontFamily: "'Cormorant',serif", fontSize: 20, color: '#1c4a35', fontWeight: 700 }}>{value}</div>
+                      <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280' }}>{label}</div>
+                      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, fontWeight: 300, color: '#1c4a35' }}>{value}</div>
                     </div>
                   ))}
                 </div>
@@ -1276,13 +1278,13 @@ function TabSequencias({ sequences, onToggle }: {
                       }}>
                         {channelIcon[step.channel]}
                       </div>
-                      <div style={{ flex: 1, background: '#ede9dc', borderRadius: 8, padding: '10px 14px' }}>
+                      <div style={{ flex: 1, background: '#ede9dc', borderRadius: '8px', padding: '10px 14px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: channelColor[step.channel], fontWeight: 700 }}>
+                          <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: channelColor[step.channel], fontWeight: 700 }}>
                             DIA {step.day} · {step.channel.toUpperCase()}
                           </span>
                           {step.condition === 'no_response_previous' && (
-                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#6b7280' }}>SE SEM RESPOSTA</span>
+                            <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280' }}>SE SEM RESPOSTA</span>
                           )}
                         </div>
                         <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#0e0e0d', margin: 0 }}>{step.template}</p>
@@ -1361,8 +1363,8 @@ function TabGerador() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
       {/* Config Panel */}
-      <div className="p-card" style={{ padding: 24 }}>
-        <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: 22, color: '#0e0e0d', margin: '0 0 20px' }}>
+      <div className="p-card" style={{ padding: 24, borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+        <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: '#0e0e0d', margin: '0 0 20px' }}>
           Parâmetros
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1431,7 +1433,7 @@ function TabGerador() {
             <div style={{
               background: '#dc262222', border: '1px solid #dc262244',
               borderRadius: 8, padding: '8px 12px',
-              fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#dc2626'
+              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#dc2626'
             }}>{error}</div>
           )}
           <button
@@ -1450,10 +1452,11 @@ function TabGerador() {
         {!result && !generating && (
           <div className="p-card" style={{
             padding: '60px 32px', textAlign: 'center',
-            borderStyle: 'dashed', borderColor: '#c9a96e66'
+            borderStyle: 'dashed', borderColor: '#c9a96e66',
+            borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)'
           }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>✉</div>
-            <div style={{ fontFamily: "'Cormorant',serif", fontSize: 20, color: '#0e0e0d', marginBottom: 8 }}>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, fontWeight: 300, color: '#0e0e0d', marginBottom: 8 }}>
               Configure e gere
             </div>
             <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#6b7280' }}>
@@ -1462,7 +1465,7 @@ function TabGerador() {
           </div>
         )}
         {generating && (
-          <div className="p-card" style={{ padding: '60px 32px', textAlign: 'center' }}>
+          <div className="p-card" style={{ padding: '60px 32px', textAlign: 'center', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
             <div style={{ fontSize: 32, marginBottom: 12, animation: 'spin 1s linear infinite' }}>⚙</div>
             <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: '#6b7280' }}>
               A IA está a redigir a mensagem...
@@ -1470,9 +1473,9 @@ function TabGerador() {
           </div>
         )}
         {result && (
-          <div className="p-card" style={{ padding: 24 }}>
+          <div className="p-card" style={{ padding: 24, borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: 20, color: '#0e0e0d', margin: 0 }}>
+              <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 20, fontWeight: 300, color: '#0e0e0d', margin: 0 }}>
                 Mensagem Gerada
               </h3>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -1481,7 +1484,7 @@ function TabGerador() {
                   background: '#c9a96e22', color: '#c9a96e',
                   border: '1px solid #c9a96e44', borderRadius: 4,
                   padding: '2px 8px', fontSize: 10,
-                  fontFamily: "'DM Mono',monospace", fontWeight: 700
+                  fontFamily: 'var(--font-dm-mono),monospace', fontWeight: 700
                 }}>{msgType.toUpperCase()}</span>
               </div>
             </div>
@@ -1494,10 +1497,10 @@ function TabGerador() {
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center'
               }}>
                 <div>
-                  <div style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700 }}>Agency Group</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, opacity: 0.7 }}>AMI 22506 · Lisboa · Porto · Algarve</div>
+                  <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 700 }}>Agency Group</div>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, opacity: 0.7 }}>AMI 22506 · Lisboa · Porto · Algarve</div>
                 </div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, opacity: 0.7, textAlign: 'right' }}>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, opacity: 0.7, textAlign: 'right' }}>
                   Lisboa, {new Date().toLocaleDateString('pt-PT')}<br />
                   Confidencial
                 </div>
@@ -1510,7 +1513,7 @@ function TabGerador() {
                 background: '#ede9dc', borderRadius: '8px 8px 0 0',
                 padding: '10px 16px', borderBottom: '1px solid #d4cfc4'
               }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280' }}>ASSUNTO: </span>
+                <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280' }}>ASSUNTO: </span>
                 <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#0e0e0d', fontWeight: 600 }}>
                   {result.subject}
                 </span>
@@ -1581,15 +1584,16 @@ function TabPipeline({ signals, onUpdateSignal }: {
         {PIPELINE_STAGES.map(stage => (
           <div key={stage.key} style={{
             background: stage.color + '15', border: `1px solid ${stage.color}33`,
-            borderRadius: 8, padding: '10px 12px', textAlign: 'center'
+            borderRadius: '10px', padding: '10px 12px', textAlign: 'center',
+            boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)'
           }}>
-            <div style={{ fontFamily: "'Cormorant',serif", fontSize: 24, color: stage.color, fontWeight: 700 }}>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 24, fontWeight: 300, color: stage.color }}>
               {byStage[stage.key]?.length || 0}
             </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#6b7280', marginTop: 2 }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280', marginTop: 2 }}>
               {stage.label.toUpperCase()}
             </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: stage.color, marginTop: 4, fontWeight: 700 }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: stage.color, marginTop: 4, fontWeight: 700 }}>
               {fmtCurrency(stageAvm(stage.key))}
             </div>
           </div>
@@ -1616,14 +1620,14 @@ function TabPipeline({ signals, onUpdateSignal }: {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               marginBottom: 12, paddingBottom: 10, borderBottom: `2px solid ${stage.color}`
             }}>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: stage.color, fontWeight: 700 }}>
+              <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: stage.color, fontWeight: 700 }}>
                 {stage.label.toUpperCase()}
               </span>
               <span style={{
                 background: stage.color, color: '#fff',
                 borderRadius: '50%', width: 20, height: 20,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: "'DM Mono',monospace", fontSize: 10, fontWeight: 700
+                fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, fontWeight: 700
               }}>
                 {byStage[stage.key]?.length || 0}
               </span>
@@ -1653,15 +1657,15 @@ function TabPipeline({ signals, onUpdateSignal }: {
                   <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, color: '#0e0e0d', fontWeight: 600, marginBottom: 2, lineHeight: 1.3 }}>
                     {sig.address.length > 30 ? sig.address.slice(0, 30) + '...' : sig.address}
                   </div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280', marginBottom: 6 }}>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280', marginBottom: 6 }}>
                     {sig.zona.split(' - ')[1] || sig.zona}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: "'Cormorant',serif", fontSize: 14, color: '#1c4a35', fontWeight: 700 }}>
+                    <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 14, color: '#1c4a35', fontWeight: 700 }}>
                       {fmtCurrency(sig.avmEstimate)}
                     </span>
                     <span style={{
-                      fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#6b7280',
+                      fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280',
                       background: '#ede9dc', padding: '2px 6px', borderRadius: 4
                     }}>
                       {daysSince(sig.createdAt)}d
@@ -1677,7 +1681,7 @@ function TabPipeline({ signals, onUpdateSignal }: {
                         style={{
                           flex: 1, border: 'none', borderRadius: 4, padding: '3px 0',
                           background: s.color + '22', color: s.color,
-                          fontFamily: "'DM Mono',monospace", fontSize: 8, cursor: 'pointer',
+                          fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer',
                           fontWeight: 700
                         }}
                       >
@@ -1690,9 +1694,9 @@ function TabPipeline({ signals, onUpdateSignal }: {
               {byStage[stage.key]?.length === 0 && (
                 <div style={{
                   textAlign: 'center', padding: '20px 0',
-                  fontFamily: "'DM Mono',monospace", fontSize: 10,
+                  fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11,
                   color: '#c4bfb4', border: '2px dashed #d4cfc4',
-                  borderRadius: 8
+                  borderRadius: '8px'
                 }}>VAZIO</div>
               )}
             </div>
@@ -1773,7 +1777,7 @@ export default function PortalOutbound() {
     <div style={{ background: '#f4f0e6', minHeight: '100vh', padding: '32px 24px', boxSizing: 'border-box' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        .p-card { background: #fff; border: 1px solid #e5e0d5; border-radius: 12px; }
+        .p-card { background: #fff; border: 1px solid #e5e0d5; border-radius: 12px; box-shadow: 0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04); }
         .p-btn {
           background: #1c4a35; color: #f4f0e6; border: none; border-radius: 8px;
           font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600;
@@ -1807,11 +1811,11 @@ export default function PortalOutbound() {
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#c9a96e', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 6 }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#c9a96e', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 6 }}>
               AGENCY GROUP · AMI 22506
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <h1 style={{ fontFamily: "'Cormorant',serif", fontSize: 38, color: '#0e0e0d', margin: 0, lineHeight: 1.1 }}>
+              <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 38, color: '#0e0e0d', margin: 0, lineHeight: 1.1 }}>
                 Outbound Off-Market
               </h1>
               {/* LIVE / DEMO badge */}
@@ -1826,7 +1830,7 @@ export default function PortalOutbound() {
                   background: liveSource === 'live' ? '#22c55e' : '#fbbf24',
                   boxShadow: liveSource === 'live' ? '0 0 0 2px rgba(34,197,94,.25)' : 'none',
                 }} />
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: liveSource === 'live' ? '#16a34a' : '#d97706' }}>
+                <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: liveSource === 'live' ? '#16a34a' : '#d97706' }}>
                   {liveSource === 'live' ? 'LIVE' : 'DEMO'}
                 </span>
               </div>
@@ -1837,12 +1841,12 @@ export default function PortalOutbound() {
           </div>
           <div style={{ display: 'flex', gap: 16 }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280' }}>PORTFÓLIO PROSPECTADO</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: 26, color: '#1c4a35', fontWeight: 700 }}>{fmtCurrency(totalAvm)}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280' }}>PORTFÓLIO PROSPECTADO</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 26, color: '#1c4a35', fontWeight: 700 }}>{fmtCurrency(totalAvm)}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#6b7280' }}>PROB. MÉDIA</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: 26, color: '#c9a96e', fontWeight: 700 }}>{avgProb}%</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#6b7280' }}>PROB. MÉDIA</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 26, color: '#c9a96e', fontWeight: 700 }}>{avgProb}%</div>
             </div>
           </div>
         </div>
@@ -1862,7 +1866,7 @@ export default function PortalOutbound() {
               padding: '10px 20px', border: 'none', borderRadius: 8, cursor: 'pointer',
               background: activeTab === t.key ? '#1c4a35' : 'transparent',
               color: activeTab === t.key ? '#f4f0e6' : '#6b7280',
-              fontFamily: "'DM Mono',monospace", fontSize: 12, fontWeight: 700,
+              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, fontWeight: 700,
               transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6
             }}
           >

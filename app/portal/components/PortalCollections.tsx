@@ -278,9 +278,9 @@ function NewCollectionModal({ onClose, onCreate }: NewCollectionModalProps) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(14,14,13,.6)', backdropFilter: 'blur(4px)' }} />
-      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 520, zIndex: 1, padding: '2rem', border: '1px solid rgba(201,169,110,.25)' }}>
+      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 520, zIndex: 1, padding: '2rem', border: '1px solid rgba(201,169,110,.25)', borderRadius: '16px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.5rem', color: '#0e0e0d', fontWeight: 600 }}>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', color: '#0e0e0d', fontWeight: 300 }}>
             Nova Collection
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)', padding: '4px' }}>
@@ -460,9 +460,9 @@ function ShareLinkModal({ col, onClose }: { col: Collection; onClose: () => void
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(14,14,13,.6)', backdropFilter: 'blur(4px)' }} />
-      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 480, zIndex: 1, padding: '2rem', border: '1px solid rgba(201,169,110,.25)' }}>
+      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 480, zIndex: 1, padding: '2rem', border: '1px solid rgba(201,169,110,.25)', borderRadius: '16px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.4rem', color: '#0e0e0d', fontWeight: 600 }}>Partilhar Collection</h3>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.4rem', color: '#0e0e0d', fontWeight: 300 }}>Partilhar Collection</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}><IconX /></button>
         </div>
         <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: 'rgba(14,14,13,.6)', marginBottom: '1rem' }}>
@@ -473,7 +473,7 @@ function ShareLinkModal({ col, onClose }: { col: Collection; onClose: () => void
           <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.78rem', color: '#0e0e0d', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shareUrl}</span>
         </div>
         <div style={{ display: 'flex', gap: '.75rem' }}>
-          <button onClick={copy} className="p-btn-gold" style={{ flex: 1, fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem' }}>
+          <button onClick={copy} className="p-btn-gold" style={{ flex: 1, fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', borderRadius: '6px', transition: 'all .2s' }}>
             {copied ? <><IconCheck /> Copiado!</> : <><IconLink /> Copiar Link</>}
           </button>
           <button onClick={onClose} className="p-btn" style={{ fontSize: '.82rem' }}>Fechar</button>
@@ -599,8 +599,8 @@ function EditorCollection({ collections, editingCol, onSave }: EditorCollectionP
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 280px', gap: '1.25rem', alignItems: 'start' }}>
       {/* Settings panel */}
-      <div className="p-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 600, margin: 0 }}>Configurações</h3>
+      <div className="p-card" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+        <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 300, margin: 0 }}>Configurações</h3>
 
         <div>
           <label className="p-label">Nome</label>
@@ -635,7 +635,7 @@ function EditorCollection({ collections, editingCol, onSave }: EditorCollectionP
           <span style={{ fontFamily: 'var(--font-cormorant)', color: '#fff', fontSize: '.95rem', fontWeight: 600, textShadow: '0 1px 3px rgba(0,0,0,.5)', lineHeight: 1.2 }}>{name || 'Nome da Collection'}</span>
         </div>
 
-        <button onClick={handleSave} className="p-btn-gold" style={{ fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', marginTop: '.25rem' }}>
+        <button onClick={handleSave} className="p-btn-gold" style={{ fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', marginTop: '.25rem', borderRadius: '6px', transition: 'all .2s' }}>
           {saved ? <><IconCheck /> Guardado!</> : 'Guardar Collection'}
         </button>
       </div>
@@ -643,7 +643,7 @@ function EditorCollection({ collections, editingCol, onSave }: EditorCollectionP
       {/* Property grid */}
       <div>
         <div style={{ marginBottom: '1rem' }}>
-          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .25rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 300, margin: '0 0 .25rem' }}>
             Seleccionar Imóveis
           </h3>
           <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', color: 'rgba(14,14,13,.5)', margin: 0 }}>
@@ -696,8 +696,8 @@ function EditorCollection({ collections, editingCol, onSave }: EditorCollectionP
 
       {/* Selected list */}
       <div style={{ position: 'sticky', top: '1rem' }}>
-        <div className="p-card" style={{ padding: '1.25rem' }}>
-          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 1rem' }}>
+        <div className="p-card" style={{ padding: '1.25rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+          <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.2rem', color: '#0e0e0d', fontWeight: 300, margin: '0 0 1rem' }}>
             Collection ({selectedIds.length})
           </h3>
 
@@ -779,7 +779,7 @@ function Partilhadas({ collections, onRevoke }: { collections: Collection[]; onR
             const shareUrl = `https://collections.agencygroup.pt/${col.shareToken}`
 
             return (
-              <div key={col.id} className="p-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <div key={col.id} className="p-card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                 {/* Cover mini */}
                 <div style={{ width: 72, height: 56, borderRadius: 8, background: gradientBg(col.coverColor), flexShrink: 0, display: 'flex', alignItems: 'flex-end', padding: '.35rem .45rem' }}>
                   <span style={{ fontFamily: 'var(--font-cormorant)', color: '#fff', fontSize: '.72rem', fontWeight: 600, lineHeight: 1.2, textShadow: '0 1px 3px rgba(0,0,0,.5)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{col.name}</span>
@@ -1022,14 +1022,14 @@ export default function PortalCollections() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2rem', color: '#0e0e0d', fontWeight: 600, margin: '0 0 .25rem' }}>
+          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', color: '#0e0e0d', fontWeight: 300, margin: '0 0 .25rem' }}>
             Collections
           </h1>
           <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: 'rgba(14,14,13,.5)', margin: 0 }}>
             Portfólios exclusivos para clientes seleccionados
           </p>
         </div>
-        <button onClick={() => setShowNewModal(true)} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
+        <button onClick={() => setShowNewModal(true)} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem', borderRadius: '6px', transition: 'all .2s' }}>
           <IconPlus /> Nova Collection
         </button>
       </div>
@@ -1042,7 +1042,7 @@ export default function PortalCollections() {
           { label: 'Partilhadas', value: sharedCount, color: '#c9a96e' },
           { label: 'Visualizações', value: totalViews, color: '#3a7bd5' },
         ].map(s => (
-          <div key={s.label} className="p-card" style={{ padding: '.9rem 1rem' }}>
+          <div key={s.label} className="p-card" style={{ padding: '.9rem 1rem', borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
             <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.2rem' }}>{s.label.toUpperCase()}</div>
             <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.8rem', color: s.color, fontWeight: 600, lineHeight: 1 }}>{s.value}</div>
           </div>

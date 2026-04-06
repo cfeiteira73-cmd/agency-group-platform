@@ -455,7 +455,7 @@ function KPICard({ label, value, sub, trend, gold }: KPICardProps) {
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: 20, fontWeight: 600, color: '#1c4a35', margin: 0 }}>{title}</h3>
+      <h3 style={{ fontFamily: "'Cormorant',serif", fontSize: 20, fontWeight: 300, color: '#1c4a35', margin: 0 }}>{title}</h3>
       {sub && <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, color: '#6b6b5e', margin: '2px 0 0' }}>{sub}</p>}
     </div>
   )
@@ -573,9 +573,10 @@ function TabPipeline() {
             <div key={s.stage} style={{
               background: '#f4f0e6',
               border: `2px solid ${s.color}`,
-              borderRadius: 8,
+              borderRadius: 10,
               padding: '14px 12px',
               textAlign: 'center',
+              boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
             }}>
               <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#6b6b5e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{s.stage}</div>
               <div style={{ fontFamily: "'Cormorant',serif", fontSize: 26, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.deals}</div>
@@ -1006,7 +1007,7 @@ export default function PortalAnalytics() {
           to   { opacity: 1; transform: translateY(0); }
         }
         .p-card {
-          background: #ffffff;
+          background: #fff;
           border: 1px solid #e8e2d6;
           border-radius: 10px;
           padding: 20px;
@@ -1097,7 +1098,7 @@ export default function PortalAnalytics() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
           <div>
-            <h1 style={{ fontFamily: "'Cormorant',serif", fontSize: 32, fontWeight: 700, color: '#1c4a35', margin: 0, lineHeight: 1 }}>
+            <h1 style={{ fontFamily: "'Cormorant',serif", fontSize: 32, fontWeight: 300, color: '#1c4a35', margin: 0, lineHeight: 1 }}>
               Business Intelligence
             </h1>
             <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#6b6b5e', margin: '4px 0 0' }}>

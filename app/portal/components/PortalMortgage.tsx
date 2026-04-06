@@ -98,9 +98,9 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
     <div>
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Simulação de Financiamento</div>
-        <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Simulador Crédito Habitação</div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.4)', marginTop: '4px' }}>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Simulação de Financiamento</div>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Simulador Crédito Habitação</div>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginTop: '4px' }}>
           Euribor 6M live · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização 30 anos · DSTI Banco de Portugal
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {PERSONAS.map(p => (
           <button key={p.label}
-            style={{ padding: '6px 14px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer', transition: 'background .15s' }}
+            style={{ padding: '6px 14px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', transition: 'all .2s', borderRadius: '6px' }}
             onClick={() => onRunMort(p)}
           >{p.label}</button>
         ))}
@@ -133,7 +133,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
                 )}
               </label>
               <input type="range" min={10} max={80} value={mortEntrada} onChange={e => setMortEntrada(Number(e.target.value))} style={{ width: '100%', accentColor: '#1c4a35' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                 <span>10% HPP min</span><span>80%</span>
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
             <div>
               <label className="p-label">Prazo — {mortPrazo} anos</label>
               <input type="range" min={5} max={40} value={mortPrazo} onChange={e => setMortPrazo(Number(e.target.value))} style={{ width: '100%', accentColor: '#1c4a35' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                 <span>5 anos</span><span>40 anos</span>
               </div>
             </div>
@@ -149,7 +149,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
             <div>
               <label className="p-label">Spread — {mortSpreadVal.toFixed(2)}%</label>
               <input type="range" min={0.5} max={3} step={0.05} value={mortSpreadVal} onChange={e => setMortSpreadVal(Number(e.target.value))} style={{ width: '100%', accentColor: '#1c4a35' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                 <span>0.50% excelente</span><span>3.00% alto</span>
               </div>
             </div>
@@ -165,7 +165,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
             <div>
               <label className="p-label">Rendimento Anual Bruto (€) — DSTI</label>
               <input className="p-inp" type="number" placeholder="ex: 80000 — opcional" value={mortRendimento} onChange={e => setMortRendimento(e.target.value)} />
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>Necessário para calcular DSTI e dedução IRS</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>Necessário para calcular DSTI e dedução IRS</div>
             </div>
 
             <button className="p-btn p-btn-gold" style={{ padding: '13px 24px', fontSize: '.5rem', letterSpacing: '.1em' }} onClick={() => onRunMort()} disabled={mortLoading || !mortMontante}>
@@ -182,7 +182,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
               <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', background: 'radial-gradient(circle,rgba(201,169,110,.12) 0%,transparent 70%)', pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', bottom: '-30px', left: '-20px', width: '160px', height: '160px', background: 'radial-gradient(circle,rgba(28,74,53,.3) 0%,transparent 70%)', pointerEvents: 'none' }} />
               <div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.22em', textTransform: 'uppercase', color: 'rgba(201,169,110,.5)', marginBottom: '14px' }}>O QUE VAI DESCOBRIR</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.22em', textTransform: 'uppercase', color: 'rgba(201,169,110,.5)', marginBottom: '14px' }}>O QUE VAI DESCOBRIR</div>
                 <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.6rem', color: '#f4f0e6', lineHeight: 1.15, marginBottom: '8px' }}>
                   A simulação mais<br /><em style={{ fontStyle: 'italic', color: '#c9a96e' }}>completa de Portugal</em>
                 </div>
@@ -199,7 +199,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
                 ].map(f => (
                   <div key={f.label} style={{ padding: '12px 14px', background: 'rgba(244,240,230,.04)', border: '1px solid rgba(244,240,230,.08)' }}>
                     <div style={{ fontSize: '.9rem', marginBottom: '4px' }}>{f.icon}</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(244,240,230,.65)', letterSpacing: '.04em', marginBottom: '2px' }}>{f.label}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.65)', letterSpacing: '.04em', marginBottom: '2px' }}>{f.label}</div>
                     <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.7rem', color: 'rgba(244,240,230,.28)' }}>{f.sub}</div>
                   </div>
                 ))}
@@ -222,20 +222,20 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
           {r && r.resultado && (
             <div>
               {/* ── Main metric ── */}
-              <div style={{ padding: '24px 28px', background: '#0c1f15', marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+              <div style={{ padding: '24px 28px', background: '#0c1f15', marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', borderRadius: '12px' }}>
                 <div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>Prestação Mensal</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>Prestação Mensal</div>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '2rem', fontWeight: 600, color: '#c9a96e', lineHeight: 1 }}>{fmt(r.resultado.prestacao_mensal)}</div>
                 </div>
                 <div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>TAN</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>TAN</div>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.8rem', fontWeight: 600, color: '#f4f0e6', lineHeight: 1 }}>{r.resultado.tan_pct}%</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(244,240,230,.3)', marginTop: '3px' }}>Euribor 6M {r.resultado.euribor_6m_pct}%</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.3)', marginTop: '3px' }}>Euribor 6M {r.resultado.euribor_6m_pct}%</div>
                 </div>
                 <div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>TAEG</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.35)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>TAEG</div>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.8rem', fontWeight: 600, color: '#f4f0e6', lineHeight: 1 }}>{r.resultado.taeg_pct}%</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(244,240,230,.3)', marginTop: '3px' }}>Newton-Raphson</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.3)', marginTop: '3px' }}>Newton-Raphson</div>
                 </div>
               </div>
 
@@ -249,8 +249,8 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
                   { l: 'IMI / Ano', v: r.resultado.imi_anual },
                   { l: 'Custo Total', v: r.resultado.custo_total_aquisicao, gold: true },
                 ].map(m => (
-                  <div key={m.l} className="p-card" style={{ padding: '12px 14px', textAlign: 'center' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>{m.l}</div>
+                  <div key={m.l} className="p-card" style={{ padding: '12px 14px', textAlign: 'center', borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>{m.l}</div>
                     <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', fontWeight: 600, color: m.gold ? '#c9a96e' : '#0e0e0d' }}>{fmt(m.v)}</div>
                   </div>
                 ))}
@@ -260,11 +260,11 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
               {r.acessibilidade && (
                 <div style={{ padding: '12px 16px', background: r.acessibilidade.dsti_ok ? 'rgba(28,74,53,.06)' : 'rgba(220,38,38,.05)', border: `1px solid ${r.acessibilidade.dsti_ok ? 'rgba(28,74,53,.2)' : 'rgba(220,38,38,.2)'}`, borderLeft: `3px solid ${r.acessibilidade.dsti_ok ? '#1c4a35' : '#dc2626'}`, marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: r.acessibilidade.dsti_ok ? '#1c4a35' : '#dc2626', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: r.acessibilidade.dsti_ok ? '#1c4a35' : '#dc2626', textTransform: 'uppercase', letterSpacing: '.08em' }}>
                       DSTI {r.acessibilidade.dsti_pct}% {r.acessibilidade.dsti_ok ? '✓' : '⚠'}
                     </div>
                     {r.acessibilidade.poupanca_irs_anual > 0 && (
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35' }}>
                         Dedução IRS: {fmt(r.acessibilidade.poupanca_irs_anual)}/ano
                       </div>
                     )}
@@ -286,14 +286,14 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
               {mortSubTab === 'cenarios' && (
                 <div style={{ display: 'grid', gap: '8px' }}>
                   {(r.cenarios || []).map((c, i) => (
-                    <div key={i} className="p-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px' }}>
+                    <div key={i} className="p-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)', transition: 'all .2s' }}>
                       <div>
                         <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: '#0e0e0d', marginBottom: '2px' }}>{c.label}</div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)' }}>TAN {c.tan_pct}%</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>TAN {c.tan_pct}%</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 600, color: i === 0 ? '#c9a96e' : i === 1 ? '#dc2626' : '#1c4a35' }}>{fmt(c.pmt)}</div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)' }}>/mês</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>/mês</div>
                       </div>
                     </div>
                   ))}
@@ -308,14 +308,14 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
                       <thead>
                         <tr style={{ background: 'rgba(28,74,53,.06)' }}>
                           {['Ano', 'Prestação', 'Juros', 'Amortização', 'Saldo'].map(h => (
-                            <th key={h} style={{ padding: '8px 12px', textAlign: 'right', fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em', textTransform: 'uppercase', fontWeight: 400, borderBottom: '1px solid rgba(14,14,13,.08)', whiteSpace: 'nowrap' }}>{h}</th>
+                            <th key={h} style={{ padding: '8px 12px', textAlign: 'right', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em', textTransform: 'uppercase', fontWeight: 400, borderBottom: '1px solid rgba(14,14,13,.08)', whiteSpace: 'nowrap' }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {r.tabela_amortizacao.map((row, i) => (
                           <tr key={row.ano} style={{ background: i % 2 === 0 ? '#fff' : 'rgba(14,14,13,.01)', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
-                            <td style={{ padding: '7px 12px', textAlign: 'right', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.5)' }}>{row.ano}</td>
+                            <td style={{ padding: '7px 12px', textAlign: 'right', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)' }}>{row.ano}</td>
                             <td style={{ padding: '7px 12px', textAlign: 'right', color: '#0e0e0d' }}>{fmt(row.prestacao_anual)}</td>
                             <td style={{ padding: '7px 12px', textAlign: 'right', color: '#dc2626' }}>{fmt(row.juros)}</td>
                             <td style={{ padding: '7px 12px', textAlign: 'right', color: '#1c4a35' }}>{fmt(row.amortizacao)}</td>
@@ -330,9 +330,9 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
 
               {/* ── TAB: Partilhar ── */}
               {mortSubTab === 'share' && (
-                <div className="p-card" style={{ padding: '24px' }}>
+                <div className="p-card" style={{ padding: '24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', fontWeight: 600, color: '#0e0e0d', marginBottom: '12px' }}>Resumo para Partilhar</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.5)', lineHeight: 1.8, background: 'rgba(14,14,13,.02)', padding: '16px', border: '1px solid rgba(14,14,13,.08)', whiteSpace: 'pre-wrap', userSelect: 'all' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', lineHeight: 1.8, background: 'rgba(14,14,13,.02)', padding: '16px', border: '1px solid rgba(14,14,13,.08)', whiteSpace: 'pre-wrap', userSelect: 'all' }}>
                     {`Simulação Crédito Habitação — Agency Group\n` +
                      `─────────────────────────────────\n` +
                      `Imóvel:            ${fmt(r.inputs.montante)}\n` +
@@ -347,7 +347,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
                      `${r.info?.intermediario || 'Agency Group · AMI 22506'}\n` +
                      `${r.info?.nota_legal || ''}`}
                   </div>
-                  <button className="p-btn p-btn-gold" style={{ marginTop: '12px', fontSize: '.42rem', padding: '8px 18px' }}
+                  <button className="p-btn p-btn-gold" style={{ marginTop: '12px', fontSize: '.52rem', padding: '8px 18px', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={() => {
                       const text = `Simulação Crédito — ${fmt(r.inputs.montante)} | Prestação: ${fmt(r.resultado.prestacao_mensal)}/mês | TAN ${r.resultado.tan_pct}% | Custo Total: ${fmt(r.resultado.custo_total_aquisicao)} | Agency Group AMI 22506`
                       navigator.clipboard.writeText(text).catch(() => {})

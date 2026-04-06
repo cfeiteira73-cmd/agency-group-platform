@@ -158,10 +158,10 @@ function PriceHistoryChart({ zona }: { zona: string }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '6px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
           Evolução do Preço 2022–2026
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: growthPositive ? '#22c55e' : '#e05252' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: growthPositive ? '#22c55e' : '#e05252' }}>
           {growthPositive ? '+' : ''}{growth}% · 4 anos
         </div>
       </div>
@@ -263,7 +263,7 @@ function AdjustmentFactorsPanel({
 
   return (
     <div className="p-card">
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>
         Factores de Ajuste
       </div>
 
@@ -280,7 +280,7 @@ function AdjustmentFactorsPanel({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                 <div>
                   <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.7)', marginBottom: '1px' }}>{f.label}</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)' }}>{f.description}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>{f.description}</div>
                 </div>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: valueColor, fontWeight: 600, minWidth: '40px', textAlign: 'right' }}>
                   {val > 0 ? '+' : ''}{val}{f.unit}
@@ -347,17 +347,18 @@ function AdjustmentFactorsPanel({
         padding: '10px 14px',
         background: `${adjustedColor}08`,
         border: `1px solid ${adjustedColor}25`,
+        borderRadius: '10px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>AJUSTE TOTAL</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>AJUSTE TOTAL</div>
           <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: adjustedColor, fontWeight: 300 }}>
             {totalAdjustment > 0 ? '+' : ''}{totalAdjustment.toFixed(1)}%
           </div>
         </div>
         {baseValue > 0 && (
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>VALOR AJUSTADO</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>VALOR AJUSTADO</div>
             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', color: adjustedColor, fontWeight: 300 }}>
               €{Math.round(adjustedValue).toLocaleString('pt-PT')}
             </div>
@@ -423,7 +424,7 @@ function ZoneHeatmap({ activeZona, onSelect }: { activeZona: string; onSelect: (
           <tr>
             {['Zona', '€/m²', 'Var. YoY', 'Liquidez', 'Segmento'].map(h => (
               <th key={h} style={{
-                fontFamily: "'DM Mono',monospace", fontSize: '.3rem',
+                fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                 color: 'rgba(14,14,13,.35)', letterSpacing: '.1em', textTransform: 'uppercase',
                 padding: '4px 8px', textAlign: 'left', borderBottom: '1px solid rgba(14,14,13,.07)',
                 fontWeight: 400,
@@ -455,23 +456,23 @@ function ZoneHeatmap({ activeZona, onSelect }: { activeZona: string; onSelect: (
                 <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{ width: `${heatPct * 48}px`, height: '4px', background: heatColor, borderRadius: '2px', flexShrink: 0, transition: 'width .4s ease' }} />
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: heatColor, fontWeight: 600 }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: heatColor, fontWeight: 600 }}>
                       €{row.preco.toLocaleString('pt-PT')}
                     </span>
                   </div>
                 </td>
-                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)', fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#4a9c7a' }}>
+                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a' }}>
                   {row.variacao}
                 </td>
                 <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
                   <span style={{
-                    fontFamily: "'DM Mono',monospace", fontSize: '.3rem',
+                    fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                     color: liquidezColor[row.liquidez] || '#888',
                     background: (liquidezColor[row.liquidez] || '#888') + '14',
-                    padding: '1px 6px', borderRadius: '2px',
+                    padding: '1px 6px', borderRadius: '4px',
                   }}>{row.liquidez}</span>
                 </td>
-                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)', fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.4)' }}>
+                <td style={{ padding: '6px 8px', borderBottom: '1px solid rgba(14,14,13,.04)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>
                   {row.segmento}
                 </td>
               </tr>
@@ -554,9 +555,9 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
   return (
     <div>
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Avaliação Automática de Imóveis</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Avaliação Automática de Imóveis</div>
         <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>AVM Inteligente</div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>6 metodologias RICS · Comparáveis em tempo real · Relatório PDF</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>6 metodologias RICS · Comparáveis em tempo real · Relatório PDF</div>
       </div>
 
       <div className="p-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
@@ -670,8 +671,8 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                 padding: '0',
               }}
             >
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Heatmap de Zonas · €/m²</div>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)' }}>{showZoneHeatmap ? '▲' : '▼'}</span>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Heatmap de Zonas · €/m²</div>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>{showZoneHeatmap ? '▲' : '▼'}</span>
             </button>
             {showZoneHeatmap && (
               <div style={{ marginTop: '12px' }}>
@@ -683,7 +684,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
           {/* ── Market Reference (compact) ───────────────────────────────── */}
           {!showZoneHeatmap && (
             <div className="p-card" style={{ marginTop: '16px' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Referência de Mercado · €/m²</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Referência de Mercado · €/m²</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {Object.entries(ZONA_PRICES)
                   .sort((a, b) => b[1] - a[1])
@@ -702,9 +703,9 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                           borderRadius: '2px', transition: 'background .15s',
                         }}
                       >
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.55)', width: '140px', flexShrink: 0, fontWeight: isActive ? 700 : 400 }}>{zona}</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.55)', width: '140px', flexShrink: 0, fontWeight: isActive ? 700 : 400 }}>{zona}</div>
                         <InlineBar pct={barPct} color={isActive ? '#1c4a35' : 'rgba(28,74,53,.25)'} />
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.5)', width: '52px', textAlign: 'right', flexShrink: 0, fontWeight: isActive ? 700 : 400 }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: isActive ? '#1c4a35' : 'rgba(14,14,13,.5)', width: '52px', textAlign: 'right', flexShrink: 0, fontWeight: isActive ? 700 : 400 }}>
                           €{preco.toLocaleString('pt-PT')}
                         </div>
                       </div>
@@ -721,7 +722,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
             <div className="p-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
               <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🏠</div>
               <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', color: darkMode ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.4)', marginBottom: '8px' }}>Aguarda avaliação</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.3)', lineHeight: 1.6 }}>Preencha os dados e clique em Avaliar</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', lineHeight: 1.6 }}>Preencha os dados e clique em Avaliar</div>
             </div>
           )}
 
@@ -738,7 +739,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
               <div className="p-card">
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '6px' }}>Valor de Mercado Estimado</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '6px' }}>Valor de Mercado Estimado</div>
                     <div style={{ fontFamily: "'Cormorant',serif", fontSize: '2.5rem', color: '#1c4a35', fontWeight: 300, lineHeight: 1, marginBottom: '8px' }}>
                       €{valorCentral.toLocaleString('pt-PT')}
                     </div>
@@ -765,7 +766,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                     {confianca > 0 && (
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: `${confidenceColor}12`, border: `1px solid ${confidenceColor}30`, borderRadius: '20px' }}>
                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: confidenceColor }} />
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: confidenceColor, letterSpacing: '.05em' }}>{confidenceLabel} · {confianca}%</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: confidenceColor, letterSpacing: '.05em' }}>{confidenceLabel} · {confianca}%</span>
                       </div>
                     )}
                   </div>
@@ -786,8 +787,8 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                   { label: 'Tempo de Venda', val: liquidez },
                   { label: 'Preço / m²', val: precoM2 > 0 ? `€${precoM2.toLocaleString('pt-PT')}` : '—' },
                 ].map(m => (
-                  <div key={m.label} style={{ padding: '14px 16px', background: 'rgba(28,74,53,.03)', border: '1px solid rgba(28,74,53,.07)', borderRadius: '2px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>{m.label}</div>
+                  <div key={m.label} style={{ padding: '14px 16px', background: 'rgba(28,74,53,.03)', border: '1px solid rgba(28,74,53,.07)', borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>{m.label}</div>
                     <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.4rem', color: '#1c4a35', fontWeight: 300 }}>{m.val}</div>
                   </div>
                 ))}
@@ -801,7 +802,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                     width: '100%', padding: '10px 14px',
                     background: 'rgba(201,169,110,.05)', border: '1px solid rgba(201,169,110,.2)',
                     cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#c9a96e', letterSpacing: '.1em',
+                    fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', letterSpacing: '.1em',
                   }}
                 >
                   <span>✦ Factores de Ajuste Manual</span>
@@ -817,7 +818,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
               {/* ── Metodologias ─────────────────────────────────────────────── */}
               {metodologias.length > 0 && (
                 <div className="p-card">
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Breakdown de Metodologias</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Breakdown de Metodologias</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {metodologias.map((m, i) => {
                       // API returns peso as decimal (0.35), valor as full integer
@@ -831,7 +832,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                               {m.label ?? m.nome ?? `Metodologia ${i + 1}`}
                             </div>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)' }}>peso {pesoDisplay}%</span>
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>peso {pesoDisplay}%</span>
                               <span style={{ fontFamily: "'Cormorant',serif", fontSize: '.9rem', color: '#1c4a35', fontWeight: 500 }}>€{contrib.toLocaleString('pt-PT')}</span>
                             </div>
                           </div>
@@ -846,14 +847,14 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
               {/* ── Comparáveis Grid ──────────────────────────────────────── */}
               {comparaveis.length > 0 && (
                 <div className="p-card">
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>
                     Comparáveis de Mercado
                     <span style={{ marginLeft: '8px', color: 'rgba(14,14,13,.25)', fontWeight: 400 }}>· {comparaveis.length} imóveis</span>
                   </div>
                   {/* Grid header */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px', padding: '4px 12px', marginBottom: '4px' }}>
                     {['Imóvel', 'Área', '€/m²', 'Ajuste'].map(h => (
-                      <div key={h} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>{h}</div>
+                      <div key={h} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>{h}</div>
                     ))}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -869,22 +870,22 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                           display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '8px',
                           alignItems: 'center', padding: '10px 12px',
                           background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.05)',
-                          borderRadius: '2px',
+                          borderRadius: '10px',
                         }}>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.76rem', color: 'rgba(14,14,13,.75)', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                               <span style={{ fontFamily: "'Cormorant',serif", fontSize: '.9rem', color: '#1c4a35' }}>€{c.valor.toLocaleString('pt-PT')}</span>
-                              {c.estado && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)', alignSelf: 'center' }}>{c.estado}</span>}
+                              {c.estado && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', alignSelf: 'center' }}>{c.estado}</span>}
                             </div>
                           </div>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.area}m²</div>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.5)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textAlign: 'right', whiteSpace: 'nowrap' }}>{c.area}m²</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', textAlign: 'right', whiteSpace: 'nowrap' }}>
                             {cPm2 > 0 ? `€${cPm2.toLocaleString('pt-PT')}` : '—'}
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ display: 'inline-block', padding: '2px 8px', background: badge.bg, borderRadius: '10px' }}>
-                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: badge.color, letterSpacing: '.04em', whiteSpace: 'nowrap' }}>
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: badge.color, letterSpacing: '.04em', whiteSpace: 'nowrap' }}>
                                 {deltaVsBase !== 0 ? `${deltaVsBase > 0 ? '+' : ''}${deltaVsBase}%` : badge.label}
                               </span>
                             </div>

@@ -62,19 +62,19 @@ export default function PortalIMT() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.6rem', color: '#0e0e0d', letterSpacing: '-.01em', marginBottom: '4px' }}>Calculadora IMT + IS + Custos Totais</div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Tabelas actualizadas 2026 · Portugal · IMI exempt · HPP / Segunda Habitação / Investimento</div>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.6rem', color: '#0e0e0d', letterSpacing: '-.01em', marginBottom: '4px' }}>Calculadora IMT + IS + Custos Totais</div>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Tabelas actualizadas 2026 · Portugal · IMI exempt · HPP / Segunda Habitação / Investimento</div>
       </div>
 
       {/* Input card */}
-      <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '28px', marginBottom: '24px' }}>
+      <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '28px', marginBottom: '24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '20px', marginBottom: '20px' }}>
           <div>
-            <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.1em', display: 'block', marginBottom: '6px' }}>Valor do Imóvel (€)</label>
+            <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.1em', display: 'block', marginBottom: '6px' }}>Valor do Imóvel (€)</label>
             <input className="p-inp" type="number" value={imtValor} onChange={e => setImtValor(e.target.value)} placeholder="Ex: 500000" style={{ fontSize: '1rem', padding: '10px 14px', fontFamily: "'Cormorant',serif" }} onKeyDown={e => e.key === 'Enter' && calcIMT()} />
           </div>
           <div>
-            <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.1em', display: 'block', marginBottom: '6px' }}>Tipo de Aquisição</label>
+            <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.1em', display: 'block', marginBottom: '6px' }}>Tipo de Aquisição</label>
             <select className="p-inp" value={imtTipo} onChange={e => setImtTipo(e.target.value as 'hpp' | 'second' | 'invest')}>
               <option value="hpp">🏠 Habitação Própria Permanente</option>
               <option value="second">🏖 Segunda Habitação</option>
@@ -82,7 +82,7 @@ export default function PortalIMT() {
             </select>
           </div>
           <div>
-            <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.1em', display: 'block', marginBottom: '6px' }}>Comprador</label>
+            <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.1em', display: 'block', marginBottom: '6px' }}>Comprador</label>
             <select className="p-inp" value={imtComprador} onChange={e => setImtComprador(e.target.value as 'singular' | 'empresa')}>
               <option value="singular">Pessoa Singular</option>
               <option value="empresa">Empresa / Jurídico</option>
@@ -94,13 +94,13 @@ export default function PortalIMT() {
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
           {presets.map(p => (
             <button key={p.label} onClick={() => { setImtValor(p.v); setImtResult(null) }}
-              style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '6px 14px', background: imtValor === p.v ? '#1c4a35' : 'rgba(14,14,13,.04)', color: imtValor === p.v ? '#f4f0e6' : 'rgba(14,14,13,.5)', border: `1px solid ${imtValor === p.v ? '#1c4a35' : 'rgba(14,14,13,.1)'}`, cursor: 'pointer', letterSpacing: '.06em', transition: 'all .2s' }}>
+              style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', padding: '6px 14px', background: imtValor === p.v ? '#1c4a35' : 'rgba(14,14,13,.04)', color: imtValor === p.v ? '#f4f0e6' : 'rgba(14,14,13,.5)', border: `1px solid ${imtValor === p.v ? '#1c4a35' : 'rgba(14,14,13,.1)'}`, cursor: 'pointer', letterSpacing: '.06em', transition: 'all .2s', borderRadius: '6px' }}>
               {p.label}
             </button>
           ))}
         </div>
 
-        <button className="p-btn p-btn-gold" style={{ padding: '12px 32px', fontSize: '.5rem', letterSpacing: '.12em' }} onClick={calcIMT} disabled={imtLoading || !imtValor}>
+        <button className="p-btn p-btn-gold" style={{ padding: '12px 32px', fontSize: '.52rem', letterSpacing: '.12em', borderRadius: '6px', transition: 'all .2s' }} onClick={calcIMT} disabled={imtLoading || !imtValor}>
           {imtLoading ? 'A calcular...' : '⟶ Calcular Custos Totais'}
         </button>
       </div>
@@ -121,26 +121,26 @@ export default function PortalIMT() {
 
           {/* Main metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ padding: '20px 24px', background: '#0c1f15', color: '#f4f0e6' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.45)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Total Custos Aquisição</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: '2rem', fontWeight: 600, color: '#c9a96e', lineHeight: 1 }}>{fmt(r.total)}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(244,240,230,.35)', marginTop: '4px' }}>incl. advogado estimado</div>
+            <div style={{ padding: '20px 24px', background: '#0c1f15', color: '#f4f0e6', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(244,240,230,.45)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Total Custos Aquisição</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '2rem', fontWeight: 600, color: '#c9a96e', lineHeight: 1 }}>{fmt(r.total)}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(244,240,230,.35)', marginTop: '4px' }}>incl. advogado estimado</div>
             </div>
-            <div style={{ padding: '20px 24px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>IMT + IS</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.8rem', fontWeight: 600, color: '#1c4a35', lineHeight: 1 }}>{fmt(r.imt + r.is)}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>Taxa efectiva: {r.taxaEfetiva}</div>
+            <div style={{ padding: '20px 24px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>IMT + IS</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: 600, color: '#1c4a35', lineHeight: 1 }}>{fmt(r.imt + r.is)}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>Taxa efectiva: {r.taxaEfetiva}</div>
             </div>
-            <div style={{ padding: '20px 24px', border: '1px solid rgba(14,14,13,.08)', background: '#fff' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Valor Total c/ Imóvel</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.8rem', fontWeight: 600, color: '#0e0e0d', lineHeight: 1 }}>{fmt(valor + r.total)}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>{valor > 0 ? ((r.total / valor) * 100).toFixed(1) : '0.0'}% do valor do imóvel</div>
+            <div style={{ padding: '20px 24px', border: '1px solid rgba(14,14,13,.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Valor Total c/ Imóvel</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.8rem', fontWeight: 600, color: '#0e0e0d', lineHeight: 1 }}>{fmt(valor + r.total)}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>{valor > 0 ? ((r.total / valor) * 100).toFixed(1) : '0.0'}% do valor do imóvel</div>
             </div>
           </div>
 
           {/* Breakdown table */}
-          <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', marginBottom: '20px' }}>
-            <div style={{ padding: '14px 20px', background: 'rgba(14,14,13,.03)', borderBottom: '1px solid rgba(14,14,13,.08)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)' }}>Desdobramento de Custos</div>
+          <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', marginBottom: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', background: 'rgba(14,14,13,.03)', borderBottom: '1px solid rgba(14,14,13,.08)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)' }}>Desdobramento de Custos</div>
             {[
               { label: '🏛 IMT (Imposto Municipal Transacções)', value: r.imt, note: r.isento ? 'Isento HPP' : 'Tabela 2026' },
               { label: '📜 IS (Imposto de Selo 0,8%)', value: r.is, note: 'Sobre o valor do imóvel' },
@@ -151,23 +151,23 @@ export default function PortalIMT() {
               <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(14,14,13,.05)', background: i % 2 === 0 ? '#fff' : 'rgba(14,14,13,.01)' }}>
                 <div>
                   <div style={{ fontSize: '.88rem', color: '#0e0e0d', marginBottom: '1px' }}>{row.label}</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)' }}>{row.note}</div>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>{row.note}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 600, color: row.value === 0 ? '#4a9c7a' : '#0e0e0d' }}>{row.value === 0 ? 'ISENTO' : fmt(row.value)}</div>
-                  {row.value > 0 && valor > 0 && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)' }}>{((row.value / valor) * 100).toFixed(2)}%</div>}
+                  {row.value > 0 && valor > 0 && <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>{((row.value / valor) * 100).toFixed(2)}%</div>}
                 </div>
               </div>
             ))}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: 'rgba(28,74,53,.04)', borderTop: '2px solid rgba(28,74,53,.15)' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: '#1c4a35', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 600 }}>TOTAL CUSTOS</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#1c4a35', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 600 }}>TOTAL CUSTOS</div>
               <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 700, color: '#1c4a35' }}>{fmt(r.total)}</div>
             </div>
           </div>
 
           {/* HPP savings */}
           {r.savings > 0 && (
-            <div style={{ padding: '14px 20px', background: 'rgba(74,156,122,.06)', border: '1px solid rgba(74,156,122,.2)', borderLeft: '3px solid #4a9c7a', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ padding: '14px 20px', background: 'rgba(74,156,122,.06)', border: '1px solid rgba(74,156,122,.2)', borderLeft: '3px solid #4a9c7a', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '10px' }}>
               <div>
                 <div style={{ fontFamily: "'Cormorant',serif", fontSize: '.95rem', fontWeight: 600, color: '#1c4a35' }}>Poupança HPP vs Segunda Habitação</div>
                 <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.55)', marginTop: '2px' }}>Benefício fiscal da habitação própria permanente</div>
@@ -177,7 +177,7 @@ export default function PortalIMT() {
           )}
 
           {/* NHR note */}
-          <div style={{ padding: '14px 20px', background: 'rgba(201,169,110,.05)', border: '1px solid rgba(201,169,110,.15)', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+          <div style={{ padding: '14px 20px', background: 'rgba(201,169,110,.05)', border: '1px solid rgba(201,169,110,.15)', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start', borderRadius: '10px' }}>
             <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>💡</span>
             <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: 'rgba(14,14,13,.65)', lineHeight: 1.7 }}>
               <strong>Compradores Internacionais:</strong> O regime NHR/IFICI pode isentar rendimentos durante 10 anos. Consulte a secção NHR para simulação. O IMT é sempre aplicável independentemente do estatuto fiscal.
@@ -186,7 +186,7 @@ export default function PortalIMT() {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button className="p-btn p-btn-gold" style={{ fontSize: '.46rem', padding: '10px 22px' }} onClick={() => {
+            <button className="p-btn p-btn-gold" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => {
               const html = `
                 <div class="label">Simulação IMT + Custos de Aquisição</div>
                 <div class="row">
@@ -209,8 +209,8 @@ export default function PortalIMT() {
               `
               exportToPDF(`Simulação IMT — ${fmt(valor)}`, html)
             }}>⬇ Exportar PDF</button>
-            <button className="p-btn" style={{ fontSize: '.46rem', padding: '10px 22px' }} onClick={() => setSection('nhr')}>→ Simular NHR/IFICI</button>
-            <button className="p-btn" style={{ fontSize: '.46rem', padding: '10px 22px' }} onClick={() => setSection('credito')}>→ Simular Crédito</button>
+            <button className="p-btn" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setSection('nhr')}>→ Simular NHR/IFICI</button>
+            <button className="p-btn" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setSection('credito')}>→ Simular Crédito</button>
           </div>
         </div>
       )}
@@ -223,9 +223,9 @@ export default function PortalIMT() {
             { icon: '🌍', title: 'Compradores Internacionais', body: 'Mesmo IMT independente da residência fiscal. NHR não afecta IMT. IRS sobre mais-valias pode ser diferente.' },
             { icon: '⚠', title: 'Atenção', body: 'Valores estimados. IMT é calculado sobre o VPT (valor patrimonial) se superior ao preço de venda.' },
           ].map(b => (
-            <div key={b.icon} style={{ padding: '16px 18px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)' }}>
+            <div key={b.icon} style={{ padding: '16px 18px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', borderRadius: '10px' }}>
               <div style={{ fontSize: '1.2rem', marginBottom: '8px' }}>{b.icon}</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: '.95rem', fontWeight: 600, color: '#0e0e0d', marginBottom: '6px' }}>{b.title}</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '.95rem', fontWeight: 600, color: '#0e0e0d', marginBottom: '6px' }}>{b.title}</div>
               <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.55)', lineHeight: 1.6 }}>{b.body}</div>
             </div>
           ))}

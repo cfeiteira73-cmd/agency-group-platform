@@ -202,10 +202,10 @@ function BenchmarkPanel({ url, score, darkMode }: { url: string; score: number; 
   const zoneBar = Math.round((zoneAvgScore / 100) * barW)
 
   return (
-    <div style={{ padding: '16px', background: darkMode ? 'rgba(244,240,230,.03)' : 'rgba(14,14,13,.02)', border: `1px solid ${border}`, marginBottom: '20px' }}>
+    <div style={{ padding: '16px', background: darkMode ? 'rgba(244,240,230,.03)' : 'rgba(14,14,13,.02)', border: `1px solid ${border}`, borderRadius: '12px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.14em', textTransform: 'uppercase', color: textMuted }}>Benchmark — Zona Detectada</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.14em', textTransform: 'uppercase', color: textMuted }}>Benchmark — Zona Detectada</div>
           <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', fontWeight: 300, color: darkMode ? '#f4f0e6' : '#0e0e0d', marginTop: '2px', textTransform: 'capitalize' }}>{detectedZone}</div>
         </div>
         {/* SVG score comparison bar */}
@@ -222,10 +222,10 @@ function BenchmarkPanel({ url, score, darkMode }: { url: string; score: number; 
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
         {metrics.map(m => (
-          <div key={m.label} style={{ padding: '10px 12px', background: darkMode ? 'rgba(244,240,230,.04)' : '#fff', border: `1px solid ${border}` }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.1em', textTransform: 'uppercase', color: textMuted, marginBottom: '4px' }}>{m.label}</div>
+          <div key={m.label} style={{ padding: '10px 12px', background: darkMode ? 'rgba(244,240,230,.04)' : '#fff', border: `1px solid ${border}`, borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: textMuted, marginBottom: '4px' }}>{m.label}</div>
             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 300, color: m.color, lineHeight: 1 }}>{m.val}</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: textMuted, marginTop: '2px' }}>{m.bench}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: textMuted, marginTop: '2px' }}>{m.bench}</div>
           </div>
         ))}
       </div>
@@ -244,17 +244,17 @@ function AlertSystem({ risks, opportunities, darkMode }: { risks: string[]; oppo
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
       {/* Top 3 Opportunities */}
       {top3opps.length > 0 && (
-        <div style={{ background: 'rgba(28,74,53,.05)', border: '2px solid rgba(28,74,53,.2)', padding: '14px' }}>
+        <div style={{ background: 'rgba(28,74,53,.05)', border: '2px solid rgba(28,74,53,.2)', borderRadius: '12px', padding: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" aria-label="Oportunidades">
               <polygon points="8,2 10,6 15,6 11,9.5 12.5,14 8,11 3.5,14 5,9.5 1,6 6,6" fill="#22c55e" opacity=".9" />
             </svg>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#22c55e', fontWeight: 700 }}>Top Oportunidades</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#22c55e', fontWeight: 700 }}>Top Oportunidades</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {top3opps.map((o, i) => (
-              <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '7px 10px', background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.12)' }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#22c55e', fontWeight: 700, flexShrink: 0 }}>0{i + 1}</span>
+              <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '7px 10px', background: 'rgba(34,197,94,.06)', border: '1px solid rgba(34,197,94,.12)', borderRadius: '8px' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#22c55e', fontWeight: 700, flexShrink: 0 }}>0{i + 1}</span>
                 <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: darkMode ? 'rgba(244,240,230,.7)' : 'rgba(14,14,13,.7)', lineHeight: 1.4 }}>{o}</span>
               </div>
             ))}
@@ -264,19 +264,19 @@ function AlertSystem({ risks, opportunities, darkMode }: { risks: string[]; oppo
 
       {/* Top 3 Risks */}
       {top3risks.length > 0 && (
-        <div style={{ background: 'rgba(224,82,82,.05)', border: '2px solid rgba(224,82,82,.2)', padding: '14px' }}>
+        <div style={{ background: 'rgba(224,82,82,.05)', border: '2px solid rgba(224,82,82,.2)', borderRadius: '12px', padding: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" aria-label="Riscos">
               <path d="M8 2L15 13H1Z" fill="#e05252" opacity=".9" />
               <rect x="7.3" y="6" width="1.4" height="4" rx=".5" fill="#fff" />
               <circle cx="8" cy="11.5" r=".8" fill="#fff" />
             </svg>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#e05252', fontWeight: 700 }}>Top Riscos</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#e05252', fontWeight: 700 }}>Top Riscos</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {top3risks.map((r, i) => (
-              <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '7px 10px', background: 'rgba(224,82,82,.06)', border: '1px solid rgba(224,82,82,.12)' }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#e05252', fontWeight: 700, flexShrink: 0 }}>0{i + 1}</span>
+              <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', padding: '7px 10px', background: 'rgba(224,82,82,.06)', border: '1px solid rgba(224,82,82,.12)', borderRadius: '8px' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#e05252', fontWeight: 700, flexShrink: 0 }}>0{i + 1}</span>
                 <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: darkMode ? 'rgba(244,240,230,.7)' : 'rgba(14,14,13,.7)', lineHeight: 1.4 }}>{r}</span>
               </div>
             ))}
@@ -430,7 +430,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
   return (
     <div>
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Inteligência de Mercado</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Inteligência de Mercado</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Deal Radar 16D</div>
           {/* LIVE / DEMO badge */}
@@ -445,12 +445,12 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
               background: liveSource === 'live' ? '#22c55e' : '#fbbf24',
               boxShadow: liveSource === 'live' ? '0 0 0 2px rgba(34,197,94,.25)' : 'none',
             }} />
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', fontWeight: 700, letterSpacing: '.1em', color: liveSource === 'live' ? '#22c55e' : '#f59e0b' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', fontWeight: 700, letterSpacing: '.1em', color: liveSource === 'live' ? '#22c55e' : '#f59e0b' }}>
               {liveSource === 'live' ? 'LIVE' : 'DEMO'}
             </span>
           </div>
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>16 dimensões · Score AI · Leilões + Banca + Mercado livre</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>16 dimensões · Score AI · Leilões + Banca + Mercado livre</div>
       </div>
 
       {/* Mode selector */}
@@ -476,11 +476,11 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
       {/* Radar History Panel */}
       {showHistory && radarHistory.length > 0 && (
         <div className="p-card" style={{ marginBottom: '20px', background: 'rgba(14,14,13,.02)' }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Análises Recentes</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Análises Recentes</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {radarHistory.map((h, i) => (
               <div key={i}
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 10px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', cursor: 'pointer', transition: 'background .15s' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 10px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', borderRadius: '10px', cursor: 'pointer', transition: 'background .15s', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}
                 onClick={() => { setRadarUrl(h.url); setRadarMode('url'); setShowHistory(false) }}
               >
                 <div style={{
@@ -492,16 +492,16 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                   color: getScoreColor(h.score), flexShrink: 0,
                 }}>{h.score}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#c9a96e', textTransform: 'uppercase', marginBottom: '2px' }}>{getRecommendationLabel(h.recommendation)}</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.url}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', textTransform: 'uppercase', marginBottom: '2px' }}>{getRecommendationLabel(h.recommendation)}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.url}</div>
                 </div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.3)', flexShrink: 0 }}>{h.date}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', flexShrink: 0 }}>{h.date}</div>
               </div>
             ))}
           </div>
           <button
             onClick={() => { setRadarHistory([]); try { localStorage.removeItem(RADAR_HISTORY_KEY) } catch { /* ignore */ } }}
-            style={{ marginTop: '8px', padding: '4px 10px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer' }}
+            style={{ marginTop: '8px', padding: '4px 10px', background: 'none', border: '1px solid rgba(14,14,13,.1)', borderRadius: '6px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer', transition: 'all .2s' }}
           >Limpar histórico</button>
         </div>
       )}
@@ -579,10 +579,10 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
           <div className="p-label" style={{ marginBottom: '12px' }}>Heat Map de Preços — Portugal</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px' }}>
             {HEAT_MAP_ZONES.map((z: Record<string, unknown>) => (
-              <div key={String(z.zona)} style={{ padding: '10px 12px', background: `${String(z.color)}14`, border: `1px solid ${String(z.color)}30` }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: String(z.color), letterSpacing: '.08em', marginBottom: '2px' }}>{String(z.zona)}</div>
+              <div key={String(z.zona)} style={{ padding: '10px 12px', background: `${String(z.color)}14`, border: `1px solid ${String(z.color)}30`, borderRadius: '10px' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: String(z.color), letterSpacing: '.08em', marginBottom: '2px' }}>{String(z.zona)}</div>
                 <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 300, color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>€{Number(z.pm2 || 0).toLocaleString('pt-PT')}/m²</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#4a9c7a' }}>{String(z.yoy || '0')}% YoY</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a' }}>{String(z.yoy || '0')}% YoY</div>
               </div>
             ))}
           </div>
@@ -599,6 +599,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             padding: '24px 20px', marginBottom: '20px',
             background: getScoreBg(resultScore),
             border: `1px solid ${getScoreColor(resultScore)}20`,
+            borderRadius: '12px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <div style={{
@@ -616,7 +617,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                 }}>{resultScore}</div>
               </div>
               <div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '4px' }}>Score de Oportunidade</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '4px' }}>Score de Oportunidade</div>
                 <div style={{
                   fontFamily: "'DM Mono',monospace", fontSize: '.56rem',
                   fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase',
@@ -627,7 +628,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
               <button
                 className="p-btn"
-                style={{ padding: '10px 16px', fontSize: '.46rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.6)', border: '1px solid rgba(14,14,13,.15)' }}
+                style={{ padding: '10px 16px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.6)', border: '1px solid rgba(14,14,13,.15)', borderRadius: '6px', transition: 'all .2s' }}
                 onClick={() => {
                   // Build text report including chart dimensions for PDF
                   const dimText = typedResult?.dimensions?.map(d => `${d.name}: ${d.score}/100`).join('\n') ?? ''
@@ -639,7 +640,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
               >↗ Copiar Relatório</button>
               <button
                 className="p-btn p-btn-gold"
-                style={{ padding: '10px 20px', fontSize: '.48rem' }}
+                style={{ padding: '10px 20px', fontSize: '.52rem', borderRadius: '6px', transition: 'all .2s' }}
                 onClick={() => setSection('pipeline')}
               >+ Pipeline</button>
             </div>
@@ -670,7 +671,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                 style={{
                   padding: '10px 18px', background: 'none', border: 'none',
                   borderBottom: `2px solid ${resultTab === t ? '#1c4a35' : 'transparent'}`,
-                  fontFamily: "'DM Mono',monospace", fontSize: '.46rem',
+                  fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                   letterSpacing: '.12em', textTransform: 'uppercase',
                   color: resultTab === t ? '#1c4a35' : 'rgba(14,14,13,.4)',
                   cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all .2s',
@@ -691,11 +692,11 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
               {hasDimensions && (
                 <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)' }}>Análise 16 Dimensões — Visualização Radar</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.3)' }}>{typedResult!.dimensions!.length} dimensões</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)' }}>Análise 16 Dimensões — Visualização Radar</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>{typedResult!.dimensions!.length} dimensões</div>
                   </div>
                   <RadarChart dimensions={typedResult!.dimensions!} />
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.25)', textAlign: 'center', marginTop: '8px', letterSpacing: '.06em' }}>Clique em &quot;Copiar Relatório&quot; para exportar com todas as dimensões</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.25)', textAlign: 'center', marginTop: '8px', letterSpacing: '.06em' }}>Clique em &quot;Copiar Relatório&quot; para exportar com todas as dimensões</div>
                 </div>
               )}
 
@@ -704,7 +705,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   {typedResult?.risks && typedResult.risks.length > 3 && (
                     <div style={{ background: 'rgba(224,82,82,.04)', border: '1px solid rgba(224,82,82,.15)', padding: '14px' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#e05252', marginBottom: '10px' }}>Todos os Riscos ({typedResult.risks.length})</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#e05252', marginBottom: '10px' }}>Todos os Riscos ({typedResult.risks.length})</div>
                       <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                         {typedResult.risks.slice(3).map((r, i) => (
                           <li key={i} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.65)', lineHeight: 1.5 }}>{r}</li>
@@ -714,7 +715,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                   )}
                   {typedResult?.opportunities && typedResult.opportunities.length > 3 && (
                     <div style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.15)', padding: '14px' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '10px' }}>Mais Oportunidades ({typedResult.opportunities.length})</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '10px' }}>Mais Oportunidades ({typedResult.opportunities.length})</div>
                       <ul style={{ margin: 0, paddingLeft: '14px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                         {typedResult.opportunities.slice(3).map((o, i) => (
                           <li key={i} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.65)', lineHeight: 1.5 }}>{o}</li>
@@ -727,7 +728,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
 
               {/* Fallback if no structured data */}
               {!resultSummary && !hasDimensions && !hasRisksOrOpps && (
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.4)', textAlign: 'center', padding: '20px' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textAlign: 'center', padding: '20px' }}>
                   Análise completa não disponível para esta fonte.
                 </div>
               )}
@@ -740,12 +741,12 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
               {hasDimensions ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {typedResult!.dimensions!.map((d, i) => (
-                    <div key={i} style={{ background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', padding: '10px 14px' }}>
+                    <div key={i} style={{ background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', borderRadius: '10px', padding: '10px 14px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#0e0e0d', fontWeight: 600 }}>{d.name}</span>
+                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#0e0e0d', fontWeight: 600 }}>{d.name}</span>
                           {d.weight !== undefined && (
-                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', background: 'rgba(14,14,13,.06)', padding: '1px 5px' }}>peso {d.weight}%</span>
+                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', background: 'rgba(14,14,13,.06)', padding: '1px 5px', borderRadius: '4px' }}>peso {d.weight}%</span>
                           )}
                         </div>
                         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', fontWeight: 700, color: getScoreColor(d.score) }}>{d.score}</span>
@@ -758,7 +759,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.3)' }}>
+                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                   Dados de dimensões não disponíveis nesta análise.
                 </div>
               )}
@@ -770,7 +771,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <div>
               {hasFinancial && (
                 <div style={{ marginBottom: '20px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Projecção Financeira</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Projecção Financeira</div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '16px' }}>
                     {[
                       { label: 'Yield Bruto', val: `${typedResult!.financialProjection!.yieldBruto?.toFixed(1)}%` },
@@ -778,8 +779,8 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                       { label: 'IRR 5 Anos', val: `${typedResult!.financialProjection!.irr5anos?.toFixed(1)}%` },
                       { label: 'IRR 10 Anos', val: `${typedResult!.financialProjection!.irr10anos?.toFixed(1)}%` },
                     ].map(item => (
-                      <div key={item.label} style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)', padding: '14px 16px' }}>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '6px' }}>{item.label}</div>
+                      <div key={item.label} style={{ background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)', borderRadius: '10px', padding: '14px 16px' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', marginBottom: '6px' }}>{item.label}</div>
                         <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.6rem', color: '#1c4a35', lineHeight: 1 }}>{item.val}</div>
                       </div>
                     ))}
@@ -787,19 +788,19 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                 </div>
               )}
               {typedResult?.negotiationAdvice && (
-                <div style={{ marginBottom: '16px', padding: '14px', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.2)' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#c9a96e', marginBottom: '8px' }}>Estratégia de Negociação</div>
+                <div style={{ marginBottom: '16px', padding: '14px', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.2)', borderRadius: '10px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#c9a96e', marginBottom: '8px' }}>Estratégia de Negociação</div>
                   <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.7 }}>{typedResult.negotiationAdvice}</div>
                 </div>
               )}
               {typedResult?.exitStrategy && (
-                <div style={{ padding: '14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.15)' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '8px' }}>Exit Strategy</div>
+                <div style={{ padding: '14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.15)', borderRadius: '10px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '8px' }}>Exit Strategy</div>
                   <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.7 }}>{typedResult.exitStrategy}</div>
                 </div>
               )}
               {!hasFinancial && !typedResult?.negotiationAdvice && !typedResult?.exitStrategy && (
-                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.3)' }}>
+                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                   Dados financeiros não disponíveis nesta análise.
                 </div>
               )}
@@ -811,9 +812,9 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <div>
               {hasComparables ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '4px' }}>Imóveis Comparáveis Vendidos</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '4px' }}>Imóveis Comparáveis Vendidos</div>
                   {typedResult!.comparables!.map((comp, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', gap: '16px' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', borderRadius: '10px', gap: '16px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{comp.address}</div>
                         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)' }}>{comp.sqm}m² · {comp.daysOnMarket}d no mercado</div>
@@ -821,14 +822,14 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.2rem', color: '#1c4a35', lineHeight: 1 }}>€{comp.price.toLocaleString('pt-PT')}</div>
                         {comp.sqm > 0 && (
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)' }}>€{Math.round(comp.price / comp.sqm).toLocaleString('pt-PT')}/m²</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>€{Math.round(comp.price / comp.sqm).toLocaleString('pt-PT')}/m²</div>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.46rem', color: 'rgba(14,14,13,.3)' }}>
+                <div style={{ textAlign: 'center', padding: '32px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                   Sem comparáveis disponíveis para este imóvel.
                 </div>
               )}
@@ -841,7 +842,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
       {searchResults && radarMode === 'search' && searchDeals && searchDeals.length > 0 && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em' }}>
               {searchDeals.length} oportunidades encontradas
             </div>
             <button className="p-btn p-btn-gold" style={{ padding: '8px 16px' }}
@@ -860,7 +861,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                       <span style={{ fontFamily: "'Cormorant',serif", fontSize: '1.6rem', fontWeight: 300, color: '#1c4a35' }}>{String(deal.score || 0)}</span>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#c9a96e', padding: '2px 6px', background: 'rgba(201,169,110,.08)' }}>{String(deal.classificacao || '—')}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', padding: '2px 6px', background: 'rgba(201,169,110,.08)', borderRadius: '4px' }}>{String(deal.classificacao || '—')}</span>
                     </div>
                     <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.85rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '2px' }}>{String(deal.titulo || 'Imóvel').substring(0, 80)}</div>
                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)' }}>{String(deal.zona || '')} · {deal.area ? `${deal.area}m²` : ''}</div>
@@ -870,7 +871,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                       {Number(deal.preco || 0) > 0 ? `€ ${Number(deal.preco).toLocaleString('pt-PT')}` : '—'}
                     </div>
                     {!!deal.url && (
-                      <a href={String(deal.url)} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35' }}>Ver →</a>
+                      <a href={String(deal.url)} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35' }}>Ver →</a>
                     )}
                   </div>
                 </div>

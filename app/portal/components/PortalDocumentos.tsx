@@ -286,20 +286,20 @@ function StorageBar() {
   const total = 10
   const pct = (used / total) * 100
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 14px', background: 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.07)', marginBottom: '20px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 14px', background: 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.07)', borderRadius: '8px', marginBottom: '20px' }}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(14,14,13,.4)" strokeWidth="1.5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 2.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125m0 4.875c0 2.278 3.694 4.125 8.25 4.125s8.25-1.847 8.25-4.125" />
       </svg>
       <div style={{ flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.37rem', color: 'rgba(14,14,13,.45)' }}>Armazenamento</span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.37rem', color: '#1c4a35', fontWeight: 600 }}>{used}GB de {total}GB utilizado</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.45)' }}>Armazenamento</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', fontWeight: 600 }}>{used}GB de {total}GB utilizado</span>
         </div>
         <div style={{ height: '4px', background: 'rgba(14,14,13,.08)', borderRadius: '2px', overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${pct}%`, background: pct > 80 ? '#dc2626' : '#1c4a35', borderRadius: '2px', transition: 'width .5s' }} />
         </div>
       </div>
-      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: 'rgba(14,14,13,.3)' }}>{(total - used).toFixed(1)}GB livres</span>
+      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>{(total - used).toFixed(1)}GB livres</span>
     </div>
   )
 }
@@ -457,20 +457,20 @@ export default function PortalDocumentos() {
       {/* Header */}
       <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>
             Intelligence Documental
           </div>
           <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.9rem', color: '#0e0e0d', lineHeight: 1.1 }}>
             Documentos & <em style={{ color: '#1c4a35' }}>Templates</em>
           </div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.35)', marginTop: '5px', letterSpacing: '.04em' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '5px', letterSpacing: '.04em' }}>
             {MOCK_DOCUMENTS.length} documentos · {DEAL_CHECKLISTS.length} checklists · {TEMPLATES.length} templates · Gerador de documentos
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             className="p-btn"
-            style={{ fontSize: '.42rem', padding: '8px 18px' }}
+            style={{ fontSize: '.52rem', padding: '8px 18px', borderRadius: '6px' }}
             onClick={() => fileInputRef.current?.click()}
           >
             + Carregar Documento
@@ -489,7 +489,7 @@ export default function PortalDocumentos() {
               padding: '10px 22px', background: 'none', border: 'none',
               borderBottom: `2px solid ${activeTab === t.id ? '#1c4a35' : 'transparent'}`,
               color: activeTab === t.id ? '#1c4a35' : 'rgba(14,14,13,.4)',
-              fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em',
+              fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em',
               textTransform: 'uppercase', cursor: 'pointer', transition: 'all .15s', marginBottom: '-1px',
             }}
           >
@@ -543,8 +543,8 @@ export default function PortalDocumentos() {
                     padding: '4px 12px', border: `1px solid ${filterCat === cat ? CAT_COLORS[cat] : 'rgba(14,14,13,.1)'}`,
                     background: filterCat === cat ? `${CAT_COLORS[cat]}12` : 'transparent',
                     color: filterCat === cat ? CAT_COLORS[cat] : 'rgba(14,14,13,.45)',
-                    fontFamily: "'DM Mono',monospace", fontSize: '.37rem', letterSpacing: '.06em',
-                    cursor: 'pointer', transition: 'all .15s',
+                    fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
+                    cursor: 'pointer', transition: 'all .15s', borderRadius: '4px',
                   }}
                 >
                   {cat} <span style={{ opacity: 0.6 }}>({count})</span>
@@ -557,8 +557,8 @@ export default function PortalDocumentos() {
           {sharedLink && (
             <div style={{ marginBottom: '14px', padding: '10px 14px', background: 'rgba(28,74,53,.07)', border: '1px solid rgba(28,74,53,.2)', display: 'flex', gap: '10px', alignItems: 'center' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1c4a35" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sharedLink}</span>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#1c4a35', opacity: 0.6 }}>Copiado!</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sharedLink}</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', opacity: 0.6 }}>Copiado!</span>
             </div>
           )}
 
@@ -573,7 +573,8 @@ export default function PortalDocumentos() {
                   style={{
                     border: '1px solid rgba(14,14,13,.08)', background: '#fff',
                     padding: '16px', transition: 'all .2s', cursor: 'default',
-                    borderTop: `2px solid ${catColor}`,
+                    borderTop: `2px solid ${catColor}`, borderRadius: '12px',
+                    boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
                   }}
                   onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,.07)')}
                   onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
@@ -585,32 +586,32 @@ export default function PortalDocumentos() {
                       border: `1px solid ${typeConfig.color}22`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: typeConfig.color, fontWeight: 700, letterSpacing: '.04em' }}>{typeConfig.icon}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: typeConfig.color, fontWeight: 700, letterSpacing: '.04em' }}>{typeConfig.icon}</span>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', fontWeight: 600, color: '#0e0e0d', marginBottom: '3px', lineHeight: 1.3 }}>{doc.name}</div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: 'rgba(14,14,13,.4)', lineHeight: 1.5 }}>{doc.description}</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', lineHeight: 1.5 }}>{doc.description}</div>
                     </div>
                   </div>
 
                   {/* Meta row */}
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'center' }}>
-                    <span style={{ padding: '2px 8px', background: `${catColor}10`, color: catColor, fontFamily: "'DM Mono',monospace", fontSize: '.32rem', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                    <span style={{ padding: '2px 8px', background: `${catColor}10`, color: catColor, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', textTransform: 'uppercase', borderRadius: '4px' }}>
                       {doc.category}
                     </span>
-                    <span style={{ padding: '2px 8px', background: typeConfig.bg, color: typeConfig.color, fontFamily: "'DM Mono',monospace", fontSize: '.32rem', letterSpacing: '.06em' }}>
+                    <span style={{ padding: '2px 8px', background: typeConfig.bg, color: typeConfig.color, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', borderRadius: '4px' }}>
                       {doc.type}
                     </span>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.35)', marginLeft: 'auto' }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginLeft: 'auto' }}>
                       {doc.size}
                     </span>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.3)' }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                       {new Date(doc.date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.3)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                       <IconDownload />
                       {doc.downloads}
                     </span>
@@ -620,21 +621,21 @@ export default function PortalDocumentos() {
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <button style={{
                       flex: 1, padding: '6px 8px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.12)',
-                      color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.37rem', letterSpacing: '.06em',
-                      cursor: 'pointer', transition: 'all .15s',
+                      color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
+                      cursor: 'pointer', transition: 'all .2s', borderRadius: '6px',
                     }}>Ver</button>
                     <button style={{
                       flex: 1, padding: '6px 8px', background: '#1c4a35', border: 'none',
-                      color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.37rem', letterSpacing: '.06em',
-                      cursor: 'pointer', transition: 'all .15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                      color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
+                      cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '6px',
                     }}>
                       <IconDownload />Download
                     </button>
                     <button
                       style={{
                         padding: '6px 10px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)',
-                        color: 'rgba(14,14,13,.4)', cursor: 'pointer', transition: 'all .15s', display: 'flex', alignItems: 'center', gap: '4px',
-                        fontFamily: "'DM Mono',monospace", fontSize: '.37rem',
+                        color: 'rgba(14,14,13,.4)', cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', gap: '4px',
+                        fontFamily: "'DM Mono',monospace", fontSize: '.52rem', borderRadius: '6px',
                       }}
                       onClick={() => handleShareDoc(doc)}
                     >
@@ -666,10 +667,10 @@ export default function PortalDocumentos() {
             onClick={() => fileInputRef.current?.click()}
           >
             <IconUpload />
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
               Arraste documentos aqui
             </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.25)' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.25)' }}>
               PDF · DOCX · XLSX · PNG — até 50MB por ficheiro
             </div>
           </div>
@@ -681,13 +682,13 @@ export default function PortalDocumentos() {
         <div>
           {/* Deal selector */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.08em' }}>Deal activo:</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.08em' }}>Deal activo:</div>
             <select className="p-sel" value={selectedDeal} onChange={e => setSelectedDeal(e.target.value)} style={{ minWidth: '200px' }}>
               {['Deal #AG-2401', 'Deal #AG-2398', 'Deal #AG-2387', 'Deal #AG-2376'].map(d => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
               {selectedDeal} — Apartamento T3 Príncipe Real
             </span>
           </div>
@@ -695,7 +696,7 @@ export default function PortalDocumentos() {
           <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
             {/* Stage sidebar */}
             <div style={{ width: '230px', flexShrink: 0 }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
                 Fase do Negócio
               </div>
               {DEAL_CHECKLISTS.map((stage, idx) => {
@@ -709,11 +710,11 @@ export default function PortalDocumentos() {
                     style={{
                       padding: '11px 14px', marginBottom: '6px', cursor: 'pointer', transition: 'all .15s',
                       background: isActive ? '#1c4a35' : allDone ? 'rgba(34,197,94,.05)' : 'rgba(14,14,13,.02)',
-                      border: `1px solid ${isActive ? '#1c4a35' : allDone ? 'rgba(34,197,94,.2)' : 'rgba(14,14,13,.08)'}`,
+                      border: `1px solid ${isActive ? '#1c4a35' : allDone ? 'rgba(34,197,94,.2)' : 'rgba(14,14,13,.08)'}`, borderRadius: '10px',
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: isActive ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.35)', background: isActive ? 'rgba(255,255,255,.1)' : 'rgba(14,14,13,.06)', padding: '2px 5px' }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: isActive ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.35)', background: isActive ? 'rgba(255,255,255,.1)' : 'rgba(14,14,13,.06)', padding: '2px 5px', borderRadius: '4px' }}>
                         {String(idx + 1).padStart(2, '0')}
                       </span>
                       <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', fontWeight: 500, color: isActive ? '#f4f0e6' : '#0e0e0d', flex: 1, lineHeight: 1.2 }}>
@@ -727,7 +728,7 @@ export default function PortalDocumentos() {
                       <div style={{ flex: 1, height: '3px', background: isActive ? 'rgba(255,255,255,.15)' : 'rgba(14,14,13,.08)', borderRadius: '2px', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${prog.pct}%`, background: isActive ? '#c9a96e' : allDone ? '#22c55e' : '#1c4a35', transition: 'width .4s' }} />
                       </div>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: isActive ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.3)', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: isActive ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.3)', whiteSpace: 'nowrap' }}>
                         {prog.done}/{prog.total}
                       </span>
                     </div>
@@ -749,14 +750,14 @@ export default function PortalDocumentos() {
                           {activeStageData.label}
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: prog.pct === 100 ? '#22c55e' : '#1c4a35', fontWeight: 600 }}>
+                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: prog.pct === 100 ? '#22c55e' : '#1c4a35', fontWeight: 600 }}>
                             {prog.pct}% completo
                           </span>
                           <button
                             style={{
                               padding: '5px 14px', background: '#1c4a35', border: 'none', color: '#f4f0e6',
-                              fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.08em',
-                              textTransform: 'uppercase', cursor: 'pointer',
+                              fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em',
+                              textTransform: 'uppercase', cursor: 'pointer', borderRadius: '6px',
                             }}
                             onClick={() => alert('Função de export PDF — integração com API de geração em breve.')}
                           >
@@ -767,7 +768,7 @@ export default function PortalDocumentos() {
                       <div style={{ height: '5px', background: 'rgba(14,14,13,.07)', borderRadius: '3px', overflow: 'hidden', marginBottom: '6px' }}>
                         <div style={{ height: '100%', width: `${prog.pct}%`, background: prog.pct === 100 ? '#22c55e' : '#1c4a35', transition: 'width .5s ease', borderRadius: '3px' }} />
                       </div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: 'rgba(14,14,13,.35)' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>
                         {prog.done} de {prog.total} itens obrigatórios concluídos · {activeStageData.items.filter(i => !i.required).length} opcionais
                       </div>
                     </div>
@@ -785,7 +786,7 @@ export default function PortalDocumentos() {
                               display: 'flex', gap: '12px', padding: '11px 14px', cursor: 'pointer',
                               background: checked ? 'rgba(28,74,53,.03)' : 'transparent',
                               border: `1px solid ${checked ? 'rgba(28,74,53,.12)' : 'rgba(14,14,13,.06)'}`,
-                              transition: 'all .15s',
+                              transition: 'all .15s', borderRadius: '8px',
                             }}
                           >
                             {/* Checkbox */}
@@ -809,16 +810,16 @@ export default function PortalDocumentos() {
                                   {item.name}
                                 </span>
                                 {item.required && !checked && (
-                                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.29rem', color: '#dc2626', background: 'rgba(220,38,38,.07)', padding: '1px 6px', letterSpacing: '.06em', textTransform: 'uppercase', flexShrink: 0 }}>
+                                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#dc2626', background: 'rgba(220,38,38,.07)', padding: '1px 6px', letterSpacing: '.06em', textTransform: 'uppercase', flexShrink: 0, borderRadius: '4px' }}>
                                     Obrigatório
                                   </span>
                                 )}
                               </div>
                               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.35)' }}>
+                                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>
                                   {item.deadline}
                                 </span>
-                                <span style={{ padding: '1px 7px', background: resp.bg, color: resp.color, fontFamily: "'DM Mono',monospace", fontSize: '.3rem', letterSpacing: '.06em' }}>
+                                <span style={{ padding: '1px 7px', background: resp.bg, color: resp.color, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', borderRadius: '4px' }}>
                                   {item.responsible}
                                 </span>
                               </div>
@@ -831,7 +832,7 @@ export default function PortalDocumentos() {
                     {prog.pct === 100 && (
                       <div style={{ marginTop: '16px', padding: '12px 16px', background: 'rgba(34,197,94,.07)', border: '1px solid rgba(34,197,94,.2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="#22c55e" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.39rem', color: '#22c55e', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#22c55e', letterSpacing: '.08em', textTransform: 'uppercase' }}>
                           Fase documentalmente completa
                         </span>
                       </div>
@@ -854,7 +855,7 @@ export default function PortalDocumentos() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a07a38" strokeWidth="2" style={{ marginTop: '1px', flexShrink: 0 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75h.007v.008H12v-.008z" />
                 </svg>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.37rem', color: '#a07a38', lineHeight: 1.5 }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#a07a38', lineHeight: 1.5 }}>
                   Templates de referência interna. Recomendamos revisão por advogado ou solicitador antes de qualquer uso legal.
                 </span>
               </div>
@@ -875,14 +876,15 @@ export default function PortalDocumentos() {
                     key={tpl.id}
                     style={{
                       border: '1px solid rgba(14,14,13,.08)', background: '#fff', padding: '16px', cursor: 'pointer',
-                      transition: 'all .2s', position: 'relative',
+                      transition: 'all .2s', position: 'relative', borderRadius: '12px',
+                      boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.borderColor = '#1c4a35')}
                     onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(14,14,13,.08)')}
                     onClick={() => useTemplate(tpl)}
                   >
                     {tpl.popular && (
-                      <div style={{ position: 'absolute', top: '0', right: '0', padding: '3px 8px', background: '#c9a96e', color: '#fff', fontFamily: "'DM Mono',monospace", fontSize: '.3rem', letterSpacing: '.06em' }}>
+                      <div style={{ position: 'absolute', top: '0', right: '0', padding: '3px 8px', background: '#c9a96e', color: '#fff', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', borderRadius: '0 12px 0 4px' }}>
                         POPULAR
                       </div>
                     )}
@@ -894,7 +896,7 @@ export default function PortalDocumentos() {
                         <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', fontWeight: 600, color: '#0e0e0d', marginBottom: '3px', paddingRight: tpl.popular ? '48px' : '0' }}>
                           {tpl.name}
                         </div>
-                        <span style={{ padding: '2px 7px', background: 'rgba(28,74,53,.06)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.3rem', letterSpacing: '.06em' }}>
+                        <span style={{ padding: '2px 7px', background: 'rgba(28,74,53,.06)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', borderRadius: '4px' }}>
                           {tpl.category}
                         </span>
                       </div>
@@ -905,12 +907,12 @@ export default function PortalDocumentos() {
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', gap: '4px' }}>
                         {(tpl.langs || ['PT']).map(lang => (
-                          <span key={lang} style={{ padding: '2px 6px', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.04em' }}>
+                          <span key={lang} style={{ padding: '2px 6px', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.04em', borderRadius: '4px' }}>
                             {lang}
                           </span>
                         ))}
                       </div>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#1c4a35', letterSpacing: '.06em' }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', letterSpacing: '.06em' }}>
                         Usar →
                       </span>
                     </div>
@@ -923,7 +925,7 @@ export default function PortalDocumentos() {
             <div>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
                 <button
-                  style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', letterSpacing: '.06em' }}
+                  style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', letterSpacing: '.06em', borderRadius: '6px' }}
                   onClick={() => setActiveTemplate(null)}
                 >
                   ← Voltar
@@ -938,11 +940,11 @@ export default function PortalDocumentos() {
                         key={lang}
                         onClick={() => setActiveLang(lang)}
                         style={{
-                          padding: '4px 10px', fontFamily: "'DM Mono',monospace", fontSize: '.36rem',
+                          padding: '4px 10px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                           cursor: 'pointer', border: '1px solid',
                           background: activeLang === lang ? '#1c4a35' : 'transparent',
                           color: activeLang === lang ? '#fff' : 'rgba(14,14,13,.45)',
-                          borderColor: activeLang === lang ? '#1c4a35' : 'rgba(14,14,13,.15)',
+                          borderColor: activeLang === lang ? '#1c4a35' : 'rgba(14,14,13,.15)', borderRadius: '6px',
                         }}
                       >
                         {lang}
@@ -955,11 +957,11 @@ export default function PortalDocumentos() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                 {/* Variable hints */}
                 <div style={{ padding: '10px 14px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em' }}>Variáveis:</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em' }}>Variáveis:</span>
                   {['{nome}', '{imovel}', '{preco}', '{morada}', '{consultor}', '{data}', '{prazo}'].map(v => (
                     <span
                       key={v}
-                      style={{ padding: '2px 8px', background: 'rgba(201,169,110,.08)', border: '1px solid rgba(201,169,110,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: '#a07a38', cursor: 'pointer' }}
+                      style={{ padding: '2px 8px', background: 'rgba(201,169,110,.08)', border: '1px solid rgba(201,169,110,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#a07a38', cursor: 'pointer', borderRadius: '4px' }}
                       onClick={() => setTemplateContent(prev => prev + v)}
                     >
                       {v}
@@ -981,7 +983,7 @@ export default function PortalDocumentos() {
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button
                     className="p-btn-gold p-btn"
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.42rem', padding: '8px 18px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.52rem', padding: '8px 18px', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={simulateAIFill}
                     disabled={aiLoading}
                   >
@@ -990,13 +992,13 @@ export default function PortalDocumentos() {
                   </button>
                   <button
                     className="p-btn"
-                    style={{ fontSize: '.42rem', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    style={{ fontSize: '.52rem', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={handleCopyTemplate}
                   >
                     {copied ? '✓ Copiado!' : 'Copiar Texto'}
                   </button>
                   <button
-                    style={{ padding: '8px 18px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}
+                    style={{ padding: '8px 18px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={() => { setActiveTemplate(null); setTemplateContent('') }}
                   >
                     Fechar
@@ -1054,7 +1056,7 @@ export default function PortalDocumentos() {
 
             <button
               className="p-btn"
-              style={{ width: '100%', marginTop: '4px', background: '#1c4a35', color: '#f4f0e6', padding: '12px', fontSize: '.46rem', letterSpacing: '.1em' }}
+              style={{ width: '100%', marginTop: '4px', background: '#1c4a35', color: '#f4f0e6', padding: '12px', fontSize: '.52rem', letterSpacing: '.1em', borderRadius: '6px', transition: 'all .2s' }}
               onClick={generateDocument}
             >
               Gerar Documento
@@ -1063,29 +1065,30 @@ export default function PortalDocumentos() {
 
           {/* Right: Preview */}
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '12px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '12px' }}>
               Pré-visualização
             </div>
             {genPreview ? (
               <div>
                 <pre style={{
-                  fontFamily: "'DM Mono',monospace", fontSize: '.42rem', lineHeight: 1.8,
+                  fontFamily: "'DM Mono',monospace", fontSize: '.52rem', lineHeight: 1.8,
                   color: '#0e0e0d', background: '#fff', border: '1px solid rgba(14,14,13,.1)',
                   padding: '20px', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                  maxHeight: '480px', overflowY: 'auto', margin: '0 0 12px',
+                  maxHeight: '480px', overflowY: 'auto', margin: '0 0 12px', borderRadius: '10px',
+                  boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
                 }}>
                   {genPreview}
                 </pre>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
                     className="p-btn"
-                    style={{ flex: 1, background: '#1c4a35', color: '#f4f0e6', fontSize: '.4rem', padding: '9px' }}
+                    style={{ flex: 1, background: '#1c4a35', color: '#f4f0e6', fontSize: '.52rem', padding: '9px', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={handlePrintPreview}
                   >
                     Download PDF
                   </button>
                   <button
-                    style={{ flex: 1, padding: '9px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', letterSpacing: '.06em' }}
+                    style={{ flex: 1, padding: '9px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', letterSpacing: '.06em', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={handleGenCopy}
                   >
                     {genCopied ? '✓ Copiado!' : 'Copiar Texto'}
@@ -1097,7 +1100,7 @@ export default function PortalDocumentos() {
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(14,14,13,.15)" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                 </svg>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.25)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.8 }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.25)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.8 }}>
                   Preenche o formulário<br />e clica em Gerar
                 </div>
               </div>

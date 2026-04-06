@@ -311,7 +311,7 @@ function CityProfileCard({ city, lisboaCity }: { city: City; lisboaCity: City })
     { label: 'DOM', cityV: city.dom, lisbV: lisboaCity.dom, fmtFn: (v: number) => `${v}d` },
   ]
   return (
-    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
       <div className="flex items-center gap-3 mb-4">
         <span style={{ fontSize: 36 }}>{city.flag}</span>
         <div>
@@ -529,7 +529,7 @@ export default function PortalCrossCompare() {
           <div className="space-y-6">
 
             {/* Metric toggle */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 22, color: '#0e0e0d', fontWeight: 600, margin: 0 }}>
                   Ranking de Mercados
@@ -606,7 +606,7 @@ export default function PortalCrossCompare() {
             </div>
 
             {/* Mini comparison table */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <h2 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>Visão Completa · Todos os Mercados</h2>
               <div className="overflow-x-auto">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -689,7 +689,7 @@ export default function PortalCrossCompare() {
             <CityProfileCard city={selectedCity} lisboaCity={lisboaCity} />
 
             {/* Score bars */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 16 }}>Scores de Avaliação</h3>
               <div className="space-y-3">
                 {Object.entries(selectedCity.scores).map(([key, val]) => {
@@ -739,7 +739,7 @@ export default function PortalCrossCompare() {
             </div>
 
             {/* Top 5 Ranked */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 20, color: '#0e0e0d', fontWeight: 600, marginBottom: 20 }}>
                 Top 5 Mercados para {profileData.label}
               </h3>
@@ -798,7 +798,7 @@ export default function PortalCrossCompare() {
             </div>
 
             {/* Radar chart */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                 <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, margin: 0 }}>Radar · Top 3 Mercados</h3>
                 <div className="flex gap-2">
@@ -841,7 +841,7 @@ export default function PortalCrossCompare() {
             </div>
 
             {/* Bar chart */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <h3 style={{ fontFamily: 'Cormorant, serif', fontSize: 18, color: '#0e0e0d', fontWeight: 600, marginBottom: 20 }}>
                 €1M Investido 2020 → Valor 2026
               </h3>
@@ -849,7 +849,7 @@ export default function PortalCrossCompare() {
             </div>
 
             {/* Arbitrage table */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid rgba(28,74,53,0.1)', padding: '20px 24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
               <div className="overflow-x-auto">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>

@@ -187,8 +187,8 @@ function StageBadge({ fase }: { fase: string }) {
     <span style={{
       display: 'inline-block', padding: '2px 8px',
       background: color + '18', border: `1px solid ${color}40`,
-      color, fontFamily: "'DM Mono',monospace", fontSize: '.36rem',
-      letterSpacing: '.06em', borderRadius: '2px',
+      color, fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
+      letterSpacing: '.06em', borderRadius: '4px',
     }}>
       {fase}
     </span>
@@ -206,7 +206,7 @@ function HealthBadge({ score }: { score: number }) {
       borderRadius: '20px',
     }}>
       <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: color, flexShrink: 0, display: 'inline-block' }} />
-      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color, letterSpacing: '.04em' }}>{label} {score}%</span>
+      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color, letterSpacing: '.04em' }}>{label} {score}%</span>
     </span>
   )
 }
@@ -226,7 +226,7 @@ function DealHealthBadges({ badges }: { badges: HealthIssue[] }) {
         const col = SEVERITY_COLOR[b.severity]
         return (
           <span key={i} style={{
-            fontFamily: "'DM Mono',monospace", fontSize: '.3rem',
+            fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
             color: col, background: col + '12', border: `1px solid ${col}30`,
             padding: '1px 6px', borderRadius: '2px',
           }}>
@@ -263,6 +263,7 @@ function AtRiskBanner({ deals, darkMode }: { deals: Deal[]; darkMode: boolean })
       background: 'rgba(220,38,38,.06)',
       border: '1px solid rgba(220,38,38,.2)',
       display: 'flex', alignItems: 'flex-start', gap: '12px',
+      borderRadius: '12px',
     }}>
       <div style={{ flexShrink: 0, marginTop: '1px' }}>
         <svg width="16" height="16" viewBox="0 0 16 16" aria-label="Alerta de risco">
@@ -272,7 +273,7 @@ function AtRiskBanner({ deals, darkMode }: { deals: Deal[]; darkMode: boolean })
         </svg>
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#dc2626', letterSpacing: '.06em', marginBottom: '4px' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#dc2626', letterSpacing: '.06em', marginBottom: '4px' }}>
           {atRisk.length} DEAL{atRisk.length > 1 ? 'S' : ''} EM RISCO · PARADO{atRisk.length > 1 ? 'S' : ''} {STALE_DAYS}+ DIAS
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -283,7 +284,7 @@ function AtRiskBanner({ deals, darkMode }: { deals: Deal[]; darkMode: boolean })
                 padding: '2px 9px',
                 background: 'rgba(220,38,38,.1)', border: '1px solid rgba(220,38,38,.25)',
                 borderRadius: '2px',
-                fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#dc2626',
+                fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#dc2626',
               }}>
                 {d.ref ?? '—'} · {d.fase ?? '—'} · {days}d
               </span>
@@ -306,8 +307,9 @@ function ActivityTimelineBanner({ moves, darkMode }: { moves: PipelineMove[]; da
       padding: '12px 16px',
       background: darkMode ? 'rgba(28,74,53,.1)' : 'rgba(28,74,53,.03)',
       border: '1px solid rgba(28,74,53,.1)',
+      borderRadius: '12px',
     }}>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
         Actividade Recente
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -316,18 +318,18 @@ function ActivityTimelineBanner({ moves, darkMode }: { moves: PipelineMove[]; da
           const toColor = STAGE_COLOR[m.toFase] || '#888'
           return (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.3)', flexShrink: 0, width: '52px' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', flexShrink: 0, width: '52px' }}>
                 {m.at}
               </div>
               <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.76rem', color: darkMode ? 'rgba(244,240,230,.7)' : 'rgba(14,14,13,.65)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {m.dealRef}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: fromColor, padding: '1px 5px', background: fromColor + '15', borderRadius: '2px' }}>{m.fromFase}</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: fromColor, padding: '1px 5px', background: fromColor + '15', borderRadius: '2px' }}>{m.fromFase}</span>
                 <svg width="12" height="8" viewBox="0 0 12 8" aria-label="avançou para">
                   <path d="M0 4h9M6 1l3 3-3 3" stroke="rgba(14,14,13,.3)" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: toColor, padding: '1px 5px', background: toColor + '15', borderRadius: '2px' }}>{m.toFase}</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: toColor, padding: '1px 5px', background: toColor + '15', borderRadius: '2px' }}>{m.toFase}</span>
               </div>
             </div>
           )
@@ -383,12 +385,12 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
   const maxForecast = Math.max(forecast30, forecast90, gciWeighted, forecastAnnual, 1)
 
   return (
-    <div style={{ marginBottom: '20px', padding: '18px 20px', background: bg, border: `1px solid ${border}` }}>
+    <div style={{ marginBottom: '20px', padding: '18px 20px', background: bg, border: `1px solid ${border}`, borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.15em', textTransform: 'uppercase', color: '#c9a96e' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: '#c9a96e' }}>
           GCI Forecast · Comissão Prevista
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.3)' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
           AMI 22506 · 5% comissão
         </div>
       </div>
@@ -406,9 +408,10 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
             background: darkMode ? 'rgba(0,0,0,.15)' : 'rgba(255,255,255,.65)',
             border: `1px solid ${m.gold ? 'rgba(201,169,110,.2)' : border}`,
             display: 'flex', flexDirection: 'column', alignItems: 'center',
+            borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
           }}>
             <GCIGauge pct={m.pct} label={m.label} value={m.value} />
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.3)', marginTop: '4px', textAlign: 'center' }}>{m.sub}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '4px', textAlign: 'center' }}>{m.sub}</div>
           </div>
         ))}
       </div>
@@ -416,7 +419,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
       {/* Pipeline total bar */}
       <div style={{ marginBottom: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em' }}>PIPELINE TOTAL</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em' }}>PIPELINE TOTAL</span>
           <span style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: darkMode ? '#f4f0e6' : '#0e0e0d', fontWeight: 300 }}>{fmtK(totalPipeline)}</span>
         </div>
       </div>
@@ -424,7 +427,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
       {/* Stage distribution */}
       {stageDist.length > 0 && (
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)', marginBottom: '6px', letterSpacing: '.06em' }}>DISTRIBUIÇÃO POR STAGE</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginBottom: '6px', letterSpacing: '.06em' }}>DISTRIBUIÇÃO POR STAGE</div>
           <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', gap: '1px' }}>
             {stageDist.map(s => (
               <div key={s.stage} style={{ flex: s.pct, background: s.color, minWidth: '2px', transition: 'flex .5s ease' }} />
@@ -432,7 +435,7 @@ function GCIForecastPanel({ deals, darkMode }: { deals: Deal[]; darkMode: boolea
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 14px', marginTop: '7px' }}>
             {stageDist.map(s => (
-              <span key={s.stage} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.4)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span key={s.stage} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color, display: 'inline-block', flexShrink: 0 }} />
                 {s.stage} {s.pct.toFixed(0)}%
               </span>
@@ -500,11 +503,11 @@ function DealCard({
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.06em' }}>{deal.ref ?? '—'}</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.06em' }}>{deal.ref ?? '—'}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {isStale && (
             <span style={{
-              fontFamily: "'DM Mono',monospace", fontSize: '.3rem',
+              fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
               color: '#dc2626', background: '#dc262610',
               padding: '1px 5px', border: '1px solid #dc262628', borderRadius: '2px',
               animation: isVeryStale ? 'none' : 'none',
@@ -525,7 +528,7 @@ function DealCard({
           {deal.valor ?? '—'}
         </div>
         {commission > 0 && (
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
             GCI {fmtK(commission)}
           </div>
         )}
@@ -533,7 +536,7 @@ function DealCard({
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
         <StageBadge fase={deal.fase ?? '—'} />
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: isStale ? '#dc2626' : 'rgba(14,14,13,.28)' }}>
+        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: isStale ? '#dc2626' : 'rgba(14,14,13,.28)' }}>
           {days}d
         </span>
       </div>
@@ -541,7 +544,7 @@ function DealCard({
       <DealHealthBadges badges={badges} />
 
       {deal.comprador ? (
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.38)', marginTop: '5px' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.38)', marginTop: '5px' }}>
           👤 {deal.comprador}
         </div>
       ) : null}
@@ -554,7 +557,7 @@ function DealCard({
           style={{
             marginTop: '8px', width: '100%', padding: '5px 0',
             background: 'transparent', border: `1px solid ${color}50`,
-            color, fontFamily: "'DM Mono',monospace", fontSize: '.34rem',
+            color, fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
             cursor: 'pointer', letterSpacing: '.06em',
             transition: 'background .15s ease',
           }}
@@ -682,12 +685,12 @@ function KanbanView({
                 outlineOffset: '-3px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(244,240,230,.75)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.75)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
                     {stage}
                   </div>
                   <span style={{
                     background: 'rgba(244,240,230,.18)', color: '#f4f0e6',
-                    fontFamily: "'DM Mono',monospace", fontSize: '.32rem',
+                    fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                     padding: '1px 6px', borderRadius: '10px',
                   }}>
                     {stageDeals.length}
@@ -697,7 +700,7 @@ function KanbanView({
                   {fmtTotal}
                 </div>
                 {isDropTarget && (
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(244,240,230,.7)', marginTop: '3px', letterSpacing: '.05em' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.7)', marginTop: '3px', letterSpacing: '.05em' }}>
                     ↓ solte aqui
                   </div>
                 )}
@@ -720,7 +723,7 @@ function KanbanView({
                     padding: '16px 12px',
                     border: `1px dashed ${isDropTarget ? stageColor + '50' : 'rgba(14,14,13,.12)'}`,
                     textAlign: 'center',
-                    fontFamily: "'DM Mono',monospace", fontSize: '.34rem',
+                    fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                     color: isDropTarget ? stageColor : 'rgba(14,14,13,.2)',
                     transition: 'border .15s, color .15s',
                   }}>
@@ -840,10 +843,10 @@ function TimelineTab({ deal, darkMode }: { deal: DealWithMeta; darkMode: boolean
                 boxShadow: `0 0 0 2px ${color}35`,
               }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color, background: color + '15', padding: '1px 5px', borderRadius: '2px' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color, background: color + '15', padding: '1px 5px', borderRadius: '2px' }}>
                   {tipoIcon[ev.tipo] || '·'} {ev.tipo}
                 </span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)' }}>{ev.date}</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>{ev.date}</span>
               </div>
               <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: darkMode ? 'rgba(244,240,230,.8)' : '#0e0e0d', lineHeight: 1.5 }}>
                 {ev.nota}
@@ -860,7 +863,7 @@ function TimelineTab({ deal, darkMode }: { deal: DealWithMeta; darkMode: boolean
               background: newTipo === t ? tipoColor[t] + '20' : 'transparent',
               border: `1px solid ${newTipo === t ? tipoColor[t] + '50' : 'rgba(14,14,13,.1)'}`,
               color: newTipo === t ? tipoColor[t] : 'rgba(14,14,13,.4)',
-              fontFamily: "'DM Mono',monospace", fontSize: '.32rem', cursor: 'pointer', borderRadius: '2px',
+              fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '2px',
             }}>{t}</button>
           ))}
         </div>
@@ -920,9 +923,9 @@ function DocumentosTab({ deal, darkMode }: { deal: DealWithMeta; darkMode: boole
   return (
     <div>
       {/* Progress summary */}
-      <div style={{ marginBottom: '14px', padding: '10px 14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.08)' }}>
+      <div style={{ marginBottom: '14px', padding: '10px 14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.08)', borderRadius: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em' }}>DOCUMENTAÇÃO COMPLETA</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em' }}>DOCUMENTAÇÃO COMPLETA</span>
           <span style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: '#1c4a35', fontWeight: 300 }}>{obtidos}/{totalDocs}</span>
         </div>
         <div style={{ height: '4px', background: 'rgba(14,14,13,.07)', borderRadius: '2px', overflow: 'hidden' }}>
@@ -930,13 +933,13 @@ function DocumentosTab({ deal, darkMode }: { deal: DealWithMeta; darkMode: boole
         </div>
       </div>
 
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)', marginBottom: '10px', letterSpacing: '.04em' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginBottom: '10px', letterSpacing: '.04em' }}>
         Clique para alternar: ⬜ Em falta → ✅ Obtido → ➖ N/A
       </div>
       {Object.entries(grouped).map(([fase, docs]) => (
         <div key={fase} style={{ marginBottom: '14px' }}>
           <div style={{
-            fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.1em',
+            fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em',
             textTransform: 'uppercase', color: fase === deal.fase ? '#c9a96e' : 'rgba(14,14,13,.3)',
             marginBottom: '6px',
           }}>
@@ -1043,14 +1046,14 @@ function DealDetailPanel({
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
           <span style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', color: '#c9a96e', fontWeight: 300 }}>{deal.valor}</span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)' }}>·</span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)' }}>{deal.ref}</span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)' }}>·</span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)' }}>{days}d no pipeline</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>·</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>{deal.ref}</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>·</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>{days}d no pipeline</span>
           {expectedGCI > 0 && (
             <>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)' }}>·</span>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#c9a96e' }}>GCI esperado {fmtK(expectedGCI)}</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>·</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e' }}>GCI esperado {fmtK(expectedGCI)}</span>
             </>
           )}
         </div>
@@ -1076,13 +1079,13 @@ function DealDetailPanel({
             </svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: hColor, fontWeight: 'bold', marginBottom: '4px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: hColor, fontWeight: 'bold', marginBottom: '4px' }}>
               Deal Health: {healthLabel(score)}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
               {issues.map(issue => (
                 <span key={issue} style={{
-                  fontFamily: "'DM Mono',monospace", fontSize: '.32rem',
+                  fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                   color: 'rgba(14,14,13,.45)', background: 'rgba(14,14,13,.05)',
                   padding: '1px 6px', borderRadius: '2px',
                 }}>
@@ -1090,12 +1093,12 @@ function DealDetailPanel({
                 </span>
               ))}
               {issues.length === 0 && (
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: '#4a9c7a' }}>Nenhum problema identificado</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a' }}>Nenhum problema identificado</span>
               )}
             </div>
           </div>
           <div style={{ flexShrink: 0, textAlign: 'right' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>Prob. fecho</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>Prob. fecho</div>
             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: hColor }}>{Math.round(prob * 100)}%</div>
           </div>
         </div>
@@ -1131,8 +1134,8 @@ function DealDetailPanel({
             return (
               <div key={fase} style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.1em', textTransform: 'uppercase', color: fase === deal.fase ? '#c9a96e' : 'rgba(14,14,13,.3)' }}>{fase}</div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: doneCount === total ? '#4a9c7a' : 'rgba(14,14,13,.35)' }}>{doneCount}/{total}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: fase === deal.fase ? '#c9a96e' : 'rgba(14,14,13,.3)' }}>{fase}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: doneCount === total ? '#4a9c7a' : 'rgba(14,14,13,.35)' }}>{doneCount}/{total}</div>
                 </div>
                 {(CHECKLISTS[fase] || []).map((item: string, idx: number) => (
                   <div key={idx} className={`check-item${(items as boolean[])[idx] ? ' done' : ''}`} onClick={() => onToggleCheck(deal.id, fase, idx)}>
@@ -1210,19 +1213,19 @@ function DealDetailPanel({
           <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
             {(['bear', 'base', 'bull'] as const).map(s => (
               <div key={s} className={`inv-scenario${invScenario === s ? ' best' : ''}`} onClick={() => setInvScenario(s)} style={{ cursor: 'pointer' }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: s === 'bull' ? '#4a9c7a' : s === 'bear' ? '#dc2626' : '#c9a96e', textTransform: 'uppercase', letterSpacing: '.08em' }}>{s}</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>{s === 'bull' ? '+4% anual' : s === 'base' ? '+2.5% anual' : '+0.5% anual'}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: s === 'bull' ? '#4a9c7a' : s === 'bear' ? '#dc2626' : '#c9a96e', textTransform: 'uppercase', letterSpacing: '.08em' }}>{s}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>{s === 'bull' ? '+4% anual' : s === 'base' ? '+2.5% anual' : '+0.5% anual'}</div>
               </div>
             ))}
           </div>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
             {(['standard', 'ifici'] as const).map(r => (
-              <button key={r} style={{ padding: '6px 14px', background: taxRegime === r ? '#1c4a35' : 'transparent', border: `1px solid ${taxRegime === r ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: taxRegime === r ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }} onClick={() => setTaxRegime(r)}>
+              <button key={r} style={{ padding: '6px 14px', background: taxRegime === r ? '#1c4a35' : 'transparent', border: `1px solid ${taxRegime === r ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: taxRegime === r ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setTaxRegime(r)}>
                 {r === 'standard' ? 'Regime Geral' : 'IFICI/NHR'}
               </button>
             ))}
             {(['residencial', 'comercial'] as const).map(t => (
-              <button key={t} style={{ padding: '6px 14px', background: tipoImovelInv === t ? '#c9a96e' : 'transparent', border: `1px solid ${tipoImovelInv === t ? '#c9a96e' : 'rgba(14,14,13,.15)'}`, color: tipoImovelInv === t ? '#0c1f15' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }} onClick={() => setTipoImovelInv(t)}>
+              <button key={t} style={{ padding: '6px 14px', background: tipoImovelInv === t ? '#c9a96e' : 'transparent', border: `1px solid ${tipoImovelInv === t ? '#c9a96e' : 'rgba(14,14,13,.15)'}`, color: tipoImovelInv === t ? '#0c1f15' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setTipoImovelInv(t)}>
                 {t}
               </button>
             ))}
@@ -1250,7 +1253,7 @@ function DealDetailPanel({
                   { l: 'Rendimento Total Acumulado', v: `€${Math.round(renda * 12 * anos).toLocaleString('pt-PT')}` },
                 ].map(m => (
                   <div key={m.l} style={{ padding: '12px 14px', background: darkMode ? 'rgba(28,74,53,.15)' : 'rgba(28,74,53,.04)', border: `1px solid ${darkMode ? 'rgba(201,169,110,.1)' : 'rgba(28,74,53,.1)'}` }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>{m.l}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '4px' }}>{m.l}</div>
                     <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', color: '#c9a96e', fontWeight: 300 }}>{m.v}</div>
                   </div>
                 ))}
@@ -1300,8 +1303,8 @@ function NewDealForm({
   const bg = darkMode ? '#122a1a' : 'rgba(28,74,53,.04)'
 
   return (
-    <div style={{ padding: '18px 20px', background: bg, border: '1px solid rgba(28,74,53,.15)', marginBottom: '18px' }}>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '16px' }}>Novo Deal</div>
+    <div style={{ padding: '18px 20px', background: bg, border: '1px solid rgba(28,74,53,.15)', marginBottom: '18px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '16px' }}>Novo Deal</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
         <div>
           <label className="p-label">Imóvel *</label>
@@ -1360,7 +1363,7 @@ function NewDealForm({
         <button className="p-btn" onClick={() => { if (canSubmit) onAdd(form) }} disabled={!canSubmit}>
           Adicionar Deal
         </button>
-        <button style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', cursor: 'pointer' }} onClick={onCancel}>
+        <button style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={onCancel}>
           Cancelar
         </button>
       </div>
@@ -1545,25 +1548,25 @@ export default function PortalPipeline({
       {/* ── Header ── */}
       <div style={{ marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '4px' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '4px' }}>
             Gestão de Negócios
           </div>
-          <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.6rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.6rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>
             Pipeline CPCV · <span style={{ color: '#c9a96e' }}>{fmtM(pipelineTotal)}</span>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', border: '1px solid rgba(14,14,13,.1)' }}>
+          <div style={{ display: 'flex', border: '1px solid rgba(14,14,13,.1)', borderRadius: '6px', overflow: 'hidden' }}>
             {(['lista', 'kanban'] as const).map(v => (
               <button key={v}
-                style={{ padding: '6px 14px', background: pipelineView === v ? '#1c4a35' : 'transparent', color: pipelineView === v ? '#f4f0e6' : 'rgba(14,14,13,.45)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', border: 'none', cursor: 'pointer', letterSpacing: '.08em' }}
+                style={{ padding: '6px 14px', background: pipelineView === v ? '#1c4a35' : 'transparent', color: pipelineView === v ? '#f4f0e6' : 'rgba(14,14,13,.45)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', border: 'none', cursor: 'pointer', letterSpacing: '.08em' }}
                 onClick={() => setPipelineView(v)}>
                 {v === 'lista' ? '☰ Lista' : '⠿ Kanban'}
               </button>
             ))}
           </div>
           <button
-            style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer', color: 'rgba(14,14,13,.55)', letterSpacing: '.06em' }}
+            style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: 'rgba(14,14,13,.55)', letterSpacing: '.06em', borderRadius: '6px', transition: 'all .2s' }}
             onClick={() => exportToPDF('Pipeline CPCV — Agency Group', buildPipelineHTML(deals))}
           >
             ⬇ Exportar PDF
@@ -1583,6 +1586,7 @@ export default function PortalPipeline({
         background: darkMode ? '#0c1f15' : '#1c4a35',
         border: '1px solid rgba(201,169,110,.15)',
         overflow: 'hidden',
+        borderRadius: '12px',
       }}>
         {[
           { label: 'Deals Activos', val: String(filteredDeals.filter(d => d.fase !== 'Escritura Concluída').length) },
@@ -1598,13 +1602,13 @@ export default function PortalPipeline({
             textAlign: 'center',
           }}>
             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: '#c9a96e', fontWeight: 300, lineHeight: 1 }}>{s.val}</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(244,240,230,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '3px' }}>{s.label}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '3px' }}>{s.label}</div>
           </div>
         ))}
         {liveDataSource === 'live' && (
           <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '5px', borderLeft: '1px solid rgba(201,169,110,.1)' }}>
             <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4a9c7a' }} />
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(244,240,230,.35)', letterSpacing: '.06em' }}>LIVE</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.35)', letterSpacing: '.06em' }}>LIVE</span>
           </div>
         )}
       </div>
@@ -1640,15 +1644,15 @@ export default function PortalPipeline({
                   background: activeFilter === chip.key ? '#1c4a35' : 'transparent',
                   color: activeFilter === chip.key ? '#c9a96e' : 'rgba(14,14,13,.5)',
                   border: `1px solid ${activeFilter === chip.key ? '#1c4a35' : 'rgba(14,14,13,.12)'}`,
-                  fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.06em',
-                  cursor: 'pointer',
+                  fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
+                  cursor: 'pointer', borderRadius: '6px', transition: 'all .2s',
                   ...(chip.key === 'atrisk' && activeFilter !== 'atrisk' ? { color: '#dc2626', borderColor: 'rgba(220,38,38,.2)' } : {}),
                 }}>
                 {chip.label}
                 <span style={{
                   background: activeFilter === chip.key ? 'rgba(201,169,110,.25)' : 'rgba(14,14,13,.06)',
                   color: activeFilter === chip.key ? '#c9a96e' : 'rgba(14,14,13,.4)',
-                  padding: '1px 6px', borderRadius: '10px', fontSize: '.34rem', fontFamily: "'DM Mono',monospace",
+                  padding: '1px 6px', borderRadius: '10px', fontSize: '.52rem', fontFamily: "'DM Mono',monospace",
                   ...(chip.key === 'atrisk' ? { color: '#dc2626', background: 'rgba(220,38,38,.08)' } : {}),
                 }}>
                   {chip.count}
@@ -1693,6 +1697,7 @@ export default function PortalPipeline({
               marginTop: '20px', padding: '20px',
               background: darkMode ? '#122a1a' : 'rgba(255,255,255,.6)',
               border: '1px solid rgba(28,74,53,.15)',
+              borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
             }}>
               <DealDetailPanel
                 deal={activeDealObj} darkMode={darkMode}
@@ -1716,7 +1721,7 @@ export default function PortalPipeline({
         <div style={{ display: 'flex', gap: '20px', minHeight: 0 }}>
           <div style={{ width: '280px', flexShrink: 0 }}>
             {filteredDeals.length === 0 && (
-              <div style={{ padding: '32px 16px', textAlign: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.25)', border: '1px dashed rgba(14,14,13,.1)' }}>
+              <div style={{ padding: '32px 16px', textAlign: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.25)', border: '1px dashed rgba(14,14,13,.1)' }}>
                 Sem deals encontrados
               </div>
             )}
@@ -1755,7 +1760,7 @@ export default function PortalPipeline({
               <div style={{ color: 'rgba(14,14,13,.2)', fontFamily: "'Cormorant',serif", fontSize: '1.1rem' }}>
                 Selecione um deal para ver os detalhes
               </div>
-              <div style={{ color: 'rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem' }}>
+              <div style={{ color: 'rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem' }}>
                 {filteredDeals.length} deal{filteredDeals.length !== 1 ? 's' : ''} no pipeline
               </div>
             </div>

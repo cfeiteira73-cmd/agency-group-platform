@@ -87,7 +87,7 @@ function renderMarkdown(text: string): React.ReactNode[] {
       const num = line.match(/^(\d+)\. /)?.[1] ?? ''
       result.push(
         <div key={keyIdx++} style={{ display: 'flex', gap: '8px', marginBottom: '3px' }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: '#c9a96e', flexShrink: 0, marginTop: '2px', minWidth: '16px' }}>{num}.</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', flexShrink: 0, marginTop: '2px', minWidth: '16px' }}>{num}.</span>
           <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.84rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.6 }}>{inlineFormat(line.replace(/^\d+\. /, ''))}</span>
         </div>
       )
@@ -279,15 +279,15 @@ export default function PortalSofia({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <style>{`
-        .sofia-mode-btn { padding: 7px 16px; border: 1px solid rgba(14,14,13,.12); background: transparent; font-family: 'DM Mono',monospace; font-size: .44rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; color: rgba(14,14,13,.5); transition: all .2s; }
+        .sofia-mode-btn { padding: 7px 16px; border: 1px solid rgba(14,14,13,.12); background: transparent; font-family: var(--font-dm-mono),monospace; font-size: .52rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; color: rgba(14,14,13,.5); transition: all .2s; }
         .sofia-mode-btn.active { background: #1c4a35; color: #f4f0e6; border-color: #1c4a35; }
-        .sofia-chip { padding: 6px 14px; border: 1px solid rgba(14,14,13,.12); background: transparent; font-family: 'DM Mono',monospace; font-size: .4rem; letter-spacing: .06em; cursor: pointer; color: rgba(14,14,13,.5); transition: all .2s; white-space: nowrap; }
+        .sofia-chip { padding: 6px 14px; border: 1px solid rgba(14,14,13,.12); background: transparent; font-family: var(--font-dm-mono),monospace; font-size: .52rem; letter-spacing: .06em; cursor: pointer; color: rgba(14,14,13,.5); transition: all .2s; white-space: nowrap; border-radius: 6px; }
         .sofia-chip:hover { background: rgba(28,74,53,.06); border-color: rgba(28,74,53,.3); color: #1c4a35; }
         .chat-bubble-user { background: #1c4a35; color: #f4f0e6; border-radius: 12px 12px 2px 12px; padding: 10px 14px; max-width: 80%; align-self: flex-end; font-family: 'Jost',sans-serif; font-size: .84rem; line-height: 1.6; }
         .chat-bubble-ai { background: ${darkMode ? 'rgba(244,240,230,.06)' : '#f8f7f4'}; border: 1px solid ${border}; border-radius: 12px 12px 12px 2px; padding: 12px 16px; max-width: 88%; align-self: flex-start; }
-        .chat-input-area { border: 1px solid ${border}; background: ${darkMode ? 'rgba(244,240,230,.04)' : '#fff'}; font-family: 'Jost',sans-serif; font-size: .84rem; color: ${textPrimary}; padding: 10px 14px; resize: none; outline: none; line-height: 1.5; flex: 1; }
+        .chat-input-area { border: 1px solid ${border}; background: ${darkMode ? 'rgba(244,240,230,.04)' : '#fff'}; font-family: 'Jost',sans-serif; font-size: .84rem; color: ${textPrimary}; padding: 10px 14px; resize: none; outline: none; line-height: 1.5; flex: 1; border-radius: 8px; }
         .chat-input-area::placeholder { color: ${textMuted}; }
-        .mode-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; font-family: 'DM Mono',monospace; font-size: .38rem; letter-spacing: .06em; cursor: pointer; border: 1px solid transparent; transition: all .2s; }
+        .mode-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; font-family: var(--font-dm-mono),monospace; font-size: .52rem; letter-spacing: .06em; cursor: pointer; border: 1px solid transparent; transition: all .2s; border-radius: 4px; }
         .mode-pill.active { background: rgba(28,74,53,.1); border-color: rgba(28,74,53,.25); color: #1c4a35; }
         .mode-pill:not(.active) { color: rgba(14,14,13,.4); }
         .mode-pill:not(.active):hover { background: rgba(14,14,13,.04); }
@@ -299,7 +299,7 @@ export default function PortalSofia({
           <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant',serif", fontSize: '1rem', color: '#f4f0e6', fontWeight: 300, flexShrink: 0 }}>S</div>
           <div>
             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 300, color: textPrimary }}>Sofia <em style={{ fontStyle: 'italic', color: '#c9a96e' }}>IA</em></div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: sofiaConnected ? '#4a9c7a' : textMuted, letterSpacing: '.06em' }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: sofiaConnected ? '#4a9c7a' : textMuted, letterSpacing: '.06em' }}>
               {sofiaConnected ? '● AVATAR CONECTADO' : sofiaLoading ? '● A conectar...' : sofiaMode === 'chat' ? '● CHAT ACTIVO' : '○ Avatar Offline'}
             </div>
           </div>
@@ -315,7 +315,7 @@ export default function PortalSofia({
           {/* Language selector */}
           {(['PT', 'EN', 'FR', 'AR'] as const).map(l => (
             <button key={l}
-              style={{ padding: '4px 10px', background: sofiaLang === l ? '#c9a96e' : 'transparent', border: `1px solid ${sofiaLang === l ? '#c9a96e' : border}`, color: sofiaLang === l ? '#0c1f15' : textMuted, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', background: sofiaLang === l ? '#c9a96e' : 'transparent', border: `1px solid ${sofiaLang === l ? '#c9a96e' : border}`, color: sofiaLang === l ? '#0c1f15' : textMuted, fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', borderRadius: '4px', transition: 'all .2s' }}
               onClick={() => setSofiaLang(l)}>
               {l}
             </button>
@@ -327,7 +327,7 @@ export default function PortalSofia({
                 {sofiaLoading ? '✦ A conectar...' : '▶ Conectar Sofia'}
               </button>
             ) : (
-              <button style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(220,38,38,.3)', color: '#dc2626', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer', letterSpacing: '.08em' }} onClick={onDisconnect}>
+              <button style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(220,38,38,.3)', color: '#dc2626', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.08em', borderRadius: '6px', transition: 'all .2s' }} onClick={onDisconnect}>
                 ■ Desconectar
               </button>
             )
@@ -353,7 +353,7 @@ export default function PortalSofia({
                   <span style={{ fontFamily: "'Cormorant',serif", fontSize: '2rem', color: '#c9a96e' }}>S</span>
                 </div>
                 <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 300, color: 'rgba(244,240,230,.6)', marginBottom: '8px' }}>Sofia está offline</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.25)', lineHeight: 1.6 }}>Clique em &ldquo;Conectar Sofia&rdquo; para iniciar<br />apresentação de propriedade com avatar IA</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(244,240,230,.25)', lineHeight: 1.6 }}>Clique em &ldquo;Conectar Sofia&rdquo; para iniciar<br />apresentação de propriedade com avatar IA</div>
               </div>
             )}
             {sofiaSpeaking && (
@@ -381,7 +381,7 @@ export default function PortalSofia({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <label className="p-label" style={{ marginBottom: 0 }}>Script</label>
                 <button
-                  style={{ background: 'transparent', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', cursor: 'pointer' }}
+                  style={{ background: 'transparent', border: 'none', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#1c4a35', cursor: 'pointer' }}
                   onClick={onGenerateScript}
                   disabled={sofiaScriptLoading || !sofiaPropSel}>
                   {sofiaScriptLoading ? '✦ A gerar...' : '✦ Gerar Script IA'}
@@ -402,13 +402,13 @@ export default function PortalSofia({
             </button>
 
             {sofiaError && (
-              <div style={{ padding: '10px 12px', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#dc2626' }}>
+              <div style={{ padding: '10px 12px', background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.15)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#dc2626', borderRadius: '8px' }}>
                 {sofiaError}
               </div>
             )}
 
-            <div style={{ padding: '12px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.08)' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.08em', marginBottom: '8px', textTransform: 'uppercase' }}>Casos de Uso</div>
+            <div style={{ padding: '12px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.08)', borderRadius: '10px' }}>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.08em', marginBottom: '8px', textTransform: 'uppercase' }}>Casos de Uso</div>
               {['Apresentação Virtual', 'Tour Remoto HNWI', 'Pitch Investidor', 'WhatsApp Vídeo'].map(u => (
                 <div key={u} style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.5)', padding: '4px 0', borderBottom: '1px solid rgba(14,14,13,.04)' }}>
                   ✓ {u}
@@ -425,7 +425,7 @@ export default function PortalSofia({
 
           {/* Assistant mode selector + actions bar */}
           <div style={{ padding: '10px 20px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, background: bg, flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: textMuted, letterSpacing: '.1em', textTransform: 'uppercase', marginRight: '4px' }}>Modo</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: textMuted, letterSpacing: '.1em', textTransform: 'uppercase', marginRight: '4px' }}>Modo</div>
             {(Object.entries(ASSISTANT_MODES) as [AssistantMode, typeof ASSISTANT_MODES[AssistantMode]][]).map(([k, v]) => (
               <button key={k} className={`mode-pill${assistantMode === k ? ' active' : ''}`} onClick={() => setAssistantMode(k)}>
                 <span>{v.icon}</span> {v.label}
@@ -436,13 +436,13 @@ export default function PortalSofia({
                 <>
                   <button
                     onClick={exportConversation}
-                    style={{ padding: '4px 10px', background: 'rgba(28,74,53,.06)', border: `1px solid rgba(28,74,53,.15)`, color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer', letterSpacing: '.06em' }}
+                    style={{ padding: '4px 10px', background: 'rgba(28,74,53,.06)', border: `1px solid rgba(28,74,53,.15)`, color: '#1c4a35', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.06em', borderRadius: '6px', transition: 'all .2s' }}
                     title="Copiar conversa para clipboard">
                     ↗ Exportar
                   </button>
                   <button
                     onClick={clearConversation}
-                    style={{ padding: '4px 10px', background: 'transparent', border: `1px solid ${border}`, color: textMuted, fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}>
+                    style={{ padding: '4px 10px', background: 'transparent', border: `1px solid ${border}`, color: textMuted, fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
                     × Limpar
                   </button>
                 </>
@@ -459,7 +459,7 @@ export default function PortalSofia({
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontFamily: "'Cormorant',serif", fontSize: '1.5rem', color: '#f4f0e6' }}>S</div>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', fontWeight: 300, color: textPrimary, marginBottom: '4px' }}>Sofia <em style={{ color: '#c9a96e' }}>Assistente IA</em></div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: textMuted, letterSpacing: '.08em' }}>
+                  <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: textMuted, letterSpacing: '.08em' }}>
                     Modo: {ASSISTANT_MODES[assistantMode].icon} {ASSISTANT_MODES[assistantMode].label}
                   </div>
                 </div>
@@ -467,7 +467,7 @@ export default function PortalSofia({
                   {CONVERSATION_STARTERS.map((s, i) => (
                     <button key={i}
                       onClick={() => sendChatMessage(s.text)}
-                      style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '12px 14px', background: darkMode ? 'rgba(244,240,230,.04)' : '#f8f7f4', border: `1px solid ${border}`, cursor: 'pointer', textAlign: 'left', transition: 'all .15s' }}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '12px 14px', background: darkMode ? 'rgba(244,240,230,.04)' : '#f8f7f4', border: `1px solid ${border}`, cursor: 'pointer', textAlign: 'left', transition: 'all .15s', borderRadius: '10px' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#1c4a35'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(28,74,53,.06)' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = border; (e.currentTarget as HTMLButtonElement).style.background = darkMode ? 'rgba(244,240,230,.04)' : '#f8f7f4' }}>
                       <span style={{ fontSize: '.9rem', flexShrink: 0 }}>{s.icon}</span>
@@ -485,7 +485,7 @@ export default function PortalSofia({
                   {msg.role === 'assistant' && (
                     <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'linear-gradient(135deg,#1c4a35,#c9a96e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant',serif", fontSize: '.5rem', color: '#f4f0e6', flexShrink: 0 }}>S</div>
                   )}
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: textMuted }}>{msg.timestamp}</span>
+                  <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: textMuted }}>{msg.timestamp}</span>
                 </div>
                 {msg.role === 'user' ? (
                   <div className="chat-bubble-user">{msg.content}</div>
@@ -562,8 +562,8 @@ export default function PortalSofia({
                   background: chatLoading || !chatInput.trim() ? 'rgba(28,74,53,.3)' : '#1c4a35',
                   color: '#c9a96e',
                   border: 'none',
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.44rem',
+                  fontFamily: 'var(--font-dm-mono),monospace',
+                  fontSize: '.52rem',
                   letterSpacing: '.1em',
                   cursor: chatLoading || !chatInput.trim() ? 'default' : 'pointer',
                   flexShrink: 0,
@@ -573,7 +573,7 @@ export default function PortalSofia({
                 {chatLoading ? '✦' : '→'}
               </button>
             </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: textMuted, marginTop: '5px', letterSpacing: '.04em' }}>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: textMuted, marginTop: '5px', letterSpacing: '.04em' }}>
               Enter para enviar · Shift+Enter para nova linha · {ASSISTANT_MODES[assistantMode].icon} {ASSISTANT_MODES[assistantMode].label}
             </div>
           </div>

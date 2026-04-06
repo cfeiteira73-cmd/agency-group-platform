@@ -97,8 +97,8 @@ function GrowthChart({ totalValue, totalEquity, totalRental, properties }: Growt
   const xLabels = [0, 5, 10]
 
   return (
-    <div style={{ marginTop: '24px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '20px' }}>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '14px' }}>
+    <div style={{ marginTop: '24px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+      <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '14px' }}>
         Projeção de Crescimento — 10 Anos
       </div>
       <svg
@@ -210,12 +210,12 @@ function GrowthChart({ totalValue, totalEquity, totalRental, properties }: Growt
                 strokeDasharray={l.dash ? '4 3' : undefined}
               />
             </svg>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.5)' }}>{l.label}</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)' }}>{l.label}</span>
           </div>
         ))}
       </div>
       {/* Current snapshot note */}
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.25)', marginTop: '8px' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.25)', marginTop: '8px' }}>
         Valor actual: {`€${(totalValue / 1e6).toFixed(2)}M`} · Equity: {`€${(totalEquity / 1e6).toFixed(2)}M`} · Renda anual: {`€${Math.round(totalRental).toLocaleString('pt-PT')}`}
       </div>
     </div>
@@ -260,7 +260,7 @@ function ComparisonResult({ raw }: { raw: unknown }) {
       <div className="p-card">
         <div className="p-label" style={{ marginBottom: '12px' }}>Análise Comparativa</div>
         {summary ? renderSummaryText(summary) : (
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.3)' }}>Sem dados de análise.</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>Sem dados de análise.</div>
         )}
       </div>
     )
@@ -285,10 +285,11 @@ function ComparisonResult({ raw }: { raw: unknown }) {
             background: 'linear-gradient(135deg,#c9a96e22,#c9a96e44)',
             border: '1px solid #c9a96e',
             fontFamily: "'DM Mono',monospace",
-            fontSize: '.4rem',
+            fontSize: '.52rem',
             letterSpacing: '.1em',
             textTransform: 'uppercase',
             color: '#9a7340',
+            borderRadius: '4px',
           }}>
             <span style={{ color: '#c9a96e', fontSize: '.9rem' }}>★</span>
             Melhor opção: {winner}
@@ -301,7 +302,7 @@ function ComparisonResult({ raw }: { raw: unknown }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em', padding: '8px 10px', textAlign: 'left', background: 'rgba(14,14,13,.03)', borderBottom: '1px solid rgba(14,14,13,.1)', width: '120px' }}>
+              <th style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em', padding: '8px 10px', textAlign: 'left', background: 'rgba(14,14,13,.03)', borderBottom: '1px solid rgba(14,14,13,.1)', width: '120px' }}>
                 Métrica
               </th>
               {properties.map(p => (
@@ -318,7 +319,7 @@ function ComparisonResult({ raw }: { raw: unknown }) {
                 }}>
                   {p.name}
                   {winner === p.name && (
-                    <span style={{ display: 'block', fontSize: '.36rem', fontFamily: "'DM Mono',monospace", color: '#c9a96e', letterSpacing: '.08em', marginTop: '2px' }}>★ VENCEDOR</span>
+                    <span style={{ display: 'block', fontSize: '.52rem', fontFamily: "'DM Mono',monospace", color: '#c9a96e', letterSpacing: '.08em', marginTop: '2px' }}>★ VENCEDOR</span>
                   )}
                 </th>
               ))}
@@ -330,7 +331,7 @@ function ComparisonResult({ raw }: { raw: unknown }) {
               const best = metric.higherIsBetter ? Math.max(...vals) : Math.min(...vals)
               return (
                 <tr key={metric.key} style={{ background: mi % 2 === 0 ? '#fff' : 'rgba(14,14,13,.015)' }}>
-                  <td style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.5)', textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 10px', borderBottom: '1px solid rgba(14,14,13,.06)' }}>
+                  <td style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', textTransform: 'uppercase', letterSpacing: '.06em', padding: '10px 10px', borderBottom: '1px solid rgba(14,14,13,.06)' }}>
                     {metric.label}
                   </td>
                   {properties.map(p => {
@@ -339,7 +340,7 @@ function ComparisonResult({ raw }: { raw: unknown }) {
                     return (
                       <td key={p.name} style={{
                         fontFamily: "'DM Mono',monospace",
-                        fontSize: '.46rem',
+                        fontSize: '.52rem',
                         fontWeight: isBest ? 700 : 400,
                         color: isBest ? '#1c4a35' : 'rgba(14,14,13,.65)',
                         padding: '10px 10px',
@@ -370,7 +371,7 @@ function ComparisonResult({ raw }: { raw: unknown }) {
           background: 'rgba(201,169,110,.04)',
           padding: '14px 16px',
         }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#9a7340', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>Recomendação</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#9a7340', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '6px' }}>Recomendação</div>
           <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.85rem', lineHeight: 1.6, color: 'rgba(14,14,13,.75)', fontStyle: 'italic' }}>
             {recommendation}
           </div>
@@ -412,8 +413,8 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
   return (
     <div>
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Gestão de Activos</div>
-        <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Portfolio Análise</div>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>Gestão de Activos</div>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.8rem', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>Portfolio Análise</div>
       </div>
 
       {/* Tab selector */}
@@ -443,12 +444,12 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
                   }}
                 />
                 {portItems.length > 2 && (
-                  <button onClick={() => setPortItems(portItems.filter((_, j) => j !== i))} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', cursor: 'pointer', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)' }}>✕</button>
+                  <button onClick={() => setPortItems(portItems.filter((_, j) => j !== i))} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', cursor: 'pointer', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', borderRadius: '6px', transition: 'all .2s' }}>✕</button>
                 )}
               </div>
             ))}
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-              <button style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', cursor: 'pointer', color: 'rgba(14,14,13,.5)' }} onClick={() => setPortItems([...portItems, ''])}>
+              <button style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: 'rgba(14,14,13,.5)', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setPortItems([...portItems, ''])}>
                 + Adicionar Imóvel
               </button>
               <button className="p-btn" onClick={onRunPortfolio} disabled={portLoading || portItems.filter(x => x.trim()).length < 2}>
@@ -495,7 +496,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
 
           {/* Properties in portfolio */}
           <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
               {portfolioProperties.length} Imóveis no Portfólio
             </div>
             <button className="p-btn p-btn-gold" style={{ padding: '6px 14px' }} onClick={() => setShowPropertyPicker(true)}>
@@ -507,7 +508,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
             <div className="p-card" style={{ textAlign: 'center', padding: '40px' }}>
               <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🏘️</div>
               <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', color: 'rgba(14,14,13,.4)', marginBottom: '8px' }}>Portfólio vazio</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.3)' }}>Adicione imóveis para simular o portfólio</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>Adicione imóveis para simular o portfólio</div>
             </div>
           )}
 
@@ -525,7 +526,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
                   { label: 'Apreciação (%)', key: 'appreciation', value: prop.appreciation },
                 ].map(f => (
                   <div key={f.key}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '3px' }}>{f.label}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '3px' }}>{f.label}</div>
                     <input
                       type="number"
                       className="p-inp"
@@ -542,14 +543,14 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
           {/* Property Picker */}
           {showPropertyPicker && (
             <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500 }}>
-              <div style={{ background: darkMode ? '#0f2117' : '#fff', padding: '24px', maxWidth: '600px', width: '100%', maxHeight: '80vh', overflow: 'auto' }}>
+              <div style={{ background: darkMode ? '#0f2117' : '#fff', padding: '24px', maxWidth: '600px', width: '100%', maxHeight: '80vh', overflow: 'auto', borderRadius: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35' }}>Selecionar Imóvel</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35' }}>Selecionar Imóvel</div>
                   <button onClick={() => setShowPropertyPicker(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: 'rgba(14,14,13,.4)' }}>✕</button>
                 </div>
                 <div style={{ display: 'grid', gap: '8px' }}>
                   {(PORTAL_PROPERTIES as Record<string, unknown>[]).map((p) => (
-                    <div key={String(p.id)} style={{ padding: '12px', border: '1px solid rgba(14,14,13,.1)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+                    <div key={String(p.id)} style={{ padding: '12px', border: '1px solid rgba(14,14,13,.1)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderRadius: '10px', transition: 'all .2s' }}
                       onClick={() => {
                         addPortfolioProperty({
                           id: String(p.id),
@@ -562,7 +563,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
                         setShowPropertyPicker(false)
                       }}>
                       <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: darkMode ? 'rgba(244,240,230,.8)' : '#0e0e0d' }}>{String(p.nome || p.title)}</div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#c9a96e' }}>€{(Number(p.preco) / 1e6).toFixed(2)}M</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e' }}>€{(Number(p.preco) / 1e6).toFixed(2)}M</div>
                     </div>
                   ))}
                 </div>

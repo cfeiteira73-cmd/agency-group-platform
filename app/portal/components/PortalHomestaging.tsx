@@ -320,10 +320,10 @@ function BeforeAfterSlider({
       </div>
 
       {/* Labels */}
-      <div style={{ position: 'absolute', top: '10px', left: '10px', padding: '3px 10px', background: 'rgba(0,0,0,.6)', fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#fff', letterSpacing: '.08em', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', top: '10px', left: '10px', padding: '3px 10px', background: 'rgba(0,0,0,.6)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#fff', letterSpacing: '.08em', pointerEvents: 'none', borderRadius: '4px' }}>
         ANTES
       </div>
-      <div style={{ position: 'absolute', top: '10px', right: '10px', padding: '3px 10px', background: 'rgba(28,74,53,.85)', fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#fff', letterSpacing: '.08em', pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', top: '10px', right: '10px', padding: '3px 10px', background: 'rgba(28,74,53,.85)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#fff', letterSpacing: '.08em', pointerEvents: 'none', borderRadius: '4px' }}>
         DEPOIS · {styleName.toUpperCase()}
       </div>
     </div>
@@ -471,13 +471,13 @@ export default function PortalHomestaging() {
     <div style={{ maxWidth: '1100px' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>
           AI Home Staging
         </div>
         <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '2rem', color: '#0e0e0d', lineHeight: 1.1, marginBottom: '5px' }}>
           Transforma qualquer imóvel <em style={{ color: '#1c4a35' }}>em segundos</em>
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.04em' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.04em' }}>
           Simulação visual por IA · 8 estilos · Antes/Depois · Relatório de custo real
         </div>
       </div>
@@ -506,14 +506,14 @@ export default function PortalHomestaging() {
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,0,0,.35)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'rgba(0,0,0,.0)')}
                 >
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#fff', letterSpacing: '.08em', opacity: 0, transition: 'opacity .2s' }}
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#fff', letterSpacing: '.08em', opacity: 0, transition: 'opacity .2s' }}
                     onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
                     onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
                   >
                     Trocar foto
                   </span>
                 </div>
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 10px', background: 'rgba(0,0,0,.55)', fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: '#fff', display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '6px 10px', background: 'rgba(0,0,0,.55)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#fff', display: 'flex', justifyContent: 'space-between' }}>
                   <span>{imageName}</span>
                   <span style={{ opacity: 0.6 }}>clica para alterar</span>
                 </div>
@@ -524,10 +524,10 @@ export default function PortalHomestaging() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
                 </svg>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>
                   Arraste uma foto do imóvel
                 </div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.22)', textAlign: 'center' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.22)', textAlign: 'center' }}>
                   JPG · PNG · WEBP — até 20MB
                 </div>
               </div>
@@ -537,7 +537,7 @@ export default function PortalHomestaging() {
 
           {/* Style grid 4×2 */}
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
               Estilo de Decoração
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
@@ -548,21 +548,21 @@ export default function PortalHomestaging() {
                     key={style.id}
                     onClick={() => { setSelectedStyle(style.id); setTransformed(false) }}
                     style={{
-                      textAlign: 'left', padding: '9px 10px', cursor: 'pointer', transition: 'all .15s',
+                      textAlign: 'left', padding: '9px 10px', cursor: 'pointer', transition: 'all .2s',
                       background: isActive ? 'rgba(28,74,53,.07)' : 'transparent',
                       border: `1px solid ${isActive ? '#1c4a35' : 'rgba(14,14,13,.1)'}`,
-                      position: 'relative',
+                      position: 'relative', borderRadius: '8px',
                     }}
                   >
                     {style.popular && (
-                      <span style={{ position: 'absolute', top: '0', right: '0', padding: '1px 5px', background: '#c9a96e', fontFamily: "'DM Mono',monospace", fontSize: '.26rem', color: '#fff', letterSpacing: '.04em' }}>
+                      <span style={{ position: 'absolute', top: '0', right: '0', padding: '1px 5px', background: '#c9a96e', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#fff', letterSpacing: '.04em', borderRadius: '0 6px 0 4px' }}>
                         TOP
                       </span>
                     )}
                     <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', fontWeight: isActive ? 600 : 500, color: isActive ? '#1c4a35' : '#0e0e0d', marginBottom: '3px' }}>
                       {style.label}
                     </div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.35)', marginBottom: '5px', lineHeight: 1.4 }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginBottom: '5px', lineHeight: 1.4 }}>
                       {style.desc}
                     </div>
                     <PaletteDots colors={style.palette} />
@@ -574,7 +574,7 @@ export default function PortalHomestaging() {
 
           {/* Room type */}
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
               Tipo de Divisão
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
@@ -583,8 +583,8 @@ export default function PortalHomestaging() {
                   key={r.id}
                   onClick={() => setRoomType(r.id)}
                   style={{
-                    padding: '5px 12px', fontFamily: "'DM Mono',monospace", fontSize: '.37rem',
-                    cursor: 'pointer', border: '1px solid', transition: 'all .15s',
+                    padding: '5px 12px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
+                    cursor: 'pointer', border: '1px solid', transition: 'all .2s', borderRadius: '6px',
                     background: roomType === r.id ? '#1c4a35' : 'transparent',
                     color: roomType === r.id ? '#fff' : 'rgba(14,14,13,.5)',
                     borderColor: roomType === r.id ? '#1c4a35' : 'rgba(14,14,13,.15)',
@@ -598,7 +598,7 @@ export default function PortalHomestaging() {
 
           {/* Budget */}
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
               Nível de Investimento
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -610,18 +610,18 @@ export default function PortalHomestaging() {
                     key={b}
                     onClick={() => setBudget(b)}
                     style={{
-                      textAlign: 'left', padding: '8px 12px', cursor: 'pointer', transition: 'all .15s',
+                      textAlign: 'left', padding: '8px 12px', cursor: 'pointer', transition: 'all .2s',
                       background: isActive ? `${cfg.color}10` : 'transparent',
                       border: `1px solid ${isActive ? cfg.color : 'rgba(14,14,13,.1)'}`,
-                      display: 'flex', alignItems: 'center', gap: '10px',
+                      display: 'flex', alignItems: 'center', gap: '10px', borderRadius: '6px',
                     }}
                   >
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isActive ? cfg.color : 'rgba(14,14,13,.2)', flexShrink: 0 }} />
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: isActive ? cfg.color : 'rgba(14,14,13,.6)', fontWeight: isActive ? 700 : 400, letterSpacing: '.04em' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: isActive ? cfg.color : 'rgba(14,14,13,.6)', fontWeight: isActive ? 700 : 400, letterSpacing: '.04em' }}>
                         {cfg.label}
                       </div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.35)', marginTop: '1px' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '1px' }}>
                         {cfg.desc}
                       </div>
                     </div>
@@ -633,7 +633,7 @@ export default function PortalHomestaging() {
 
           {/* Target buyer + preserves */}
           <div style={{ marginBottom: '16px', padding: '12px 14px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
               Perfil do Comprador Alvo
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '14px' }}>
@@ -642,8 +642,8 @@ export default function PortalHomestaging() {
                   key={id}
                   onClick={() => setTargetBuyer(id)}
                   style={{
-                    padding: '4px 10px', fontFamily: "'DM Mono',monospace", fontSize: '.33rem',
-                    cursor: 'pointer', border: '1px solid', transition: 'all .15s',
+                    padding: '4px 10px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
+                    cursor: 'pointer', border: '1px solid', transition: 'all .2s', borderRadius: '6px',
                     background: targetBuyer === id ? '#1c4a35' : 'transparent',
                     color: targetBuyer === id ? '#fff' : 'rgba(14,14,13,.45)',
                     borderColor: targetBuyer === id ? '#1c4a35' : 'rgba(14,14,13,.12)',
@@ -654,7 +654,7 @@ export default function PortalHomestaging() {
               ))}
             </div>
 
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
               Preservar
             </div>
             {[
@@ -675,7 +675,7 @@ export default function PortalHomestaging() {
             disabled={!image || generating}
             style={{
               width: '100%', padding: '13px', fontFamily: "'DM Mono',monospace",
-              fontSize: '.5rem', letterSpacing: '.14em', textTransform: 'uppercase',
+              fontSize: '.52rem', letterSpacing: '.14em', textTransform: 'uppercase',
               cursor: !image || generating ? 'not-allowed' : 'pointer',
               background: !image || generating ? 'rgba(14,14,13,.07)' : '#1c4a35',
               color: !image || generating ? 'rgba(14,14,13,.3)' : '#f4f0e6',
@@ -697,7 +697,7 @@ export default function PortalHomestaging() {
                     key={mode}
                     onClick={() => setDisplayMode(mode)}
                     style={{
-                      padding: '6px 14px', fontFamily: "'DM Mono',monospace", fontSize: '.37rem',
+                      padding: '6px 14px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                       cursor: 'pointer', border: 'none', borderRight: '1px solid rgba(14,14,13,.1)',
                       background: displayMode === mode ? '#1c4a35' : 'transparent',
                       color: displayMode === mode ? '#fff' : 'rgba(14,14,13,.45)',
@@ -708,7 +708,7 @@ export default function PortalHomestaging() {
                   </button>
                 ))}
               </div>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.3)', marginLeft: 'auto' }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginLeft: 'auto' }}>
                 Seed: {seed}
               </span>
             </div>
@@ -730,13 +730,13 @@ export default function PortalHomestaging() {
                   <div style={{ position: 'relative', overflow: 'hidden' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={image} alt="antes" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block' }} />
-                    <div style={{ position: 'absolute', top: '8px', left: '8px', padding: '3px 8px', background: 'rgba(0,0,0,.6)', fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: '#fff' }}>ANTES</div>
+                    <div style={{ position: 'absolute', top: '8px', left: '8px', padding: '3px 8px', background: 'rgba(0,0,0,.6)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#fff', borderRadius: '4px' }}>ANTES</div>
                   </div>
                   <div style={{ position: 'relative', overflow: 'hidden' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={image} alt="depois" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block', filter: currentStyle.cssFilter }} />
                     <div style={{ position: 'absolute', inset: 0, background: currentStyle.overlayColor, opacity: currentStyle.overlayOpacity, mixBlendMode: 'multiply' as const }} />
-                    <div style={{ position: 'absolute', top: '8px', right: '8px', padding: '3px 8px', background: 'rgba(28,74,53,.85)', fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: '#fff' }}>DEPOIS</div>
+                    <div style={{ position: 'absolute', top: '8px', right: '8px', padding: '3px 8px', background: 'rgba(28,74,53,.85)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#fff', borderRadius: '4px' }}>DEPOIS</div>
                   </div>
                 </div>
               )}
@@ -744,19 +744,19 @@ export default function PortalHomestaging() {
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                 <button
-                  style={{ flex: 1, padding: '9px', background: '#1c4a35', border: 'none', color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.08em', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '9px', background: '#1c4a35', border: 'none', color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={handleDownload}
                 >
                   ↓ Download Depois
                 </button>
                 <button
-                  style={{ padding: '9px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', color: 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}
+                  style={{ padding: '9px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', color: 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={handleShare}
                 >
                   Partilhar
                 </button>
                 <button
-                  style={{ padding: '9px 14px', background: 'transparent', border: '1px solid rgba(28,74,53,.25)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}
+                  style={{ padding: '9px 14px', background: 'transparent', border: '1px solid rgba(28,74,53,.25)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={handleRegenerate}
                 >
                   ↻ Regenerar
@@ -772,8 +772,8 @@ export default function PortalHomestaging() {
                   { label: 'Buyer',         val: BUYER_CFG[targetBuyer].label },
                 ].map(chip => (
                   <div key={chip.label} style={{ padding: '5px 10px', background: 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.07)' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{chip.label}</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', fontWeight: 600, marginTop: '1px' }}>{chip.val}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.06em' }}>{chip.label}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', fontWeight: 600, marginTop: '1px' }}>{chip.val}</div>
                   </div>
                 ))}
               </div>
@@ -788,7 +788,7 @@ export default function PortalHomestaging() {
               <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', color: '#1c4a35', fontWeight: 300 }}>
                 A transformar o espaço...
               </div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.35)', textAlign: 'center', lineHeight: 1.8 }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textAlign: 'center', lineHeight: 1.8 }}>
                 Estilo: {currentStyle.label}<br />
                 Divisão: {ROOM_TYPES.find(r => r.id === roomType)?.label}<br />
                 IA a reinterpretar o espaço...
@@ -800,12 +800,12 @@ export default function PortalHomestaging() {
               <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="rgba(14,14,13,.1)" strokeWidth="1">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.2)', textAlign: 'center', lineHeight: 1.8 }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.2)', textAlign: 'center', lineHeight: 1.8 }}>
                 {image ? 'Clica em "Gerar AI Homestaging"' : 'Carrega uma foto do imóvel'}
               </div>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '340px' }}>
                 {HS_STYLES.filter(s => s.popular).map(s => (
-                  <div key={s.id} style={{ padding: '3px 10px', border: '1px solid rgba(14,14,13,.07)', fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.2)' }}>
+                  <div key={s.id} style={{ padding: '3px 10px', border: '1px solid rgba(14,14,13,.07)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.2)', borderRadius: '4px' }}>
                     {s.label}
                   </div>
                 ))}
@@ -821,7 +821,7 @@ export default function PortalHomestaging() {
                 onClick={() => setShowReport(r => !r)}
               >
                 <div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>
                     Relatório de Homestaging
                   </div>
                   <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: '#0e0e0d', fontWeight: 300 }}>
@@ -837,22 +837,22 @@ export default function PortalHomestaging() {
                 <div style={{ padding: '16px 18px' }}>
                   {/* Items */}
                   <div style={{ marginBottom: '16px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
                       Items estimados — {BUDGET_CFG[budget].label}
                     </div>
                     {report.items.map((item, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: '1px solid rgba(14,14,13,.05)' }}>
                         <span style={{ fontFamily: "'Jost',sans-serif", fontSize: '.8rem', color: 'rgba(14,14,13,.7)' }}>{item.name}</span>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#1c4a35', fontWeight: 600 }}>{item.estimate}</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', fontWeight: 600 }}>{item.estimate}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Total */}
-                  <div style={{ padding: '12px 14px', background: 'rgba(28,74,53,.05)', border: '1px solid rgba(28,74,53,.1)', marginBottom: '14px' }}>
+                  <div style={{ padding: '12px 14px', background: 'rgba(28,74,53,.05)', border: '1px solid rgba(28,74,53,.1)', marginBottom: '14px', borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '2px' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '2px' }}>
                           Orçamento Estimado
                         </div>
                         <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.4rem', color: '#1c4a35', fontWeight: 600 }}>
@@ -861,7 +861,7 @@ export default function PortalHomestaging() {
                       </div>
                       {/* ROI SVG mini bar */}
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', marginBottom: '4px' }}>ROI estimado</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', marginBottom: '4px' }}>ROI estimado</div>
                         <svg width="100" height="24" viewBox="0 0 100 24">
                           <rect x="0" y="8" width="100" height="8" fill="rgba(28,74,53,.1)" rx="2" />
                           <rect x="0" y="8" width={budget === 'luxury' ? 90 : budget === 'premium' ? 70 : 50} height="8" fill="#1c4a35" rx="2" />
@@ -875,10 +875,10 @@ export default function PortalHomestaging() {
 
                   {/* ROI note */}
                   <div style={{ padding: '10px 14px', background: 'rgba(201,169,110,.07)', border: '1px solid rgba(201,169,110,.2)', marginBottom: '14px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: '#a07a38', lineHeight: 1.6 }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#a07a38', lineHeight: 1.6 }}>
                       ✦ {report.roi}
                     </div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>
                       Fonte: National Association of Realtors 2025 · Análise Agency Group portfolio
                     </div>
                   </div>
@@ -888,8 +888,8 @@ export default function PortalHomestaging() {
                     onClick={handleQuoteEmail}
                     style={{
                       width: '100%', padding: '11px', background: '#c9a96e', border: 'none',
-                      color: '#fff', fontFamily: "'DM Mono',monospace", fontSize: '.44rem',
-                      letterSpacing: '.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'opacity .2s',
+                      color: '#fff', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
+                      letterSpacing: '.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all .2s', borderRadius: '6px',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
                     onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
@@ -904,7 +904,7 @@ export default function PortalHomestaging() {
           {/* History */}
           {history.length > 0 && (
             <div style={{ marginTop: '20px' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '10px' }}>
                 Últimas transformações
               </div>
               <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
@@ -928,7 +928,7 @@ export default function PortalHomestaging() {
                         alt={h.style}
                         style={{ width: '100px', height: '68px', objectFit: 'cover', display: 'block', filter: h.afterFilter, border: '1px solid rgba(14,14,13,.1)' }}
                       />
-                      <div style={{ padding: '3px 0', fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: 'rgba(14,14,13,.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ padding: '3px 0', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {s?.label || h.style}
                       </div>
                     </div>

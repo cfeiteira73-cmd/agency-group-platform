@@ -36,7 +36,7 @@ export default function PriceHistoryWidget({ url }: { url: string }) {
   return (
     <div style={{ background: 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.08)', borderRadius: '8px', padding: '16px', marginTop: '12px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.6)', fontWeight: 600, letterSpacing: '.06em' }}>HISTÓRICO DE PREÇO</span>
+        <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.6)', fontWeight: 600, letterSpacing: '.06em' }}>HISTÓRICO DE PREÇO</span>
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', fontWeight: 700, color: trendColor }}>{trendIcon} {trend === 'down' ? 'A BAIXAR' : trend === 'up' ? 'A SUBIR' : 'ESTÁVEL'}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '48px', marginBottom: '8px' }}>
@@ -53,8 +53,8 @@ export default function PriceHistoryWidget({ url }: { url: string }) {
         })}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)' }}>{history.length > 0 ? new Date(history[0].data).toLocaleDateString('pt-PT') : ''}</span>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)' }}>{history.length > 0 ? new Date(history[history.length - 1].data).toLocaleDateString('pt-PT') : ''}</span>
+        <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>{history.length > 0 ? new Date(history[0].data).toLocaleDateString('pt-PT') : ''}</span>
+        <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>{history.length > 0 ? new Date(history[history.length - 1].data).toLocaleDateString('pt-PT') : ''}</span>
       </div>
     </div>
   )

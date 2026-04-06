@@ -370,7 +370,7 @@ function PropertyRow({ p, onSelect }: PropertyCardProps) {
       style={{
         display: 'flex', alignItems: 'center', gap: '1rem', padding: '.85rem 1.25rem',
         background: hovered ? 'rgba(14,14,13,.03)' : '#fff', cursor: 'pointer',
-        borderBottom: '1px solid rgba(14,14,13,.06)', transition: 'background .15s',
+        borderBottom: '1px solid rgba(14,14,13,.06)', transition: 'all .2s',
       }}>
       {/* Photo thumbnail */}
       <div style={{ width: 72, height: 52, borderRadius: 8, background: grad, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
@@ -461,7 +461,7 @@ function FiltersBar({ filters, setFilters, sort, setSort, open }: FiltersBarProp
   }
 
   return (
-    <div className="p-card" style={{ padding: '1.25rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div className="p-card" style={{ padding: '1.25rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
         <PillGroup label="Tipo" items={TIPOS} field="tipo" />
         <PillGroup label="Zona" items={ZONAS} field="zona" />
@@ -594,7 +594,7 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
               { label: 'WCs', value: `${p.casasBanho}` },
               { label: 'Mercado', value: `${days}d` },
             ].map(s => (
-              <div key={s.label} style={{ background: 'rgba(14,14,13,.04)', borderRadius: 8, padding: '.5rem .6rem', textAlign: 'center' }}>
+              <div key={s.label} style={{ background: 'rgba(14,14,13,.04)', borderRadius: 10, padding: '.5rem .6rem', textAlign: 'center' }}>
                 <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.4)' }}>{s.label}</div>
                 <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem', color: '#0e0e0d', fontWeight: 600 }}>{s.value}</div>
               </div>
@@ -647,7 +647,7 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
               {/* Price history chart */}
               <div>
                 <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.5rem', letterSpacing: '.06em' }}>EVOLUÇÃO DE PREÇO</div>
-                <div style={{ background: '#fff', borderRadius: 10, padding: '1rem', border: '1px solid rgba(14,14,13,.08)' }}>
+                <div style={{ background: '#fff', borderRadius: 10, padding: '1rem', border: '1px solid rgba(14,14,13,.08)', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                   <svg width="100%" height={svgH + 20} viewBox={`0 0 ${svgW} ${svgH + 20}`} preserveAspectRatio="none">
                     <defs>
                       <linearGradient id={`pg-${p.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -716,7 +716,7 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
           {/* AVM */}
           {dtab === 'avm' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
-              <div style={{ padding: '1rem', background: '#fff', borderRadius: 10, border: '1px solid rgba(14,14,13,.08)' }}>
+              <div style={{ padding: '1rem', background: '#fff', borderRadius: 10, border: '1px solid rgba(14,14,13,.08)', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                 <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.5rem' }}>AVALIAÇÃO AUTOMÁTICA (AVM)</div>
                 <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.8rem', color: '#1c4a35', fontWeight: 600 }}>{fmtPreco(avmValue)}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginTop: '.3rem' }}>
@@ -755,7 +755,7 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
                 {BUYER_MATCHES.map((b, i) => (
-                  <div key={i} style={{ padding: '.85rem 1rem', background: '#fff', borderRadius: 10, border: '1px solid rgba(14,14,13,.08)', display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+                  <div key={i} style={{ padding: '.85rem 1rem', background: '#fff', borderRadius: 10, border: '1px solid rgba(14,14,13,.08)', display: 'flex', alignItems: 'center', gap: '.75rem', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                     <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(28,74,53,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>
                       {b.nationality}
                     </div>
@@ -876,7 +876,7 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(14,14,13,.6)', backdropFilter: 'blur(4px)' }} />
-      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 640, maxHeight: '90vh', zIndex: 1, padding: '2rem', overflowY: 'auto', border: '1px solid rgba(201,169,110,.25)' }}>
+      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 640, maxHeight: '90vh', zIndex: 1, padding: '2rem', overflowY: 'auto', border: '1px solid rgba(201,169,110,.25)', borderRadius: '16px', boxShadow: '0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
           <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.6rem', color: '#0e0e0d', fontWeight: 600, margin: 0 }}>Adicionar Imóvel</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}><IconClose /></button>
@@ -1018,12 +1018,13 @@ function MapView({ properties, onSelect }: { properties: ImovelFull[]; onSelect:
             border: `1px solid ${heatMap ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
             background: heatMap ? 'rgba(201,169,110,.12)' : 'transparent',
             color: heatMap ? '#b8852a' : 'rgba(14,14,13,.55)',
+            transition: 'all .2s',
           }}>
           Heat Map {heatMap ? 'Activo' : 'Inactivo'}
         </button>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid rgba(14,14,13,.1)', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid rgba(14,14,13,.1)', overflow: 'hidden', position: 'relative', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
         <svg viewBox="0 0 400 480" style={{ width: '100%', maxHeight: 520 }}>
           {/* Portugal mainland + islands outline (simplified) */}
           <defs>
@@ -1283,6 +1284,7 @@ export default function PortalImoveis() {
             border: `1px solid ${filtersOpen || activeFilterCount > 0 ? '#1c4a35' : 'rgba(14,14,13,.18)'}`,
             background: filtersOpen || activeFilterCount > 0 ? 'rgba(28,74,53,.07)' : '#fff',
             color: filtersOpen || activeFilterCount > 0 ? '#1c4a35' : 'rgba(14,14,13,.6)',
+            transition: 'all .2s',
           }}>
           <IconFilter />
           Filtros
@@ -1292,7 +1294,7 @@ export default function PortalImoveis() {
         </button>
 
         {activeFilterCount > 0 && (
-          <button onClick={clearFilters} style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', background: 'none', border: '1px solid rgba(14,14,13,.15)', borderRadius: 8, padding: '7px 12px', cursor: 'pointer', color: 'rgba(14,14,13,.5)', display: 'flex', alignItems: 'center', gap: '.3rem' }}>
+          <button onClick={clearFilters} style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', background: 'none', border: '1px solid rgba(14,14,13,.15)', borderRadius: 8, padding: '7px 12px', cursor: 'pointer', color: 'rgba(14,14,13,.5)', display: 'flex', alignItems: 'center', gap: '.3rem', transition: 'all .2s' }}>
             <IconX /> Limpar
           </button>
         )}
@@ -1343,7 +1345,7 @@ export default function PortalImoveis() {
           { label: 'Off-Market', value: filtered.filter(p => p.badge === 'Off-Market').length.toString(), color: '#1c4a35' },
           { label: 'Exclusivos', value: filtered.filter(p => p.badge === 'Exclusivo').length.toString(), color: '#c9a96e' },
         ].map(s => (
-          <div key={s.label} style={{ background: '#fff', borderRadius: 8, padding: '.5rem .85rem', border: '1px solid rgba(14,14,13,.08)', flexShrink: 0 }}>
+          <div key={s.label} style={{ background: '#fff', borderRadius: 10, padding: '.5rem .85rem', border: '1px solid rgba(14,14,13,.08)', flexShrink: 0, boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
             <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.4)' }}>{s.label.toUpperCase()}</div>
             <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.3rem', color: s.color, fontWeight: 600, lineHeight: 1 }}>{s.value}</div>
           </div>
@@ -1366,7 +1368,7 @@ export default function PortalImoveis() {
       )}
 
       {viewMode === 'list' && (
-        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid rgba(14,14,13,.08)', overflow: 'hidden' }}>
+        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid rgba(14,14,13,.08)', overflow: 'hidden', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '.65rem 1.25rem', background: 'rgba(14,14,13,.03)', borderBottom: '1px solid rgba(14,14,13,.07)' }}>
             <div style={{ width: 72, flexShrink: 0 }} />

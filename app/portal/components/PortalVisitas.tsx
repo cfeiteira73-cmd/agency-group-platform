@@ -202,7 +202,7 @@ function WeekCalendar({
                 borderLeft: '1px solid rgba(14,14,13,.05)',
               }}
             >
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                 {PT_WEEKDAYS[i]}
               </div>
               <div style={{
@@ -211,7 +211,7 @@ function WeekCalendar({
               }}>
                 {d.getDate()}
               </div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.35)' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)' }}>
                 {PT_MONTHS[d.getMonth()]}
               </div>
             </div>
@@ -394,13 +394,13 @@ function VisitCard({
         {/* Content */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap' }}>
-            <span style={{ padding: '2px 8px', background: cfg.bg, color: cfg.color, fontFamily: "'DM Mono',monospace", fontSize: '.3rem', letterSpacing: '.06em', textTransform: 'uppercase', border: `1px solid ${cfg.border}` }}>
+            <span style={{ padding: '2px 8px', background: cfg.bg, color: cfg.color, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', textTransform: 'uppercase', border: `1px solid ${cfg.border}` }}>
               {cfg.label}
             </span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: tCfg.color, letterSpacing: '.04em' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: tCfg.color, letterSpacing: '.04em' }}>
               {tCfg.icon} {visit.type}
             </span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: 'rgba(14,14,13,.4)', marginLeft: 'auto' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginLeft: 'auto' }}>
               {visit.consultant}
             </span>
           </div>
@@ -408,7 +408,7 @@ function VisitCard({
           <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.86rem', fontWeight: 600, color: '#0e0e0d', marginBottom: '2px', lineHeight: 1.2 }}>
             {visit.propertyName}
           </div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.4)', marginBottom: '6px' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginBottom: '6px' }}>
             {visit.propertyAddress}
           </div>
 
@@ -420,7 +420,7 @@ function VisitCard({
             </span>
 
             {/* Time */}
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: '#1c4a35', fontWeight: 600 }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', fontWeight: 600 }}>
               {dateLabel} · {visit.time} · {visit.duration}min
             </span>
           </div>
@@ -438,7 +438,7 @@ function VisitCard({
               { label: 'Email briefing', active: visit.remindEmail },
               { label: 'Notif. proprietário', active: visit.notifyOwner },
             ].map(t => (
-              <span key={t.label} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: t.active ? '#1c4a35' : 'rgba(14,14,13,.25)' }}>
+              <span key={t.label} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: t.active ? '#1c4a35' : 'rgba(14,14,13,.25)' }}>
                 <span style={{ width: '10px', height: '10px', borderRadius: '5px', background: t.active ? '#1c4a35' : 'rgba(14,14,13,.12)', display: 'inline-block', flexShrink: 0 }} />
                 {t.label}
               </span>
@@ -449,11 +449,11 @@ function VisitCard({
           {visit.status === 'realizada' && (
             <div style={{ marginTop: '6px' }}>
               {visit.feedbackSaved ? (
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: '#6366f1', background: 'rgba(99,102,241,.08)', padding: '2px 8px', letterSpacing: '.04em' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#6366f1', background: 'rgba(99,102,241,.08)', padding: '2px 8px', letterSpacing: '.04em' }}>
                   Feedback recebido
                 </span>
               ) : (
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: '#a07a38', background: 'rgba(201,169,110,.1)', padding: '2px 8px', letterSpacing: '.04em' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#a07a38', background: 'rgba(201,169,110,.1)', padding: '2px 8px', letterSpacing: '.04em' }}>
                   Aguarda feedback
                 </span>
               )}
@@ -467,13 +467,13 @@ function VisitCard({
             href={mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.12)', color: '#1c4a35', textDecoration: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.33rem', letterSpacing: '.04em' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.12)', color: '#1c4a35', textDecoration: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.04em' }}
           >
             <IconMapPin />Rota
           </a>
           {visit.status === 'pendente' && (
             <button
-              style={{ padding: '5px 10px', background: '#1c4a35', border: 'none', color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.33rem', letterSpacing: '.04em', cursor: 'pointer' }}
+              style={{ padding: '5px 10px', background: '#1c4a35', border: 'none', color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.04em', cursor: 'pointer' }}
               onClick={() => onConfirm(visit.id)}
             >
               Confirmar
@@ -482,13 +482,13 @@ function VisitCard({
           {(visit.status === 'confirmada' || visit.status === 'pendente') && (
             <>
               <button
-                style={{ padding: '5px 10px', background: 'transparent', border: '1px solid rgba(201,169,110,.3)', color: '#a07a38', fontFamily: "'DM Mono',monospace", fontSize: '.33rem', cursor: 'pointer' }}
+                style={{ padding: '5px 10px', background: 'transparent', border: '1px solid rgba(201,169,110,.3)', color: '#a07a38', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                 onClick={() => onReschedule(visit.id)}
               >
                 Remarcar
               </button>
               <button
-                style={{ padding: '5px 10px', background: 'transparent', border: '1px solid rgba(220,38,38,.2)', color: '#dc2626', fontFamily: "'DM Mono',monospace", fontSize: '.33rem', cursor: 'pointer' }}
+                style={{ padding: '5px 10px', background: 'transparent', border: '1px solid rgba(220,38,38,.2)', color: '#dc2626', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                 onClick={() => onCancel(visit.id)}
               >
                 Cancelar
@@ -671,7 +671,7 @@ export default function PortalVisitas() {
       {/* Header */}
       <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '6px' }}>
             Gestão de Visitas
           </div>
           <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.9rem', color: '#0e0e0d', lineHeight: 1.1 }}>
@@ -680,7 +680,7 @@ export default function PortalVisitas() {
         </div>
         <button
           className="p-btn p-btn-gold"
-          style={{ fontSize: '.42rem', padding: '9px 20px' }}
+          style={{ fontSize: '.52rem', padding: '9px 20px' }}
           onClick={() => setActiveTab('agendar')}
         >
           + Nova Visita
@@ -695,10 +695,10 @@ export default function PortalVisitas() {
           { label: 'Confirmadas',   value: confirmed,                                        color: '#1c4a35', sub: 'total' },
           { label: 'Interesse Méd.', value: avgInterest > 0 ? avgInterest.toFixed(1) : '—',  color: '#c9a96e', sub: '/ 5 estrelas' },
         ].map(kpi => (
-          <div key={kpi.label} style={{ padding: '14px 16px', border: '1px solid rgba(14,14,13,.08)', background: '#fff' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>{kpi.label}</div>
+          <div key={kpi.label} style={{ padding: '14px 16px', border: '1px solid rgba(14,14,13,.08)', background: '#fff', borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>{kpi.label}</div>
             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.7rem', fontWeight: 600, color: kpi.color, lineHeight: 1 }}>{kpi.value}</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)', marginTop: '3px' }}>{kpi.sub}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '3px' }}>{kpi.sub}</div>
           </div>
         ))}
       </div>
@@ -713,14 +713,14 @@ export default function PortalVisitas() {
               padding: '10px 20px', background: 'none', border: 'none',
               borderBottom: `2px solid ${activeTab === t.id ? '#1c4a35' : 'transparent'}`,
               color: activeTab === t.id ? '#1c4a35' : 'rgba(14,14,13,.4)',
-              fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.1em',
+              fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em',
               textTransform: 'uppercase', cursor: 'pointer', transition: 'all .15s', marginBottom: '-1px',
               display: 'flex', alignItems: 'center', gap: '6px',
             }}
           >
             {t.label}
             {t.count !== undefined && t.count > 0 && (
-              <span style={{ padding: '1px 6px', background: activeTab === t.id ? '#1c4a35' : 'rgba(14,14,13,.08)', color: activeTab === t.id ? '#fff' : 'rgba(14,14,13,.5)', borderRadius: '10px', fontSize: '.36rem' }}>
+              <span style={{ padding: '1px 6px', background: activeTab === t.id ? '#1c4a35' : 'rgba(14,14,13,.08)', color: activeTab === t.id ? '#fff' : 'rgba(14,14,13,.5)', borderRadius: '10px', fontSize: '.52rem' }}>
                 {t.count}
               </span>
             )}
@@ -734,19 +734,19 @@ export default function PortalVisitas() {
           {/* Week navigation */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
             <button
-              style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}
+              style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', transition: 'all .2s', borderRadius: '6px' }}
               onClick={() => setWeekStart(addDays(weekStart, -7))}
             >
               ← Anterior
             </button>
             <button
-              style={{ padding: '7px 14px', background: 'rgba(28,74,53,.07)', border: '1px solid rgba(28,74,53,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: '#1c4a35', cursor: 'pointer', letterSpacing: '.06em' }}
+              style={{ padding: '7px 14px', background: 'rgba(28,74,53,.07)', border: '1px solid rgba(28,74,53,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', cursor: 'pointer', letterSpacing: '.06em', transition: 'all .2s', borderRadius: '6px' }}
               onClick={() => setWeekStart(getWeekStart(TODAY))}
             >
               Esta Semana
             </button>
             <button
-              style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}
+              style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', transition: 'all .2s', borderRadius: '6px' }}
               onClick={() => setWeekStart(addDays(weekStart, 7))}
             >
               Seguinte →
@@ -773,16 +773,16 @@ export default function PortalVisitas() {
 
           <div style={{ marginTop: '12px', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             {Object.entries(STATUS_CFG).map(([status, cfg]) => (
-              <span key={status} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.4)' }}>
+              <span key={status} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>
                 <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: cfg.bg, border: `1px solid ${cfg.dot}`, display: 'inline-block' }} />
                 {cfg.label}
               </span>
             ))}
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.4)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>
               <span style={{ width: '10px', height: '2px', background: '#dc2626', display: 'inline-block' }} />
               Hora actual
             </span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.3)', marginLeft: 'auto' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginLeft: 'auto' }}>
               Clique num slot vazio para agendar
             </span>
           </div>
@@ -806,7 +806,7 @@ export default function PortalVisitas() {
                   padding: '8px 18px', background: proximasFilter === f.id ? '#1c4a35' : 'transparent',
                   border: 'none', borderRight: '1px solid rgba(14,14,13,.1)',
                   color: proximasFilter === f.id ? '#f4f0e6' : 'rgba(14,14,13,.5)',
-                  fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.06em',
+                  fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
                   cursor: 'pointer', transition: 'all .15s',
                 }}
               >
@@ -841,20 +841,20 @@ export default function PortalVisitas() {
           {/* Form */}
           <div>
             {quickSlot && (
-              <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(28,74,53,.07)', border: '1px solid rgba(28,74,53,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35' }}>
+              <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(28,74,53,.07)', border: '1px solid rgba(28,74,53,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35' }}>
                 Slot pré-seleccionado: {quickSlot.date} às {quickSlot.time}
               </div>
             )}
 
             {conflictWarn && (
-              <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(220,38,38,.05)', border: '1px solid rgba(220,38,38,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#dc2626', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(220,38,38,.05)', border: '1px solid rgba(220,38,38,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#dc2626', display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>
                 Conflito de horário detectado — confirma mesmo assim?
               </div>
             )}
 
             {schedSuccess && (
-              <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(28,74,53,.07)', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: '#1c4a35', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ marginBottom: '16px', padding: '10px 14px', background: 'rgba(28,74,53,.07)', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#1c4a35" stroke="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
                 Visita agendada com sucesso!
               </div>
@@ -895,7 +895,7 @@ export default function PortalVisitas() {
                       key={d}
                       onClick={() => setSchedDur(d)}
                       style={{
-                        flex: 1, padding: '7px 4px', fontFamily: "'DM Mono',monospace", fontSize: '.37rem',
+                        flex: 1, padding: '7px 4px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                         cursor: 'pointer', border: '1px solid', transition: 'all .15s',
                         background: schedDur === d ? '#1c4a35' : 'transparent',
                         color: schedDur === d ? '#fff' : 'rgba(14,14,13,.5)',
@@ -938,8 +938,8 @@ export default function PortalVisitas() {
             </div>
 
             {/* Auto-actions */}
-            <div style={{ marginTop: '18px', padding: '14px 16px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>
+            <div style={{ marginTop: '18px', padding: '14px 16px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', borderRadius: '10px' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>
                 Acções automáticas ao agendar
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -974,7 +974,7 @@ export default function PortalVisitas() {
 
             <button
               className="p-btn"
-              style={{ marginTop: '16px', width: '100%', background: '#1c4a35', color: '#f4f0e6', padding: '12px', fontSize: '.46rem', letterSpacing: '.12em', textTransform: 'uppercase' }}
+              style={{ marginTop: '16px', width: '100%', background: '#1c4a35', color: '#f4f0e6', padding: '12px', fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', borderRadius: '6px', transition: 'all .2s' }}
               onClick={handleSchedule}
               disabled={!schedProp || !schedBuyer}
             >
@@ -984,7 +984,7 @@ export default function PortalVisitas() {
 
           {/* Right: upcoming mini list */}
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '12px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '12px' }}>
               Próximas visitas
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -995,14 +995,14 @@ export default function PortalVisitas() {
                 .map(v => {
                   const cfg = STATUS_CFG[v.status]
                   return (
-                    <div key={v.id} style={{ padding: '10px 12px', border: `1px solid ${cfg.border}`, borderLeft: `2px solid ${cfg.dot}`, background: '#fff' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: cfg.color, marginBottom: '3px' }}>
+                    <div key={v.id} style={{ padding: '10px 12px', border: `1px solid ${cfg.border}`, borderLeft: `2px solid ${cfg.dot}`, background: '#fff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: cfg.color, marginBottom: '3px' }}>
                         {v.date === fmtDate(TODAY) ? 'Hoje' : new Date(v.date + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })} · {v.time}
                       </div>
                       <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', fontWeight: 500, color: '#0e0e0d', lineHeight: 1.2 }}>
                         {v.propertyName}
                       </div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>
                         {v.buyerNationality} {v.buyerName.split(' ')[0]}
                       </div>
                     </div>
@@ -1023,17 +1023,17 @@ export default function PortalVisitas() {
               { label: 'Interesse médio',     value: avgInterest > 0 ? `${avgInterest.toFixed(1)}★` : '—', sub: 'escala 1–5' },
               { label: 'Top objecção',        value: topObj || '—',                    sub: 'mais frequente' },
             ].map(s => (
-              <div key={s.label} style={{ padding: '14px 16px', border: '1px solid rgba(14,14,13,.08)', background: '#fff' }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.33rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '4px' }}>{s.label}</div>
+              <div key={s.label} style={{ padding: '14px 16px', border: '1px solid rgba(14,14,13,.08)', background: '#fff', borderRadius: '10px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '4px' }}>{s.label}</div>
                 <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', color: '#1c4a35', fontWeight: 300 }}>{s.value}</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: 'rgba(14,14,13,.3)', marginTop: '2px' }}>{s.sub}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '2px' }}>{s.sub}</div>
               </div>
             ))}
           </div>
 
           {/* SVG Funnel */}
-          <div style={{ marginBottom: '24px', padding: '16px 20px', border: '1px solid rgba(14,14,13,.08)', background: '#fff' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '14px' }}>
+          <div style={{ marginBottom: '24px', padding: '16px 20px', border: '1px solid rgba(14,14,13,.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '14px' }}>
               Funil de Conversão
             </div>
             {(() => {
@@ -1093,11 +1093,11 @@ export default function PortalVisitas() {
                         <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.88rem', fontWeight: 600, color: '#0e0e0d', marginBottom: '3px' }}>
                           {v.propertyName}
                         </div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.35rem', color: 'rgba(14,14,13,.4)' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>
                           {v.buyerNationality} {v.buyerName} · {new Date(v.date + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })} às {v.time}
                         </div>
                       </div>
-                      <span style={{ padding: '2px 8px', background: 'rgba(201,169,110,.1)', border: '1px solid rgba(201,169,110,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: '#a07a38', letterSpacing: '.04em' }}>
+                      <span style={{ padding: '2px 8px', background: 'rgba(201,169,110,.1)', border: '1px solid rgba(201,169,110,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#a07a38', letterSpacing: '.04em' }}>
                         Aguarda feedback
                       </span>
                     </div>
@@ -1115,7 +1115,7 @@ export default function PortalVisitas() {
                             <IconStar filled={fb.interest >= n} />
                           </button>
                         ))}
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#c9a96e', alignSelf: 'center', marginLeft: '6px' }}>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', alignSelf: 'center', marginLeft: '6px' }}>
                           {fb.interest}/5
                         </span>
                       </div>
@@ -1132,7 +1132,7 @@ export default function PortalVisitas() {
                               key={obj}
                               onClick={() => toggleObjection(v.id, obj)}
                               style={{
-                                padding: '4px 12px', fontFamily: "'DM Mono',monospace", fontSize: '.35rem',
+                                padding: '4px 12px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem',
                                 cursor: 'pointer', border: '1px solid', transition: 'all .15s', letterSpacing: '.04em',
                                 background: selected ? 'rgba(220,38,38,.06)' : 'transparent',
                                 color: selected ? '#dc2626' : 'rgba(14,14,13,.45)',
@@ -1177,7 +1177,7 @@ export default function PortalVisitas() {
 
                     <button
                       className="p-btn p-btn-gold"
-                      style={{ fontSize: '.42rem', padding: '9px 22px' }}
+                      style={{ fontSize: '.52rem', padding: '9px 22px' }}
                       onClick={() => saveFeedback(v.id)}
                       disabled={!fb.nextAction}
                     >

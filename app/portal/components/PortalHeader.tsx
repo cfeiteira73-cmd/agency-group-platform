@@ -64,7 +64,7 @@ export default function PortalHeader({
   const totalAlerts = overdueFU.length + stalePropsN.length
 
   return (
-    <header style={{ height: '56px', background: darkMode ? '#0c1f15' : '#f4f0e6', borderBottom: `1px solid ${darkMode ? 'rgba(201,169,110,.12)' : 'rgba(14,14,13,.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 20px', flexShrink: 0 }}>
+    <header style={{ height: '56px', background: darkMode ? '#0c1f15' : '#f4f0e6', borderBottom: `1px solid ${darkMode ? 'rgba(201,169,110,.12)' : 'rgba(14,14,13,.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 20px', flexShrink: 0, backdropFilter: 'blur(12px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
           <span /><span /><span />
@@ -72,27 +72,27 @@ export default function PortalHeader({
         {section !== 'dashboard' && (
           <button
             onClick={() => setSection('dashboard')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', padding: '4px 8px 4px 0', transition: 'color .2s', display: 'flex', alignItems: 'center', gap: '5px' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', padding: '4px 8px 4px 0', transition: 'color .2s', display: 'flex', alignItems: 'center', gap: '5px' }}
             onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.color = '#1c4a35' }}
             onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(14,14,13,.35)' }}
           >
             ← voltar
           </button>
         )}
-        <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.05rem', color: darkMode ? '#f4f0e6' : '#0e0e0d', letterSpacing: '.01em' }}>{SECTION_NAMES[section]}</div>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.05rem', color: darkMode ? '#f4f0e6' : '#0e0e0d', letterSpacing: '.01em' }}>{SECTION_NAMES[section]}</div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <div style={{ display: 'flex', gap: '18px' }}>
           {([['Pipeline', `€${(pipelineTotal / 1e6).toFixed(1)}M`], ['Deals', String(deals.length)], ['Mercado', '+17,6%']] as [string, string][]).map(([l, v]) => (
             <div key={l} style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.53rem', color: darkMode ? '#c9a96e' : '#1c4a35', fontWeight: 500 }}>{v}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.1em', color: darkMode ? 'rgba(244,240,230,.35)' : 'rgba(14,14,13,.32)', textTransform: 'uppercase' }}>{l}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.53rem', color: darkMode ? '#c9a96e' : '#1c4a35', fontWeight: 500 }}>{v}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.1em', color: darkMode ? 'rgba(244,240,230,.35)' : 'rgba(14,14,13,.32)', textTransform: 'uppercase' }}>{l}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.08em', color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.35)' }}>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.08em', color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.35)' }}>
           {now.toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })} · {now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
         </div>
 
@@ -106,21 +106,21 @@ export default function PortalHeader({
               <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             {totalAlerts > 0 && (
-              <span style={{ position: 'absolute', top: '2px', right: '2px', minWidth: '14px', height: '14px', borderRadius: '7px', background: '#e05454', border: `2px solid ${darkMode ? '#0c1f15' : '#fff'}`, fontFamily: "'DM Mono',monospace", fontSize: '.28rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px' }}>{totalAlerts}</span>
+              <span style={{ position: 'absolute', top: '2px', right: '2px', minWidth: '16px', height: '16px', borderRadius: '8px', background: '#e05454', border: `2px solid ${darkMode ? '#0c1f15' : '#fff'}`, fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px' }}>{totalAlerts}</span>
             )}
           </button>
 
           {showNotifPanel && (
-            <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: darkMode ? '#0f2117' : '#fff', border: `1px solid ${darkMode ? 'rgba(201,169,110,.15)' : 'rgba(14,14,13,.12)'}`, boxShadow: '0 16px 48px rgba(0,0,0,.25)', zIndex: 300, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: darkMode ? '#0f2117' : '#fff', border: `1px solid ${darkMode ? 'rgba(201,169,110,.15)' : 'rgba(14,14,13,.12)'}`, boxShadow: '0 16px 48px rgba(0,0,0,.25)', zIndex: 300, overflow: 'hidden', borderRadius: '16px' }}>
               <div style={{ padding: '12px 16px', borderBottom: `1px solid ${darkMode ? 'rgba(244,240,230,.06)' : 'rgba(14,14,13,.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', letterSpacing: '.12em', textTransform: 'uppercase', color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)' }}>Central de Alertas</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: totalAlerts > 0 ? '#e05454' : '#10b981' }}>{totalAlerts} alerta{totalAlerts !== 1 ? 's' : ''}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)' }}>Central de Alertas</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: totalAlerts > 0 ? '#e05454' : '#10b981' }}>{totalAlerts} alerta{totalAlerts !== 1 ? 's' : ''}</div>
               </div>
 
               <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
                 {overdueFU.length > 0 && (
                   <div style={{ padding: '10px 16px', borderBottom: `1px solid ${darkMode ? 'rgba(244,240,230,.04)' : 'rgba(14,14,13,.06)'}` }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#e05454', letterSpacing: '.1em', marginBottom: '6px', textTransform: 'uppercase' }}>📅 Follow-up Atrasado ({overdueFU.length})</div>
+                    <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#e05454', letterSpacing: '.1em', marginBottom: '6px', textTransform: 'uppercase' }}>📅 Follow-up Atrasado ({overdueFU.length})</div>
                     {overdueFU.map(c => (
                       <div
                         key={c.id}
@@ -129,9 +129,9 @@ export default function PortalHeader({
                       >
                         <div>
                           <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: darkMode ? 'rgba(244,240,230,.8)' : 'rgba(14,14,13,.8)', fontWeight: 500 }}>{c.name}</div>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: darkMode ? 'rgba(244,240,230,.3)' : 'rgba(14,14,13,.4)' }}>{c.nextFollowUp}</div>
+                          <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.3)' : 'rgba(14,14,13,.4)' }}>{c.nextFollowUp}</div>
                         </div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#e05454', background: 'rgba(224,84,84,.08)', padding: '2px 7px', flexShrink: 0 }}>ATRASADO</div>
+                        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#e05454', background: 'rgba(224,84,84,.08)', padding: '2px 7px', flexShrink: 0, borderRadius: '4px' }}>ATRASADO</div>
                       </div>
                     ))}
                   </div>
@@ -139,7 +139,7 @@ export default function PortalHeader({
 
                 {stalePropsN.length > 0 && (
                   <div style={{ padding: '10px 16px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: '#f97316', letterSpacing: '.1em', marginBottom: '6px', textTransform: 'uppercase' }}>🏠 Imóvel Sem Movimento &gt;60d ({stalePropsN.length})</div>
+                    <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#f97316', letterSpacing: '.1em', marginBottom: '6px', textTransform: 'uppercase' }}>🏠 Imóvel Sem Movimento &gt;60d ({stalePropsN.length})</div>
                     {stalePropsN.map(p => {
                       const ld = p.listingDate as string
                       const days = Math.floor((todayTs - new Date(ld).getTime()) / 86400000)
@@ -151,9 +151,9 @@ export default function PortalHeader({
                         >
                           <div>
                             <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: darkMode ? 'rgba(244,240,230,.8)' : 'rgba(14,14,13,.8)', fontWeight: 500 }}>{p.nome as string}</div>
-                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: darkMode ? 'rgba(244,240,230,.3)' : 'rgba(14,14,13,.4)' }}>{p.zona as string} · €{((p.preco as number) / 1e6).toFixed(1)}M</div>
+                            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.3)' : 'rgba(14,14,13,.4)' }}>{p.zona as string} · €{((p.preco as number) / 1e6).toFixed(1)}M</div>
                           </div>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: '#f97316', background: 'rgba(249,115,22,.08)', padding: '2px 7px', flexShrink: 0 }}>{days}d</div>
+                          <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#f97316', background: 'rgba(249,115,22,.08)', padding: '2px 7px', flexShrink: 0, borderRadius: '4px' }}>{days}d</div>
                         </div>
                       )
                     })}
@@ -170,13 +170,13 @@ export default function PortalHeader({
 
               <div style={{ padding: '10px 16px', borderTop: `1px solid ${darkMode ? 'rgba(244,240,230,.06)' : 'rgba(14,14,13,.08)'}`, display: 'flex', gap: '8px' }}>
                 <button
-                  style={{ flex: 1, padding: '7px', background: darkMode ? 'rgba(28,74,53,.2)' : 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer', letterSpacing: '.08em' }}
+                  style={{ flex: 1, padding: '7px', background: darkMode ? 'rgba(28,74,53,.2)' : 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.08em', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={() => { setSection('crm'); setShowNotifPanel(false) }}
                 >
                   Ver CRM →
                 </button>
                 <button
-                  style={{ flex: 1, padding: '7px', background: 'rgba(14,14,13,.04)', border: `1px solid ${darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.1)'}`, color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)', fontFamily: "'DM Mono',monospace", fontSize: '.38rem', cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '7px', background: 'rgba(14,14,13,.04)', border: `1px solid ${darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.1)'}`, color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={() => setShowNotifPanel(false)}
                 >
                   Fechar

@@ -321,13 +321,15 @@ function HighlightCard({ icon, label, value, sub, accent }: HighlightCardProps) 
       display: 'flex',
       flexDirection: 'column',
       gap: '3px',
+      borderRadius: '10px',
+      boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
         <span style={{ fontSize: '1rem' }}>{icon}</span>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.38)' }}>{label}</span>
+        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.38)' }}>{label}</span>
       </div>
       <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.35rem', color: accent ? '#1c4a35' : '#0e0e0d', fontWeight: 300, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: 'rgba(14,14,13,.35)', marginTop: '2px' }}>{sub}</div>}
+      {sub && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '2px' }}>{sub}</div>}
     </div>
   )
 }
@@ -408,7 +410,7 @@ function PlaceholderState({ darkMode }: { darkMode: boolean }) {
       <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.4rem', fontWeight: 300, color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.3)', marginBottom: '8px' }}>
         Investor Pitch Deck
       </div>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(14,14,13,.25)', letterSpacing: '.1em', lineHeight: 1.7 }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.25)', letterSpacing: '.1em', lineHeight: 1.7 }}>
         FAMILY OFFICE · HNWI · INSTITUCIONAL<br />
         CONFIGURE O PAINEL E GERE O PITCH
       </div>
@@ -520,13 +522,13 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
     <div>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.2em', textTransform: 'uppercase', color: col.muted, marginBottom: '6px' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: col.muted, marginBottom: '6px' }}>
           Captação de Capital · Agency Group AMI 22506
         </div>
         <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '2rem', color: darkMode ? '#f4f0e6' : col.text, letterSpacing: '-.01em' }}>
           Investor Pitch IA
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: col.muted, marginTop: '4px' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted, marginTop: '4px' }}>
           Family Office · HNWI · Institucional · Multi-idioma · Lisboa · Dubai · Paris · New York
         </div>
       </div>
@@ -539,7 +541,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
 
           {/* Header */}
           <div style={{ borderBottom: `1px solid ${col.border}`, paddingBottom: '14px' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted }}>Configuração do Pitch</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted }}>Configuração do Pitch</div>
           </div>
 
           {/* Property selector */}
@@ -560,14 +562,14 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
             </select>
             {selectedProp && (
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: col.green, background: 'rgba(28,74,53,.06)', padding: '3px 8px', border: '1px solid rgba(28,74,53,.12)' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.green, background: 'rgba(28,74,53,.06)', padding: '3px 8px', border: '1px solid rgba(28,74,53,.12)', borderRadius: '4px' }}>
                   {formatPrice(selectedPrice)}
                 </span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: col.muted, background: 'rgba(14,14,13,.04)', padding: '3px 8px', border: `1px solid ${col.border}` }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted, background: 'rgba(14,14,13,.04)', padding: '3px 8px', border: `1px solid ${col.border}`, borderRadius: '4px' }}>
                   {asString(selectedProp.zona)} · {asString(selectedProp.area)}m²
                 </span>
                 {!!selectedProp.badge && (
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: col.gold, background: 'rgba(201,169,110,.08)', padding: '3px 8px', border: '1px solid rgba(201,169,110,.2)' }}>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.gold, background: 'rgba(201,169,110,.08)', padding: '3px 8px', border: '1px solid rgba(201,169,110,.2)', borderRadius: '4px' }}>
                     {asString(selectedProp.badge)}
                   </span>
                 )}
@@ -588,11 +590,12 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${ipInvestorType === t ? col.green : col.border}`,
                     color: ipInvestorType === t ? '#f4f0e6' : col.muted,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.36rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
                     letterSpacing: '.06em',
                     textTransform: 'uppercase',
-                    transition: 'all .15s',
+                    transition: 'all .2s',
+                    borderRadius: '6px',
                   }}
                   onClick={() => setIpInvestorType(t)}
                 >
@@ -616,9 +619,10 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${ipHorizon === h ? col.gold : col.border}`,
                     color: ipHorizon === h ? '#0c1f15' : col.muted,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.4rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
-                    transition: 'all .15s',
+                    transition: 'all .2s',
+                    borderRadius: '6px',
                   }}
                   onClick={() => setIpHorizon(h)}
                 >
@@ -642,9 +646,10 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${ipIrr === irr ? col.green : col.border}`,
                     color: ipIrr === irr ? '#f4f0e6' : col.muted,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.4rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
-                    transition: 'all .15s',
+                    transition: 'all .2s',
+                    borderRadius: '6px',
                   }}
                   onClick={() => setIpIrr(irr)}
                 >
@@ -668,9 +673,10 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${ipLang === l ? col.gold : col.border}`,
                     color: ipLang === l ? '#0c1f15' : col.muted,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.4rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
-                    transition: 'all .15s',
+                    transition: 'all .2s',
+                    borderRadius: '6px',
                   }}
                   onClick={() => setIpLang(l)}
                 >
@@ -693,9 +699,10 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${capital === c ? col.green : col.border}`,
                     color: capital === c ? col.green : col.muted,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.36rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
-                    transition: 'all .15s',
+                    transition: 'all .2s',
+                    borderRadius: '6px',
                   }}
                   onClick={() => setCapital(c)}
                 >
@@ -723,11 +730,12 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${yieldFocus === f.id ? col.gold : col.border}`,
                     color: yieldFocus === f.id ? '#7a5c1e' : col.muted,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.33rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
                     letterSpacing: '.04em',
-                    transition: 'all .15s',
+                    transition: 'all .2s',
                     textAlign: 'center',
+                    borderRadius: '6px',
                   }}
                   onClick={() => setYieldFocus(f.id)}
                 >
@@ -745,13 +753,13 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
             className="p-btn"
             onClick={onRunInvestorPitch}
             disabled={ipLoading || !ipProperty}
-            style={{ width: '100%', padding: '14px', fontSize: '.46rem', letterSpacing: '.12em' }}
+            style={{ width: '100%', padding: '14px', fontSize: '.52rem', letterSpacing: '.12em', borderRadius: '6px', transition: 'all .2s' }}
           >
             {ipLoading ? '✦ A gerar pitch...' : '✦ Gerar Investor Pitch'}
           </button>
 
           {!ipProperty && (
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: col.muted, textAlign: 'center', marginTop: '-8px' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted, textAlign: 'center', marginTop: '-8px' }}>
               Seleciona um imóvel para continuar
             </div>
           )}
@@ -767,7 +775,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
           {/* Error */}
           {ipError && (
             <div className="p-card" style={{ borderLeft: '3px solid #dc2626', padding: '20px 24px' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#dc2626', marginBottom: '4px', letterSpacing: '.06em' }}>ERRO</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#dc2626', marginBottom: '4px', letterSpacing: '.06em' }}>ERRO</div>
               <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: '#dc2626' }}>{ipError}</div>
             </div>
           )}
@@ -781,6 +789,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 padding: '28px 32px',
                 position: 'relative',
                 overflow: 'hidden',
+                borderRadius: '12px',
               }}>
                 {/* Decorative arc */}
                 <svg
@@ -792,16 +801,17 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 </svg>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.5)', letterSpacing: '.15em', textTransform: 'uppercase' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.5)', letterSpacing: '.15em', textTransform: 'uppercase' }}>
                     Agency Group · AMI 22506 · Investor Pitch
                   </div>
                   <div style={{
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.38rem',
+                    fontSize: '.52rem',
                     color: '#0c1f15',
                     background: col.gold,
                     padding: '4px 10px',
                     letterSpacing: '.1em',
+                    borderRadius: '4px',
                   }}>
                     {langLabel(ipLang)}
                   </div>
@@ -813,11 +823,11 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
 
                 <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
                   {selectedPrice > 0 && (
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', color: col.gold, letterSpacing: '.06em' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.gold, letterSpacing: '.06em' }}>
                       {formatPrice(selectedPrice)}
                     </div>
                   )}
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', color: 'rgba(244,240,230,.55)', letterSpacing: '.06em' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(244,240,230,.55)', letterSpacing: '.06em' }}>
                     {investorLabels[ipInvestorType]} · IRR {ipIrr}% · {ipHorizon} anos · {yieldFocus === 'growth' ? 'Capital Growth' : yieldFocus === 'income' ? 'Yield Income' : 'Balanced'}
                   </div>
                 </div>
@@ -826,7 +836,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
               {/* ── Investment Highlights Grid ─────────────────────────────── */}
               {(highlights.length > 0 || Object.keys(keyMetrics).length > 0) && (
                 <div>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '10px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '10px' }}>
                     Investment Highlights
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
@@ -883,13 +893,13 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 <div className="p-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <div>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted }}>Projeção de Retorno</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted }}>Projeção de Retorno</div>
                       <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: darkMode ? '#f4f0e6' : col.text, fontWeight: 300, marginTop: '2px' }}>
                         Valorização Projetada · IRR {ipIrr}% · {ipHorizon} anos
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: col.muted }}>Valor Final Estimado</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted }}>Valor Final Estimado</div>
                       <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', color: col.green, fontWeight: 300 }}>
                         {(() => {
                           // Prefer API-confirmed projected value, fall back to compound at IRR target
@@ -911,11 +921,11 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                   <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <div style={{ width: 10, height: 10, background: col.gold, borderRadius: 2 }} />
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: col.muted }}>Retorno projetado</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted }}>Retorno projetado</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <div style={{ width: 10, height: 10, background: 'rgba(28,74,53,.18)', borderRadius: 2 }} />
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: col.muted }}>Capital inicial</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted }}>Capital inicial</span>
                     </div>
                   </div>
                 </div>
@@ -924,7 +934,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
               {/* ── Executive Summary ──────────────────────────────────────── */}
               {execSummary && (
                 <div className="p-card">
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '14px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '14px' }}>
                     Executive Summary
                   </div>
                   <div style={{
@@ -940,7 +950,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                       const isHeader = /^#{1,3}\s/.test(line) || /^[A-Z\s]{6,}$/.test(line.trim()) || /:\s*$/.test(line)
                       const cleaned = line.replace(/^#{1,3}\s*/, '')
                       return isHeader
-                        ? <div key={i} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.1em', color: col.green, textTransform: 'uppercase', marginTop: i > 0 ? '14px' : 0, marginBottom: '4px' }}>{cleaned}</div>
+                        ? <div key={i} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', color: col.green, textTransform: 'uppercase', marginTop: i > 0 ? '14px' : 0, marginBottom: '4px' }}>{cleaned}</div>
                         : <p key={i} style={{ margin: '0 0 8px' }}>{cleaned}</p>
                     })}
                   </div>
@@ -951,12 +961,12 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
               <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '16px' }}>
                 {/* Risk Matrix */}
                 <div className="p-card">
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '12px' }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '12px' }}>
                     Risk Matrix
                   </div>
                   <RiskMatrix riskScore={riskScore} irr={ipIrr} />
                   <div style={{ marginTop: '10px', textAlign: 'center' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.34rem', color: col.muted }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted }}>
                       Perfil: {riskScore <= 3 ? 'Conservador' : riskScore <= 5 ? 'Moderado' : riskScore <= 7 ? 'Crescimento' : 'Oportunista'}
                     </div>
                     <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: col.green, fontWeight: 300, marginTop: '2px' }}>
@@ -968,7 +978,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 {/* Market Context */}
                 {marketContext ? (
                   <div className="p-card">
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '12px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '12px' }}>
                       Market Context
                     </div>
                     <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', lineHeight: 1.75, color: darkMode ? 'rgba(244,240,230,.75)' : 'rgba(14,14,13,.7)' }}>
@@ -977,7 +987,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                   </div>
                 ) : (
                   <div className="p-card" style={{ background: 'rgba(28,74,53,.02)' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.38rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '12px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.15em', textTransform: 'uppercase', color: col.muted, marginBottom: '12px' }}>
                       Mercado Portugal 2026
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -988,10 +998,10 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                         { label: 'Dias em Mercado', value: '210 dias', trend: 'Média nacional' },
                       ].map(m => (
                         <div key={m.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: `1px solid ${col.border}` }}>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: col.muted }}>{m.label}</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted }}>{m.label}</div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1rem', color: col.green, fontWeight: 300 }}>{m.value}</div>
-                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.32rem', color: col.gold }}>{m.trend}</div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.gold }}>{m.trend}</div>
                           </div>
                         </div>
                       ))}
@@ -1008,8 +1018,10 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 background: '#fff',
                 border: `1px solid ${col.border}`,
                 alignItems: 'center',
+                borderRadius: '12px',
+                boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
               }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.36rem', color: col.muted, letterSpacing: '.08em', flex: 1 }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted, letterSpacing: '.08em', flex: 1 }}>
                   PITCH · {new Date().toLocaleDateString('pt-PT')} · Agency Group AMI 22506
                 </div>
                 <button
@@ -1021,10 +1033,11 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${copied ? col.green : col.border}`,
                     color: copied ? col.green : col.muted,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.38rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
                     letterSpacing: '.06em',
-                    transition: 'all .15s',
+                    transition: 'all .2s',
+                    borderRadius: '6px',
                   }}
                 >
                   {copied ? '✓ Copiado' : '⧉ Copiar'}
@@ -1038,10 +1051,11 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${col.border}`,
                     color: col.muted,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.38rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
                     letterSpacing: '.06em',
-                    transition: 'all .15s',
+                    transition: 'all .2s',
+                    borderRadius: '6px',
                   }}
                 >
                   ⬇ PDF
@@ -1055,9 +1069,11 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                     border: `1px solid ${col.green}`,
                     color: '#f4f0e6',
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.38rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
                     letterSpacing: '.06em',
+                    borderRadius: '6px',
+                    transition: 'all .2s',
                   }}
                 >
                   ✉ Email Pitch

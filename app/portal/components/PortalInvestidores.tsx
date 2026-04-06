@@ -350,7 +350,7 @@ function ScoreBar({ score, size = 'sm' }: { score: number; size?: 'sm' | 'lg' })
       }}>
         <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: 99, transition: 'width .4s ease' }} />
       </div>
-      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: size === 'lg' ? 13 : 11, color, fontWeight: 600 }}>{score}</span>
+      <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: size === 'lg' ? 13 : 11, color, fontWeight: 600 }}>{score}</span>
     </div>
   )
 }
@@ -363,7 +363,7 @@ function TypeBadge({ type }: { type: InvestorType }) {
       background: TYPE_COLORS[type] + '22', color: TYPE_COLORS[type],
       border: `1px solid ${TYPE_COLORS[type]}44`,
       borderRadius: 6, padding: '2px 8px',
-      fontFamily: "'DM Mono',monospace", fontSize: 10, fontWeight: 600, letterSpacing: '.04em',
+      fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, fontWeight: 600, letterSpacing: '.04em',
     }}>
       {TYPE_LABELS[type].toUpperCase()}
     </span>
@@ -380,7 +380,7 @@ function StatusBadge({ status }: { status: InvestorStatus }) {
       display: 'inline-flex', alignItems: 'center', gap: 4,
       background: c + '18', color: c, border: `1px solid ${c}33`,
       borderRadius: 6, padding: '2px 8px',
-      fontFamily: "'DM Mono',monospace", fontSize: 10, fontWeight: 700,
+      fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, fontWeight: 700,
     }}>
       <span style={{ width: 5, height: 5, borderRadius: '50%', background: c, display: 'inline-block' }} />
       {l}
@@ -395,10 +395,11 @@ function KpiCard({ label, value, sub, color = G }: { label: string; value: strin
     <div style={{
       background: '#fff', border: `1px solid #e8e2d4`, borderRadius: 14,
       padding: '18px 22px', flex: 1, minWidth: 140,
+      boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
     }}>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontFamily: "'Cormorant',serif", fontSize: 28, fontWeight: 700, color, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: '#8a8070', marginTop: 4 }}>{sub}</div>}
+      <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 28, fontWeight: 700, color, lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 11, color: '#8a8070', marginTop: 4 }}>{sub}</div>}
     </div>
   )
 }
@@ -424,7 +425,7 @@ function InvestorCard({ inv, onClick, isSelected }: { inv: Investor; onClick: ()
         <div style={{ fontSize: 32, lineHeight: 1 }}>{inv.flag}</div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: "'Cormorant',serif", fontSize: 17, fontWeight: 700, color: isSelected ? '#fff' : TXT }}>{inv.name}</span>
+            <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 17, fontWeight: 700, color: isSelected ? '#fff' : TXT }}>{inv.name}</span>
             <TypeBadge type={inv.type} />
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -443,9 +444,9 @@ function InvestorCard({ inv, onClick, isSelected }: { inv: Investor; onClick: ()
 
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {inv.zonas.slice(0, 3).map(z => (
-          <span key={z} style={{ background: isSelected ? '#ffffff22' : '#f4f0e6', color: isSelected ? '#c9a96e' : '#5a4f3a', borderRadius: 6, padding: '2px 8px', fontFamily: "'DM Mono',monospace", fontSize: 10 }}>{z}</span>
+          <span key={z} style={{ background: isSelected ? '#ffffff22' : '#f4f0e6', color: isSelected ? '#c9a96e' : '#5a4f3a', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10 }}>{z}</span>
         ))}
-        {inv.zonas.length > 3 && <span style={{ color: isSelected ? '#ffffff88' : '#8a8070', fontSize: 10, fontFamily: "'DM Mono',monospace" }}>+{inv.zonas.length - 3}</span>}
+        {inv.zonas.length > 3 && <span style={{ color: isSelected ? '#ffffff88' : '#8a8070', fontSize: 10, fontFamily: 'var(--font-dm-mono),monospace' }}>+{inv.zonas.length - 3}</span>}
       </div>
     </div>
   )
@@ -454,8 +455,8 @@ function InvestorCard({ inv, onClick, isSelected }: { inv: Investor; onClick: ()
 function Stat({ label, value, inv, color }: { label: string; value: string; inv?: boolean; color?: string }) {
   return (
     <div>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: inv ? '#ffffff66' : '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
-      <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: color ?? (inv ? '#ffffffcc' : TXT) }}>{value}</div>
+      <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: inv ? '#ffffff66' : '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
+      <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, fontWeight: 600, color: color ?? (inv ? '#ffffffcc' : TXT) }}>{value}</div>
     </div>
   )
 }
@@ -508,16 +509,16 @@ function InvestorDrawer({
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <span style={{ fontSize: 28 }}>{investor.flag}</span>
             <div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: 22, fontWeight: 700 }}>{investor.name}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#ffffff88', marginTop: 2 }}>{investor.email}</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 700 }}>{investor.name}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#ffffff88', marginTop: 2 }}>{investor.email}</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: '#ffffff22', border: 'none', color: '#fff', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+          <button onClick={onClose} style={{ background: '#ffffff22', border: 'none', color: '#fff', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>✕</button>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <TypeBadge type={investor.type} />
           <StatusBadge status={investor.status} />
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#c9a96e', background: '#c9a96e22', border: '1px solid #c9a96e44', borderRadius: 6, padding: '2px 8px' }}>
+          <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#c9a96e', background: '#c9a96e22', border: '1px solid #c9a96e44', borderRadius: 6, padding: '2px 8px' }}>
             {fmt(investor.capitalMin)} – {fmt(investor.capitalMax)}
           </span>
         </div>
@@ -528,7 +529,7 @@ function InvestorDrawer({
         {SUB_TABS.map(t => (
           <button key={t.id} onClick={() => setSubTab(t.id)} style={{
             flex: 1, padding: '12px 4px', border: 'none', cursor: 'pointer',
-            background: 'none', fontFamily: "'DM Mono',monospace", fontSize: 10,
+            background: 'none', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10,
             color: subTab === t.id ? G : '#8a8070',
             borderBottom: subTab === t.id ? `2px solid ${G}` : '2px solid transparent',
             fontWeight: subTab === t.id ? 700 : 400, transition: 'all .15s',
@@ -562,15 +563,15 @@ function DrawerPerfil({ investor, editMode, onChange, onToggleEdit, onSave }: {
 }) {
   const inp = (field: keyof Investor, label: string, type: string = 'text') => (
     <div style={{ marginBottom: 14 }}>
-      <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>{label}</label>
+      <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>{label}</label>
       {editMode ? (
         <input
           type={type} value={String(investor[field] ?? '')}
           onChange={e => onChange({ ...investor, [field]: type === 'number' ? Number(e.target.value) : e.target.value })}
-          style={{ width: '100%', background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none', boxSizing: 'border-box' }}
+          style={{ width: '100%', background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none', boxSizing: 'border-box' }}
         />
       ) : (
-        <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, padding: '8px 0' }}>{String(investor[field] ?? '—')}</div>
+        <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, padding: '8px 0' }}>{String(investor[field] ?? '—')}</div>
       )}
     </div>
   )
@@ -578,10 +579,10 @@ function DrawerPerfil({ investor, editMode, onChange, onToggleEdit, onSave }: {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <span style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700, color: G }}>Perfil do Investidor</span>
+        <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G }}>Perfil do Investidor</span>
         <div style={{ display: 'flex', gap: 8 }}>
-          {editMode && <button onClick={onSave} style={{ background: G, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: "'DM Mono',monospace", fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>Guardar</button>}
-          <button onClick={onToggleEdit} style={{ background: editMode ? '#f4f0e6' : GOLD, color: editMode ? '#8a8070' : '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: "'DM Mono',monospace", fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>{editMode ? 'Cancelar' : 'Editar'}</button>
+          {editMode && <button onClick={onSave} style={{ background: G, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>Guardar</button>}
+          <button onClick={onToggleEdit} style={{ background: editMode ? '#f4f0e6' : GOLD, color: editMode ? '#8a8070' : '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>{editMode ? 'Cancelar' : 'Editar'}</button>
         </div>
       </div>
 
@@ -597,14 +598,14 @@ function DrawerPerfil({ investor, editMode, onChange, onToggleEdit, onSave }: {
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Perfil de Risco</label>
+        <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Perfil de Risco</label>
         <div style={{ display: 'flex', gap: 8 }}>
           {(['conservador', 'moderado', 'agressivo'] as RiskProfile[]).map(r => (
             <button key={r} onClick={() => editMode && onChange({ ...investor, riskProfile: r })} style={{
               padding: '6px 12px', borderRadius: 8, border: `1px solid ${investor.riskProfile === r ? RISK_COLORS[r] : '#d4cfc4'}`,
               background: investor.riskProfile === r ? RISK_COLORS[r] + '18' : '#fff',
               color: investor.riskProfile === r ? RISK_COLORS[r] : '#8a8070',
-              fontFamily: "'DM Mono',monospace", fontSize: 10, cursor: editMode ? 'pointer' : 'default', fontWeight: 600,
+              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: editMode ? 'pointer' : 'default', fontWeight: 600,
               textTransform: 'capitalize',
             }}>{r}</button>
           ))}
@@ -612,41 +613,41 @@ function DrawerPerfil({ investor, editMode, onChange, onToggleEdit, onSave }: {
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Notas</label>
+        <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Notas</label>
         {editMode ? (
           <textarea
             value={investor.notes} rows={4}
             onChange={e => onChange({ ...investor, notes: e.target.value })}
-            style={{ width: '100%', background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
+            style={{ width: '100%', background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none', resize: 'vertical', boxSizing: 'border-box' }}
           />
         ) : (
-          <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, lineHeight: 1.5 }}>{investor.notes}</div>
+          <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, lineHeight: 1.5 }}>{investor.notes}</div>
         )}
       </div>
 
       <div style={{ marginBottom: 14 }}>
-        <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Tags</label>
+        <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Tags</label>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {investor.tags.map(t => (
-            <span key={t} style={{ background: '#f4f0e6', color: '#5a4f3a', borderRadius: 6, padding: '3px 10px', fontFamily: "'DM Mono',monospace", fontSize: 10 }}>{t}</span>
+            <span key={t} style={{ background: '#f4f0e6', color: '#5a4f3a', borderRadius: 6, padding: '3px 10px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10 }}>{t}</span>
           ))}
         </div>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 12, padding: '16px', border: '1px solid #e8e2d4' }}>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 12 }}>Métricas</div>
+      <div style={{ background: '#fff', borderRadius: '12px', padding: '16px', border: '1px solid #e8e2d4', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 12 }}>Métricas</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Cormorant',serif", fontSize: 24, fontWeight: 700, color: G }}>{fmt(investor.totalInvested)}</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>TOTAL INVESTIDO</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 24, fontWeight: 700, color: G }}>{fmt(investor.totalInvested)}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>TOTAL INVESTIDO</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Cormorant',serif", fontSize: 24, fontWeight: 700, color: GOLD }}>{investor.dealsHistory}</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>DEALS HIST.</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 24, fontWeight: 700, color: GOLD }}>{investor.dealsHistory}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>DEALS HIST.</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontFamily: "'Cormorant',serif", fontSize: 24, fontWeight: 700, color: '#2563eb' }}>{investor.yieldTarget}%</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>YIELD TARGET</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 24, fontWeight: 700, color: '#2563eb' }}>{investor.yieldTarget}%</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>YIELD TARGET</div>
           </div>
         </div>
       </div>
@@ -660,33 +661,33 @@ function DrawerMatches({ matches, investor, onAddDeal, existingDeals }: {
   matches: Match[]; investor: Investor; onAddDeal: (deal: InvestorDeal) => void; existingDeals: InvestorDeal[]
 }) {
   if (matches.length === 0) {
-    return <div style={{ textAlign: 'center', color: '#8a8070', fontFamily: "'Jost',sans-serif", padding: '40px 0' }}>Nenhum match encontrado com o portfólio actual.</div>
+    return <div style={{ textAlign: 'center', color: '#8a8070', fontFamily: 'var(--font-jost),sans-serif', padding: '40px 0' }}>Nenhum match encontrado com o portfólio actual.</div>
   }
 
   const existingRefs = new Set(existingDeals.map(d => d.propertyRef))
 
   return (
     <div>
-      <div style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700, color: G, marginBottom: 16 }}>
+      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G, marginBottom: 16 }}>
         {matches.length} Imóveis em Match
       </div>
       {matches.map(m => (
-        <div key={m.property.id} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
+        <div key={m.property.id} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: '12px', padding: '14px 16px', marginBottom: 10, boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
             <div>
-              <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, fontWeight: 600, color: TXT, marginBottom: 2 }}>{m.property.nome}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070' }}>{m.property.zona} · {m.property.tipo} · {fmt(m.property.preco)}</div>
+              <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, fontWeight: 600, color: TXT, marginBottom: 2 }}>{m.property.nome}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070' }}>{m.property.zona} · {m.property.tipo} · {fmt(m.property.preco)}</div>
             </div>
             <ScoreBar score={m.score} size="lg" />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
             <div style={{ background: '#f4f0e6', borderRadius: 8, padding: '8px 10px' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>YIELD EST.</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700, color: '#16a34a' }}>{m.yieldEstimado.toFixed(1)}%</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>YIELD EST.</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 700, color: '#16a34a' }}>{m.yieldEstimado.toFixed(1)}%</div>
             </div>
             <div style={{ background: '#f4f0e6', borderRadius: 8, padding: '8px 10px' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>IRR EST.</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700, color: '#2563eb' }}>{m.irrEstimado.toFixed(1)}%</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>IRR EST.</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 700, color: '#2563eb' }}>{m.irrEstimado.toFixed(1)}%</div>
             </div>
           </div>
           <button
@@ -707,7 +708,7 @@ function DrawerMatches({ matches, investor, onAddDeal, existingDeals }: {
               background: existingRefs.has(m.property.ref) ? '#f4f0e6' : G,
               color: existingRefs.has(m.property.ref) ? '#8a8070' : '#fff',
               border: 'none', cursor: existingRefs.has(m.property.ref) ? 'default' : 'pointer',
-              fontFamily: "'DM Mono',monospace", fontSize: 11, fontWeight: 600,
+              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, fontWeight: 600,
             }}>
             {existingRefs.has(m.property.ref) ? 'JÁ NO PIPELINE' : 'ADICIONAR AO PIPELINE'}
           </button>
@@ -721,20 +722,20 @@ function DrawerMatches({ matches, investor, onAddDeal, existingDeals }: {
 
 function DrawerPipeline({ deals, onStageChange }: { deals: InvestorDeal[]; onStageChange: (id: number, stage: DealStage) => void }) {
   if (deals.length === 0) {
-    return <div style={{ textAlign: 'center', color: '#8a8070', fontFamily: "'Jost',sans-serif", padding: '40px 0' }}>Nenhum deal activo. Use os Matches para iniciar.</div>
+    return <div style={{ textAlign: 'center', color: '#8a8070', fontFamily: 'var(--font-jost),sans-serif', padding: '40px 0' }}>Nenhum deal activo. Use os Matches para iniciar.</div>
   }
 
   const stages: DealStage[] = ['novo', 'enviado', 'interesse', 'visita', 'proposta']
 
   return (
     <div>
-      <div style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700, color: G, marginBottom: 16 }}>Pipeline Activo</div>
+      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G, marginBottom: 16 }}>Pipeline Activo</div>
       {deals.map(deal => (
-        <div key={deal.id} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
+        <div key={deal.id} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: '12px', padding: '14px 16px', marginBottom: 10, boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <div>
-              <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, fontWeight: 600, color: TXT }}>{deal.propertyTitle}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070' }}>{deal.propertyZona} · {fmt(deal.propertyPreco)}</div>
+              <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, fontWeight: 600, color: TXT }}>{deal.propertyTitle}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070' }}>{deal.propertyZona} · {fmt(deal.propertyPreco)}</div>
             </div>
             <ScoreBar score={deal.matchScore} />
           </div>
@@ -744,11 +745,11 @@ function DrawerPipeline({ deals, onStageChange }: { deals: InvestorDeal[]; onSta
                 padding: '4px 10px', borderRadius: 6, border: `1px solid ${deal.stage === s ? STAGE_COLORS[s] : '#d4cfc4'}`,
                 background: deal.stage === s ? STAGE_COLORS[s] : '#fff',
                 color: deal.stage === s ? '#fff' : '#8a8070',
-                fontFamily: "'DM Mono',monospace", fontSize: 9, cursor: 'pointer', fontWeight: 600,
+                fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600,
               }}>{STAGE_LABELS[s]}</button>
             ))}
           </div>
-          {deal.notas && <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, color: '#5a4f3a', fontStyle: 'italic' }}>{deal.notas}</div>}
+          {deal.notas && <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, color: '#5a4f3a', fontStyle: 'italic' }}>{deal.notas}</div>}
         </div>
       ))}
     </div>
@@ -763,35 +764,35 @@ function DrawerHistorico({ investor, deals }: { investor: Investor; deals: Inves
 
   return (
     <div>
-      <div style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700, color: G, marginBottom: 16 }}>Histórico de Deals</div>
+      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G, marginBottom: 16 }}>Histórico de Deals</div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-        <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Cormorant',serif", fontSize: 22, fontWeight: 700, color: G }}>{fmt(investor.totalInvested)}</div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>TOTAL INVESTIDO</div>
+        <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: '12px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: G }}>{fmt(investor.totalInvested)}</div>
+          <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>TOTAL INVESTIDO</div>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
-          <div style={{ fontFamily: "'Cormorant',serif", fontSize: 22, fontWeight: 700, color: '#16a34a' }}>{avgYield.toFixed(1)}%</div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>YIELD MÉDIO</div>
+        <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: '12px', padding: '14px', textAlign: 'center', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+          <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: '#16a34a' }}>{avgYield.toFixed(1)}%</div>
+          <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>YIELD MÉDIO</div>
         </div>
       </div>
 
       {deals.length === 0 ? (
-        <div style={{ textAlign: 'center', color: '#8a8070', fontFamily: "'Jost',sans-serif", padding: '20px 0' }}>Nenhum deal concluído ainda.</div>
+        <div style={{ textAlign: 'center', color: '#8a8070', fontFamily: 'var(--font-jost),sans-serif', padding: '20px 0' }}>Nenhum deal concluído ainda.</div>
       ) : (
         deals.map(deal => (
-          <div key={deal.id} style={{ background: '#fff', border: `1px solid #16a34a44`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
+          <div key={deal.id} style={{ background: '#fff', border: `1px solid #16a34a44`, borderRadius: '12px', padding: '14px 16px', marginBottom: 10, boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
               <div>
-                <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, fontWeight: 600, color: TXT }}>{deal.propertyTitle}</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070' }}>{deal.propertyZona}</div>
+                <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, fontWeight: 600, color: TXT }}>{deal.propertyTitle}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070' }}>{deal.propertyZona}</div>
               </div>
-              <span style={{ background: '#16a34a18', color: '#16a34a', border: '1px solid #16a34a33', borderRadius: 6, padding: '2px 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, fontWeight: 700 }}>FECHADO</span>
+              <span style={{ background: '#16a34a18', color: '#16a34a', border: '1px solid #16a34a33', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, fontWeight: 700 }}>FECHADO</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-              <div><div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>PREÇO</div><div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600 }}>{fmt(deal.propertyPreco)}</div></div>
-              <div><div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>YIELD</div><div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: '#16a34a' }}>{deal.yieldEstimado.toFixed(1)}%</div></div>
-              <div><div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>IRR</div><div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: '#2563eb' }}>{deal.irrEstimado.toFixed(1)}%</div></div>
+              <div><div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>PREÇO</div><div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, fontWeight: 600 }}>{fmt(deal.propertyPreco)}</div></div>
+              <div><div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>YIELD</div><div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, fontWeight: 600, color: '#16a34a' }}>{deal.yieldEstimado.toFixed(1)}%</div></div>
+              <div><div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>IRR</div><div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, fontWeight: 600, color: '#2563eb' }}>{deal.irrEstimado.toFixed(1)}%</div></div>
             </div>
           </div>
         ))
@@ -828,11 +829,12 @@ function TabDealFlow({ deals, investors, onStageChange }: {
         {convRates.map(({ stage, count, rate }) => (
           <div key={stage} style={{
             background: '#fff', border: `1px solid ${STAGE_COLORS[stage]}33`,
-            borderRadius: 10, padding: '10px 14px', minWidth: 100, textAlign: 'center', flex: 1,
+            borderRadius: '10px', padding: '10px 14px', minWidth: 100, textAlign: 'center', flex: 1,
+            boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
           }}>
-            <div style={{ fontFamily: "'Cormorant',serif", fontSize: 22, fontWeight: 700, color: STAGE_COLORS[stage] }}>{count}</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070', textTransform: 'uppercase' }}>{STAGE_LABELS[stage]}</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: STAGE_COLORS[stage], marginTop: 2 }}>{rate}%</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 700, color: STAGE_COLORS[stage] }}>{count}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070', textTransform: 'uppercase' }}>{STAGE_LABELS[stage]}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: STAGE_COLORS[stage], marginTop: 2 }}>{rate}%</div>
           </div>
         ))}
       </div>
@@ -849,40 +851,40 @@ function TabDealFlow({ deals, investors, onStageChange }: {
                 padding: '6px 10px', borderRadius: 8, background: STAGE_COLORS[stage] + '18',
               }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLORS[stage], display: 'inline-block' }} />
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: STAGE_COLORS[stage], fontWeight: 700 }}>{STAGE_LABELS[stage].toUpperCase()}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 10, color: STAGE_COLORS[stage] }}>{stageDeals.length}</span>
+                <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: STAGE_COLORS[stage], fontWeight: 700 }}>{STAGE_LABELS[stage].toUpperCase()}</span>
+                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: STAGE_COLORS[stage] }}>{stageDeals.length}</span>
               </div>
 
               {stageDeals.map(deal => {
                 const inv = investors.find(i => i.id === deal.investorId)
                 return (
                   <div key={deal.id} style={{
-                    background: '#fff', border: `1px solid #e8e2d4`, borderRadius: 10,
+                    background: '#fff', border: `1px solid #e8e2d4`, borderRadius: '10px',
                     padding: '12px', marginBottom: 8,
-                    boxShadow: '0 1px 4px #0000000a',
+                    boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
                   }}>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
                       <span style={{ fontSize: 14 }}>{inv?.flag ?? '🌍'}</span>
                       <div>
-                        <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 600, color: TXT }}>{getInvestorName(deal.investorId)}</div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070' }}>{deal.propertyZona}</div>
+                        <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 11, fontWeight: 600, color: TXT }}>{getInvestorName(deal.investorId)}</div>
+                        <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>{deal.propertyZona}</div>
                       </div>
                     </div>
-                    <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: '#5a4f3a', marginBottom: 8, lineHeight: 1.3 }}>{deal.propertyTitle}</div>
+                    <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 11, color: '#5a4f3a', marginBottom: 8, lineHeight: 1.3 }}>{deal.propertyTitle}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: G, fontWeight: 700 }}>{fmt(deal.propertyPreco)}</span>
+                      <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: G, fontWeight: 700 }}>{fmt(deal.propertyPreco)}</span>
                       <ScoreBar score={deal.matchScore} />
                     </div>
                     <div style={{ display: 'flex', gap: 4 }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#16a34a', background: '#16a34a18', borderRadius: 4, padding: '2px 6px' }}>{deal.yieldEstimado.toFixed(1)}% Y</span>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#2563eb', background: '#2563eb18', borderRadius: 4, padding: '2px 6px' }}>{deal.irrEstimado.toFixed(1)}% IRR</span>
+                      <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#16a34a', background: '#16a34a18', borderRadius: 4, padding: '2px 6px' }}>{deal.yieldEstimado.toFixed(1)}% Y</span>
+                      <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#2563eb', background: '#2563eb18', borderRadius: 4, padding: '2px 6px' }}>{deal.irrEstimado.toFixed(1)}% IRR</span>
                     </div>
                     {nextStage && (
                       <button onClick={() => onStageChange(deal.id, nextStage)} style={{
                         width: '100%', marginTop: 8, padding: '5px', borderRadius: 6,
                         background: STAGE_COLORS[nextStage] + '18', color: STAGE_COLORS[nextStage],
                         border: `1px solid ${STAGE_COLORS[nextStage]}44`,
-                        fontFamily: "'DM Mono',monospace", fontSize: 9, cursor: 'pointer', fontWeight: 700,
+                        fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 700,
                       }}>→ {STAGE_LABELS[nextStage].toUpperCase()}</button>
                     )}
                   </div>
@@ -976,24 +978,24 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
   return (
     <div style={{ display: 'grid', gridTemplateColumns: memo ? '420px 1fr' : '1fr', gap: 24 }}>
       {/* Form */}
-      <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 16, padding: '24px' }}>
-        <div style={{ fontFamily: "'Cormorant',serif", fontSize: 22, fontWeight: 700, color: G, marginBottom: 20 }}>
+      <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: '16px', padding: '24px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: G, marginBottom: 20 }}>
           Gerar Deal Memo IA
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Investidor</label>
+          <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Investidor</label>
           <select value={selInvestor ?? ''} onChange={e => setSelInvestor(Number(e.target.value) || null)}
-            style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none' }}>
+            style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none' }}>
             <option value="">Seleccionar investidor...</option>
             {investors.map(i => <option key={i.id} value={i.id}>{i.flag} {i.name} · {fmt(i.capitalMin)}–{fmt(i.capitalMax)}</option>)}
           </select>
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Imóvel</label>
+          <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Imóvel</label>
           <select value={selProperty ?? ''} onChange={e => setSelProperty(e.target.value || null)}
-            style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none' }}>
+            style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none' }}>
             <option value="">Seleccionar imóvel...</option>
             {properties.map(p => <option key={p.id} value={p.ref}>{p.ref} · {p.nome} · {fmt(p.preco)}</option>)}
           </select>
@@ -1001,7 +1003,7 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
 
         {investor && property && (
           <div style={{ background: '#f4f0e6', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#8a8070', marginBottom: 4 }}>MATCH SCORE</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070', marginBottom: 4 }}>MATCH SCORE</div>
             {(() => {
               const m = matchInvestorToProperties(investor, [property])
               const score = m[0]?.score ?? 0
@@ -1012,16 +1014,16 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
           <div>
-            <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Tipo de Deal</label>
+            <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Tipo de Deal</label>
             <select value={dealType} onChange={e => setDealType(e.target.value)}
-              style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none' }}>
+              style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none' }}>
               {DEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Idioma</label>
+            <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Idioma</label>
             <select value={language} onChange={e => setLanguage(e.target.value)}
-              style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none' }}>
+              style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none' }}>
               {MEMO_LANGS.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
@@ -1034,20 +1036,20 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
             { label: 'Timeline', val: timeline, set: setTimeline, ph: '5 anos' },
           ].map(({ label, val, set, ph }) => (
             <div key={label}>
-              <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>{label}</label>
+              <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>{label}</label>
               <input value={val} onChange={e => set(e.target.value)} placeholder={ph}
-                style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none', boxSizing: 'border-box' }} />
+                style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none', boxSizing: 'border-box' }} />
             </div>
           ))}
         </div>
 
-        {error && <div style={{ background: '#ef444418', border: '1px solid #ef444433', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontFamily: "'Jost',sans-serif", fontSize: 12, color: '#dc2626' }}>{error}</div>}
+        {error && <div style={{ background: '#ef444418', border: '1px solid #ef444433', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, color: '#dc2626' }}>{error}</div>}
 
         <button onClick={generateMemo} disabled={loading || !selInvestor || !selProperty} style={{
           width: '100%', padding: '14px', borderRadius: 10,
           background: loading || !selInvestor || !selProperty ? '#d4cfc4' : G,
           color: '#fff', border: 'none', cursor: loading || !selInvestor || !selProperty ? 'default' : 'pointer',
-          fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 700, letterSpacing: '.05em',
+          fontFamily: 'var(--font-dm-mono),monospace', fontSize: 13, fontWeight: 700, letterSpacing: '.05em',
           transition: 'background .2s',
         }}>
           {loading ? '⏳ A GERAR MEMO...' : 'GERAR DEAL MEMO IA'}
@@ -1056,18 +1058,18 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
 
       {/* Memo Result */}
       {memo && investor && property && (
-        <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 16, padding: '24px', overflowY: 'auto', maxHeight: '80vh' }}>
+        <div style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: '16px', padding: '24px', overflowY: 'auto', maxHeight: '80vh', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
           {/* Memo Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
             <div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', letterSpacing: '.06em', marginBottom: 4 }}>AGENCY GROUP · AMI 22506 · DEAL MEMO</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: 24, fontWeight: 700, color: TXT }}>{property.nome}</div>
-              <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#8a8070', marginTop: 2 }}>{investor.flag} {investor.name} · {dealType} · {language}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', letterSpacing: '.06em', marginBottom: 4 }}>AGENCY GROUP · AMI 22506 · DEAL MEMO</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 24, fontWeight: 700, color: TXT }}>{property.nome}</div>
+              <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: '#8a8070', marginTop: 2 }}>{investor.flag} {investor.name} · {dealType} · {language}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={exportTxt} style={{ background: '#f4f0e6', color: G, border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 14px', fontFamily: "'DM Mono',monospace", fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>EXPORTAR</button>
-              <button onClick={() => window.open(`mailto:${investor.email}?subject=Deal Memo: ${property.nome}&body=...`)} style={{ background: G, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: "'DM Mono',monospace", fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>EMAIL</button>
-              <button onClick={() => window.open(`https://wa.me/${investor.phone.replace(/\D/g, '')}?text=Deal Memo: ${property.nome}`)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: "'DM Mono',monospace", fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>WA</button>
+              <button onClick={exportTxt} style={{ background: '#f4f0e6', color: G, border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>EXPORTAR</button>
+              <button onClick={() => window.open(`mailto:${investor.email}?subject=Deal Memo: ${property.nome}&body=...`)} style={{ background: G, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>EMAIL</button>
+              <button onClick={() => window.open(`https://wa.me/${investor.phone.replace(/\D/g, '')}?text=Deal Memo: ${property.nome}`)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>WA</button>
             </div>
           </div>
 
@@ -1075,12 +1077,12 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
 
           {/* Executive Summary */}
           <MemoSection title="Executive Summary">
-            <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: TXT, lineHeight: 1.6, margin: 0 }}>{memo.executiveSummary}</p>
+            <p style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, color: TXT, lineHeight: 1.6, margin: 0 }}>{memo.executiveSummary}</p>
           </MemoSection>
 
           {/* Investment Thesis */}
           <MemoSection title="Investment Thesis">
-            <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: TXT, lineHeight: 1.6, margin: 0 }}>{memo.investmentThesis}</p>
+            <p style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, color: TXT, lineHeight: 1.6, margin: 0 }}>{memo.investmentThesis}</p>
           </MemoSection>
 
           {/* Financial Projections */}
@@ -1090,7 +1092,7 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
                 <thead>
                   <tr style={{ background: '#f4f0e6' }}>
                     {['Métrica', 'Valor'].map(h => (
-                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e2d4' }}>{h}</th>
+                      <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: '1px solid #e8e2d4' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1105,8 +1107,8 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
                     { k: 'ROI 5 Anos', v: `${memo.financials.roi5anos}%` },
                   ].map(({ k, v }, i) => (
                     <tr key={k} style={{ background: i % 2 === 0 ? '#fff' : '#f9f7f2' }}>
-                      <td style={{ padding: '10px 14px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#5a4f3a', borderBottom: '1px solid #f0ece2' }}>{k}</td>
-                      <td style={{ padding: '10px 14px', fontFamily: "'DM Mono',monospace", fontSize: 13, fontWeight: 700, color: G, borderBottom: '1px solid #f0ece2' }}>{v}</td>
+                      <td style={{ padding: '10px 14px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: '#5a4f3a', borderBottom: '1px solid #f0ece2' }}>{k}</td>
+                      <td style={{ padding: '10px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 13, fontWeight: 700, color: G, borderBottom: '1px solid #f0ece2' }}>{v}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1120,7 +1122,7 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
               {memo.risks.map((r, i) => (
                 <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
                   <span style={{ color: '#ef4444', fontSize: 12, marginTop: 2 }}>▲</span>
-                  <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, lineHeight: 1.5 }}>{r}</span>
+                  <span style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, lineHeight: 1.5 }}>{r}</span>
                 </li>
               ))}
             </ul>
@@ -1131,15 +1133,15 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
             <ol style={{ margin: 0, padding: 0, listStyle: 'none', counterReset: 'steps' }}>
               {memo.nextSteps.map((s, i) => (
                 <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 10 }}>
-                  <span style={{ background: G, color: '#fff', borderRadius: 6, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono',monospace", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
-                  <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, lineHeight: 1.5, paddingTop: 2 }}>{s}</span>
+                  <span style={{ background: G, color: '#fff', borderRadius: 6, width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                  <span style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, lineHeight: 1.5, paddingTop: 2 }}>{s}</span>
                 </li>
               ))}
             </ol>
           </MemoSection>
 
           <div style={{ borderTop: '1px solid #e8e2d4', marginTop: 20, paddingTop: 16, textAlign: 'center' }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070' }}>Agency Group · AMI 22506 · Gerado em {new Date('2026-04-05').toLocaleDateString('pt-PT')}</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070' }}>Agency Group · AMI 22506 · Gerado em {new Date('2026-04-05').toLocaleDateString('pt-PT')}</div>
           </div>
         </div>
       )}
@@ -1150,7 +1152,7 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
 function MemoSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 24 }}>
-      <div style={{ fontFamily: "'Cormorant',serif", fontSize: 16, fontWeight: 700, color: G, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 16, fontWeight: 300, color: G, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ width: 3, height: 16, background: GOLD, borderRadius: 2, display: 'inline-block' }} />
         {title}
       </div>
@@ -1208,10 +1210,10 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
 
   const inp = (label: string, field: keyof Investor, type: string = 'text') => (
     <div style={{ marginBottom: 14 }}>
-      <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>{label}</label>
+      <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>{label}</label>
       <input type={type} value={String(form[field] ?? '')}
         onChange={e => set(field, (type === 'number' ? Number(e.target.value) : e.target.value) as Investor[typeof field])}
-        style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none', boxSizing: 'border-box' }} />
+        style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none', boxSizing: 'border-box' }} />
     </div>
   )
 
@@ -1219,7 +1221,7 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
     <div style={{ position: 'fixed', inset: 0, background: '#000000aa', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: BG, borderRadius: 20, padding: '28px', width: 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px #00000033' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <span style={{ fontFamily: "'Cormorant',serif", fontSize: 22, fontWeight: 700, color: G }}>Novo Investidor</span>
+          <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: G }}>Novo Investidor</span>
           <button onClick={onClose} style={{ background: '#f4f0e6', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 14 }}>✕</button>
         </div>
 
@@ -1228,9 +1230,9 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
           {inp('Email', 'email', 'email')}
           {inp('Telefone', 'phone')}
           <div style={{ marginBottom: 14 }}>
-            <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Nacionalidade</label>
+            <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Nacionalidade</label>
             <select value={form.nationality ?? 'PT'} onChange={e => set('nationality', e.target.value as Investor['nationality'])}
-              style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none' }}>
+              style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none' }}>
               {[['PT','🇵🇹'],['UK','🇬🇧'],['US','🇺🇸'],['FR','🇫🇷'],['DE','🇩🇪'],['AE','🇦🇪'],['CN','🇨🇳'],['SA','🇸🇦'],['BR','🇧🇷'],['QA','🇶🇦']].map(([code, flag]) => (
                 <option key={code} value={code}>{flag} {code}</option>
               ))}
@@ -1243,15 +1245,15 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Tipo</label>
+          <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Tipo</label>
           <select value={form.type ?? 'hnwi'} onChange={e => set('type', e.target.value as InvestorType)}
-            style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT, outline: 'none' }}>
+            style={{ width: '100%', background: '#f4f0e6', border: '1px solid #d4cfc4', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT, outline: 'none' }}>
             {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Zonas de Interesse</label>
+          <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Zonas de Interesse</label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {zonaOpts.map(z => (
               <button key={z} onClick={() => toggleArr('zonas', z)} style={{
@@ -1259,14 +1261,14 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
                 background: (form.zonas ?? []).includes(z) ? G : '#fff',
                 color: (form.zonas ?? []).includes(z) ? '#fff' : '#5a4f3a',
                 border: `1px solid ${(form.zonas ?? []).includes(z) ? G : '#d4cfc4'}`,
-                fontFamily: "'DM Mono',monospace", fontSize: 10, cursor: 'pointer', fontWeight: 600,
+                fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600,
               }}>{z}</button>
             ))}
           </div>
         </div>
 
         <div style={{ marginBottom: 20 }}>
-          <label style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Tipo de Imóvel</label>
+          <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Tipo de Imóvel</label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {tipoOpts.map(t => (
               <button key={t} onClick={() => toggleArr('tipoImovel', t)} style={{
@@ -1274,15 +1276,15 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
                 background: (form.tipoImovel ?? []).includes(t) ? GOLD : '#fff',
                 color: (form.tipoImovel ?? []).includes(t) ? '#fff' : '#5a4f3a',
                 border: `1px solid ${(form.tipoImovel ?? []).includes(t) ? GOLD : '#d4cfc4'}`,
-                fontFamily: "'DM Mono',monospace", fontSize: 10, cursor: 'pointer', fontWeight: 600,
+                fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600,
               }}>{t}</button>
             ))}
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '12px', background: '#f4f0e6', color: '#5a4f3a', border: '1px solid #d4cfc4', borderRadius: 10, fontFamily: "'DM Mono',monospace", fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>CANCELAR</button>
-          <button onClick={handleSubmit} style={{ flex: 2, padding: '12px', background: G, color: '#fff', border: 'none', borderRadius: 10, fontFamily: "'DM Mono',monospace", fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>CRIAR INVESTIDOR</button>
+          <button onClick={onClose} style={{ flex: 1, padding: '12px', background: '#f4f0e6', color: '#5a4f3a', border: '1px solid #d4cfc4', borderRadius: 10, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>CANCELAR</button>
+          <button onClick={handleSubmit} style={{ flex: 2, padding: '12px', background: G, color: '#fff', border: 'none', borderRadius: 10, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>CRIAR INVESTIDOR</button>
         </div>
       </div>
     </div>
@@ -1373,7 +1375,7 @@ export default function PortalInvestidores() {
   ]
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', fontFamily: "'Jost',sans-serif", color: TXT, position: 'relative' }}>
+    <div style={{ background: BG, minHeight: '100vh', fontFamily: 'var(--font-jost),sans-serif', color: TXT, position: 'relative' }}>
       <style>{`
         @keyframes slideInRight { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -1387,13 +1389,13 @@ export default function PortalInvestidores() {
       <div style={{ background: G, padding: '24px 32px', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: '#c9a96e', letterSpacing: '.1em', marginBottom: 4 }}>AGENCY GROUP · AMI 22506</div>
-            <div style={{ fontFamily: "'Cormorant',serif", fontSize: 32, fontWeight: 700, letterSpacing: '-.02em' }}>Investor Intelligence OS</div>
-            <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#ffffff88', marginTop: 4 }}>Motor de Gestão de Investidores Imobiliários</div>
+            <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#c9a96e', letterSpacing: '.1em', marginBottom: 4 }}>AGENCY GROUP · AMI 22506</div>
+            <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 32, fontWeight: 300, letterSpacing: '-.02em' }}>Investor Intelligence OS</div>
+            <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: '#ffffff88', marginTop: 4 }}>Motor de Gestão de Investidores Imobiliários</div>
           </div>
           <button onClick={() => setShowNewModal(true)} style={{
             background: GOLD, color: '#fff', border: 'none', borderRadius: 10,
-            padding: '12px 20px', fontFamily: "'DM Mono',monospace", fontSize: 12,
+            padding: '12px 20px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12,
             cursor: 'pointer', fontWeight: 700, letterSpacing: '.05em',
             boxShadow: '0 4px 16px #c9a96e44',
           }}>
@@ -1410,8 +1412,8 @@ export default function PortalInvestidores() {
             { label: 'Yield Médio Target', value: `${avgYield.toFixed(1)}%`, color: '#f59e0b' },
           ].map(({ label, value, color }) => (
             <div key={label} style={{ background: '#ffffff12', borderRadius: 10, padding: '12px 18px', flex: 1, minWidth: 120, backdropFilter: 'blur(4px)' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: '#ffffff66', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>{label}</div>
-              <div style={{ fontFamily: "'Cormorant',serif", fontSize: 24, fontWeight: 700, color }}>{value}</div>
+              <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#ffffff66', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>{label}</div>
+              <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 24, fontWeight: 700, color }}>{value}</div>
             </div>
           ))}
         </div>
@@ -1423,7 +1425,7 @@ export default function PortalInvestidores() {
           {MAIN_TABS.map(t => (
             <button key={t.id} onClick={() => setMainTab(t.id)} style={{
               padding: '16px 20px', border: 'none', background: 'none', cursor: 'pointer',
-              fontFamily: "'DM Mono',monospace", fontSize: 12, fontWeight: mainTab === t.id ? 700 : 400,
+              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, fontWeight: mainTab === t.id ? 700 : 400,
               color: mainTab === t.id ? G : '#8a8070',
               borderBottom: mainTab === t.id ? `2px solid ${G}` : '2px solid transparent',
               transition: 'all .15s', letterSpacing: '.04em',
@@ -1443,13 +1445,13 @@ export default function PortalInvestidores() {
               {/* Filters */}
               <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
                 <select value={filterType} onChange={e => setFilterType(e.target.value)}
-                  style={{ background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: "'DM Mono',monospace", fontSize: 11, color: filterType ? G : '#8a8070', outline: 'none', cursor: 'pointer' }}>
+                  style={{ background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: filterType ? G : '#8a8070', outline: 'none', cursor: 'pointer' }}>
                   <option value="">Todos os Tipos</option>
                   {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
 
                 <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-                  style={{ background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: "'DM Mono',monospace", fontSize: 11, color: filterStatus ? G : '#8a8070', outline: 'none', cursor: 'pointer' }}>
+                  style={{ background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: filterStatus ? G : '#8a8070', outline: 'none', cursor: 'pointer' }}>
                   <option value="">Todos os Status</option>
                   <option value="activo">Activo</option>
                   <option value="dormiente">Dormiente</option>
@@ -1457,13 +1459,13 @@ export default function PortalInvestidores() {
                 </select>
 
                 <select value={filterZona} onChange={e => setFilterZona(e.target.value)}
-                  style={{ background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: "'DM Mono',monospace", fontSize: 11, color: filterZona ? G : '#8a8070', outline: 'none', cursor: 'pointer' }}>
+                  style={{ background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: filterZona ? G : '#8a8070', outline: 'none', cursor: 'pointer' }}>
                   <option value="">Todas as Zonas</option>
                   {allZonas.map(z => <option key={z} value={z}>{z}</option>)}
                 </select>
 
                 <select value={filterCapital} onChange={e => setFilterCapital(e.target.value)}
-                  style={{ background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: "'DM Mono',monospace", fontSize: 11, color: filterCapital ? G : '#8a8070', outline: 'none', cursor: 'pointer' }}>
+                  style={{ background: '#fff', border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: filterCapital ? G : '#8a8070', outline: 'none', cursor: 'pointer' }}>
                   <option value="">Todos os Capitais</option>
                   <option value="under1M">Até €1M</option>
                   <option value="1M-5M">€1M – €5M</option>
@@ -1472,12 +1474,12 @@ export default function PortalInvestidores() {
 
                 {(filterType || filterStatus || filterZona || filterCapital) && (
                   <button onClick={() => { setFilterType(''); setFilterStatus(''); setFilterZona(''); setFilterCapital('') }}
-                    style={{ background: '#ef444418', color: '#dc2626', border: '1px solid #ef444433', borderRadius: 8, padding: '8px 12px', fontFamily: "'DM Mono',monospace", fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>
+                    style={{ background: '#ef444418', color: '#dc2626', border: '1px solid #ef444433', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>
                     LIMPAR FILTROS
                   </button>
                 )}
 
-                <div style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#8a8070', padding: '8px 0' }}>
+                <div style={{ marginLeft: 'auto', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070', padding: '8px 0' }}>
                   {filteredInvestors.length} de {investors.length}
                 </div>
               </div>
@@ -1494,7 +1496,7 @@ export default function PortalInvestidores() {
               </div>
 
               {filteredInvestors.length === 0 && (
-                <div style={{ textAlign: 'center', color: '#8a8070', padding: '60px 0', fontFamily: "'Jost',sans-serif" }}>
+                <div style={{ textAlign: 'center', color: '#8a8070', padding: '60px 0', fontFamily: 'var(--font-jost),sans-serif' }}>
                   Nenhum investidor encontrado com estes filtros.
                 </div>
               )}
@@ -1503,30 +1505,30 @@ export default function PortalInvestidores() {
             {/* Right: KPI sidebar when no drawer */}
             {!selectedId && (
               <div style={{ width: 280, flexShrink: 0 }}>
-                <div style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700, color: G, marginBottom: 14 }}>Carteira</div>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G, marginBottom: 14 }}>Carteira</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {Object.entries(TYPE_LABELS).map(([type, label]) => {
                     const count = investors.filter(i => i.type === type).length
                     if (count === 0) return null
                     return (
-                      <div key={type} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: TXT }}>{label}</span>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: TYPE_COLORS[type as InvestorType], fontWeight: 700 }}>{count}</span>
+                      <div key={type} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
+                        <span style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: TXT }}>{label}</span>
+                        <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, color: TYPE_COLORS[type as InvestorType], fontWeight: 700 }}>{count}</span>
                       </div>
                     )
                   })}
                 </div>
 
-                <div style={{ fontFamily: "'Cormorant',serif", fontSize: 18, fontWeight: 700, color: G, marginTop: 24, marginBottom: 14 }}>Top Zonas</div>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G, marginTop: 24, marginBottom: 14 }}>Top Zonas</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {allZonas.slice(0, 6).map(z => {
                     const cnt = investors.filter(i => i.zonas.includes(z)).length
                     const pct = Math.round((cnt / investors.length) * 100)
                     return (
-                      <div key={z} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 10, padding: '10px 14px' }}>
+                      <div key={z} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: 10, padding: '10px 14px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                          <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, color: TXT }}>{z}</span>
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: G, fontWeight: 700 }}>{cnt}</span>
+                          <span style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, color: TXT }}>{z}</span>
+                          <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: G, fontWeight: 700 }}>{cnt}</span>
                         </div>
                         <div style={{ height: 4, background: '#f4f0e6', borderRadius: 4 }}>
                           <div style={{ height: '100%', width: `${pct}%`, background: G, borderRadius: 4 }} />
