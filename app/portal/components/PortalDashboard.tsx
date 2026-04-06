@@ -7,6 +7,7 @@ import type { SectionId } from './types'
 import { PIPELINE_STAGES, STAGE_PCT, STAGE_COLOR } from './constants'
 import { useStaggerIn, useFadeIn } from '../hooks/useGSAPAnimations'
 import { SkeletonDashboard, SkeletonKPIGrid } from './PortalSkeleton'
+import Tooltip from './Tooltip'
 
 interface PortalDashboardProps {
   agentName: string
@@ -49,23 +50,61 @@ interface AlertItem {
 // ─── Sparkline SVG ────────────────────────────────────────────────────────────
 function Sparkline({ data, color }: { data: number[]; color: string }) {
   if (data.length < 2) return null
+  const w = 64, h = 28
   const max = Math.max(...data)
   const min = Math.min(...data)
-  const w = 60
-  const h = 24
-  const pts = data
-    .map((v, i) => {
-      const x = (i / (data.length - 1)) * w
-      const y = h - ((v - min) / (max - min || 1)) * h
-      return `${x.toFixed(1)},${y.toFixed(1)}`
-    })
-    .join(' ')
-  const lastPt = pts.split(' ').pop() ?? '0,0'
-  const [lx, ly] = lastPt.split(',')
+  const range = max - min || 1
+
+  // Calculate points
+  const pts = data.map((v, i) => ({
+    x: (i / (data.length - 1)) * w,
+    y: h - 4 - ((v - min) / range) * (h - 8),
+  }))
+
+  // Build smooth cubic bezier path
+  function smoothPath(points: { x: number; y: number }[]): string {
+    if (points.length < 2) return ''
+    let d = `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`
+    for (let i = 0; i < points.length - 1; i++) {
+      const cp1x = points[i].x + (points[i + 1].x - points[i].x) / 3
+      const cp1y = points[i].y
+      const cp2x = points[i + 1].x - (points[i + 1].x - points[i].x) / 3
+      const cp2y = points[i + 1].y
+      d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${points[i + 1].x.toFixed(1)},${points[i + 1].y.toFixed(1)}`
+    }
+    return d
+  }
+
+  const linePath = smoothPath(pts)
+  const lastPt = pts[pts.length - 1]
+
+  // Area path (close below the line)
+  const areaPath = linePath + ` L ${w},${h} L 0,${h} Z`
+
+  const gradId = `sg_${color.replace('#', '')}`
+
   return (
     <svg width={w} height={h} style={{ overflow: 'visible', display: 'block' }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
-      <circle cx={lx} cy={ly} r="2.5" fill={color} />
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.18" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {/* Area fill */}
+      <path d={areaPath} fill={`url(#${gradId})`} />
+      {/* Line */}
+      <path
+        d={linePath}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Last point dot */}
+      <circle cx={lastPt.x} cy={lastPt.y} r="2.5" fill={color} />
+      <circle cx={lastPt.x} cy={lastPt.y} r="4" fill={color} fillOpacity="0.20" />
     </svg>
   )
 }
@@ -2135,8 +2174,8 @@ export default function PortalDashboard({
           {QUICK_ACTIONS.map(a => {
             const needsAction = a.sec === 'crm' && followUpsHoje > 0
             return (
+              <Tooltip key={a.label} content={a.sub} darkMode={darkMode} position="top">
               <div
-                key={a.label}
                 data-stagger=""
                 className="qa-card"
                 style={{
@@ -2265,6 +2304,7 @@ export default function PortalDashboard({
                   →
                 </div>
               </div>
+              </Tooltip>
             )
           })}
         </div>

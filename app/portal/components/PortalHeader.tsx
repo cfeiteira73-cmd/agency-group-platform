@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { SECTION_NAMES } from './constants'
 import type { CRMContact } from './types'
+import Tooltip from './Tooltip'
 
 interface Deal {
   id: number
@@ -112,6 +113,7 @@ export default function PortalHeader({
 
         {/* Notification Bell */}
         <div style={{ position: 'relative' }}>
+          <Tooltip content="Notificações" darkMode={darkMode}>
           <button
             aria-label={`Alertas${totalAlerts > 0 ? ` — ${totalAlerts} activo${totalAlerts !== 1 ? 's' : ''}` : ''}`}
             aria-expanded={showNotifPanel}
@@ -127,6 +129,7 @@ export default function PortalHeader({
               <span style={{ position: 'absolute', top: '2px', right: '2px', minWidth: '16px', height: '16px', borderRadius: '8px', background: '#e05454', border: `2px solid ${darkMode ? '#0c1f15' : '#fff'}`, fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px' }}>{totalAlerts}</span>
             )}
           </button>
+          </Tooltip>
 
           {showNotifPanel && (
             <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: darkMode ? '#0f2117' : '#fff', border: `1px solid ${darkMode ? 'rgba(201,169,110,.15)' : 'rgba(14,14,13,.12)'}`, boxShadow: '0 16px 48px rgba(0,0,0,.25)', zIndex: 300, overflow: 'hidden', borderRadius: '16px' }}>
@@ -205,15 +208,17 @@ export default function PortalHeader({
         </div>
 
         {/* Dark mode toggle */}
-        <button
-          aria-label={darkMode ? 'Activar modo claro' : 'Activar modo escuro'}
-          tabIndex={0}
-          onClick={() => setDarkMode(!darkMode)}
-          style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, cursor: 'pointer', fontSize: '.78rem', background: 'transparent', color: darkMode ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.4)', transition: 'all .2s', flexShrink: 0 }}
-          title={darkMode ? 'Modo claro' : 'Modo escuro'}
-        >
-          {darkMode ? '☀️' : '🌙'}
-        </button>
+        <Tooltip content="Modo escuro" shortcut="⌘D" darkMode={darkMode}>
+          <button
+            aria-label={darkMode ? 'Activar modo claro' : 'Activar modo escuro'}
+            tabIndex={0}
+            onClick={() => setDarkMode(!darkMode)}
+            style={{ padding: '6px 10px', borderRadius: '8px', border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, cursor: 'pointer', fontSize: '.78rem', background: 'transparent', color: darkMode ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.4)', transition: 'all .2s', flexShrink: 0 }}
+            title={darkMode ? 'Modo claro' : 'Modo escuro'}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+        </Tooltip>
       </div>
     </header>
   )

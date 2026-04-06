@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { NAV, SECTION_NAMES } from './constants'
 import type { SectionId } from './types'
+import Tooltip from './Tooltip'
 
 interface PortalSidebarProps {
   agentName: string
@@ -65,19 +66,20 @@ export default function PortalSidebar({
               lastGroup = item.group
             }
             rendered.push(
-              <div
-                key={item.id}
-                role="menuitem"
-                tabIndex={0}
-                className={`nav-item${section === item.id ? ' active' : ''}`}
-                onClick={() => { setSection(item.id); setSidebarOpen(false) }}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSection(item.id); setSidebarOpen(false) } }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" style={{ flexShrink: 0 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                </svg>
-                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>
-              </div>
+              <Tooltip key={item.id} content={item.label} position="right" darkMode>
+                <div
+                  role="menuitem"
+                  tabIndex={0}
+                  className={`nav-item${section === item.id ? ' active' : ''}`}
+                  onClick={() => { setSection(item.id); setSidebarOpen(false) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSection(item.id); setSidebarOpen(false) } }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                  </svg>
+                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>
+                </div>
+              </Tooltip>
             )
           })
           return rendered

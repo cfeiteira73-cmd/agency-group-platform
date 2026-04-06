@@ -1,11 +1,12 @@
 'use client'
+import type { CSSProperties } from 'react'
 
 interface SkeletonProps {
   darkMode?: boolean
 }
 
 // Base shimmer line
-function SkLine({ w = '100%', h = 14, r = 6, style }: { w?: string | number; h?: number; r?: number; style?: React.CSSProperties }) {
+function SkLine({ w = '100%', h = 14, r = 6, style }: { w?: string | number; h?: number; r?: number; style?: CSSProperties }) {
   return (
     <div
       className="skeleton"

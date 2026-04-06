@@ -1,20 +1,15 @@
 'use client'
-import { useEffect, useRef } from 'react'
-
-// Only import gsap on client side
-let gsap: typeof import('gsap').gsap | null = null
-if (typeof window !== 'undefined') {
-  import('gsap').then(m => { gsap = m.gsap })
-}
+import { useEffect, type RefObject } from 'react'
+import gsap from 'gsap'
 
 /** Stagger-in a group of elements (cards, rows, items) */
 export function useStaggerIn(
-  containerRef: React.RefObject<HTMLElement | null>,
+  containerRef: RefObject<HTMLElement | null>,
   selector: string = '[data-stagger]',
   options?: { delay?: number; duration?: number; y?: number }
 ) {
   useEffect(() => {
-    if (!gsap || !containerRef.current) return
+    if (!containerRef.current) return
     const els = containerRef.current.querySelectorAll(selector)
     if (!els.length) return
     gsap.fromTo(
@@ -29,16 +24,17 @@ export function useStaggerIn(
         clearProps: 'transform',
       }
     )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 }
 
 /** Fade + slide in a single element */
 export function useFadeIn(
-  ref: React.RefObject<HTMLElement | null>,
+  ref: RefObject<HTMLElement | null>,
   options?: { delay?: number; duration?: number; y?: number }
 ) {
   useEffect(() => {
-    if (!gsap || !ref.current) return
+    if (!ref.current) return
     gsap.fromTo(
       ref.current,
       { opacity: 0, y: options?.y ?? 12 },
@@ -50,42 +46,42 @@ export function useFadeIn(
         clearProps: 'transform',
       }
     )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 }
 
 /** Animate a number counting up from 0 to target */
 export function useCountUp(
-  ref: React.RefObject<HTMLElement | null>,
+  ref: RefObject<HTMLElement | null>,
   target: number,
   options?: { delay?: number; duration?: number; prefix?: string; suffix?: string; decimals?: number }
 ) {
   useEffect(() => {
-    if (!gsap || !ref.current) return
+    if (!ref.current) return
     const obj = { val: 0 }
-    const prefix = options?.prefix ?? ''
-    const suffix = options?.suffix ?? ''
-    const decimals = options?.decimals ?? 0
+    const el = ref.current
     gsap.to(obj, {
       val: target,
       duration: options?.duration ?? 1.2,
       delay: options?.delay ?? 0.2,
       ease: 'power2.out',
       onUpdate: () => {
-        if (ref.current) {
-          ref.current.textContent = prefix + obj.val.toFixed(decimals) + suffix
+        if (el) {
+          el.textContent = (options?.prefix ?? '') + obj.val.toFixed(options?.decimals ?? 0) + (options?.suffix ?? '')
         }
       }
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target])
 }
 
 /** Subtle scale pulse for notification/alert elements */
 export function usePulseAttention(
-  ref: React.RefObject<HTMLElement | null>,
+  ref: RefObject<HTMLElement | null>,
   active: boolean
 ) {
   useEffect(() => {
-    if (!gsap || !ref.current || !active) return
+    if (!ref.current || !active) return
     gsap.fromTo(
       ref.current,
       { scale: 1 },

@@ -715,6 +715,39 @@ export default function Portal() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
+  // ── Section transition ref ────────────────────────────────────────────────────
+  const mainContentRef = useRef<HTMLElement>(null)
+
+  // ── GSAP section transition — runs on every section change ───────────────────
+  useEffect(() => {
+    if (!mainContentRef.current) return
+    import('gsap').then(({ gsap }) => {
+      gsap.fromTo(
+        mainContentRef.current!,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.28, ease: 'power2.out', clearProps: 'transform' }
+      )
+    })
+  }, [section])
+
+  // ── Animated navigation ───────────────────────────────────────────────────────
+  const navigateTo = useCallback((newSection: SectionId) => {
+    if (!mainContentRef.current) {
+      setSection(newSection)
+      return
+    }
+    import('gsap').then(({ gsap }) => {
+      gsap.to(mainContentRef.current!, {
+        opacity: 0, y: -8,
+        duration: 0.18, ease: 'power2.in',
+        onComplete: () => {
+          setSection(newSection)
+          // Entry animation triggered by the section useEffect above
+        }
+      })
+    })
+  }, [setSection])
+
   // ── WEEKLY REPORT ─────────────────────────────────────────────────────────────
 
   async function handleWeeklyReport() {
@@ -840,7 +873,7 @@ export default function Portal() {
           section={section}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
-          setSection={(s) => setSection(s as SectionId)}
+          setSection={(s) => navigateTo(s as SectionId)}
           logout={logout}
         />
 
@@ -861,7 +894,7 @@ export default function Portal() {
             section={section}
             darkMode={darkMode}
             setDarkMode={setDarkMode}
-            setSection={(s) => setSection(s as SectionId)}
+            setSection={(s) => navigateTo(s as SectionId)}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
             deals={deals}
@@ -874,7 +907,7 @@ export default function Portal() {
           />
 
           {/* Content */}
-          <main style={{ flex: 1, overflowY: (section === 'juridico' || section === 'sofia') ? 'hidden' : 'auto', padding: (section === 'juridico' || section === 'sofia') ? '0' : '32px', display: 'flex', flexDirection: 'column' }}>
+          <main ref={mainContentRef} style={{ flex: 1, overflowY: (section === 'juridico' || section === 'sofia') ? 'hidden' : 'auto', padding: (section === 'juridico' || section === 'sofia') ? '0' : '32px', display: 'flex', flexDirection: 'column' }}>
 
             {section === 'dashboard' && (
               <PortalDashboard
@@ -885,7 +918,7 @@ export default function Portal() {
                 onWeeklyReport={handleWeeklyReport}
                 onCloseWeeklyReport={() => setWeeklyReport(null)}
                 exportToPDF={exportToPDF}
-                onSetSection={(s) => setSection(s)}
+                onSetSection={(s) => navigateTo(s)}
               />
             )}
 

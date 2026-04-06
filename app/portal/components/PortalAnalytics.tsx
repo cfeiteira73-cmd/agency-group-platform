@@ -188,90 +188,141 @@ function scoreCell(score: number): string {
 
 function BarChart({ data, labels, height = 120, color = '#1c4a35', highlightTop = 3, highlightColor = '#c9a96e', showTrend = true }: BarChartProps) {
   const [tooltip, setTooltip] = useState<{ idx: number; x: number; y: number } | null>(null)
-  const W = 600
-  const H = height
-  const PAD = { top: 10, right: 10, bottom: 24, left: 10 }
+  const W = 600, H = height + 40
+  const PAD = { top: 10, right: 8, bottom: 32, left: 8 }
   const chartW = W - PAD.left - PAD.right
   const chartH = H - PAD.top - PAD.bottom
-  const max = Math.max(...data) * 1.1 || 1  // guard against division-by-zero on empty/zero data
+  const max = Math.max(...data, 1)
   const barW = chartW / data.length
-  const barPad = barW * 0.18
+  const bw = Math.max(barW * 0.55, 4)
 
-  const sorted = [...data].sort((a, b) => b - a)
-  const topVals = sorted.slice(0, highlightTop)
+  // Sort indices to find top N
+  const sorted = [...data].map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v)
+  const topIdx = new Set(sorted.slice(0, highlightTop).map(x => x.i))
 
-  const trendPoints = data.map((v, i) => {
-    const x = PAD.left + i * barW + barW / 2
-    const y = PAD.top + chartH - (v / max) * chartH
-    return `${x},${y}`
-  }).join(' ')
+  // Trend line using smooth quadratic bezier
+  const trendPts = data.map((v, i) => ({
+    x: PAD.left + i * barW + barW / 2,
+    y: PAD.top + chartH - (v / max) * chartH,
+  }))
+  function smoothTrendPath(pts: { x: number; y: number }[]): string {
+    if (pts.length < 2) return ''
+    let d = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`
+    for (let i = 0; i < pts.length - 1; i++) {
+      const cpx = (pts[i].x + pts[i + 1].x) / 2
+      d += ` Q ${cpx.toFixed(1)},${pts[i].y.toFixed(1)} ${pts[i + 1].x.toFixed(1)},${pts[i + 1].y.toFixed(1)}`
+    }
+    return d
+  }
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block' }}>
+        <defs>
+          <linearGradient id="bar-grad-hi" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={highlightColor} stopOpacity="1" />
+            <stop offset="100%" stopColor={highlightColor} stopOpacity="0.65" />
+          </linearGradient>
+          <linearGradient id="bar-grad-base" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.85" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.45" />
+          </linearGradient>
+        </defs>
+
         {/* Grid lines */}
         {[0.25, 0.5, 0.75, 1].map(t => (
-          <line
-            key={t}
+          <line key={t}
             x1={PAD.left} y1={PAD.top + chartH * (1 - t)}
             x2={W - PAD.right} y2={PAD.top + chartH * (1 - t)}
-            stroke="#e8e2d6" strokeWidth="0.5"
+            stroke="rgba(14,14,13,.06)" strokeWidth="1" strokeDasharray="2,4"
           />
         ))}
+
         {/* Bars */}
         {data.map((v, i) => {
-          const x = PAD.left + i * barW + barPad
-          const bw = barW - barPad * 2
-          const bh = (v / max) * chartH
+          const bh = Math.max((v / max) * chartH, 2)
+          const x = PAD.left + i * barW + (barW - bw) / 2
           const y = PAD.top + chartH - bh
-          const isTop = topVals.includes(v)
-          const fill = isTop ? highlightColor : color
+          const isTop = topIdx.has(i)
           const isHovered = tooltip?.idx === i
           return (
             <g key={i}
-              onMouseEnter={e => setTooltip({ idx: i, x: PAD.left + i * barW + barW / 2, y })}
+              onMouseEnter={() => setTooltip({ idx: i, x: PAD.left + i * barW + barW / 2, y })}
               onMouseLeave={() => setTooltip(null)}
               style={{ cursor: 'pointer' }}
             >
-              <rect x={x} y={y} width={bw} height={bh}
-                fill={fill} opacity={isHovered ? 1 : 0.85}
-                rx="2"
+              {/* Shadow bar */}
+              <rect
+                x={x + 1} y={y + 2}
+                width={bw} height={bh}
+                rx={3} ry={3}
+                fill="rgba(14,14,13,.06)"
+              />
+              {/* Main bar */}
+              <rect
+                x={x} y={y}
+                width={bw} height={bh}
+                rx={3} ry={3}
+                fill={isTop ? 'url(#bar-grad-hi)' : 'url(#bar-grad-base)'}
+                opacity={isHovered ? 1 : 0.9}
                 style={{ transition: 'opacity 0.15s' }}
               />
+              {/* Top value label for highlighted bars */}
+              {isTop && (
+                <text
+                  x={x + bw / 2} y={y - 4}
+                  textAnchor="middle"
+                  fill={highlightColor}
+                  fontSize="9"
+                  fontFamily="DM Mono, monospace"
+                  fontWeight="400"
+                >
+                  {v}
+                </text>
+              )}
+              {/* X-axis label */}
               {labels && (
-                <text x={PAD.left + i * barW + barW / 2} y={H - 4}
-                  textAnchor="middle" fontSize="8" fill="#6b6b5e"
-                  fontFamily="'DM Mono',monospace"
-                >{labels[i]}</text>
+                <text
+                  x={PAD.left + i * barW + barW / 2} y={H - 8}
+                  textAnchor="middle"
+                  fill="rgba(14,14,13,.38)"
+                  fontSize="8"
+                  fontFamily="DM Mono, monospace"
+                >
+                  {labels[i]}
+                </text>
               )}
             </g>
           )
         })}
+
         {/* Trend line */}
-        {showTrend && (
-          <polyline
-            points={trendPoints}
+        {showTrend && data.length > 2 && (
+          <path
+            d={smoothTrendPath(trendPts)}
             fill="none"
-            stroke="#e74c3c"
+            stroke={highlightColor}
             strokeWidth="1.5"
-            strokeDasharray="4 2"
-            opacity="0.7"
+            strokeDasharray="3,4"
+            strokeOpacity="0.55"
+            strokeLinecap="round"
           />
         )}
+
         {/* Tooltip */}
         {tooltip && (
           <g>
             <rect
               x={Math.min(tooltip.x - 28, W - 70)}
               y={tooltip.y - 28}
-              width={64} height={20} rx="4"
+              width={64} height={20} rx={4}
               fill="#0e0e0d" opacity="0.85"
             />
             <text
               x={Math.min(tooltip.x - 28, W - 70) + 32}
               y={tooltip.y - 14}
               textAnchor="middle" fontSize="8.5" fill="#f4f0e6"
-              fontFamily="'DM Mono',monospace"
+              fontFamily="DM Mono, monospace"
             >{fmt(data[tooltip.idx])}</text>
           </g>
         )}
@@ -284,40 +335,73 @@ function DonutChart({ segments, size = 160, thickness = 36, centerLabel }: Donut
   const [mounted, setMounted] = useState(false)
   useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t) }, [])
 
-  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1  // guard against division-by-zero
-  const cx = size / 2
-  const cy = size / 2
-  const r = (size - thickness) / 2
+  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1
+  const cx = size / 2, cy = size / 2
+  const r = (size - thickness) / 2 - 4
 
-  let cumAngle = -Math.PI / 2
+  let start = -Math.PI / 2
   const arcs = segments.map(seg => {
     const angle = (seg.value / total) * 2 * Math.PI
-    const start = cumAngle
-    const end = cumAngle + angle
-    cumAngle = end
+    const end = start + angle
     const x1 = cx + r * Math.cos(start)
     const y1 = cy + r * Math.sin(start)
     const x2 = cx + r * Math.cos(end)
     const y2 = cy + r * Math.sin(end)
     const large = angle > Math.PI ? 1 : 0
-    const path = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${cx} ${cy} Z`
-    return { ...seg, path, startA: start, endA: end }
+    const path = `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`
+    const result = { ...seg, path, startA: start, endA: end }
+    start = end
+    return result
   })
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
-        style={{ flexShrink: 0, opacity: mounted ? 1 : 0, transition: 'opacity 0.5s' }}
+        style={{ flexShrink: 0, opacity: mounted ? 1 : 0, transition: 'opacity 0.5s', display: 'block' }}
       >
+        <defs>
+          {arcs.map((arc, i) => (
+            <radialGradient key={i} id={`donut-grad-${i}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={arc.color} stopOpacity="0.9" />
+              <stop offset="100%" stopColor={arc.color} stopOpacity="1" />
+            </radialGradient>
+          ))}
+        </defs>
+
+        {/* Background track */}
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill="none"
+          stroke="rgba(14,14,13,.06)"
+          strokeWidth={thickness}
+        />
+
+        {/* Segments */}
         {arcs.map((arc, i) => (
-          <path key={i} d={arc.path} fill={arc.color} opacity="0.9"
-            stroke="#f4f0e6" strokeWidth="1.5"
+          <path
+            key={i}
+            d={arc.path}
+            fill={`url(#donut-grad-${i})`}
+            stroke="rgba(255,255,255,.08)"
+            strokeWidth="1"
           />
         ))}
-        <circle cx={cx} cy={cy} r={r - thickness / 2 + 2} fill="#f4f0e6" />
+
+        {/* Center hole cutout */}
+        <circle cx={cx} cy={cy} r={r - thickness / 2} fill="white" />
+
+        {/* Center label */}
         {centerLabel && (
-          <text x={cx} y={cy + 4} textAnchor="middle" fontSize="10"
-            fill="#0e0e0d" fontFamily="'DM Mono',monospace">{centerLabel}</text>
+          <>
+            <text x={cx} y={cy - 4} textAnchor="middle" fill="#1c4a35"
+              fontSize="20" fontFamily="Cormorant, serif" fontWeight="300">
+              {centerLabel}
+            </text>
+            <text x={cx} y={cy + 12} textAnchor="middle" fill="rgba(14,14,13,.40)"
+              fontSize="7" fontFamily="DM Mono, monospace" letterSpacing="1">
+              TOTAL
+            </text>
+          </>
         )}
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -345,51 +429,105 @@ function LineChart({ series, labels, height = 100, showGrid = true, yPrefix = ''
   const allVals = series.flatMap(s => s.data)
   const minV = Math.min(...allVals) * 0.95
   const maxV = Math.max(...allVals) * 1.05
-  const range = maxV - minV || 1  // guard against division-by-zero when all values are equal
+  const range = maxV - minV || 1
 
   const getX = (i: number) => labels.length <= 1
     ? PAD.left + chartW / 2
     : PAD.left + (i / (labels.length - 1)) * chartW
   const getY = (v: number) => PAD.top + chartH - ((v - minV) / range) * chartH
 
+  // Smooth cubic bezier path builder
+  function smoothLinePath(pts: { x: number; y: number }[]): string {
+    if (pts.length < 2) return ''
+    let d = `M ${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`
+    for (let i = 0; i < pts.length - 1; i++) {
+      const cp1x = pts[i].x + (pts[i + 1].x - pts[i].x) / 3
+      const cp1y = pts[i].y
+      const cp2x = pts[i + 1].x - (pts[i + 1].x - pts[i].x) / 3
+      const cp2y = pts[i + 1].y
+      d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${pts[i + 1].x.toFixed(1)},${pts[i + 1].y.toFixed(1)}`
+    }
+    return d
+  }
+
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block' }}>
+        <defs>
+          {series.map((s, si) => (
+            <linearGradient key={si} id={`line-area-${si}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={s.color} stopOpacity="0.18" />
+              <stop offset="100%" stopColor={s.color} stopOpacity="0" />
+            </linearGradient>
+          ))}
+        </defs>
+
         {showGrid && [0, 0.25, 0.5, 0.75, 1].map(t => (
           <line key={t}
             x1={PAD.left} y1={PAD.top + chartH * (1 - t)}
             x2={W - PAD.right} y2={PAD.top + chartH * (1 - t)}
-            stroke="#e8e2d6" strokeWidth="0.5"
+            stroke="rgba(14,14,13,.06)" strokeWidth="1" strokeDasharray="2,4"
           />
         ))}
+
         {labels.map((lbl, i) => (
           <text key={i} x={getX(i)} y={H - 4}
-            textAnchor="middle" fontSize="8" fill="#6b6b5e"
+            textAnchor="middle" fontSize="8" fill="rgba(14,14,13,.38)"
             fontFamily="'DM Mono',monospace"
           >{lbl}</text>
         ))}
+
         {series.map((s, si) => {
-          const points = s.data.map((v, di) => `${getX(di)},${getY(v)}`).join(' ')
+          const pts = s.data.map((v, di) => ({ x: getX(di), y: getY(v) }))
+          const linePath = smoothLinePath(pts)
+          const lastPt = pts[pts.length - 1]
+          // Area path closes under the line
+          const firstPt = pts[0]
+          const areaPath = linePath +
+            ` L ${lastPt.x.toFixed(1)},${(PAD.top + chartH).toFixed(1)}` +
+            ` L ${firstPt.x.toFixed(1)},${(PAD.top + chartH).toFixed(1)} Z`
+
           return (
             <g key={si}>
-              <polyline points={points} fill="none" stroke={s.color} strokeWidth="2" opacity="0.9" />
-              {s.data.map((v, di) => (
-                <circle key={di} cx={getX(di)} cy={getY(v)} r="3.5"
-                  fill={s.color} stroke="#f4f0e6" strokeWidth="1.5"
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={() => setTooltip({ si, di, x: getX(di), y: getY(v) })}
-                  onMouseLeave={() => setTooltip(null)}
-                />
-              ))}
+              {/* Area fill under line */}
+              <path d={areaPath} fill={`url(#line-area-${si})`} />
+              {/* Smooth line */}
+              <path
+                d={linePath}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity="0.9"
+              />
+              {/* Data point dots */}
+              {pts.map((pt, di) => {
+                const isLast = di === pts.length - 1
+                return (
+                  <g key={di}>
+                    {isLast && (
+                      <circle cx={pt.x} cy={pt.y} r="5" fill={s.color} fillOpacity="0.18" />
+                    )}
+                    <circle cx={pt.x} cy={pt.y} r={isLast ? 3.5 : 2.5}
+                      fill={s.color} stroke="#f4f0e6" strokeWidth="1.5"
+                      style={{ cursor: 'pointer' }}
+                      onMouseEnter={() => setTooltip({ si, di, x: pt.x, y: pt.y })}
+                      onMouseLeave={() => setTooltip(null)}
+                    />
+                  </g>
+                )
+              })}
             </g>
           )
         })}
+
         {tooltip && (
           <g>
             <rect
               x={Math.min(tooltip.x - 32, W - 74)}
               y={tooltip.y - 26}
-              width={70} height={18} rx="3"
+              width={70} height={18} rx={3}
               fill="#0e0e0d" opacity="0.85"
             />
             <text
