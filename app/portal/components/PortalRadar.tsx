@@ -546,7 +546,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {TIPOS_IMOVEL.map(t => (
                 <button type="button" key={t} onClick={() => toggleTipo(t)}
-                  style={{ padding: '4px 10px', background: searchTipos.includes(t) ? '#1c4a35' : 'transparent', border: `1px solid ${searchTipos.includes(t) ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: searchTipos.includes(t) ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
+                  style={{ padding: '4px 10px', background: searchTipos.includes(t) ? '#1c4a35' : 'transparent', border: `1px solid ${searchTipos.includes(t) ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: searchTipos.includes(t) ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}>
                   {t}
                 </button>
               ))}
@@ -557,7 +557,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {FONTES.map(f => (
                 <button type="button" key={f} onClick={() => toggleFonte(f)}
-                  style={{ padding: '4px 10px', background: searchFontes.includes(f) ? '#c9a96e' : 'transparent', border: `1px solid ${searchFontes.includes(f) ? '#c9a96e' : 'rgba(14,14,13,.15)'}`, color: searchFontes.includes(f) ? '#0c1f15' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
+                  style={{ padding: '4px 10px', background: searchFontes.includes(f) ? '#c9a96e' : 'transparent', border: `1px solid ${searchFontes.includes(f) ? '#c9a96e' : 'rgba(14,14,13,.15)'}`, color: searchFontes.includes(f) ? '#0c1f15' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}>
                   {f}
                 </button>
               ))}
@@ -817,7 +817,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                     <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', borderRadius: '10px', gap: '16px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{comp.address}</div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)' }}>{comp.sqm}m² · {comp.daysOnMarket}d no mercado</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>{comp.sqm}m² · {comp.daysOnMarket}d no mercado</div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.2rem', color: '#1c4a35', lineHeight: 1 }}>€{comp.price.toLocaleString('pt-PT')}</div>
@@ -864,7 +864,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                       <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', padding: '2px 6px', background: 'rgba(201,169,110,.08)', borderRadius: '4px' }}>{String(deal.classificacao || '—')}</span>
                     </div>
                     <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.85rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '2px' }}>{String(deal.titulo || 'Imóvel').substring(0, 80)}</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)' }}>{String(deal.zona || '')} · {deal.area ? `${deal.area}m²` : ''}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>{String(deal.zona || '')} · {deal.area ? `${deal.area}m²` : ''}</div>
                   </div>
                   <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px' }}>
                     <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', fontWeight: 300, color: '#0e0e0d' }}>

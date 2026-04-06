@@ -456,11 +456,11 @@ export default function PortalAgenda({ exportToICS }: PortalAgendaProps) {
         <div>
           {/* Month navigation */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <button type="button" onClick={prevMonth} style={{ width: '32px', height: '32px', background: cardBg, border: `1px solid ${borderCol}`, cursor: 'pointer', color: col, fontFamily: "'DM Mono',monospace", fontSize: '.5rem' }}>‹</button>
+            <button type="button" aria-label="Mês anterior" onClick={prevMonth} style={{ width: '32px', height: '32px', background: cardBg, border: `1px solid ${borderCol}`, cursor: 'pointer', color: col, fontFamily: "'DM Mono',monospace", fontSize: '.5rem' }}>‹</button>
             <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.3rem', color: col }}>
               {MONTHS_PT[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </div>
-            <button type="button" onClick={nextMonth} style={{ width: '32px', height: '32px', background: cardBg, border: `1px solid ${borderCol}`, cursor: 'pointer', color: col, fontFamily: "'DM Mono',monospace", fontSize: '.5rem' }}>›</button>
+            <button type="button" aria-label="Próximo mês" onClick={nextMonth} style={{ width: '32px', height: '32px', background: cardBg, border: `1px solid ${borderCol}`, cursor: 'pointer', color: col, fontFamily: "'DM Mono',monospace", fontSize: '.5rem' }}>›</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: selectedDay ? '1fr 280px' : '1fr', gap: '20px' }}>

@@ -54,14 +54,14 @@ export default function PortalJuridico({
           {/* Mode toggle */}
           <div style={{ display: 'flex', border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, borderRadius: '6px', overflow: 'hidden' }}>
             {(['rapido', 'memo'] as const).map(m => (
-              <button key={m}
+              <button type="button" key={m}
                 style={{ padding: '5px 12px', background: jurMode === m ? '#1c4a35' : 'transparent', color: jurMode === m ? '#f4f0e6' : darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', border: 'none', cursor: 'pointer', letterSpacing: '.06em', transition: 'all .2s' }}
                 onClick={() => setJurMode(m)}>
                 {m === 'rapido' ? 'Rápido' : 'MEMO'}
               </button>
             ))}
           </div>
-          <button onClick={onExportar} style={{ padding: '5px 12px', background: 'transparent', border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
+          <button type="button" onClick={onExportar} style={{ padding: '5px 12px', background: 'transparent', border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
             ⬇ Exportar
           </button>
         </div>
@@ -107,7 +107,7 @@ export default function PortalJuridico({
       {/* Suggestions */}
       <div style={{ padding: '8px 24px', borderTop: `1px solid ${darkMode ? 'rgba(244,240,230,.06)' : 'rgba(14,14,13,.06)'}`, overflowX: 'auto', display: 'flex', gap: '6px', flexShrink: 0, background: darkMode ? '#0f2117' : '#fff' }}>
         {JUR_SUGGESTIONS.slice(0, 6).map((s: Record<string, string>, i: number) => (
-          <button key={i}
+          <button type="button" key={i}
             style={{ whiteSpace: 'nowrap', padding: '4px 10px', background: 'transparent', border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`, color: darkMode ? 'rgba(244,240,230,.45)' : 'rgba(14,14,13,.45)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', flexShrink: 0, borderRadius: '6px', transition: 'all .2s' }}
             onClick={() => onEnviar(s.q)}>
             {s.label}
@@ -126,7 +126,7 @@ export default function PortalJuridico({
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onEnviar() } }}
           disabled={jurLoading}
         />
-        <button className="p-btn" onClick={() => onEnviar()} disabled={jurLoading || !jurInput.trim()}>
+        <button type="button" className="p-btn" onClick={() => onEnviar()} disabled={jurLoading || !jurInput.trim()}>
           {jurLoading ? '...' : '→'}
         </button>
       </div>

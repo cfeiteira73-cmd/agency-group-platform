@@ -129,7 +129,7 @@ export default function PortalEmptyState({
 
       {/* Action button */}
       {action && (
-        <button
+        <button type="button"
           onClick={action.onClick}
           className="p-btn"
           style={{ marginTop: 4 }}

@@ -189,7 +189,7 @@ export function exportToPDF(title: string, htmlContent: string): void {
       .print-btn:hover{background:#b8904a}
     </style>
   </head><body>
-    <button class="print-btn no-print" onclick="window.print()">⬇ IMPRIMIR / PDF</button>
+    <button type="button" class="print-btn no-print" onclick="window.print()">⬇ IMPRIMIR / PDF</button>
     <div class="hdr">
       <div>
         <div class="hdr-brand">Agency Group</div>

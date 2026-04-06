@@ -376,7 +376,7 @@ function LoadingState() {
       <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', color: '#1c4a35', fontWeight: 300, marginBottom: '8px' }}>
         A gerar Investor Pitch IA
       </div>
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em' }}>
         {LOADING_STEPS[step]}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '20px' }}>

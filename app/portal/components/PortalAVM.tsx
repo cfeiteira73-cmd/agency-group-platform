@@ -282,7 +282,7 @@ function AdjustmentFactorsPanel({
                   <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.78rem', color: 'rgba(14,14,13,.7)', marginBottom: '1px' }}>{f.label}</div>
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>{f.description}</div>
                 </div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: valueColor, fontWeight: 600, minWidth: '40px', textAlign: 'right' }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: valueColor, fontWeight: 600, minWidth: '40px', textAlign: 'right' }}>
                   {val > 0 ? '+' : ''}{val}{f.unit}
                 </div>
               </div>
@@ -744,7 +744,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                       €{valorCentral.toLocaleString('pt-PT')}
                     </div>
                     {/* Confidence interval */}
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.4rem', color: 'rgba(14,14,13,.4)', marginBottom: '10px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginBottom: '10px' }}>
                       €{valorMin.toLocaleString('pt-PT')} <span style={{ color: 'rgba(14,14,13,.2)', margin: '0 4px' }}>—</span> €{valorMax.toLocaleString('pt-PT')}
                     </div>
                     {/* Confidence interval bar */}

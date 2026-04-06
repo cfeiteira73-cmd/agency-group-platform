@@ -974,7 +974,7 @@ export default function PortalDocumentos() {
                   onChange={e => setTemplateContent(e.target.value)}
                   style={{
                     width: '100%', minHeight: '320px', padding: '16px', fontFamily: "'DM Mono',monospace",
-                    fontSize: '.44rem', lineHeight: 1.8, color: '#0e0e0d', background: '#fff',
+                    fontSize: '.52rem', lineHeight: 1.8, color: '#0e0e0d', background: '#fff',
                     border: '1px solid rgba(14,14,13,.12)', resize: 'vertical', outline: 'none',
                     boxSizing: 'border-box',
                   }}

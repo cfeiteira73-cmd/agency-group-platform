@@ -1254,7 +1254,7 @@ export default function PortalAnalytics() {
             {/* Period selector */}
             <div style={{ display: 'flex', gap: 4, background: '#fff', border: '1px solid #e8e2d6', borderRadius: 24, padding: '4px 6px' }}>
               {PERIODS.map(p => (
-                <button
+                <button type="button"
                   key={p.id}
                   className={`period-btn${period === p.id ? ' active' : ''}`}
                   onClick={() => setPeriod(p.id)}
@@ -1264,7 +1264,7 @@ export default function PortalAnalytics() {
               ))}
             </div>
             {/* Export PDF */}
-            <button
+            <button type="button"
               className="p-btn p-btn-gold"
               onClick={handleExport}
               disabled={isExporting}
@@ -1278,7 +1278,7 @@ export default function PortalAnalytics() {
         {/* Tab Navigation */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
           {TABS.map(tab => (
-            <button
+            <button type="button"
               key={tab.id}
               className={`analytics-tab${activeTab === tab.id ? ' active' : ''}`}
               onClick={() => setActiveTab(tab.id)}

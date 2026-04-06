@@ -828,13 +828,13 @@ export default function PortalMarketing({
                         return (
                           <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <span style={{ fontSize: '.55rem', color: ok ? '#22c55e' : '#e05252' }}>{ok ? '✓' : '✗'}</span>
-                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: ok ? 'rgba(14,14,13,.55)' : '#e05252' }}>{item.label}</span>
+                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: ok ? 'rgba(14,14,13,.55)' : '#e05252' }}>{item.label}</span>
                           </div>
                         )
                       })}
                     </div>
                     {mktSeoScore < 80 && (
-                      <div style={{ marginTop: '6px', fontFamily: "'DM Mono',monospace", fontSize: '.3rem', color: '#c9a96e', lineHeight: 1.5 }}>
+                      <div style={{ marginTop: '6px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', lineHeight: 1.5 }}>
                         Sugestão: adicionar palavras-chave de localização e aumentar comprimento
                       </div>
                     )}

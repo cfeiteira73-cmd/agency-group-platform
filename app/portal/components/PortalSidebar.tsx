@@ -48,7 +48,7 @@ export default function PortalSidebar({
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: '.82rem', color: '#f4f0e6', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{agentName}</div>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginTop: '2px' }}>AMI 22506</div>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: 'rgba(44,122,86,.8)', letterSpacing: '.08em', background: 'rgba(44,122,86,.1)', border: '1px solid rgba(44,122,86,.25)', padding: '2px 8px', marginTop: '4px', display: 'inline-block' }}>● Notion Sync</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(44,122,86,.8)', letterSpacing: '.08em', background: 'rgba(44,122,86,.1)', border: '1px solid rgba(44,122,86,.25)', padding: '2px 8px', marginTop: '4px', display: 'inline-block' }}>● Notion Sync</span>
         </div>
       </div>
 
@@ -71,6 +71,7 @@ export default function PortalSidebar({
                 <div
                   role="menuitem"
                   tabIndex={0}
+                  aria-current={section === item.id ? 'page' : undefined}
                   className={`nav-item${section === item.id ? ' active' : ''}`}
                   onClick={() => { setSection(item.id); setSidebarOpen(false) }}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSection(item.id); setSidebarOpen(false) } }}
@@ -98,7 +99,7 @@ export default function PortalSidebar({
         ))}
         <button type="button"
           onClick={logout}
-          style={{ marginTop: '10px', width: '100%', background: 'none', border: '1px solid rgba(244,240,230,.08)', color: 'rgba(244,240,230,.25)', padding: '7px', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all .2s' }}
+          style={{ marginTop: '10px', width: '100%', background: 'none', border: '1px solid rgba(244,240,230,.08)', color: 'rgba(244,240,230,.25)', padding: '7px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all .2s' }}
           onMouseOver={e => { (e.target as HTMLButtonElement).style.borderColor = 'rgba(244,240,230,.25)'; (e.target as HTMLButtonElement).style.color = 'rgba(244,240,230,.55)' }}
           onMouseOut={e => { (e.target as HTMLButtonElement).style.borderColor = 'rgba(244,240,230,.08)'; (e.target as HTMLButtonElement).style.color = 'rgba(244,240,230,.25)' }}
         >
