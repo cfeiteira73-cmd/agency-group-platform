@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface Property {
   id: string
@@ -28,6 +28,7 @@ const EXAMPLE_QUERIES = [
   'Algo como a Comporta mas mais barato',
   'Moradia familiar no Algarve com jardim',
   '€2M villa near Cascais golf course',
+  'Penthouse Lisboa vista rio',
 ]
 
 function formatPrice(price: number): string {
@@ -43,8 +44,19 @@ export function AIPropertySearch() {
   const [results, setResults] = useState<SearchResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isListening, setIsListening] = useState(false)
+  const [voiceSupported, setVoiceSupported] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
+
+  // Check Web Speech API support on mount (client-only)
+  useEffect(() => {
+    const SpeechRecognitionAPI =
+      (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ||
+      (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition
+    setVoiceSupported(!!SpeechRecognitionAPI)
+  }, [])
 
   async function handleSearch(searchQuery?: string) {
     const q = (searchQuery ?? query).trim()
@@ -79,6 +91,45 @@ export function AIPropertySearch() {
     }
   }
 
+  function startVoiceSearch() {
+    const SpeechRecognitionAPI =
+      (window as unknown as Record<string, unknown>).SpeechRecognition as typeof SpeechRecognition ||
+      (window as unknown as Record<string, unknown>).webkitSpeechRecognition as typeof SpeechRecognition
+
+    if (!SpeechRecognitionAPI) return
+
+    const recognition = new SpeechRecognitionAPI()
+    recognitionRef.current = recognition
+
+    recognition.lang = 'pt-PT'
+    recognition.interimResults = true
+    recognition.maxAlternatives = 1
+    recognition.continuous = false
+
+    recognition.onstart = () => setIsListening(true)
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from({ length: event.results.length }, (_, i) => event.results[i][0].transcript).join('')
+      setQuery(transcript)
+
+      // Auto-search on final result
+      if (event.results[event.results.length - 1].isFinal) {
+        setIsListening(false)
+        void handleSearch(transcript)
+      }
+    }
+
+    recognition.onerror = () => setIsListening(false)
+    recognition.onend = () => setIsListening(false)
+
+    recognition.start()
+  }
+
+  function stopVoiceSearch() {
+    recognitionRef.current?.stop()
+    setIsListening(false)
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') void handleSearch()
   }
@@ -94,7 +145,7 @@ export function AIPropertySearch() {
       aria-label="Pesquisa inteligente de imóveis por linguagem natural"
     >
       {/* Search input */}
-      <div className="relative">
+      <div className="relative pb-2">
         <div className="flex items-center gap-3 bg-white border-2 border-[#1c4a35] rounded-2xl px-5 py-4 shadow-xl focus-within:border-[#c9a96e] transition-colors">
           <svg
             className="w-5 h-5 text-[#1c4a35] flex-shrink-0"
@@ -121,6 +172,39 @@ export function AIPropertySearch() {
             aria-label="Pesquisa de imóveis por linguagem natural"
             autoComplete="off"
           />
+          {/* Microphone button — voice search */}
+          {voiceSupported && (
+            <button
+              type="button"
+              onClick={isListening ? stopVoiceSearch : startVoiceSearch}
+              className={`relative flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                isListening
+                  ? 'bg-red-500 text-white shadow-lg shadow-red-200'
+                  : 'text-gray-400 hover:text-[#1c4a35] hover:bg-gray-50'
+              }`}
+              aria-label={isListening ? 'Parar gravação de voz' : 'Pesquisar por voz'}
+              aria-pressed={isListening}
+            >
+              {/* Pulse rings when listening */}
+              {isListening && (
+                <>
+                  <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-30" aria-hidden="true" />
+                  <span className="absolute inset-0 rounded-full bg-red-300 animate-pulse opacity-20" aria-hidden="true" />
+                </>
+              )}
+              {/* Microphone / Stop SVG */}
+              <svg className="w-5 h-5 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                {isListening ? (
+                  // Stop icon
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                ) : (
+                  // Mic icon
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                )}
+              </svg>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => void handleSearch()}
@@ -138,6 +222,15 @@ export function AIPropertySearch() {
             )}
           </button>
         </div>
+
+        {/* Listening indicator — shown while recording */}
+        {isListening && (
+          <div className="absolute -bottom-1 left-0 right-0 text-center" aria-live="assertive">
+            <span className="text-xs text-red-500 font-medium animate-pulse">
+              🎙️ A ouvir... fale agora
+            </span>
+          </div>
+        )}
 
         {/* Sofia AI badge */}
         <div
