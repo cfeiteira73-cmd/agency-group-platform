@@ -4,6 +4,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import PressSection from './components/PressSection'
 import { CurrencySelector } from './components/CurrencyWidget'
+import { AIPropertySearch } from './components/AIPropertySearch'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -925,6 +926,11 @@ export default function Home() {
             </span>
           ))}
         </div>
+      </div>
+
+      {/* AI PROPERTY SEARCH — Sofia NLP */}
+      <div className="sw" style={{ paddingTop: '40px', paddingBottom: '0' }}>
+        <AIPropertySearch />
       </div>
 
       {/* SEARCH */}

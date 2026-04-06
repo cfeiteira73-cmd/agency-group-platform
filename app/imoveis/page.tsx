@@ -5,6 +5,7 @@ import { PROPERTIES, ZONAS, TIPOS, formatPriceFull } from './data'
 import FavoriteButton, { FavoritesDrawer } from './FavoriteButton'
 import CompareBar from './CompareBar'
 import { CurrencySelector, useCurrency } from '../components/CurrencyWidget'
+import { AIPropertySearch } from '../components/AIPropertySearch'
 
 const MapView = lazy(() => import('./MapView'))
 
@@ -182,6 +183,11 @@ export default function ImoveisPage() {
             <span>/</span>
             <span style={{ color: 'rgba(244,240,230,.5)' }}>Imóveis</span>
           </div>
+        </div>
+
+        {/* ── AI PROPERTY SEARCH — Sofia NLP ── */}
+        <div style={{ background: '#0c1f15', padding: '0 40px 8px' }}>
+          <AIPropertySearch />
         </div>
 
         {/* ── STICKY FILTER BAR ── */}

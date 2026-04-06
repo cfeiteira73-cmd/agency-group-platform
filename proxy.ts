@@ -7,6 +7,7 @@ const store = new Map<string, { count: number; reset: number }>()
 
 // ─── Limites por rota ────────────────────────────────────────────────────────
 const LIMITS: Record<string, { max: number; window: number }> = {
+  '/api/search':       { max: 30,  window: 3_600_000 },
   '/api/radar':        { max: 20,  window: 3_600_000 },
   '/api/avm':          { max: 100, window: 3_600_000 },
   '/api/mortgage':     { max: 200, window: 3_600_000 },
