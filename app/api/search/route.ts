@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
 const client = new Anthropic()
 
-// Property database (aligned with Agency Group portfolio)
-const PROPERTIES = [
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+// Fallback properties used when Supabase is unavailable or returns 0 results
+const FALLBACK_PROPERTIES = [
   {
     id: 'prop-001',
     title: 'Penthouse Chiado',
@@ -128,9 +134,23 @@ const PROPERTIES = [
     rentalYield: 4.1,
     available: true,
   },
-] as const
+]
 
-type Property = (typeof PROPERTIES)[number]
+interface SearchProperty {
+  id: string
+  title: string
+  type: string
+  zone: string
+  area: number
+  bedrooms: number
+  bathrooms: number
+  price: number
+  pricePerSqm: number
+  features: string[]
+  description: string
+  rentalYield: number
+  available: boolean
+}
 
 interface ExtractedCriteria {
   zones?: string[] | null
@@ -143,9 +163,75 @@ interface ExtractedCriteria {
   searchSummary?: string
 }
 
+async function fetchPropertiesFromDB(criteria: ExtractedCriteria): Promise<SearchProperty[]> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = supabase
+      .from('properties')
+      .select('id, nome, tipo, zona, preco, area, quartos, casas_banho, descricao, features, yield_bruto, status')
+      .not('nome', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    // Filter by status — accept both 'active' (enum) and fallback
+    query = query.eq('status', 'active')
+
+    const zones = criteria.zones
+    if (Array.isArray(zones) && zones.length > 0 && zones[0] !== null) {
+      query = query.in('zona', zones)
+    }
+
+    const maxPrice = criteria.maxPrice
+    if (typeof maxPrice === 'number' && maxPrice > 0) {
+      query = query.lte('preco', maxPrice)
+    }
+
+    const minPrice = criteria.minPrice
+    if (typeof minPrice === 'number' && minPrice > 0) {
+      query = query.gte('preco', minPrice)
+    }
+
+    const minBedrooms = criteria.minBedrooms
+    if (typeof minBedrooms === 'number' && minBedrooms > 0) {
+      query = query.gte('quartos', minBedrooms)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await query as { data: any[] | null; error: unknown }
+
+    if (error || !data || data.length === 0) {
+      return FALLBACK_PROPERTIES
+    }
+
+    // Map DB schema to unified search result format
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return data.map((p: any): SearchProperty => {
+      const preco = Number(p.preco) || 0
+      const areaVal = Number(p.area) || 1
+      return {
+        id: String(p.id),
+        title: String(p.nome || ''),
+        type: String(p.tipo || ''),
+        zone: String(p.zona || ''),
+        area: areaVal,
+        bedrooms: Number(p.quartos) || 0,
+        bathrooms: Number(p.casas_banho) || 0,
+        price: preco,
+        pricePerSqm: p.pm2 ? Number(p.pm2) : Math.round(preco / areaVal),
+        features: Array.isArray(p.features) ? p.features : [],
+        description: String(p.descricao || ''),
+        rentalYield: Number(p.yield_bruto) || 4.5,
+        available: true,
+      }
+    })
+  } catch {
+    return FALLBACK_PROPERTIES
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { query?: unknown; language?: unknown }
+    const body = await req.json() as { query?: unknown; language?: unknown; sessionId?: unknown }
     const { query, language = 'pt' } = body
 
     if (!query || typeof query !== 'string' || query.trim().length < 3) {
@@ -199,45 +285,27 @@ Rules:
       criteria = {}
     }
 
-    // Filter properties based on extracted criteria
-    let results: Property[] = [...PROPERTIES]
+    // Fetch from Supabase with extracted criteria, fallback to static data if needed
+    let results: SearchProperty[] = await fetchPropertiesFromDB(criteria)
 
-    const zones = criteria.zones
-    if (Array.isArray(zones) && zones.length > 0) {
-      results = results.filter(p =>
-        zones.some(z => p.zone.toLowerCase().includes(z.toLowerCase()))
-      )
-    }
-
+    // Apply in-memory filters for fields not handled by DB query (types, features)
     const types = criteria.types
     if (Array.isArray(types) && types.length > 0) {
-      results = results.filter(p =>
+      const filtered = results.filter(p =>
         types.some(t => p.type.toLowerCase().includes(t.toLowerCase()))
       )
-    }
-
-    const maxPrice = criteria.maxPrice
-    if (typeof maxPrice === 'number' && maxPrice > 0) {
-      results = results.filter(p => p.price <= maxPrice)
-    }
-
-    const minPrice = criteria.minPrice
-    if (typeof minPrice === 'number' && minPrice > 0) {
-      results = results.filter(p => p.price >= minPrice)
-    }
-
-    const minBedrooms = criteria.minBedrooms
-    if (typeof minBedrooms === 'number' && minBedrooms > 0) {
-      results = results.filter(p => p.bedrooms >= minBedrooms)
+      // Only apply filter if it still yields results
+      if (filtered.length > 0) results = filtered
     }
 
     const features = criteria.features
     if (Array.isArray(features) && features.length > 0) {
-      results = results.filter(p =>
+      const filtered = results.filter(p =>
         features.some(f =>
           p.features.some(pf => pf.toLowerCase().includes(f.toLowerCase()))
         )
       )
+      if (filtered.length > 0) results = filtered
     }
 
     // Sort by relevance based on use case

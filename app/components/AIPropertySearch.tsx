@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import { getOrCreateSessionId } from '@/lib/session'
 
 interface Property {
   id: string
@@ -74,7 +75,11 @@ export function AIPropertySearch() {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q, language: 'pt' }),
+        body: JSON.stringify({
+          query: q,
+          language: 'pt',
+          sessionId: getOrCreateSessionId(),
+        }),
         signal: abortRef.current.signal,
       })
       if (!res.ok) {

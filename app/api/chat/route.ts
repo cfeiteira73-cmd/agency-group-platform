@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
@@ -17,9 +18,98 @@ function checkRateLimit(ip: string): boolean {
   return true
 }
 
-const client = new Anthropic()
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY ?? '',
+  dangerouslyAllowBrowser: true, // required for Next.js Edge Runtime
+})
 
-const SYSTEM_PROMPT = `You are Sofia, the digital specialist consultant of Agency Group — Portugal's leading luxury real estate agency (AMI 22506).
+// Lazy Supabase client — only initialised if env vars are present
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) return null
+  return createClient(url, key)
+}
+
+interface SofiaMemory {
+  session_id: string
+  conversation_count: number
+  budget_min: number | null
+  budget_max: number | null
+  preferred_zones: string[] | null
+  preferred_types: string[] | null
+  preferences: Record<string, unknown>
+}
+
+async function getSofiaMemory(sessionId: string): Promise<SofiaMemory | null> {
+  try {
+    const sb = getSupabaseClient()
+    if (!sb) return null
+    const { data } = await sb
+      .from('sofia_memory')
+      .select('*')
+      .eq('session_id', sessionId)
+      .single()
+    return data as SofiaMemory | null
+  } catch {
+    return null
+  }
+}
+
+async function updateSofiaMemory(
+  sessionId: string,
+  updates: Partial<SofiaMemory>
+): Promise<void> {
+  try {
+    const sb = getSupabaseClient()
+    if (!sb) return
+    await sb
+      .from('sofia_memory')
+      .upsert(
+        {
+          session_id: sessionId,
+          ...updates,
+          last_active_at: new Date().toISOString(),
+          conversation_count: (updates.conversation_count ?? 0) + 1,
+        },
+        { onConflict: 'session_id' }
+      )
+  } catch {
+    /* non-critical — memory update failure should never break chat */
+  }
+}
+
+interface LiveProperty {
+  id: string
+  nome: string | null
+  tipo: string | null
+  zona: string | null
+  preco: number | null
+  area: number | null
+  quartos: number | null
+  descricao: string | null
+  features: string[] | null
+  yield_bruto: number | null
+}
+
+async function getAvailableProperties(limit = 20): Promise<LiveProperty[]> {
+  try {
+    const sb = getSupabaseClient()
+    if (!sb) return []
+    const { data } = await sb
+      .from('properties')
+      .select('id, nome, tipo, zona, preco, area, quartos, descricao, features, yield_bruto')
+      .eq('status', 'active')
+      .not('nome', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    return (data ?? []) as LiveProperty[]
+  } catch {
+    return []
+  }
+}
+
+const BASE_SYSTEM_PROMPT = `You are Sofia, the digital specialist consultant of Agency Group — Portugal's leading luxury real estate agency (AMI 22506).
 
 LANGUAGE INTELLIGENCE:
 - Detect the user's language from their messages and ALWAYS respond in that exact language
@@ -50,45 +140,8 @@ ZONE PRICES & YIELDS (2026):
 | Ericeira   | €2.800/m² | 4.3%        |
 | Açores     | €1.952/m² | 4.1%        |
 
-AVAILABLE PROPERTIES (portfolio — always match to buyer preferences):
-Lisboa:
-- AG-2026-010: Penthouse Príncipe Real — T3 — 220m² — €2.850.000 — Rooftop privativo, vistas 360°, última cave | Tour: agencygroup.pt/tour/AG-2026-010
-- AG-2026-011: Apartamento Chiado — T2 — 145m² — €1.450.000 — Vista Rio Tejo, edifício histórico recuperado | Tour: agencygroup.pt/tour/AG-2026-011
-- AG-2026-012: Moradia Belém — T5 — 380m² — €3.200.000 — Jardim 800m², piscina aquecida | Tour: agencygroup.pt/tour/AG-2026-012
-- AG-2026-013: T3 Campo de Ourique — T3 — 165m² — €890.000 — Bairro premium, remodelado 2025 | Tour: agencygroup.pt/tour/AG-2026-013
-
-Cascais:
-- AG-2026-020: Villa Quinta da Marinha — T5 — 450m² — €3.800.000 — Condomínio privado, vista golfe, EXCLUSIVO | Tour: agencygroup.pt/tour/AG-2026-020
-- AG-2026-021: Moradia Estoril Frente Mar — T4 — 280m² — €2.100.000 — 50m da praia, piscina aquecida, vista mar | Tour: agencygroup.pt/tour/AG-2026-021
-- AG-2026-022: Apartamento Centro Cascais — T3 — 185m² — €1.350.000 — Centro histórico, terraço vista mar | Tour: agencygroup.pt/tour/AG-2026-022
-
-Comporta:
-- AG-2026-030: Herdade Comporta Exclusiva — T6 — 850m² — €6.500.000 — 5 hectares, privacidade total, OFF-MARKET | Tour: agencygroup.pt/tour/AG-2026-030
-- AG-2026-031: Villa Carvalhal — T4 — 320m² — €2.800.000 — Vista arrozais, design contemporâneo | Tour: agencygroup.pt/tour/AG-2026-031
-
-Porto:
-- AG-2026-040: Apartamento Foz do Douro — T3 — 180m² — €980.000 — Vista Rio Douro, zona premium | Tour: agencygroup.pt/tour/AG-2026-040
-- AG-2026-041: Moradia Boavista — T4 — 240m² — €1.250.000 — Jardim privativo, zona residencial nobre | Tour: agencygroup.pt/tour/AG-2026-041
-- AG-2026-042: T2 Cedofeita — T2 — 110m² — €520.000 — Remodelado 2025, centro Porto | Tour: agencygroup.pt/tour/AG-2026-042
-
-Algarve:
-- AG-2026-050: Villa Vale do Lobo Golf — T5 — 480m² — €4.200.000 — Resort premium, campo de golfe, piscina | Tour: agencygroup.pt/tour/AG-2026-050
-- AG-2026-051: Apartamento Vilamoura Marina — T3 — 175m² — €1.100.000 — Vista marina, condomínio com piscina | Tour: agencygroup.pt/tour/AG-2026-051
-
-Madeira:
-- AG-2026-060: Apartamento Funchal Prime — T3 — 165m² — €980.000 — Vista oceano 180°, IFICI elegível, DESTAQUE | Tour: agencygroup.pt/tour/AG-2026-060
-- AG-2026-061: Villa Câmara de Lobos — T4 — 290m² — €1.450.000 — Falésias atlânticas, Churchill pintou aqui | Tour: agencygroup.pt/tour/AG-2026-061
-
-Sintra:
-- AG-2026-070: Quinta Histórica Sintra — T6 — 650m² — €2.800.000 — Zona UNESCO, séc. XIX, jardim 2000m² | Tour: agencygroup.pt/tour/AG-2026-070
-- AG-2026-071: Moradia Colares Serra — T4 — 280m² — €1.200.000 — Vista Serra Sintra, jardim orgânico | Tour: agencygroup.pt/tour/AG-2026-071
-
-Ericeira:
-- AG-2026-080: Apartamento Ericeira Vista Mar — T2 — 120m² — €650.000 — Reserva mundial de surf, 100m das ondas | Tour: agencygroup.pt/tour/AG-2026-080
-- AG-2026-081: Moradia Mafra — T4 — 240m² — €1.100.000 — 15min Ericeira, jardim privativo | Tour: agencygroup.pt/tour/AG-2026-081
-
 PROPERTY MATCHING — KEY SKILL:
-When a user describes what they want (budget, zone, lifestyle, family needs, investment goals), proactively match them to 2-3 specific properties from the portfolio. Always include the reference (AG-2026-XXX) and the virtual tour link. Example: "Based on your €1M budget and preference for sea views, I recommend: **AG-2026-022** (Cascais, €1.350.000, terraço vista mar) — [Virtual Tour](agencygroup.pt/tour/AG-2026-022)"
+When a user describes what they want (budget, zone, lifestyle, family needs, investment goals), proactively match them to 2-3 specific properties from the CURRENT AVAILABLE PORTFOLIO below. Always include the property name/id and suggest a virtual tour via agencygroup.pt.
 
 PURCHASE PROCESS IN PORTUGAL:
 1. Select property + submit offer
@@ -130,9 +183,66 @@ RESPONSE RULES:
 - Never invent information — if unsure, say so honestly
 - Maximum 300 words per response
 - Use clear formatting with short paragraphs
-- Always include reference AG-2026-XXX when mentioning specific properties
-- Always include virtual tour link when recommending a property
 - When user mentions budget/location/type preferences, immediately match to relevant properties`
+
+/**
+ * Extract preference signals from a user message using simple heuristics.
+ * Intentionally lightweight — avoids an extra LLM call in the hot path.
+ */
+function extractPreferenceSignals(
+  message: string,
+  existing: SofiaMemory | null
+): Partial<SofiaMemory> {
+  const signals: Partial<SofiaMemory> = {}
+  const lower = message.toLowerCase()
+
+  // Budget — match patterns like "€500K", "500 mil", "2M", "2 milhões"
+  const budgetMatch = lower.match(/€?\s*(\d+(?:[.,]\d+)?)\s*(k|mil|m|milhão|milhões|million)/i)
+  if (budgetMatch) {
+    const raw = parseFloat(budgetMatch[1].replace(',', '.'))
+    const unit = budgetMatch[2].toLowerCase()
+    const value = unit.startsWith('m') ? Math.round(raw * 1_000_000) : Math.round(raw * 1_000)
+    if (value > 0) {
+      if (!existing?.budget_max || value > (existing.budget_max ?? 0)) {
+        signals.budget_max = value
+      } else {
+        signals.budget_min = value
+      }
+    }
+  }
+
+  // Zones
+  const zoneKeywords: Record<string, string> = {
+    lisboa: 'Lisboa', cascais: 'Cascais', porto: 'Porto',
+    algarve: 'Algarve', comporta: 'Comporta', madeira: 'Madeira',
+    sintra: 'Sintra', ericeira: 'Ericeira', açores: 'Açores', azores: 'Açores',
+  }
+  const detectedZones: string[] = []
+  for (const [keyword, zone] of Object.entries(zoneKeywords)) {
+    if (lower.includes(keyword)) detectedZones.push(zone)
+  }
+  if (detectedZones.length > 0) {
+    const merged = Array.from(new Set([...(existing?.preferred_zones ?? []), ...detectedZones]))
+    signals.preferred_zones = merged
+  }
+
+  // Property types
+  const typeKeywords: Record<string, string> = {
+    apartamento: 'Apartamento', apartment: 'Apartamento',
+    moradia: 'Moradia', villa: 'Moradia', vivenda: 'Moradia',
+    quinta: 'Moradia', house: 'Moradia',
+  }
+  const detectedTypes: string[] = []
+  for (const [keyword, type] of Object.entries(typeKeywords)) {
+    if (lower.includes(keyword)) detectedTypes.push(type)
+  }
+  if (detectedTypes.length > 0) {
+    const merged = Array.from(new Set([...(existing?.preferred_types ?? []), ...detectedTypes]))
+    signals.preferred_types = merged
+  }
+
+  return signals
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -141,7 +251,11 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'Rate limit: 30 mensagens/hora' }), { status: 429, headers: { 'Content-Type': 'application/json' } })
     }
 
-    const { messages, language, sessionId } = await req.json()
+    const { messages, language, sessionId = `anon-${Date.now()}` } = await req.json() as {
+      messages: Array<{ role: string; content: string }>
+      language?: string
+      sessionId?: string
+    }
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response('Invalid messages', { status: 400 })
@@ -156,15 +270,40 @@ export async function POST(req: NextRequest) {
       return new Response('No valid messages', { status: 400 })
     }
 
+    // Fetch live data in parallel — non-blocking if Supabase is unavailable
+    const [properties, memory] = await Promise.all([
+      getAvailableProperties(20),
+      getSofiaMemory(sessionId),
+    ])
+
+    // Build property context section
+    const propertyContext = properties.length > 0
+      ? `\n\nCURRENT AVAILABLE PORTFOLIO (${properties.length} active listings — use these for recommendations):\n` +
+        properties.slice(0, 15).map(p =>
+          `- ${p.nome}: ${p.zona}, ${p.tipo}, €${Number(p.preco ?? 0).toLocaleString('pt-PT')}, ${p.quartos ?? 0}Q, ${p.area ?? 0}m²${p.yield_bruto ? `, yield ${p.yield_bruto}%` : ''}`
+        ).join('\n')
+      : '\n\nUsing showcase portfolio data — live inventory not available.'
+
+    // Build memory context section
+    const memoryContext = memory && memory.conversation_count > 0
+      ? `\n\nUSER MEMORY (previous sessions — reference naturally without being robotic):` +
+        `\n- Previous conversations: ${memory.conversation_count}` +
+        `\n- Known budget: ${memory.budget_min ? `€${memory.budget_min.toLocaleString('pt-PT')}` : 'unknown'}–${memory.budget_max ? `€${memory.budget_max.toLocaleString('pt-PT')}` : 'unknown'}` +
+        `\n- Preferred zones: ${memory.preferred_zones?.join(', ') || 'unknown'}` +
+        `\n- Preferred types: ${memory.preferred_types?.join(', ') || 'unknown'}`
+      : ''
+
     // Build language hint if provided explicitly
     const langHint = language && language !== 'pt'
       ? ` [User's preferred language: ${language}. Respond in this language unless the user's messages indicate otherwise.]`
       : ''
 
+    const fullSystemPrompt = BASE_SYSTEM_PROMPT + propertyContext + memoryContext + langHint
+
     const stream = await client.messages.stream({
       model: 'claude-opus-4-6',
       max_tokens: 600,
-      system: SYSTEM_PROMPT + langHint,
+      system: fullSystemPrompt,
       messages: validMessages,
     })
 
@@ -172,11 +311,9 @@ export async function POST(req: NextRequest) {
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          // If sessionId provided, send it as the first event for client tracking
-          if (sessionId) {
-            const sessionData = JSON.stringify({ sessionId })
-            controller.enqueue(encoder.encode(`data: ${sessionData}\n\n`))
-          }
+          // Send sessionId as first event for client tracking
+          const sessionData = JSON.stringify({ sessionId })
+          controller.enqueue(encoder.encode(`data: ${sessionData}\n\n`))
 
           for await (const event of stream) {
             if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
@@ -192,13 +329,24 @@ export async function POST(req: NextRequest) {
       }
     })
 
+    // Fire-and-forget: persist preference signals after response starts streaming
+    const lastUserMessage = validMessages.filter(m => m.role === 'user').at(-1)?.content ?? ''
+    void updateSofiaMemory(sessionId, {
+      conversation_count: memory?.conversation_count ?? 0,
+      ...(memory?.budget_min != null ? { budget_min: memory.budget_min } : {}),
+      ...(memory?.budget_max != null ? { budget_max: memory.budget_max } : {}),
+      ...(memory?.preferred_zones?.length ? { preferred_zones: memory.preferred_zones } : {}),
+      ...(memory?.preferred_types?.length ? { preferred_types: memory.preferred_types } : {}),
+      ...extractPreferenceSignals(lastUserMessage, memory),
+    })
+
     return new Response(readable, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
         'X-Accel-Buffering': 'no',
-        ...(sessionId ? { 'X-Session-Id': sessionId } : {}),
+        'X-Session-Id': sessionId,
       },
     })
   } catch (err) {
