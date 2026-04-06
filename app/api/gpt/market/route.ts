@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const ZONES: Record<string, object> = {
+const ZONES: Record<string, Record<string, unknown>> = {
   'Lisboa': {
     pricePerSqm: 5000,
     askingPricePerSqm: 5400,
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
 
   const zoneKey =
     Object.keys(ZONES).find(k => zona.toLowerCase().includes(k.toLowerCase())) || 'Lisboa'
-  const data = ZONES[zoneKey] as Record<string, unknown>
+  const data = ZONES[zoneKey]
 
   return NextResponse.json(
     {

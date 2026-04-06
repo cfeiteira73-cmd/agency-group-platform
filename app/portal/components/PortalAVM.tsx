@@ -770,13 +770,13 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: confidenceColor, letterSpacing: '.05em' }}>{confidenceLabel} · {confianca}%</span>
                         </div>
                       )}
-                      {res?.accuracy && (
+                      {res?.accuracy ? (
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(28,74,53,.08)', border: '1px solid rgba(28,74,53,.2)', borderRadius: 20, padding: '4px 12px' }}>
                           <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.52rem', color: '#1c4a35', letterSpacing: '.06em' }}>
-                            ✓ {(res.accuracy as Record<string, unknown>).label as string}
+                            ✓ {String((res.accuracy as Record<string, unknown>).label ?? '')}
                           </span>
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                   {/* Improved Confidence Gauge */}
@@ -805,7 +805,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
 
               {/* ── Previsão 6 Meses ─────────────────────────────────────── */}
               {res?.forecast_6m ? (() => {
-                const f6 = res.forecast_6m as Record<string, unknown>
+                const f6 = (res?.forecast_6m ?? {}) as Record<string, unknown>
                 return (
                   <div style={{ background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', borderRadius: 8, padding: '16px 20px' }}>
                     <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em', marginBottom: 8 }}>PREVISÃO 6 MESES</div>
