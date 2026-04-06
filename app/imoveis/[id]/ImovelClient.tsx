@@ -190,21 +190,24 @@ export default function ImovelClient({ id }: { id: string }) {
       <div style={{ background: '#0c1f15', minHeight: '100vh', paddingTop: '68px' }}>
 
         {/* ── BREADCRUMB ── */}
-        <div style={{
+        <nav aria-label="Localização da propriedade" style={{
           maxWidth: '1280px', margin: '0 auto', padding: '20px 40px 0',
-          display: 'flex', gap: '8px', alignItems: 'center',
-          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
-          letterSpacing: '.12em', color: 'rgba(244,240,230,.3)',
-          flexWrap: 'wrap',
         }}>
-          <Link href="/" style={{ color: 'rgba(201,169,110,.55)', textDecoration: 'none' }}>Agency Group</Link>
-          <span>/</span>
-          <Link href="/imoveis" style={{ color: 'rgba(201,169,110,.55)', textDecoration: 'none' }}>Imóveis</Link>
-          <span>/</span>
-          <Link href={`/zonas/${zonaSlug}`} style={{ color: 'rgba(201,169,110,.55)', textDecoration: 'none' }}>{property.zona}</Link>
-          <span>/</span>
-          <span style={{ color: 'rgba(244,240,230,.5)' }}>{property.nome}</span>
-        </div>
+          <ol style={{
+            display: 'flex', gap: '8px', alignItems: 'center',
+            fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
+            letterSpacing: '.12em', color: 'rgba(244,240,230,.3)',
+            flexWrap: 'wrap', listStyle: 'none', padding: 0, margin: 0,
+          }}>
+            <li><Link href="/" style={{ color: 'rgba(201,169,110,.55)', textDecoration: 'none' }}>Agency Group</Link></li>
+            <li aria-hidden="true" style={{ color: 'rgba(255,255,255,.4)' }}>/</li>
+            <li><Link href="/imoveis" style={{ color: 'rgba(201,169,110,.55)', textDecoration: 'none' }}>Imóveis</Link></li>
+            <li aria-hidden="true" style={{ color: 'rgba(255,255,255,.4)' }}>/</li>
+            <li><Link href={`/zonas/${zonaSlug}`} style={{ color: 'rgba(201,169,110,.55)', textDecoration: 'none' }}>{property.zona}</Link></li>
+            <li aria-hidden="true" style={{ color: 'rgba(255,255,255,.4)' }}>/</li>
+            <li aria-current="page" style={{ color: 'rgba(244,240,230,.5)' }}>{property.nome}</li>
+          </ol>
+        </nav>
 
         {/* ── HERO GALLERY ── */}
         <div style={{
@@ -386,13 +389,14 @@ export default function ImovelClient({ id }: { id: string }) {
 
           {/* Prev/Next nav */}
           <button
+            aria-label="Foto anterior"
             onClick={e => { e.stopPropagation(); setGalleryIdx(i => (i - 1 + galleryFrames.length) % galleryFrames.length) }}
             style={{
               position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
               zIndex: 10,
               background: 'rgba(12,31,21,.7)', backdropFilter: 'blur(8px)',
               border: '1px solid rgba(201,169,110,.25)', color: '#c9a96e',
-              width: '40px', height: '40px',
+              width: '48px', height: '48px', minWidth: '48px', minHeight: '48px',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -401,13 +405,14 @@ export default function ImovelClient({ id }: { id: string }) {
             </svg>
           </button>
           <button
+            aria-label="Foto seguinte"
             onClick={e => { e.stopPropagation(); setGalleryIdx(i => (i + 1) % galleryFrames.length) }}
             style={{
               position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
               zIndex: 10,
               background: 'rgba(12,31,21,.7)', backdropFilter: 'blur(8px)',
               border: '1px solid rgba(201,169,110,.25)', color: '#c9a96e',
-              width: '40px', height: '40px',
+              width: '48px', height: '48px', minWidth: '48px', minHeight: '48px',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -501,11 +506,15 @@ export default function ImovelClient({ id }: { id: string }) {
                 background: 'rgba(0,0,0,.95)', backdropFilter: 'blur(4px)',
               }}
             />
-            <div style={{
-              position: 'fixed', inset: '40px', zIndex: 2001,
-              display: 'flex', flexDirection: 'column',
-              maxWidth: '1400px', margin: '0 auto',
-            }}>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Galeria de fotos: ${property.nome || 'Propriedade'}`}
+              style={{
+                position: 'fixed', inset: '40px', zIndex: 2001,
+                display: 'flex', flexDirection: 'column',
+                maxWidth: '1400px', margin: '0 auto',
+              }}>
               {/* Lightbox header */}
               <div style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -521,7 +530,7 @@ export default function ImovelClient({ id }: { id: string }) {
                     letterSpacing: '.14em', color: 'rgba(201,169,110,.6)',
                   }}>{galleryFrames[galleryIdx].label} · {galleryIdx + 1} / {galleryFrames.length}</div>
                 </div>
-                <button onClick={() => setLightboxOpen(false)} style={{
+                <button onClick={() => setLightboxOpen(false)} aria-label="Fechar galeria" style={{
                   background: 'none', border: '1px solid rgba(244,240,230,.2)',
                   color: 'rgba(244,240,230,.6)', padding: '8px 16px',
                   cursor: 'pointer', fontFamily: "'DM Mono', monospace",

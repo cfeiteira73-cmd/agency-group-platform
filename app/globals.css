@@ -8,7 +8,15 @@
 .text-gold-accessible{color:var(--gold-text)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;overflow-x:hidden}
-body{font-family:var(--font-jost),sans-serif;background:var(--cr);color:var(--ink);cursor:none;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{font-family:var(--font-jost),sans-serif;background:var(--cr);color:var(--ink);overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+/* Only disable cursor on fine-pointer devices (mouse) — preserve for touch/AT/reduced-motion */
+@media (pointer: fine) and (hover: hover) {
+  body { cursor: none; }
+}
+@media (pointer: coarse), (pointer: none), (prefers-reduced-motion: reduce) {
+  body { cursor: auto !important; }
+  * { cursor: auto !important; }
+}
 /* Custom scrollbar */
 ::-webkit-scrollbar{width:2px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -18,6 +26,10 @@ body{font-family:var(--font-jost),sans-serif;background:var(--cr);color:var(--in
 /* Global film grain — Awwwards editorial texture */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:.032;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:130px;animation:grainAnim 8s steps(8) infinite}
 @keyframes grainAnim{0%{transform:translate(0,0)}12%{transform:translate(-5%,-5%)}25%{transform:translate(5%,3%)}37%{transform:translate(-3%,7%)}50%{transform:translate(7%,-3%)}62%{transform:translate(-7%,5%)}75%{transform:translate(3%,-7%)}87%{transform:translate(-5%,3%)}100%{transform:translate(0,0)}}
+/* Film grain — disable on touch devices (performance + accessibility) */
+@media (pointer: coarse) {
+  body::after { display: none !important; }
+}
 #cur{position:fixed;pointer-events:none;z-index:9999;top:0;left:0}
 .c-dot{position:absolute;width:8px;height:8px;background:#ffffff;border-radius:50%;transform:translate(-50%,-50%);transition:width .35s var(--ease-out),height .35s var(--ease-out),background .25s,opacity .25s;mix-blend-mode:exclusion;will-change:transform}
 .c-ring{position:absolute;width:40px;height:40px;border:1px solid rgba(28,74,53,.35);border-radius:50%;transform:translate(-50%,-50%);transition:width .55s var(--ease-out),height .55s var(--ease-out),opacity .4s,border-color .3s;mix-blend-mode:exclusion;will-change:transform}
@@ -631,14 +643,22 @@ img, video {
 
 .skip-to-content{position:absolute;top:-40px;left:0;background:var(--gold);color:var(--gd);padding:8px 16px;font-family:var(--font-dm-mono),monospace;font-size:13px;z-index:9999;transition:top .2s;text-decoration:none}
 .skip-to-content:focus{top:0}
-:focus-visible{outline:1px solid var(--gold);outline-offset:3px}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;border-bottom-color:var(--g)!important;box-shadow:0 1px 0 var(--g)}
 
-/* ── Focus Visible — WCAG AA ──────────────────────────────────────────────── */
-:focus-visible{outline:2px solid #c9a96e;outline-offset:3px;border-radius:2px}
-.nav-links a:focus-visible{outline:2px solid #c9a96e;outline-offset:4px;border-radius:2px}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid #c9a96e;outline-offset:3px;border-radius:2px}
-.p-btn:focus-visible,.p-btn-gold:focus-visible{outline:2px solid #c9a96e;outline-offset:3px}
+/* ── Focus Visible — WCAG 2.2 AA (7:1+ contrast on white/cream) ─────────── */
+:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #1c4a35 !important;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.nav-links a:focus-visible{outline:2px solid #1c4a35 !important;outline-offset:4px;border-radius:2px}
+.p-btn:focus-visible,.p-btn-gold:focus-visible{outline:2px solid #1c4a35 !important;outline-offset:3px}
 
 /* ═══════════════════════════════════════════════
    AWWWARDS REFINEMENTS — GLOBAL POLISH
@@ -797,6 +817,39 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
   .gsap-animate {
     transform: none !important;
     opacity: 1 !important;
+  }
+
+  /* Cover actual GSAP-animated elements (not just [data-gsap]) */
+  .fade-in,
+  .fade-up,
+  .text-reveal-inner,
+  .line-inner,
+  .hero-h1,
+  .hero-h1 .line-inner,
+  .hero-sub,
+  .zc,
+  .imc,
+  .sec-h2,
+  .sec-eye,
+  .cred-item,
+  .mkt-row,
+  [class*="gsap"],
+  [class*="reveal"],
+  [class*="animate"] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  /* Disable GSAP timeline (CSS hint — JS should also check) */
+  .gsap-paused {
+    animation-play-state: paused !important;
+  }
+
+  /* Film grain animation — disable on reduced motion */
+  body::after {
+    animation: none !important;
+    display: none !important;
   }
 }
 

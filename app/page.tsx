@@ -616,10 +616,30 @@ export default function Home() {
   // ═══ MODAL ═══
   function openModal() { setModalOpen(true); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('offPwd')?.focus(),300) }
   function closeModal() { setModalOpen(false); document.body.style.overflow='' }
-  function checkOff() {
-    const p=(document.getElementById('offPwd') as HTMLInputElement).value
-    if (['offmarket2026','agencygroup','ag2026'].includes(p)) { closeModal(); alert('✅ Acesso concedido. Portfolio off-market a carregar...') }
-    else { const err=document.getElementById('offErr'); if(err) err.style.display='block'; (document.getElementById('offPwd') as HTMLInputElement).value='' }
+  async function checkOff() {
+    const input = document.getElementById('offPwd') as HTMLInputElement
+    const code = input?.value ?? ''
+    try {
+      const res = await fetch('/api/auth/offmarket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const { valid } = await res.json()
+      if (valid) {
+        closeModal()
+        localStorage.setItem('ag_offmarket', '1')
+        alert('✅ Acesso concedido. Portfolio off-market a carregar...')
+      } else {
+        const err = document.getElementById('offErr')
+        if (err) err.style.display = 'block'
+        if (input) input.value = ''
+      }
+    } catch {
+      const err = document.getElementById('offErr')
+      if (err) err.style.display = 'block'
+      if (input) input.value = ''
+    }
   }
 
   // ═══ PROPERTIES DATA ═══
@@ -906,7 +926,9 @@ export default function Home() {
             muted
             loop
             playsInline
-            preload="auto"
+            preload="none"
+            poster="/hero-poster.jpg"
+            aria-hidden="true"
             src="/hero-video.mp4"
             style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
           />
@@ -993,7 +1015,7 @@ export default function Home() {
               {c:'z8',nome:'Arrábida',pais:'Portugal',pm2:'€4.500/m²',yoy:'+19%',tag:'The coast nobody found yet',photo:'/zones/arrabida.jpg'},
               {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally',photo:'/zones/ericeira.jpg'},
             ].map(z=>(
-              <div key={z.c} className={`zc ${z.c}`} onClick={()=>filterZ(z.nome)}>
+              <a key={z.c} href={`/zonas/${z.nome.toLowerCase()}`} className={`zc ${z.c}`} onClick={(e)=>{e.preventDefault();filterZ(z.nome)}}>
                 <div className="zc-bg" style={{backgroundImage:`url(${z.photo})`}}></div><div className="zc-ov"></div><div className="zc-clip-overlay"></div>
                 <div className="zc-c">
                   <div className="zc-id">{z.nome} · {z.pais}</div>
@@ -1001,7 +1023,7 @@ export default function Home() {
                   <div className="zc-data"><span className="zc-pm2">{z.pm2}</span><span className="zc-yoy">{z.yoy}</span></div>
                   <div className="zc-tag">{z.tag}</div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
