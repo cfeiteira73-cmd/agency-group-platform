@@ -78,8 +78,20 @@ export default auth(async (req) => {
     return new NextResponse('Forbidden', { status: 403 })
   }
 
-  // 2. Protected routes — require NextAuth session
-  // /portal uses its own localStorage magic link auth — NOT NextAuth
+  // 2a. Portal routes — require ag-auth-token cookie (magic link / Google OAuth)
+  if (pathname.startsWith('/portal') && pathname !== '/portal/login') {
+    const authCookie =
+      req.cookies.get('next-auth.session-token')?.value ||
+      req.cookies.get('__Secure-next-auth.session-token')?.value ||
+      req.cookies.get('ag-auth-token')?.value
+    if (!authCookie) {
+      const loginUrl = new URL('/portal/login', req.url)
+      loginUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+
+  // 2b. Protected API routes — require NextAuth session
   const protectedPaths = [
     '/api/crm', '/api/deal', '/api/agent', '/api/reports',
     '/api/contacts', '/api/deals', '/api/visitas/db', '/api/properties/db',
@@ -138,7 +150,7 @@ export default auth(async (req) => {
 
 export const config = {
   matcher: [
-    // Exclude /portal routes — use their own localStorage magic link auth
-    '/((?!_next/static|_next/image|favicon.ico|portal|api/chat|api/avm|api/properties(?!/db)|api/mortgage|api/imt|api/nhr|api/mais-valias).*)',
+    // Include /portal/* so we can enforce auth, exclude static assets + public API routes
+    '/((?!_next/static|_next/image|favicon.ico|api/chat|api/avm|api/properties(?!/db)|api/mortgage|api/imt|api/nhr|api/mais-valias).*)',
   ],
 }
