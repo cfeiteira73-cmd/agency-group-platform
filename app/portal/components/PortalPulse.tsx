@@ -565,10 +565,12 @@ export default function PortalPulse() {
 
   // ── Live data fetch ────────────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/market-data')
+    const controller = new AbortController()
+    fetch('/api/market-data', { signal: controller.signal })
       .then(r => { if (!r.ok) throw new Error('not ok'); return r.json() })
       .then(() => setLiveSource('live'))
       .catch(() => setLiveSource('demo'))
+    return () => controller.abort()
   }, [])
 
   useEffect(() => {
@@ -639,7 +641,7 @@ export default function PortalPulse() {
         {/* Tabs */}
         <div className="flex gap-1 mt-5 flex-wrap">
           {TABS.map((t) => (
-            <button
+            <button type="button"
               key={t.id}
               onClick={() => setActiveTab(t.id)}
               style={{
@@ -783,7 +785,7 @@ export default function PortalPulse() {
             {/* Zone Pills */}
             <div className="flex flex-wrap gap-2">
               {ZONES.map((z) => (
-                <button
+                <button type="button"
                   key={z.id}
                   onClick={() => setSelectedZone(z)}
                   style={{

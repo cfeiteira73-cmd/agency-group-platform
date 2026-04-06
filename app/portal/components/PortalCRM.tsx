@@ -195,14 +195,14 @@ function WAModal({
           <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.3rem', color: '#0e0e0d' }}>
             📱 WhatsApp{wc ? <em style={{ color: '#1c4a35' }}> — {wc.name}</em> : ''}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>×</button>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>×</button>
         </div>
 
         <div style={{ padding: '18px 24px' }}>
           {/* Language selector */}
           <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
             {(['PT', 'EN', 'FR', 'DE', 'AR'] as const).map(l => (
-              <button key={l} onClick={() => setWaLang(l)}
+              <button type="button" key={l} onClick={() => setWaLang(l)}
                 style={{ padding: '5px 12px', background: waLang === l ? '#1c4a35' : 'transparent', color: waLang === l ? '#f4f0e6' : 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
                 {l}
               </button>
@@ -216,7 +216,7 @@ function WAModal({
             </div>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {(quickTemplates.length > 0 ? quickTemplates : templateEntries.slice(0, 3).map(([k, t]) => ({ key: k, label: t.label, tmpl: t }))).map(item => (
-                <button key={item.key}
+                <button type="button" key={item.key}
                   onClick={() => { setSelectedKey(item.key); setCustomMsg('') }}
                   style={{ padding: '6px 14px', background: selectedKey === item.key ? '#1c4a35' : 'rgba(14,14,13,.04)', color: selectedKey === item.key ? '#c9a96e' : 'rgba(14,14,13,.6)', border: `1px solid ${selectedKey === item.key ? '#1c4a35' : 'rgba(14,14,13,.12)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.06em', borderRadius: '6px', transition: 'all .2s' }}>
                   {item.label}
@@ -230,7 +230,7 @@ function WAModal({
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>Todos os Templates</div>
             <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
               {templateEntries.map(([k, t]) => (
-                <button key={k}
+                <button type="button" key={k}
                   onClick={() => { setSelectedKey(k); setCustomMsg('') }}
                   style={{ padding: '3px 8px', background: selectedKey === k ? 'rgba(201,169,110,.15)' : 'transparent', color: selectedKey === k ? '#c9a96e' : 'rgba(14,14,13,.4)', border: `1px solid ${selectedKey === k ? 'rgba(201,169,110,.3)' : 'rgba(14,14,13,.08)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '4px' }}>
                   {t.label}
@@ -258,20 +258,20 @@ function WAModal({
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
+            <button type="button"
               onClick={() => { navigator.clipboard.writeText(finalMsg); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
               style={{ padding: '8px 16px', background: 'rgba(14,14,13,.06)', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: copied ? '#4a9c7a' : 'rgba(14,14,13,.6)', borderRadius: '6px', transition: 'all .2s' }}>
               {copied ? '✓ Copiado' : 'Copiar'}
             </button>
             {!!wc && !!wc.phone && (
-              <button
+              <button type="button"
                 disabled={charCount > WA_CHAR_LIMIT}
                 onClick={() => window.open(`https://wa.me/${wc.phone.replace(/\D/g, '')}?text=${encodeURIComponent(finalMsg)}`, '_blank')}
                 style={{ padding: '8px 18px', background: '#25D366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: charCount > WA_CHAR_LIMIT ? 'not-allowed' : 'pointer', opacity: charCount > WA_CHAR_LIMIT ? 0.5 : 1, borderRadius: '6px', transition: 'all .2s' }}>
                 Enviar via WA Web ↗
               </button>
             )}
-            <button onClick={onClose}
+            <button type="button" onClick={onClose}
               style={{ padding: '8px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)', marginLeft: 'auto', borderRadius: '6px', transition: 'all .2s' }}>
               Fechar
             </button>
@@ -354,9 +354,10 @@ export default function PortalCRM() {
 
   useEffect(() => {
     let cancelled = false
+    const controller = new AbortController()
     async function loadContacts() {
       try {
-        const res = await fetch('/api/crm?limit=50')
+        const res = await fetch('/api/crm?limit=50', { signal: controller.signal })
         if (res.ok) {
           const { data } = await res.json()
           if (!cancelled && data && data.length > 0) {
@@ -368,7 +369,7 @@ export default function PortalCRM() {
       finally { if (!cancelled) setIsLoading(false) }
     }
     loadContacts()
-    return () => { cancelled = true }
+    return () => { cancelled = true; controller.abort() }
   }, [setCrmContacts])
 
   useEffect(() => {
@@ -460,25 +461,25 @@ export default function PortalCRM() {
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ display: 'flex', border: '1px solid rgba(14,14,13,.12)', overflow: 'hidden' }}>
             {(['list', 'kanban'] as const).map(v => (
-              <button key={v} onClick={() => setCrmView(v)}
+              <button type="button" key={v} onClick={() => setCrmView(v)}
                 style={{ padding: '7px 14px', background: crmView === v ? '#1c4a35' : 'transparent', color: crmView === v ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
                 {v === 'list' ? '≡ Lista' : '⬛ Kanban'}
               </button>
             ))}
           </div>
-          <button onClick={() => setCrmShowFilters(!crmShowFilters)}
+          <button type="button" onClick={() => setCrmShowFilters(!crmShowFilters)}
             style={{ padding: '7px 14px', background: crmShowFilters ? 'rgba(28,74,53,.1)' : 'transparent', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
             ⚙ Filtros {(crmNatFilter || crmZonaFilter || crmStatusFilter) ? '●' : ''}
           </button>
-          <button onClick={() => exportCrmCSV(crmContacts)}
+          <button type="button" onClick={() => exportCrmCSV(crmContacts)}
             style={{ padding: '7px 14px', background: 'transparent', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
             ↓ CSV
           </button>
-          <button onClick={() => setShowImportCSV(!showImportCSV)}
+          <button type="button" onClick={() => setShowImportCSV(!showImportCSV)}
             style={{ padding: '7px 14px', background: showImportCSV ? 'rgba(28,74,53,.1)' : 'transparent', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
             ↑ Import CSV
           </button>
-          <button className="p-btn p-btn-gold" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => setShowNewContact(true)}>+ Novo</button>
+          <button type="button" className="p-btn p-btn-gold" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => setShowNewContact(true)}>+ Novo</button>
         </div>
       </div>
 
@@ -492,7 +493,7 @@ export default function PortalCRM() {
                 {['🇺🇸 Americana', '🇫🇷 Francesa', '🇬🇧 Britânica', '🇨🇳 Chinesa', '🇧🇷 Brasileira', '🇩🇪 Alemã', '🇵🇹 Portuguesa'].map(flag => {
                   const nat = flag.split(' ')[1]
                   return (
-                    <button key={nat} onClick={() => setCrmNatFilter(crmNatFilter === nat ? '' : nat)}
+                    <button type="button" key={nat} onClick={() => setCrmNatFilter(crmNatFilter === nat ? '' : nat)}
                       style={{ padding: '3px 8px', background: crmNatFilter === nat ? 'rgba(28,74,53,.15)' : 'rgba(14,14,13,.04)', border: `1px solid ${crmNatFilter === nat ? 'rgba(28,74,53,.3)' : 'rgba(14,14,13,.1)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: crmNatFilter === nat ? '#1c4a35' : 'rgba(14,14,13,.5)' }}>
                       {flag}
                     </button>
@@ -511,7 +512,7 @@ export default function PortalCRM() {
                 {(['', 'lead', 'prospect', 'cliente', 'vip'] as const).map(s => {
                   const sc = s ? STATUS_CONFIG[s] : null
                   return (
-                    <button key={s || 'all'} onClick={() => setCrmStatusFilter(s)}
+                    <button type="button" key={s || 'all'} onClick={() => setCrmStatusFilter(s)}
                       style={{ padding: '3px 8px', background: crmStatusFilter === s ? (sc?.bg || 'rgba(28,74,53,.12)') : 'transparent', border: `1px solid ${crmStatusFilter === s ? (sc?.color || '#1c4a35') + '50' : 'rgba(14,14,13,.1)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: crmStatusFilter === s ? (sc?.color || '#1c4a35') : 'rgba(14,14,13,.45)' }}>
                       {s ? s.toUpperCase() : 'TODOS'}
                     </button>
@@ -519,7 +520,7 @@ export default function PortalCRM() {
                 })}
               </div>
             </div>
-            <button onClick={() => { setCrmNatFilter(''); setCrmZonaFilter(''); setCrmStatusFilter(''); setBudgetFilterMin(0); setBudgetFilterMax(10) }}
+            <button type="button" onClick={() => { setCrmNatFilter(''); setCrmZonaFilter(''); setCrmStatusFilter(''); setBudgetFilterMin(0); setBudgetFilterMax(10) }}
               style={{ padding: '6px 12px', background: 'rgba(14,14,13,.06)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', alignSelf: 'flex-end' }}>
               Limpar
             </button>
@@ -609,13 +610,13 @@ export default function PortalCRM() {
                 {csvImportResult}
               </div>
             )}
-            <button onClick={() => { setShowImportCSV(false); setCsvImportResult('') }}
+            <button type="button" onClick={() => { setShowImportCSV(false); setCsvImportResult('') }}
               style={{ padding: '6px 12px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }}>
               × Fechar
             </button>
           </div>
           {/* Download template */}
-          <button
+          <button type="button"
             style={{ marginTop: '10px', padding: '5px 12px', background: 'transparent', border: '1px dashed rgba(28,74,53,.3)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(28,74,53,.6)', cursor: 'pointer' }}
             onClick={() => {
               const template = 'Nome,Email,Telefone,Nacionalidade,BudgetMin,BudgetMax,Zonas,Status\nJohn Smith,john@example.com,+44700000000,Britânica,800000,1500000,Lisboa|Cascais,prospect'
@@ -650,7 +651,7 @@ export default function PortalCRM() {
           <div style={{ background: '#f4f0e6', padding: '32px', maxWidth: '520px', width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: '16px', boxShadow: '0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.5rem', color: '#0e0e0d' }}>Novo <em style={{ color: '#1c4a35' }}>Contacto</em></div>
-              <button style={{ padding: '6px 14px', background: showSmartImport ? 'rgba(28,74,53,.12)' : 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em', cursor: 'pointer' }}
+              <button type="button" style={{ padding: '6px 14px', background: showSmartImport ? 'rgba(28,74,53,.12)' : 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em', cursor: 'pointer' }}
                 onClick={() => setShowSmartImport(!showSmartImport)}>
                 {showSmartImport ? '× Fechar' : '✦ Import Inteligente IA'}
               </button>
@@ -661,7 +662,7 @@ export default function PortalCRM() {
                 <textarea style={{ width: '100%', minHeight: '80px', border: '1px solid rgba(28,74,53,.15)', background: '#fff', color: '#0e0e0d', fontFamily: "'Jost',sans-serif", fontSize: '.8rem', padding: '8px', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
                   value={smartImportText} onChange={e => setSmartImportText(e.target.value)}
                   placeholder="Cole aqui o email, mensagem WhatsApp, perfil LinkedIn..." />
-                <button style={{ marginTop: '8px', padding: '8px 18px', background: '#1c4a35', color: '#c9a96e', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', cursor: 'pointer' }}
+                <button type="button" style={{ marginTop: '8px', padding: '8px 18px', background: '#1c4a35', color: '#c9a96e', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', cursor: 'pointer' }}
                   disabled={smartImportLoading || !smartImportText.trim()}
                   onClick={async () => {
                     setSmartImportLoading(true)
@@ -704,7 +705,7 @@ export default function PortalCRM() {
             </div>
             <div><label className="p-label">Notas</label><textarea className="p-inp" style={{ minHeight: '60px', resize: 'vertical' }} value={newContact.notes} onChange={e => setNewContact({ notes: e.target.value })} placeholder="Preferências, observações..." /></div>
             <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-              <button className="p-btn p-btn-gold" style={{ flex: 1 }}
+              <button type="button" className="p-btn p-btn-gold" style={{ flex: 1 }}
                 onClick={() => {
                   if (!newContact.name) return
                   const c: CRMContact = {
@@ -738,7 +739,7 @@ export default function PortalCRM() {
                     }),
                   }).catch(() => { /* silently fail — data persisted to localStorage */ })
                 }}>Guardar Contacto</button>
-              <button className="p-btn" style={{ background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.6)' }} onClick={() => setShowNewContact(false)}>Cancelar</button>
+              <button type="button" className="p-btn" style={{ background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.6)' }} onClick={() => setShowNewContact(false)}>Cancelar</button>
             </div>
           </div>
         </div>
@@ -764,7 +765,7 @@ export default function PortalCRM() {
           <div style={{ background: '#f4f0e6', maxWidth: '560px', width: '100%', maxHeight: '90vh', overflowY: 'auto', borderRadius: '16px', boxShadow: '0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04)' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(14,14,13,.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.3rem', color: '#0e0e0d' }}>📧 Email <em style={{ color: '#1c4a35' }}>Campaign</em></div>
-              <button onClick={() => setShowCampaignModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>×</button>
+              <button type="button" onClick={() => setShowCampaignModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>×</button>
             </div>
             {campaignSent ? (
               <div style={{ padding: '40px 24px', textAlign: 'center' }}>
@@ -773,7 +774,7 @@ export default function PortalCRM() {
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)' }}>
                   {crmSelectedIds.size} destinatários · {campaignName}
                 </div>
-                <button className="p-btn" style={{ marginTop: '20px', padding: '8px 20px' }} onClick={() => { setShowCampaignModal(false); setCampaignSent(false) }}>Fechar</button>
+                <button type="button" className="p-btn" style={{ marginTop: '20px', padding: '8px 20px' }} onClick={() => { setShowCampaignModal(false); setCampaignSent(false) }}>Fechar</button>
               </div>
             ) : (
               <div style={{ padding: '20px 24px' }}>
@@ -801,7 +802,7 @@ export default function PortalCRM() {
                   Total: <strong>{crmSelectedIds.size} destinatários</strong>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="p-btn p-btn-gold" style={{ flex: 1 }} disabled={!campaignName.trim()}
+                  <button type="button" className="p-btn p-btn-gold" style={{ flex: 1 }} disabled={!campaignName.trim()}
                     onClick={async () => {
                       try {
                         const selectedContacts = crmContacts.filter(c => crmSelectedIds.has(c.id))
@@ -814,7 +815,7 @@ export default function PortalCRM() {
                     }}>
                     Enviar Campanha
                   </button>
-                  <button className="p-btn" style={{ background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowCampaignModal(false)}>Cancelar</button>
+                  <button type="button" className="p-btn" style={{ background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowCampaignModal(false)}>Cancelar</button>
                 </div>
               </div>
             )}
@@ -882,7 +883,7 @@ export default function PortalCRM() {
                             {na.urgency === 'high' ? '🔴' : '🟡'} {na.text}
                           </div>
                         )}
-                        <button onClick={e => { e.stopPropagation(); setWaModalContact(c.id); setWaLang((c.language as typeof waLang) || 'PT'); setShowWaModal(true) }}
+                        <button type="button" onClick={e => { e.stopPropagation(); setWaModalContact(c.id); setWaLang((c.language as typeof waLang) || 'PT'); setShowWaModal(true) }}
                           style={{ marginTop: '6px', width: '100%', padding: '4px', background: '#25D366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '4px' }}>
                           📱 WhatsApp
                         </button>
@@ -902,7 +903,7 @@ export default function PortalCRM() {
       {/* CRM Stats Funnel Panel (collapsible) */}
       {crmView === 'list' && (
         <div style={{ marginBottom: '12px' }}>
-          <button
+          <button type="button"
             onClick={() => setShowStatsPanel(!showStatsPanel)}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: showStatsPanel ? 'rgba(28,74,53,.08)' : 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', color: '#1c4a35', cursor: 'pointer', width: '100%', justifyContent: 'space-between' }}>
             <span>📊 Funil CRM — {crmContacts.length} Contactos</span>
@@ -972,7 +973,7 @@ export default function PortalCRM() {
                   ['cliente', `Clientes (${crmContacts.filter(c => c.status === 'cliente').length})`],
                   ['vip', `VIP (${crmContacts.filter(c => c.status === 'vip').length})`],
                 ] as [string, string][]).map(([k, l]) => (
-                  <button key={k} onClick={() => setQuickFilter(k)}
+                  <button type="button" key={k} onClick={() => setQuickFilter(k)}
                     style={{ padding: '3px 7px', background: quickFilter === k ? (STATUS_CONFIG[k as keyof typeof STATUS_CONFIG]?.bg || 'rgba(28,74,53,.12)') : 'transparent', border: `1px solid ${quickFilter === k ? (STATUS_CONFIG[k as keyof typeof STATUS_CONFIG]?.color || '#1c4a35') + '50' : 'rgba(14,14,13,.1)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', color: quickFilter === k ? (STATUS_CONFIG[k as keyof typeof STATUS_CONFIG]?.color || '#1c4a35') : 'rgba(14,14,13,.45)', cursor: 'pointer' }}>
                     {l}
                   </button>
@@ -983,7 +984,7 @@ export default function PortalCRM() {
                   ['followup', `Follow-up Hoje (${crmContacts.filter(c => c.nextFollowUp && c.nextFollowUp <= today).length})`],
                   ['sem_contacto', `Sem Contacto 14d+ (${crmContacts.filter(c => { const d = c.lastContact ? Math.floor((Date.now() - new Date(c.lastContact).getTime()) / 86400000) : null; return d !== null && d >= 14 }).length})`],
                 ] as [string, string][]).map(([k, l]) => (
-                  <button key={k} onClick={() => setQuickFilter(quickFilter === k ? 'todos' : k)}
+                  <button type="button" key={k} onClick={() => setQuickFilter(quickFilter === k ? 'todos' : k)}
                     style={{ padding: '3px 7px', background: quickFilter === k ? 'rgba(224,82,82,.1)' : 'transparent', border: `1px solid ${quickFilter === k ? 'rgba(224,82,82,.3)' : 'rgba(14,14,13,.1)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: quickFilter === k ? '#e05252' : 'rgba(14,14,13,.45)', cursor: 'pointer' }}>
                     {l}
                   </button>
@@ -998,7 +999,7 @@ export default function PortalCRM() {
                     <option value="nome">↓ Nome</option>
                     <option value="budget">↓ Budget</option>
                   </select>
-                  <button onClick={() => { setCrmBulkMode(!crmBulkMode); setCrmSelectedIds(new Set()) }}
+                  <button type="button" onClick={() => { setCrmBulkMode(!crmBulkMode); setCrmSelectedIds(new Set()) }}
                     style={{ padding: '3px 8px', background: crmBulkMode ? 'rgba(28,74,53,.12)' : 'rgba(14,14,13,.04)', border: `1px solid ${crmBulkMode ? 'rgba(28,74,53,.3)' : 'rgba(14,14,13,.1)'}`, color: crmBulkMode ? '#1c4a35' : 'rgba(14,14,13,.4)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}>
                     {crmBulkMode ? '✓ Bulk' : '☐ Bulk'}
                   </button>
@@ -1011,24 +1012,24 @@ export default function PortalCRM() {
               <div style={{ padding: '8px 10px', background: 'rgba(28,74,53,.06)', borderBottom: '1px solid rgba(28,74,53,.12)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', fontWeight: 700 }}>{crmSelectedIds.size} seleccionados</div>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  <button style={{ padding: '4px 8px', background: 'rgba(28,74,53,.1)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
+                  <button type="button" style={{ padding: '4px 8px', background: 'rgba(28,74,53,.1)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                     onClick={() => { setShowCampaignModal(true); setCampaignSent(false) }}>📧 Email Campaign</button>
-                  <button style={{ padding: '4px 8px', background: '#25d366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
+                  <button type="button" style={{ padding: '4px 8px', background: '#25d366', color: '#fff', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                     onClick={() => {
                       const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
                       const phones = selected.map(c => c.phone?.replace(/\D/g, '')).filter(Boolean)
                       if (phones.length === 1) window.open(`https://wa.me/${phones[0]}`)
                       else { alert(`Campanha WA para ${phones.length} contactos.`); phones.forEach((p, i) => setTimeout(() => window.open(`https://wa.me/${p}`), i * 500)) }
                     }}>💬 WA</button>
-                  <button style={{ padding: '4px 8px', background: 'rgba(201,169,110,.1)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
+                  <button type="button" style={{ padding: '4px 8px', background: 'rgba(201,169,110,.1)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                     onClick={() => setShowBulkStatusModal(true)}>📊 Status</button>
-                  <button style={{ padding: '4px 8px', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
+                  <button type="button" style={{ padding: '4px 8px', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                     onClick={() => {
                       const d = new Date(); d.setDate(d.getDate() + 3)
                       saveCrmContacts(crmContacts.map(c => crmSelectedIds.has(c.id) ? { ...c, nextFollowUp: d.toISOString().split('T')[0] } : c))
                       setCrmSelectedIds(new Set())
                     }}>📅 +3d</button>
-                  <button style={{ padding: '4px 8px', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
+                  <button type="button" style={{ padding: '4px 8px', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                     onClick={() => {
                       const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
                       const csv = ['Nome,Email,Telefone,Nacionalidade,Status,Budget Max,Zonas', ...selected.map(c => `"${c.name}","${c.email}","${c.phone}","${c.nationality}","${c.status}","${c.budgetMax}","${(c.zonas || []).join(';')}"`)]
@@ -1037,14 +1038,14 @@ export default function PortalCRM() {
                       const a = document.createElement('a'); a.href = url; a.download = `crm_export_${new Date().toISOString().split('T')[0]}.csv`; a.click()
                       URL.revokeObjectURL(url)
                     }}>📤 CSV</button>
-                  <button style={{ padding: '4px 8px', background: 'rgba(224,82,82,.06)', color: '#e05252', border: '1px solid rgba(224,82,82,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
+                  <button type="button" style={{ padding: '4px 8px', background: 'rgba(224,82,82,.06)', color: '#e05252', border: '1px solid rgba(224,82,82,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                     onClick={() => {
                       if (confirm(`Arquivar ${crmSelectedIds.size} contactos?`)) {
                         saveCrmContacts(crmContacts.filter(c => !crmSelectedIds.has(c.id)))
                         setCrmSelectedIds(new Set()); setCrmBulkMode(false)
                       }
                     }}>🗑️ Arquivar</button>
-                  <button style={{ padding: '4px 8px', background: 'rgba(14,14,13,.04)', color: 'rgba(14,14,13,.35)', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }} onClick={() => setCrmSelectedIds(new Set())}>× Limpar</button>
+                  <button type="button" style={{ padding: '4px 8px', background: 'rgba(14,14,13,.04)', color: 'rgba(14,14,13,.35)', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }} onClick={() => setCrmSelectedIds(new Set())}>× Limpar</button>
                 </div>
               </div>
             )}
@@ -1055,12 +1056,12 @@ export default function PortalCRM() {
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', marginBottom: '6px' }}>Alterar status para:</div>
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                   {(['lead', 'prospect', 'cliente', 'vip'] as const).map(s => (
-                    <button key={s} style={{ padding: '4px 8px', background: STATUS_CONFIG[s].bg, color: STATUS_CONFIG[s].color, border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
+                    <button type="button" key={s} style={{ padding: '4px 8px', background: STATUS_CONFIG[s].bg, color: STATUS_CONFIG[s].color, border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                       onClick={() => { saveCrmContacts(crmContacts.map(c => crmSelectedIds.has(c.id) ? { ...c, status: s } : c)); setCrmSelectedIds(new Set()); setShowBulkStatusModal(false) }}>
                       {s.toUpperCase()}
                     </button>
                   ))}
-                  <button style={{ padding: '4px 8px', background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => setShowBulkStatusModal(false)}>× cancelar</button>
+                  <button type="button" style={{ padding: '4px 8px', background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => setShowBulkStatusModal(false)}>× cancelar</button>
                 </div>
               </div>
             )}
@@ -1073,11 +1074,11 @@ export default function PortalCRM() {
                   Emails: {crmContacts.filter(c => crmSelectedIds.has(c.id) && c.email).map(c => c.email).join(', ').substring(0, 100)}{crmContacts.filter(c => crmSelectedIds.has(c.id) && c.email).length > 3 ? '...' : ''}
                 </div>
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  <button style={{ padding: '5px 10px', background: '#1c4a35', color: '#c9a96e', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
+                  <button type="button" style={{ padding: '5px 10px', background: '#1c4a35', color: '#c9a96e', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                     onClick={() => { const emails = crmContacts.filter(c => crmSelectedIds.has(c.id) && c.email).map(c => c.email).join(','); window.open(`mailto:${emails}`); setShowBulkEmailModal(false) }}>
                     Abrir no Mail
                   </button>
-                  <button style={{ padding: '5px 8px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => setShowBulkEmailModal(false)}>× Cancelar</button>
+                  <button type="button" style={{ padding: '5px 8px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => setShowBulkEmailModal(false)}>× Cancelar</button>
                 </div>
               </div>
             )}
@@ -1131,7 +1132,7 @@ export default function PortalCRM() {
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', fontWeight: 700, color: dColor, marginRight: '2px' }}>{dLabel}</div>
                           {/* Quick Action: Call */}
                           {c.phone && (
-                            <button
+                            <button type="button"
                               title={`Ligar para ${c.phone}`}
                               onClick={e => { e.stopPropagation(); setQuickCallId(quickCallId === c.id ? null : c.id) }}
                               style={{ padding: '2px 5px', background: quickCallId === c.id ? 'rgba(28,74,53,.15)' : 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', cursor: 'pointer', lineHeight: 1 }}>
@@ -1140,7 +1141,7 @@ export default function PortalCRM() {
                           )}
                           {/* Quick Action: WhatsApp */}
                           {c.phone && (
-                            <button
+                            <button type="button"
                               title="WhatsApp"
                               onClick={e => { e.stopPropagation(); setWaModalContact(c.id); setWaLang((c.language as typeof waLang) || 'PT'); setShowWaModal(true) }}
                               style={{ padding: '2px 5px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#25D366', cursor: 'pointer', lineHeight: 1 }}>
@@ -1149,7 +1150,7 @@ export default function PortalCRM() {
                           )}
                           {/* Quick Action: Email */}
                           {c.email && (
-                            <button
+                            <button type="button"
                               title={`Email: ${c.email}`}
                               onClick={e => { e.stopPropagation(); setQuickEmailId(quickEmailId === c.id ? null : c.id) }}
                               style={{ padding: '2px 5px', background: quickEmailId === c.id ? 'rgba(58,123,213,.12)' : 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#3a7bd5', cursor: 'pointer', lineHeight: 1 }}>
@@ -1157,7 +1158,7 @@ export default function PortalCRM() {
                             </button>
                           )}
                           {/* Quick Note */}
-                          <button
+                          <button type="button"
                             title="Nota rápida"
                             onClick={e => { e.stopPropagation(); setQuickNoteId(isQuickNoteOpen ? null : c.id); setQuickNoteText('') }}
                             style={{ padding: '2px 5px', background: isQuickNoteOpen ? 'rgba(28,74,53,.12)' : 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', cursor: 'pointer', lineHeight: 1 }}>
@@ -1179,7 +1180,7 @@ export default function PortalCRM() {
                           }}>
                           Ligar ↗
                         </a>
-                        <button style={{ background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer' }} onClick={() => setQuickCallId(null)}>× cancelar</button>
+                        <button type="button" style={{ background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer' }} onClick={() => setQuickCallId(null)}>× cancelar</button>
                       </div>
                     )}
                     {/* Quick Email inline */}
@@ -1195,7 +1196,7 @@ export default function PortalCRM() {
                           }}>
                           Abrir Mail ↗
                         </a>
-                        <button style={{ background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer', flexShrink: 0 }} onClick={() => setQuickEmailId(null)}>× cancelar</button>
+                        <button type="button" style={{ background: 'none', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer', flexShrink: 0 }} onClick={() => setQuickEmailId(null)}>× cancelar</button>
                       </div>
                     )}
                     {/* Quick Note inline */}
@@ -1210,7 +1211,7 @@ export default function PortalCRM() {
                           style={{ width: '100%', border: '1px solid rgba(28,74,53,.2)', background: '#fff', fontFamily: "'Jost',sans-serif", fontSize: '.78rem', padding: '6px 8px', resize: 'vertical', outline: 'none', boxSizing: 'border-box', color: '#0e0e0d', lineHeight: 1.5 }}
                         />
                         <div style={{ display: 'flex', gap: '6px', marginTop: '5px' }}>
-                          <button
+                          <button type="button"
                             style={{ padding: '4px 12px', background: '#1c4a35', color: '#c9a96e', border: 'none', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                             disabled={!quickNoteText.trim()}
                             onClick={() => {
@@ -1219,7 +1220,7 @@ export default function PortalCRM() {
                               saveCrmContacts(crmContacts.map(cont => cont.id === c.id ? { ...cont, activities: [act, ...(cont.activities || [])], lastContact: today } : cont))
                               setQuickNoteId(null); setQuickNoteText('')
                             }}>Guardar</button>
-                          <button style={{ padding: '4px 10px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => { setQuickNoteId(null); setQuickNoteText('') }}>Cancelar</button>
+                          <button type="button" style={{ padding: '4px 10px', background: 'none', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', cursor: 'pointer' }} onClick={() => { setQuickNoteId(null); setQuickNoteText('') }}>Cancelar</button>
                         </div>
                       </div>
                     )}
@@ -1256,7 +1257,7 @@ export default function PortalCRM() {
                   </div>
                   <div style={{ display: 'flex', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
                     {(['lead', 'prospect', 'cliente', 'vip'] as const).map(s => (
-                      <button key={s}
+                      <button type="button" key={s}
                         style={{ padding: '5px 10px', background: activeContact.status === s ? STATUS_CONFIG[s].bg : 'transparent', border: `1px solid ${activeContact.status === s ? STATUS_CONFIG[s].color : 'rgba(14,14,13,.12)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: activeContact.status === s ? STATUS_CONFIG[s].color : 'rgba(14,14,13,.4)', cursor: 'pointer' }}
                         onClick={() => {
                           saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, status: s } : c))
@@ -1279,9 +1280,9 @@ export default function PortalCRM() {
               {/* Tabs */}
               <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.08)', padding: '0 24px', overflowX: 'auto' }}>
                 {[['overview', 'Perfil'], ['timeline', 'Timeline'], ['tasks', 'Tarefas'], ['notes', 'Notas'], ['matching', 'Matching']].map(([t, l]) => (
-                  <button key={t} className={`crm-profile-tab${crmProfileTab === t ? ' active' : ''}`} onClick={() => setCrmProfileTab(t as typeof crmProfileTab)}>{l}</button>
+                  <button type="button" key={t} className={`crm-profile-tab${crmProfileTab === t ? ' active' : ''}`} onClick={() => setCrmProfileTab(t as typeof crmProfileTab)}>{l}</button>
                 ))}
-                {activeContact.status === 'cliente' && <button className={`crm-profile-tab${crmProfileTab === 'postclosing' ? ' active' : ''}`} onClick={() => setCrmProfileTab('postclosing')}>Post-Sale</button>}
+                {activeContact.status === 'cliente' && <button type="button" className={`crm-profile-tab${crmProfileTab === 'postclosing' ? ' active' : ''}`} onClick={() => setCrmProfileTab('postclosing')}>Post-Sale</button>}
               </div>
 
               {/* Tab content */}
@@ -1315,7 +1316,7 @@ export default function PortalCRM() {
                             </div>
                             <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.1rem', fontWeight: 300, color: activeContact.nextFollowUp <= today ? '#e05454' : '#c9a96e', lineHeight: 1 }}>{activeContact.nextFollowUp}</div>
                           </div>
-                          <button className="p-btn" style={{ padding: '5px 10px', fontSize: '.52rem', background: '#1c4a35', color: '#f4f0e6' }}
+                          <button type="button" className="p-btn" style={{ padding: '5px 10px', fontSize: '.52rem', background: '#1c4a35', color: '#f4f0e6' }}
                             onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today, nextFollowUp: '' } : c))}>
                             ✓ Feito
                           </button>
@@ -1327,13 +1328,13 @@ export default function PortalCRM() {
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <input type="date" className="p-inp" style={{ flex: 1, fontSize: '.75rem', padding: '6px 8px' }} value={activeContact.nextFollowUp || ''} onChange={e => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, nextFollowUp: e.target.value } : c))} />
-                        <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today } : c))}>Hoje</button>
+                        <button type="button" className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today } : c))}>Hoje</button>
                       </div>
                       <div style={{ display: 'flex', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
                         {[1, 3, 7, 14, 30].map(d => {
                           const dt = new Date(); dt.setDate(dt.getDate() + d)
                           return (
-                            <button key={d} style={{ padding: '3px 8px', background: 'rgba(14,14,13,.05)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}
+                            <button type="button" key={d} style={{ padding: '3px 8px', background: 'rgba(14,14,13,.05)', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}
                               onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, nextFollowUp: dt.toISOString().split('T')[0] } : c))}>
                               +{d}d
                             </button>
@@ -1346,12 +1347,12 @@ export default function PortalCRM() {
                       {activeContact.dealRef ? (
                         <div>
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.65rem', color: '#c9a96e', marginBottom: '4px' }}>{activeContact.dealRef}</div>
-                          <button className="p-btn" style={{ padding: '6px 14px', fontSize: '.52rem', width: '100%' }} onClick={() => setSection('pipeline')}>Ver no Pipeline →</button>
+                          <button type="button" className="p-btn" style={{ padding: '6px 14px', fontSize: '.52rem', width: '100%' }} onClick={() => setSection('pipeline')}>Ver no Pipeline →</button>
                         </div>
                       ) : (
                         <div>
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginBottom: '8px' }}>Sem deal activo</div>
-                          <button className="p-btn" style={{ padding: '6px 14px', fontSize: '.52rem', width: '100%', background: 'rgba(28,74,53,.08)', color: '#1c4a35' }} onClick={() => setSection('pipeline')}>Criar Deal →</button>
+                          <button type="button" className="p-btn" style={{ padding: '6px 14px', fontSize: '.52rem', width: '100%', background: 'rgba(28,74,53,.08)', color: '#1c4a35' }} onClick={() => setSection('pipeline')}>Criar Deal →</button>
                         </div>
                       )}
                     </div>
@@ -1365,7 +1366,7 @@ export default function PortalCRM() {
                             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '2px' }}>IA · Próxima Acção</div>
                             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: na.urgency === 'high' ? '#e05454' : na.urgency === 'medium' ? '#c9a96e' : '#1c4a35', fontWeight: 600 }}>{na.text}</div>
                           </div>
-                          <button className="p-btn" style={{ padding: '5px 12px', fontSize: '.52rem', flexShrink: 0, background: 'rgba(14,14,13,.06)' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today } : c))}>✓ Feito</button>
+                          <button type="button" className="p-btn" style={{ padding: '5px 12px', fontSize: '.52rem', flexShrink: 0, background: 'rgba(14,14,13,.06)' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, lastContact: today } : c))}>✓ Feito</button>
                         </div>
                       )
                     })()}
@@ -1373,11 +1374,11 @@ export default function PortalCRM() {
                     <div className="p-card" style={{ gridColumn: '1/-1' }}>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Acções Rápidas</div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <button className="p-btn p-btn-gold" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => { setWaModalContact(activeContact.id); setWaLang((activeContact.language as typeof waLang) || 'PT'); setShowWaModal(true) }}>📱 Templates WA</button>
-                        {activeContact.phone && <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => window.open(`https://wa.me/${activeContact.phone.replace(/\D/g, '')}`)}>📱 WhatsApp</button>}
-                        {activeContact.email && <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => window.open(`mailto:${activeContact.email}`)}>✉ Email</button>}
-                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'rgba(28,74,53,.08)', color: '#1c4a35' }} onClick={() => setSection('avm')}>📊 AVM</button>
-                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'linear-gradient(135deg,#0c1f15,#1c4a35)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.3)' }}
+                        <button type="button" className="p-btn p-btn-gold" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => { setWaModalContact(activeContact.id); setWaLang((activeContact.language as typeof waLang) || 'PT'); setShowWaModal(true) }}>📱 Templates WA</button>
+                        {activeContact.phone && <button type="button" className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => window.open(`https://wa.me/${activeContact.phone.replace(/\D/g, '')}`)}>📱 WhatsApp</button>}
+                        {activeContact.email && <button type="button" className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => window.open(`mailto:${activeContact.email}`)}>✉ Email</button>}
+                        <button type="button" className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'rgba(28,74,53,.08)', color: '#1c4a35' }} onClick={() => setSection('avm')}>📊 AVM</button>
+                        <button type="button" className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'linear-gradient(135deg,#0c1f15,#1c4a35)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.3)' }}
                           disabled={crmNextStepLoading}
                           onClick={async () => {
                             setCrmNextStepLoading(true); setCrmNextStep(null)
@@ -1388,7 +1389,7 @@ export default function PortalCRM() {
                           }}>
                           {crmNextStepLoading ? '✦ A analisar...' : '✦ IA Próxima Acção'}
                         </button>
-                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.55)', border: '1px solid rgba(14,14,13,.15)' }}
+                        <button type="button" className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.55)', border: '1px solid rgba(14,14,13,.15)' }}
                           disabled={meetingPrepLoading}
                           onClick={async () => {
                             if (meetingPrep) { setMeetingPrep(null); return }
@@ -1400,7 +1401,7 @@ export default function PortalCRM() {
                           }}>
                           {meetingPrepLoading ? '✦ A preparar...' : meetingPrep ? '× Fechar Briefing' : '📋 Meeting Prep IA'}
                         </button>
-                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'rgba(28,74,53,.06)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)' }}
+                        <button type="button" className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'rgba(28,74,53,.06)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)' }}
                           disabled={emailDraftLoading}
                           onClick={async () => {
                             setEmailDraftLoading(true); setEmailDraft(null)
@@ -1411,7 +1412,7 @@ export default function PortalCRM() {
                           }}>
                           {emailDraftLoading ? '✦ A gerar...' : '✉ Draft Email IA'}
                         </button>
-                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: enrichLoading === activeContact.id ? 'rgba(201,169,110,.12)' : 'rgba(201,169,110,.08)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.25)' }}
+                        <button type="button" className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: enrichLoading === activeContact.id ? 'rgba(201,169,110,.12)' : 'rgba(201,169,110,.08)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.25)' }}
                           disabled={enrichLoading === activeContact.id}
                           onClick={async () => {
                             setEnrichLoading(activeContact.id)
@@ -1445,7 +1446,7 @@ export default function PortalCRM() {
                             </span>
                           ) : '✦ Enriquecer Lead'}
                         </button>
-                        <button className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'rgba(224,84,84,.08)', color: '#e05454', border: '1px solid rgba(224,84,84,.2)' }}
+                        <button type="button" className="p-btn" style={{ padding: '8px 16px', fontSize: '.52rem', background: 'rgba(224,84,84,.08)', color: '#e05454', border: '1px solid rgba(224,84,84,.2)' }}
                           onClick={() => { if (confirm(`Eliminar ${activeContact.name}?`)) { saveCrmContacts(crmContacts.filter(c => c.id !== activeContact.id)); setActiveCrmId(null) } }}>
                           🗑 Eliminar
                         </button>
@@ -1498,8 +1499,8 @@ export default function PortalCRM() {
                           </div>
                         )}
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          {!!crmNextStep.messageTemplate && <button className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.52rem' }} onClick={() => window.open(`https://wa.me/${activeContact.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(String(crmNextStep.messageTemplate || ''))}`)}>💬 Enviar WA</button>}
-                          <button style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(244,240,230,.12)', color: 'rgba(244,240,230,.6)', padding: '6px 14px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }} onClick={() => setCrmNextStep(null)}>✕ Fechar</button>
+                          {!!crmNextStep.messageTemplate && <button type="button" className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.52rem' }} onClick={() => window.open(`https://wa.me/${activeContact.phone?.replace(/\D/g, '')}?text=${encodeURIComponent(String(crmNextStep.messageTemplate || ''))}`)}>💬 Enviar WA</button>}
+                          <button type="button" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(244,240,230,.12)', color: 'rgba(244,240,230,.6)', padding: '6px 14px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }} onClick={() => setCrmNextStep(null)}>✕ Fechar</button>
                         </div>
                       </div>
                     )}
@@ -1508,7 +1509,7 @@ export default function PortalCRM() {
                       <div style={{ gridColumn: '1/-1', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.18)', padding: '18px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(28,74,53,.5)' }}>✉ Draft Email IA</div>
-                          <button onClick={() => setEmailDraft(null)} style={{ background: 'none', border: 'none', color: 'rgba(14,14,13,.3)', cursor: 'pointer', fontSize: '.85rem' }}>✕</button>
+                          <button type="button" onClick={() => setEmailDraft(null)} style={{ background: 'none', border: 'none', color: 'rgba(14,14,13,.3)', cursor: 'pointer', fontSize: '.85rem' }}>✕</button>
                         </div>
                         <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.05rem', fontWeight: 700, color: '#1c4a35', marginBottom: '14px' }}>{emailDraft.subject}</div>
                         <div style={{ background: '#fff', border: '1px solid rgba(14,14,13,.08)', padding: '16px', marginBottom: '12px' }}>
@@ -1517,8 +1518,8 @@ export default function PortalCRM() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          <button className="p-btn p-btn-gold" style={{ padding: '7px 16px', fontSize: '.52rem' }} onClick={() => navigator.clipboard.writeText(`${emailDraft.subject}\n\n${emailDraft.greeting}\n\n${emailDraft.body}\n\n${emailDraft.cta}\n\n${emailDraft.signature}`)}>📋 Copiar</button>
-                          {activeContact.email && <button className="p-btn" style={{ padding: '7px 16px', fontSize: '.52rem' }} onClick={() => window.open(`mailto:${activeContact.email}?subject=${encodeURIComponent(emailDraft.subject)}&body=${encodeURIComponent(emailDraft.greeting + '\n\n' + emailDraft.body + '\n\n' + emailDraft.cta + '\n\n' + emailDraft.signature)}`)}>✉ Abrir no Mail</button>}
+                          <button type="button" className="p-btn p-btn-gold" style={{ padding: '7px 16px', fontSize: '.52rem' }} onClick={() => navigator.clipboard.writeText(`${emailDraft.subject}\n\n${emailDraft.greeting}\n\n${emailDraft.body}\n\n${emailDraft.cta}\n\n${emailDraft.signature}`)}>📋 Copiar</button>
+                          {activeContact.email && <button type="button" className="p-btn" style={{ padding: '7px 16px', fontSize: '.52rem' }} onClick={() => window.open(`mailto:${activeContact.email}?subject=${encodeURIComponent(emailDraft.subject)}&body=${encodeURIComponent(emailDraft.greeting + '\n\n' + emailDraft.body + '\n\n' + emailDraft.cta + '\n\n' + emailDraft.signature)}`)}>✉ Abrir no Mail</button>}
                         </div>
                       </div>
                     )}
@@ -1527,7 +1528,7 @@ export default function PortalCRM() {
                       <div style={{ gridColumn: '1/-1', background: 'linear-gradient(135deg,#0c1f15,#1a3d2a)', padding: '18px', border: '1px solid rgba(201,169,110,.12)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(201,169,110,.5)' }}>📋 Meeting Prep IA</div>
-                          <button style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(244,240,230,.12)', color: 'rgba(244,240,230,.5)', padding: '4px 10px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }} onClick={() => setMeetingPrep(null)}>× Fechar</button>
+                          <button type="button" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(244,240,230,.12)', color: 'rgba(244,240,230,.5)', padding: '4px 10px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }} onClick={() => setMeetingPrep(null)}>× Fechar</button>
                         </div>
                         <div style={{ background: 'rgba(201,169,110,.08)', border: '1px solid rgba(201,169,110,.15)', padding: '10px 14px', marginBottom: '12px', fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: '#f4f0e6', lineHeight: 1.6, fontStyle: 'italic' }}>
                           &ldquo;{String(meetingPrep.openingLine)}&rdquo;
@@ -1596,7 +1597,7 @@ export default function PortalCRM() {
                     })()}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Timeline de Actividades</div>
-                      <button onClick={() => setShowAddActivity(!showAddActivity)}
+                      <button type="button" onClick={() => setShowAddActivity(!showAddActivity)}
                         style={{ padding: '6px 14px', background: 'rgba(28,74,53,.08)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}>
                         + Actividade
                       </button>
@@ -1617,7 +1618,7 @@ export default function PortalCRM() {
                         </div>
                         <input className="p-inp" style={{ fontSize: '.8rem', padding: '6px 8px', marginBottom: '8px' }} placeholder="Resumo da actividade..." value={newActivity.note} onChange={e => setNewActivity({ note: e.target.value })} />
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <button className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.52rem' }}
+                          <button type="button" className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.52rem' }}
                             onClick={() => {
                               if (!newActivity.note.trim()) return
                               const act: Activity = { id: Date.now(), ...newActivity }
@@ -1625,7 +1626,7 @@ export default function PortalCRM() {
                               setNewActivity({ type: 'call', note: '', date: today })
                               setShowAddActivity(false)
                             }}>Guardar</button>
-                          <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowAddActivity(false)}>Cancelar</button>
+                          <button type="button" className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowAddActivity(false)}>Cancelar</button>
                         </div>
                       </div>
                     )}
@@ -1651,7 +1652,7 @@ export default function PortalCRM() {
                                 </div>
                                 <div style={{ fontSize: '.82rem', color: 'rgba(14,14,13,.75)', lineHeight: 1.5 }}>{act.note}</div>
                               </div>
-                              <button onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, activities: (c.activities || []).filter((_, idx) => idx !== i) } : c))}
+                              <button type="button" onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, activities: (c.activities || []).filter((_, idx) => idx !== i) } : c))}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.2)', fontSize: '.8rem', padding: '0 4px', flexShrink: 0 }}>×</button>
                             </div>
                           )
@@ -1666,7 +1667,7 @@ export default function PortalCRM() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Tarefas</div>
-                      <button onClick={() => setShowAddTask(!showAddTask)}
+                      <button type="button" onClick={() => setShowAddTask(!showAddTask)}
                         style={{ padding: '6px 14px', background: 'rgba(28,74,53,.08)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}>
                         + Tarefa
                       </button>
@@ -1689,7 +1690,7 @@ export default function PortalCRM() {
                           </select>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <button className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.52rem' }}
+                          <button type="button" className="p-btn p-btn-gold" style={{ padding: '6px 14px', fontSize: '.52rem' }}
                             onClick={() => {
                               if (!newTask.title.trim()) return
                               const task: Task = { id: Date.now(), ...newTask, done: false }
@@ -1697,7 +1698,7 @@ export default function PortalCRM() {
                               setNewTask({ title: '', dueDate: '', type: 'call' })
                               setShowAddTask(false)
                             }}>Guardar</button>
-                          <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowAddTask(false)}>Cancelar</button>
+                          <button type="button" className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.5)' }} onClick={() => setShowAddTask(false)}>Cancelar</button>
                         </div>
                       </div>
                     )}
@@ -1718,13 +1719,13 @@ export default function PortalCRM() {
                                   {task.type}{task.dueDate ? ` · ${isOverdueTask ? 'OVERDUE — ' : ''}${task.dueDate}` : ''}
                                 </div>
                               </div>
-                              <button onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, tasks: (c.tasks || []).filter((_, idx) => idx !== i) } : c))}
+                              <button type="button" onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, tasks: (c.tasks || []).filter((_, idx) => idx !== i) } : c))}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.2)', fontSize: '.8rem' }}>×</button>
                             </div>
                           )
                         })}
                         {activeContact.tasks.filter(t => t.done).length > 0 && (
-                          <button onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, tasks: (c.tasks || []).filter(t => !t.done) } : c))}
+                          <button type="button" onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, tasks: (c.tasks || []).filter(t => !t.done) } : c))}
                             style={{ marginTop: '4px', padding: '5px 12px', background: 'rgba(14,14,13,.04)', border: '1px dashed rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer', letterSpacing: '.08em', textTransform: 'uppercase' }}>
                             Limpar concluídas ({activeContact.tasks.filter(t => t.done).length})
                           </button>
@@ -1739,7 +1740,7 @@ export default function PortalCRM() {
                   <div>
                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '12px' }}>Notas &amp; Histórico</div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-                      <button
+                      <button type="button"
                         style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: voiceActive ? 'rgba(224,84,84,.1)' : 'rgba(28,74,53,.06)', border: `1px solid ${voiceActive ? 'rgba(224,84,84,.4)' : 'rgba(28,74,53,.2)'}`, fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em', color: voiceActive ? '#e05454' : '#1c4a35', cursor: 'pointer' }}
                         onClick={() => {
                           if (voiceActive) { setVoiceActive(false); return }
@@ -1757,7 +1758,7 @@ export default function PortalCRM() {
                         <span style={{ fontSize: '.8rem' }}>{voiceActive ? '⏹' : '🎤'}</span>
                         {voiceActive ? 'A gravar...' : 'Gravar nota'}
                       </button>
-                      {voiceText && <button style={{ padding: '5px 10px', background: 'rgba(74,156,122,.08)', border: '1px solid rgba(74,156,122,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a', cursor: 'pointer' }} onClick={() => setVoiceText('')}>Limpar</button>}
+                      {voiceText && <button type="button" style={{ padding: '5px 10px', background: 'rgba(74,156,122,.08)', border: '1px solid rgba(74,156,122,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a', cursor: 'pointer' }} onClick={() => setVoiceText('')}>Limpar</button>}
                     </div>
                     {voiceText && (
                       <div style={{ background: 'rgba(74,156,122,.06)', border: '1px solid rgba(74,156,122,.15)', padding: '10px 12px', marginBottom: '10px', fontFamily: "'Jost',sans-serif", fontSize: '.86rem', color: 'rgba(14,14,13,.7)', lineHeight: 1.6 }}>
@@ -1792,7 +1793,7 @@ export default function PortalCRM() {
                             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', marginTop: '2px' }}>{d.valor} · {d.fase}</div>
                             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: inBudget ? '#4a9c7a' : '#c9a96e', marginTop: '2px' }}>{inBudget ? '✓ Budget ideal' : '~ Budget ajustado'}</div>
                           </div>
-                          <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, dealRef: d.ref } : c))}>Associar</button>
+                          <button type="button" className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, dealRef: d.ref } : c))}>Associar</button>
                         </div>
                       )
                     })}
@@ -1809,7 +1810,7 @@ export default function PortalCRM() {
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', marginTop: '2px' }}>€{(im.preco / 1e6).toFixed(2)}M · {im.zona} · {im.tipo}</div>
                           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>{im.area}m² · T{im.quartos}</div>
                         </div>
-                        <button className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => setSection('imoveis')}>Ver →</button>
+                        <button type="button" className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => setSection('imoveis')}>Ver →</button>
                       </div>
                     ))}
                     {deals.filter(d => { const b = parseFloat(d.valor.replace(/[^0-9.]/g, '')); const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0; return (!bMin && !bMax) || (b >= bMin * 0.8 && b <= bMax * 1.2) }).length === 0 &&
@@ -1845,7 +1846,7 @@ export default function PortalCRM() {
                     <div style={{ marginTop: '16px', padding: '14px', background: 'rgba(28,74,53,.04)', border: '1px solid rgba(28,74,53,.12)' }}>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', marginBottom: '8px', letterSpacing: '.08em', textTransform: 'uppercase' }}>Próximas Oportunidades</div>
                       <div style={{ fontSize: '.8rem', color: 'rgba(14,14,13,.6)', lineHeight: 1.6 }}>Cliente {activeContact.name} poderá estar interessado em investimento adicional, AL ou nova aquisição em 12–24 meses. Manter contacto trimestral.</div>
-                      <button className="p-btn p-btn-gold" style={{ marginTop: '10px', padding: '8px 16px', fontSize: '.52rem' }} onClick={() => { setWaModalContact(activeContact.id); setWaLang((activeContact.language as typeof waLang) || 'PT'); setShowWaModal(true) }}>📱 Enviar Mensagem Pós-Venda</button>
+                      <button type="button" className="p-btn p-btn-gold" style={{ marginTop: '10px', padding: '8px 16px', fontSize: '.52rem' }} onClick={() => { setWaModalContact(activeContact.id); setWaLang((activeContact.language as typeof waLang) || 'PT'); setShowWaModal(true) }}>📱 Enviar Mensagem Pós-Venda</button>
                     </div>
                   </div>
                 )}

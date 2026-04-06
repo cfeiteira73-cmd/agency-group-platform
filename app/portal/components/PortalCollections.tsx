@@ -283,7 +283,7 @@ function NewCollectionModal({ onClose, onCreate }: NewCollectionModalProps) {
           <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.5rem', color: '#0e0e0d', fontWeight: 300 }}>
             Nova Collection
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)', padding: '4px' }}>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)', padding: '4px' }}>
             <IconX />
           </button>
         </div>
@@ -313,7 +313,7 @@ function NewCollectionModal({ onClose, onCreate }: NewCollectionModalProps) {
             <label className="p-label">Cor de Capa</label>
             <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
               {COVER_COLORS.map(c => (
-                <button key={c.id} onClick={() => setCoverColor(c.value)} title={c.label}
+                <button type="button" key={c.id} onClick={() => setCoverColor(c.value)} title={c.label}
                   style={{ width: 36, height: 36, borderRadius: 8, background: c.value, border: coverColor === c.value ? '2.5px solid #c9a96e' : '2px solid transparent', cursor: 'pointer', outline: 'none', flexShrink: 0 }} />
               ))}
             </div>
@@ -321,8 +321,8 @@ function NewCollectionModal({ onClose, onCreate }: NewCollectionModalProps) {
         </div>
 
         <div style={{ display: 'flex', gap: '.75rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} className="p-btn" style={{ fontSize: '.8rem' }}>Cancelar</button>
-          <button onClick={handleCreate} className="p-btn-gold" disabled={!name.trim()} style={{ fontSize: '.8rem', opacity: name.trim() ? 1 : .5 }}>
+          <button type="button" onClick={onClose} className="p-btn" style={{ fontSize: '.8rem' }}>Cancelar</button>
+          <button type="button" onClick={handleCreate} className="p-btn-gold" disabled={!name.trim()} style={{ fontSize: '.8rem', opacity: name.trim() ? 1 : .5 }}>
             Criar Collection
           </button>
         </div>
@@ -426,17 +426,17 @@ function CollectionCard({ col, onView, onEdit, onShare, onArchive }: CollectionC
 
       {/* Actions */}
       <div style={{ padding: '.75rem 1.25rem', borderTop: '1px solid rgba(14,14,13,.06)', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-        <button onClick={() => onView(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '.35rem', flex: 1 }}>
+        <button type="button" onClick={() => onView(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '.35rem', flex: 1 }}>
           <IconEye /> Ver
         </button>
-        <button onClick={() => onShare(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+        <button type="button" onClick={() => onShare(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
           <IconShare />
         </button>
-        <button onClick={() => onEdit(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+        <button type="button" onClick={() => onEdit(col)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
           <IconEdit />
         </button>
         {col.status !== 'Arquivada' && (
-          <button onClick={() => onArchive(col.id)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem', color: 'rgba(14,14,13,.4)' }}>
+          <button type="button" onClick={() => onArchive(col.id)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem', color: 'rgba(14,14,13,.4)' }}>
             <IconArchive />
           </button>
         )}
@@ -463,7 +463,7 @@ function ShareLinkModal({ col, onClose }: { col: Collection; onClose: () => void
       <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 480, zIndex: 1, padding: '2rem', border: '1px solid rgba(201,169,110,.25)', borderRadius: '16px', boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <h3 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.4rem', color: '#0e0e0d', fontWeight: 300 }}>Partilhar Collection</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}><IconX /></button>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}><IconX /></button>
         </div>
         <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: 'rgba(14,14,13,.6)', marginBottom: '1rem' }}>
           Partilhe este link exclusivo com <strong>{col.client}</strong>. Só pessoas com o link podem aceder.
@@ -473,10 +473,10 @@ function ShareLinkModal({ col, onClose }: { col: Collection; onClose: () => void
           <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.78rem', color: '#0e0e0d', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{shareUrl}</span>
         </div>
         <div style={{ display: 'flex', gap: '.75rem' }}>
-          <button onClick={copy} className="p-btn-gold" style={{ flex: 1, fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', borderRadius: '6px', transition: 'all .2s' }}>
+          <button type="button" onClick={copy} className="p-btn-gold" style={{ flex: 1, fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', borderRadius: '6px', transition: 'all .2s' }}>
             {copied ? <><IconCheck /> Copiado!</> : <><IconLink /> Copiar Link</>}
           </button>
-          <button onClick={onClose} className="p-btn" style={{ fontSize: '.82rem' }}>Fechar</button>
+          <button type="button" onClick={onClose} className="p-btn" style={{ fontSize: '.82rem' }}>Fechar</button>
         </div>
       </div>
     </div>
@@ -504,7 +504,7 @@ function MinhasCollections({ collections, onNewCollection, onView, onEdit, onSha
       {/* Filter Pills */}
       <div style={{ display: 'flex', gap: '.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         {(['Todas', 'Activa', 'Partilhada', 'Arquivada'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)}
+          <button type="button" key={f} onClick={() => setFilter(f)}
             style={{
               fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', padding: '5px 14px', borderRadius: 20,
               border: `1px solid ${filter === f ? '#1c4a35' : 'rgba(14,14,13,.15)'}`,
@@ -522,7 +522,7 @@ function MinhasCollections({ collections, onNewCollection, onView, onEdit, onSha
         ))}
 
         {/* Add New Card */}
-        <button onClick={onNewCollection}
+        <button type="button" onClick={onNewCollection}
           style={{
             background: 'rgba(201,169,110,.05)', borderRadius: 14,
             border: '1.5px dashed rgba(201,169,110,.4)', cursor: 'pointer',
@@ -624,7 +624,7 @@ function EditorCollection({ collections, editingCol, onSave }: EditorCollectionP
           <label className="p-label">Cor de Capa</label>
           <div style={{ display: 'flex', gap: '.4rem', marginTop: '.5rem', flexWrap: 'wrap' }}>
             {COVER_COLORS.map(c => (
-              <button key={c.id} onClick={() => setCoverColor(c.value)} title={c.label}
+              <button type="button" key={c.id} onClick={() => setCoverColor(c.value)} title={c.label}
                 style={{ width: 32, height: 32, borderRadius: 6, background: c.value, border: coverColor === c.value ? '2.5px solid #c9a96e' : '2px solid transparent', cursor: 'pointer', outline: 'none' }} />
             ))}
           </div>
@@ -635,7 +635,7 @@ function EditorCollection({ collections, editingCol, onSave }: EditorCollectionP
           <span style={{ fontFamily: 'var(--font-cormorant)', color: '#fff', fontSize: '.95rem', fontWeight: 600, textShadow: '0 1px 3px rgba(0,0,0,.5)', lineHeight: 1.2 }}>{name || 'Nome da Collection'}</span>
         </div>
 
-        <button onClick={handleSave} className="p-btn-gold" style={{ fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', marginTop: '.25rem', borderRadius: '6px', transition: 'all .2s' }}>
+        <button type="button" onClick={handleSave} className="p-btn-gold" style={{ fontSize: '.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem', marginTop: '.25rem', borderRadius: '6px', transition: 'all .2s' }}>
           {saved ? <><IconCheck /> Guardado!</> : 'Guardar Collection'}
         </button>
       </div>
@@ -718,7 +718,7 @@ function EditorCollection({ collections, editingCol, onSave }: EditorCollectionP
                       <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.76rem', color: '#0e0e0d', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome}</div>
                       <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '.88rem', color: '#c9a96e' }}>{fmtPreco(p.preco)}</div>
                     </div>
-                    <button onClick={() => removeProperty(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.35)', padding: '2px', flexShrink: 0 }}>
+                    <button type="button" onClick={() => removeProperty(id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.35)', padding: '2px', flexShrink: 0 }}>
                       <IconX />
                     </button>
                   </div>
@@ -736,7 +736,7 @@ function EditorCollection({ collections, editingCol, onSave }: EditorCollectionP
             </div>
           )}
 
-          <button onClick={() => setLinkPreview(!linkPreview)} className="p-btn-gold" style={{ width: '100%', fontSize: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem' }}>
+          <button type="button" onClick={() => setLinkPreview(!linkPreview)} className="p-btn-gold" style={{ width: '100%', fontSize: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.4rem' }}>
             <IconShare /> Partilhar Collection
           </button>
 
@@ -812,10 +812,10 @@ function Partilhadas({ collections, onRevoke }: { collections: Collection[]; onR
                 </div>
 
                 <div style={{ display: 'flex', gap: '.5rem', flexShrink: 0 }}>
-                  <button className="p-btn" style={{ fontSize: '.75rem', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+                  <button type="button" className="p-btn" style={{ fontSize: '.75rem', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
                     <IconEye /> Ver
                   </button>
-                  <button onClick={() => onRevoke(col.id)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem', color: '#c0392b', borderColor: 'rgba(192,57,43,.3)' }}>
+                  <button type="button" onClick={() => onRevoke(col.id)} className="p-btn" style={{ fontSize: '.75rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '.35rem', color: '#c0392b', borderColor: 'rgba(192,57,43,.3)' }}>
                     <IconRevoke />
                   </button>
                 </div>
@@ -860,7 +860,7 @@ function PreviaCliente({ collections }: { collections: Collection[] }) {
       {/* Collection Selector */}
       <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         {collections.map(c => (
-          <button key={c.id} onClick={() => setSelectedColId(c.id)}
+          <button type="button" key={c.id} onClick={() => setSelectedColId(c.id)}
             style={{
               fontFamily: 'var(--font-jost)', fontSize: '.82rem', padding: '6px 16px', borderRadius: 20,
               border: `1px solid ${selectedColId === c.id ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
@@ -943,7 +943,7 @@ function PreviaCliente({ collections }: { collections: Collection[] }) {
             <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1rem', color: 'rgba(255,255,255,.7)' }}>Agency Group · AMI 22506</div>
             <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', color: 'rgba(255,255,255,.4)' }}>geral@agencygroup.pt · +351 910 000 000</div>
           </div>
-          <button className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem', padding: '10px 20px' }}>
+          <button type="button" className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem', padding: '10px 20px' }}>
             <IconPhone /> Contactar Consultor
           </button>
         </div>
@@ -1029,7 +1029,7 @@ export default function PortalCollections() {
             Portfólios exclusivos para clientes seleccionados
           </p>
         </div>
-        <button onClick={() => setShowNewModal(true)} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem', borderRadius: '6px', transition: 'all .2s' }}>
+        <button type="button" onClick={() => setShowNewModal(true)} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem', borderRadius: '6px', transition: 'all .2s' }}>
           <IconPlus /> Nova Collection
         </button>
       </div>
@@ -1052,7 +1052,7 @@ export default function PortalCollections() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '1.75rem', overflowX: 'auto' }}>
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+          <button type="button" key={t.id} onClick={() => setTab(t.id)}
             style={{
               fontFamily: 'var(--font-jost)', fontSize: '.875rem', padding: '.75rem 1.25rem',
               background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',

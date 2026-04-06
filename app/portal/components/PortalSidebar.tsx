@@ -96,7 +96,7 @@ export default function PortalSidebar({
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.54rem', color: 'rgba(201,169,110,.65)', letterSpacing: '.06em' }}>{v}</span>
           </div>
         ))}
-        <button
+        <button type="button"
           onClick={logout}
           style={{ marginTop: '10px', width: '100%', background: 'none', border: '1px solid rgba(244,240,230,.08)', color: 'rgba(244,240,230,.25)', padding: '7px', fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all .2s' }}
           onMouseOver={e => { (e.target as HTMLButtonElement).style.borderColor = 'rgba(244,240,230,.25)'; (e.target as HTMLButtonElement).style.color = 'rgba(244,240,230,.55)' }}

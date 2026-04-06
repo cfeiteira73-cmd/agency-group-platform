@@ -552,7 +552,7 @@ function DealCard({
       <ProgressBar pct={pct} color={color} />
 
       {onAdvance && ns && (
-        <button
+        <button type="button"
           onClick={e => { e.stopPropagation(); onAdvance() }}
           style={{
             marginTop: '8px', width: '100%', padding: '5px 0',
@@ -858,7 +858,7 @@ function TimelineTab({ deal, darkMode }: { deal: DealWithMeta; darkMode: boolean
       <div style={{ marginTop: '16px', borderTop: '1px solid rgba(14,14,13,.07)', paddingTop: '14px' }}>
         <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
           {(['Nota', 'Reunião', 'Proposta', 'Alerta'] as const).map(t => (
-            <button key={t} onClick={() => setNewTipo(t)} style={{
+            <button type="button" key={t} onClick={() => setNewTipo(t)} style={{
               padding: '3px 9px',
               background: newTipo === t ? tipoColor[t] + '20' : 'transparent',
               border: `1px solid ${newTipo === t ? tipoColor[t] + '50' : 'rgba(14,14,13,.1)'}`,
@@ -876,7 +876,7 @@ function TimelineTab({ deal, darkMode }: { deal: DealWithMeta; darkMode: boolean
             onKeyDown={e => e.key === 'Enter' && addNote()}
             style={{ flex: 1 }}
           />
-          <button className="p-btn" onClick={addNote} style={{ flexShrink: 0 }}>Adicionar</button>
+          <button type="button" className="p-btn" onClick={addNote} style={{ flexShrink: 0 }}>Adicionar</button>
         </div>
       </div>
     </div>
@@ -1115,7 +1115,7 @@ function DealDetailPanel({
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '16px', overflowX: 'auto' }}>
         {TABS.map(t => (
-          <button
+          <button type="button"
             key={t.id}
             className={`deal-tab${dealTab === t.id ? ' active' : ''}`}
             onClick={() => setDealTab(t.id as DealTabId)}
@@ -1165,10 +1165,10 @@ function DealDetailPanel({
       {dealTab === 'nego' && (
         <div>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <button className="p-btn" onClick={() => onDealRisk(deal.id)} disabled={dealRiskLoading}>
+            <button type="button" className="p-btn" onClick={() => onDealRisk(deal.id)} disabled={dealRiskLoading}>
               {dealRiskLoading ? '✦ A analisar...' : '🔍 Análise de Risco'}
             </button>
-            <button className="p-btn p-btn-gold" onClick={() => onDealNego(deal.id)} disabled={dealNegoLoading}>
+            <button type="button" className="p-btn p-btn-gold" onClick={() => onDealNego(deal.id)} disabled={dealNegoLoading}>
               {dealNegoLoading ? '✦ A preparar...' : '⚡ Estratégia Negociação'}
             </button>
           </div>
@@ -1220,12 +1220,12 @@ function DealDetailPanel({
           </div>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
             {(['standard', 'ifici'] as const).map(r => (
-              <button key={r} style={{ padding: '6px 14px', background: taxRegime === r ? '#1c4a35' : 'transparent', border: `1px solid ${taxRegime === r ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: taxRegime === r ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setTaxRegime(r)}>
+              <button type="button" key={r} style={{ padding: '6px 14px', background: taxRegime === r ? '#1c4a35' : 'transparent', border: `1px solid ${taxRegime === r ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: taxRegime === r ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setTaxRegime(r)}>
                 {r === 'standard' ? 'Regime Geral' : 'IFICI/NHR'}
               </button>
             ))}
             {(['residencial', 'comercial'] as const).map(t => (
-              <button key={t} style={{ padding: '6px 14px', background: tipoImovelInv === t ? '#c9a96e' : 'transparent', border: `1px solid ${tipoImovelInv === t ? '#c9a96e' : 'rgba(14,14,13,.15)'}`, color: tipoImovelInv === t ? '#0c1f15' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setTipoImovelInv(t)}>
+              <button type="button" key={t} style={{ padding: '6px 14px', background: tipoImovelInv === t ? '#c9a96e' : 'transparent', border: `1px solid ${tipoImovelInv === t ? '#c9a96e' : 'rgba(14,14,13,.15)'}`, color: tipoImovelInv === t ? '#0c1f15' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setTipoImovelInv(t)}>
                 {t}
               </button>
             ))}
@@ -1360,10 +1360,10 @@ function NewDealForm({
         />
       </div>
       <div style={{ display: 'flex', gap: '8px' }}>
-        <button className="p-btn" onClick={() => { if (canSubmit) onAdd(form) }} disabled={!canSubmit}>
+        <button type="button" className="p-btn" onClick={() => { if (canSubmit) onAdd(form) }} disabled={!canSubmit}>
           Adicionar Deal
         </button>
-        <button style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={onCancel}>
+        <button type="button" style={{ padding: '10px 20px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }} onClick={onCancel}>
           Cancelar
         </button>
       </div>
@@ -1447,9 +1447,10 @@ export default function PortalPipeline({
   // Load live deals from /api/deals
   useEffect(() => {
     let cancelled = false
+    const controller = new AbortController()
     async function loadDeals() {
       try {
-        const res = await fetch('/api/deals')
+        const res = await fetch('/api/deals', { signal: controller.signal })
         if (res.ok) {
           const { data } = await res.json()
           if (!cancelled && data && data.length > 0) {
@@ -1468,7 +1469,7 @@ export default function PortalPipeline({
     }
     loadDeals()
     const interval = setInterval(loadDeals, 60000)
-    return () => { cancelled = true; clearInterval(interval) }
+    return () => { cancelled = true; clearInterval(interval); controller.abort() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1558,20 +1559,20 @@ export default function PortalPipeline({
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', border: '1px solid rgba(14,14,13,.1)', borderRadius: '6px', overflow: 'hidden' }}>
             {(['lista', 'kanban'] as const).map(v => (
-              <button key={v}
+              <button type="button" key={v}
                 style={{ padding: '6px 14px', background: pipelineView === v ? '#1c4a35' : 'transparent', color: pipelineView === v ? '#f4f0e6' : 'rgba(14,14,13,.45)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', border: 'none', cursor: 'pointer', letterSpacing: '.08em' }}
                 onClick={() => setPipelineView(v)}>
                 {v === 'lista' ? '☰ Lista' : '⠿ Kanban'}
               </button>
             ))}
           </div>
-          <button
+          <button type="button"
             style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: 'rgba(14,14,13,.55)', letterSpacing: '.06em', borderRadius: '6px', transition: 'all .2s' }}
             onClick={() => exportToPDF('Pipeline CPCV — Agency Group', buildPipelineHTML(deals))}
           >
             ⬇ Exportar PDF
           </button>
-          <button className="p-btn p-btn-gold" style={{ padding: '6px 14px' }} onClick={() => setShowNewDealForm(true)}>
+          <button type="button" className="p-btn p-btn-gold" style={{ padding: '6px 14px' }} onClick={() => setShowNewDealForm(true)}>
             + Novo Deal
           </button>
         </div>
@@ -1636,7 +1637,7 @@ export default function PortalPipeline({
         return (
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
             {chips.map(chip => (
-              <button key={chip.key}
+              <button type="button" key={chip.key}
                 onClick={() => setActiveFilter(chip.key)}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '6px',

@@ -472,7 +472,7 @@ function VisitCard({
             <IconMapPin />Rota
           </a>
           {visit.status === 'pendente' && (
-            <button
+            <button type="button"
               style={{ padding: '5px 10px', background: '#1c4a35', border: 'none', color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.04em', cursor: 'pointer' }}
               onClick={() => onConfirm(visit.id)}
             >
@@ -481,13 +481,13 @@ function VisitCard({
           )}
           {(visit.status === 'confirmada' || visit.status === 'pendente') && (
             <>
-              <button
+              <button type="button"
                 style={{ padding: '5px 10px', background: 'transparent', border: '1px solid rgba(201,169,110,.3)', color: '#a07a38', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                 onClick={() => onReschedule(visit.id)}
               >
                 Remarcar
               </button>
-              <button
+              <button type="button"
                 style={{ padding: '5px 10px', background: 'transparent', border: '1px solid rgba(220,38,38,.2)', color: '#dc2626', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                 onClick={() => onCancel(visit.id)}
               >
@@ -678,7 +678,7 @@ export default function PortalVisitas() {
             Visitas & <em style={{ color: '#1c4a35' }}>Follow-up</em>
           </div>
         </div>
-        <button
+        <button type="button"
           className="p-btn p-btn-gold"
           style={{ fontSize: '.52rem', padding: '9px 20px' }}
           onClick={() => setActiveTab('agendar')}
@@ -706,7 +706,7 @@ export default function PortalVisitas() {
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '24px' }}>
         {TABS.map(t => (
-          <button
+          <button type="button"
             key={t.id}
             onClick={() => setActiveTab(t.id)}
             style={{
@@ -733,19 +733,19 @@ export default function PortalVisitas() {
         <div>
           {/* Week navigation */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
-            <button
+            <button type="button"
               style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', transition: 'all .2s', borderRadius: '6px' }}
               onClick={() => setWeekStart(addDays(weekStart, -7))}
             >
               ← Anterior
             </button>
-            <button
+            <button type="button"
               style={{ padding: '7px 14px', background: 'rgba(28,74,53,.07)', border: '1px solid rgba(28,74,53,.15)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', cursor: 'pointer', letterSpacing: '.06em', transition: 'all .2s', borderRadius: '6px' }}
               onClick={() => setWeekStart(getWeekStart(TODAY))}
             >
               Esta Semana
             </button>
-            <button
+            <button type="button"
               style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', transition: 'all .2s', borderRadius: '6px' }}
               onClick={() => setWeekStart(addDays(weekStart, 7))}
             >
@@ -799,7 +799,7 @@ export default function PortalVisitas() {
               { id: 'semana', label: `Esta Semana (${visits.filter(v => isSameWeek(v.date, TODAY) && v.status !== 'cancelada').length})` },
               { id: 'todas', label: 'Todas' },
             ] as { id: ProximasFilter; label: string }[]).map(f => (
-              <button
+              <button type="button"
                 key={f.id}
                 onClick={() => setProximasFilter(f.id)}
                 style={{
@@ -891,7 +891,7 @@ export default function PortalVisitas() {
                 <label className="p-label" style={{ display: 'block', marginBottom: '6px' }}>Duração</label>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {([30, 60, 90, 120] as VisitDuration[]).map(d => (
-                    <button
+                    <button type="button"
                       key={d}
                       onClick={() => setSchedDur(d)}
                       style={{
@@ -972,7 +972,7 @@ export default function PortalVisitas() {
               </div>
             </div>
 
-            <button
+            <button type="button"
               className="p-btn"
               style={{ marginTop: '16px', width: '100%', background: '#1c4a35', color: '#f4f0e6', padding: '12px', fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', borderRadius: '6px', transition: 'all .2s' }}
               onClick={handleSchedule}
@@ -1107,7 +1107,7 @@ export default function PortalVisitas() {
                       <div className="p-label" style={{ marginBottom: '8px', display: 'block' }}>Nível de interesse</div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         {[1, 2, 3, 4, 5].map(n => (
-                          <button
+                          <button type="button"
                             key={n}
                             onClick={() => updateFeedback(v.id, 'interest', n)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
@@ -1128,7 +1128,7 @@ export default function PortalVisitas() {
                         {OBJECTIONS.map(obj => {
                           const selected = fb.objections.includes(obj)
                           return (
-                            <button
+                            <button type="button"
                               key={obj}
                               onClick={() => toggleObjection(v.id, obj)}
                               style={{
@@ -1175,7 +1175,7 @@ export default function PortalVisitas() {
                       />
                     </div>
 
-                    <button
+                    <button type="button"
                       className="p-btn p-btn-gold"
                       style={{ fontSize: '.52rem', padding: '9px 22px' }}
                       onClick={() => saveFeedback(v.id)}

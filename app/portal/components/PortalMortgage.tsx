@@ -108,7 +108,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
       {/* Persona presets */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {PERSONAS.map(p => (
-          <button key={p.label}
+          <button type="button" key={p.label}
             style={{ padding: '6px 14px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', transition: 'all .2s', borderRadius: '6px' }}
             onClick={() => onRunMort(p)}
           >{p.label}</button>
@@ -168,7 +168,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
               <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', marginTop: '4px' }}>Necessário para calcular DSTI e dedução IRS</div>
             </div>
 
-            <button className="p-btn p-btn-gold" style={{ padding: '13px 24px', fontSize: '.5rem', letterSpacing: '.1em' }} onClick={() => onRunMort()} disabled={mortLoading || !mortMontante}>
+            <button type="button" className="p-btn p-btn-gold" style={{ padding: '13px 24px', fontSize: '.5rem', letterSpacing: '.1em' }} onClick={() => onRunMort()} disabled={mortLoading || !mortMontante}>
               {mortLoading ? '✦ A simular...' : '✦ Simular Crédito'}
             </button>
 
@@ -276,7 +276,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
               {/* ── Sub-tabs ── */}
               <div style={{ display: 'flex', gap: '0', marginBottom: '16px', borderBottom: '1px solid rgba(14,14,13,.1)' }}>
                 {(['cenarios', 'amortizacao', 'share'] as const).map(t => (
-                  <button key={t} className={`deal-tab${mortSubTab === t ? ' active' : ''}`} onClick={() => setMortSubTab(t)}>
+                  <button type="button" key={t} className={`deal-tab${mortSubTab === t ? ' active' : ''}`} onClick={() => setMortSubTab(t)}>
                     {t === 'cenarios' ? 'Cenários Euribor' : t === 'amortizacao' ? 'Amortização' : 'Partilhar'}
                   </button>
                 ))}
@@ -347,7 +347,7 @@ export default function PortalMortgage({ onRunMort }: PortalMortgageProps) {
                      `${r.info?.intermediario || 'Agency Group · AMI 22506'}\n` +
                      `${r.info?.nota_legal || ''}`}
                   </div>
-                  <button className="p-btn p-btn-gold" style={{ marginTop: '12px', fontSize: '.52rem', padding: '8px 18px', borderRadius: '6px', transition: 'all .2s' }}
+                  <button type="button" className="p-btn p-btn-gold" style={{ marginTop: '12px', fontSize: '.52rem', padding: '8px 18px', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={() => {
                       const text = `Simulação Crédito — ${fmt(r.inputs.montante)} | Prestação: ${fmt(r.resultado.prestacao_mensal)}/mês | TAN ${r.resultado.tan_pct}% | Custo Total: ${fmt(r.resultado.custo_total_aquisicao)} | Agency Group AMI 22506`
                       navigator.clipboard.writeText(text).catch(() => {})

@@ -278,7 +278,7 @@ export default function PortalMaisvalias() {
             ))}
           </div>
 
-          <button className="p-btn" onClick={calcular} disabled={loading || !precoCompra || !precoVenda}>
+          <button type="button" className="p-btn" onClick={calcular} disabled={loading || !precoCompra || !precoVenda}>
             {loading ? 'A calcular...' : '▶ Calcular Mais-Valias'}
           </button>
 
@@ -395,8 +395,8 @@ export default function PortalMaisvalias() {
 
               {/* Actions */}
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="p-btn p-btn-gold" style={{ fontSize: '.52rem', padding: '9px 20px' }} onClick={handleExportPDF}>⬇ Exportar PDF</button>
-                <button className="p-btn" style={{ fontSize: '.52rem', padding: '9px 20px' }} onClick={() => navigator.clipboard.writeText(`Mais-Valia: ${eur(result.ganho_bruto || 0)} | Imposto: ${eur(result.imposto_estimado)} | Líquido: ${eur(result.liquido_apos_imposto)}`)}>📋 Copiar</button>
+                <button type="button" className="p-btn p-btn-gold" style={{ fontSize: '.52rem', padding: '9px 20px' }} onClick={handleExportPDF}>⬇ Exportar PDF</button>
+                <button type="button" className="p-btn" style={{ fontSize: '.52rem', padding: '9px 20px' }} onClick={() => navigator.clipboard.writeText(`Mais-Valia: ${eur(result.ganho_bruto || 0)} | Imposto: ${eur(result.imposto_estimado)} | Líquido: ${eur(result.liquido_apos_imposto)}`)}>📋 Copiar</button>
               </div>
             </>
           )}

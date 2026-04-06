@@ -513,7 +513,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
             const icons: Record<CampaignType, string> = { email: '✉', whatsapp: '💬', linkedin: '💼', sms: '📱', multichannel: '🔀' }
             const active = type === t
             return (
-              <button
+              <button type="button"
                 key={t}
                 onClick={() => setType(t)}
                 style={{
@@ -539,7 +539,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
           {(Object.keys(SEGMENT_LABELS) as AudienceSegment[]).map(seg => {
             const active = segments.has(seg)
             return (
-              <button
+              <button type="button"
                 key={seg}
                 onClick={() => toggleSegment(seg)}
                 style={{
@@ -574,7 +574,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
           {MOCK_TEMPLATES.filter(t => type === 'multichannel' || t.channel === type).map(tpl => {
             const active = templateId === tpl.id
             return (
-              <button
+              <button type="button"
                 key={tpl.id}
                 onClick={() => setTemplateId(active ? null : tpl.id)}
                 style={{
@@ -628,7 +628,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <label className="p-label">Assunto / Mensagem Principal</label>
-          <button
+          <button type="button"
             onClick={() => setShowAISuggestions(!showAISuggestions)}
             style={{
               fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.gold,
@@ -649,7 +649,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
         {showAISuggestions && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {AI_SUBJECT_SUGGESTIONS.map((s, i) => (
-              <button
+              <button type="button"
                 key={i}
                 onClick={() => { setSubjectA(s); setShowAISuggestions(false) }}
                 style={{
@@ -668,7 +668,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
 
       {/* A/B test toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button
+        <button type="button"
           onClick={() => setAbEnabled(!abEnabled)}
           style={{
             width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer',
@@ -702,7 +702,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
         <label className="p-label" style={{ display: 'block', marginBottom: 10 }}>Envio</label>
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           {(['imediato', 'agendar'] as const).map(m => (
-            <button
+            <button type="button"
               key={m}
               onClick={() => setScheduleMode(m)}
               style={{
@@ -728,7 +728,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
 
       {/* Launch button */}
       <div style={{ display: 'flex', gap: 12 }}>
-        <button
+        <button type="button"
           className="p-btn-gold"
           onClick={handleLaunch}
           disabled={segments.size === 0 || launching}
@@ -736,7 +736,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
         >
           {launching ? 'A lançar...' : launched ? '✓ Campanha lançada!' : scheduleMode === 'agendar' ? '🗓 Agendar Campanha' : '🚀 Lançar Campanha'}
         </button>
-        <button className="p-btn" style={{ padding: '14px 20px', fontSize: 14 }}>
+        <button type="button" className="p-btn" style={{ padding: '14px 20px', fontSize: 14 }}>
           Guardar Rascunho
         </button>
       </div>
@@ -802,7 +802,7 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
                 <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>{camp.subject}</div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button
+                <button type="button"
                   onClick={() => pauseToggle(camp.id)}
                   style={{
                     fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
@@ -811,7 +811,7 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
                 >
                   {camp.status === 'paused' ? '▶ Retomar' : '⏸ Pausar'}
                 </button>
-                <button
+                <button type="button"
                   onClick={() => setViewingId(viewingId === camp.id ? null : camp.id)}
                   style={{
                     fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
@@ -820,7 +820,7 @@ function TabActivas({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCam
                 >
                   Ver Resultados
                 </button>
-                <button
+                <button type="button"
                   onClick={() => duplicate(camp)}
                   style={{
                     fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
@@ -1108,7 +1108,7 @@ function TabTemplates() {
             ))}
           </select>
         </div>
-        <button
+        <button type="button"
           className="p-btn-gold"
           onClick={() => setShowCreateModal(true)}
           style={{ padding: '9px 20px', fontSize: 13 }}
@@ -1150,15 +1150,15 @@ function TabTemplates() {
                 {tpl.useCount}× usado · {tpl.lastUsed !== '—' ? new Date(tpl.lastUsed).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) : '—'}
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button
+                <button type="button"
                   onClick={() => setEditingId(editingId === tpl.id ? null : tpl.id)}
                   style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, cursor: 'pointer', transition: 'all .2s' }}
                 >Editar</button>
-                <button
+                <button type="button"
                   onClick={() => duplicateTemplate(tpl)}
                   style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.gold}40`, background: C.gold + '0a', color: C.gold, cursor: 'pointer', transition: 'all .2s' }}
                 >Dup.</button>
-                <button
+                <button type="button"
                   onClick={() => deleteTemplate(tpl.id)}
                   style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '3px 8px', borderRadius: 5, border: `1px solid ${C.red}40`, background: C.red + '0a', color: C.red, cursor: 'pointer', transition: 'all .2s' }}
                 >Del.</button>
@@ -1179,7 +1179,7 @@ function TabTemplates() {
               <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: C.text, margin: 0 }}>
                 ✦ Criar Template com IA
               </h2>
-              <button onClick={() => setShowCreateModal(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.muted }}>×</button>
+              <button type="button" onClick={() => setShowCreateModal(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: C.muted }}>×</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
@@ -1215,7 +1215,7 @@ function TabTemplates() {
                   style={{ width: '100%', resize: 'vertical' }}
                 />
               </div>
-              <button
+              <button type="button"
                 className="p-btn"
                 onClick={handleGenerate}
                 disabled={generating || !newTplPrompt}
@@ -1233,7 +1233,7 @@ function TabTemplates() {
                     rows={8}
                     style={{ width: '100%', fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, resize: 'vertical' }}
                   />
-                  <button
+                  <button type="button"
                     className="p-btn-gold"
                     onClick={handleSaveTemplate}
                     style={{ marginTop: 12, width: '100%', padding: '12px' }}
@@ -1293,7 +1293,7 @@ export default function PortalCampanhas() {
         boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
       }}>
         {TABS.map(tab => (
-          <button
+          <button type="button"
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{

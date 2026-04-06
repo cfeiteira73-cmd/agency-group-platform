@@ -437,7 +437,7 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.6rem 0' }}>
       <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.875rem', color: '#0e0e0d' }}>{label}</span>
-      <button onClick={() => onChange(!value)}
+      <button type="button" onClick={() => onChange(!value)}
         style={{
           width: 42, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
           background: value ? '#1c4a35' : 'rgba(14,14,13,.15)', padding: 0, position: 'relative',
@@ -576,7 +576,7 @@ function Step1({
             { id: 'venda' as OfferType, label: 'Com Venda', sub: 'Condicionada a venda' },
             { id: 'arrendamento' as OfferType, label: 'Arrendamento', sub: 'Com opção de compra' },
           ]).map(t => (
-            <button key={t.id} onClick={() => setOfferType(t.id)}
+            <button type="button" key={t.id} onClick={() => setOfferType(t.id)}
               style={{
                 borderRadius: 8, padding: '.6rem .75rem', cursor: 'pointer', textAlign: 'left',
                 border: `1.5px solid ${offerType === t.id ? '#1c4a35' : 'rgba(14,14,13,.12)'}`,
@@ -631,7 +631,7 @@ function Step1({
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '.25rem' }}>
-        <button onClick={onNext} className="p-btn-gold" disabled={!canNext}
+        <button type="button" onClick={onNext} className="p-btn-gold" disabled={!canNext}
           style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem', opacity: canNext ? 1 : .45 }}>
           Condições <IconArrow dir="right" />
         </button>
@@ -730,10 +730,10 @@ function Step2({ conditions, setConditions, onBack, onNext }: {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '.25rem' }}>
-        <button onClick={onBack} className="p-btn" style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+        <button type="button" onClick={onBack} className="p-btn" style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
           <IconArrow dir="left" /> Voltar
         </button>
-        <button onClick={onNext} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
+        <button type="button" onClick={onNext} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.4rem', fontSize: '.85rem' }}>
           Gerar Proposta <IconArrow dir="right" />
         </button>
       </div>
@@ -785,21 +785,21 @@ function Step3({
           {letterText}
         </div>
         <div style={{ display: 'flex', gap: '.4rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-          <button onClick={copy} className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+          <button type="button" onClick={copy} className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
             {copied ? <><IconCheck /> Copiado!</> : <><IconCopy /> Copiar Proposta</>}
           </button>
-          <button className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+          <button type="button" className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
             <IconMail /> Enviar por Email
           </button>
-          <button className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem', color: '#16a34a', borderColor: 'rgba(22,163,74,.3)' }}>
+          <button type="button" className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem', color: '#16a34a', borderColor: 'rgba(22,163,74,.3)' }}>
             <IconWhatsapp /> WhatsApp
           </button>
-          <button className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem', color: '#c0392b', borderColor: 'rgba(192,57,43,.3)' }}>
+          <button type="button" className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem', color: '#c0392b', borderColor: 'rgba(192,57,43,.3)' }}>
             <IconPDF /> Gerar PDF
           </button>
         </div>
         <div style={{ marginTop: '.75rem' }}>
-          <button onClick={onBack} className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+          <button type="button" onClick={onBack} className="p-btn" style={{ fontSize: '.8rem', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
             <IconArrow dir="left" /> Editar Condições
           </button>
         </div>
@@ -1003,7 +1003,7 @@ function PropostasActivasTab() {
                     {offer.counterOfferNote && (
                       <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', color: 'rgba(14,14,13,.65)', margin: '.4rem 0 0', lineHeight: 1.5 }}>{offer.counterOfferNote}</p>
                     )}
-                    <button className="p-btn-gold" style={{ marginTop: '.75rem', fontSize: '.8rem' }}>Responder à Contra-Proposta</button>
+                    <button type="button" className="p-btn-gold" style={{ marginTop: '.75rem', fontSize: '.8rem' }}>Responder à Contra-Proposta</button>
                   </div>
                 )}
 
@@ -1034,9 +1034,9 @@ function PropostasActivasTab() {
 
                 {offer.status !== 'Aceite' && offer.status !== 'Recusada' && (
                   <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
-                    <button className="p-btn-gold" style={{ fontSize: '.8rem' }}>Responder</button>
-                    <button className="p-btn" style={{ fontSize: '.8rem' }}>Actualizar Estado</button>
-                    <button className="p-btn" style={{ fontSize: '.8rem' }}>Enviar Follow-up</button>
+                    <button type="button" className="p-btn-gold" style={{ fontSize: '.8rem' }}>Responder</button>
+                    <button type="button" className="p-btn" style={{ fontSize: '.8rem' }}>Actualizar Estado</button>
+                    <button type="button" className="p-btn" style={{ fontSize: '.8rem' }}>Enviar Follow-up</button>
                   </div>
                 )}
               </div>
@@ -1189,7 +1189,7 @@ function TemplatesTab() {
                 <strong style={{ color: 'rgba(14,14,13,.75)' }}>Quando usar: </strong>{t.whenToUse}
               </p>
 
-              <button onClick={() => setExpandedId(isExpanded ? null : t.id)}
+              <button type="button" onClick={() => setExpandedId(isExpanded ? null : t.id)}
                 className="p-btn" style={{ fontSize: '.78rem', color: t.textColor, borderColor: `${t.textColor}44`, width: '100%' }}>
                 {isExpanded ? 'Ocultar Linguagem' : 'Ver Linguagem de Exemplo'}
               </button>
@@ -1199,7 +1199,7 @@ function TemplatesTab() {
               <div style={{ borderTop: `1px solid ${t.textColor}22`, padding: '1rem 1.25rem', background: 'rgba(14,14,13,.03)' }}>
                 <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.3rem', letterSpacing: '.06em' }}>LINGUAGEM SUGERIDA</div>
                 <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: '#0e0e0d', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>{t.exampleLanguage}</p>
-                <button className="p-btn-gold" style={{ marginTop: '.75rem', fontSize: '.78rem', width: '100%' }}>
+                <button type="button" className="p-btn-gold" style={{ marginTop: '.75rem', fontSize: '.78rem', width: '100%' }}>
                   Usar Este Template
                 </button>
               </div>
@@ -1238,7 +1238,7 @@ export default function PortalDraftOffer() {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '1.75rem', overflowX: 'auto' }}>
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+          <button type="button" key={t.id} onClick={() => setTab(t.id)}
             style={{
               fontFamily: 'var(--font-jost)', fontSize: '.875rem', padding: '.75rem 1.25rem',
               background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',

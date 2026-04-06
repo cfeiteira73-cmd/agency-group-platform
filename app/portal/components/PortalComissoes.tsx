@@ -444,10 +444,10 @@ export default function PortalComissoes() {
           <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: darkMode ? 'rgba(240,237,228,.42)' : 'rgba(14,14,13,.4)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '4px' }}>5% Comissão · 50% CPCV + 50% Escritura · IRS 25% Retenção</div>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button className="p-btn" style={{ fontSize: '.52rem', padding: '8px 16px' }} onClick={handleAIAnalysis} disabled={commLoading}>
+          <button type="button" className="p-btn" style={{ fontSize: '.52rem', padding: '8px 16px' }} onClick={handleAIAnalysis} disabled={commLoading}>
             {commLoading ? 'A analisar...' : '✦ Análise IA'}
           </button>
-          <button className="p-btn p-btn-gold" style={{ fontSize: '.52rem', padding: '8px 16px' }} onClick={handleExportPDF}>
+          <button type="button" className="p-btn p-btn-gold" style={{ fontSize: '.52rem', padding: '8px 16px' }} onClick={handleExportPDF}>
             ⬇ Exportar PDF
           </button>
         </div>

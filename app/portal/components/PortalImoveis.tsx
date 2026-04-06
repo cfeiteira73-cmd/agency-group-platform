@@ -444,7 +444,7 @@ function FiltersBar({ filters, setFilters, sort, setSort, open }: FiltersBarProp
         <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', marginBottom: '.35rem', letterSpacing: '.08em' }}>{label.toUpperCase()}</div>
         <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
           {items.map(item => (
-            <button key={item} onClick={() => toggleArr(field, item)}
+            <button type="button" key={item} onClick={() => toggleArr(field, item)}
               style={{
                 fontFamily: 'var(--font-jost)', fontSize: '.76rem', padding: '4px 12px', borderRadius: 20, cursor: 'pointer',
                 border: `1px solid ${selected.includes(item) ? '#1c4a35' : 'rgba(14,14,13,.15)'}`,
@@ -556,7 +556,7 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
       <div style={{ width: 480, background: '#f4f0e6', overflowY: 'auto', display: 'flex', flexDirection: 'column', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
         {/* Photo area */}
         <div style={{ height: 200, background: grad, position: 'relative', flexShrink: 0 }}>
-          <button onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(4px)' }}>
+          <button type="button" onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(4px)' }}>
             <IconClose />
           </button>
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 80, background: 'linear-gradient(to top, rgba(0,0,0,.5), transparent)' }} />
@@ -605,7 +605,7 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
         {/* Drawer Tabs */}
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', background: '#fff', overflowX: 'auto' }}>
           {DTABS.map(t => (
-            <button key={t.id} onClick={() => setDtab(t.id)}
+            <button type="button" key={t.id} onClick={() => setDtab(t.id)}
               style={{
                 fontFamily: 'var(--font-jost)', fontSize: '.8rem', padding: '.65rem .9rem',
                 background: 'none', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
@@ -799,23 +799,23 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
                   {['Ativo', 'Sob Proposta', 'Reservado', 'Vendido'].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-              <button className="p-btn-gold" style={{ marginTop: '.5rem', fontSize: '.82rem' }}>Guardar Alterações</button>
+              <button type="button" className="p-btn-gold" style={{ marginTop: '.5rem', fontSize: '.82rem' }}>Guardar Alterações</button>
             </div>
           )}
         </div>
 
         {/* Action buttons */}
         <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid rgba(14,14,13,.08)', background: '#fff', display: 'flex', gap: '.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
-          <button className="p-btn-gold" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <button type="button" className="p-btn-gold" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
             <IconPipeline /> Pipeline
           </button>
-          <button className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
             <IconShare /> Partilhar
           </button>
-          <button className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
             <IconEye /> Ver no Portal
           </button>
-          <button className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
             <IconCollection /> Collection
           </button>
         </div>
@@ -879,7 +879,7 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
       <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 640, maxHeight: '90vh', zIndex: 1, padding: '2rem', overflowY: 'auto', border: '1px solid rgba(201,169,110,.25)', borderRadius: '16px', boxShadow: '0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
           <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.6rem', color: '#0e0e0d', fontWeight: 600, margin: 0 }}>Adicionar Imóvel</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}><IconClose /></button>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}><IconClose /></button>
         </div>
 
         {/* Photo drop zone */}
@@ -955,7 +955,7 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
               { label: 'Jardim', value: jardim, set: setJardim },
               { label: 'Terraço', value: terraco, set: setTerraco },
             ] as const).map(f => (
-              <button key={f.label} onClick={() => (f.set as (v: boolean) => void)(!f.value)}
+              <button type="button" key={f.label} onClick={() => (f.set as (v: boolean) => void)(!f.value)}
                 style={{
                   fontFamily: 'var(--font-jost)', fontSize: '.78rem', padding: '6px 14px', borderRadius: 20, cursor: 'pointer',
                   border: `1px solid ${f.value ? '#1c4a35' : 'rgba(14,14,13,.15)'}`,
@@ -971,7 +971,7 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
           <div style={{ gridColumn: '1/-1' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.3rem' }}>
               <label className="p-label">Descrição</label>
-              <button onClick={generateDesc} disabled={!nome.trim() || generating}
+              <button type="button" onClick={generateDesc} disabled={!nome.trim() || generating}
                 style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', background: 'none', border: '1px solid rgba(201,169,110,.4)', borderRadius: 20, padding: '3px 10px', cursor: nome.trim() ? 'pointer' : 'not-allowed', color: '#c9a96e', display: 'flex', alignItems: 'center', gap: '.3rem', opacity: nome.trim() ? 1 : .45 }}>
                 <IconSparkle /> {generating ? 'A gerar…' : 'Gerar com IA'}
               </button>
@@ -981,8 +981,8 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
         </div>
 
         <div style={{ display: 'flex', gap: '.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-          <button onClick={onClose} className="p-btn" style={{ fontSize: '.82rem' }}>Cancelar</button>
-          <button onClick={handleAdd} className="p-btn-gold" disabled={!canAdd} style={{ fontSize: '.82rem', opacity: canAdd ? 1 : .45 }}>
+          <button type="button" onClick={onClose} className="p-btn" style={{ fontSize: '.82rem' }}>Cancelar</button>
+          <button type="button" onClick={handleAdd} className="p-btn-gold" disabled={!canAdd} style={{ fontSize: '.82rem', opacity: canAdd ? 1 : .45 }}>
             Adicionar Imóvel
           </button>
         </div>
@@ -1012,7 +1012,7 @@ function MapView({ properties, onSelect }: { properties: ImovelFull[]; onSelect:
         <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: 'rgba(14,14,13,.55)' }}>
           {properties.length} imóveis no mapa
         </div>
-        <button onClick={() => setHeatMap(!heatMap)}
+        <button type="button" onClick={() => setHeatMap(!heatMap)}
           style={{
             fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', padding: '5px 14px', borderRadius: 20, cursor: 'pointer',
             border: `1px solid ${heatMap ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
@@ -1158,9 +1158,10 @@ export default function PortalImoveis() {
 
   useEffect(() => {
     let cancelled = false
+    const controller = new AbortController()
     async function loadProperties() {
       try {
-        const res = await fetch('/api/properties')
+        const res = await fetch('/api/properties', { signal: controller.signal })
         if (res.ok) {
           const { data } = await res.json()
           if (!cancelled && data && data.length > 0) {
@@ -1194,7 +1195,7 @@ export default function PortalImoveis() {
       } catch { /* use static data */ }
     }
     loadProperties()
-    return () => { cancelled = true }
+    return () => { cancelled = true; controller.abort() }
   }, [])
 
   const baseProperties = liveProperties.length > 0 ? liveProperties : ALL_PROPERTIES
@@ -1254,7 +1255,7 @@ export default function PortalImoveis() {
             )}
           </p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
+        <button type="button" onClick={() => setShowAddModal(true)} className="p-btn-gold" style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.85rem' }}>
           <IconPlus /> Adicionar Imóvel
         </button>
       </div>
@@ -1270,14 +1271,14 @@ export default function PortalImoveis() {
             placeholder="Pesquisar por nome, zona, bairro…"
             style={{ paddingLeft: '2.25rem', width: '100%' }} />
           {search && (
-            <button onClick={() => setSearch('')} style={{ position: 'absolute', right: '.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>
+            <button type="button" onClick={() => setSearch('')} style={{ position: 'absolute', right: '.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}>
               <IconX />
             </button>
           )}
         </div>
 
         {/* Filter toggle */}
-        <button onClick={() => setFiltersOpen(!filtersOpen)}
+        <button type="button" onClick={() => setFiltersOpen(!filtersOpen)}
           style={{
             display: 'flex', alignItems: 'center', gap: '.4rem', fontFamily: 'var(--font-jost)', fontSize: '.84rem',
             padding: '8px 16px', borderRadius: 8, cursor: 'pointer',
@@ -1294,7 +1295,7 @@ export default function PortalImoveis() {
         </button>
 
         {activeFilterCount > 0 && (
-          <button onClick={clearFilters} style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', background: 'none', border: '1px solid rgba(14,14,13,.15)', borderRadius: 8, padding: '7px 12px', cursor: 'pointer', color: 'rgba(14,14,13,.5)', display: 'flex', alignItems: 'center', gap: '.3rem', transition: 'all .2s' }}>
+          <button type="button" onClick={clearFilters} style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.75rem', background: 'none', border: '1px solid rgba(14,14,13,.15)', borderRadius: 8, padding: '7px 12px', cursor: 'pointer', color: 'rgba(14,14,13,.5)', display: 'flex', alignItems: 'center', gap: '.3rem', transition: 'all .2s' }}>
             <IconX /> Limpar
           </button>
         )}
@@ -1306,7 +1307,7 @@ export default function PortalImoveis() {
             { id: 'list' as ViewMode, icon: <IconList /> },
             { id: 'map' as ViewMode, icon: <IconMap /> },
           ]).map(v => (
-            <button key={v.id} onClick={() => setViewMode(v.id)}
+            <button type="button" key={v.id} onClick={() => setViewMode(v.id)}
               style={{
                 padding: '7px 12px', border: 'none', cursor: 'pointer',
                 background: viewMode === v.id ? '#1c4a35' : '#fff',
@@ -1361,7 +1362,7 @@ export default function PortalImoveis() {
           {filtered.length === 0 && (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', color: 'rgba(14,14,13,.35)' }}>
               <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.9rem' }}>Nenhum imóvel encontrado. Tente ajustar os filtros.</p>
-              <button onClick={clearFilters} className="p-btn" style={{ marginTop: '1rem', fontSize: '.82rem' }}>Limpar Filtros</button>
+              <button type="button" onClick={clearFilters} className="p-btn" style={{ marginTop: '1rem', fontSize: '.82rem' }}>Limpar Filtros</button>
             </div>
           )}
         </div>

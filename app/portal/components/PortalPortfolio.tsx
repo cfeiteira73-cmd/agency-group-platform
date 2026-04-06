@@ -420,7 +420,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
       {/* Tab selector */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '24px' }}>
         {(['comparar', 'simulador'] as const).map(t => (
-          <button key={t} className={`deal-tab${portfolioTab === t ? ' active' : ''}`} onClick={() => setPortfolioTab(t)}>
+          <button type="button" key={t} className={`deal-tab${portfolioTab === t ? ' active' : ''}`} onClick={() => setPortfolioTab(t)}>
             {t === 'comparar' ? '📊 Comparar Imóveis' : '📈 Simulador de Portfólio'}
           </button>
         ))}
@@ -444,15 +444,15 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
                   }}
                 />
                 {portItems.length > 2 && (
-                  <button onClick={() => setPortItems(portItems.filter((_, j) => j !== i))} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', cursor: 'pointer', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', borderRadius: '6px', transition: 'all .2s' }}>✕</button>
+                  <button type="button" onClick={() => setPortItems(portItems.filter((_, j) => j !== i))} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', cursor: 'pointer', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', borderRadius: '6px', transition: 'all .2s' }}>✕</button>
                 )}
               </div>
             ))}
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-              <button style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: 'rgba(14,14,13,.5)', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setPortItems([...portItems, ''])}>
+              <button type="button" style={{ padding: '8px 16px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', color: 'rgba(14,14,13,.5)', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setPortItems([...portItems, ''])}>
                 + Adicionar Imóvel
               </button>
-              <button className="p-btn" onClick={onRunPortfolio} disabled={portLoading || portItems.filter(x => x.trim()).length < 2}>
+              <button type="button" className="p-btn" onClick={onRunPortfolio} disabled={portLoading || portItems.filter(x => x.trim()).length < 2}>
                 {portLoading ? '✦ A comparar...' : '✦ Comparar'}
               </button>
             </div>
@@ -499,7 +499,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>
               {portfolioProperties.length} Imóveis no Portfólio
             </div>
-            <button className="p-btn p-btn-gold" style={{ padding: '6px 14px' }} onClick={() => setShowPropertyPicker(true)}>
+            <button type="button" className="p-btn p-btn-gold" style={{ padding: '6px 14px' }} onClick={() => setShowPropertyPicker(true)}>
               + Adicionar Imóvel
             </button>
           </div>
@@ -516,7 +516,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
             <div key={prop.id} className="p-card" style={{ marginBottom: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div style={{ fontFamily: "'Jost',sans-serif", fontSize: '.88rem', fontWeight: 500, color: darkMode ? 'rgba(244,240,230,.85)' : '#0e0e0d' }}>{prop.name}</div>
-                <button onClick={() => removePortfolioProperty(prop.id)} style={{ background: 'transparent', border: 'none', color: 'rgba(14,14,13,.3)', cursor: 'pointer', fontSize: '.8rem' }}>✕</button>
+                <button type="button" onClick={() => removePortfolioProperty(prop.id)} style={{ background: 'transparent', border: 'none', color: 'rgba(14,14,13,.3)', cursor: 'pointer', fontSize: '.8rem' }}>✕</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
                 {[
@@ -546,7 +546,7 @@ export default function PortalPortfolio({ onRunPortfolio }: PortalPortfolioProps
               <div style={{ background: darkMode ? '#0f2117' : '#fff', padding: '24px', maxWidth: '600px', width: '100%', maxHeight: '80vh', overflow: 'auto', borderRadius: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35' }}>Selecionar Imóvel</div>
-                  <button onClick={() => setShowPropertyPicker(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: 'rgba(14,14,13,.4)' }}>✕</button>
+                  <button type="button" onClick={() => setShowPropertyPicker(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', color: 'rgba(14,14,13,.4)' }}>✕</button>
                 </div>
                 <div style={{ display: 'grid', gap: '8px' }}>
                   {(PORTAL_PROPERTIES as Record<string, unknown>[]).map((p) => (

@@ -93,14 +93,14 @@ export default function PortalIMT() {
         {/* Presets */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
           {presets.map(p => (
-            <button key={p.label} onClick={() => { setImtValor(p.v); setImtResult(null) }}
+            <button type="button" key={p.label} onClick={() => { setImtValor(p.v); setImtResult(null) }}
               style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', padding: '6px 14px', background: imtValor === p.v ? '#1c4a35' : 'rgba(14,14,13,.04)', color: imtValor === p.v ? '#f4f0e6' : 'rgba(14,14,13,.5)', border: `1px solid ${imtValor === p.v ? '#1c4a35' : 'rgba(14,14,13,.1)'}`, cursor: 'pointer', letterSpacing: '.06em', transition: 'all .2s', borderRadius: '6px' }}>
               {p.label}
             </button>
           ))}
         </div>
 
-        <button className="p-btn p-btn-gold" style={{ padding: '12px 32px', fontSize: '.52rem', letterSpacing: '.12em', borderRadius: '6px', transition: 'all .2s' }} onClick={calcIMT} disabled={imtLoading || !imtValor}>
+        <button type="button" className="p-btn p-btn-gold" style={{ padding: '12px 32px', fontSize: '.52rem', letterSpacing: '.12em', borderRadius: '6px', transition: 'all .2s' }} onClick={calcIMT} disabled={imtLoading || !imtValor}>
           {imtLoading ? 'A calcular...' : '⟶ Calcular Custos Totais'}
         </button>
       </div>
@@ -186,7 +186,7 @@ export default function PortalIMT() {
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button className="p-btn p-btn-gold" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => {
+            <button type="button" className="p-btn p-btn-gold" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => {
               const html = `
                 <div class="label">Simulação IMT + Custos de Aquisição</div>
                 <div class="row">
@@ -209,8 +209,8 @@ export default function PortalIMT() {
               `
               exportToPDF(`Simulação IMT — ${fmt(valor)}`, html)
             }}>⬇ Exportar PDF</button>
-            <button className="p-btn" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setSection('nhr')}>→ Simular NHR/IFICI</button>
-            <button className="p-btn" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setSection('credito')}>→ Simular Crédito</button>
+            <button type="button" className="p-btn" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setSection('nhr')}>→ Simular NHR/IFICI</button>
+            <button type="button" className="p-btn" style={{ fontSize: '.52rem', padding: '10px 22px', borderRadius: '6px', transition: 'all .2s' }} onClick={() => setSection('credito')}>→ Simular Crédito</button>
           </div>
         </div>
       )}

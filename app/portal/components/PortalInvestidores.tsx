@@ -513,7 +513,7 @@ function InvestorDrawer({
               <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#ffffff88', marginTop: 2 }}>{investor.email}</div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: '#ffffff22', border: 'none', color: '#fff', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>✕</button>
+          <button type="button" onClick={onClose} style={{ background: '#ffffff22', border: 'none', color: '#fff', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>✕</button>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <TypeBadge type={investor.type} />
@@ -527,7 +527,7 @@ function InvestorDrawer({
       {/* Sub Tabs */}
       <div style={{ display: 'flex', background: '#fff', borderBottom: '1px solid #e8e2d4' }}>
         {SUB_TABS.map(t => (
-          <button key={t.id} onClick={() => setSubTab(t.id)} style={{
+          <button type="button" key={t.id} onClick={() => setSubTab(t.id)} style={{
             flex: 1, padding: '12px 4px', border: 'none', cursor: 'pointer',
             background: 'none', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10,
             color: subTab === t.id ? G : '#8a8070',
@@ -581,8 +581,8 @@ function DrawerPerfil({ investor, editMode, onChange, onToggleEdit, onSave }: {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G }}>Perfil do Investidor</span>
         <div style={{ display: 'flex', gap: 8 }}>
-          {editMode && <button onClick={onSave} style={{ background: G, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>Guardar</button>}
-          <button onClick={onToggleEdit} style={{ background: editMode ? '#f4f0e6' : GOLD, color: editMode ? '#8a8070' : '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>{editMode ? 'Cancelar' : 'Editar'}</button>
+          {editMode && <button type="button" onClick={onSave} style={{ background: G, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>Guardar</button>}
+          <button type="button" onClick={onToggleEdit} style={{ background: editMode ? '#f4f0e6' : GOLD, color: editMode ? '#8a8070' : '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600, transition: 'all .2s' }}>{editMode ? 'Cancelar' : 'Editar'}</button>
         </div>
       </div>
 
@@ -601,7 +601,7 @@ function DrawerPerfil({ investor, editMode, onChange, onToggleEdit, onSave }: {
         <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 4 }}>Perfil de Risco</label>
         <div style={{ display: 'flex', gap: 8 }}>
           {(['conservador', 'moderado', 'agressivo'] as RiskProfile[]).map(r => (
-            <button key={r} onClick={() => editMode && onChange({ ...investor, riskProfile: r })} style={{
+            <button type="button" key={r} onClick={() => editMode && onChange({ ...investor, riskProfile: r })} style={{
               padding: '6px 12px', borderRadius: 8, border: `1px solid ${investor.riskProfile === r ? RISK_COLORS[r] : '#d4cfc4'}`,
               background: investor.riskProfile === r ? RISK_COLORS[r] + '18' : '#fff',
               color: investor.riskProfile === r ? RISK_COLORS[r] : '#8a8070',
@@ -690,7 +690,7 @@ function DrawerMatches({ matches, investor, onAddDeal, existingDeals }: {
               <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 700, color: '#2563eb' }}>{m.irrEstimado.toFixed(1)}%</div>
             </div>
           </div>
-          <button
+          <button type="button"
             disabled={existingRefs.has(m.property.ref)}
             onClick={() => {
               const deal: InvestorDeal = {
@@ -741,7 +741,7 @@ function DrawerPipeline({ deals, onStageChange }: { deals: InvestorDeal[]; onSta
           </div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
             {stages.map(s => (
-              <button key={s} onClick={() => onStageChange(deal.id, s)} style={{
+              <button type="button" key={s} onClick={() => onStageChange(deal.id, s)} style={{
                 padding: '4px 10px', borderRadius: 6, border: `1px solid ${deal.stage === s ? STAGE_COLORS[s] : '#d4cfc4'}`,
                 background: deal.stage === s ? STAGE_COLORS[s] : '#fff',
                 color: deal.stage === s ? '#fff' : '#8a8070',
@@ -880,7 +880,7 @@ function TabDealFlow({ deals, investors, onStageChange }: {
                       <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#2563eb', background: '#2563eb18', borderRadius: 4, padding: '2px 6px' }}>{deal.irrEstimado.toFixed(1)}% IRR</span>
                     </div>
                     {nextStage && (
-                      <button onClick={() => onStageChange(deal.id, nextStage)} style={{
+                      <button type="button" onClick={() => onStageChange(deal.id, nextStage)} style={{
                         width: '100%', marginTop: 8, padding: '5px', borderRadius: 6,
                         background: STAGE_COLORS[nextStage] + '18', color: STAGE_COLORS[nextStage],
                         border: `1px solid ${STAGE_COLORS[nextStage]}44`,
@@ -1045,7 +1045,7 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
 
         {error && <div style={{ background: '#ef444418', border: '1px solid #ef444433', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontFamily: 'var(--font-jost),sans-serif', fontSize: 12, color: '#dc2626' }}>{error}</div>}
 
-        <button onClick={generateMemo} disabled={loading || !selInvestor || !selProperty} style={{
+        <button type="button" onClick={generateMemo} disabled={loading || !selInvestor || !selProperty} style={{
           width: '100%', padding: '14px', borderRadius: 10,
           background: loading || !selInvestor || !selProperty ? '#d4cfc4' : G,
           color: '#fff', border: 'none', cursor: loading || !selInvestor || !selProperty ? 'default' : 'pointer',
@@ -1067,9 +1067,9 @@ function TabDealMemo({ investors, properties }: { investors: Investor[]; propert
               <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: '#8a8070', marginTop: 2 }}>{investor.flag} {investor.name} · {dealType} · {language}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={exportTxt} style={{ background: '#f4f0e6', color: G, border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>EXPORTAR</button>
-              <button onClick={() => window.open(`mailto:${investor.email}?subject=Deal Memo: ${property.nome}&body=...`)} style={{ background: G, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>EMAIL</button>
-              <button onClick={() => window.open(`https://wa.me/${investor.phone.replace(/\D/g, '')}?text=Deal Memo: ${property.nome}`)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>WA</button>
+              <button type="button" onClick={exportTxt} style={{ background: '#f4f0e6', color: G, border: '1px solid #d4cfc4', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>EXPORTAR</button>
+              <button type="button" onClick={() => window.open(`mailto:${investor.email}?subject=Deal Memo: ${property.nome}&body=...`)} style={{ background: G, color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>EMAIL</button>
+              <button type="button" onClick={() => window.open(`https://wa.me/${investor.phone.replace(/\D/g, '')}?text=Deal Memo: ${property.nome}`)} style={{ background: '#16a34a', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>WA</button>
             </div>
           </div>
 
@@ -1222,7 +1222,7 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
       <div style={{ background: BG, borderRadius: 20, padding: '28px', width: 560, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px #00000033' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: G }}>Novo Investidor</span>
-          <button onClick={onClose} style={{ background: '#f4f0e6', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 14 }}>✕</button>
+          <button type="button" onClick={onClose} style={{ background: '#f4f0e6', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 14 }}>✕</button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
@@ -1256,7 +1256,7 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
           <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Zonas de Interesse</label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {zonaOpts.map(z => (
-              <button key={z} onClick={() => toggleArr('zonas', z)} style={{
+              <button type="button" key={z} onClick={() => toggleArr('zonas', z)} style={{
                 padding: '5px 12px', borderRadius: 6,
                 background: (form.zonas ?? []).includes(z) ? G : '#fff',
                 color: (form.zonas ?? []).includes(z) ? '#fff' : '#5a4f3a',
@@ -1271,7 +1271,7 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
           <label style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070', textTransform: 'uppercase', letterSpacing: '.05em', display: 'block', marginBottom: 6 }}>Tipo de Imóvel</label>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {tipoOpts.map(t => (
-              <button key={t} onClick={() => toggleArr('tipoImovel', t)} style={{
+              <button type="button" key={t} onClick={() => toggleArr('tipoImovel', t)} style={{
                 padding: '5px 12px', borderRadius: 6,
                 background: (form.tipoImovel ?? []).includes(t) ? GOLD : '#fff',
                 color: (form.tipoImovel ?? []).includes(t) ? '#fff' : '#5a4f3a',
@@ -1283,8 +1283,8 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '12px', background: '#f4f0e6', color: '#5a4f3a', border: '1px solid #d4cfc4', borderRadius: 10, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>CANCELAR</button>
-          <button onClick={handleSubmit} style={{ flex: 2, padding: '12px', background: G, color: '#fff', border: 'none', borderRadius: 10, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>CRIAR INVESTIDOR</button>
+          <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px', background: '#f4f0e6', color: '#5a4f3a', border: '1px solid #d4cfc4', borderRadius: 10, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>CANCELAR</button>
+          <button type="button" onClick={handleSubmit} style={{ flex: 2, padding: '12px', background: G, color: '#fff', border: 'none', borderRadius: 10, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, cursor: 'pointer', fontWeight: 700 }}>CRIAR INVESTIDOR</button>
         </div>
       </div>
     </div>
@@ -1393,7 +1393,7 @@ export default function PortalInvestidores() {
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 32, fontWeight: 300, letterSpacing: '-.02em' }}>Investor Intelligence OS</div>
             <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: '#ffffff88', marginTop: 4 }}>Motor de Gestão de Investidores Imobiliários</div>
           </div>
-          <button onClick={() => setShowNewModal(true)} style={{
+          <button type="button" onClick={() => setShowNewModal(true)} style={{
             background: GOLD, color: '#fff', border: 'none', borderRadius: 10,
             padding: '12px 20px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12,
             cursor: 'pointer', fontWeight: 700, letterSpacing: '.05em',
@@ -1423,7 +1423,7 @@ export default function PortalInvestidores() {
       <div style={{ background: '#fff', borderBottom: '1px solid #e8e2d4', padding: '0 32px' }}>
         <div style={{ display: 'flex', gap: 0 }}>
           {MAIN_TABS.map(t => (
-            <button key={t.id} onClick={() => setMainTab(t.id)} style={{
+            <button type="button" key={t.id} onClick={() => setMainTab(t.id)} style={{
               padding: '16px 20px', border: 'none', background: 'none', cursor: 'pointer',
               fontFamily: 'var(--font-dm-mono),monospace', fontSize: 12, fontWeight: mainTab === t.id ? 700 : 400,
               color: mainTab === t.id ? G : '#8a8070',
@@ -1473,7 +1473,7 @@ export default function PortalInvestidores() {
                 </select>
 
                 {(filterType || filterStatus || filterZona || filterCapital) && (
-                  <button onClick={() => { setFilterType(''); setFilterStatus(''); setFilterZona(''); setFilterCapital('') }}
+                  <button type="button" onClick={() => { setFilterType(''); setFilterStatus(''); setFilterZona(''); setFilterCapital('') }}
                     style={{ background: '#ef444418', color: '#dc2626', border: '1px solid #ef444433', borderRadius: 8, padding: '8px 12px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, cursor: 'pointer', fontWeight: 600 }}>
                     LIMPAR FILTROS
                   </button>

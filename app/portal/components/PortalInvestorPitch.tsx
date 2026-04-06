@@ -582,7 +582,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
             <label className="p-label">Tipo de Investidor</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
               {(['private', 'family_office', 'institutional', 'hnwi'] as const).map(t => (
-                <button
+                <button type="button"
                   key={t}
                   style={{
                     padding: '9px 6px',
@@ -610,7 +610,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
             <label className="p-label">Horizonte de Investimento</label>
             <div style={{ display: 'flex', gap: '5px' }}>
               {([3, 5, 10] as const).map(h => (
-                <button
+                <button type="button"
                   key={h}
                   style={{
                     flex: 1,
@@ -637,7 +637,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
             <label className="p-label">IRR Target</label>
             <div style={{ display: 'flex', gap: '5px' }}>
               {([8, 12, 15, 20] as const).map(irr => (
-                <button
+                <button type="button"
                   key={irr}
                   style={{
                     flex: 1,
@@ -664,7 +664,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
             <label className="p-label">Idioma do Pitch</label>
             <div style={{ display: 'flex', gap: '5px' }}>
               {(['PT', 'EN', 'FR', 'AR'] as const).map(l => (
-                <button
+                <button type="button"
                   key={l}
                   style={{
                     flex: 1,
@@ -691,7 +691,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
             <label className="p-label">Capital Disponível</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '5px' }}>
               {(['500K', '1M', '2M', '5M', '10M+'] as CapitalOption[]).map(c => (
-                <button
+                <button type="button"
                   key={c}
                   style={{
                     padding: '8px 4px',
@@ -721,7 +721,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 { id: 'income', label: 'Yield Income' },
                 { id: 'balanced', label: 'Balanced' },
               ] as { id: YieldFocus; label: string }[]).map(f => (
-                <button
+                <button type="button"
                   key={f.id}
                   style={{
                     flex: 1,
@@ -749,7 +749,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
           <div style={{ borderTop: `1px solid ${col.border}`, paddingTop: '4px' }} />
 
           {/* Generate button */}
-          <button
+          <button type="button"
             className="p-btn"
             onClick={onRunInvestorPitch}
             disabled={ipLoading || !ipProperty}
@@ -1024,7 +1024,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: col.muted, letterSpacing: '.08em', flex: 1 }}>
                   PITCH · {new Date().toLocaleDateString('pt-PT')} · Agency Group AMI 22506
                 </div>
-                <button
+                <button type="button"
                   onClick={handleCopy}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px',
@@ -1042,7 +1042,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 >
                   {copied ? '✓ Copiado' : '⧉ Copiar'}
                 </button>
-                <button
+                <button type="button"
                   onClick={handlePDF}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px',
@@ -1060,7 +1060,7 @@ export default function PortalInvestorPitch({ onRunInvestorPitch, exportToPDF }:
                 >
                   ⬇ PDF
                 </button>
-                <button
+                <button type="button"
                   onClick={handleEmail}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px',

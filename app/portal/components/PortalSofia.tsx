@@ -308,13 +308,13 @@ export default function PortalSofia({
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Mode toggle */}
           <div style={{ display: 'flex', border: `1px solid ${border}`, overflow: 'hidden' }}>
-            <button className={`sofia-mode-btn${sofiaMode === 'avatar' ? ' active' : ''}`} onClick={() => setSofiaMode('avatar')}>▶ Avatar</button>
-            <button className={`sofia-mode-btn${sofiaMode === 'chat' ? ' active' : ''}`} onClick={() => setSofiaMode('chat')}>💬 Chat IA</button>
+            <button type="button" className={`sofia-mode-btn${sofiaMode === 'avatar' ? ' active' : ''}`} onClick={() => setSofiaMode('avatar')}>▶ Avatar</button>
+            <button type="button" className={`sofia-mode-btn${sofiaMode === 'chat' ? ' active' : ''}`} onClick={() => setSofiaMode('chat')}>💬 Chat IA</button>
           </div>
 
           {/* Language selector */}
           {(['PT', 'EN', 'FR', 'AR'] as const).map(l => (
-            <button key={l}
+            <button type="button" key={l}
               style={{ padding: '4px 10px', background: sofiaLang === l ? '#c9a96e' : 'transparent', border: `1px solid ${sofiaLang === l ? '#c9a96e' : border}`, color: sofiaLang === l ? '#0c1f15' : textMuted, fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', borderRadius: '4px', transition: 'all .2s' }}
               onClick={() => setSofiaLang(l)}>
               {l}
@@ -323,11 +323,11 @@ export default function PortalSofia({
 
           {sofiaMode === 'avatar' && (
             !sofiaConnected ? (
-              <button className="p-btn" style={{ padding: '6px 14px' }} onClick={onConnect} disabled={sofiaLoading}>
+              <button type="button" className="p-btn" style={{ padding: '6px 14px' }} onClick={onConnect} disabled={sofiaLoading}>
                 {sofiaLoading ? '✦ A conectar...' : '▶ Conectar Sofia'}
               </button>
             ) : (
-              <button style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(220,38,38,.3)', color: '#dc2626', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.08em', borderRadius: '6px', transition: 'all .2s' }} onClick={onDisconnect}>
+              <button type="button" style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(220,38,38,.3)', color: '#dc2626', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.08em', borderRadius: '6px', transition: 'all .2s' }} onClick={onDisconnect}>
                 ■ Desconectar
               </button>
             )
@@ -380,7 +380,7 @@ export default function PortalSofia({
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <label className="p-label" style={{ marginBottom: 0 }}>Script</label>
-                <button
+                <button type="button"
                   style={{ background: 'transparent', border: 'none', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: '#1c4a35', cursor: 'pointer' }}
                   onClick={onGenerateScript}
                   disabled={sofiaScriptLoading || !sofiaPropSel}>
@@ -397,7 +397,7 @@ export default function PortalSofia({
               />
             </div>
 
-            <button className="p-btn" onClick={onSpeak} disabled={!sofiaConnected || sofiaSpeaking || !sofiaText.trim()}>
+            <button type="button" className="p-btn" onClick={onSpeak} disabled={!sofiaConnected || sofiaSpeaking || !sofiaText.trim()}>
               {sofiaSpeaking ? '✦ A falar...' : '▶ Falar'}
             </button>
 
@@ -427,20 +427,20 @@ export default function PortalSofia({
           <div style={{ padding: '10px 20px', borderBottom: `1px solid ${border}`, display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, background: bg, flexWrap: 'wrap' }}>
             <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: textMuted, letterSpacing: '.1em', textTransform: 'uppercase', marginRight: '4px' }}>Modo</div>
             {(Object.entries(ASSISTANT_MODES) as [AssistantMode, typeof ASSISTANT_MODES[AssistantMode]][]).map(([k, v]) => (
-              <button key={k} className={`mode-pill${assistantMode === k ? ' active' : ''}`} onClick={() => setAssistantMode(k)}>
+              <button type="button" key={k} className={`mode-pill${assistantMode === k ? ' active' : ''}`} onClick={() => setAssistantMode(k)}>
                 <span>{v.icon}</span> {v.label}
               </button>
             ))}
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px' }}>
               {chatMessages.length > 0 && (
                 <>
-                  <button
+                  <button type="button"
                     onClick={exportConversation}
                     style={{ padding: '4px 10px', background: 'rgba(28,74,53,.06)', border: `1px solid rgba(28,74,53,.15)`, color: '#1c4a35', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.06em', borderRadius: '6px', transition: 'all .2s' }}
                     title="Copiar conversa para clipboard">
                     ↗ Exportar
                   </button>
-                  <button
+                  <button type="button"
                     onClick={clearConversation}
                     style={{ padding: '4px 10px', background: 'transparent', border: `1px solid ${border}`, color: textMuted, fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
                     × Limpar
@@ -465,7 +465,7 @@ export default function PortalSofia({
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', maxWidth: '560px', width: '100%' }}>
                   {CONVERSATION_STARTERS.map((s, i) => (
-                    <button key={i}
+                    <button type="button" key={i}
                       onClick={() => sendChatMessage(s.text)}
                       style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '12px 14px', background: darkMode ? 'rgba(244,240,230,.04)' : '#f8f7f4', border: `1px solid ${border}`, cursor: 'pointer', textAlign: 'left', transition: 'all .15s', borderRadius: '10px' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#1c4a35'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(28,74,53,.06)' }}
@@ -532,7 +532,7 @@ export default function PortalSofia({
           {/* Quick actions chips */}
           <div style={{ padding: '8px 20px', borderTop: `1px solid ${border}`, display: 'flex', gap: '6px', overflowX: 'auto', flexShrink: 0, background: bg }}>
             {QUICK_ACTIONS.map((a, i) => (
-              <button key={i} className="sofia-chip" onClick={() => sendChatMessage(a.prompt)} disabled={chatLoading}>{a.label}</button>
+              <button type="button" key={i} className="sofia-chip" onClick={() => sendChatMessage(a.prompt)} disabled={chatLoading}>{a.label}</button>
             ))}
           </div>
 
@@ -554,7 +554,7 @@ export default function PortalSofia({
                 }}
                 disabled={chatLoading}
               />
-              <button
+              <button type="button"
                 onClick={() => sendChatMessage(chatInput)}
                 disabled={chatLoading || !chatInput.trim()}
                 style={{

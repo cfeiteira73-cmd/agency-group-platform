@@ -561,7 +561,7 @@ function SignalDrawer({
   }
 
   const tabBtn = (key: typeof tab, label: string) => (
-    <button
+    <button type="button"
       onClick={() => setTab(key)}
       style={{
         padding: '8px 16px', border: 'none', cursor: 'pointer',
@@ -599,7 +599,7 @@ function SignalDrawer({
                 {signal.zona} · AVM {fmtCurrency(signal.avmEstimate)}
               </p>
             </div>
-            <button
+            <button type="button"
               onClick={onClose}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
@@ -662,7 +662,7 @@ function SignalDrawer({
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {(['novo', 'contactado', 'interesse', 'reuniao', 'exclusividade', 'arquivo'] as const).map(s => (
-                  <button
+                  <button type="button"
                     key={s}
                     onClick={() => onUpdate({ ...signal, status: s })}
                     style={{
@@ -790,7 +790,7 @@ function SignalDrawer({
                   fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#dc2626'
                 }}>{generateError}</div>
               )}
-              <button
+              <button type="button"
                 onClick={handleGenerate}
                 disabled={generating}
                 className="p-btn-gold"
@@ -816,14 +816,14 @@ function SignalDrawer({
                     {generatedMsg.message}
                   </pre>
                   <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                    <button
+                    <button type="button"
                       onClick={handleCopy}
                       className="p-btn"
                       style={{ flex: 1, padding: '8px' }}
                     >
                       {copied ? '✓ Copiado' : 'Copiar'}
                     </button>
-                    <button
+                    <button type="button"
                       onClick={() => onUpdate({
                         ...signal,
                         outreachHistory: [...(signal.outreachHistory ?? []), {
@@ -942,8 +942,8 @@ function AddSignalModal({ onClose, onAdd }: { onClose: () => void; onAdd: (s: Pr
             />
           </div>
           <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-            <button onClick={onClose} className="p-btn" style={{ flex: 1, padding: '12px' }}>Cancelar</button>
-            <button onClick={handleSubmit} className="p-btn-gold" style={{ flex: 2, padding: '12px' }}>Adicionar Sinal</button>
+            <button type="button" onClick={onClose} className="p-btn" style={{ flex: 1, padding: '12px' }}>Cancelar</button>
+            <button type="button" onClick={handleSubmit} className="p-btn-gold" style={{ flex: 2, padding: '12px' }}>Adicionar Sinal</button>
           </div>
         </div>
       </div>
@@ -1095,7 +1095,7 @@ function TabSinais({ signals, onUpdateSignal, onAddSignal }: {
         <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#6b7280' }}>
           {filtered.length} sinais
         </span>
-        <button onClick={() => setShowAdd(true)} className="p-btn-gold" style={{ padding: '8px 18px' }}>
+        <button type="button" onClick={() => setShowAdd(true)} className="p-btn-gold" style={{ padding: '8px 18px' }}>
           + Adicionar Sinal
         </button>
       </div>
@@ -1239,7 +1239,7 @@ function TabSequencias({ sequences, onToggle }: {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginLeft: 16 }}>
-                <button
+                <button type="button"
                   onClick={e => { e.stopPropagation(); onToggle(seq.id) }}
                   style={{
                     background: seq.active ? '#1c4a35' : '#e5e0d5',
@@ -1436,7 +1436,7 @@ function TabGerador() {
               fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#dc2626'
             }}>{error}</div>
           )}
-          <button
+          <button type="button"
             onClick={handleGenerate}
             disabled={generating}
             className="p-btn-gold"
@@ -1534,10 +1534,10 @@ function TabGerador() {
             </div>
 
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <button onClick={handleCopy} className="p-btn" style={{ flex: 1, padding: '10px' }}>
+              <button type="button" onClick={handleCopy} className="p-btn" style={{ flex: 1, padding: '10px' }}>
                 {copied ? '✓ Copiado!' : 'Copiar Mensagem'}
               </button>
-              <button
+              <button type="button"
                 onClick={() => { setResult(null); setAddress(''); setOwnerName(''); setAvm('') }}
                 className="p-btn"
                 style={{ padding: '10px 16px' }}
@@ -1674,7 +1674,7 @@ function TabPipeline({ signals, onUpdateSignal }: {
                   {/* Move buttons */}
                   <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
                     {PIPELINE_STAGES.filter(s => s.key !== stage.key).slice(0, 3).map(s => (
-                      <button
+                      <button type="button"
                         key={s.key}
                         onClick={() => handleMoveSignal(sig.id, s.key)}
                         title={`Mover para ${s.label}`}
@@ -1859,7 +1859,7 @@ export default function PortalOutbound() {
         width: 'fit-content'
       }}>
         {tabs.map(t => (
-          <button
+          <button type="button"
             key={t.key}
             onClick={() => setActiveTab(t.key)}
             style={{

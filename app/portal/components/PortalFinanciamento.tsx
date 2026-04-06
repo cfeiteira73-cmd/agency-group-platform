@@ -241,7 +241,7 @@ export default function PortalFinanciamento() {
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '24px' }}>
         {TABS.map(t => (
-          <button key={t.id}
+          <button type="button" key={t.id}
             onClick={() => setTab(t.id)}
             style={{ padding: '10px 20px', background: 'transparent', border: 'none', borderBottom: `2px solid ${tab === t.id ? '#1c4a35' : 'transparent'}`, color: tab === t.id ? '#1c4a35' : 'rgba(14,14,13,.45)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.06em', transition: 'all .2s', marginBottom: '-1px' }}>
             {t.label}
@@ -261,7 +261,7 @@ export default function PortalFinanciamento() {
                   <label className="p-label">País de Residência</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
                     {COUNTRY_PROFILES.slice(0, 8).map(c => (
-                      <button key={c.code}
+                      <button type="button" key={c.code}
                         onClick={() => setPais(c.code)}
                         style={{ padding: '8px 4px', textAlign: 'center', background: pais === c.code ? '#1c4a35' : 'transparent', border: `1px solid ${pais === c.code ? '#1c4a35' : 'rgba(14,14,13,.1)'}`, color: pais === c.code ? '#f4f0e6' : 'rgba(14,14,13,.6)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', transition: 'all .15s', borderRadius: '6px' }}>
                         <div style={{ fontSize: '1rem' }}>{c.flag}</div>
@@ -303,10 +303,10 @@ export default function PortalFinanciamento() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button className="p-btn" style={{ flex: 1 }} onClick={calcularAPI} disabled={loading || !montante}>
+                  <button type="button" className="p-btn" style={{ flex: 1 }} onClick={calcularAPI} disabled={loading || !montante}>
                     {loading ? '✦ A consultar...' : '✦ Análise IA Completa'}
                   </button>
-                  <button className="p-btn p-btn-gold" style={{ padding: '10px 16px' }} onClick={handleExportPDF} disabled={!localCalc}>
+                  <button type="button" className="p-btn p-btn-gold" style={{ padding: '10px 16px' }} onClick={handleExportPDF} disabled={!localCalc}>
                     ⬇ PDF
                   </button>
                 </div>

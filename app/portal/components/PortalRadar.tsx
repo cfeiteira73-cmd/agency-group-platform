@@ -456,17 +456,17 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
       {/* Mode selector */}
       <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: '1px solid rgba(14,14,13,.1)' }}>
         {(['url', 'search'] as const).map(m => (
-          <button key={m} className={`mkt-tab${radarMode === m ? ' active' : ''}`} onClick={() => setRadarMode(m)}>
+          <button type="button" key={m} className={`mkt-tab${radarMode === m ? ' active' : ''}`} onClick={() => setRadarMode(m)}>
             {m === 'url' ? '🔗 Analisar URL' : '🔍 Busca Inteligente'}
           </button>
         ))}
-        <button
+        <button type="button"
           className={`mkt-tab${showHeatMap ? ' active' : ''}`}
           onClick={() => setShowHeatMap(!showHeatMap)}
           style={{ marginLeft: 'auto' }}
         >🗺 Heat Map</button>
         {radarHistory.length > 0 && (
-          <button
+          <button type="button"
             className={`mkt-tab${showHistory ? ' active' : ''}`}
             onClick={() => setShowHistory(!showHistory)}
           >🕐 Histórico ({radarHistory.length})</button>
@@ -499,7 +499,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
               </div>
             ))}
           </div>
-          <button
+          <button type="button"
             onClick={() => { setRadarHistory([]); try { localStorage.removeItem(RADAR_HISTORY_KEY) } catch { /* ignore */ } }}
             style={{ marginTop: '8px', padding: '4px 10px', background: 'none', border: '1px solid rgba(14,14,13,.1)', borderRadius: '6px', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', cursor: 'pointer', transition: 'all .2s' }}
           >Limpar histórico</button>
@@ -518,7 +518,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             onChange={e => setRadarUrl(e.target.value)}
             style={{ resize: 'vertical' }}
           />
-          <button className="p-btn" style={{ marginTop: '12px' }} onClick={onRunRadar} disabled={radarLoading || !radarUrl.trim()}>
+          <button type="button" className="p-btn" style={{ marginTop: '12px' }} onClick={onRunRadar} disabled={radarLoading || !radarUrl.trim()}>
             {radarLoading ? '✦ A analisar...' : '✦ Analisar Deal'}
           </button>
         </div>
@@ -545,7 +545,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <label className="p-label">Tipologias</label>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {TIPOS_IMOVEL.map(t => (
-                <button key={t} onClick={() => toggleTipo(t)}
+                <button type="button" key={t} onClick={() => toggleTipo(t)}
                   style={{ padding: '4px 10px', background: searchTipos.includes(t) ? '#1c4a35' : 'transparent', border: `1px solid ${searchTipos.includes(t) ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: searchTipos.includes(t) ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
                   {t}
                 </button>
@@ -556,7 +556,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <label className="p-label">Fontes</label>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {FONTES.map(f => (
-                <button key={f} onClick={() => toggleFonte(f)}
+                <button type="button" key={f} onClick={() => toggleFonte(f)}
                   style={{ padding: '4px 10px', background: searchFontes.includes(f) ? '#c9a96e' : 'transparent', border: `1px solid ${searchFontes.includes(f) ? '#c9a96e' : 'rgba(14,14,13,.15)'}`, color: searchFontes.includes(f) ? '#0c1f15' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.4rem', cursor: 'pointer' }}>
                   {f}
                 </button>
@@ -567,7 +567,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <label className="p-label">Score Mínimo: {searchScoreMin}</label>
             <input type="range" min={40} max={95} value={searchScoreMin} onChange={e => setSearchScoreMin(e.target.value)} style={{ width: '100%' }} />
           </div>
-          <button className="p-btn" onClick={onRunRadarSearch} disabled={searchLoading}>
+          <button type="button" className="p-btn" onClick={onRunRadarSearch} disabled={searchLoading}>
             {searchLoading ? '✦ A pesquisar...' : '✦ Buscar Oportunidades'}
           </button>
         </div>
@@ -626,7 +626,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-              <button
+              <button type="button"
                 className="p-btn"
                 style={{ padding: '10px 16px', fontSize: '.52rem', background: 'rgba(14,14,13,.06)', color: 'rgba(14,14,13,.6)', border: '1px solid rgba(14,14,13,.15)', borderRadius: '6px', transition: 'all .2s' }}
                 onClick={() => {
@@ -638,7 +638,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
                   navigator.clipboard.writeText(report).catch(() => {})
                 }}
               >↗ Copiar Relatório</button>
-              <button
+              <button type="button"
                 className="p-btn p-btn-gold"
                 style={{ padding: '10px 20px', fontSize: '.52rem', borderRadius: '6px', transition: 'all .2s' }}
                 onClick={() => setSection('pipeline')}
@@ -666,7 +666,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
               ['financeiro', 'Financeiro'],
               ['comparaveis', 'Comparáveis'],
             ] as [ResultTab, string][]).map(([t, l]) => (
-              <button key={t}
+              <button type="button" key={t}
                 onClick={() => setResultTab(t)}
                 style={{
                   padding: '10px 18px', background: 'none', border: 'none',
@@ -845,7 +845,7 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.1em' }}>
               {searchDeals.length} oportunidades encontradas
             </div>
-            <button className="p-btn p-btn-gold" style={{ padding: '8px 16px' }}
+            <button type="button" className="p-btn p-btn-gold" style={{ padding: '8px 16px' }}
               onClick={() => onGerarPDF(
                 searchDeals,
                 { zona: searchZona, preco_min: searchPrecoMin, preco_max: searchPrecoMax, tipos: searchTipos, fontes: searchFontes, score_min: searchScoreMin },

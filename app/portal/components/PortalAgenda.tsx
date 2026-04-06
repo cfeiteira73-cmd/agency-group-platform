@@ -321,11 +321,11 @@ export default function PortalAgenda({ exportToICS }: PortalAgendaProps) {
           <div style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 300, fontSize: '1.8rem', color: col }}>Agenda</div>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button
+          <button type="button"
             style={{ padding: '7px 14px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
             onClick={() => setShowAddForm(v => !v)}
           >+ Evento</button>
-          <button
+          <button type="button"
             className="p-btn"
             style={{ padding: '7px 14px' }}
             onClick={() => exportToICS(upcoming.map(e => ({ title: e.title, date: e.date, time: e.time, description: e.description })))}
@@ -366,8 +366,8 @@ export default function PortalAgenda({ exportToICS }: PortalAgendaProps) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', marginTop: '14px' }}>
-            <button className="p-btn" onClick={saveManualEvent} disabled={!formTitle || !formDate}>Guardar Evento</button>
-            <button onClick={() => setShowAddForm(false)} style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', color: 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>Cancelar</button>
+            <button type="button" className="p-btn" onClick={saveManualEvent} disabled={!formTitle || !formDate}>Guardar Evento</button>
+            <button type="button" onClick={() => setShowAddForm(false)} style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', color: 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>Cancelar</button>
           </div>
         </div>
       )}
@@ -375,7 +375,7 @@ export default function PortalAgenda({ exportToICS }: PortalAgendaProps) {
       {/* View Tabs */}
       <div style={{ display: 'flex', gap: '0', marginBottom: '20px', borderBottom: `1px solid ${borderCol}` }}>
         {(['lista', 'calendario', 'semana'] as AgendaView[]).map(v => (
-          <button
+          <button type="button"
             key={v}
             className={`deal-tab${agendaView === v ? ' active' : ''}`}
             onClick={() => setAgendaView(v)}
@@ -456,11 +456,11 @@ export default function PortalAgenda({ exportToICS }: PortalAgendaProps) {
         <div>
           {/* Month navigation */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <button onClick={prevMonth} style={{ width: '32px', height: '32px', background: cardBg, border: `1px solid ${borderCol}`, cursor: 'pointer', color: col, fontFamily: "'DM Mono',monospace", fontSize: '.5rem' }}>‹</button>
+            <button type="button" onClick={prevMonth} style={{ width: '32px', height: '32px', background: cardBg, border: `1px solid ${borderCol}`, cursor: 'pointer', color: col, fontFamily: "'DM Mono',monospace", fontSize: '.5rem' }}>‹</button>
             <div style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: '1.3rem', color: col }}>
               {MONTHS_PT[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </div>
-            <button onClick={nextMonth} style={{ width: '32px', height: '32px', background: cardBg, border: `1px solid ${borderCol}`, cursor: 'pointer', color: col, fontFamily: "'DM Mono',monospace", fontSize: '.5rem' }}>›</button>
+            <button type="button" onClick={nextMonth} style={{ width: '32px', height: '32px', background: cardBg, border: `1px solid ${borderCol}`, cursor: 'pointer', color: col, fontFamily: "'DM Mono',monospace", fontSize: '.5rem' }}>›</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: selectedDay ? '1fr 280px' : '1fr', gap: '20px' }}>

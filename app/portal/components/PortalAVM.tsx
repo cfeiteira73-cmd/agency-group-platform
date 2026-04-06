@@ -649,7 +649,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                 </select>
               </div>
               <div style={{ gridColumn: '1/-1' }}>
-                <button className="p-btn" style={{ width: '100%' }} onClick={onRunAVM} disabled={avmLoading}>
+                <button type="button" className="p-btn" style={{ width: '100%' }} onClick={onRunAVM} disabled={avmLoading}>
                   {avmLoading ? '✦ A calcular...' : '✦ Avaliar Imóvel'}
                 </button>
               </div>
@@ -663,7 +663,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
 
           {/* ── Zone Heatmap Toggle ──────────────────────────────────────── */}
           <div className="p-card" style={{ marginTop: '16px' }}>
-            <button
+            <button type="button"
               onClick={() => setShowZoneHeatmap(v => !v)}
               style={{
                 width: '100%', background: 'transparent', border: 'none', cursor: 'pointer',
@@ -796,7 +796,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
 
               {/* ── Adjustment Factors Toggle ────────────────────────────── */}
               <div>
-                <button
+                <button type="button"
                   onClick={() => setShowAdjustments(v => !v)}
                   style={{
                     width: '100%', padding: '10px 14px',
@@ -899,7 +899,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
 
               {/* ── Adicionar ao Portfólio ───────────────────────────────── */}
               {onAddToPortfolio && (
-                <button
+                <button type="button"
                   className="p-btn"
                   style={{ width: '100%', background: 'transparent', border: '1px solid rgba(28,74,53,.3)', color: '#1c4a35' }}
                   onClick={() => onAddToPortfolio({

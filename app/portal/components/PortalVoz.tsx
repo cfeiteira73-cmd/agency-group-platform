@@ -480,7 +480,7 @@ function TabDitado() {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <span style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted }}>Idioma:</span>
         {LANGUAGE_OPTIONS.map(opt => (
-          <button
+          <button type="button"
             key={opt.value}
             onClick={() => setLang(opt.value)}
             style={{
@@ -516,7 +516,7 @@ function TabDitado() {
         </div>
 
         {/* Mic button */}
-        <button
+        <button type="button"
           onClick={recording ? stopRecording : startRecording}
           style={{
             width: 88, height: 88, borderRadius: '50%', border: 'none', cursor: 'pointer',
@@ -565,7 +565,7 @@ function TabDitado() {
             {interim && <span style={{ color: C.muted, fontStyle: 'italic' }}>{interim}</span>}
           </div>
           <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
-            <button
+            <button type="button"
               className="p-btn-gold"
               onClick={handleProcess}
               disabled={processing || !transcript.trim()}
@@ -573,7 +573,7 @@ function TabDitado() {
             >
               {processing ? 'A processar com IA...' : '✦ Processar com IA'}
             </button>
-            <button
+            <button type="button"
               className="p-btn"
               onClick={() => { setTranscript(''); setInterim(''); setResult(null); setSeconds(0) }}
               style={{ padding: '12px 16px' }}
@@ -734,7 +734,7 @@ function TabVisitas() {
           <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 22, fontWeight: 300, color: C.text, margin: '0 0 4px' }}>Notas de Visita</h2>
           <p style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.muted, margin: 0 }}>{visitNotes.length} notas gravadas</p>
         </div>
-        <button
+        <button type="button"
           className="p-btn-gold"
           onClick={() => setShowForm(!showForm)}
           style={{ padding: '9px 18px', fontSize: 13 }}
@@ -771,7 +771,7 @@ function TabVisitas() {
           {/* Voice recorder for notes */}
           <div style={{ background: C.bg, borderRadius: 10, padding: '16px', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-              <button
+              <button type="button"
                 onClick={recording ? stopNoteRecording : startNoteRecording}
                 style={{
                   width: 48, height: 48, borderRadius: '50%', border: 'none', cursor: 'pointer',
@@ -799,7 +799,7 @@ function TabVisitas() {
             )}
           </div>
 
-          <button
+          <button type="button"
             className="p-btn-gold"
             onClick={handleSaveNote}
             disabled={processing || !formBuyer || !noteTranscript}
@@ -832,7 +832,7 @@ function TabVisitas() {
                       {note.buyerName} · {new Date(note.date).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })} {note.time}
                     </div>
                   </div>
-                  <button
+                  <button type="button"
                     onClick={() => setExpandedId(expandedId === note.id ? null : note.id)}
                     style={{
                       fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
@@ -998,7 +998,7 @@ function TabComandos() {
           </div>
         </div>
 
-        <button
+        <button type="button"
           onClick={listening ? stopListening : startListening}
           style={{
             width: 72, height: 72, borderRadius: '50%', border: 'none', cursor: 'pointer',
@@ -1230,28 +1230,28 @@ function TabTranscricoes() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                <button
+                <button type="button"
                   onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
                   style={{
                     fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '4px 10px', borderRadius: 5,
                     border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, cursor: 'pointer', transition: 'all .2s',
                   }}
                 >{expandedId === t.id ? '▲' : '▼'}</button>
-                <button
+                <button type="button"
                   onClick={() => copyText(t)}
                   style={{
                     fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '4px 10px', borderRadius: 5,
                     border: `1px solid ${C.green}30`, background: C.green + '08', color: C.green, cursor: 'pointer', transition: 'all .2s',
                   }}
                 >{copied === t.id ? '✓' : 'Copiar'}</button>
-                <button
+                <button type="button"
                   onClick={() => exportPDF(t)}
                   style={{
                     fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '4px 10px', borderRadius: 5,
                     border: `1px solid ${C.gold}30`, background: C.gold + '08', color: C.gold, cursor: 'pointer', transition: 'all .2s',
                   }}
                 >Export</button>
-                <button
+                <button type="button"
                   onClick={() => deleteTranscript(t.id)}
                   style={{
                     fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, padding: '4px 10px', borderRadius: 5,
@@ -1298,7 +1298,7 @@ export default function PortalVoz() {
         boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)',
       }}>
         {TABS.map(tab => (
-          <button
+          <button type="button"
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{

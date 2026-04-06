@@ -67,11 +67,11 @@ export default function PortalHeader({
   return (
     <header role="banner" style={{ height: '56px', background: darkMode ? '#0c1f15' : '#f4f0e6', borderBottom: `1px solid ${darkMode ? 'rgba(201,169,110,.12)' : 'rgba(14,14,13,.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 20px', flexShrink: 0, backdropFilter: 'blur(12px)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <button className="hamburger" aria-label={sidebarOpen ? 'Fechar menu' : 'Abrir menu'} onClick={() => setSidebarOpen(!sidebarOpen)}>
+        <button type="button" className="hamburger" aria-label={sidebarOpen ? 'Fechar menu' : 'Abrir menu'} onClick={() => setSidebarOpen(!sidebarOpen)}>
           <span /><span /><span />
         </button>
         {section !== 'dashboard' && (
-          <button
+          <button type="button"
             onClick={() => setSection('dashboard')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', padding: '4px 8px 4px 0', transition: 'color .2s', display: 'flex', alignItems: 'center', gap: '5px' }}
             onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.color = '#1c4a35' }}
@@ -114,7 +114,7 @@ export default function PortalHeader({
         {/* Notification Bell */}
         <div style={{ position: 'relative' }}>
           <Tooltip content="Notificações" darkMode={darkMode}>
-          <button
+          <button type="button"
             aria-label={`Alertas${totalAlerts > 0 ? ` — ${totalAlerts} activo${totalAlerts !== 1 ? 's' : ''}` : ''}`}
             aria-expanded={showNotifPanel}
             aria-haspopup="true"
@@ -190,13 +190,13 @@ export default function PortalHeader({
               </div>
 
               <div style={{ padding: '10px 16px', borderTop: `1px solid ${darkMode ? 'rgba(244,240,230,.06)' : 'rgba(14,14,13,.08)'}`, display: 'flex', gap: '8px' }}>
-                <button
+                <button type="button"
                   style={{ flex: 1, padding: '7px', background: darkMode ? 'rgba(28,74,53,.2)' : 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.08em', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={() => { setSection('crm'); setShowNotifPanel(false) }}
                 >
                   Ver CRM →
                 </button>
-                <button
+                <button type="button"
                   style={{ flex: 1, padding: '7px', background: 'rgba(14,14,13,.04)', border: `1px solid ${darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.1)'}`, color: darkMode ? 'rgba(244,240,230,.4)' : 'rgba(14,14,13,.4)', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={() => setShowNotifPanel(false)}
                 >
@@ -209,7 +209,7 @@ export default function PortalHeader({
 
         {/* Dark mode toggle */}
         <Tooltip content="Modo escuro" shortcut="⌘D" darkMode={darkMode}>
-          <button
+          <button type="button"
             aria-label={darkMode ? 'Activar modo claro' : 'Activar modo escuro'}
             tabIndex={0}
             onClick={() => setDarkMode(!darkMode)}

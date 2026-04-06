@@ -544,7 +544,7 @@ export default function PortalHomestaging() {
               {HS_STYLES.map(style => {
                 const isActive = selectedStyle === style.id
                 return (
-                  <button
+                  <button type="button"
                     key={style.id}
                     onClick={() => { setSelectedStyle(style.id); setTransformed(false) }}
                     style={{
@@ -579,7 +579,7 @@ export default function PortalHomestaging() {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
               {ROOM_TYPES.map(r => (
-                <button
+                <button type="button"
                   key={r.id}
                   onClick={() => setRoomType(r.id)}
                   style={{
@@ -606,7 +606,7 @@ export default function PortalHomestaging() {
                 const cfg = BUDGET_CFG[b]
                 const isActive = budget === b
                 return (
-                  <button
+                  <button type="button"
                     key={b}
                     onClick={() => setBudget(b)}
                     style={{
@@ -638,7 +638,7 @@ export default function PortalHomestaging() {
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '14px' }}>
               {(Object.entries(BUYER_CFG) as [TargetBuyer, { label: string; icon: string }][]).map(([id, cfg]) => (
-                <button
+                <button type="button"
                   key={id}
                   onClick={() => setTargetBuyer(id)}
                   style={{
@@ -670,7 +670,7 @@ export default function PortalHomestaging() {
           </div>
 
           {/* Generate button */}
-          <button
+          <button type="button"
             onClick={handleGenerate}
             disabled={!image || generating}
             style={{
@@ -693,7 +693,7 @@ export default function PortalHomestaging() {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center' }}>
               <div style={{ display: 'flex', border: '1px solid rgba(14,14,13,.1)' }}>
                 {([['slider', 'Slider'], ['sidebyside', 'Lado a Lado']] as [DisplayMode, string][]).map(([mode, label]) => (
-                  <button
+                  <button type="button"
                     key={mode}
                     onClick={() => setDisplayMode(mode)}
                     style={{
@@ -743,19 +743,19 @@ export default function PortalHomestaging() {
 
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                <button
+                <button type="button"
                   style={{ flex: 1, padding: '9px', background: '#1c4a35', border: 'none', color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={handleDownload}
                 >
                   ↓ Download Depois
                 </button>
-                <button
+                <button type="button"
                   style={{ padding: '9px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', color: 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={handleShare}
                 >
                   Partilhar
                 </button>
-                <button
+                <button type="button"
                   style={{ padding: '9px 14px', background: 'transparent', border: '1px solid rgba(28,74,53,.25)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                   onClick={handleRegenerate}
                 >
@@ -884,7 +884,7 @@ export default function PortalHomestaging() {
                   </div>
 
                   {/* CTA */}
-                  <button
+                  <button type="button"
                     onClick={handleQuoteEmail}
                     style={{
                       width: '100%', padding: '11px', background: '#c9a96e', border: 'none',

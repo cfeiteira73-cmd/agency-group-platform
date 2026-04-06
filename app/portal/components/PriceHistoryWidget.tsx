@@ -14,7 +14,8 @@ export default function PriceHistoryWidget({ url }: { url: string }) {
 
   useEffect(() => {
     if (!url) return
-    fetch(`/api/radar/history?url=${encodeURIComponent(url)}`)
+    const controller = new AbortController()
+    fetch(`/api/radar/history?url=${encodeURIComponent(url)}`, { signal: controller.signal })
       .then(r => r.json())
       .then(d => {
         if (d.history && Array.isArray(d.history) && d.history.length > 1) {
@@ -23,6 +24,7 @@ export default function PriceHistoryWidget({ url }: { url: string }) {
         }
       })
       .catch(() => {})
+    return () => controller.abort()
   }, [url])
 
   if (history.length < 2) return null

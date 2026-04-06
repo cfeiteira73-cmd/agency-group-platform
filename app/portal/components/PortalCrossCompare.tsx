@@ -511,7 +511,7 @@ export default function PortalCrossCompare() {
         </div>
         <div className="flex gap-1 mt-5 flex-wrap">
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+            <button type="button" key={t.id} onClick={() => setActiveTab(t.id)} style={{
               padding: '8px 20px', borderRadius: 8, border: 'none', cursor: 'pointer',
               fontFamily: 'DM Mono, monospace', fontSize: 12, letterSpacing: '0.05em', transition: 'all 0.2s',
               background: activeTab === t.id ? '#c9a96e' : 'rgba(244,240,230,0.1)',
@@ -541,7 +541,7 @@ export default function PortalCrossCompare() {
                     { key: 'yield', label: 'Yield' },
                     { key: 'volume', label: 'Volume' },
                   ].map(m => (
-                    <button
+                    <button type="button"
                       key={m.key}
                       onClick={() => setPriceMetric(m.key as typeof priceMetric)}
                       style={{
@@ -670,7 +670,7 @@ export default function PortalCrossCompare() {
             {/* City selector pills */}
             <div className="flex flex-wrap gap-2">
               {CITIES.map(c => (
-                <button
+                <button type="button"
                   key={c.id}
                   onClick={() => setSelectedCity(c)}
                   style={{
@@ -716,7 +716,7 @@ export default function PortalCrossCompare() {
             {/* Profile selector */}
             <div className="flex flex-wrap gap-3">
               {Object.entries(INVESTOR_PROFILES).map(([k, p]) => (
-                <button
+                <button type="button"
                   key={k}
                   onClick={() => setSelectedProfile(k)}
                   style={{

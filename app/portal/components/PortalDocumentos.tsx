@@ -468,7 +468,7 @@ export default function PortalDocumentos() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button
+          <button type="button"
             className="p-btn"
             style={{ fontSize: '.52rem', padding: '8px 18px', borderRadius: '6px' }}
             onClick={() => fileInputRef.current?.click()}
@@ -482,7 +482,7 @@ export default function PortalDocumentos() {
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', marginBottom: '24px', gap: '0' }}>
         {TABS.map(t => (
-          <button
+          <button type="button"
             key={t.id}
             onClick={() => setActiveTab(t.id)}
             style={{
@@ -536,7 +536,7 @@ export default function PortalDocumentos() {
             {(['Contratos', 'Jurídico', 'Fiscal', 'Marketing', 'Templates', 'Due Diligence'] as DocCategory[]).map(cat => {
               const count = MOCK_DOCUMENTS.filter(d => d.category === cat).length
               return (
-                <button
+                <button type="button"
                   key={cat}
                   onClick={() => setFilterCat(filterCat === cat ? 'Todas' : cat)}
                   style={{
@@ -619,19 +619,19 @@ export default function PortalDocumentos() {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <button style={{
+                    <button type="button" style={{
                       flex: 1, padding: '6px 8px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.12)',
                       color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
                       cursor: 'pointer', transition: 'all .2s', borderRadius: '6px',
                     }}>Ver</button>
-                    <button style={{
+                    <button type="button" style={{
                       flex: 1, padding: '6px 8px', background: '#1c4a35', border: 'none',
                       color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
                       cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '6px',
                     }}>
                       <IconDownload />Download
                     </button>
-                    <button
+                    <button type="button"
                       style={{
                         padding: '6px 10px', background: 'transparent', border: '1px solid rgba(14,14,13,.1)',
                         color: 'rgba(14,14,13,.4)', cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', gap: '4px',
@@ -753,7 +753,7 @@ export default function PortalDocumentos() {
                           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: prog.pct === 100 ? '#22c55e' : '#1c4a35', fontWeight: 600 }}>
                             {prog.pct}% completo
                           </span>
-                          <button
+                          <button type="button"
                             style={{
                               padding: '5px 14px', background: '#1c4a35', border: 'none', color: '#f4f0e6',
                               fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em',
@@ -924,7 +924,7 @@ export default function PortalDocumentos() {
             /* Template editor */
             <div>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
-                <button
+                <button type="button"
                   style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', letterSpacing: '.06em', borderRadius: '6px' }}
                   onClick={() => setActiveTemplate(null)}
                 >
@@ -936,7 +936,7 @@ export default function PortalDocumentos() {
                 {activeTemplate.langs && activeTemplate.langs.length > 1 && (
                   <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto' }}>
                     {activeTemplate.langs.map(lang => (
-                      <button
+                      <button type="button"
                         key={lang}
                         onClick={() => setActiveLang(lang)}
                         style={{
@@ -981,7 +981,7 @@ export default function PortalDocumentos() {
                 />
 
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
+                  <button type="button"
                     className="p-btn-gold p-btn"
                     style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.52rem', padding: '8px 18px', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={simulateAIFill}
@@ -990,14 +990,14 @@ export default function PortalDocumentos() {
                     <IconAI />
                     {aiLoading ? 'A preencher...' : 'Preencher com IA'}
                   </button>
-                  <button
+                  <button type="button"
                     className="p-btn"
                     style={{ fontSize: '.52rem', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: '6px', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={handleCopyTemplate}
                   >
                     {copied ? '✓ Copiado!' : 'Copiar Texto'}
                   </button>
-                  <button
+                  <button type="button"
                     style={{ padding: '8px 18px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={() => { setActiveTemplate(null); setTemplateContent('') }}
                   >
@@ -1054,7 +1054,7 @@ export default function PortalDocumentos() {
               </div>
             ))}
 
-            <button
+            <button type="button"
               className="p-btn"
               style={{ width: '100%', marginTop: '4px', background: '#1c4a35', color: '#f4f0e6', padding: '12px', fontSize: '.52rem', letterSpacing: '.1em', borderRadius: '6px', transition: 'all .2s' }}
               onClick={generateDocument}
@@ -1080,14 +1080,14 @@ export default function PortalDocumentos() {
                   {genPreview}
                 </pre>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
+                  <button type="button"
                     className="p-btn"
                     style={{ flex: 1, background: '#1c4a35', color: '#f4f0e6', fontSize: '.52rem', padding: '9px', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={handlePrintPreview}
                   >
                     Download PDF
                   </button>
-                  <button
+                  <button type="button"
                     style={{ flex: 1, padding: '9px', background: 'transparent', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer', letterSpacing: '.06em', borderRadius: '6px', transition: 'all .2s' }}
                     onClick={handleGenCopy}
                   >

@@ -395,7 +395,7 @@ function CopyButton({ text, label = 'Copiar', style: btnStyle = {} }: { text: st
   }, [text])
 
   return (
-    <button
+    <button type="button"
       onClick={handleCopy}
       style={{
         padding: '4px 10px',
@@ -568,7 +568,7 @@ export default function PortalMarketing({
           {/* Input tabs */}
           <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.08)', marginBottom: '16px' }}>
             {(['dados', 'media', 'url', 'tour'] as const).map(t => (
-              <button key={t} className={`mkt-input-tab${mktInputTab === t ? ' active' : ''}`} onClick={() => setMktInputTab(t)}>
+              <button type="button" key={t} className={`mkt-input-tab${mktInputTab === t ? ' active' : ''}`} onClick={() => setMktInputTab(t)}>
                 {t === 'dados' ? '📋 Dados' : t === 'media' ? '📸 Fotos' : t === 'url' ? '🔗 URL' : '🎥 Tour'}
               </button>
             ))}
@@ -604,7 +604,7 @@ export default function PortalMarketing({
                 <div style={{ gridColumn: '1/-1' }}>
                   <label className="p-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Descrição Livre</span>
-                    <button onClick={onStartVoice} style={{ background: isListening ? '#dc2626' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '.7rem', color: isListening ? '#fff' : 'rgba(14,14,13,.4)', padding: '0 6px' }}>
+                    <button type="button" onClick={onStartVoice} style={{ background: isListening ? '#dc2626' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '.7rem', color: isListening ? '#fff' : 'rgba(14,14,13,.4)', padding: '0 6px' }}>
                       {isListening ? '● A gravar...' : '🎤 Voz'}
                     </button>
                   </label>
@@ -633,7 +633,7 @@ export default function PortalMarketing({
                   {mktPhotos.map((p, i) => (
                     <div key={i} className="photo-thumb">
                       <img src={p} alt={`foto-${i}`} />
-                      <button className="photo-remove" onClick={() => setMktPhotos(mktPhotos.filter((_, j) => j !== i))}>✕</button>
+                      <button type="button" className="photo-remove" onClick={() => setMktPhotos(mktPhotos.filter((_, j) => j !== i))}>✕</button>
                     </div>
                   ))}
                 </div>
@@ -649,7 +649,7 @@ export default function PortalMarketing({
             <div className="p-card">
               <label className="p-label">URL do Anúncio</label>
               <input className="p-inp" placeholder="https://idealista.pt/imovel/..." value={mktListingUrl} onChange={e => setMktListingUrl(e.target.value)} />
-              <button className="p-btn" style={{ marginTop: '12px', width: '100%' }} onClick={onAutoFillFromUrl} disabled={mktAutoFilling || !mktListingUrl.trim()}>
+              <button type="button" className="p-btn" style={{ marginTop: '12px', width: '100%' }} onClick={onAutoFillFromUrl} disabled={mktAutoFilling || !mktListingUrl.trim()}>
                 {mktAutoFilling ? '✦ A importar...' : '✦ Auto-Preencher Dados'}
               </button>
             </div>
@@ -672,7 +672,7 @@ export default function PortalMarketing({
             {/* Category filter */}
             <div style={{ display: 'flex', gap: '4px', marginBottom: '10px', overflowX: 'auto', paddingBottom: '2px' }}>
               {templateCategories.map(cat => (
-                <button
+                <button type="button"
                   key={cat}
                   onClick={() => setTemplateFilter(cat)}
                   style={{
@@ -690,7 +690,7 @@ export default function PortalMarketing({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {filteredTemplates.map(tpl => (
-                <button
+                <button type="button"
                   key={tpl.nome}
                   onClick={() => applyTemplate(tpl)}
                   style={{
@@ -722,7 +722,7 @@ export default function PortalMarketing({
 
           {/* ── Posting Schedule Visual ──────────────────────────────────── */}
           <div className="p-card" style={{ marginTop: '16px' }}>
-            <button
+            <button type="button"
               onClick={() => setShowSchedule(v => !v)}
               style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0' }}
             >
@@ -756,7 +756,7 @@ export default function PortalMarketing({
             <label className="p-label">Idiomas</label>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
               {LANGS.map(l => (
-                <button key={l.v} onClick={() => toggleLang(l.v)}
+                <button type="button" key={l.v} onClick={() => toggleLang(l.v)}
                   style={{ padding: '4px 10px', background: mktLangs.includes(l.v) ? '#1c4a35' : 'transparent', border: `1px solid ${mktLangs.includes(l.v) ? '#1c4a35' : 'rgba(14,14,13,.15)'}`, color: mktLangs.includes(l.v) ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}>
                   {l.l}
                 </button>
@@ -764,7 +764,7 @@ export default function PortalMarketing({
             </div>
           </div>
 
-          <button className="p-btn" style={{ width: '100%' }} onClick={onRunMarketing} disabled={mktLoading}>
+          <button type="button" className="p-btn" style={{ width: '100%' }} onClick={onRunMarketing} disabled={mktLoading}>
             {mktLoading ? '✦ A gerar conteúdo...' : '✦ Gerar Conteúdo Multi-Formato'}
           </button>
         </div>
@@ -795,7 +795,7 @@ export default function PortalMarketing({
                 {FORMATS.map((f) => {
                   const fColor = FORMAT_COLORS[f.id] ?? '#1c4a35'
                   return (
-                    <button
+                    <button type="button"
                       key={f.id}
                       className={`mkt-tab${mktFormat === f.id ? ' active' : ''}`}
                       onClick={() => setMktFormat(f.id)}
@@ -810,7 +810,7 @@ export default function PortalMarketing({
               {/* Language tabs */}
               <div style={{ display: 'flex', gap: '4px', marginBottom: '12px' }}>
                 {mktLangs.map(l => (
-                  <button key={l} className={`mkt-tab${mktLang === l ? ' active' : ''}`} onClick={() => setMktLang(l)} style={{ fontSize: '.52rem' }}>
+                  <button type="button" key={l} className={`mkt-tab${mktLang === l ? ' active' : ''}`} onClick={() => setMktLang(l)} style={{ fontSize: '.52rem' }}>
                     {l.toUpperCase()}
                   </button>
                 ))}
@@ -854,7 +854,7 @@ export default function PortalMarketing({
               {/* ── Performance Preview toggle ────────────────────────────── */}
               {currentContent && (
                 <div style={{ marginTop: '10px' }}>
-                  <button
+                  <button type="button"
                     onClick={() => setShowPerformance(v => !v)}
                     style={{
                       background: 'transparent', border: 'none', cursor: 'pointer',
@@ -882,7 +882,7 @@ export default function PortalMarketing({
               )}
 
               <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                <button className="p-btn" style={{ flex: 1 }} onClick={handleCopy}>
+                <button type="button" className="p-btn" style={{ flex: 1 }} onClick={handleCopy}>
                   📋 Copiar tudo
                 </button>
               </div>

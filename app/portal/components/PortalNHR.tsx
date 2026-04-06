@@ -196,7 +196,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
       {/* Persona presets */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
         {PERSONAS_NHR.map(p => (
-          <button key={p.label}
+          <button type="button" key={p.label}
             style={{ padding: '6px 14px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
             onClick={() => onRunNHR(p)}
           >{p.label}</button>
@@ -227,7 +227,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
               <input type="checkbox" id="nhrFonte" checked={nhrFonte} onChange={e => setNhrFonte(e.target.checked)} />
               <label htmlFor="nhrFonte" style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.5)', cursor: 'pointer' }}>Fonte estrangeira (rendimento auferido fora de Portugal)</label>
             </div>
-            <button className="p-btn" onClick={() => onRunNHR()} disabled={nhrLoading || !nhrRend}>
+            <button type="button" className="p-btn" onClick={() => onRunNHR()} disabled={nhrLoading || !nhrRend}>
               {nhrLoading ? '✦ A calcular...' : '✦ Analisar NHR / IFICI'}
             </button>
           </div>
@@ -251,7 +251,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
               {/* Sub-tabs */}
               <div style={{ display: 'flex', gap: '0', marginBottom: '16px', borderBottom: `1px solid ${borderCol}` }}>
                 {(['elegib', 'processo', 'share'] as const).map(t => (
-                  <button key={t} className={`deal-tab${nhrSubTab === t ? ' active' : ''}`} onClick={() => setNhrSubTab(t)}>
+                  <button type="button" key={t} className={`deal-tab${nhrSubTab === t ? ' active' : ''}`} onClick={() => setNhrSubTab(t)}>
                     {t === 'elegib' ? 'Elegibilidade' : t === 'processo' ? 'Processo' : 'Partilhar'}
                   </button>
                 ))}
@@ -419,14 +419,14 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
 
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    <button
+                    <button type="button"
                       className="p-btn"
                       onClick={copyResumo}
                       style={{ minWidth: '160px' }}
                     >
                       {copied ? '✓ Copiado!' : 'Copiar Resumo'}
                     </button>
-                    <button
+                    <button type="button"
                       style={{ padding: '8px 18px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px', transition: 'all .2s' }}
                       onClick={() => {
                         const w = window.open('', '_blank')
@@ -444,7 +444,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', marginBottom: '6px' }}>LINK DE SIMULAÇÃO</div>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                       <code style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', flex: 1, wordBreak: 'break-all' }}>{buildDeepLink()}</code>
-                      <button
+                      <button type="button"
                         style={{ padding: '4px 10px', background: 'transparent', border: '1px solid rgba(28,74,53,.2)', color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', flexShrink: 0, borderRadius: '6px' }}
                         onClick={() => navigator.clipboard.writeText(buildDeepLink()).catch(() => {})}
                       >Copiar</button>
@@ -460,7 +460,7 @@ export default function PortalNHR({ onRunNHR }: PortalNHRProps) {
                       lineHeight: 1.65, margin: '0 0 10px',
                       maxHeight: '220px', overflowY: 'auto',
                     }}>{buildEmailTemplate()}</pre>
-                    <button
+                    <button type="button"
                       style={{ padding: '5px 12px', background: 'transparent', border: '1px solid rgba(14,14,13,.15)', color: 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer', borderRadius: '6px' }}
                       onClick={() => navigator.clipboard.writeText(buildEmailTemplate()).catch(() => {})}
                     >Copiar Email</button>
