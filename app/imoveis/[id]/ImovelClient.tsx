@@ -7,6 +7,7 @@ import FavoriteButton from '../FavoriteButton'
 import { getPropertyPhotos } from '../photos'
 import VideoSection from '../../components/VideoSection'
 import NeighbourhoodIntel from '../../components/NeighbourhoodIntel'
+import Matterport3DTour from '@/app/components/Matterport3DTour'
 import { CurrencySelector, useCurrency } from '../../components/CurrencyWidget'
 import dynamic from 'next/dynamic'
 
@@ -757,6 +758,15 @@ export default function ImovelClient({ id }: { id: string }) {
               }}>
                 * Estimativas indicativas. Não constituem aconselhamento financeiro. Consulte o seu banco e consultor fiscal.
               </div>
+            </div>
+
+            {/* ── Matterport 3D Tour ── */}
+            <div style={{ marginBottom: '48px' }}>
+              <Matterport3DTour
+                propertyName={property.nome}
+                propertyPrice={property.preco}
+                compact={false}
+              />
             </div>
 
             {/* ── Location section ── */}

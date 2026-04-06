@@ -629,6 +629,12 @@ img, video {
 :focus-visible{outline:1px solid var(--gold);outline-offset:3px}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;border-bottom-color:var(--g)!important;box-shadow:0 1px 0 var(--g)}
 
+/* ── Focus Visible — WCAG AA ──────────────────────────────────────────────── */
+:focus-visible{outline:2px solid #c9a96e;outline-offset:3px;border-radius:2px}
+.nav-links a:focus-visible{outline:2px solid #c9a96e;outline-offset:4px;border-radius:2px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid #c9a96e;outline-offset:3px;border-radius:2px}
+.p-btn:focus-visible,.p-btn-gold:focus-visible{outline:2px solid #c9a96e;outline-offset:3px}
+
 /* ═══════════════════════════════════════════════
    AWWWARDS REFINEMENTS — GLOBAL POLISH
 ═══════════════════════════════════════════════ */

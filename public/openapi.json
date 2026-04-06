@@ -1,0 +1,175 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Agency Group — Luxury Real Estate Portugal API",
+    "description": "Search luxury properties in Portugal (Lisbon, Cascais, Comporta, Porto, Algarve, Madeira). Get market data, valuations, NHR tax info. AMI 22506.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Agency Group",
+      "url": "https://www.agencygroup.pt",
+      "email": "geral@agencygroup.pt"
+    }
+  },
+  "servers": [
+    { "url": "https://www.agencygroup.pt" }
+  ],
+  "paths": {
+    "/api/gpt/properties": {
+      "get": {
+        "operationId": "searchProperties",
+        "summary": "Search luxury properties in Portugal",
+        "description": "Search for luxury properties by zone, type, price range, bedrooms. Returns available properties with price, area, features.",
+        "parameters": [
+          { "name": "zona", "in": "query", "description": "Zone/city: Lisboa, Cascais, Comporta, Porto, Algarve, Madeira, Sintra, Ericeira", "schema": { "type": "string" } },
+          { "name": "tipo", "in": "query", "description": "Property type: Apartamento, Moradia, Villa, Quinta, Penthouse, Herdade", "schema": { "type": "string" } },
+          { "name": "precoMin", "in": "query", "description": "Minimum price in EUR", "schema": { "type": "integer" } },
+          { "name": "precoMax", "in": "query", "description": "Maximum price in EUR", "schema": { "type": "integer" } },
+          { "name": "quartos", "in": "query", "description": "Minimum number of bedrooms", "schema": { "type": "integer" } },
+          { "name": "lang", "in": "query", "description": "Response language: pt, en, fr", "schema": { "type": "string", "default": "en" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of matching properties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "properties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "name": { "type": "string" },
+                          "zone": { "type": "string" },
+                          "type": { "type": "string" },
+                          "price": { "type": "integer" },
+                          "area": { "type": "integer" },
+                          "bedrooms": { "type": "integer" },
+                          "features": { "type": "array", "items": { "type": "string" } },
+                          "url": { "type": "string" },
+                          "pricePerSqm": { "type": "integer" }
+                        }
+                      }
+                    },
+                    "total": { "type": "integer" },
+                    "marketNote": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gpt/market": {
+      "get": {
+        "operationId": "getMarketData",
+        "summary": "Get Portugal real estate market data for a zone",
+        "description": "Get current market prices, trends, yields, and buyer insights for any Portuguese zone.",
+        "parameters": [
+          { "name": "zona", "in": "query", "required": true, "description": "Zone: Lisboa, Cascais, Comporta, Porto, Algarve, Madeira, etc.", "schema": { "type": "string" } },
+          { "name": "lang", "in": "query", "schema": { "type": "string", "default": "en" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Market data for the zone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "zone": { "type": "string" },
+                    "pricePerSqm": { "type": "integer" },
+                    "askingPricePerSqm": { "type": "integer" },
+                    "rentalYield": { "type": "number" },
+                    "daysOnMarket": { "type": "integer" },
+                    "yoyChange": { "type": "number" },
+                    "topBuyers": { "type": "array", "items": { "type": "string" } },
+                    "insight": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gpt/avm": {
+      "post": {
+        "operationId": "valuateProperty",
+        "summary": "Get automatic property valuation (AVM)",
+        "description": "Get an instant property valuation for any Portuguese location. Returns price range, yield, and market position.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["zona"],
+                "properties": {
+                  "zona": { "type": "string", "description": "Location zone" },
+                  "tipo": { "type": "string", "description": "T0, T1, T2, T3, T4, T5" },
+                  "area": { "type": "integer", "description": "Area in m\u00b2" },
+                  "estado": { "type": "string", "description": "Novo, Bom, Remodelado, Para Remodelar" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Property valuation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "estimatedValue": { "type": "integer" },
+                    "rangeMin": { "type": "integer" },
+                    "rangeMax": { "type": "integer" },
+                    "pricePerSqm": { "type": "integer" },
+                    "confidence": { "type": "number" },
+                    "rentalYield": { "type": "number" },
+                    "daysToSell": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gpt/nhr": {
+      "get": {
+        "operationId": "getNHRInfo",
+        "summary": "Get NHR/IFICI tax regime information for Portugal",
+        "description": "Get information about Portugal's NHR and IFICI tax regimes for foreign residents.",
+        "parameters": [
+          { "name": "lang", "in": "query", "schema": { "type": "string", "default": "en" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "NHR/IFICI tax information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "regime": { "type": "string" },
+                    "benefits": { "type": "array", "items": { "type": "string" } },
+                    "eligibility": { "type": "string" },
+                    "duration": { "type": "string" },
+                    "flatTaxRate": { "type": "string" },
+                    "link": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
