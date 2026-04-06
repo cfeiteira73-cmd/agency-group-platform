@@ -156,17 +156,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       if (!error && data) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mapped = (data as any[]).map((row) => ({
-          id: typeof row.id === 'number' ? row.id : parseInt(String(row.id), 10) || 0,
-          ref: row.ref || '',
-          imovel: row.imovel || '',
-          valor: row.valor ? `€${Number(row.valor).toLocaleString('pt-PT')}` : '€0',
-          fase: row.fase || 'Contacto',
+        const mapped = (data as any[]).map((row, idx) => ({
+          // Use portal-compat columns if available (from migration 003), fall back to complex schema columns
+          id: typeof row.id === 'number' ? row.id : idx + 1,  // sequential numeric ID since UUID→parseInt fails
+          ref: row.ref || row.reference || '',
+          imovel: row.imovel || row.title || '',
+          valor: row.valor || (row.deal_value ? `€ ${Number(row.deal_value).toLocaleString('pt-PT')}` : '€0'),
+          fase: row.fase || row.stage || 'Contacto',
           comprador: row.comprador || '',
-          cpcvDate: row.cpcv_date || '',
-          escrituraDate: row.escritura_date || '',
+          cpcvDate: row.cpcv_date_text || row.cpcv_date || '',
+          escrituraDate: row.escritura_date_text || row.escritura_date || '',
           checklist: {},
-          notas: row.notas || '',
+          notas: row.notas || row.notes || '',
           propertyId: row.property_id || null,
         }))
 
@@ -255,19 +256,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const ref = String(body.ref || `AG-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`)
 
-    // Try Supabase
+    // Try Supabase (uses portal-compat columns from migration 003)
     try {
+      const valorNum = typeof body.valor === 'number' ? body.valor : parseFloat(String(body.valor)) || 0
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabaseAdmin.from('deals') as any)
         .insert({
+          // Portal-friendly columns (added by migration 003_portal_compat.sql)
           ref,
           imovel:      String(body.imovel),
-          property_id: typeof body.property_id === 'string' ? body.property_id : null,
-          valor:       typeof body.valor === 'number'       ? body.valor        : parseFloat(String(body.valor)),
+          valor:       `€ ${valorNum.toLocaleString('pt-PT')}`,
           fase:        String(body.fase || 'Contacto'),
-          contact_id:  typeof body.contact_id === 'string'  ? body.contact_id   : null,
           comprador:   typeof body.comprador === 'string'   ? body.comprador    : null,
           notas:       typeof body.notas === 'string'       ? body.notas        : null,
+          // Standard columns (migration 001)
+          title:       String(body.imovel),  // mirror imovel as title for schema compliance
+          deal_value:  valorNum,
+          property_id: typeof body.property_id === 'string' ? body.property_id : null,
           agent_id:    typeof body.agent_id === 'string'    ? body.agent_id     : null,
         })
         .select()

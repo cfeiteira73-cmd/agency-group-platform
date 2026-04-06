@@ -320,7 +320,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           budgetMax: row.budget_max || 0,
           tipos: Array.isArray(row.typologies_wanted) ? row.typologies_wanted : (Array.isArray(row.tipos) ? row.tipos : []),
           zonas: Array.isArray(row.preferred_locations) ? row.preferred_locations : (Array.isArray(row.zonas) ? row.zonas : []),
-          status: row.status || 'lead',
+          // Map Supabase enum 'client' → portal Portuguese 'cliente'
+          status: row.status === 'client' ? 'cliente' : (row.status || 'lead'),
           notes: row.notes || '',
           lastContact: row.last_contact_at || row.last_contact || '',
           nextFollowUp: row.next_followup_at || '',
@@ -440,7 +441,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       nationality:         typeof input.nationality === 'string' ? input.nationality.toUpperCase() : null,
       language:            typeof input.language    === 'string' ? input.language.toLowerCase()    : null,
       role:                (input.role as ContactInsert['role']) ?? 'buyer',
-      status:              (input.status as ContactInsert['status']) ?? 'lead',
+      // Map portal Portuguese 'cliente' → Supabase enum 'client'
+      status:              (input.status === 'cliente' ? 'client' : input.status) as ContactInsert['status'] ?? 'lead',
       lead_tier:           (input.lead_tier as ContactInsert['lead_tier']) ?? null,
       budget_min:          typeof input.budget_min === 'number' ? input.budget_min : null,
       budget_max:          typeof input.budget_max === 'number' ? input.budget_max : null,
@@ -565,6 +567,12 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       if (field in input) {
         (updates as Record<string, unknown>)[field] = input[field]
       }
+    }
+    // Map portal Portuguese status values to Supabase enum values
+    if (typeof (updates as Record<string, unknown>).status === 'string') {
+      const statusMap: Record<string, string> = { cliente: 'client' }
+      const s = (updates as Record<string, unknown>).status as string
+      if (statusMap[s]) (updates as Record<string, unknown>).status = statusMap[s]
     }
 
     // Try Supabase — prefer UUID id, fall back to email lookup
