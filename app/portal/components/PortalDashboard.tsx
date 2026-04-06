@@ -11,7 +11,7 @@ import Tooltip from './Tooltip'
 
 interface PortalDashboardProps {
   agentName: string
-  imoveisList: Record<string, unknown>[]
+  imoveisList?: Record<string, unknown>[]
   weeklyReport: Record<string, unknown> | null
   weeklyReportLoading: boolean
   onWeeklyReport: () => void
@@ -48,7 +48,7 @@ interface AlertItem {
 }
 
 // ─── Sparkline SVG ────────────────────────────────────────────────────────────
-function Sparkline({ data, color }: { data: number[]; color: string }) {
+function Sparkline({ data, color, id }: { data: number[]; color: string; id: string }) {
   if (data.length < 2) return null
   const w = 64, h = 28
   const max = Math.max(...data)
@@ -81,7 +81,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   // Area path (close below the line)
   const areaPath = linePath + ` L ${w},${h} L 0,${h} Z`
 
-  const gradId = `sg_${color.replace('#', '')}`
+  const gradId = `sg_${id}_${color.replace('#', '')}`
 
   return (
     <svg width={w} height={h} style={{ overflow: 'visible', display: 'block' }}>
@@ -303,13 +303,13 @@ export default function PortalDashboard({
   }, [])
 
   // ── Supabase real data loader ─────────────────────────────────────────────
-  const loadDashboardData = useCallback(async () => {
+  const loadDashboardData = useCallback(async (signal?: AbortSignal) => {
     try {
       const [kpiRes, activityRes, healthRes, dealsRes] = await Promise.allSettled([
-        fetch('/api/automation/daily-brief'),
-        fetch('/api/crm?limit=5'),
-        fetch('/api/health'),
-        fetch('/api/deals'),
+        fetch('/api/automation/daily-brief', { signal }),
+        fetch('/api/crm?limit=5', { signal }),
+        fetch('/api/health', { signal }),
+        fetch('/api/deals', { signal }),
       ])
 
       if (kpiRes.status === 'fulfilled' && kpiRes.value.ok) {
@@ -374,7 +374,8 @@ export default function PortalDashboard({
       } else {
         console.warn('[Dashboard] /api/deals failed:', dealsRes.status === 'rejected' ? dealsRes.reason : dealsRes.value.status)
       }
-    } catch {
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return
       // silently fall back to mock data
     } finally {
       setIsLoadingKPIs(false)
@@ -382,54 +383,61 @@ export default function PortalDashboard({
   }, [])
 
   useEffect(() => {
-    loadDashboardData()
-    const interval = setInterval(loadDashboardData, 5 * 60 * 1000)
-    return () => clearInterval(interval)
+    const controller = new AbortController()
+    loadDashboardData(controller.signal)
+    const interval = setInterval(() => loadDashboardData(controller.signal), 5 * 60 * 1000)
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+    }
   }, [loadDashboardData])
 
   // ── Derived metrics ──────────────────────────────────────────────────────────
-  const today = new Date().toISOString().split('T')[0]
+  const today = (() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })()
 
-  const pipelineTotal = deals.reduce((s, d) => {
-    const v = parseValorLocal(d.valor)
-    return s + v
-  }, 0)
+  const pipelineTotal = useMemo(() => deals.reduce((s, d) => s + parseValorLocal(d.valor), 0), [deals])
 
   const { closedDeals, cpcvDeals } = useMemo(() => ({
     closedDeals: deals.filter(d => d.fase === 'Escritura Concluída'),
     cpcvDeals: deals.filter(d => d.fase === 'CPCV Assinado'),
   }), [deals])
 
-  const followUpsHoje = crmContacts.filter(
+  const followUpsHoje = useMemo(() => crmContacts.filter(
     c => c.nextFollowUp && c.nextFollowUp <= today
-  ).length
+  ).length, [crmContacts, today])
 
-  const leadsNovos = crmContacts.filter(c => {
+  const leadsNovos = useMemo(() => crmContacts.filter(c => {
     if (c.status !== 'lead') return false
     const created = c.createdAt ?? ''
+    if (!created) return false
     const diffDays = (Date.now() - new Date(created).getTime()) / 86400000
     return diffDays <= 3 && !c.lastContact
-  }).length
+  }).length, [crmContacts])
 
-  const dealsUrgentes = deals.filter(d => {
+  const dealsUrgentes = useMemo(() => deals.filter(d => {
     if (d.fase === 'Escritura Concluída') return false
     const ref = d.cpcvDate || d.escrituraDate || ''
     if (!ref) return false
-    const diffDays = (Date.now() - new Date(ref).getTime()) / 86400000
-    return diffDays > 7
-  }).length
+    const diff = (Date.now() - new Date(ref).getTime()) / 86400000
+    return diff > 7
+  }).length, [deals])
 
-  const leadsAtivos = crmContacts.filter(
-    c => c.status === 'lead' || c.status === 'prospect'
-  ).length
-  const vipContacts = crmContacts.filter(c => c.status === 'vip').length
+  const { leadsAtivos, vipContacts } = useMemo(() => ({
+    leadsAtivos: crmContacts.filter(c => c.status === 'lead' || c.status === 'prospect').length,
+    vipContacts: crmContacts.filter(c => c.status === 'vip').length,
+  }), [crmContacts])
 
+  const effectiveContactCount = liveKPIs.source === 'live' && liveKPIs.contactCount > 0
+    ? liveKPIs.contactCount
+    : crmContacts.length
   const convRate =
-    crmContacts.length > 0
-      ? ((closedDeals.length / crmContacts.length) * 100).toFixed(1)
+    effectiveContactCount > 0
+      ? ((closedDeals.length / effectiveContactCount) * 100).toFixed(1)
       : '0.0'
 
-  const gciPrevisto = Math.round((pipelineTotal * 0.05) / 1000)
 
   // ── Live KPI helpers: use real Supabase data when available ─────────────────
   const livePipeline = liveKPIs.source === 'live' ? liveKPIs.pipeline : pipelineTotal
@@ -439,26 +447,25 @@ export default function PortalDashboard({
   const liveTotalContacts = liveKPIs.source === 'live' && liveKPIs.contactCount > 0 ? liveKPIs.contactCount : crmContacts.length
 
   // ── Stalled deals revenue at risk ────────────────────────────────────────────
-  const stalledDeals = deals.filter(d => {
+  const stalledDeals = useMemo(() => deals.filter(d => {
     if (d.fase === 'Escritura Concluída') return false
     const ref = d.cpcvDate || d.escrituraDate || ''
     if (!ref) return false
     const diffDays = (Date.now() - new Date(ref).getTime()) / 86400000
     return diffDays > 5 && diffDays <= 14
-  })
-  const stalledGCI = stalledDeals.reduce((s, d) => {
-    const v = parseValorLocal(d.valor)
-    return s + v * 0.05
-  }, 0)
+  }), [deals])
+  const stalledGCI = useMemo(() => stalledDeals.reduce((s, d) => {
+    return s + parseValorLocal(d.valor) * 0.05
+  }, 0), [stalledDeals])
 
   // ── Silent contacts (>18 days no touch, tier A/VIP) ───────────────────────
-  const silentVIPs = crmContacts.filter(c => {
+  const silentVIPs = useMemo(() => crmContacts.filter(c => {
     if (c.status !== 'vip') return false
     const last = c.lastContact || c.createdAt || ''
     if (!last) return true
     const diffDays = (Date.now() - new Date(last).getTime()) / 86400000
     return diffDays >= 18
-  })
+  }), [crmContacts])
 
   // ── Categorised alerts ────────────────────────────────────────────────────
   const allAlerts: AlertItem[] = [
@@ -572,7 +579,7 @@ export default function PortalDashboard({
   }
 
   // ── KPI Cards (8 total with enhanced data) ────────────────────────────────────
-  const kpiCards: KPICardData[] = [
+  const kpiCards: KPICardData[] = useMemo(() => [
     {
       title: 'GCI Previsto',
       value: `€${liveGCI}K`,
@@ -673,7 +680,7 @@ export default function PortalDashboard({
       delta: 17.6,
       deltaPositive: true,
     },
-  ]
+  ], [liveGCI, livePipeline, liveDealCount, liveKPIs.source, leadsAtivos, vipContacts, liveTotalContacts, followUpsHoje, cpcvDeals, liveClosingNow, closedDeals, convRate, pipelineTotal, stageBreakdown])
 
   // ── Styles ───────────────────────────────────────────────────────────────────
   const cardBg = darkMode ? '#0f1e16' : '#ffffff'
@@ -709,6 +716,7 @@ export default function PortalDashboard({
         .alert-item button:hover { opacity: 0.75; }
         .sofia-card:hover { background: ${darkMode ? 'rgba(28,74,53,.14)' : 'rgba(28,74,53,.04)'} !important; }
         .pulse-dot { animation: pulseGreen 2s ease-in-out infinite; }
+        button:focus-visible { outline: 2px solid #c9a96e; outline-offset: 2px; }
         @media (max-width: 768px) {
           .kpi-grid { grid-template-columns: repeat(2,1fr) !important; }
           .qa-grid { grid-template-columns: repeat(2,1fr) !important; }
@@ -806,7 +814,7 @@ export default function PortalDashboard({
                   textTransform: 'uppercase',
                 }}
               >
-                {isLoadingKPIs ? 'SYNC...' : supabaseConnected ? 'LIVE' : 'DEMO'}
+                {isLoadingKPIs ? 'SYNC' : supabaseConnected ? 'LIVE' : 'DEMO'}
               </span>
             </div>
           </div>
@@ -816,6 +824,7 @@ export default function PortalDashboard({
           style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}
         >
           <button
+            type="button"
             style={{
               padding: '6px 14px',
               background: weeklyReport
@@ -829,6 +838,7 @@ export default function PortalDashboard({
               cursor: 'pointer',
               transition: 'all .15s',
               borderRadius: '4px',
+              opacity: weeklyReportLoading ? 0.7 : 1,
             }}
             disabled={weeklyReportLoading}
             onClick={weeklyReport ? onCloseWeeklyReport : onWeeklyReport}
@@ -951,6 +961,7 @@ export default function PortalDashboard({
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
+                type="button"
                 style={{
                   padding: '5px 12px',
                   background: 'rgba(244,240,230,.06)',
@@ -974,6 +985,7 @@ export default function PortalDashboard({
                 ⬇ PDF
               </button>
               <button
+                type="button"
                 style={{
                   padding: '5px 12px',
                   background: 'rgba(244,240,230,.06)',
@@ -1001,6 +1013,7 @@ export default function PortalDashboard({
               padding: '12px 14px',
               background: 'rgba(255,255,255,.04)',
               borderLeft: '3px solid rgba(201,169,110,.4)',
+              borderRadius: '4px',
             }}
           >
             {String(weeklyReport.executiveSummary)}
@@ -1017,7 +1030,7 @@ export default function PortalDashboard({
             marginBottom: '24px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '6px',
+            gap: '8px',
           }}
         >
           <div
@@ -1027,7 +1040,7 @@ export default function PortalDashboard({
               letterSpacing: '.14em',
               textTransform: 'uppercase',
               color: mutedText,
-              marginBottom: '6px',
+              marginBottom: '8px',
             }}
           >
             ⚠ Alertas activos — {visibleAlerts.length} item{visibleAlerts.length > 1 ? 's' : ''}
@@ -1106,6 +1119,7 @@ export default function PortalDashboard({
                   </div>
                 </div>
                 <button
+                  type="button"
                   style={{
                     padding: '4px 12px',
                     background: 'transparent',
@@ -1124,6 +1138,7 @@ export default function PortalDashboard({
                   {a.cta}
                 </button>
                 <button
+                  type="button"
                   style={{
                     width: '22px',
                     height: '22px',
@@ -1134,11 +1149,12 @@ export default function PortalDashboard({
                     border: `1px solid ${borderCol}`,
                     color: mutedText,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.5rem',
+                    fontSize: '.52rem',
                     cursor: 'pointer',
                     flexShrink: 0,
                     lineHeight: 1,
                     borderRadius: '4px',
+                    transition: 'opacity .15s ease',
                   }}
                   onClick={() => setDismissedAlerts(prev => new Set([...prev, a.id]))}
                   title="Dispensar"
@@ -1192,11 +1208,12 @@ export default function PortalDashboard({
                   top: 0,
                   right: 0,
                   background: kpi.color,
-                  color: '#fff',
+                  color: '#ffffff',
                   fontFamily: "'DM Mono',monospace",
                   fontSize: '.52rem',
                   letterSpacing: '.08em',
                   padding: '2px 7px',
+                  borderRadius: '0 12px 0 6px',
                   textTransform: 'uppercase',
                 }}
               >
@@ -1234,12 +1251,13 @@ export default function PortalDashboard({
                     fontFamily: "'DM Mono',monospace",
                     fontSize: '.60rem',
                     color: mutedText,
+                    lineHeight: 1.4,
                     marginBottom: '8px',
                   }}
                 >
                   {kpi.sub}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
                   <span
                     style={{
                       display: 'inline-block',
@@ -1274,6 +1292,7 @@ export default function PortalDashboard({
                 </div>
                 {!!kpi.action && (
                   <button
+                    type="button"
                     style={{
                       marginTop: '8px',
                       padding: '3px 10px',
@@ -1287,6 +1306,7 @@ export default function PortalDashboard({
                       cursor: 'pointer',
                       letterSpacing: '.04em',
                       borderRadius: '4px',
+                      transition: 'all .15s',
                     }}
                     onClick={kpi.action}
                   >
@@ -1295,7 +1315,7 @@ export default function PortalDashboard({
                 )}
               </div>
               <div style={{ flexShrink: 0, marginLeft: '8px' }}>
-                <Sparkline data={kpi.spark} color={kpi.color} />
+                <Sparkline data={kpi.spark} color={kpi.color} id={kpi.title.replace(/\s/g, '')} />
               </div>
             </div>
           </div>
@@ -1320,7 +1340,7 @@ export default function PortalDashboard({
           <div
             style={{
               display: 'flex',
-              alignItems: 'baseline',
+              alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: '18px',
             }}
@@ -1336,6 +1356,7 @@ export default function PortalDashboard({
               Pipeline por Fase
             </div>
             <button
+              type="button"
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -1469,13 +1490,13 @@ export default function PortalDashboard({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4a9c7a' }} />
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: mutedText }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: mutedText, fontWeight: 500 }}>
                 Dentro do alvo de velocidade
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }} />
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: mutedText }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: mutedText, fontWeight: 500 }}>
                 Acima do alvo — acção requerida
               </span>
             </div>
@@ -1547,6 +1568,7 @@ export default function PortalDashboard({
             </div>
           </div>
           <button
+            type="button"
             style={{
               padding: '5px 14px',
               background: 'transparent',
@@ -1692,7 +1714,7 @@ export default function PortalDashboard({
                   fontSize: '.54rem',
                   letterSpacing: '.1em',
                   textTransform: 'uppercase',
-                  color: '#1c4a35',
+                  color: darkMode ? '#6fcf97' : '#1c4a35',
                 }}
               >
                 Acção Prioritária
@@ -1711,6 +1733,7 @@ export default function PortalDashboard({
             </div>
             {topDeals.length > 0 && (
               <button
+                type="button"
                 style={{
                   marginTop: '12px',
                   padding: '4px 12px',
@@ -1735,6 +1758,7 @@ export default function PortalDashboard({
             className="sofia-card"
             style={{
               padding: '18px 20px',
+              borderLeft: stalledDeals.length > 0 ? '3px solid rgba(220,38,38,.4)' : 'none',
               transition: 'background .15s',
             }}
           >
@@ -1785,6 +1809,7 @@ export default function PortalDashboard({
                   {sofiaInsights.risk}
                 </div>
                 <button
+                  type="button"
                   style={{
                     marginTop: '10px',
                     padding: '4px 12px',
@@ -1843,7 +1868,7 @@ export default function PortalDashboard({
           <div
             style={{
               display: 'flex',
-              alignItems: 'baseline',
+              alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: '16px',
             }}
@@ -1859,6 +1884,7 @@ export default function PortalDashboard({
               Actividade Recente CRM
             </div>
             <button
+              type="button"
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -1885,7 +1911,7 @@ export default function PortalDashboard({
                   textAlign: 'center',
                 }}
               >
-                Sem contactos no CRM
+                📋 Sem contactos no CRM
               </div>
             )}
             {recentContacts.map(c => {
@@ -1938,7 +1964,7 @@ export default function PortalDashboard({
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontFamily: "'DM Mono',monospace",
-                      fontSize: '.52rem',
+                      fontSize: '.62rem',
                       color: sColor,
                       flexShrink: 0,
                       letterSpacing: '.04em',
@@ -1978,6 +2004,7 @@ export default function PortalDashboard({
                           letterSpacing: '.08em',
                           textTransform: 'uppercase',
                           flexShrink: 0,
+                          borderRadius: '3px',
                         }}
                       >
                         {c.status}
@@ -2012,7 +2039,7 @@ export default function PortalDashboard({
           <div
             style={{
               display: 'flex',
-              alignItems: 'baseline',
+              alignItems: 'center',
               justifyContent: 'space-between',
               marginBottom: '16px',
             }}
@@ -2028,6 +2055,7 @@ export default function PortalDashboard({
               Deals em Destaque
             </div>
             <button
+              type="button"
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -2054,7 +2082,7 @@ export default function PortalDashboard({
                   textAlign: 'center',
                 }}
               >
-                Sem deals activos
+                🏠 Sem deals activos
               </div>
             )}
             {topDeals.map(d => {
@@ -2212,7 +2240,7 @@ export default function PortalDashboard({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3,1fr)',
-            gap: '12px',
+            gap: '14px',
           }}
         >
           {QUICK_ACTIONS.map(a => {
@@ -2222,6 +2250,8 @@ export default function PortalDashboard({
               <div
                 data-stagger=""
                 className="qa-card"
+                role="button"
+                tabIndex={0}
                 style={{
                   background: cardBg,
                   border: `1px solid ${needsAction ? 'rgba(220,38,38,.25)' : borderCol}`,
@@ -2235,6 +2265,7 @@ export default function PortalDashboard({
                   borderRadius: '12px',
                 }}
                 onClick={() => onSetSection(a.sec)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSetSection(a.sec) } }}
               >
                 {/* Priority indicator */}
                 {!!needsAction && (
@@ -2254,7 +2285,7 @@ export default function PortalDashboard({
                   style={{
                     width: '38px',
                     height: '38px',
-                    background: `${a.color}14`,
+                    background: darkMode ? `${a.color}28` : `${a.color}14`,
                     borderRadius: '6px',
                     display: 'flex',
                     alignItems: 'center',
@@ -2290,8 +2321,8 @@ export default function PortalDashboard({
                       <span
                         style={{
                           padding: '1px 6px',
-                          background: a.badgeRed ? 'rgba(220,38,38,.1)' : 'rgba(28,74,53,.08)',
-                          color: a.badgeRed ? '#dc2626' : '#1c4a35',
+                          background: a.badgeRed ? 'rgba(220,38,38,.1)' : darkMode ? 'rgba(28,74,53,.35)' : 'rgba(28,74,53,.08)',
+                          color: a.badgeRed ? '#dc2626' : darkMode ? '#6fcf97' : '#1c4a35',
                           fontFamily: "'DM Mono',monospace",
                           fontSize: '.54rem',
                           letterSpacing: '.06em',
@@ -2329,6 +2360,7 @@ export default function PortalDashboard({
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
+                      lineHeight: 1.4,
                     }}
                   >
                     {a.sub}
@@ -2409,6 +2441,7 @@ export default function PortalDashboard({
           { label: 'Radar', sec: 'radar' as SectionId, svg: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
         ] as { label: string; sec: SectionId; svg: string }[]).map(tab => (
           <button
+            type="button"
             key={tab.sec}
             style={{
               flex: 1,
