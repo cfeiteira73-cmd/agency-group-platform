@@ -153,7 +153,7 @@ function HomeMortgage() {
         )}
         {loading&&(
           <div style={{padding:'64px 24px',textAlign:'center',background:'rgba(14,14,13,.02)',border:'1px solid rgba(14,14,13,.06)'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',color:'#1c4a35',letterSpacing:'.2em'}}>✦ A simular...</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#1c4a35',letterSpacing:'.2em'}}>✦ A simular...</div>
           </div>
         )}
         {result&&(
@@ -1063,7 +1063,7 @@ export default function Home() {
           {/* AI Summary */}
           {searchMode==='ai' && aiSummary && (
             <div style={{background:'rgba(28,74,53,.06)',border:'1px solid rgba(28,74,53,.18)',borderLeft:'3px solid #1c4a35',padding:'10px 16px',marginBottom:'16px',fontFamily:"'Jost',sans-serif",fontSize:'13px',color:'rgba(14,14,13,.7)',lineHeight:1.6}}>
-              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.1em',textTransform:'uppercase',color:'#1c4a35',fontWeight:600,marginRight:'8px'}}>✦ IA</span>{aiSummary}
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'#1c4a35',fontWeight:600,marginRight:'8px'}}>✦ IA</span>{aiSummary}
             </div>
           )}
           {searchMode==='ai' && aiLoading && (

@@ -48,9 +48,11 @@ const BANKS_PT = ['Banco BPI', 'Millennium BCP', 'Novo Banco', 'Caixa Geral Dep�
 // ─── Amortization Calculator ─────────────────────────────────────────────────
 
 function calcAmortization(principal: number, annualRate: number, years: number): AmortPoint[] {
+  if (!principal || principal <= 0 || !years || years <= 0) return []
   const monthlyRate = annualRate / 100 / 12
   const nPayments = years * 12
-  const monthlyPayment = monthlyRate === 0 ? principal / nPayments
+  const monthlyPayment = monthlyRate === 0
+    ? (nPayments > 0 ? principal / nPayments : 0)
     : principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -nPayments))
 
   const points: AmortPoint[] = []
