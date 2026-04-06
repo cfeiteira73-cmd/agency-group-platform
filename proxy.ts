@@ -106,6 +106,7 @@ export default auth(async (req) => {
     '/api/sofia', '/api/investor', '/api/collections', '/api/learn',
     '/api/admin', '/api/push/send', '/api/market',
     '/api/notion',
+    '/api/automation',
   ]
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
@@ -126,7 +127,7 @@ export default auth(async (req) => {
   const key = `rl:${pathname}|${ip}`
 
   const upstash    = await rateLimitUpstash(key, max, Math.floor(win / 1000))
-  const useUpstash = process.env.UPSTASH_REDIS_REST_URL && upstash.remaining <= max
+  const useUpstash = !!process.env.UPSTASH_REDIS_REST_URL && upstash.reset > 0
 
   const { limited, remaining, reset } = useUpstash
     ? upstash

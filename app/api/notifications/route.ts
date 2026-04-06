@@ -38,15 +38,12 @@ interface NotificationsResponse {
 }
 
 // ---------------------------------------------------------------------------
-// Rate-limit headers
+// Response headers
 // ---------------------------------------------------------------------------
 
-function rateLimitHeaders(): HeadersInit {
+function responseHeaders(): HeadersInit {
   return {
-    'X-RateLimit-Limit':     '120',
-    'X-RateLimit-Remaining': '119',
-    'X-RateLimit-Reset':     String(Math.floor(Date.now() / 1000) + 60),
-    'Cache-Control':         'no-store',
+    'Cache-Control': 'no-store',
   }
 }
 
@@ -241,7 +238,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           source:        'supabase',
         }
 
-        return NextResponse.json(response, { headers: rateLimitHeaders() })
+        return NextResponse.json(response, { headers: responseHeaders() })
       }
     } catch {
       // Supabase unavailable
@@ -258,12 +255,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       source:        'mock',
     }
 
-    return NextResponse.json(response, { headers: rateLimitHeaders() })
+    return NextResponse.json(response, { headers: responseHeaders() })
   } catch (error) {
     console.error('[notifications GET]', error)
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500, headers: rateLimitHeaders() }
+      { status: 500, headers: responseHeaders() }
     )
   }
 }
@@ -280,7 +277,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!body || typeof body !== 'object') {
       return NextResponse.json(
         { error: 'Request body must be JSON object' },
-        { status: 400, headers: rateLimitHeaders() }
+        { status: 400, headers: responseHeaders() }
       )
     }
 
@@ -299,7 +296,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     } else {
       return NextResponse.json(
         { error: 'Provide ids: string[], id: string, or all: true' },
-        { status: 400, headers: rateLimitHeaders() }
+        { status: 400, headers: responseHeaders() }
       )
     }
 
@@ -320,7 +317,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (!error) {
         return NextResponse.json(
           { success: true, marked_read: markAll ? 'all' : ids.length, source: 'supabase' },
-          { headers: rateLimitHeaders() }
+          { headers: responseHeaders() }
         )
       }
       console.warn('[notifications POST] Supabase error:', error.message)
@@ -336,13 +333,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         source:      'mock',
         warning:     'Supabase unavailable — read status not persisted',
       },
-      { headers: rateLimitHeaders() }
+      { headers: responseHeaders() }
     )
   } catch (error) {
     console.error('[notifications POST]', error)
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500, headers: rateLimitHeaders() }
+      { status: 500, headers: responseHeaders() }
     )
   }
 }

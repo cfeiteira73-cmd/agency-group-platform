@@ -95,7 +95,9 @@ export async function POST(req: NextRequest) {
             const senderName = value.contacts?.[0]?.profile?.name ?? 'Unknown'
             const text = message.text?.body ?? ''
 
-            console.log(`[WhatsApp] Incoming from ${senderName} (${from}): ${text}${!sofiaActive ? ' [Sofia inactiva — só CRM]' : ''}`)
+            // GDPR compliant: log only truncated identifier, never full phone number
+            const phoneHash = from ? `***${from.slice(-4)}` : 'unknown'
+            console.log(`[WhatsApp] Incoming from ${senderName} (${phoneHash})${!sofiaActive ? ' [Sofia inactiva — só CRM]' : ''}`)
 
             // Auto-lead creation from inbound WhatsApp — sempre activo (independente de sofiaActive)
             // Extracts name + phone and upserts into CRM contacts
@@ -215,7 +217,9 @@ Nome do contacto: ${name}.`
     const result = await sendWhatsApp({ to, type: 'text', text: reply })
 
     if (result.success) {
-      console.log(`[WhatsApp/Sofia] Auto-reply sent to ${to} (intent: ${intent}) — msgId: ${result.messageId}`)
+      // GDPR compliant: log only truncated identifier
+      const toHash = to ? `***${to.slice(-4)}` : 'unknown'
+      console.log(`[WhatsApp/Sofia] Auto-reply sent to ${toHash} (intent: ${intent}) — msgId: ${result.messageId}`)
     } else {
       console.error('[WhatsApp/Sofia] Send failed:', result.error)
     }

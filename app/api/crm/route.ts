@@ -33,15 +33,12 @@ interface PaginatedResponse<T> {
 }
 
 // ---------------------------------------------------------------------------
-// Rate-limit headers helper
+// Response headers helper
 // ---------------------------------------------------------------------------
 
 function rateLimitHeaders(): HeadersInit {
   return {
-    'X-RateLimit-Limit':     '100',
-    'X-RateLimit-Remaining': '99',
-    'X-RateLimit-Reset':     String(Math.floor(Date.now() / 1000) + 60),
-    'Cache-Control':         'no-store',
+    'Cache-Control': 'no-store',
   }
 }
 

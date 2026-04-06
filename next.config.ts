@@ -54,10 +54,8 @@ const config: NextConfig = {
   experimental: {
     optimizePackageImports: [
       '@anthropic-ai/sdk',
-      'framer-motion',
       'gsap',
       'zustand',
-      'date-fns',
     ],
   },
 

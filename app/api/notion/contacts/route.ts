@@ -46,86 +46,109 @@ export async function GET(req: NextRequest) {
   // Accept magic-link token OR no token (graceful for portal direct use)
   // Strict auth only needed for write operations
   if (!TOKEN || !DB_ID) return NextResponse.json({ contacts: [] })
-  if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-  const zona = req.nextUrl.searchParams.get('zona') || ''
+  try {
+    const zona = req.nextUrl.searchParams.get('zona') || ''
 
-  const body: Record<string, unknown> = {
-    page_size: 100,
-    sorts: [{ timestamp: 'created_time', direction: 'descending' }],
-  }
-  if (zona) {
-    body.filter = { property: 'Zona Interesse', select: { equals: zona } }
-  }
-
-  const res = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
-    method: 'POST',
-    headers: headers(),
-    body: JSON.stringify(body),
-  })
-  const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: 'Failed to fetch contacts' }, { status: 500 })
-
-  const contacts = (data.results || []).map((page: Record<string, unknown>) => {
-    const props = page.properties as Record<string, Record<string, unknown>>
-    return {
-      notionId: page.id,
-      id: page.id,
-      name: (props['Nome']?.title as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
-      email: (props['Email']?.email as string) || '',
-      phone: (props['Telefone']?.phone_number as string) || '',
-      nationality: (props['Nacionalidade']?.select as { name: string } | null)?.name || '',
-      status: mapStatus((props['Status']?.select as { name: string } | null)?.name || ''),
-      zona: (props['Zona Interesse']?.select as { name: string } | null)?.name || '',
-      budget: (props['Faixa Orçamento']?.select as { name: string } | null)?.name || '',
-      tipo: (props['Tipo']?.select as { name: string } | null)?.name || '',
-      origin: (props['Origem']?.select as { name: string } | null)?.name || '',
-      notes: (props['Notas']?.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
-      lastContact: (props['Último Contacto']?.date as { start: string } | null)?.start || '',
-      nextFollowUp: (props['Próximo Follow-up']?.date as { start: string } | null)?.start || '',
-      leadScore: (props['Lead Score']?.select as { name: string } | null)?.name || '',
-      lingua: (props['Língua']?.select as { name: string } | null)?.name || '',
-      createdAt: page.created_time as string,
+    const body: Record<string, unknown> = {
+      page_size: 100,
+      sorts: [{ timestamp: 'created_time', direction: 'descending' }],
     }
-  })
+    if (zona) {
+      body.filter = { property: 'Zona Interesse', select: { equals: zona } }
+    }
 
-  return NextResponse.json({ contacts })
+    const res = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify(body),
+    })
+    const data = await res.json()
+    if (!res.ok) return NextResponse.json({ error: 'Failed to fetch contacts' }, { status: 500 })
+
+    const contacts = (data.results || []).map((page: Record<string, unknown>) => {
+      const props = page.properties as Record<string, Record<string, unknown>>
+      return {
+        notionId: page.id,
+        id: page.id,
+        name: (props['Nome']?.title as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
+        email: (props['Email']?.email as string) || '',
+        phone: (props['Telefone']?.phone_number as string) || '',
+        nationality: (props['Nacionalidade']?.select as { name: string } | null)?.name || '',
+        status: mapStatus((props['Status']?.select as { name: string } | null)?.name || ''),
+        zona: (props['Zona Interesse']?.select as { name: string } | null)?.name || '',
+        budget: (props['Faixa Orçamento']?.select as { name: string } | null)?.name || '',
+        tipo: (props['Tipo']?.select as { name: string } | null)?.name || '',
+        origin: (props['Origem']?.select as { name: string } | null)?.name || '',
+        notes: (props['Notas']?.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
+        lastContact: (props['Último Contacto']?.date as { start: string } | null)?.start || '',
+        nextFollowUp: (props['Próximo Follow-up']?.date as { start: string } | null)?.start || '',
+        leadScore: (props['Lead Score']?.select as { name: string } | null)?.name || '',
+        lingua: (props['Língua']?.select as { name: string } | null)?.name || '',
+        createdAt: page.created_time as string,
+      }
+    })
+
+    return NextResponse.json({ contacts })
+  } catch (error) {
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    return NextResponse.json(
+      { error: 'Serviço temporariamente indisponível. Tente novamente.' },
+      { status: 503 }
+    )
+  }
 }
 
 // POST — create contact
 export async function POST(req: NextRequest) {
   if (!validateMagicToken(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-  const body = await req.json()
+  try {
+    const body = await req.json()
 
-  const res = await fetch('https://api.notion.com/v1/pages', {
-    method: 'POST',
-    headers: headers(),
-    body: JSON.stringify({
-      parent: { database_id: DB_ID },
-      properties: buildProps(body),
-    }),
-  })
-  const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: 'Failed to create contact' }, { status: 500 })
-  return NextResponse.json({ success: true, notionId: data.id })
+    const res = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({
+        parent: { database_id: DB_ID },
+        properties: buildProps(body),
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) return NextResponse.json({ error: 'Failed to create contact' }, { status: 500 })
+    return NextResponse.json({ success: true, notionId: data.id })
+  } catch (error) {
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    return NextResponse.json(
+      { error: 'Serviço temporariamente indisponível. Tente novamente.' },
+      { status: 503 }
+    )
+  }
 }
 
 // PATCH — update contact by notionId
 export async function PATCH(req: NextRequest) {
   if (!validateMagicToken(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-  const body = await req.json()
-  const { notionId, ...contact } = body
-  if (!notionId) return NextResponse.json({ error: 'notionId required' }, { status: 400 })
+  try {
+    const body = await req.json()
+    const { notionId, ...contact } = body
+    if (!notionId) return NextResponse.json({ error: 'notionId required' }, { status: 400 })
 
-  const res = await fetch(`https://api.notion.com/v1/pages/${notionId}`, {
-    method: 'PATCH',
-    headers: headers(),
-    body: JSON.stringify({ properties: buildProps(contact) }),
-  })
-  const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: 'Failed to update contact' }, { status: 500 })
-  return NextResponse.json({ success: true })
+    const res = await fetch(`https://api.notion.com/v1/pages/${notionId}`, {
+      method: 'PATCH',
+      headers: headers(),
+      body: JSON.stringify({ properties: buildProps(contact) }),
+    })
+    const data = await res.json()
+    if (!res.ok) return NextResponse.json({ error: 'Failed to update contact' }, { status: 500 })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    return NextResponse.json(
+      { error: 'Serviço temporariamente indisponível. Tente novamente.' },
+      { status: 503 }
+    )
+  }
 }
 
 function mapStatus(s: string): string {

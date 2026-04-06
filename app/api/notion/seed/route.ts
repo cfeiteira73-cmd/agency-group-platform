@@ -192,6 +192,7 @@ function buildContactProps(c: SeedContact) {
 
 export async function POST(_req: NextRequest) {
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
+  try {
 
   const results = { seeded: true, contacts: 0, properties: 0, errors: [] as string[] }
 
@@ -242,4 +243,11 @@ export async function POST(_req: NextRequest) {
   }
 
   return NextResponse.json(results)
+  } catch (error) {
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    return NextResponse.json(
+      { error: 'Serviço temporariamente indisponível. Tente novamente.' },
+      { status: 503 }
+    )
+  }
 }

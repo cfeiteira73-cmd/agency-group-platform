@@ -17,10 +17,7 @@ function checkRateLimit(ip: string): boolean {
   return true
 }
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY ?? '',
-  dangerouslyAllowBrowser: true, // required for Next.js Edge Runtime
-})
+const client = new Anthropic()
 
 const SYSTEM_PROMPT = `You are Sofia, the digital specialist consultant of Agency Group — Portugal's leading luxury real estate agency (AMI 22506).
 

@@ -12,83 +12,107 @@ const headers = () => ({
 // GET — list deals
 export async function GET(req: NextRequest) {
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
-  const zona = req.nextUrl.searchParams.get('zona') || ''
+  try {
+    const zona = req.nextUrl.searchParams.get('zona') || ''
 
-  const body: Record<string, unknown> = {
-    page_size: 100,
-    sorts: [{ timestamp: 'created_time', direction: 'descending' }],
-  }
-  if (zona) body.filter = { property: 'Zona', select: { equals: zona } }
-
-  const res = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
-    method: 'POST',
-    headers: headers(),
-    body: JSON.stringify(body),
-  })
-  const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
-
-  const deals = (data.results || []).map((page: Record<string, unknown>) => {
-    const props = page.properties as Record<string, Record<string, unknown>>
-    return {
-      notionId: page.id,
-      name: (props['Nome do Negócio']?.title as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
-      status: (props['Status']?.select as { name: string } | null)?.name || '',
-      zona: (props['Zona']?.select as { name: string } | null)?.name || '',
-      perfilComprador: (props['Perfil Comprador']?.select as { name: string } | null)?.name || '',
-      precoEstimado: (props['Preço Estimado']?.number as number) || 0,
-      comissaoEstimada: (props['Comissão Estimada']?.number as number) || 0,
-      probabilidade: (props['Probabilidade Fecho %']?.number as number) || 0,
-      proximaAccao: (props['Próxima Acção']?.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
-      notasClaude: (props['Notas Claude']?.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
-      bloqueio: (props['Bloqueio']?.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
-      dataPrevistaFecho: (props['Data Prevista Fecho']?.date as { start: string } | null)?.start || '',
-      tipologia: (props['Tipologia']?.select as { name: string } | null)?.name || '',
-      lingua: (props['Língua']?.select as { name: string } | null)?.name || '',
-      emailComprador: (props['Email Comprador']?.email as string) || '',
-      telefone: (props['Telefone']?.phone_number as string) || '',
-      contexto: (props['Contexto']?.select as { name: string } | null)?.name || '',
-      origemLead: (props['Origem Lead']?.select as { name: string } | null)?.name || '',
-      createdAt: page.created_time as string,
+    const body: Record<string, unknown> = {
+      page_size: 100,
+      sorts: [{ timestamp: 'created_time', direction: 'descending' }],
     }
-  })
+    if (zona) body.filter = { property: 'Zona', select: { equals: zona } }
 
-  return NextResponse.json({ deals })
+    const res = await fetch(`https://api.notion.com/v1/databases/${DB_ID}/query`, {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify(body),
+    })
+    const data = await res.json()
+    if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
+
+    const deals = (data.results || []).map((page: Record<string, unknown>) => {
+      const props = page.properties as Record<string, Record<string, unknown>>
+      return {
+        notionId: page.id,
+        name: (props['Nome do Negócio']?.title as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
+        status: (props['Status']?.select as { name: string } | null)?.name || '',
+        zona: (props['Zona']?.select as { name: string } | null)?.name || '',
+        perfilComprador: (props['Perfil Comprador']?.select as { name: string } | null)?.name || '',
+        precoEstimado: (props['Preço Estimado']?.number as number) || 0,
+        comissaoEstimada: (props['Comissão Estimada']?.number as number) || 0,
+        probabilidade: (props['Probabilidade Fecho %']?.number as number) || 0,
+        proximaAccao: (props['Próxima Acção']?.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
+        notasClaude: (props['Notas Claude']?.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
+        bloqueio: (props['Bloqueio']?.rich_text as Array<{ plain_text: string }>)?.[0]?.plain_text || '',
+        dataPrevistaFecho: (props['Data Prevista Fecho']?.date as { start: string } | null)?.start || '',
+        tipologia: (props['Tipologia']?.select as { name: string } | null)?.name || '',
+        lingua: (props['Língua']?.select as { name: string } | null)?.name || '',
+        emailComprador: (props['Email Comprador']?.email as string) || '',
+        telefone: (props['Telefone']?.phone_number as string) || '',
+        contexto: (props['Contexto']?.select as { name: string } | null)?.name || '',
+        origemLead: (props['Origem Lead']?.select as { name: string } | null)?.name || '',
+        createdAt: page.created_time as string,
+      }
+    })
+
+    return NextResponse.json({ deals })
+  } catch (error) {
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    return NextResponse.json(
+      { error: 'Serviço temporariamente indisponível. Tente novamente.' },
+      { status: 503 }
+    )
+  }
 }
 
 // POST — create deal
 export async function POST(req: NextRequest) {
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
-  const body = await req.json()
+  try {
+    const body = await req.json()
 
-  const res = await fetch('https://api.notion.com/v1/pages', {
-    method: 'POST',
-    headers: headers(),
-    body: JSON.stringify({
-      parent: { database_id: DB_ID },
-      properties: buildProps(body),
-    }),
-  })
-  const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
-  return NextResponse.json({ success: true, notionId: data.id })
+    const res = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: headers(),
+      body: JSON.stringify({
+        parent: { database_id: DB_ID },
+        properties: buildProps(body),
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
+    return NextResponse.json({ success: true, notionId: data.id })
+  } catch (error) {
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    return NextResponse.json(
+      { error: 'Serviço temporariamente indisponível. Tente novamente.' },
+      { status: 503 }
+    )
+  }
 }
 
 // PATCH — update deal
 export async function PATCH(req: NextRequest) {
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
-  const body = await req.json()
-  const { notionId, ...deal } = body
-  if (!notionId) return NextResponse.json({ error: 'notionId required' }, { status: 400 })
+  try {
+    const body = await req.json()
+    const { notionId, ...deal } = body
+    if (!notionId) return NextResponse.json({ error: 'notionId required' }, { status: 400 })
 
-  const res = await fetch(`https://api.notion.com/v1/pages/${notionId}`, {
-    method: 'PATCH',
-    headers: headers(),
-    body: JSON.stringify({ properties: buildProps(deal) }),
-  })
-  const data = await res.json()
-  if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
-  return NextResponse.json({ success: true })
+    const res = await fetch(`https://api.notion.com/v1/pages/${notionId}`, {
+      method: 'PATCH',
+      headers: headers(),
+      body: JSON.stringify({ properties: buildProps(deal) }),
+    })
+    const data = await res.json()
+    if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    return NextResponse.json(
+      { error: 'Serviço temporariamente indisponível. Tente novamente.' },
+      { status: 503 }
+    )
+  }
 }
 
 function buildProps(d: Record<string, unknown>) {
