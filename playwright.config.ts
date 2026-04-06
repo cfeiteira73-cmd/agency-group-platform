@@ -2,31 +2,47 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests/e2e',
-  timeout: 30_000,
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? 'github' : 'list',
-
+  timeout: 30_000,
+  reporter: [
+    ['html', { outputFolder: 'playwright-report' }],
+    ['list'],
+  ],
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    video: 'on-first-retry',
+    colorScheme: 'light',
+    locale: 'pt-PT',
+    timezoneId: 'Europe/Lisbon',
   },
-
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 14'] },
+      name: 'mobile-chrome',
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
     },
   ],
-
+  // Auto-start dev server for local runs only
   webServer: process.env.CI ? {
     command: 'npm run start',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
-  } : undefined,
+  } : {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  },
 })
