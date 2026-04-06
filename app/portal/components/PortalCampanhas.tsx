@@ -1014,15 +1014,44 @@ function TabTemplates() {
   const handleGenerate = async () => {
     if (!newTplPrompt) return
     setGenerating(true)
+
+    // Map TemplateCategory → SignalType (closest semantic equivalent)
+    const categoryToSignalType: Record<TemplateCategory, string> = {
+      captacao:     'manual',
+      nurture:      'tempo_mercado',
+      investidores: 'multiplos_imoveis',
+      'pos-venda':  'manual',
+      mercado:      'preco_reduzido',
+      urgente:      'preco_reduzido',
+    }
+
+    // Map CampaignType → MessageType (API only accepts carta | email | whatsapp)
+    const channelToMessageType: Record<CampaignType, string> = {
+      email:        'email',
+      whatsapp:     'whatsapp',
+      linkedin:     'email',
+      sms:          'whatsapp',
+      multichannel: 'email',
+    }
+
     try {
       const res = await fetch('/api/outbound/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: newTplPrompt, category: newTplCategory, channel: newTplChannel }),
+        body: JSON.stringify({
+          address:     newTplPrompt,           // use the AI instruction as context address
+          signalType:  categoryToSignalType[newTplCategory],
+          messageType: channelToMessageType[newTplChannel],
+          tone:        'profissional',
+          language:    'PT',
+        }),
       })
       if (!res.ok) throw new Error()
-      const data = await res.json() as { preview?: string }
-      setGeneratedPreview(data.preview ?? '')
+      const data = await res.json() as { message?: string; subject?: string; messageType?: string }
+      const preview = data.subject
+        ? `ASSUNTO: ${data.subject}\n\n${data.message ?? ''}`
+        : (data.message ?? '')
+      setGeneratedPreview(preview)
     } catch {
       // Mock response
       setGeneratedPreview(

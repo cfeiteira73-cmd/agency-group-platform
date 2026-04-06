@@ -31,8 +31,8 @@ export async function GET(req: NextRequest) {
       .range((page - 1) * limit, page * limit - 1)
 
     if (type)       query = query.eq('type', type)
-    if (contact_id) query = query.eq('contact_id', parseInt(contact_id))
-    if (deal_id)    query = query.eq('deal_id', parseInt(deal_id))
+    if (contact_id) query = query.eq('contact_id', contact_id)
+    if (deal_id)    query = query.eq('deal_id', deal_id)
 
     const { data, error, count } = await query
 

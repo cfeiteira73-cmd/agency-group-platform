@@ -96,12 +96,15 @@ export async function GET(): Promise<NextResponse> {
   // Determine overall status
   const allOk = Object.values(report.services).every(s => s.ok)
   const anyDown = !report.services.supabase.ok
-  report.status = allOk ? 'healthy' : anyDown ? 'degraded' : 'degraded'
+  report.status = allOk ? 'healthy' : anyDown ? 'down' : 'degraded'
 
   const httpStatus = report.status === 'healthy' ? 200 : 207
 
   return NextResponse.json({
     ...report,
+    // Flat aliases for consumers that check json.status === 'ok' or json.supabase === true
+    status: report.status === 'healthy' ? 'ok' : report.status,
+    supabase: report.services.supabase.ok,
     _latency_total: Date.now() - start,
   }, {
     status: httpStatus,

@@ -86,7 +86,7 @@ function generateDealStallAlerts(deals: DealAlert[]): AppNotification[] {
 }
 
 function generateFollowUpAlerts(contacts: FollowUpAlert[]): AppNotification[] {
-  const today = new Date('2026-04-05')
+  const today = new Date()
   return contacts
     .filter(c => {
       const followUp = new Date(c.follow_up_date)
@@ -122,11 +122,13 @@ function generateMockNotifications(): AppNotification[] {
     { id: 'AG-2026-0007', stage: 'Escritura',  property: 'T4 Belém',          contact: 'Marco Aurelio Santos', days_in_stage: 22, health: 95 },
   ]
 
+  const todayStr    = new Date().toISOString().slice(0, 10)
+  const tomorrowStr = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   const followUpContacts: FollowUpAlert[] = [
-    { contact_id: '1',  full_name: 'James Mitchell',      follow_up_date: '2026-04-05' },
-    { contact_id: '4',  full_name: 'Khalid Al-Rashid',    follow_up_date: '2026-04-05' },
-    { contact_id: '10', full_name: 'Marco Aurelio Santos', follow_up_date: '2026-04-06' },
-    { contact_id: '2',  full_name: 'Pierre Dubois',       follow_up_date: '2026-04-06' },
+    { contact_id: '1',  full_name: 'James Mitchell',       follow_up_date: todayStr    },
+    { contact_id: '4',  full_name: 'Khalid Al-Rashid',     follow_up_date: todayStr    },
+    { contact_id: '10', full_name: 'Marco Aurelio Santos',  follow_up_date: tomorrowStr },
+    { contact_id: '2',  full_name: 'Pierre Dubois',        follow_up_date: tomorrowStr },
   ]
 
   const stallAlerts    = generateDealStallAlerts(stalledDeals)

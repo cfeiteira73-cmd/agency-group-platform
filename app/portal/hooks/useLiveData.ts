@@ -24,6 +24,15 @@ export function useLiveData(): void {
     loaded.current = true
 
     async function bootstrap() {
+      // Helper: log fulfilled-but-not-ok HTTP responses without alarming the user
+      function warnEndpoint(label: string, res: PromiseSettledResult<Response>) {
+        if (res.status === 'rejected') {
+          console.warn(`[LiveData] ${label} network error (using demo data):`, res.reason)
+        } else if (!res.value.ok) {
+          console.warn(`[LiveData] ${label} HTTP ${res.value.status} (using demo data)`)
+        }
+      }
+
       try {
         // Load all data in parallel
         const [crmRes, dealsRes, propsRes, signalsRes, activitiesRes, marketRes] = await Promise.allSettled([
@@ -43,6 +52,8 @@ export function useLiveData(): void {
             setCrmContacts(data)
             console.log(`[LiveData] ✓ ${data.length} contacts loaded`)
           }
+        } else {
+          warnEndpoint('/api/crm', crmRes)
         }
 
         // --- Deals ---
@@ -58,6 +69,8 @@ export function useLiveData(): void {
             setDeals(dealsWithChecklist)
             console.log(`[LiveData] ✓ ${data.length} deals loaded`)
           }
+        } else {
+          warnEndpoint('/api/deals', dealsRes)
         }
 
         // --- Properties ---
@@ -68,6 +81,8 @@ export function useLiveData(): void {
             setProperties(data)
             console.log(`[LiveData] ✓ ${data.length} properties loaded`)
           }
+        } else {
+          warnEndpoint('/api/properties', propsRes)
         }
 
         // --- Signals ---
@@ -78,6 +93,8 @@ export function useLiveData(): void {
             setSignals(data)
             console.log(`[LiveData] ✓ ${data.length} signals loaded`)
           }
+        } else {
+          warnEndpoint('/api/signals', signalsRes)
         }
 
         // --- Activities ---
@@ -88,6 +105,8 @@ export function useLiveData(): void {
             setActivities(data)
             console.log(`[LiveData] ✓ ${data.length} activities loaded`)
           }
+        } else {
+          warnEndpoint('/api/activities', activitiesRes)
         }
 
         // --- Market data ---
@@ -103,10 +122,12 @@ export function useLiveData(): void {
             setMarketSnapshots(data as unknown[])
             console.log(`[LiveData] ✓ ${(data as unknown[]).length} market zones loaded`)
           }
+        } else {
+          warnEndpoint('/api/market-data', marketRes)
         }
 
       } catch (err) {
-        console.log('[LiveData] Bootstrap error, using demo data', err)
+        console.warn('[LiveData] Bootstrap error, using demo data', err)
       }
     }
 

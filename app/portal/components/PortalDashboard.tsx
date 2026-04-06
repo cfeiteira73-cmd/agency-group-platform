@@ -256,9 +256,13 @@ export default function PortalDashboard({
 
       if (kpiRes.status === 'fulfilled' && kpiRes.value.ok) {
         setSupabaseConnected(true)
+      } else {
+        console.warn('[Dashboard] /api/automation/daily-brief failed:', kpiRes.status === 'rejected' ? kpiRes.reason : kpiRes.value.status)
       }
       // suppress unused warning — activityRes used for future enrichment
-      void activityRes
+      if (activityRes.status === 'rejected') {
+        console.warn('[Dashboard] /api/crm?limit=5 failed:', activityRes.reason)
+      }
 
       // ── Parse /api/health for contact count ────────────────────────────────
       let contactCount = 0
@@ -268,10 +272,14 @@ export default function PortalDashboard({
           contactCount = healthData?.counts?.contacts ?? 0
           setSupabaseConnected(true)
         } catch { /* ignore */ }
+      } else {
+        console.warn('[Dashboard] /api/health failed:', healthRes.status === 'rejected' ? healthRes.reason : healthRes.value.status)
       }
 
       // ── Parse /api/deals for real pipeline KPIs ────────────────────────────
       if (dealsRes.status === 'fulfilled' && dealsRes.value.ok) {
+        // /api/deals succeeded — mark as connected even if health/brief failed
+        setSupabaseConnected(true)
         try {
           const dealsData = await dealsRes.value.json()
           const rawDeals: { valor?: string; escrituraDate?: string; cpcvDate?: string }[] =
@@ -305,6 +313,8 @@ export default function PortalDashboard({
             })
           }
         } catch { /* silently fall back */ }
+      } else {
+        console.warn('[Dashboard] /api/deals failed:', dealsRes.status === 'rejected' ? dealsRes.reason : dealsRes.value.status)
       }
     } catch {
       // silently fall back to mock data

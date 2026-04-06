@@ -144,7 +144,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       if (fase && fase !== 'all')     query = query.eq('fase', fase)
-      if (status && status !== 'all') query = query.eq('fase', status)
+      // Note: deals table has no 'status' column — status filter is mock-only
       if (minValue !== null)          query = query.gte('valor', minValue)
       if (search) {
         query = query.or(
