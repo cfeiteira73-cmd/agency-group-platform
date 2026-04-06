@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
 
+const SECRET = process.env.AUTH_SECRET
+if (!SECRET) {
+  console.error('[auth/verify] AUTH_SECRET não configurado')
+  // Não faz throw — deixa a rota tratar como 500 normalmente
+}
+
 export async function GET(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const limit = rateLimit(ip, { maxAttempts: 10, windowMs: 15 * 60 * 1000 })
@@ -13,7 +19,9 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  const SECRET = process.env.AUTH_SECRET!
+  if (!SECRET) {
+    return NextResponse.json({ error: 'Configuração inválida' }, { status: 500 })
+  }
   try {
     const token = req.nextUrl.searchParams.get('token')
     if (!token) return NextResponse.json({ error: 'Token em falta' }, { status: 400 })
