@@ -71,40 +71,40 @@ function HomeMortgage() {
               setEntrada(p.entrada); setPrazo(p.prazo); setSpread(p.spread); setUso(p.uso)
               if(p.rendimento) setRendimento(p.rendimento)
               simulate({montante:p.montante,entrada:p.entrada,prazo:p.prazo,spread:p.spread,uso:p.uso,rendimento:p.rendimento})
-            }} style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',padding:'5px 10px',background:'rgba(28,74,53,.06)',color:'#1c4a35',border:'1px solid rgba(28,74,53,.15)',cursor:'pointer'}}>
+            }} style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',padding:'5px 10px',background:'rgba(28,74,53,.06)',color:'#1c4a35',border:'1px solid rgba(28,74,53,.15)',cursor:'pointer'}}>
               {p.label}
             </button>
           ))}
         </div>
         <div style={{display:'grid',gap:'14px'}}>
           <div>
-            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Valor do Imóvel (€)</label>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Valor do Imóvel (€)</label>
             <input type="number" value={montante} onChange={e=>setMontante(e.target.value)} placeholder="ex: 500000" style={{width:'100%',padding:'10px 0',border:'none',borderBottom:'1.5px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d',boxSizing:'border-box',background:'transparent',transition:'border-color .2s'}} />
           </div>
           <div>
-            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Entrada — {entrada}% {montante&&Number(montante)>0?`(${fmtM(Number(montante)*entrada/100)})`:''}  </label>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Entrada — {entrada}% {montante&&Number(montante)>0?`(${fmtM(Number(montante)*entrada/100)})`:''}  </label>
             <input type="range" min={10} max={80} value={entrada} onChange={e=>setEntrada(Number(e.target.value))} style={{width:'100%',accentColor:'#1c4a35'}} />
           </div>
           <div>
-            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Prazo — {prazo} anos</label>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Prazo — {prazo} anos</label>
             <input type="range" min={5} max={40} value={prazo} onChange={e=>setPrazo(Number(e.target.value))} style={{width:'100%',accentColor:'#1c4a35'}} />
           </div>
           <div>
-            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Spread — {spread.toFixed(2)}%</label>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Spread — {spread.toFixed(2)}%</label>
             <input type="range" min={0.5} max={3} step={0.05} value={spread} onChange={e=>setSpread(Number(e.target.value))} style={{width:'100%',accentColor:'#1c4a35'}} />
           </div>
           <div>
-            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Finalidade</label>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Finalidade</label>
             <select value={uso} onChange={e=>setUso(e.target.value as 'habitacao_propria'|'investimento')} style={{width:'100%',padding:'10px 0',border:'none',borderBottom:'1.5px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'.88rem',outline:'none',background:'transparent',color:'#0e0e0d',appearance:'none',cursor:'pointer'}}>
               <option value="habitacao_propria">Habitação Própria Permanente</option>
               <option value="investimento">Investimento / 2ª Habitação</option>
             </select>
           </div>
           <div>
-            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'rgba(14,14,13,.4)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Rendimento Anual (€) — DSTI</label>
+            <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',textTransform:'uppercase',letterSpacing:'.1em',display:'block',marginBottom:'5px'}}>Rendimento Anual (€) — DSTI</label>
             <input type="number" value={rendimento} onChange={e=>setRendimento(e.target.value)} placeholder="ex: 80000 — opcional" style={{width:'100%',padding:'10px 0',border:'none',borderBottom:'1.5px solid rgba(14,14,13,.15)',fontFamily:"'Jost',sans-serif",fontSize:'1rem',outline:'none',color:'#0e0e0d',boxSizing:'border-box',background:'transparent',transition:'border-color .2s'}} />
           </div>
-          <button onClick={()=>simulate()} disabled={loading||!montante} style={{width:'100%',padding:'14px',background:'#1c4a35',color:'#f4f0e6',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.16em',textTransform:'uppercase',cursor:'pointer',fontWeight:400,opacity:loading?0.6:1,marginTop:'8px',transition:'background .25s'}}>
+          <button onClick={()=>simulate()} disabled={loading||!montante} style={{width:'100%',padding:'14px',background:'#1c4a35',color:'#f4f0e6',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.16em',textTransform:'uppercase',cursor:'pointer',fontWeight:400,opacity:loading?0.6:1,marginTop:'8px',transition:'background .25s'}}>
             {loading?'✦ A simular...':'Calcular →'}
           </button>
         </div>
@@ -119,7 +119,7 @@ function HomeMortgage() {
             <div style={{position:'absolute',bottom:'-30px',left:'-30px',width:'180px',height:'180px',background:'radial-gradient(circle,rgba(28,74,53,.3) 0%,transparent 70%)',pointerEvents:'none'}}/>
             {/* Top */}
             <div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.5)',marginBottom:'16px'}}>O QUE VAI DESCOBRIR</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'16px'}}>O QUE VAI DESCOBRIR</div>
               <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.7rem',color:'#f4f0e6',lineHeight:1.15,marginBottom:'8px'}}>
                 A simulação mais<br/><em style={{fontStyle:'italic',color:'#c9a96e'}}>completa de Portugal</em>
               </div>
@@ -137,7 +137,7 @@ function HomeMortgage() {
               ].map(f=>(
                 <div key={f.label} style={{padding:'14px 16px',background:'rgba(244,240,230,.04)',border:'1px solid rgba(244,240,230,.08)'}}>
                   <div style={{fontSize:'.95rem',marginBottom:'5px'}}>{f.icon}</div>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(244,240,230,.7)',letterSpacing:'.04em',marginBottom:'2px'}}>{f.label}</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.8)',letterSpacing:'.04em',marginBottom:'2px'}}>{f.label}</div>
                   <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.72rem',color:'rgba(244,240,230,.3)'}}>{f.sub}</div>
                 </div>
               ))}
@@ -161,16 +161,16 @@ function HomeMortgage() {
             {/* Main metric */}
             <div style={{padding:'22px 26px',background:'#0c1f15',marginBottom:'12px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'16px'}}>
               <div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>Prestação Mensal</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.5)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>Prestação Mensal</div>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:400,color:'var(--gold)',lineHeight:1}}>{fmtM(result.resultado.prestacao_mensal)}</div>
               </div>
               <div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAN</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.5)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAN</div>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:300,color:'var(--cr)',lineHeight:1}}>{result.resultado.tan_pct}%</div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.25)',marginTop:'2px'}}>Euribor {result.resultado.euribor_6m_pct}%</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.4)',marginTop:'2px'}}>Euribor {result.resultado.euribor_6m_pct}%</div>
               </div>
               <div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.35)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAEG</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.5)',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:'5px'}}>TAEG</div>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.6rem',fontWeight:300,color:'var(--cr)',lineHeight:1}}>{result.resultado.taeg_pct}%</div>
               </div>
             </div>
@@ -185,7 +185,7 @@ function HomeMortgage() {
                 {l:'Custo Total',v:result.resultado.custo_total_aquisicao,gold:true},
               ].map(m=>(
                 <div key={m.l} style={{padding:'10px 12px',background:'#fff',border:'1px solid rgba(14,14,13,.07)',textAlign:'center'}}>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(14,14,13,.35)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'3px'}}>{m.l}</div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.45)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:'3px'}}>{m.l}</div>
                   <div style={{fontFamily:"'Cormorant',serif",fontSize:'.95rem',fontWeight:600,color:(m as {gold?:boolean}).gold?'#c9a96e':'#0e0e0d'}}>{fmtM(m.v)}</div>
                 </div>
               ))}
@@ -194,8 +194,8 @@ function HomeMortgage() {
             {result.acessibilidade&&(
               <div style={{padding:'10px 14px',background:result.acessibilidade.dsti_ok?'rgba(28,74,53,.05)':'rgba(220,38,38,.05)',border:`1px solid ${result.acessibilidade.dsti_ok?'rgba(28,74,53,.18)':'rgba(220,38,38,.18)'}`,borderLeft:`3px solid ${result.acessibilidade.dsti_ok?'#1c4a35':'#dc2626'}`,marginBottom:'12px'}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:result.acessibilidade.dsti_ok?'#1c4a35':'#dc2626',textTransform:'uppercase',letterSpacing:'.08em'}}>DSTI {result.acessibilidade.dsti_pct}% {result.acessibilidade.dsti_ok?'✓':'⚠'}</div>
-                  {result.acessibilidade.poupanca_irs_anual>0&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'#1c4a35'}}>Dedução IRS: {fmtM(result.acessibilidade.poupanca_irs_anual)}/ano</div>}
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:result.acessibilidade.dsti_ok?'#1c4a35':'#dc2626',textTransform:'uppercase',letterSpacing:'.08em'}}>DSTI {result.acessibilidade.dsti_pct}% {result.acessibilidade.dsti_ok?'✓':'⚠'}</div>
+                  {result.acessibilidade.poupanca_irs_anual>0&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#1c4a35'}}>Dedução IRS: {fmtM(result.acessibilidade.poupanca_irs_anual)}/ano</div>}
                 </div>
                 <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.76rem',color:'rgba(14,14,13,.5)',marginTop:'3px',lineHeight:1.5}}>{result.acessibilidade.nota}</div>
               </div>
@@ -203,11 +203,11 @@ function HomeMortgage() {
             {/* Sub-tabs */}
             <div style={{display:'flex',gap:'0',marginBottom:'12px',borderBottom:'1px solid rgba(14,14,13,.1)'}}>
               {(['cenarios','amortizacao'] as const).map(t=>(
-                <button key={t} onClick={()=>setSubTab(t)} style={{padding:'8px 16px',background:'none',border:'none',borderBottom:`2px solid ${subTab===t?'#c9a96e':'transparent'}`,fontFamily:"'DM Mono',monospace",fontSize:'.4rem',color:subTab===t?'#0e0e0d':'rgba(14,14,13,.4)',cursor:'pointer',letterSpacing:'.06em',textTransform:'uppercase',transition:'all .15s'}}>
+                <button key={t} onClick={()=>setSubTab(t)} style={{padding:'8px 16px',background:'none',border:'none',borderBottom:`2px solid ${subTab===t?'#c9a96e':'transparent'}`,fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:subTab===t?'#0e0e0d':'rgba(14,14,13,.4)',cursor:'pointer',letterSpacing:'.06em',textTransform:'uppercase',transition:'all .15s'}}>
                   {t==='cenarios'?'Cenários Euribor':'Amortização'}
                 </button>
               ))}
-              <a href="/portal" style={{marginLeft:'auto',padding:'8px 14px',fontFamily:"'DM Mono',monospace",fontSize:'.38rem',color:'#c9a96e',textDecoration:'none',display:'flex',alignItems:'center',gap:'4px'}}>Ver análise completa →</a>
+              <a href="/portal" style={{marginLeft:'auto',padding:'8px 14px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#c9a96e',textDecoration:'none',display:'flex',alignItems:'center',gap:'4px'}}>Ver análise completa →</a>
             </div>
             {/* Cenários */}
             {subTab==='cenarios'&&(
@@ -216,9 +216,9 @@ function HomeMortgage() {
                   <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 16px',background:'#fff',border:'1px solid rgba(14,14,13,.07)'}}>
                     <div>
                       <div style={{fontFamily:"'Jost',sans-serif",fontSize:'.82rem',color:'#0e0e0d',marginBottom:'1px'}}>{c.label}</div>
-                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(14,14,13,.35)'}}>TAN {c.tan_pct}%</div>
+                      <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.4)'}}>TAN {c.tan_pct}%</div>
                     </div>
-                    <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:400,color:i===0?'var(--gold)':i===1?'#dc2626':'var(--g)'}}>{fmtM(c.pmt)}<span style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',color:'rgba(14,14,13,.35)',fontWeight:400}}>/mês</span></div>
+                    <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.2rem',fontWeight:400,color:i===0?'var(--gold)':i===1?'#dc2626':'var(--g)'}}>{fmtM(c.pmt)}<span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.4)',fontWeight:400}}>/mês</span></div>
                   </div>
                 ))}
               </div>
@@ -230,14 +230,14 @@ function HomeMortgage() {
                   <thead style={{position:'sticky',top:0}}>
                     <tr style={{background:'rgba(28,74,53,.06)'}}>
                       {['Ano','Prestação','Juros','Amort.','Saldo'].map(h=>(
-                        <th key={h} style={{padding:'7px 10px',textAlign:'right',fontFamily:"'DM Mono',monospace",fontSize:'.32rem',color:'rgba(14,14,13,.4)',letterSpacing:'.06em',textTransform:'uppercase',fontWeight:400,borderBottom:'1px solid rgba(14,14,13,.08)'}}>{h}</th>
+                        <th key={h} style={{padding:'7px 10px',textAlign:'right',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',letterSpacing:'.06em',textTransform:'uppercase',fontWeight:400,borderBottom:'1px solid rgba(14,14,13,.08)'}}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {result.tabela_amortizacao.map((row,i)=>(
                       <tr key={row.ano} style={{background:i%2===0?'#fff':'rgba(14,14,13,.01)',borderBottom:'1px solid rgba(14,14,13,.04)'}}>
-                        <td style={{padding:'6px 10px',textAlign:'right',fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(14,14,13,.45)'}}>{row.ano}</td>
+                        <td style={{padding:'6px 10px',textAlign:'right',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)'}}>{row.ano}</td>
                         <td style={{padding:'6px 10px',textAlign:'right',color:'#0e0e0d'}}>{fmtM(row.prestacao_anual)}</td>
                         <td style={{padding:'6px 10px',textAlign:'right',color:'#dc2626'}}>{fmtM(row.juros)}</td>
                         <td style={{padding:'6px 10px',textAlign:'right',color:'#1c4a35'}}>{fmtM(row.amortizacao)}</td>
@@ -381,6 +381,7 @@ export default function Home() {
       loaderEl.classList.add('done')
       document.body.style.overflow = ''
       setTimeout(heroEntrance, 150)
+      setTimeout(() => { if (loaderRef.current) loaderRef.current.style.display = 'none' }, 1200)
     }
     // Safety: force loader out after 4500ms (cinematic loader needs breathing room)
     const ldrSafetyTimer = setTimeout(finishLoader, 4500)
@@ -532,6 +533,31 @@ export default function Home() {
               n: to, duration: 2.8, ease: 'power4.out',
               scrollTrigger: { trigger: el, start: 'top 85%', once: true },
               onUpdate() { el.innerHTML = `${pre}${Math.round(obj.n)}<sup>${suf}</sup>` }
+            })
+          })
+          // Counter animation for credenciais
+          const credNumbers = document.querySelectorAll<HTMLElement>('.cred-n')
+          credNumbers.forEach((el) => {
+            const text = el.innerText || el.textContent || ''
+            const numMatch = text.match(/[\d.]+/)
+            if (!numMatch) return
+            const target = parseFloat(numMatch[0])
+            const isDecimal = numMatch[0].includes('.')
+            ScrollTrigger.create({
+              trigger: el,
+              start: 'top 85%',
+              once: true,
+              onEnter: () => {
+                const sup = el.querySelector('sup')?.outerHTML || ''
+                gsap.fromTo({ val: 0 }, { val: target }, {
+                  duration: 1.8,
+                  ease: 'power2.out',
+                  onUpdate: function() {
+                    const v = isDecimal ? this.targets()[0].val.toFixed(1) : Math.round(this.targets()[0].val)
+                    el.innerHTML = v + sup
+                  }
+                })
+              }
             })
           })
           // MAGNETIC BUTTONS
@@ -757,7 +783,7 @@ export default function Home() {
         <div style={{position:'fixed',inset:0,zIndex:2000,background:'rgba(12,31,21,.92)',backdropFilter:'blur(24px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}} onClick={closeAgModal}>
           <div style={{background:'#0c1f15',border:'1px solid rgba(201,169,110,.18)',padding:'52px 44px',maxWidth:'420px',width:'100%',position:'relative',boxShadow:'0 40px 100px rgba(0,0,0,.5)'}} onClick={e=>e.stopPropagation()}>
             <button onClick={closeAgModal} style={{position:'absolute',top:'18px',right:'18px',background:'none',border:'none',color:'rgba(244,240,230,.3)',cursor:'pointer',fontSize:'1rem',lineHeight:1,padding:'4px 8px'}}>✕</button>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.28em',textTransform:'uppercase',color:'rgba(201,169,110,.55)',marginBottom:'8px'}}>Acesso Restrito · AMI 22506</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.65)',marginBottom:'8px'}}>Acesso Restrito · AMI 22506</div>
             <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.9rem',color:'#f4f0e6',lineHeight:1.1,marginBottom:'6px'}}>Portal do<br/><em style={{fontStyle:'italic',color:'#c9a96e'}}>Consultor</em></h2>
             {!agSent ? (
               <>
@@ -786,7 +812,7 @@ export default function Home() {
                 <p style={{fontSize:'.75rem',color:'rgba(244,240,230,.35)',lineHeight:1.65}}>Receberás um link de acesso por email assim que o teu pedido for aprovado.</p>
               </div>
             )}
-            <div style={{marginTop:'28px',paddingTop:'16px',borderTop:'1px solid rgba(244,240,230,.05)',fontFamily:"'DM Mono',monospace",fontSize:'.42rem',color:'rgba(244,240,230,.18)',letterSpacing:'.1em',textTransform:'uppercase'}}>
+            <div style={{marginTop:'28px',paddingTop:'16px',borderTop:'1px solid rgba(244,240,230,.05)',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.25)',letterSpacing:'.1em',textTransform:'uppercase'}}>
               Agency Group · Mediação Imobiliária Lda · AMI 22506
             </div>
           </div>
@@ -856,14 +882,14 @@ export default function Home() {
               <span className="line"><span className="line-inner"><em>veio ter</em></span></span>
               <span className="line"><span className="line-inner">consigo.</span></span>
             </h1>
-            <p className="hero-sub" id="hSub">Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem sabe onde procurar.</p>
+            <p className="hero-sub" id="hSub">Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem chegou primeiro.</p>
             <div className="hero-btns" id="hBtns">
               <a href="#imoveis" className="btn-gold">Descobrir Portfolio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-              <a href="#avaliacao" className="btn-outline">Avaliação Privada</a>
+              <a href="#avaliacao" className="btn-outline">Avaliação Privada →</a>
             </div>
           </div>
           <div className="hero-stats" id="hStats">
-            <div><div className="hs-n">169<em>K</em></div><div className="hs-l">Transacções · Portugal</div></div>
+            <div><div className="hs-n">169<em>K</em></div><div className="hs-l">Transacções 2025</div></div>
             <div><div className="hs-n">+17<em>%</em></div><div className="hs-l">Valorização · 2025</div></div>
             <div><div className="hs-n">44<em>%</em></div><div className="hs-l">Compradores Internacionais</div></div>
           </div>
@@ -925,7 +951,7 @@ export default function Home() {
             <div className="search-fields" style={{gap:'16px',alignItems:'flex-end',padding:'18px 24px'}}>
               <div style={{flex:1}}>
                 <label className="sf-lbl" style={{letterSpacing:'.12em'}}>Descreve o imóvel que imaginas</label>
-                <input className="sf-inp" type="text" placeholder='"T3 com piscina em Cascais até €2M, vista mar, garagem..."' value={naturalQuery} onChange={e=>setNaturalQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAiSearch()} style={{width:'100%'}}/>
+                <input className="sf-inp" type="text" placeholder='"T3 vista mar em Cascais, até €2M"' value={naturalQuery} onChange={e=>setNaturalQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doAiSearch()} style={{width:'100%'}}/>
               </div>
               <button className="sf-btn" onClick={doAiSearch} disabled={aiLoading} style={{opacity:aiLoading?.65:1,whiteSpace:'nowrap',flexShrink:0}}>
                 {aiLoading ? '✦ A analisar...' : '✦ Descobrir'}
@@ -975,7 +1001,10 @@ export default function Home() {
       </section>
 
       {/* ── MARKET STATS TICKER ── */}
-      <div style={{background:'#0c1f15',borderTop:'1px solid rgba(201,169,110,.1)',borderBottom:'1px solid rgba(201,169,110,.1)',overflow:'hidden',padding:'0',position:'relative'}}>
+      <div style={{background:'#0c1f15',borderTop:'1px solid rgba(201,169,110,.1)',borderBottom:'1px solid rgba(201,169,110,.1)',overflow:'hidden',padding:'0',position:'relative'}}
+        onMouseEnter={e=>{const t=e.currentTarget.querySelector('div') as HTMLElement;if(t)t.style.animationPlayState='paused'}}
+        onMouseLeave={e=>{const t=e.currentTarget.querySelector('div') as HTMLElement;if(t)t.style.animationPlayState='running'}}
+      >
         <div style={{display:'flex',alignItems:'center',animation:'tickerScroll 40s linear infinite',whiteSpace:'nowrap',gap:'0'}}>
           {[
             {label:'Mercado PT 2026',value:'+17.6%',desc:'Valorização média'},
@@ -996,12 +1025,12 @@ export default function Home() {
             {label:'Lisboa Prime',value:'€7.500/m²',desc:'Chiado · Príncipe Real'},
             {label:'Comporta',value:'€11.000/m²',desc:'Zona mais valorizada'},
           ].map((s,i)=>(
-            <div key={i} style={{display:'inline-flex',alignItems:'center',gap:'20px',padding:'10px 32px',borderRight:'1px solid rgba(201,169,110,.1)',flexShrink:0}}>
+            <div key={i} style={{display:'inline-flex',alignItems:'center',gap:'20px',padding:'14px 32px',borderRight:'1px solid rgba(201,169,110,.1)',flexShrink:0}}>
               <div>
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',color:'rgba(201,169,110,.5)',letterSpacing:'.1em',textTransform:'uppercase'}}>{s.label}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(201,169,110,.6)',letterSpacing:'.1em',textTransform:'uppercase'}}>{s.label}</div>
                 <div style={{fontFamily:"'Cormorant',serif",fontSize:'1rem',fontWeight:600,color:'#c9a96e',lineHeight:1}}>{s.value}</div>
               </div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.34rem',color:'rgba(244,240,230,.25)',letterSpacing:'.06em'}}>{s.desc}</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(244,240,230,.4)',letterSpacing:'.06em'}}>{s.desc}</div>
             </div>
           ))}
         </div>
@@ -1094,6 +1123,18 @@ export default function Home() {
         </div>
       </section>
 
+      {/* SIMULADOR DE CRÉDITO — versão completa (cenários, amortização, DSTI) */}
+      <section id="simulador" style={{background:'#f4f0e6',padding:'112px 0',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
+        <div className="sw">
+          <div style={{marginBottom:'40px'}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Simulação · Crédito Habitação · Portugal</div>
+            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2.2rem,4vw,4rem)',color:'#0e0e0d',lineHeight:1.05,marginBottom:'12px',letterSpacing:'-.012em'}}>A Verdade <em style={{fontStyle:'italic',color:'#1c4a35'}}>Sobre o Crédito</em></h2>
+            <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.86rem',lineHeight:1.8,color:'rgba(14,14,13,.5)',maxWidth:'560px'}}>Euribor 6M em tempo real · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização · DSTI Banco de Portugal · IMT + IS incluído</p>
+          </div>
+          <HomeMortgage />
+        </div>
+      </section>
+
       {/* MARKET DATA */}
       <section className="market-section" id="mercado">
         <div className="sw">
@@ -1116,6 +1157,16 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Market CTA ── */}
+      <div style={{background:'#f4f0e6',padding:'32px 0',textAlign:'center',borderBottom:'1px solid rgba(14,14,13,.06)'}}>
+        <a href="#imoveis" style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.16em',textTransform:'uppercase',color:'#1c4a35',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'8px',transition:'gap .25s var(--ease-out)'}}
+          onMouseEnter={e=>(e.currentTarget as HTMLAnchorElement).style.gap='14px'}
+          onMouseLeave={e=>(e.currentTarget as HTMLAnchorElement).style.gap='8px'}
+        >
+          Explorar o Portfolio →
+        </a>
+      </div>
+
       {/* BLOCO 2 — Avaliação Privada */}
       <section id="avaliacao" style={{background:'#f4f0e6',padding:'112px 0',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg, transparent, rgba(201,169,110,.6), transparent)'}}/>
@@ -1123,7 +1174,7 @@ export default function Home() {
 
           {/* LEFT — Text */}
           <div>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.38rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'28px'}}>Avaliação Privada · Dados Reais · Sem Estimativas</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'28px'}}>Avaliação Privada · Dados Reais · Sem Estimativas</div>
             <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.4rem,4vw,4rem)',fontWeight:300,color:'#0e0e0d',lineHeight:1.08,margin:'0 0 28px',letterSpacing:'-.01em'}}>
               O seu imóvel vale<br/>quanto vale.<br/><em style={{fontStyle:'italic',color:'#1c4a35'}}>Não mais. Não menos.</em>
             </h2>
@@ -1133,7 +1184,7 @@ export default function Home() {
             <a
               href="https://wa.me/351919948986?text=Gostaria+de+solicitar+uma+avalia%C3%A7%C3%A3o+privada+do+meu+im%C3%B3vel."
               target="_blank" rel="noreferrer"
-              style={{display:'inline-flex',alignItems:'center',gap:'12px',padding:'16px 40px',background:'#1c4a35',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.46rem',letterSpacing:'.18em',textTransform:'uppercase',textDecoration:'none',fontWeight:400}}
+              style={{display:'inline-flex',alignItems:'center',gap:'12px',padding:'16px 40px',background:'#1c4a35',color:'#f4f0e6',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.18em',textTransform:'uppercase',textDecoration:'none',fontWeight:400}}
             >
               Pedir Avaliação Privada
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -1142,14 +1193,14 @@ export default function Home() {
 
           {/* RIGHT — Formulário simples */}
           <div style={{background:'#fff',padding:'48px',boxShadow:'0 24px 80px rgba(14,14,13,.10),0 4px 16px rgba(14,14,13,.06)',borderTop:'2px solid var(--g)'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(14,14,13,.3)',marginBottom:'28px'}}>Pedido de Avaliação · Confidencial</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.14em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'28px'}}>Pedido de Avaliação · Confidencial</div>
             <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
               {[{id:'avalNome',label:'Nome',placeholder:'O seu nome'},
                 {id:'avalTel',label:'Telefone',placeholder:'+351 9XX XXX XXX'},
                 {id:'avalZona',label:'Zona',placeholder:'Ex: Lisboa, Cascais, Comporta...'}
               ].map(f=>(
                 <div key={f.id}>
-                  <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',display:'block',marginBottom:'6px'}}>{f.label}</label>
+                  <label style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',textTransform:'uppercase',color:'rgba(14,14,13,.5)',display:'block',marginBottom:'6px'}}>{f.label}</label>
                   <input id={f.id} placeholder={f.placeholder} style={{width:'100%',padding:'12px 0',border:'none',borderBottom:'1px solid rgba(14,14,13,.18)',fontFamily:"'Jost',sans-serif",fontSize:'.88rem',color:'#0e0e0d',outline:'none',background:'transparent',boxSizing:'border-box',transition:'border-color .3s'}}/>
                 </div>
               ))}
@@ -1161,25 +1212,15 @@ export default function Home() {
                   if(!nome||!tel){alert('Por favor preenche o nome e telefone.');return}
                   window.open(`https://wa.me/351919948986?text=${encodeURIComponent(`Pedido de avaliação privada:\nNome: ${nome}\nTelefone: ${tel}\nZona: ${zona}`)}`, '_blank')
                 }}
-                style={{marginTop:'8px',padding:'14px',background:'#1c4a35',color:'#f4f0e6',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.16em',textTransform:'uppercase',cursor:'pointer',fontWeight:400}}
+                style={{marginTop:'8px',padding:'14px',background:'#1c4a35',color:'#f4f0e6',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.16em',textTransform:'uppercase',cursor:'pointer',fontWeight:400,transition:'background .25s,transform .2s'}}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)';(e.currentTarget as HTMLButtonElement).style.background='#16382a'}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(0)';(e.currentTarget as HTMLButtonElement).style.background='#1c4a35'}}
               >
                 Pedir Avaliação Privada →
               </button>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.33rem',color:'rgba(14,14,13,.25)',letterSpacing:'.06em',textTransform:'uppercase',textAlign:'center'}}>Resposta em menos de 2 horas · 100% confidencial</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.35)',letterSpacing:'.06em',textTransform:'uppercase',textAlign:'center'}}>Resposta em menos de 2 horas · 100% confidencial</div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* SIMULADOR DE CRÉDITO — versão completa (cenários, amortização, DSTI) */}
-      <section id="simulador" style={{background:'#f4f0e6',padding:'112px 0',borderBottom:'1px solid rgba(14,14,13,.08)'}}>
-        <div className="sw">
-          <div style={{marginBottom:'40px'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Simulação · Crédito Habitação · Portugal</div>
-            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2.2rem,4vw,4rem)',color:'#0e0e0d',lineHeight:1.05,marginBottom:'12px',letterSpacing:'-.012em'}}>A Verdade <em style={{fontStyle:'italic',color:'#1c4a35'}}>Sobre o Crédito</em></h2>
-            <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.86rem',lineHeight:1.8,color:'rgba(14,14,13,.5)',maxWidth:'560px'}}>Euribor 6M em tempo real · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização · DSTI Banco de Portugal · IMT + IS incluído</p>
-          </div>
-          <HomeMortgage />
         </div>
       </section>
 
@@ -1203,7 +1244,7 @@ export default function Home() {
 
         {/* RIGHT — Text + bullets + CTA */}
         <div style={{display:'flex',flexDirection:'column',justifyContent:'center',padding:'80px 64px'}}>
-          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.37rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'28px'}}>NHR · IFICI · Residência Fiscal · Portugal</div>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(201,169,110,.7)',marginBottom:'28px'}}>NHR · IFICI · Residência Fiscal · Portugal</div>
           <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.2rem,3.8vw,3.8rem)',fontWeight:300,color:'#f4f0e6',lineHeight:1.05,margin:'0 0 28px',letterSpacing:'-.012em'}}>
             Dez Anos de<br/>Liberdade Fiscal.<br/><em style={{fontStyle:'italic',color:'#c9a96e'}}>Uma Vida Nova.</em>
           </h2>
@@ -1225,7 +1266,7 @@ export default function Home() {
           <a
             href="https://wa.me/351919948986?text=Gostaria+de+falar+com+o+vosso+consultor+fiscal+sobre+NHR%2FIFICI."
             target="_blank" rel="noreferrer"
-            style={{display:'inline-flex',alignItems:'center',gap:'12px',padding:'16px 36px',background:'transparent',border:'1px solid rgba(201,169,110,.4)',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.44rem',letterSpacing:'.18em',textTransform:'uppercase',textDecoration:'none',fontWeight:400,width:'fit-content'}}
+            style={{display:'inline-flex',alignItems:'center',gap:'12px',padding:'16px 36px',background:'transparent',border:'1px solid rgba(201,169,110,.4)',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.16em',textTransform:'uppercase',textDecoration:'none',fontWeight:400,width:'fit-content'}}
           >
             <svg viewBox="0 0 24 24" fill="currentColor" width="14"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a9.88 9.88 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             Falar com o Consultor Fiscal
@@ -1248,7 +1289,7 @@ export default function Home() {
           <div style={{position:'absolute',top:0,left:0,right:0,height:'30%',background:'linear-gradient(to bottom, rgba(7,15,10,.7) 0%, transparent 100%)'}}/>
           {/* Editorial label */}
           <div style={{position:'absolute',bottom:'36px',left:'36px',right:'36px'}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(201,169,110,.6)',marginBottom:'8px'}}>Comporta · Herdade Privada · Off-Market</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.16em',textTransform:'uppercase',color:'rgba(201,169,110,.7)',marginBottom:'8px'}}>Comporta · Herdade Privada · Off-Market</div>
             <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.4rem',fontWeight:300,color:'rgba(244,240,230,.75)',fontStyle:'italic',lineHeight:1.2}}>
               "Os imóveis mais extraordinários<br/>nunca chegam ao mercado."
             </div>
@@ -1264,7 +1305,7 @@ export default function Home() {
             {/* Eyebrow */}
             <div style={{display:'inline-flex',alignItems:'center',gap:'10px',padding:'6px 18px',border:'1px solid rgba(201,169,110,.22)',marginBottom:'40px'}}>
               <div style={{width:'5px',height:'5px',background:'#c9a96e',borderRadius:'50%'}}/>
-              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.36rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.75)'}}>Off-Market · By Invitation Only</span>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(201,169,110,.8)'}}>Off-Market · By Invitation Only</span>
             </div>
 
             {/* Title */}
@@ -1282,7 +1323,7 @@ export default function Home() {
             {/* CTA */}
             <button
               onClick={()=>window.location.href='/portal'}
-              style={{display:'inline-flex',alignItems:'center',gap:'14px',padding:'17px 44px',background:'transparent',border:'1px solid rgba(201,169,110,.42)',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.47rem',letterSpacing:'.2em',textTransform:'uppercase',cursor:'pointer',transition:'all .25s',fontWeight:400,width:'fit-content'}}
+              style={{display:'inline-flex',alignItems:'center',gap:'14px',padding:'17px 44px',background:'transparent',border:'1px solid rgba(201,169,110,.42)',color:'#c9a96e',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.18em',textTransform:'uppercase',cursor:'pointer',transition:'all .25s',fontWeight:400,width:'fit-content'}}
               onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(201,169,110,.09)';(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.75)'}}
               onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent';(e.currentTarget as HTMLButtonElement).style.borderColor='rgba(201,169,110,.42)'}}
             >
@@ -1291,7 +1332,7 @@ export default function Home() {
             </button>
 
             {/* Bottom note */}
-            <div style={{marginTop:'52px',fontFamily:"'DM Mono',monospace",fontSize:'.34rem',letterSpacing:'.12em',color:'rgba(244,240,230,.16)',textTransform:'uppercase'}}>Agency Group · AMI 22506 · Acesso restrito</div>
+            <div style={{marginTop:'52px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.1em',color:'rgba(244,240,230,.22)',textTransform:'uppercase'}}>Agency Group · AMI 22506 · Acesso restrito</div>
           </div>
         </div>
       </section>
@@ -1305,6 +1346,18 @@ export default function Home() {
           <div className="cred-c fade-in"><div className="cred-n">Top<sup>5</sup></div><div className="cred-l">Luxo Mundial</div><div className="cred-d">Lisboa. As 5 melhores do mundo.</div></div>
         </div>
       </section>
+
+      {/* ── Credenciais CTA ── */}
+      <div style={{background:'#0c1f15',padding:'40px 0',textAlign:'center',borderTop:'1px solid rgba(201,169,110,.08)'}}>
+        <a href="https://wa.me/351919948986?text=Bom%20dia%2C%20gostaria%20de%20falar%20com%20um%20consultor." target="_blank" rel="noreferrer"
+          style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.16em',textTransform:'uppercase',color:'#c9a96e',textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'10px',border:'1px solid rgba(201,169,110,.3)',padding:'13px 32px',transition:'all .25s'}}
+          onMouseEnter={e=>{(e.currentTarget as HTMLAnchorElement).style.background='rgba(201,169,110,.08)';(e.currentTarget as HTMLAnchorElement).style.borderColor='rgba(201,169,110,.6)'}}
+          onMouseLeave={e=>{(e.currentTarget as HTMLAnchorElement).style.background='transparent';(e.currentTarget as HTMLAnchorElement).style.borderColor='rgba(201,169,110,.3)'}}
+        >
+          Falar com um Consultor
+          <svg viewBox="0 0 24 24" fill="currentColor" width="13"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a9.88 9.88 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        </a>
+      </div>
 
       {/* AGENTES */}
       <section className="ag-section" id="agentes">
@@ -1501,7 +1554,7 @@ export default function Home() {
 
                 {/* Property */}
                 <div className="test-property" style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.12em', color: 'rgba(201,169,110,.5)',
                   marginBottom: '16px', textTransform: 'uppercase',
                 }}>{t.property}</div>
@@ -1518,12 +1571,12 @@ export default function Home() {
                       fontSize: '.72rem', color: '#f4f0e6', marginBottom: '4px',
                     }}>{t.name}</div>
                     <div style={{
-                      fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                      fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                       letterSpacing: '.1em', color: 'rgba(244,240,230,.4)',
                     }}>{t.country} · {t.zone}</div>
                   </div>
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: '.4rem',
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                     color: 'rgba(244,240,230,.25)', letterSpacing: '.08em',
                   }}>{t.date}</div>
                 </div>
@@ -1548,7 +1601,7 @@ export default function Home() {
                   color: '#c9a96e', fontWeight: 300,
                 }}>{b.val}</div>
                 <div style={{
-                  fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
                   letterSpacing: '.14em', color: 'rgba(244,240,230,.4)',
                   textTransform: 'uppercase', marginTop: '4px',
                 }}>{b.label}</div>
