@@ -58,8 +58,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    if (!body.type || !body.title) {
-      return NextResponse.json({ error: 'type and title are required' }, { status: 400, headers: headers() })
+    if (!body.type) {
+      return NextResponse.json({ error: 'type is required' }, { status: 400, headers: headers() })
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,14 +67,11 @@ export async function POST(req: NextRequest) {
       .from('activities')
       .insert({
         type:       body.type,
-        title:      body.title,
-        date:       body.date || new Date().toISOString(),
+        note:       body.note || body.title || body.notes || null,  // support multiple field names
         contact_id: body.contact_id || null,
         deal_id:    body.deal_id || null,
-        notes:      body.notes || null,
         duration:   body.duration || null,
         outcome:    body.outcome || null,
-        next_step:  body.next_step || null,
         agent_id:   body.agent_id || null,
       })
       .select()
