@@ -5,6 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import PressSection from './components/PressSection'
 import { CurrencySelector } from './components/CurrencyWidget'
 import { AIPropertySearch } from './components/AIPropertySearch'
+import { PreMarketProperties } from './components/PreMarketProperties'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -1233,6 +1234,12 @@ export default function Home() {
         </div>
       </section>
 
+      {/* EXCLUSIVOS PRÉ-MERCADO — Compass-style coming soon section */}
+      <section style={{ background: '#f4f0e6', padding: '96px 0' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+          <PreMarketProperties />
+        </div>
+      </section>
 
       {/* BLOCO 3 — Viver e Investir em Portugal · Editorial 2 colunas */}
       <section style={{background:'#0c1f15',minHeight:'560px',display:'grid',gridTemplateColumns:'1fr 1fr',overflow:'hidden',position:'relative'}}>
