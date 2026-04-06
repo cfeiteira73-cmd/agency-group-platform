@@ -34,7 +34,7 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' blob: data: https://images.unsplash.com https://plus.unsplash.com https://www.google.com https://lh3.googleusercontent.com https://*.supabase.co https:",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://api.resend.com https://graph.facebook.com https://o*.ingest.sentry.io https://api.stability.ai https://api.notion.com https://vercel.live wss://vercel.live https://www.wixapis.com https://accounts.google.com https://api.heygen.com https://production-sfo.browserless.io https://www.idealista.pt https://api.twilio.com",
-      "frame-src 'none'",
+      "frame-src 'self' https://my.matterport.com https://www.youtube.com https://player.vimeo.com",
       "object-src 'none'",
       "frame-ancestors 'self'",
       "base-uri 'self'",

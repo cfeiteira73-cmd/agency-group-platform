@@ -804,7 +804,7 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
               </div>
 
               {/* ── Previsão 6 Meses ─────────────────────────────────────── */}
-              {res?.forecast_6m && (() => {
+              {res?.forecast_6m ? (() => {
                 const f6 = res.forecast_6m as Record<string, unknown>
                 return (
                   <div style={{ background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.15)', borderRadius: 8, padding: '16px 20px' }}>
@@ -813,11 +813,11 @@ export default function PortalAVM({ onRunAVM, onAddToPortfolio }: PortalAVMProps
                       €{Number(f6.priceMin).toLocaleString('pt-PT')} — €{Number(f6.priceMax).toLocaleString('pt-PT')}
                     </div>
                     <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.52rem', color: '#1c4a35', marginTop: 4 }}>
-                      +{f6.changePercent}% projecção QoQ
+                      +{String(f6.changePercent)}% projecção QoQ
                     </div>
                   </div>
                 )
-              })()}
+              })() : null}
 
               {/* ── Adjustment Factors Toggle ────────────────────────────── */}
               <div>
