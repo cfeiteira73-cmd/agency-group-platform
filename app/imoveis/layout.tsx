@@ -2,18 +2,36 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
-  title: 'Imóveis Luxo Portugal 2026 | Lisboa, Cascais, Comporta | Agency Group',
-  description: 'Descubra 20 imóveis de luxo em Portugal: Lisboa, Cascais, Comporta, Porto, Algarve, Madeira, Sintra e Ericeira. Agency Group AMI 22506 — mediação boutique €500K–€10M.',
+  title: 'Imóveis de Luxo em Portugal | Agency Group',
+  description: 'Descubra imóveis de luxo em Lisboa, Cascais, Algarve, Porto e Madeira. Apartamentos, moradias e propriedades premium de €500K a €10M+. Agency Group AMI 22506.',
+  keywords: ['imóveis luxo portugal', 'apartamentos lisboa', 'moradias cascais', 'propriedades algarve', 'investimento imobiliário portugal'],
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/imoveis',
+    languages: {
+      'en': 'https://www.agencygroup.pt/properties',
+      'pt': 'https://www.agencygroup.pt/imoveis',
+      'x-default': 'https://www.agencygroup.pt/imoveis',
+    },
+  },
   openGraph: {
-    title: 'Imóveis de Luxo Portugal 2026 | Agency Group',
-    description: 'Portfolio exclusivo de imóveis em Lisboa, Cascais, Comporta e Algarve. Penhíouses, villas, quintas e herdades de €500K a €6.5M.',
+    title: 'Imóveis de Luxo em Portugal | Agency Group',
+    description: 'Descubra imóveis de luxo em Lisboa, Cascais, Algarve, Porto e Madeira. Agency Group AMI 22506.',
     url: 'https://www.agencygroup.pt/imoveis',
     siteName: 'Agency Group',
     locale: 'pt_PT',
     type: 'website',
-    images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630, alt: 'Imóveis de Luxo Portugal — Agency Group' }],
+    images: [{
+      url: 'https://www.agencygroup.pt/og-imoveis.jpg',
+      width: 1200,
+      height: 630,
+      alt: 'Imóveis de Luxo Agency Group Portugal',
+    }],
   },
-  alternates: { canonical: 'https://www.agencygroup.pt/imoveis' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Imóveis de Luxo em Portugal | Agency Group',
+    description: 'Descubra imóveis de luxo em Lisboa, Cascais, Algarve, Porto e Madeira.',
+  },
 }
 
 export default function ImoveisLayout({ children }: { children: ReactNode }) {

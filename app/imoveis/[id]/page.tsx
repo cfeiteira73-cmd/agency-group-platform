@@ -12,6 +12,7 @@ import { PROPERTIES, PROPERTY_IDS, ZONE_YIELDS, formatPriceFull } from '../data'
 import type { Property } from '../data'
 import ImovelClient from './ImovelClient'
 import ShareButton from './ShareButton'
+import { BreadcrumbJsonLd } from '@/app/components/BreadcrumbJsonLd'
 
 // ─── Static params ─────────────────────────────────────────────────────────────
 export function generateStaticParams() {
@@ -126,14 +127,33 @@ export default async function ImovelPage(
 ) {
   const { id } = await params
 
+  const breadcrumbItems = [
+    { name: 'Início', url: 'https://www.agencygroup.pt' },
+    { name: 'Imóveis', url: 'https://www.agencygroup.pt/imoveis' },
+    {
+      name: PROPERTIES.find(x => x.id === id)?.nome ?? 'Propriedade',
+      url: `https://www.agencygroup.pt/imoveis/${id}`,
+    },
+  ]
+
   // Known IDs → use the existing rich ImovelClient (photo gallery, modals, etc.)
   if (PROPERTY_IDS.includes(id)) {
-    return <ImovelClient id={id} />
+    return (
+      <>
+        <BreadcrumbJsonLd items={breadcrumbItems} />
+        <ImovelClient id={id} />
+      </>
+    )
   }
 
   // Generated / unknown IDs → full server-rendered showcase
   const p = generateMockProperty(id)
-  return <PropertyShowcase property={p} />
+  return (
+    <>
+      <BreadcrumbJsonLd items={breadcrumbItems} />
+      <PropertyShowcase property={p} />
+    </>
+  )
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

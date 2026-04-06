@@ -2,6 +2,10 @@
 import { useEffect, type RefObject } from 'react'
 import gsap from 'gsap'
 
+// Accessibility: respect user's motion preference
+const prefersReducedMotion = typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 /** Stagger-in a group of elements (cards, rows, items) */
 export function useStaggerIn(
   containerRef: RefObject<HTMLElement | null>,
@@ -12,6 +16,10 @@ export function useStaggerIn(
     if (!containerRef.current) return
     const els = containerRef.current.querySelectorAll(selector)
     if (!els.length) return
+    if (prefersReducedMotion) {
+      // Skip animation — CSS handles visibility via prefers-reduced-motion media query
+      return
+    }
     gsap.fromTo(
       els,
       { opacity: 0, y: options?.y ?? 16 },
@@ -35,6 +43,9 @@ export function useFadeIn(
 ) {
   useEffect(() => {
     if (!ref.current) return
+    if (prefersReducedMotion) {
+      return
+    }
     gsap.fromTo(
       ref.current,
       { opacity: 0, y: options?.y ?? 12 },
@@ -58,6 +69,12 @@ export function useCountUp(
 ) {
   useEffect(() => {
     if (!ref.current) return
+    if (prefersReducedMotion) {
+      // Show final value immediately — no animation
+      ref.current.textContent =
+        (options?.prefix ?? '') + target.toFixed(options?.decimals ?? 0) + (options?.suffix ?? '')
+      return
+    }
     const obj = { val: 0 }
     const el = ref.current
     gsap.to(obj, {
@@ -82,6 +99,9 @@ export function usePulseAttention(
 ) {
   useEffect(() => {
     if (!ref.current || !active) return
+    if (prefersReducedMotion) {
+      return
+    }
     gsap.fromTo(
       ref.current,
       { scale: 1 },

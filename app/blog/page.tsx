@@ -1,15 +1,16 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { BreadcrumbJsonLd } from '@/app/components/BreadcrumbJsonLd'
 
 export const metadata: Metadata = {
   title: 'Blog · Mercado Imobiliário Portugal 2026 · Agency Group',
   description: 'Análises de mercado, guias de compra, NHR/IFICI, zonas premium Portugal 2026. Lisboa, Cascais, Comporta, Algarve, Madeira. AMI 22506.',
-  alternates: { canonical: 'https://agencygroup.pt/blog' },
+  alternates: { canonical: 'https://www.agencygroup.pt/blog' },
   openGraph: {
     title: 'Blog · Mercado Imobiliário Portugal 2026',
     description: 'Análises de mercado, guias de compra e fiscalidade para investidores em Portugal.',
     type: 'website',
-    url: 'https://agencygroup.pt/blog',
+    url: 'https://www.agencygroup.pt/blog',
   },
 }
 
@@ -59,6 +60,10 @@ const ARTICLES = [
 export default function BlogPage() {
   return (
     <>
+      <BreadcrumbJsonLd items={[
+        { name: 'Início', url: 'https://www.agencygroup.pt' },
+        { name: 'Blog', url: 'https://www.agencygroup.pt/blog' },
+      ]} />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}

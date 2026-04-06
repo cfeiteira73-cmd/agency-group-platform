@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface Matterport3DTourProps {
   modelId?: string
@@ -21,6 +21,50 @@ const DEMO_MODELS: Record<string, string> = {
 export default function Matterport3DTour({ modelId, propertyName, propertyPrice, compact = false }: Matterport3DTourProps) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+
+  const modalRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  // Focus trap: trap focus inside modal when open, return focus to trigger when closed
+  useEffect(() => {
+    if (!isOpen) {
+      triggerRef.current?.focus()
+      return
+    }
+
+    const modal = modalRef.current
+    if (!modal) return
+
+    const focusableElements = modal.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const firstElement = focusableElements[0]
+    const lastElement = focusableElements[focusableElements.length - 1]
+
+    firstElement?.focus()
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+        return
+      }
+      if (e.key !== 'Tab') return
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault()
+          lastElement?.focus()
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault()
+          firstElement?.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen])
 
   const mid = modelId || DEMO_MODELS.default
   const embedUrl = `https://my.matterport.com/show/?m=${mid}&brand=0&mls=1&mt=0&play=1`
@@ -64,6 +108,7 @@ export default function Matterport3DTour({ modelId, propertyName, propertyPrice,
           Explora {propertyName || 'este imóvel'} ao teu ritmo. Tecnologia Matterport — cada divisão, cada detalhe.
         </div>
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setIsOpen(true)}
           style={{
@@ -81,13 +126,14 @@ export default function Matterport3DTour({ modelId, propertyName, propertyPrice,
       {/* Full-screen Modal */}
       {isOpen && (
         <div
+          ref={modalRef}
           style={{
             position: 'fixed', inset: 0, zIndex: 9999,
             background: 'rgba(0,0,0,.95)', display: 'flex', flexDirection: 'column',
           }}
           role="dialog"
-          aria-label={`Tour 3D — ${propertyName}`}
           aria-modal="true"
+          aria-label="Tour 3D da propriedade"
         >
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,.1)', flexShrink: 0 }}>
