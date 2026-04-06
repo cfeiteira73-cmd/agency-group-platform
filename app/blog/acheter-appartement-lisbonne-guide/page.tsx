@@ -5,12 +5,20 @@ export const metadata: Metadata = {
   title: 'Acheter un Appartement à Lisbonne en 2026 : Guide Complet · Agency Group',
   description: "Guide complet pour acheter un appartement à Lisbonne en 2026. Prix par quartier, régime IFICI, processus d'achat, frais IMT, comparaison Paris vs Lisbonne. Communauté française. AMI 22506.",
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/acheter-appartement-lisbonne-guide' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/acheter-appartement-lisbonne-guide',
+    languages: {
+      'en': 'https://www.agencygroup.pt/blog/buy-property-cascais',
+      'pt': 'https://www.agencygroup.pt/blog/apartamentos-luxo-cascais-comprar',
+      'fr': 'https://www.agencygroup.pt/blog/acheter-appartement-lisbonne-guide',
+      'x-default': 'https://www.agencygroup.pt/blog/buy-property-cascais',
+    },
+  },
   openGraph: {
     title: 'Acheter un Appartement à Lisbonne en 2026 : Guide Complet',
     description: "Chiado €7.000/m², IFICI 20% flat tax, Paris–Lisbonne 2h20. Le guide complet pour les acheteurs français à Lisbonne.",
     type: 'article',
-    url: 'https://agencygroup.pt/blog/acheter-appartement-lisbonne-guide',
+    url: 'https://www.agencygroup.pt/blog/acheter-appartement-lisbonne-guide',
     locale: 'fr_FR',
   },
 }
@@ -20,11 +28,11 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Acheter un Appartement à Lisbonne en 2026 : Guide Complet',
   description: "Guide complet pour acheter un appartement à Lisbonne en 2026. Prix, IFICI, processus, communauté française.",
-  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
-  url: 'https://agencygroup.pt/blog/acheter-appartement-lisbonne-guide',
+  url: 'https://www.agencygroup.pt/blog/acheter-appartement-lisbonne-guide',
   inLanguage: 'fr-FR',
   about: [
     { '@type': 'Thing', name: 'Acheter appartement Lisbonne' },
@@ -39,7 +47,6 @@ export default function ArticleAcheterAppartementLisbonne() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ARTICLE_SCHEMA) }} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

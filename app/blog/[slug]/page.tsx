@@ -27,7 +27,7 @@ export async function generateMetadata({
       type: 'article',
       publishedTime: article.date,
       authors: [article.author],
-      url: `https://agencygroup.pt/blog/${article.slug}`,
+      url: `https://www.agencygroup.pt/blog/${article.slug}`,
       siteName: 'Agency Group — Imobiliário de Luxo Portugal',
       locale: article.category === 'Compradores Internacionais' && article.slug.includes('american')
         ? 'en_US'
@@ -41,7 +41,7 @@ export async function generateMetadata({
       description: article.description,
     },
     alternates: {
-      canonical: `https://agencygroup.pt/blog/${article.slug}`,
+      canonical: `https://www.agencygroup.pt/blog/${article.slug}`,
     },
   }
 }

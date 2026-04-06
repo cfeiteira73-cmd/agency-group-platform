@@ -5,12 +5,17 @@ export const metadata: Metadata = {
   title: 'Capital Gains Tax on Property in Portugal 2026: Complete Guide · Agency Group',
   description: 'How capital gains tax works on Portuguese property in 2026. Residents vs. non-residents, reinvestment exemption, inflation coefficients, and strategies to minimize tax. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/capital-gains-property-portugal-2026' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/capital-gains-property-portugal-2026',
+    languages: {
+      'x-default': 'https://www.agencygroup.pt/blog/capital-gains-property-portugal-2026',
+    },
+  },
   openGraph: {
     title: 'Capital Gains Tax on Property in Portugal 2026: Complete Guide',
     description: 'Residents vs. non-residents, reinvestment exemption, inflation coefficients, age exemption, and strategic tips to minimize capital gains on Portuguese property.',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/capital-gains-property-portugal-2026',
+    url: 'https://www.agencygroup.pt/blog/capital-gains-property-portugal-2026',
     locale: 'en_US',
   },
 }
@@ -20,11 +25,11 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Capital Gains Tax on Property in Portugal 2026: Complete Guide',
   description: 'How capital gains tax works on Portuguese property in 2026. Residents vs. non-residents, exemptions, and strategies.',
-  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-02',
   dateModified: '2026-04-02',
-  url: 'https://agencygroup.pt/blog/capital-gains-property-portugal-2026',
+  url: 'https://www.agencygroup.pt/blog/capital-gains-property-portugal-2026',
   inLanguage: 'en-US',
   about: [
     { '@type': 'Thing', name: 'Capital gains tax Portugal' },
@@ -38,7 +43,6 @@ export default function ArticleCapitalGains() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ARTICLE_SCHEMA) }} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

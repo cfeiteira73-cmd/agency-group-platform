@@ -5,12 +5,19 @@ export const metadata: Metadata = {
   title: 'Propriedades de Luxo em Lisboa 2026: Preços, Zonas e Guia de Investimento · Agency Group',
   description: 'Guia completo de propriedades de luxo em Lisboa 2026. Chiado, Príncipe Real, Estrela, Santos, Parque das Nações. Preços por zona, perfil do comprador, yields e processo de compra. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/propriedades-luxo-lisboa-2026' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/propriedades-luxo-lisboa-2026',
+    languages: {
+      'en': 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
+      'pt': 'https://www.agencygroup.pt/blog/propriedades-luxo-lisboa-2026',
+      'x-default': 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
+    },
+  },
   openGraph: {
     title: 'Propriedades de Luxo em Lisboa 2026: Preços, Zonas e Guia de Investimento',
     description: 'Lisboa no Top 5 mundial do luxo. Chiado €7.000/m², Príncipe Real €7.400/m². Guia completo para investidores internacionais.',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/propriedades-luxo-lisboa-2026',
+    url: 'https://www.agencygroup.pt/blog/propriedades-luxo-lisboa-2026',
   },
 }
 
@@ -19,11 +26,11 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Propriedades de Luxo em Lisboa 2026: Preços, Zonas e Guia de Investimento',
   description: 'Guia completo de propriedades de luxo em Lisboa 2026. Chiado, Príncipe Real, Estrela, Santos, Parque das Nações.',
-  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-01',
   dateModified: '2026-04-06',
-  url: 'https://agencygroup.pt/blog/propriedades-luxo-lisboa-2026',
+  url: 'https://www.agencygroup.pt/blog/propriedades-luxo-lisboa-2026',
   inLanguage: 'pt-PT',
   about: [
     { '@type': 'Thing', name: 'Propriedades luxo Lisboa' },
@@ -37,7 +44,6 @@ export default function ArticleLuxoLisboa() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ARTICLE_SCHEMA)}}/>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

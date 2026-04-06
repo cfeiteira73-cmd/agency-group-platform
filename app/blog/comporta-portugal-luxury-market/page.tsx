@@ -5,12 +5,17 @@ export const metadata: Metadata = {
   title: "Comporta Portugal Luxury Real Estate 2026: Europe's Last Unspoiled Paradise · Agency Group",
   description: 'Comporta property market 2026: prices €4,200–€8,000/m², +22% YoY appreciation, rental yields 4.5–6.2%, traditional palheiros and eco-villas. Complete guide for luxury buyers. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/comporta-portugal-luxury-market' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/comporta-portugal-luxury-market',
+    languages: {
+      'x-default': 'https://www.agencygroup.pt/blog/comporta-portugal-luxury-market',
+    },
+  },
   openGraph: {
     title: "Comporta Portugal Luxury Real Estate 2026: Europe's Last Unspoiled Paradise",
     description: 'Why hedge fund managers, family offices and celebrities are buying in Comporta. Prices, areas, investment data, legal restrictions and Agency Group listings.',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/comporta-portugal-luxury-market',
+    url: 'https://www.agencygroup.pt/blog/comporta-portugal-luxury-market',
     locale: 'en_US',
   },
 }
@@ -20,11 +25,11 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: "Comporta Portugal Luxury Real Estate 2026: Europe's Last Unspoiled Paradise",
   description: 'Complete guide to Comporta luxury property 2026. Prices €4,200–€8,000/m², key areas, rental yields 4.5–6.2%, legal restrictions, investment case and buying process.',
-  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
-  url: 'https://agencygroup.pt/blog/comporta-portugal-luxury-market',
+  url: 'https://www.agencygroup.pt/blog/comporta-portugal-luxury-market',
   inLanguage: 'en-US',
   about: [
     { '@type': 'Thing', name: 'Comporta portugal luxury real estate' },
@@ -38,7 +43,6 @@ export default function ArticleComportaLuxuryMarket() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ARTICLE_SCHEMA) }} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

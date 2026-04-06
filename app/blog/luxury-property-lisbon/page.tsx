@@ -5,12 +5,19 @@ export const metadata: Metadata = {
   title: 'Luxury Property in Lisbon 2026: Prices, Zones & Investment Guide · Agency Group',
   description: 'Complete guide to luxury property in Lisbon 2026. Chiado, Príncipe Real, Estrela, Santos. Prices, rental yields, buying process and market outlook for foreign investors. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/luxury-property-lisbon' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
+    languages: {
+      'en': 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
+      'pt': 'https://www.agencygroup.pt/blog/propriedades-luxo-lisboa-2026',
+      'x-default': 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
+    },
+  },
   openGraph: {
     title: 'Luxury Property in Lisbon 2026: Prices, Zones & Investment Guide',
     description: 'Chiado €7k/m², Príncipe Real €7.4k/m², yields 4.2–4.5%. Complete guide for foreign buyers. Lisbon top 5 luxury globally (Savills 2026).',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/luxury-property-lisbon',
+    url: 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
     locale: 'en_US',
   },
 }
@@ -20,11 +27,11 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Luxury Property in Lisbon 2026: Prices, Zones & Investment Guide',
   description: 'Complete guide to luxury property in Lisbon. Chiado, Príncipe Real, Estrela, Santos. Prices, yields, buying process.',
-  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
-  url: 'https://agencygroup.pt/blog/luxury-property-lisbon',
+  url: 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
   inLanguage: 'en-US',
   about: [
     { '@type': 'Thing', name: 'Luxury property Lisbon' },
@@ -38,7 +45,6 @@ export default function ArticleLuxuryPropertyLisbon() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ARTICLE_SCHEMA) }} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

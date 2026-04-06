@@ -5,7 +5,12 @@ import { BreadcrumbJsonLd } from '@/app/components/BreadcrumbJsonLd'
 export const metadata: Metadata = {
   title: 'Blog · Mercado Imobiliário Portugal 2026 · Agency Group',
   description: 'Análises de mercado, guias de compra, NHR/IFICI, zonas premium Portugal 2026. Lisboa, Cascais, Comporta, Algarve, Madeira. AMI 22506.',
-  alternates: { canonical: 'https://www.agencygroup.pt/blog' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog',
+    languages: {
+      'x-default': 'https://www.agencygroup.pt/blog',
+    },
+  },
   openGraph: {
     title: 'Blog · Mercado Imobiliário Portugal 2026',
     description: 'Análises de mercado, guias de compra e fiscalidade para investidores em Portugal.',
@@ -65,7 +70,6 @@ export default function BlogPage() {
         { name: 'Blog', url: 'https://www.agencygroup.pt/blog' },
       ]} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.94);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

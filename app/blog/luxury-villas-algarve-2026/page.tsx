@@ -5,12 +5,17 @@ export const metadata: Metadata = {
   title: 'Luxury Villas in Algarve 2026: Prices, Golf Resorts & Investment Guide · Agency Group',
   description: 'Complete guide to buying luxury villas in the Algarve in 2026. Vale do Lobo, Quinta do Lago, Vilamoura prices, rental yields 5.5–6.5%, golf resorts, and step-by-step buying process. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/luxury-villas-algarve-2026' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/luxury-villas-algarve-2026',
+    languages: {
+      'x-default': 'https://www.agencygroup.pt/blog/luxury-villas-algarve-2026',
+    },
+  },
   openGraph: {
     title: 'Luxury Villas in Algarve 2026: Prices, Golf Resorts & Investment Guide',
     description: 'Vale do Lobo, Quinta do Lago, Vilamoura — real prices, rental yields up to 6.5%, and the complete buying guide for the Algarve luxury market.',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/luxury-villas-algarve-2026',
+    url: 'https://www.agencygroup.pt/blog/luxury-villas-algarve-2026',
     locale: 'en_US',
   },
 }
@@ -20,11 +25,11 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Luxury Villas in Algarve 2026: Prices, Golf Resorts & Investment Guide',
   description: 'Complete guide to buying luxury villas in the Algarve in 2026. Vale do Lobo, Quinta do Lago, Vilamoura, rental yields 5.5–6.5%.',
-  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
-  url: 'https://agencygroup.pt/blog/luxury-villas-algarve-2026',
+  url: 'https://www.agencygroup.pt/blog/luxury-villas-algarve-2026',
   inLanguage: 'en-US',
   about: [
     { '@type': 'Thing', name: 'Luxury villas Algarve' },
@@ -40,7 +45,6 @@ export default function ArticleLuxuryVillasAlgarve() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ARTICLE_SCHEMA) }} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

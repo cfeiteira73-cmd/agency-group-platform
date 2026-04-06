@@ -5,12 +5,20 @@ export const metadata: Metadata = {
   title: 'Buy Property in Cascais 2026: Prices, Zones & Expat Guide · Agency Group',
   description: 'Complete guide to buying property in Cascais 2026. Quinta da Marinha, Estoril, Birre prices. International schools, golf, expat community. Villas €1.5M–€8M. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/buy-property-cascais' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/buy-property-cascais',
+    languages: {
+      'en': 'https://www.agencygroup.pt/blog/buy-property-cascais',
+      'pt': 'https://www.agencygroup.pt/blog/apartamentos-luxo-cascais-comprar',
+      'fr': 'https://www.agencygroup.pt/blog/acheter-appartement-lisbonne-guide',
+      'x-default': 'https://www.agencygroup.pt/blog/buy-property-cascais',
+    },
+  },
   openGraph: {
     title: 'Buy Property in Cascais 2026: Prices, Zones & Expat Guide',
     description: 'Cascais €4,713/m² average. Quinta da Marinha to Estoril. International schools, golf, marina. 20 min from Lisbon. Complete buyer guide.',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/buy-property-cascais',
+    url: 'https://www.agencygroup.pt/blog/buy-property-cascais',
     locale: 'en_US',
   },
 }
@@ -20,11 +28,11 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Buy Property in Cascais 2026: Prices, Zones & Expat Guide',
   description: 'Complete guide to buying property in Cascais. Quinta da Marinha, Estoril, Birre. International schools, golf, expat community.',
-  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
-  url: 'https://agencygroup.pt/blog/buy-property-cascais',
+  url: 'https://www.agencygroup.pt/blog/buy-property-cascais',
   inLanguage: 'en-US',
   about: [
     { '@type': 'Thing', name: 'Buy property Cascais' },
@@ -38,7 +46,6 @@ export default function ArticleBuyPropertyCascais() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ARTICLE_SCHEMA) }} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

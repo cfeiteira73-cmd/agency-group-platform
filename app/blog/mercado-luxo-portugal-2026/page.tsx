@@ -5,12 +5,17 @@ export const metadata: Metadata = {
   title: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial · Agency Group',
   description: 'Lisboa Top 5 mundial Savills. Cascais €12.000/m². Comporta +28%. Análise completa do mercado prime 2026. Compradores internacionais, zonas emergentes e previsões. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/mercado-luxo-portugal-2026' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/mercado-luxo-portugal-2026',
+    languages: {
+      'x-default': 'https://www.agencygroup.pt/blog/mercado-luxo-portugal-2026',
+    },
+  },
   openGraph: {
     title: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial',
     description: 'Lisboa Top 5 mundial. Cascais €12.000/m². Comporta +28%. Análise completa.',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/mercado-luxo-portugal-2026',
+    url: 'https://www.agencygroup.pt/blog/mercado-luxo-portugal-2026',
   },
 }
 
@@ -41,10 +46,10 @@ export default function ArticleLuxo() {
         '@context': 'https://schema.org', '@type': 'Article',
         headline: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial',
         description: 'Lisboa Top 5 mundial Savills. Cascais €12.000/m². Comporta +28%. Análise completa do mercado prime 2026.',
-        author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-        publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+        author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+        publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
         datePublished: '2026-02-15', dateModified: '2026-03-30',
-        url: 'https://agencygroup.pt/blog/mercado-luxo-portugal-2026',
+        url: 'https://www.agencygroup.pt/blog/mercado-luxo-portugal-2026',
         inLanguage: 'pt-PT',
         about: [
           { '@type': 'Thing', name: 'Mercado de luxo Portugal' },
@@ -54,7 +59,6 @@ export default function ArticleLuxo() {
         ],
       })}}/>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

@@ -5,7 +5,12 @@ export const metadata: Metadata = {
   title: 'Mais-Valias Imobiliárias Portugal 2026: Calcular e Poupar · Agency Group',
   description: 'Como calcular as mais-valias na venda de imóvel em Portugal. Coeficientes AT 2026, isenção HPP, reinvestimento, taxa 28% não residentes. CIRS actualizado.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://www.agencygroup.pt/blog/mais-valias-imoveis-portugal-2026' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/mais-valias-imoveis-portugal-2026',
+    languages: {
+      'x-default': 'https://www.agencygroup.pt/blog/mais-valias-imoveis-portugal-2026',
+    },
+  },
   openGraph: {
     title: 'Mais-Valias Imobiliárias Portugal 2026: Calcular e Poupar',
     description: 'Fórmula CIRS, coeficientes AT 2026, isenção HPP, reinvestimento e taxa 28% para não residentes. Guia completo com exemplos práticos.',
@@ -36,7 +41,6 @@ export default function ArticleMaisValias() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ARTICLE_SCHEMA)}}/>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

@@ -5,12 +5,19 @@ export const metadata: Metadata = {
   title: 'NHR vs IFICI 2024: Guia Completo para Estrangeiros em Portugal · Agency Group',
   description: 'NHR clássico vs IFICI 2024 — diferenças, elegibilidade, poupança fiscal. Como se candidatar. Comparação com UK, EUA, França. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/nhr-ifici-guia-completo' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
+    languages: {
+      'en': 'https://www.agencygroup.pt/blog/nhr-portugal-2026-guide',
+      'pt': 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
+      'x-default': 'https://www.agencygroup.pt/blog/nhr-portugal-2026-guide',
+    },
+  },
   openGraph: {
     title: 'NHR vs IFICI 2024: Guia Completo',
     description: '10 anos de tributação reduzida. Processo, elegibilidade, comparação internacional.',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/nhr-ifici-guia-completo',
+    url: 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
   },
 }
 
@@ -23,11 +30,10 @@ export default function ArticleNHR() {
         author: { '@type': 'Organization', name: 'Agency Group' },
         publisher: { '@type': 'Organization', name: 'Agency Group' },
         datePublished: '2026-02-15', dateModified: '2026-03-30',
-        url: 'https://agencygroup.pt/blog/nhr-ifici-guia-completo',
+        url: 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
         inLanguage: 'pt-PT',
       })}}/>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}

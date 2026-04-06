@@ -5,12 +5,19 @@ export const metadata: Metadata = {
   title: 'Portugal vs Spain: Which Country for Property Investment in 2026? · Agency Group',
   description: 'Portugal vs Spain property investment comparison 2026. Prices, taxes, NHR vs Beckham Law, rental yields, Golden Visa, quality of life. Clear verdict for international buyers. AMI 22506.',
   robots: 'index, follow',
-  alternates: { canonical: 'https://agencygroup.pt/blog/portugal-vs-spain-property-2026' },
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/blog/portugal-vs-spain-property-2026',
+    languages: {
+      'en': 'https://www.agencygroup.pt/blog/portugal-vs-spain-property-2026',
+      'pt': 'https://www.agencygroup.pt/blog/mercado-imoveis-porto-2026',
+      'x-default': 'https://www.agencygroup.pt/blog/portugal-vs-spain-property-2026',
+    },
+  },
   openGraph: {
     title: 'Portugal vs Spain: Which Country for Property Investment in 2026?',
     description: 'Direct comparison: Lisbon vs Barcelona vs Madrid. Prices, taxes, NHR vs Beckham Law, yields. Portugal wins 7 of 10 criteria for €500K–€5M international buyers.',
     type: 'article',
-    url: 'https://agencygroup.pt/blog/portugal-vs-spain-property-2026',
+    url: 'https://www.agencygroup.pt/blog/portugal-vs-spain-property-2026',
     locale: 'en_US',
   },
 }
@@ -20,11 +27,11 @@ const ARTICLE_SCHEMA = {
   '@type': 'Article',
   headline: 'Portugal vs Spain: Which Country for Property Investment in 2026?',
   description: 'Direct comparison: Portugal vs Spain property investment. Prices, taxes, yields, quality of life. Verdict for international buyers.',
-  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://agencygroup.pt' },
-  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://agencygroup.pt' },
+  author: { '@type': 'Organization', name: 'Agency Group', url: 'https://www.agencygroup.pt' },
+  publisher: { '@type': 'Organization', name: 'Agency Group', '@id': 'https://www.agencygroup.pt' },
   datePublished: '2026-04-06',
   dateModified: '2026-04-06',
-  url: 'https://agencygroup.pt/blog/portugal-vs-spain-property-2026',
+  url: 'https://www.agencygroup.pt/blog/portugal-vs-spain-property-2026',
   inLanguage: 'en-US',
   about: [
     { '@type': 'Thing', name: 'Portugal vs Spain property' },
@@ -39,7 +46,6 @@ export default function ArticlePortugalVsSpain() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ARTICLE_SCHEMA) }} />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
         nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(28px);border-bottom:1px solid rgba(14,14,13,.08);display:flex;align-items:center;justify-content:space-between}
