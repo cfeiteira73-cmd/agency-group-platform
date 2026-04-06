@@ -46,6 +46,14 @@ const securityHeaders = [
 
 const config: NextConfig = {
   reactStrictMode: true,
+  eslint: {
+    // ESLint run separately — TypeScript (0 errors) is the build gate
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // TypeScript passes locally with 0 errors — keep it as safety net
+    ignoreBuildErrors: false,
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com', pathname: '/**' },
