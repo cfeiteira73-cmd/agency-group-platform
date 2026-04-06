@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useCallback, lazy, Suspense } from 'react'
+import { useState, useMemo, useCallback, lazy, Suspense, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { PROPERTIES, ZONAS, TIPOS, formatPriceFull } from './data'
 import FavoriteButton, { FavoritesDrawer } from './FavoriteButton'
@@ -678,7 +678,7 @@ function PropertyCard({
 }
 
 // ─── Shared select style ──────────────────────────────────────────────────────
-const selectStyle: React.CSSProperties = {
+const selectStyle: CSSProperties = {
   background: 'rgba(244,240,230,.06)',
   border: '1px solid rgba(244,240,230,.1)',
   color: 'rgba(244,240,230,.65)',
@@ -691,7 +691,7 @@ const selectStyle: React.CSSProperties = {
   minWidth: '130px',
 }
 
-const iconChipStyle: React.CSSProperties = {
+const iconChipStyle: CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   width: '24px', height: '24px',
   background: 'rgba(12,31,21,.65)', backdropFilter: 'blur(8px)',

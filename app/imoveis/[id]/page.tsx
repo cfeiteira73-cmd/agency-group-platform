@@ -6,6 +6,7 @@
 // Fonts: Cormorant · Jost · DM Mono (Google Fonts, inline import)
 
 import type { Metadata } from 'next'
+import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import { PROPERTIES, PROPERTY_IDS, ZONE_YIELDS, formatPriceFull } from '../data'
 import type { Property } from '../data'
@@ -145,7 +146,7 @@ function vistaLabel(v: string) {
   return m[v] ?? v
 }
 
-const BADGE_CSS: Record<string, React.CSSProperties> = {
+const BADGE_CSS: Record<string, CSSProperties> = {
   Destaque:     { background: '#c9a96e',               color: '#0c1f15' },
   'Off-Market': { background: 'rgba(28,74,53,.9)',      color: '#c9a96e', border: '1px solid rgba(201,169,110,.3)' },
   Novo:         { background: '#1c4a35',               color: '#c9a96e' },

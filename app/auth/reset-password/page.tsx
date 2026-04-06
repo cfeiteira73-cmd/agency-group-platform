@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type CSSProperties, type FormEvent } from 'react'
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('')
@@ -8,7 +8,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: '100%',
     padding: '14px 16px',
     background: 'rgba(255,255,255,0.06)',
@@ -22,7 +22,7 @@ export default function ResetPasswordPage() {
     boxSizing: 'border-box',
   }
 
-  const labelStyle: React.CSSProperties = {
+  const labelStyle: CSSProperties = {
     display: 'block',
     fontSize: '11px',
     fontFamily: "'DM Mono', monospace",
@@ -32,7 +32,7 @@ export default function ResetPasswordPage() {
     textTransform: 'uppercase',
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')

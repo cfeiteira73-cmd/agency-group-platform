@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type CSSProperties, type MouseEvent } from 'react'
 
 const STORAGE_KEY = 'ag_favorites_v1'
 
@@ -29,7 +29,7 @@ export function useFavorites() {
 interface FavoriteButtonProps {
   propertyId: string
   size?: 'sm' | 'md' | 'lg'
-  style?: React.CSSProperties
+  style?: CSSProperties
 }
 
 export default function FavoriteButton({ propertyId, size = 'md', style }: FavoriteButtonProps) {
@@ -47,7 +47,7 @@ export default function FavoriteButton({ propertyId, size = 'md', style }: Favor
   }
   const s = sizes[size]
 
-  function handleClick(e: React.MouseEvent) {
+  function handleClick(e: MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
     toggle(propertyId)

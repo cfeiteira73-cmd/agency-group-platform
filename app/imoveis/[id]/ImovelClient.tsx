@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PROPERTIES, ZONE_YIELDS, formatPriceFull } from '../data'
@@ -15,7 +15,7 @@ const FloorplanModal  = dynamic(() => import('../../components/FloorplanModal'),
 const PriceHistoryChart = dynamic(() => import('../../components/PriceHistoryChart'), { ssr: false })
 
 // ─── Badge colours ─────────────────────────────────────────────────────────────
-const BADGE_STYLE: Record<string, React.CSSProperties> = {
+const BADGE_STYLE: Record<string, CSSProperties> = {
   'Destaque':   { background: '#c9a96e', color: '#0c1f15' },
   'Off-Market': { background: 'rgba(28,74,53,.85)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.3)' },
   'Novo':       { background: '#1c4a35', color: '#c9a96e' },
@@ -1250,7 +1250,7 @@ export default function ImovelClient({ id }: { id: string }) {
 }
 
 // ─── Shared input style ───────────────────────────────────────────────────────
-const inputStyle: React.CSSProperties = {
+const inputStyle: CSSProperties = {
   width: '100%',
   background: 'rgba(244,240,230,.04)',
   border: '1px solid rgba(244,240,230,.1)',

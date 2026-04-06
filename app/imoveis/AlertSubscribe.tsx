@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 
 interface AlertCriteria {
   email: string
@@ -246,14 +246,14 @@ export default function AlertSubscribe({ onClose }: { onClose: () => void }) {
   )
 }
 
-const labelStyle: React.CSSProperties = {
+const labelStyle: CSSProperties = {
   display: 'block',
   fontFamily: "'DM Mono', monospace", fontSize: '.42rem',
   letterSpacing: '.12em', color: 'rgba(201,169,110,.6)',
   textTransform: 'uppercase', marginBottom: '6px',
 }
 
-const inputStyle: React.CSSProperties = {
+const inputStyle: CSSProperties = {
   width: '100%', background: 'rgba(255,255,255,.04)',
   border: '1px solid rgba(201,169,110,.2)',
   color: '#f4f0e6', padding: '10px 12px',

@@ -1,7 +1,7 @@
 'use client'
 
 import { signIn } from 'next-auth/react'
-import { useState, Suspense } from 'react'
+import { useState, Suspense, type CSSProperties, type FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 function LoginForm() {
@@ -15,7 +15,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/portal'
 
-  async function handleCredentials(e: React.FormEvent) {
+  async function handleCredentials(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
@@ -41,7 +41,7 @@ function LoginForm() {
     }
   }
 
-  async function submitLogin(e?: React.FormEvent) {
+  async function submitLogin(e?: FormEvent) {
     if (e) e.preventDefault()
     setLoading(true)
     setError('')
@@ -79,7 +79,7 @@ function LoginForm() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: '100%',
     padding: '14px 16px',
     background: 'rgba(255,255,255,0.06)',
@@ -93,7 +93,7 @@ function LoginForm() {
     boxSizing: 'border-box',
   }
 
-  const labelStyle: React.CSSProperties = {
+  const labelStyle: CSSProperties = {
     display: 'block',
     fontSize: '11px',
     fontFamily: "'DM Mono', monospace",

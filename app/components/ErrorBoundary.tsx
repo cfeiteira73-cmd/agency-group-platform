@@ -1,10 +1,10 @@
 'use client'
-import React from 'react'
+import React, { type ReactNode, type ErrorInfo } from 'react'
 
 interface State { hasError: boolean; error?: Error }
 
 export class ErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback?: React.ReactNode },
+  { children: ReactNode; fallback?: ReactNode },
   State
 > {
   constructor(props: any) {
@@ -14,7 +14,7 @@ export class ErrorBoundary extends React.Component<
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error }
   }
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
+  componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, info)
   }
   render() {

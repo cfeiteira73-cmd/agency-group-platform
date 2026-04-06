@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,7 +71,7 @@ const CurrencyContext = createContext<CurrencyContextValue>({
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
-export function CurrencyProvider({ children }: { children: React.ReactNode }) {
+export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<CurrencyCode>('EUR')
   const [rates, setRates] = useState<Record<CurrencyCode, number>>(DEFAULT_RATES)
   const [loading, setLoading] = useState(false)

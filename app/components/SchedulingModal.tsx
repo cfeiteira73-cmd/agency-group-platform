@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 
 interface SchedulingModalProps {
   propertyRef: string
@@ -46,7 +46,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
   const days = getNext14Days()
   const selectedDayObj = selectedDay !== null ? days[selectedDay] : null
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: '100%', padding: '12px 14px',
     background: 'rgba(255,255,255,.04)', border: '1px solid rgba(201,169,110,.2)',
     color: '#f4f0e6', fontFamily: "'Jost', sans-serif", fontSize: '.8rem',

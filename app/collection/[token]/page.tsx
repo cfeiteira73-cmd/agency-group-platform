@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useParams } from 'next/navigation'
 
 interface CollectionItem {
@@ -97,8 +97,8 @@ export default function CollectionSharePage() {
   }
 
   const S = {
-    page: { minHeight: '100vh', background: '#0c1f15', color: '#f4f0e6', fontFamily: "'Jost', sans-serif" } as React.CSSProperties,
-    wrap: { maxWidth: '900px', margin: '0 auto', padding: '48px 24px' } as React.CSSProperties,
+    page: { minHeight: '100vh', background: '#0c1f15', color: '#f4f0e6', fontFamily: "'Jost', sans-serif" } as CSSProperties,
+    wrap: { maxWidth: '900px', margin: '0 auto', padding: '48px 24px' } as CSSProperties,
   }
 
   if (loading) return (

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent } from 'react'
 
 interface Message { role: 'user' | 'assistant'; content: string }
 
@@ -225,7 +225,7 @@ export default function AvatarWidget() {
     }
   }, [messages, streaming, avatarReady, sessionId, speakText])
 
-  const handleKey = (e: React.KeyboardEvent) => {
+  const handleKey = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input) }
   }
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
   title: 'Imóveis Luxo Portugal 2026 | Lisboa, Cascais, Comporta | Agency Group',
@@ -15,6 +16,6 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.agencygroup.pt/imoveis' },
 }
 
-export default function ImoveisLayout({ children }: { children: React.ReactNode }) {
+export default function ImoveisLayout({ children }: { children: ReactNode }) {
   return <>{children}</>
 }

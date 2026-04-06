@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import type { ReactNode } from 'react'
 import { Cormorant, Jost, DM_Mono } from 'next/font/google'
 import './globals.css'
 import Script from 'next/script'
@@ -333,7 +334,7 @@ const schemaAggregateRatingExpanded = {
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`}>
       <head>
