@@ -59,6 +59,14 @@ const PortalVideoStudio    = dynamic(
   () => import('./components/PortalVideoStudio').then(m => ({ default: m.PortalVideoStudio })),
   { ssr: false },
 )
+const PortalPhotoScorer    = dynamic(
+  () => import('./components/PortalPhotoScorer').then(m => ({ default: m.PortalPhotoScorer })),
+  { ssr: false },
+)
+const PortalAgentAI        = dynamic(
+  () => import('./components/PortalAgentAI').then(m => ({ default: m.PortalAgentAI })),
+  { ssr: false },
+)
 
 export default function Portal() {
   // localStorage auth — no NextAuth
@@ -75,12 +83,13 @@ export default function Portal() {
   const [priceHistoryId, setPriceHistoryId] = useState<string | null>(null)
 
   // UI store — use selectors to avoid re-rendering on unrelated store changes (e.g. the 1s clock)
-  const darkMode      = useUIStore(s => s.darkMode)
-  const setDarkMode   = useUIStore(s => s.setDarkMode)
-  const section       = useUIStore(s => s.section)
-  const setSection    = useUIStore(s => s.setSection)
-  const sidebarOpen   = useUIStore(s => s.sidebarOpen)
+  const darkMode       = useUIStore(s => s.darkMode)
+  const setDarkMode    = useUIStore(s => s.setDarkMode)
+  const section        = useUIStore(s => s.section)
+  const setSection     = useUIStore(s => s.setSection)
+  const sidebarOpen    = useUIStore(s => s.sidebarOpen)
   const setSidebarOpen = useUIStore(s => s.setSidebarOpen)
+  const showNotifPanel = useUIStore(s => s.showNotifPanel)
 
   // Deal store
   const { deals, setDeals } = useDealStore()
@@ -889,7 +898,7 @@ export default function Portal() {
         html.dark .doc-item{border-bottom-color:rgba(244,240,230,.06)}
         html.dark .crm-contact-row{border-bottom-color:rgba(244,240,230,.06)}
         html.dark .crm-stat-card{background:#122a1a;border-color:rgba(201,169,110,.12)}
-        html.dark .deal-tab{color:rgba(244,240,230,.35)}.html.dark .deal-tab.active{color:#c9a96e;border-bottom-color:#c9a96e}
+        html.dark .deal-tab{color:rgba(244,240,230,.35)}html.dark .deal-tab.active{color:#c9a96e;border-bottom-color:#c9a96e}
         html.dark input,html.dark select,html.dark textarea{background:#0e2416!important;border-color:rgba(201,169,110,.2)!important;color:#f4f0e6!important}
         html.dark input::placeholder,html.dark textarea::placeholder{color:rgba(244,240,230,.3)!important}
         html.dark .portal-main [style*="background:#fff"]{background:#122a1a!important}
@@ -935,7 +944,7 @@ export default function Portal() {
             deals={deals}
             crmContacts={crmContacts}
             imoveisList={imoveisList}
-            showNotifPanel={useUIStore.getState().showNotifPanel}
+            showNotifPanel={showNotifPanel}
             setShowNotifPanel={(v) => useUIStore.setState({ showNotifPanel: v })}
             setActiveCrmId={setActiveCrmId}
             setCrmProfileTab={setCrmProfileTab}
@@ -1127,6 +1136,14 @@ export default function Portal() {
 
             {section === 'videoStudio' && (
               <PortalVideoStudio />
+            )}
+
+            {section === 'photos' && (
+              <PortalPhotoScorer />
+            )}
+
+            {section === 'agentai' && (
+              <PortalAgentAI />
             )}
 
             {/* Price history modal */}

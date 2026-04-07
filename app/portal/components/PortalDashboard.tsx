@@ -270,6 +270,7 @@ export default function PortalDashboard({
   onSetSection,
 }: PortalDashboardProps) {
   const { darkMode } = useUIStore()
+  const activeSection = useUIStore(s => s.section)
   const { deals } = useDealStore()
   const { crmContacts } = useCRMStore()
 
@@ -298,6 +299,7 @@ export default function PortalDashboard({
   useStaggerIn(actionsGridRef, '[data-stagger]', { delay: 0.3 })
 
   useEffect(() => {
+    setCurrentTime(new Date())
     const t = setInterval(() => setCurrentTime(new Date()), 60000)
     return () => clearInterval(t)
   }, [])
@@ -315,11 +317,11 @@ export default function PortalDashboard({
       if (kpiRes.status === 'fulfilled' && kpiRes.value.ok) {
         setSupabaseConnected(true)
       } else {
-        console.warn('[Dashboard] /api/automation/daily-brief failed:', kpiRes.status === 'rejected' ? kpiRes.reason : kpiRes.value.status)
+        if (process.env.NODE_ENV === 'development') { console.warn('[Dashboard] /api/automation/daily-brief failed:', kpiRes.status === 'rejected' ? kpiRes.reason : kpiRes.value.status) }
       }
       // suppress unused warning — activityRes used for future enrichment
       if (activityRes.status === 'rejected') {
-        console.warn('[Dashboard] /api/crm?limit=5 failed:', activityRes.reason)
+        if (process.env.NODE_ENV === 'development') { console.warn('[Dashboard] /api/crm?limit=5 failed:', activityRes.reason) }
       }
 
       // ── Parse /api/health for contact count ────────────────────────────────
@@ -331,7 +333,7 @@ export default function PortalDashboard({
           setSupabaseConnected(true)
         } catch { /* ignore */ }
       } else {
-        console.warn('[Dashboard] /api/health failed:', healthRes.status === 'rejected' ? healthRes.reason : healthRes.value.status)
+        if (process.env.NODE_ENV === 'development') { console.warn('[Dashboard] /api/health failed:', healthRes.status === 'rejected' ? healthRes.reason : healthRes.value.status) }
       }
 
       // ── Parse /api/deals for real pipeline KPIs ────────────────────────────
@@ -354,10 +356,11 @@ export default function PortalDashboard({
           const totalPipelineValue = rawDeals.reduce((sum, d) => sum + parseValor(d.valor), 0)
           const activeDealCount = rawDeals.length
           const estimatedCommission = totalPipelineValue * 0.05
+          const currentMonthStr = new Date().toISOString().slice(0, 7)
           const closingThisMonth = rawDeals.filter(
             d =>
-              (d.escrituraDate && d.escrituraDate.includes('2026-04')) ||
-              (d.cpcvDate && d.cpcvDate.includes('2026-04'))
+              (d.escrituraDate && d.escrituraDate.includes(currentMonthStr)) ||
+              (d.cpcvDate && d.cpcvDate.includes(currentMonthStr))
           ).length
 
           if (activeDealCount > 0 || contactCount > 0) {
@@ -372,7 +375,7 @@ export default function PortalDashboard({
           }
         } catch { /* silently fall back */ }
       } else {
-        console.warn('[Dashboard] /api/deals failed:', dealsRes.status === 'rejected' ? dealsRes.reason : dealsRes.value.status)
+        if (process.env.NODE_ENV === 'development') { console.warn('[Dashboard] /api/deals failed:', dealsRes.status === 'rejected' ? dealsRes.reason : dealsRes.value.status) }
       }
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return
@@ -964,9 +967,9 @@ export default function PortalDashboard({
                 type="button"
                 style={{
                   padding: '5px 12px',
-                  background: 'rgba(244,240,230,.06)',
-                  border: '1px solid rgba(244,240,230,.1)',
-                  color: 'rgba(244,240,230,.5)',
+                  background: darkMode ? 'rgba(244,240,230,.06)' : 'rgba(14,14,13,.06)',
+                  border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`,
+                  color: darkMode ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.6)',
                   fontFamily: "'DM Mono',monospace",
                   fontSize: '.52rem',
                   cursor: 'pointer',
@@ -988,9 +991,9 @@ export default function PortalDashboard({
                 type="button"
                 style={{
                   padding: '5px 12px',
-                  background: 'rgba(244,240,230,.06)',
-                  border: '1px solid rgba(244,240,230,.1)',
-                  color: 'rgba(244,240,230,.5)',
+                  background: darkMode ? 'rgba(244,240,230,.06)' : 'rgba(14,14,13,.06)',
+                  border: `1px solid ${darkMode ? 'rgba(244,240,230,.1)' : 'rgba(14,14,13,.1)'}`,
+                  color: darkMode ? 'rgba(244,240,230,.5)' : 'rgba(14,14,13,.6)',
                   fontFamily: "'DM Mono',monospace",
                   fontSize: '.52rem',
                   cursor: 'pointer',
@@ -1140,8 +1143,8 @@ export default function PortalDashboard({
                 <button
                   type="button"
                   style={{
-                    width: '22px',
-                    height: '22px',
+                    width: '44px',
+                    height: '44px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1149,7 +1152,7 @@ export default function PortalDashboard({
                     border: `1px solid ${borderCol}`,
                     color: mutedText,
                     fontFamily: "'DM Mono',monospace",
-                    fontSize: '.52rem',
+                    fontSize: '.75rem',
                     cursor: 'pointer',
                     flexShrink: 0,
                     lineHeight: 1,
@@ -2439,7 +2442,12 @@ export default function PortalDashboard({
           { label: 'CRM', sec: 'crm' as SectionId, svg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
           { label: 'Pipeline', sec: 'pipeline' as SectionId, svg: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
           { label: 'Radar', sec: 'radar' as SectionId, svg: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-        ] as { label: string; sec: SectionId; svg: string }[]).map(tab => (
+        ] as { label: string; sec: SectionId; svg: string }[]).map(tab => {
+          const isActive = activeSection === tab.sec
+          const activeColor = darkMode ? '#c9a96e' : '#1c4a35'
+          const inactiveColor = darkMode ? 'rgba(244,240,230,.45)' : 'rgba(14,14,13,.45)'
+          const tabColor = isActive ? activeColor : inactiveColor
+          return (
           <button
             type="button"
             key={tab.sec}
@@ -2453,18 +2461,20 @@ export default function PortalDashboard({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: darkMode ? '#6fcf97' : '#1c4a35',
+              color: tabColor,
+              opacity: isActive ? 1 : 0.45,
             }}
             onClick={() => onSetSection(tab.sec)}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
               <path d={tab.svg} />
             </svg>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', color: darkMode ? '#f4f0e6' : '#0e0e0d' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', color: tabColor }}>
               {tab.label}
             </span>
           </button>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
