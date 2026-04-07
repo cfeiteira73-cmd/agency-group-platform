@@ -14,7 +14,7 @@ function SofiaAvatar({ size = 44, open = false }: { size?: number; open?: boolea
   return !imgError ? (
     /* eslint-disable-next-line @next/next/no-img-element */
     <img
-      src="/sofia.jpg"
+      src="/sofia.avif"
       alt="Sofia — Agency Group AI"
       onError={() => setImgError(true)}
       style={{
