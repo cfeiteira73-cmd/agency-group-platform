@@ -656,6 +656,7 @@ export function PortalVideoStudio() {
               background: '#0d1f17',
               borderColor: 'rgba(28,74,53,0.4)',
               minHeight: '600px',
+              maxWidth: '100%',
             }}
           >
 
@@ -789,14 +790,22 @@ export function PortalVideoStudio() {
 
               {/* Content display */}
               {(hasContent || generating) && (
-                <div className="h-full flex flex-col">
+                <div className="h-full flex flex-col min-w-0">
                   <div
-                    className="flex-1 overflow-y-auto p-5"
+                    className="flex-1 overflow-y-auto overflow-x-hidden p-5 min-w-0"
                     style={{ maxHeight: '480px' }}
                   >
-                    <pre
-                      className="whitespace-pre-wrap leading-relaxed text-sm font-sans"
-                      style={{ color: 'rgba(255,255,255,0.88)', lineHeight: '1.75' }}
+                    <div
+                      className="text-sm leading-relaxed"
+                      style={{
+                        color: 'rgba(255,255,255,0.88)',
+                        lineHeight: '1.75',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        maxWidth: '100%',
+                        fontFamily: 'inherit',
+                      }}
                     >
                       {activeContent}
                       {/* Blinking cursor while this tab is actively streaming */}
@@ -806,7 +815,7 @@ export function PortalVideoStudio() {
                           style={{ background: '#c9a96e', opacity: 0.8 }}
                         />
                       )}
-                    </pre>
+                    </div>
                     {!activeContent && generating && (
                       <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(201,169,110,0.5)' }}>
                         <div
