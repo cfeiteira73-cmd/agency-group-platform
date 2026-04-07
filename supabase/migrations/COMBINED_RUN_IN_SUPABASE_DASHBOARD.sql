@@ -122,10 +122,10 @@ CREATE OR REPLACE TRIGGER properties_embedding_trigger
 -- Sprint 9 Agent 3: Agentic AI CRM (Sofia autonomous loop)
 -- =============================================================================
 
--- CRM Tasks table
+-- CRM Tasks table (deals.id is BIGINT, not UUID)
 CREATE TABLE IF NOT EXISTS crm_tasks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  deal_id UUID REFERENCES deals(id) ON DELETE CASCADE,
+  deal_id BIGINT REFERENCES deals(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
   due_date TIMESTAMPTZ NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS crm_tasks (
 -- CRM Followups table (AI-generated messages)
 CREATE TABLE IF NOT EXISTS crm_followups (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  deal_id UUID REFERENCES deals(id) ON DELETE CASCADE,
+  deal_id BIGINT REFERENCES deals(id) ON DELETE CASCADE,
   channel TEXT CHECK (channel IN ('email', 'whatsapp', 'sms')) NOT NULL,
   message TEXT NOT NULL,
   language TEXT DEFAULT 'pt',
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS crm_followups (
 -- Deal stage history table (audit trail for AI stage changes)
 CREATE TABLE IF NOT EXISTS deal_stage_history (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  deal_id UUID REFERENCES deals(id) ON DELETE CASCADE,
+  deal_id BIGINT REFERENCES deals(id) ON DELETE CASCADE,
   stage TEXT NOT NULL,
   reason TEXT,
   changed_at TIMESTAMPTZ DEFAULT now(),
