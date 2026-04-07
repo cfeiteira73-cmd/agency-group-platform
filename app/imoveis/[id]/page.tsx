@@ -13,6 +13,7 @@ import type { Property } from '../data'
 import ImovelClient from './ImovelClient'
 import ShareButton from './ShareButton'
 import { BreadcrumbJsonLd } from '@/app/components/BreadcrumbJsonLd'
+import { buildOgImageUrl } from '@/lib/og'
 
 // ─── Static params ─────────────────────────────────────────────────────────────
 export function generateStaticParams() {
@@ -111,12 +112,31 @@ export async function generateMetadata(
       url: `https://www.agencygroup.pt/imoveis/${id}`,
       siteName: 'Agency Group',
       locale: 'pt_PT',
+      images: [{
+        url: buildOgImageUrl({
+          title: p.nome,
+          subtitle: `${p.bairro}, ${p.zona}`,
+          zone: p.zona,
+          price: formatPriceFull(p.preco),
+          type: 'property',
+        }),
+        width: 1200,
+        height: 630,
+        alt: `${p.nome} — Agency Group`,
+      }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description: desc,
       site: '@agencygroup_pt',
+      images: [buildOgImageUrl({
+        title: p.nome,
+        subtitle: `${p.bairro}, ${p.zona}`,
+        zone: p.zona,
+        price: formatPriceFull(p.preco),
+        type: 'property',
+      })],
     },
   }
 }

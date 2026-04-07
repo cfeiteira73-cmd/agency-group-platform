@@ -91,6 +91,17 @@ const config: NextConfig = {
         destination: 'https://www.agencygroup.pt/:path*',
         permanent: true,
       },
+      // Static OG image placeholders → dynamic generator (edge ImageResponse)
+      {
+        source: '/og-image.jpg',
+        destination: '/api/og',
+        permanent: false,
+      },
+      {
+        source: '/og-imoveis.jpg',
+        destination: '/api/og?title=Propriedades+de+Luxo+em+Portugal&subtitle=Lisboa+%C2%B7+Cascais+%C2%B7+Porto+%C2%B7+Algarve&type=property',
+        permanent: false,
+      },
     ]
   },
 }

@@ -58,14 +58,19 @@ export const metadata: Metadata = {
     siteName: 'Agency Group',
     locale: 'pt_PT',
     alternateLocale: ['en_US', 'fr_FR', 'de_DE', 'zh_CN', 'ar_SA'],
-    images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630, alt: 'Agency Group — Luxury Real Estate Portugal' }],
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Luxury+Real+Estate+Portugal&subtitle=Lisboa+%C2%B7+Cascais+%C2%B7+Porto+%C2%B7+Algarve+%C2%B7+Madeira',
+      width: 1200,
+      height: 630,
+      alt: 'Agency Group — Luxury Real Estate Portugal',
+    }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Agency Group · Luxury Real Estate Portugal',
     description: 'Boutique luxury real estate agency. Lisbon, Cascais, Comporta. Free AVM. AMI 22506.',
     site: '@agencygroup_pt',
-    images: ['https://www.agencygroup.pt/og-image.jpg'],
+    images: ['https://www.agencygroup.pt/api/og?title=Luxury+Real+Estate+Portugal&subtitle=Lisboa+%C2%B7+Cascais+%C2%B7+Porto+%C2%B7+Algarve+%C2%B7+Madeira'],
   },
   other: {
     'geo.region':   'PT',
