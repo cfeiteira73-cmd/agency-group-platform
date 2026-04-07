@@ -139,7 +139,7 @@ export default function PortalSofia({
   const { darkMode } = useUIStore()
   const { speak, toggleVoice, speaking: voiceSpeaking, voiceEnabled } = useSofiaVoice()
 
-  const [sofiaMode, setSofiaMode] = useState<SofiaMode>('avatar')
+  const [sofiaMode, setSofiaMode] = useState<SofiaMode>('chat')
   const [assistantMode, setAssistantMode] = useState<AssistantMode>('deal')
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = useState('')
