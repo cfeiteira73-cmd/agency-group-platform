@@ -64,6 +64,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/blog/regime-ifici-nhr-france-portugal`,    lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/acheter-appartement-porto-france`,    lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/vendre-bien-portugal-guide`,          lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    // ── Wave 8 Sprint 9 blog articles (EN×6/PT×2/FR×1/IT×1) ─────────────────────
+    { url: `${BASE}/blog/best-areas-lisbon-expats-2026`,        lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/vat-exemption-portugal-property`,      lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/luxury-apartments-porto-foz`,          lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/comprare-casa-portogallo-guida`,       lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/property-management-portugal`,         lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/acheter-villa-algarve-2026`,           lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/golden-coast-portugal-estoril`,        lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/investimento-madeira-2026`,            lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/portugal-residency-investment-2026`,   lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/blog/acores-imoveis-investimento`,          lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.7 },
     // /portal is disallowed in robots.txt — excluded from sitemap
   ]
 
