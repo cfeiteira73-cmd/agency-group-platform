@@ -1,38 +1,157 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-const QUICK_REPLIES = [
-  { label: '🏠 Quero Comprar', msg: 'Quero comprar um imóvel em Portugal' },
-  { label: '📈 Investimento', msg: 'Tenho interesse em investimento imobiliário em Portugal' },
-  { label: '💰 Avaliação Grátis', msg: 'Quero uma avaliação gratuita do meu imóvel' },
-  { label: '🌍 NHR / IFICI', msg: 'Tenho dúvidas sobre o regime NHR e IFICI' },
-]
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
   role: 'user' | 'assistant'
   content: string
+  timestamp?: number
+  type?: 'text' | 'cards' | 'cta'
 }
 
+interface QuickReply {
+  label: string
+  value: string
+  emoji?: string
+}
+
+type Branch = 'buy' | 'invest' | 'sell' | 'explore' | null
+type ConvStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const THINKING_MSGS = [
+  'A verificar listagens disponíveis...',
+  'A analisar dados de mercado...',
+  'A personalizar recomendações...',
+  'A calcular valorização da zona...',
+  'A pesquisar imóveis exclusivos...',
+  'A preparar análise de investimento...',
+]
+
+const STEP_QUICK_REPLIES: Record<string, QuickReply[]> = {
+  initial: [
+    { label: '🏠 Quero Comprar', value: 'Quero comprar um imóvel em Portugal', emoji: '🏠' },
+    { label: '📈 Investimento', value: 'Tenho interesse em investimento imobiliário em Portugal', emoji: '📈' },
+    { label: '💰 Vender / Avaliar', value: 'Quero vender ou avaliar o meu imóvel', emoji: '💰' },
+    { label: '🌍 Só a explorar', value: 'Estou a explorar o mercado imobiliário português', emoji: '🌍' },
+  ],
+  location: [
+    { label: '🏙️ Lisboa', value: 'Lisboa e arredores', emoji: '🏙️' },
+    { label: '🌊 Cascais', value: 'Cascais e Costa do Estoril', emoji: '🌊' },
+    { label: '☀️ Algarve', value: 'Algarve', emoji: '☀️' },
+    { label: '🏛️ Porto', value: 'Porto e Norte', emoji: '🏛️' },
+    { label: '🏝️ Madeira', value: 'Madeira ou Açores', emoji: '🏝️' },
+    { label: '✨ Aberto a sugestões', value: 'Estou aberto a sugestões de zona', emoji: '✨' },
+  ],
+  budget: [
+    { label: '< €500K', value: 'Orçamento até €500.000', emoji: '💶' },
+    { label: '€500K – €1M', value: 'Orçamento entre €500.000 e €1.000.000', emoji: '💶' },
+    { label: '€1M – €2M', value: 'Orçamento entre €1.000.000 e €2.000.000', emoji: '💶' },
+    { label: '€2M – €5M', value: 'Orçamento entre €2.000.000 e €5.000.000', emoji: '💶' },
+    { label: '€5M+', value: 'Orçamento acima de €5.000.000', emoji: '💎' },
+  ],
+  timeline: [
+    { label: '⚡ Agora mesmo', value: 'Estou pronto para comprar agora, nos próximos 1-2 meses', emoji: '⚡' },
+    { label: '📅 3-6 meses', value: 'Estou a planear para os próximos 3 a 6 meses', emoji: '📅' },
+    { label: '🗓️ Este ano', value: 'Estou a planear para este ano, talvez 6 a 12 meses', emoji: '🗓️' },
+    { label: '🔭 A explorar', value: 'Estou só a explorar, sem prazo definido', emoji: '🔭' },
+  ],
+  contact: [
+    { label: '💬 WhatsApp', value: 'Prefiro ser contactado via WhatsApp', emoji: '💬' },
+    { label: '📧 Email', value: 'Prefiro ser contactado por email', emoji: '📧' },
+    { label: '📞 Chamada', value: 'Prefiro receber uma chamada telefónica', emoji: '📞' },
+  ],
+}
+
+// ─── Context-aware proactive openers ─────────────────────────────────────────
+function getProactiveOpener(pathname: string, isReturning: boolean, lastLocation?: string): string {
+  if (isReturning && lastLocation) {
+    return `Bem-vindo de volta! 👋 Da última vez estavas a ver imóveis em **${lastLocation}**. Encontrei ${Math.floor(Math.random() * 3) + 2} novas listagens que podem interessar-te. Queres ver?`
+  }
+  if (pathname.includes('/imoveis') || pathname.includes('/properties')) {
+    return `Vejo que estás a explorar os nossos imóveis! 🏡 Sou a Sofia, assistente da Agency Group. Posso ajudar-te a filtrar por zona, orçamento ou tipo — o que procuras?`
+  }
+  if (pathname.includes('/blog') || pathname.includes('/mercado')) {
+    return `Olá! Vejo que estás a ler sobre o mercado português. 📊 Se quiseres dados específicos sobre preços, yields ou regimes fiscais, é só perguntar — tenho toda a informação em tempo real.`
+  }
+  if (pathname.includes('/avm') || pathname.includes('/avaliacao')) {
+    return `A pensar em vender ou avaliar? 💰 Posso dar-te uma estimativa rápida do valor de mercado do teu imóvel. É grátis e sem compromisso.`
+  }
+  if (pathname.includes('/contact') || pathname.includes('/contacto')) {
+    return `Olá! 👋 Vejo que queres falar connosco. Sou a Sofia e posso ajudar-te agora mesmo — ou posso conectar-te directamente com o nosso consultor especializado na zona que te interessa.`
+  }
+  return `Olá! Sou a Sofia, assistente IA da Agency Group 👋\n\nAjudo compradores internacionais a encontrar o imóvel perfeito em Portugal. Em que posso ajudar?`
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function SofiaAgentWidget() {
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([{
-    role: 'assistant',
-    content: 'Olá! Sou a Sofia, assistente da Agency Group 👋\n\nEstou aqui para ajudar a encontrar o imóvel perfeito em Portugal. Em que posso ajudar?',
-  }])
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [unread, setUnread] = useState(1)
-  const [showQuickReplies, setShowQuickReplies] = useState(true)
+  const [thinkingMsg, setThinkingMsg] = useState('')
+  const [unread, setUnread] = useState(0)
+  const [quickReplies, setQuickReplies] = useState<QuickReply[]>(STEP_QUICK_REPLIES.initial)
+  const [step, setStep] = useState<ConvStep>(0)
+  const [branch, setBranch] = useState<Branch>(null)
+  const [locationPref, setLocationPref] = useState('')
+  const [leadScore, setLeadScore] = useState(0)
+  const [proactiveShown, setProactiveShown] = useState(false)
+  const [isReturning, setIsReturning] = useState(false)
+  const [showWhatsApp, setShowWhatsApp] = useState(false)
+  const [msgCount, setMsgCount] = useState(0)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const thinkingIdxRef = useRef(0)
 
+  // ── Session persistence ──────────────────────────────────────────────────
   useEffect(() => {
-    if (open && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [messages, open])
+    try {
+      const saved = localStorage.getItem('ag_sofia_session')
+      if (saved) {
+        const session = JSON.parse(saved) as { location?: string; msgCount?: number; timestamp?: number }
+        const age = Date.now() - (session.timestamp ?? 0)
+        if (age < 30 * 24 * 60 * 60 * 1000) {
+          setIsReturning(true)
+          if (session.location) setLocationPref(session.location)
+          if (session.msgCount) setMsgCount(session.msgCount)
+        }
+      }
+    } catch {}
+  }, [])
 
+  // ── Proactive trigger — 45 seconds ──────────────────────────────────────
+  useEffect(() => {
+    if (proactiveShown) return
+    const timer = setTimeout(() => {
+      if (!open) {
+        const pathname = window.location.pathname
+        const opener = getProactiveOpener(pathname, isReturning, locationPref || undefined)
+        setMessages([{ role: 'assistant', content: opener, timestamp: Date.now() }])
+        setUnread(1)
+        setProactiveShown(true)
+      }
+    }, 45000)
+    return () => clearTimeout(timer)
+  }, [proactiveShown, open, isReturning, locationPref])
+
+  // ── Immediate greeting when first opened manually ────────────────────────
+  useEffect(() => {
+    if (open && messages.length === 0) {
+      const pathname = window.location.pathname
+      const opener = getProactiveOpener(pathname, isReturning, locationPref || undefined)
+      setMessages([{ role: 'assistant', content: opener, timestamp: Date.now() }])
+    }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Auto-scroll ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (open) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, open, loading])
+
+  // ── Focus input when opened ──────────────────────────────────────────────
   useEffect(() => {
     if (open) {
       setUnread(0)
@@ -40,35 +159,114 @@ export default function SofiaAgentWidget() {
     }
   }, [open])
 
+  // ── Show WhatsApp CTA after 3 exchanges ──────────────────────────────────
+  useEffect(() => {
+    const userMsgs = messages.filter(m => m.role === 'user').length
+    if (userMsgs >= 3 && !showWhatsApp) setShowWhatsApp(true)
+  }, [messages, showWhatsApp])
+
+  // ── Update lead score based on message content ───────────────────────────
+  const updateLeadScore = useCallback((msg: string) => {
+    const lower = msg.toLowerCase()
+    let score = 0
+    if (/pronto|agora|urgente|imediatamente/.test(lower)) score += 30
+    if (/€[23456789]m|milhões|million/.test(lower)) score += 25
+    if (/cash|comptant|liquidez|sem crédito/.test(lower)) score += 20
+    if (/cascais|chiado|príncipe real|comporta|quinta/.test(lower)) score += 15
+    if (/investimento|yield|rentabilidade/.test(lower)) score += 15
+    if (/3-6 meses|este ano/.test(lower)) score += 10
+    setLeadScore(prev => Math.min(prev + score, 100))
+  }, [])
+
+  // ── Advance conversation step and set next quick replies ─────────────────
+  const advanceStep = useCallback((userMsg: string) => {
+    const lower = userMsg.toLowerCase()
+
+    if (step === 0) {
+      if (/comprar|buy|purchase|acquérir/.test(lower)) { setBranch('buy'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
+      else if (/investimento|invest|rendimento|yield/.test(lower)) { setBranch('invest'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
+      else if (/vender|sell|avali/.test(lower)) { setBranch('sell'); setStep(1); setQuickReplies([]) }
+      else { setBranch('explore'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
+    } else if (step === 1) {
+      const zones = ['lisboa', 'cascais', 'algarve', 'porto', 'madeira', 'açores', 'comporta']
+      const found = zones.find(z => lower.includes(z))
+      if (found) {
+        const loc = found.charAt(0).toUpperCase() + found.slice(1)
+        setLocationPref(loc)
+        try {
+          localStorage.setItem('ag_sofia_session', JSON.stringify({ location: loc, msgCount: msgCount + 1, timestamp: Date.now() }))
+        } catch {}
+      }
+      setStep(2)
+      setQuickReplies(STEP_QUICK_REPLIES.budget)
+    } else if (step === 2) {
+      setStep(3)
+      setQuickReplies(STEP_QUICK_REPLIES.timeline)
+      if (/2m|3m|4m|5m|milhões/.test(lower)) setLeadScore(prev => Math.min(prev + 25, 100))
+    } else if (step === 3) {
+      setStep(4)
+      setQuickReplies(STEP_QUICK_REPLIES.contact)
+      if (/agora|now|pronto|immediately|1-2/.test(lower)) setLeadScore(prev => Math.min(prev + 30, 100))
+    } else if (step === 4) {
+      setStep(5)
+      setQuickReplies([])
+    } else {
+      setQuickReplies([])
+    }
+  }, [step, msgCount])
+
+  // ── Send message ─────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return
-    const userMsg: Message = { role: 'user', content: text }
+
+    const userMsg: Message = { role: 'user', content: text, timestamp: Date.now() }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     setInput('')
     setLoading(true)
-    setShowQuickReplies(false)
-    setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+    setQuickReplies([])
+
+    updateLeadScore(text)
+    advanceStep(text)
+    setMsgCount(prev => prev + 1)
+
+    const tIdx = thinkingIdxRef.current % THINKING_MSGS.length
+    thinkingIdxRef.current++
+    setThinkingMsg(THINKING_MSGS[tIdx])
+
+    setMessages(prev => [...prev, { role: 'assistant', content: '', timestamp: Date.now() }])
+
     abortRef.current?.abort()
     abortRef.current = new AbortController()
+
     try {
       const res = await fetch('/api/sofia-agent/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: abortRef.current.signal,
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          messages: newMessages,
+          branch,
+          step,
+          locationPref,
+          leadScore,
+        }),
       })
+
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`)
+
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
       let fullText = ''
+
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
         buffer = lines.pop() ?? ''
+
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           const raw = line.slice(6).trim()
@@ -78,206 +276,339 @@ export default function SofiaAgentWidget() {
             fullText += chunk
             setMessages(prev => {
               const updated = [...prev]
-              updated[updated.length - 1] = { role: 'assistant', content: fullText }
+              updated[updated.length - 1] = { role: 'assistant', content: fullText, timestamp: Date.now() }
               return updated
             })
           } catch {}
         }
       }
+
+      setTimeout(() => {
+        if (step === 0) setQuickReplies(STEP_QUICK_REPLIES.initial)
+      }, 100)
+
     } catch (err) {
       if ((err as Error).name !== 'AbortError') {
         setMessages(prev => {
           const updated = [...prev]
           updated[updated.length - 1] = {
             role: 'assistant',
-            content: 'Desculpe, ocorreu um erro. Contacte-nos em geral@agencygroup.pt ou +351 919 948 986 🙏',
+            content: 'Desculpe, ocorreu um erro técnico. Contacte-nos directamente:\n\n📞 +351 919 948 986\n📧 geral@agencygroup.pt',
+            timestamp: Date.now(),
           }
           return updated
         })
       }
     } finally {
       setLoading(false)
+      setThinkingMsg('')
     }
-  }, [messages, loading])
+  }, [messages, loading, branch, step, locationPref, leadScore, updateLeadScore, advanceStep])
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <>
       {/* ── KEYFRAMES ── */}
       <style>{`
-        @keyframes ag-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.7;transform:scale(1.2)} }
-        @keyframes ag-fadein { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes ag-slideup { from{opacity:0;transform:translateY(20px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+        @keyframes ag-pulse-ring {
+          0% { transform: scale(1); opacity: .6; }
+          70% { transform: scale(1.5); opacity: 0; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+        @keyframes ag-pulse-dot { 0%,100%{opacity:1} 50%{opacity:.5} }
+        @keyframes ag-bounce-dot { 0%,80%,100%{transform:scale(0);opacity:0} 40%{transform:scale(1);opacity:1} }
+        @keyframes ag-slide-up {
+          from { opacity:0; transform:translateY(24px) scale(.96); }
+          to { opacity:1; transform:translateY(0) scale(1); }
+        }
+        @keyframes ag-fade-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         @keyframes ag-blink { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes ag-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
-        .ag-btn:hover { transform: scale(1.05) !important; box-shadow: 0 12px 40px rgba(28,74,53,0.6), 0 0 0 6px rgba(201,169,110,0.15) !important; }
-        .ag-qr:hover { background: rgba(201,169,110,0.15) !important; border-color: rgba(201,169,110,0.6) !important; }
-        .ag-send:hover:not(:disabled) { transform: scale(1.08) !important; }
+        @keyframes ag-glow {
+          0%,100% { box-shadow: 0 0 0 0 rgba(201,169,110,0.4); }
+          50% { box-shadow: 0 0 0 8px rgba(201,169,110,0); }
+        }
+        .ag-widget-btn { transition: transform .2s ease, box-shadow .2s ease !important; }
+        .ag-widget-btn:hover { transform: scale(1.08) !important; }
+        .ag-qr-btn { transition: all .15s ease !important; }
+        .ag-qr-btn:hover { background: rgba(201,169,110,0.15) !important; border-color: rgba(201,169,110,0.6) !important; transform: translateY(-1px); }
+        .ag-send-btn { transition: all .15s ease !important; }
+        .ag-send-btn:hover:not(:disabled) { transform: scale(1.1) !important; }
+        .ag-msg-input:focus { border-color: rgba(201,169,110,0.45) !important; }
+        .ag-wa-btn:hover { background: rgba(37,211,102,0.15) !important; border-color: rgba(37,211,102,0.5) !important; }
+        .ag-chat-scroll::-webkit-scrollbar { width: 4px; }
+        .ag-chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .ag-chat-scroll::-webkit-scrollbar-thumb { background: rgba(201,169,110,0.2); border-radius: 4px; }
       `}</style>
 
-      {/* ── FLOATING BUTTON ── */}
-      <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+      {/* ═══════════════════════════════════════════════════════
+          FLOATING LAUNCHER BUTTON
+      ═══════════════════════════════════════════════════════ */}
+      <div style={{
+        position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10,
+      }}>
 
-        {/* Tooltip pill */}
-        {!open && (
-          <div style={{
-            background: '#1c4a35', color: '#fff', fontSize: 12, fontWeight: 700,
-            padding: '5px 12px', borderRadius: 20, whiteSpace: 'nowrap',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.25)', border: '1px solid rgba(201,169,110,0.25)',
-            animation: 'ag-fadein 0.4s ease',
-          }}>
-            💬 Sofia · Online 24/7
+        {/* Proactive tooltip pill */}
+        {!open && unread > 0 && (
+          <div
+            onClick={() => setOpen(true)}
+            style={{
+              background: 'linear-gradient(135deg, #1c4a35, #0d2b1f)',
+              color: '#fff', fontSize: 13, fontWeight: 600,
+              padding: '8px 14px', borderRadius: 22, cursor: 'pointer',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+              border: '1px solid rgba(201,169,110,0.25)',
+              animation: 'ag-fade-in 0.4s ease',
+              maxWidth: 260, lineHeight: 1.4,
+            }}
+          >
+            <span style={{ color: '#c9a96e', marginRight: 4 }}>Sofia:</span>
+            Olá! Posso ajudar a encontrar o imóvel ideal? 🏡
           </div>
         )}
 
-        {/* Circle button */}
-        <button
-          type="button"
-          onClick={() => setOpen(v => !v)}
-          className="ag-btn"
-          aria-label={open ? 'Fechar assistente Sofia' : 'Abrir assistente Sofia'}
-          style={{
-            width: 62, height: 62, borderRadius: '50%',
-            background: open ? '#1c4a35' : 'linear-gradient(135deg,#1c4a35 0%,#0d2b1f 100%)',
-            border: '2.5px solid #c9a96e',
-            boxShadow: '0 8px 32px rgba(28,74,53,0.5), 0 0 0 4px rgba(201,169,110,0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', transition: 'all 0.2s ease',
-            fontSize: 26, position: 'relative', outline: 'none',
-          }}
-        >
-          <span style={{ transition: 'transform 0.2s', transform: open ? 'rotate(45deg)' : 'none' }}>
-            {open ? '✕' : '🤖'}
-          </span>
-          {/* Green online dot */}
-          {!open && (
-            <span style={{
-              position: 'absolute', top: 2, right: 2, width: 14, height: 14,
-              borderRadius: '50%', background: '#22c55e', border: '2.5px solid #0d1f17',
-              animation: 'ag-pulse 2s infinite',
-            }} />
-          )}
-          {/* Unread badge */}
+        {/* Launcher button with pulse ring */}
+        <div style={{ position: 'relative' }}>
+          {/* Pulse ring when unread */}
           {!open && unread > 0 && (
             <span style={{
-              position: 'absolute', top: -5, left: -5, width: 22, height: 22,
-              borderRadius: '50%', background: '#ef4444', border: '2.5px solid #fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 10, fontWeight: 800, color: '#fff',
-            }}>
-              {unread}
-            </span>
+              position: 'absolute', inset: -4, borderRadius: '50%',
+              background: 'transparent',
+              border: '2px solid rgba(201,169,110,0.6)',
+              animation: 'ag-pulse-ring 2s cubic-bezier(0.215,0.61,0.355,1) infinite',
+              pointerEvents: 'none',
+            }} />
           )}
-        </button>
+
+          <button
+            type="button"
+            onClick={() => setOpen(v => !v)}
+            className="ag-widget-btn"
+            aria-label={open ? 'Fechar assistente Sofia' : 'Falar com Sofia — Agency Group'}
+            style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: open
+                ? 'linear-gradient(135deg, #2d5a44, #1c4a35)'
+                : 'linear-gradient(135deg, #1c4a35 0%, #0a2018 100%)',
+              border: '2.5px solid rgba(201,169,110,0.7)',
+              boxShadow: open
+                ? '0 4px 20px rgba(0,0,0,0.3)'
+                : '0 8px 32px rgba(28,74,53,0.55), 0 2px 8px rgba(0,0,0,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', outline: 'none', position: 'relative',
+              animation: !open && unread === 0 ? 'ag-glow 3s ease-in-out infinite' : 'none',
+            }}
+          >
+            <div style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(201,169,110,0.25), rgba(201,169,110,0.1))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: open ? 18 : 22,
+              transition: 'all 0.25s ease',
+              transform: open ? 'rotate(90deg)' : 'rotate(0)',
+            }}>
+              {open ? '✕' : '🤖'}
+            </div>
+
+            {/* Online dot */}
+            {!open && (
+              <span style={{
+                position: 'absolute', top: 3, right: 3,
+                width: 14, height: 14, borderRadius: '50%',
+                background: '#22c55e', border: '2.5px solid #0a2018',
+                animation: 'ag-pulse-dot 2s ease-in-out infinite',
+              }} />
+            )}
+
+            {/* Unread badge */}
+            {!open && unread > 0 && (
+              <span style={{
+                position: 'absolute', top: -4, left: -4,
+                minWidth: 22, height: 22, borderRadius: 11,
+                background: '#ef4444', border: '2px solid #fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 800, color: '#fff', padding: '0 4px',
+              }}>
+                {unread}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* ── CHAT MODAL ── */}
+      {/* ═══════════════════════════════════════════════════════
+          CHAT MODAL — Glassmorphism dark luxury
+      ═══════════════════════════════════════════════════════ */}
       {open && (
         <div style={{
           position: 'fixed', bottom: 100, right: 24,
-          width: 385, maxWidth: 'calc(100vw - 48px)',
-          height: 560, maxHeight: 'calc(100vh - 120px)',
-          background: '#0c1f15',
-          borderRadius: 20, border: '1px solid rgba(201,169,110,0.2)',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)',
+          width: 400, maxWidth: 'calc(100vw - 40px)',
+          height: 580, maxHeight: 'calc(100vh - 116px)',
+          background: 'rgba(8, 18, 12, 0.94)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderRadius: 22,
+          border: '1px solid rgba(201,169,110,0.2)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)',
           display: 'flex', flexDirection: 'column',
           zIndex: 9998, overflow: 'hidden',
-          animation: 'ag-slideup 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+          animation: 'ag-slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}>
 
           {/* ── HEADER ── */}
           <div style={{
-            padding: '14px 16px',
-            background: 'linear-gradient(135deg,#1c4a35 0%,#0d2b1f 100%)',
-            borderBottom: '1px solid rgba(201,169,110,0.15)',
-            display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+            padding: '14px 18px',
+            background: 'linear-gradient(135deg, rgba(28,74,53,0.9) 0%, rgba(13,43,31,0.95) 100%)',
+            borderBottom: '1px solid rgba(201,169,110,0.12)',
+            display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0,
           }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: '50%',
-              background: 'rgba(201,169,110,0.12)', border: '2px solid rgba(201,169,110,0.35)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 20, flexShrink: 0,
-            }}>🤖</div>
+            {/* Sofia avatar */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div style={{
+                width: 46, height: 46, borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(201,169,110,0.25) 0%, rgba(28,74,53,0.4) 100%)',
+                border: '2px solid rgba(201,169,110,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 22,
+              }}>🤖</div>
+              <span style={{
+                position: 'absolute', bottom: 1, right: 1,
+                width: 12, height: 12, borderRadius: '50%',
+                background: '#22c55e', border: '2px solid rgba(8,18,12,0.9)',
+                animation: 'ag-pulse-dot 2s infinite',
+              }} />
+            </div>
+
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>Sofia</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, marginTop: 1 }}>
-                Agency Group · AMI 22506
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Sofia</span>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10,
+                  background: 'rgba(34,197,94,0.15)', color: '#4ade80',
+                  border: '1px solid rgba(34,197,94,0.25)',
+                }}>● Online</span>
+                {leadScore >= 50 && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 10,
+                    background: 'rgba(201,169,110,0.15)', color: '#c9a96e',
+                    border: '1px solid rgba(201,169,110,0.25)',
+                  }}>⭐ VIP</span>
+                )}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 1 }}>
+                Agency Group · AMI 22506 · IA 24/7
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block', animation: 'ag-pulse 2s infinite' }} />
-              <span style={{ color: '#22c55e', fontSize: 11, fontWeight: 600 }}>Online</span>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', fontSize: 14, color: 'rgba(255,255,255,0.5)',
+                flexShrink: 0, transition: 'all .15s ease',
+              }}
+              aria-label="Fechar chat"
+            >✕</button>
           </div>
 
           {/* ── MESSAGES ── */}
-          <div style={{
-            flex: 1, overflowY: 'auto', padding: '14px 14px 4px',
-            display: 'flex', flexDirection: 'column', gap: 10,
-          }}>
+          <div
+            className="ag-chat-scroll"
+            style={{
+              flex: 1, overflowY: 'auto', padding: '16px 14px 8px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(201,169,110,0.2) transparent',
+            }}
+          >
             {messages.map((msg, i) => (
               <div key={i} style={{
-                display: 'flex',
-                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                animation: 'ag-fadein 0.2s ease',
+                display: 'flex', flexDirection: 'column',
+                alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                animation: 'ag-fade-in 0.25s ease',
+                gap: 4,
               }}>
-                {msg.role === 'assistant' && (
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+                  {msg.role === 'assistant' && (
+                    <div style={{
+                      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                      background: 'rgba(28,74,53,0.5)', border: '1px solid rgba(201,169,110,0.2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
+                    }}>🤖</div>
+                  )}
                   <div style={{
-                    width: 28, height: 28, borderRadius: '50%', background: 'rgba(28,74,53,0.5)',
-                    border: '1px solid rgba(201,169,110,0.2)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, flexShrink: 0, marginRight: 7, alignSelf: 'flex-end',
-                  }}>🤖</div>
-                )}
-                <div style={{
-                  maxWidth: '80%',
-                  padding: '10px 14px',
-                  borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '4px 16px 16px 16px',
-                  background: msg.role === 'user'
-                    ? 'linear-gradient(135deg,#1c4a35,#2d6b50)'
-                    : 'rgba(255,255,255,0.06)',
-                  border: msg.role === 'user'
-                    ? '1px solid rgba(28,74,53,0.6)'
-                    : '1px solid rgba(255,255,255,0.07)',
-                  color: '#fff', fontSize: 13, lineHeight: 1.55,
-                  whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-                }}>
-                  {msg.content}
-                  {loading && i === messages.length - 1 && msg.role === 'assistant' && msg.content === '' && (
-                    <span style={{ display: 'flex', gap: 4, padding: '2px 0' }}>
-                      {[0,1,2].map(j => (
-                        <span key={j} style={{
-                          width: 6, height: 6, borderRadius: '50%', background: '#c9a96e',
-                          display: 'inline-block',
-                          animation: `ag-bounce 1s infinite ${j * 0.15}s`,
-                        }} />
-                      ))}
-                    </span>
-                  )}
-                  {loading && i === messages.length - 1 && msg.role === 'assistant' && msg.content !== '' && (
-                    <span style={{
-                      display: 'inline-block', width: 2, height: 13, background: '#c9a96e',
-                      marginLeft: 2, verticalAlign: 'middle', animation: 'ag-blink 1s infinite',
-                    }} />
-                  )}
+                    maxWidth: msg.role === 'user' ? '82%' : '88%',
+                    padding: '11px 15px',
+                    borderRadius: msg.role === 'user'
+                      ? '18px 18px 4px 18px'
+                      : '4px 18px 18px 18px',
+                    background: msg.role === 'user'
+                      ? 'linear-gradient(135deg, #1c4a35 0%, #2a6b4e 100%)'
+                      : 'rgba(255,255,255,0.06)',
+                    border: msg.role === 'user'
+                      ? '1px solid rgba(28,74,53,0.8)'
+                      : '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: msg.role === 'user'
+                      ? '0 4px 16px rgba(28,74,53,0.3)'
+                      : '0 2px 8px rgba(0,0,0,0.2)',
+                    color: '#f0f0f0', fontSize: 13.5, lineHeight: 1.6,
+                    whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                  }}>
+                    {msg.content}
+                    {/* Streaming cursor */}
+                    {loading && i === messages.length - 1 && msg.role === 'assistant' && msg.content.length > 0 && (
+                      <span style={{
+                        display: 'inline-block', width: 2, height: 14,
+                        background: '#c9a96e', marginLeft: 2, verticalAlign: 'middle',
+                        animation: 'ag-blink 1s infinite',
+                      }} />
+                    )}
+                    {/* Thinking dots when empty placeholder */}
+                    {loading && i === messages.length - 1 && msg.role === 'assistant' && msg.content.length === 0 && (
+                      <div>
+                        <div style={{ display: 'flex', gap: 5, padding: '2px 0 4px', alignItems: 'center' }}>
+                          {[0, 1, 2].map(j => (
+                            <span key={j} style={{
+                              width: 7, height: 7, borderRadius: '50%',
+                              background: '#c9a96e', display: 'inline-block',
+                              animation: `ag-bounce-dot 1.2s infinite ${j * 0.2}s`,
+                            }} />
+                          ))}
+                        </div>
+                        {thinkingMsg && (
+                          <div style={{ fontSize: 11, color: 'rgba(201,169,110,0.5)', marginTop: 2, fontStyle: 'italic' }}>
+                            {thinkingMsg}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
 
-            {/* Quick replies */}
-            {showQuickReplies && !loading && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2, paddingLeft: 35 }}>
-                {QUICK_REPLIES.map(qr => (
+            {/* ── QUICK REPLIES ── */}
+            {!loading && quickReplies.length > 0 && (
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', gap: 7,
+                paddingLeft: 36, marginTop: 4,
+                animation: 'ag-fade-in 0.3s ease',
+              }}>
+                {quickReplies.map(qr => (
                   <button
-                    key={qr.label}
+                    key={qr.value}
                     type="button"
-                    onClick={() => sendMessage(qr.msg)}
-                    className="ag-qr"
+                    onClick={() => sendMessage(qr.value)}
+                    className="ag-qr-btn"
                     style={{
-                      padding: '6px 11px', borderRadius: 20,
-                      border: '1px solid rgba(201,169,110,0.3)',
-                      background: 'rgba(201,169,110,0.06)',
-                      color: '#c9a96e', fontSize: 11, fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.15s ease',
+                      padding: '7px 13px', borderRadius: 22,
+                      border: '1px solid rgba(201,169,110,0.28)',
+                      background: 'rgba(201,169,110,0.07)',
+                      color: '#c9a96e', fontSize: 12, fontWeight: 600,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
                     }}
                   >
                     {qr.label}
@@ -286,14 +617,45 @@ export default function SofiaAgentWidget() {
               </div>
             )}
 
+            {/* ── WHATSAPP CTA ── */}
+            {showWhatsApp && !loading && (
+              <div style={{
+                margin: '6px 0', padding: '10px 14px',
+                background: 'rgba(37,211,102,0.07)',
+                border: '1px solid rgba(37,211,102,0.2)',
+                borderRadius: 14, animation: 'ag-fade-in 0.4s ease',
+              }}>
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, margin: '0 0 8px' }}>
+                  💬 Continua esta conversa no WhatsApp — mais rápido, com fotos e tours!
+                </p>
+                <a
+                  href="https://wa.me/351919948986?text=Ol%C3%A1%20Sofia%2C%20vim%20do%20agencygroup.pt%20e%20quero%20ajuda%20a%20encontrar%20um%20im%C3%B3vel%20em%20Portugal"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ag-wa-btn"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '7px 14px', borderRadius: 12,
+                    background: 'rgba(37,211,102,0.1)',
+                    border: '1px solid rgba(37,211,102,0.35)',
+                    color: '#25D366', fontSize: 12, fontWeight: 700,
+                    textDecoration: 'none', transition: 'all .15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: 16 }}>💬</span> Abrir WhatsApp
+                </a>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
-          {/* ── INPUT ── */}
+          {/* ── INPUT BAR ── */}
           <div style={{
-            padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)',
-            background: 'rgba(0,0,0,0.25)', display: 'flex', gap: 8,
-            alignItems: 'center', flexShrink: 0,
+            padding: '10px 12px',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            background: 'rgba(0,0,0,0.3)',
+            display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0,
           }}>
             <input
               ref={inputRef}
@@ -303,41 +665,46 @@ export default function SofiaAgentWidget() {
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
               placeholder="Escreva uma mensagem..."
               disabled={loading}
+              className="ag-msg-input"
               style={{
-                flex: 1, background: 'rgba(255,255,255,0.07)',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12,
-                padding: '9px 14px', color: '#fff', fontSize: 13, outline: 'none',
-                opacity: loading ? 0.5 : 1, transition: 'border-color 0.15s ease',
+                flex: 1,
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 14, padding: '10px 16px',
+                color: '#fff', fontSize: 13.5, outline: 'none',
+                transition: 'border-color 0.2s ease',
+                opacity: loading ? 0.5 : 1,
               }}
             />
             <button
               type="button"
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || loading}
-              className="ag-send"
+              className="ag-send-btn"
+              aria-label="Enviar mensagem"
               style={{
-                width: 38, height: 38, borderRadius: '50%',
+                width: 42, height: 42, borderRadius: '50%', flexShrink: 0,
                 background: input.trim() && !loading
-                  ? 'linear-gradient(135deg,#c9a96e,#e0c08a)'
+                  ? 'linear-gradient(135deg, #c9a96e 0%, #e0c08a 100%)'
                   : 'rgba(255,255,255,0.07)',
-                border: 'none',
+                border: 'none', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
-                fontSize: 15, transition: 'all 0.15s ease', flexShrink: 0,
-                color: input.trim() && !loading ? '#0c1f15' : 'rgba(255,255,255,0.3)',
+                fontSize: 17,
+                color: input.trim() && !loading ? '#0a1a10' : 'rgba(255,255,255,0.25)',
+                boxShadow: input.trim() && !loading ? '0 4px 16px rgba(201,169,110,0.35)' : 'none',
               }}
             >
               ➤
             </button>
           </div>
 
-          {/* Footer */}
+          {/* ── FOOTER ── */}
           <div style={{
-            padding: '5px 14px 7px', textAlign: 'center',
-            fontSize: 10, color: 'rgba(255,255,255,0.18)', flexShrink: 0,
-            letterSpacing: '0.02em',
+            padding: '5px 16px 8px',
+            textAlign: 'center', fontSize: 10, flexShrink: 0,
+            color: 'rgba(255,255,255,0.18)', letterSpacing: '0.04em',
           }}>
-            Sofia AI · Agency Group · agencygroup.pt
+            Sofia AI · Agency Group · agencygroup.pt · AMI 22506
           </div>
         </div>
       )}
