@@ -6,18 +6,40 @@ import { z } from 'zod'
 
 export const runtime = 'edge'
 
-// Rate limit: 30 messages/hour per IP
-const rateLimitMap = new Map<string, { count: number; reset: number }>()
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(ip)
-  if (!entry || now > entry.reset) {
-    rateLimitMap.set(ip, { count: 1, reset: now + 3600000 })
-    return true
+// ─── Rate limiting (Upstash Redis, serverless-safe) ───────────────────────────
+// Uses Upstash REST API directly — no SDK required, works on Vercel Edge runtime.
+// Falls back gracefully if env vars are not set (logs warning, allows request).
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean }> {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      const key = `rl:chat:${ip}`
+      const now = Date.now()
+      const window = 3600 // 1 hour in seconds
+      const limit = 30
+
+      const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          ['ZADD', key, now, `${now}`],
+          ['ZREMRANGEBYSCORE', key, '-inf', now - window * 1000],
+          ['ZCARD', key],
+          ['EXPIRE', key, window],
+        ]),
+      })
+      const results = await response.json() as Array<{ result: number }>
+      const count = results[2]?.result ?? 0
+      return { allowed: count <= limit }
+    } catch (e) {
+      console.warn('[RateLimit] Upstash error, allowing request:', e)
+      return { allowed: true }
+    }
   }
-  if (entry.count >= 30) return false
-  entry.count++
-  return true
+  console.warn('[RateLimit] UPSTASH env vars not set — rate limiting disabled. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel.')
+  return { allowed: true }
 }
 
 const client = new Anthropic({
@@ -258,8 +280,12 @@ const ChatRequestSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
-    if (!checkRateLimit(ip)) {
-      return new Response(JSON.stringify({ error: 'Rate limit: 30 mensagens/hora' }), { status: 429, headers: { 'Content-Type': 'application/json' } })
+    const { allowed } = await checkRateLimit(ip)
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Demasiados pedidos. Tenta novamente em 1 hora.' }),
+        { status: 429, headers: { 'Content-Type': 'application/json', 'X-RateLimit-Remaining': '0', 'Retry-After': '3600' } }
+      )
     }
 
     const rawBody = await req.json()
@@ -269,7 +295,7 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: `Validation failed: ${errors}` }), { status: 400, headers: { 'Content-Type': 'application/json' } })
     }
 
-    const { messages, language, sessionId = `anon-${Date.now()}` } = validation.data
+    const { messages, language, sessionId = crypto.randomUUID() } = validation.data
 
     // Validate message format
     const validMessages = messages.filter(

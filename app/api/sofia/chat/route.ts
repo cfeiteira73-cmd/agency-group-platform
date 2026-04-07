@@ -1,31 +1,47 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
 
-// ⚠️ TODO: Replace with Upstash Redis for proper serverless rate limiting
-// Current Map-based rate limiting is INEFFECTIVE on Vercel serverless
-// (each function invocation gets a fresh instance, Map is always empty)
-// Implementation: npm install @upstash/ratelimit @upstash/redis
-// See: https://github.com/upstash/ratelimit
+// ─── Rate limiting (Upstash Redis, serverless-safe) ───────────────────────────
+// Uses Upstash REST API directly — no SDK required, works on Vercel serverless.
+// Falls back gracefully if env vars are not set (logs warning, allows request).
 
-// ─── Rate limiting (in-memory, edge-compatible) ───────────────────────────────
-// Edge runtime: per-instance, not global — good enough for abuse protection
-const ipHits = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT = 30          // requests
-const RATE_WINDOW_MS = 3_600_000 // 1 hour
+async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
+  // Upstash Redis rate limiting (proper serverless-safe sliding window)
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      const key = `rl:sofia:${ip}`
+      const now = Date.now()
+      const window = 3600 // 1 hour in seconds
+      const limit = 30
 
-function checkRateLimit(ip: string): boolean {
-  const now   = Date.now()
-  const entry = ipHits.get(ip)
-
-  if (!entry || now > entry.resetAt) {
-    ipHits.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
-    return true
+      // Pipeline: ZADD → ZREMRANGEBYSCORE (expire old) → ZCARD → EXPIRE
+      const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          ['ZADD', key, now, `${now}`],
+          ['ZREMRANGEBYSCORE', key, '-inf', now - window * 1000],
+          ['ZCARD', key],
+          ['EXPIRE', key, window],
+        ]),
+      })
+      const results = await response.json() as Array<{ result: number }>
+      const count = results[2]?.result ?? 0
+      return { allowed: count <= limit, remaining: Math.max(0, limit - count) }
+    } catch (e) {
+      console.warn('[RateLimit] Upstash error, allowing request:', e)
+      return { allowed: true, remaining: 30 }
+    }
   }
-  if (entry.count >= RATE_LIMIT) return false
-  entry.count++
-  return true
+  // Fallback: no rate limiting (warn and allow)
+  console.warn('[RateLimit] UPSTASH env vars not set — rate limiting disabled. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in Vercel.')
+  return { allowed: true, remaining: 30 }
 }
 
 // ─── System Prompts ───────────────────────────────────────────────────────────
@@ -79,17 +95,19 @@ interface ChatRequestBody {
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // ── Rate limiting ─────────────────────────────────────────────────────────
+  // ── Rate limiting (Upstash Redis, serverless-safe) ───────────────────────
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
            ?? req.headers.get('x-real-ip')
            ?? 'unknown'
 
-  if (!checkRateLimit(ip)) {
+  const { allowed, remaining } = await checkRateLimit(ip)
+  if (!allowed) {
     return new Response(
-      JSON.stringify({ error: 'Limite de pedidos excedido. Tente novamente em 1 hora.' }),
-      { status: 429, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Demasiados pedidos. Tenta novamente em 1 hora.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json', 'X-RateLimit-Remaining': '0', 'Retry-After': '3600' } }
     )
   }
+  void remaining // suppress unused-var warning — available for future X-RateLimit-Remaining header
 
   // ── Parse body ────────────────────────────────────────────────────────────
   let body: ChatRequestBody
@@ -192,6 +210,15 @@ export async function POST(req: NextRequest) {
 
   const client = new Anthropic({ apiKey })
 
+  // Capture request-scoped values for persistence (captured before streaming)
+  const userMessage = String(validMessages[validMessages.length - 1]?.content ?? '').slice(0, 2000)
+  const sessionId = (safeContext as Record<string, unknown>)?.sessionId
+    ? String((safeContext as Record<string, unknown>).sessionId).slice(0, 128)
+    : `anon_${ip}`
+  const propertyRef = (safeContext as Record<string, unknown>)?.propertyRef
+    ? String((safeContext as Record<string, unknown>).propertyRef).slice(0, 128)
+    : null
+
   try {
     // Use create() with stream:true — AsyncIterable approach works in edge runtime
     const stream = await client.messages.create({
@@ -206,17 +233,38 @@ export async function POST(req: NextRequest) {
 
     const readable = new ReadableStream({
       async start(controller) {
+        const assistantChunks: string[] = []
         try {
           for await (const chunk of stream) {
             if (
               chunk.type === 'content_block_delta' &&
               chunk.delta.type === 'text_delta'
             ) {
+              assistantChunks.push(chunk.delta.text)
               const payload = JSON.stringify({ text: chunk.delta.text })
               controller.enqueue(encoder.encode(`data: ${payload}\n\n`))
             }
           }
           controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+
+          // Persist conversation to Supabase (non-blocking — fires after stream completes)
+          const assistantMessage = assistantChunks.join('').slice(0, 4000)
+          if (assistantMessage) {
+            supabaseAdmin
+              .from('sofia_conversations')
+              .insert({
+                session_id: sessionId,
+                user_message: userMessage,
+                assistant_message: assistantMessage,
+                mode: mode ?? 'buyer',
+                user_ip: ip !== 'unknown' ? ip : null,
+                property_ref: propertyRef,
+                context: Object.keys(safeContext).length > 0 ? safeContext : null,
+              })
+              .then(({ error }) => {
+                if (error) console.warn('[Sofia] Failed to persist conversation:', error.message)
+              })
+          }
         } catch (streamError) {
           console.error('[Sofia] Stream error:', streamError)
           const errPayload = JSON.stringify({ error: 'Erro durante geração de resposta.' })

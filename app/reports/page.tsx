@@ -28,11 +28,77 @@ const THEMATIC_REPORTS = [
 export default function ReportsPage() {
   return (
     <div style={{ background: '#0c1f15', minHeight: '100vh', color: '#f4f0e6' }}>
+      {/* Mobile nav styles */}
+      <style>{`
+        .rep-burger{display:none;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;background:none;border:none;cursor:pointer;padding:10px;z-index:1001;flex-shrink:0}
+        .rep-burger span{display:block;width:22px;height:1.5px;background:#c9a96e;transition:transform .3s,opacity .3s}
+        .rep-burger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+        .rep-burger.open span:nth-child(2){opacity:0}
+        .rep-burger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+        .rep-drawer{display:none;position:fixed;inset:0;z-index:999;pointer-events:none}
+        .rep-drawer.open{display:block;pointer-events:all}
+        .rep-drawer-ov{position:absolute;inset:0;background:rgba(4,10,6,.6);opacity:0;transition:opacity .35s;backdrop-filter:blur(4px)}
+        .rep-drawer.open .rep-drawer-ov{opacity:1}
+        .rep-drawer-panel{position:absolute;top:0;right:0;bottom:0;width:min(320px,85vw);background:#0c1f15;transform:translateX(100%);transition:transform .4s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;padding:80px 36px 48px;border-left:1px solid rgba(201,169,110,.12)}
+        .rep-drawer.open .rep-drawer-panel{transform:translateX(0)}
+        .rep-drawer-links{display:flex;flex-direction:column;gap:2px;margin-top:8px}
+        .rep-drawer-links a{font-family:'Cormorant',serif;font-size:1.8rem;font-weight:300;color:#f4f0e6;letter-spacing:-.01em;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);text-decoration:none;transition:color .2s,padding-left .2s}
+        .rep-drawer-links a:hover{color:#c9a96e;padding-left:8px}
+        .rep-drawer-links a:last-child{border-bottom:none}
+        .rep-drawer-cta{margin-top:auto;background:#c9a96e;color:#0c1f15;font-family:'DM Mono',monospace;font-size:.6rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding:16px 24px;text-align:center;text-decoration:none;display:block}
+        .rep-nav-links-desktop{display:flex}
+        @media(max-width:960px){
+          .rep-burger{display:flex!important}
+          .rep-nav-links-desktop{display:none!important}
+        }
+      `}</style>
+
       {/* NAV */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 900, background: 'rgba(12,31,21,.96)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(201,169,110,.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: '68px' }}>
         <Link href="/" style={{ fontFamily: "'Cormorant', serif", fontSize: '1.25rem', fontWeight: 300, color: '#f4f0e6', textDecoration: 'none', letterSpacing: '.08em' }}>Agency<span style={{ color: '#c9a96e' }}>Group</span></Link>
-        <Link href="/imoveis" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.55)', textDecoration: 'none', textTransform: 'uppercase' }}>← Ver Imóveis</Link>
+        <div className="rep-nav-links-desktop" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+          <Link href="/" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.55)', textDecoration: 'none', textTransform: 'uppercase' }}>Início</Link>
+          <Link href="/imoveis" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.55)', textDecoration: 'none', textTransform: 'uppercase' }}>Imóveis</Link>
+          <Link href="/blog" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.55)', textDecoration: 'none', textTransform: 'uppercase' }}>Blog</Link>
+          <Link href="/reports" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: '#c9a96e', textDecoration: 'none', textTransform: 'uppercase' }}>Reports</Link>
+        </div>
+        <button
+          className="rep-burger"
+          id="repBurger"
+          aria-label="Abrir menu"
+          aria-expanded="false"
+          type="button"
+        >
+          <span /><span /><span />
+        </button>
       </nav>
+
+      {/* Mobile drawer */}
+      <div className="rep-drawer" id="repDrawer">
+        <div className="rep-drawer-ov" id="repDrawerOv" />
+        <div className="rep-drawer-panel">
+          <nav className="rep-drawer-links" aria-label="Menu mobile">
+            <Link href="/">Início</Link>
+            <Link href="/imoveis">Imóveis</Link>
+            <Link href="/blog">Blog</Link>
+            <Link href="/reports">Reports</Link>
+          </nav>
+          <a href="https://wa.me/351919948986" target="_blank" rel="noopener noreferrer" className="rep-drawer-cta">Contacto →</a>
+        </div>
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function(){
+          var burger=document.getElementById('repBurger');
+          var drawer=document.getElementById('repDrawer');
+          var ov=document.getElementById('repDrawerOv');
+          if(!burger||!drawer)return;
+          function open(){burger.classList.add('open');drawer.classList.add('open');burger.setAttribute('aria-expanded','true');burger.setAttribute('aria-label','Fechar menu')}
+          function close(){burger.classList.remove('open');drawer.classList.remove('open');burger.setAttribute('aria-expanded','false');burger.setAttribute('aria-label','Abrir menu')}
+          burger.addEventListener('click',function(){drawer.classList.contains('open')?close():open()});
+          ov.addEventListener('click',close);
+          document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
+        })();
+      ` }} />
 
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '128px 40px 96px' }}>
         {/* Hero */}

@@ -563,7 +563,36 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'id or _email is required (query param or body field)' }, { status: 400, headers: rateLimitHeaders() })
     }
 
-    // Build update object — only allowed fields
+    // ── Field allowlist — prevent privilege escalation via mass-assignment ────
+    // Only portal-legitimate update fields are permitted. Sensitive fields such as
+    // gdpr_consent, lead_score_breakdown, clearbit_data, apollo_data, role, referrer_id
+    // and all id/timestamp fields are explicitly excluded.
+    const ALLOWED_PATCH_FIELDS = new Set([
+      'nome', 'email', 'telefone', 'whatsapp', 'budget_min', 'budget_max',
+      'nacionalidade', 'zona_interesse', 'tipologia', 'notas', 'tags',
+      'pipeline_stage', 'lead_score', 'lingua_preferida', 'nhr_interesse',
+      'fonte', 'proxima_acao', 'data_proxima_acao', 'investidor', 'status',
+      // DB column names (used by portal directly)
+      'full_name', 'phone', 'nationality', 'language', 'source', 'source_detail',
+      'lead_tier', 'assigned_to', 'preferred_locations', 'typologies_wanted',
+      'bedrooms_min', 'bedrooms_max', 'features_required', 'use_type', 'timeline',
+      'financing_type', 'motivation_score', 'last_contact_at', 'next_followup_at',
+      'opt_out_marketing', 'opt_out_whatsapp', 'linkedin_url', 'company',
+      'job_title', 'qualified_at', 'qualification_notes', 'ai_summary',
+      'ai_suggested_action',
+    ])
+
+    const safeInput: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(input)) {
+      if (ALLOWED_PATCH_FIELDS.has(key)) {
+        safeInput[key] = value
+      }
+    }
+    if (Object.keys(safeInput).length === 0) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400, headers: rateLimitHeaders() })
+    }
+
+    // Build update object — only allowed fields (typed against ContactUpdate schema)
     const ALLOWED_FIELDS: (keyof ContactUpdate)[] = [
       'full_name', 'email', 'phone', 'whatsapp', 'nationality', 'language',
       'role', 'status', 'lead_tier', 'lead_score', 'source', 'source_detail',
@@ -577,8 +606,8 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 
     const updates: ContactUpdate = { updated_at: new Date().toISOString() }
     for (const field of ALLOWED_FIELDS) {
-      if (field in input) {
-        (updates as Record<string, unknown>)[field] = input[field]
+      if (field in safeInput) {
+        (updates as Record<string, unknown>)[field] = safeInput[field]
       }
     }
     // Map portal Portuguese status values to Supabase enum values

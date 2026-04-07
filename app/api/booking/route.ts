@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { auth } from '@/auth'
 
 const RESEND_KEY  = process.env.RESEND_API_KEY ?? ''
 const FROM_EMAIL  = 'Agency Group <geral@agencygroup.pt>'
 const ADMIN_EMAIL = 'geral@agencygroup.pt'
+
+// Allowed origins for CSRF protection
+const ALLOWED_ORIGINS = [
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt',
+  'https://www.agencygroup.pt',
+  'https://agencygroup.vercel.app',
+]
 
 interface BookingPayload {
   nome: string
@@ -92,6 +100,18 @@ function buildAdminEmail(b: BookingPayload): string {
 }
 
 export async function POST(req: NextRequest) {
+  // ── CSRF protection — only allow requests from our own origin ──────────────
+  const origin = req.headers.get('origin')
+  if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // ── Auth check — session required to book a visit (portal feature) ─────────
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body: BookingPayload = await req.json()
     const { nome, telefone, propertyRef, date, time } = body

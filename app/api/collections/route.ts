@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import Anthropic from '@anthropic-ai/sdk'
 import { randomBytes } from 'crypto'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -39,15 +40,137 @@ interface Collection {
   updatedAt: string
 }
 
-// In-memory store (replace with Supabase in production)
+// ---------------------------------------------------------------------------
+// In-memory fallback store (used when Supabase is not configured)
+// NOTE: This is ephemeral — data is lost on Vercel restarts.
+// Run 20260407_004_collections.sql migration to enable persistent Supabase storage.
+// ---------------------------------------------------------------------------
 const collectionsStore = new Map<string, Collection>()
 
+// ---------------------------------------------------------------------------
+// Supabase helpers — graceful degradation if supabaseAdmin unavailable
+// ---------------------------------------------------------------------------
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToCollection(row: any): Collection {
+  return {
+    id: row.id,
+    name: row.name ?? 'Nova Colecção',
+    agentId: row.agent_id ?? '',
+    clientEmail: row.client_email ?? undefined,
+    clientName: row.client_name ?? undefined,
+    shareToken: row.share_token ?? row.id,
+    items: Array.isArray(row.items) ? row.items : [],
+    comments: Array.isArray(row.comments) ? row.comments : [],
+    aiProfile: row.ai_profile ?? undefined,
+    createdAt: row.created_at ?? new Date().toISOString(),
+    updatedAt: row.updated_at ?? new Date().toISOString(),
+  }
+}
+
+async function dbGetByToken(token: string): Promise<Collection | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('property_collections')
+      .select('*')
+      .eq('share_token', token)
+      .single()
+    if (error || !data) return null
+    // Increment view count (non-blocking)
+    supabaseAdmin
+      .from('property_collections')
+      .update({ views: (data.views ?? 0) + 1, last_viewed_at: new Date().toISOString() })
+      .eq('id', data.id)
+      .then(({ error: e }) => { if (e) console.warn('[Collections] View count update failed:', e.message) })
+    return rowToCollection(data)
+  } catch {
+    return null
+  }
+}
+
+async function dbGetByAgent(agentId: string): Promise<Collection[]> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('property_collections')
+      .select('*')
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: false })
+    if (error || !data) return []
+    return (data as unknown[]).map(rowToCollection)
+  } catch {
+    return []
+  }
+}
+
+async function dbUpsert(col: Collection): Promise<boolean> {
+  try {
+    const { error } = await supabaseAdmin
+      .from('property_collections')
+      .upsert({
+        id: col.id,
+        name: col.name,
+        agent_id: col.agentId,
+        client_email: col.clientEmail ?? null,
+        client_name: col.clientName ?? null,
+        share_token: col.shareToken,
+        items: col.items,
+        comments: col.comments,
+        ai_profile: col.aiProfile ?? null,
+      })
+    return !error
+  } catch {
+    return false
+  }
+}
+
+async function dbDelete(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabaseAdmin
+      .from('property_collections')
+      .delete()
+      .eq('id', id)
+    return !error
+  } catch {
+    return false
+  }
+}
+
+async function dbGetById(id: string): Promise<Collection | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('property_collections')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (error || !data) return null
+    return rowToCollection(data)
+  } catch {
+    return null
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Determine if Supabase is configured (service role key present)
+// ---------------------------------------------------------------------------
+function isSupabaseConfigured(): boolean {
+  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.NEXT_PUBLIC_SUPABASE_URL)
+}
+
+// ---------------------------------------------------------------------------
+// GET /api/collections — public share-token access + agent listing
+// ---------------------------------------------------------------------------
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const token = searchParams.get('token')
 
   // Public share-token access for clients — no auth required
   if (token) {
+    if (isSupabaseConfigured()) {
+      const col = await dbGetByToken(token)
+      if (!col) return NextResponse.json({ error: 'Colecção não encontrada' }, { status: 404 })
+      return NextResponse.json({ success: true, collection: col })
+    }
+    // Fallback: in-memory
     const col = [...collectionsStore.values()].find(c => c.shareToken === token)
     if (!col) return NextResponse.json({ error: 'Colecção não encontrada' }, { status: 404 })
     return NextResponse.json({ success: true, collection: col })
@@ -60,10 +183,20 @@ export async function GET(req: NextRequest) {
   }
 
   const agentId = searchParams.get('agentId') || 'carlos'
+
+  if (isSupabaseConfigured()) {
+    const cols = await dbGetByAgent(agentId)
+    return NextResponse.json({ success: true, collections: cols })
+  }
+
+  // Fallback: in-memory
   const cols = [...collectionsStore.values()].filter(c => c.agentId === agentId)
   return NextResponse.json({ success: true, collections: cols })
 }
 
+// ---------------------------------------------------------------------------
+// POST /api/collections — all mutating actions
+// ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user) {
@@ -72,6 +205,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { action, collectionId, data } = await req.json()
+    const useSupabase = isSupabaseConfigured()
 
     switch (action) {
       case 'create': {
@@ -88,66 +222,85 @@ export async function POST(req: NextRequest) {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }
-        collectionsStore.set(id, collection)
+        if (useSupabase) {
+          await dbUpsert(collection)
+        } else {
+          collectionsStore.set(id, collection)
+        }
         return NextResponse.json({ success: true, collection })
       }
 
       case 'add_property': {
-        const col = collectionsStore.get(collectionId)
+        let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Colecção não encontrada' }, { status: 404 })
         // Avoid duplicates
         const exists = col.items.find(i => i.property.id === data.property?.id)
         if (exists) return NextResponse.json({ success: true, collection: col, duplicate: true })
-        col.items.push({
-          property: data.property,
-          addedAt: new Date().toISOString(),
-          agentNote: data.agentNote,
-          interestScore: data.interestScore,
-        })
-        col.updatedAt = new Date().toISOString()
-        collectionsStore.set(collectionId, col)
+        col = {
+          ...col,
+          items: [...col.items, {
+            property: data.property,
+            addedAt: new Date().toISOString(),
+            agentNote: data.agentNote,
+            interestScore: data.interestScore,
+          }],
+          updatedAt: new Date().toISOString(),
+        }
+        if (useSupabase) { await dbUpsert(col) } else { collectionsStore.set(collectionId, col) }
         return NextResponse.json({ success: true, collection: col })
       }
 
       case 'update_item': {
-        const col = collectionsStore.get(collectionId)
+        let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-        const item = col.items.find(i => i.property.id === data.propertyId)
-        if (item) {
-          if (data.agentNote !== undefined) item.agentNote = data.agentNote
-          if (data.clientNote !== undefined) item.clientNote = data.clientNote
-          if (data.interestScore !== undefined) item.interestScore = data.interestScore
+        col = {
+          ...col,
+          items: col.items.map(i => {
+            if (i.property.id !== data.propertyId) return i
+            return {
+              ...i,
+              ...(data.agentNote !== undefined && { agentNote: data.agentNote }),
+              ...(data.clientNote !== undefined && { clientNote: data.clientNote }),
+              ...(data.interestScore !== undefined && { interestScore: data.interestScore }),
+            }
+          }),
+          updatedAt: new Date().toISOString(),
         }
-        col.updatedAt = new Date().toISOString()
-        collectionsStore.set(collectionId, col)
+        if (useSupabase) { await dbUpsert(col) } else { collectionsStore.set(collectionId, col) }
         return NextResponse.json({ success: true, collection: col })
       }
 
       case 'remove_property': {
-        const col = collectionsStore.get(collectionId)
+        let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-        col.items = col.items.filter(i => i.property.id !== data.propertyId)
-        col.updatedAt = new Date().toISOString()
-        collectionsStore.set(collectionId, col)
+        col = {
+          ...col,
+          items: col.items.filter(i => i.property.id !== data.propertyId),
+          updatedAt: new Date().toISOString(),
+        }
+        if (useSupabase) { await dbUpsert(col) } else { collectionsStore.set(collectionId, col) }
         return NextResponse.json({ success: true, collection: col })
       }
 
       case 'add_comment': {
-        const col = collectionsStore.get(collectionId)
+        let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-        col.comments.push({
-          author: data.author || 'Agente',
-          text: data.text,
-          timestamp: new Date().toISOString(),
-          language: data.language || 'pt',
-        })
-        col.updatedAt = new Date().toISOString()
-        collectionsStore.set(collectionId, col)
+        col = {
+          ...col,
+          comments: [...col.comments, {
+            author: data.author || 'Agente',
+            text: data.text,
+            timestamp: new Date().toISOString(),
+            language: data.language || 'pt',
+          }],
+          updatedAt: new Date().toISOString(),
+        }
+        if (useSupabase) { await dbUpsert(col) } else { collectionsStore.set(collectionId, col) }
         return NextResponse.json({ success: true, collection: col })
       }
 
       case 'ai_recommend': {
-        const col = collectionsStore.get(collectionId)
+        let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col || !col.items.length) return NextResponse.json({ success: true, recommendations: [], clientProfile: '', nextStep: '' })
 
         const prompt = `És Carlos Feiteira, consultor sénior da Agency Group (AMI 22506).
@@ -183,9 +336,9 @@ Responde em JSON:
         const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
         const result = JSON.parse(clean)
 
-        // Save AI profile to collection
-        col.aiProfile = result.clientProfile
-        collectionsStore.set(collectionId, col)
+        // Save AI profile back to collection
+        col = { ...col, aiProfile: result.clientProfile, updatedAt: new Date().toISOString() }
+        if (useSupabase) { await dbUpsert(col) } else { collectionsStore.set(collectionId, col) }
 
         return NextResponse.json({ success: true, ...result })
       }
@@ -204,7 +357,11 @@ Responde em JSON:
       }
 
       case 'delete': {
-        collectionsStore.delete(collectionId)
+        if (useSupabase) {
+          await dbDelete(collectionId)
+        } else {
+          collectionsStore.delete(collectionId)
+        }
         return NextResponse.json({ success: true })
       }
 
