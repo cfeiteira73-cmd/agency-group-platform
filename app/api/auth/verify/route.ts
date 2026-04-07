@@ -84,17 +84,51 @@ export async function GET(req: NextRequest) {
       return res
     }
 
-    // Direct browser navigation from email link — set cookie ON the redirect response
-    // so the browser has it before hitting /portal (avoids race condition with fetch+navigate).
-    // Use req.nextUrl.origin so the URL is always the public-facing origin
-    // (www.agencygroup.pt) rather than any internal Vercel proxy URL.
-    const redirectRes = NextResponse.redirect(new URL('/portal', req.nextUrl.origin))
-    redirectRes.cookies.set(cookieName, sessionCookieValue, cookieOptions)
-    // Prevent any intermediate proxy from caching this response and replaying
-    // a stale Set-Cookie header to a different user.
-    redirectRes.headers.set('Cache-Control', 'no-store, no-cache')
-    redirectRes.headers.set('Pragma', 'no-cache')
-    return redirectRes
+    // Direct browser navigation from email link.
+    //
+    // IMPORTANT: We return a 200 HTML page (NOT a 302 redirect) that carries
+    // the Set-Cookie header and immediately redirects via JavaScript/meta-refresh.
+    //
+    // Why not 302 + Set-Cookie?
+    //   Chrome enforces that cookies on redirect responses that pass through a
+    //   cross-origin redirect chain (agencygroup.pt → www.agencygroup.pt → verify)
+    //   may be silently dropped.  A plain 200 response with Set-Cookie is ALWAYS
+    //   honoured by every browser — the cookie is stored before the JS redirect runs.
+    //
+    // The CSP already allows 'unsafe-inline' scripts so the tiny redirect script
+    // is permitted.
+    const cookieHeaderValue = [
+      `${cookieName}=${sessionCookieValue}`,
+      'HttpOnly',
+      'SameSite=Lax',
+      `Max-Age=${SESSION_MAX_AGE}`,
+      'Path=/',
+      ...(IS_PRODUCTION ? ['Secure'] : []),
+    ].join('; ')
+
+    const html = `<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8"/>
+  <meta http-equiv="refresh" content="0;url=/portal"/>
+  <title>A entrar…</title>
+  <style>body{margin:0;background:#0c1f15;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#c9a96e;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase}</style>
+</head>
+<body>
+  <p>A entrar no portal…</p>
+  <script>window.location.replace('/portal');</script>
+</body>
+</html>`
+
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Set-Cookie': cookieHeaderValue,
+        'Cache-Control': 'no-store, no-cache',
+        'Pragma': 'no-cache',
+      },
+    })
   } catch {
     return NextResponse.json({ error: 'Token inválido' }, { status: 400 })
   }
