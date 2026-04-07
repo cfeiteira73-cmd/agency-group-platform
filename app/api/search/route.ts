@@ -12,6 +12,78 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+// ─── Semantic search via pgvector ────────────────────────────────────────────
+
+interface SemanticFilters {
+  zona?: string
+  precoMin?: number
+  precoMax?: number
+  quartos?: number
+}
+
+interface SemanticProperty {
+  id: string
+  nome: string
+  zona: string
+  preco: number
+  quartos: number
+  area: number
+  tipo: string
+  descricao: string
+  fotos: string[]
+  similarity: number
+}
+
+async function semanticSearch(query: string, filters: SemanticFilters): Promise<SemanticProperty[]> {
+  const key = process.env.OPENAI_API_KEY
+  if (!key || !query.trim()) return []
+
+  try {
+    // Generate query embedding
+    const embRes = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'text-embedding-3-small', input: query }),
+      signal: AbortSignal.timeout(3000),
+    })
+    if (!embRes.ok) return []
+    const embData = await embRes.json() as { data: Array<{ embedding: number[] }> }
+    const embedding = embData.data[0].embedding
+
+    const serviceClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data, error } = await serviceClient.rpc('search_properties_semantic', {
+      query_embedding: embedding,
+      similarity_threshold: 0.65,
+      match_count: 15,
+      filter_zona: filters.zona ?? null,
+      filter_preco_min: filters.precoMin ?? null,
+      filter_preco_max: filters.precoMax ?? null,
+      filter_quartos: filters.quartos ?? null,
+    })
+
+    if (error || !data || (data as SemanticProperty[]).length === 0) return []
+
+    return (data as Array<Record<string, unknown>>).map((p) => ({
+      id: String(p.id),
+      nome: String(p.nome ?? ''),
+      zona: String(p.zona ?? ''),
+      preco: Number(p.preco) || 0,
+      quartos: Number(p.quartos) || 0,
+      area: Number(p.area) || 0,
+      tipo: String(p.tipo ?? ''),
+      descricao: String(p.descricao ?? ''),
+      fotos: Array.isArray(p.fotos) ? (p.fotos as string[]) : [],
+      similarity: Number(p.similarity) || 0,
+    }))
+  } catch {
+    return []
+  }
+}
+
 // Fallback properties used when Supabase is unavailable or returns 0 results
 const FALLBACK_PROPERTIES = [
   {
@@ -285,8 +357,44 @@ Rules:
       criteria = {}
     }
 
-    // Fetch from Supabase with extracted criteria, fallback to static data if needed
-    let results: SearchProperty[] = await fetchPropertiesFromDB(criteria)
+    // 1. Try semantic search (requires OPENAI_API_KEY + pgvector embeddings)
+    const semanticFilters: SemanticFilters = {
+      zona: Array.isArray(criteria.zones) && criteria.zones.length === 1 && criteria.zones[0] !== null
+        ? criteria.zones[0] ?? undefined
+        : undefined,
+      precoMin: typeof criteria.minPrice === 'number' ? criteria.minPrice : undefined,
+      precoMax: typeof criteria.maxPrice === 'number' ? criteria.maxPrice : undefined,
+      quartos: typeof criteria.minBedrooms === 'number' ? criteria.minBedrooms : undefined,
+    }
+    const semanticResults = await semanticSearch(query, semanticFilters)
+    const usedSemanticSearch = semanticResults.length > 0
+
+    // 2. If semantic returned results, map to SearchProperty; otherwise fall back to keyword/filter DB search
+    let results: SearchProperty[]
+    if (usedSemanticSearch) {
+      results = semanticResults.map((p) => {
+        const preco = p.preco
+        const areaVal = p.area || 1
+        return {
+          id: p.id,
+          title: p.nome,
+          type: p.tipo,
+          zone: p.zona,
+          area: areaVal,
+          bedrooms: p.quartos,
+          bathrooms: 0,
+          price: preco,
+          pricePerSqm: Math.round(preco / areaVal),
+          features: [],
+          description: p.descricao,
+          rentalYield: 4.5,
+          available: true,
+        }
+      })
+    } else {
+      // Fetch from Supabase with extracted criteria, fallback to static data if needed
+      results = await fetchPropertiesFromDB(criteria)
+    }
 
     // Apply in-memory filters for fields not handled by DB query (types, features)
     const types = criteria.types
@@ -342,6 +450,10 @@ Write a 2-sentence expert response summarising what we found and why it matches 
       results: results.slice(0, 6),
       totalFound: results.length,
       aiMessage,
+      semanticSearch: usedSemanticSearch,
+      topSimilarity: usedSemanticSearch && semanticResults.length > 0
+        ? semanticResults[0].similarity
+        : undefined,
       searchedAt: new Date().toISOString(),
     })
   } catch (error) {

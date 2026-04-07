@@ -107,6 +107,7 @@ export default auth(async (req) => {
     '/api/admin', '/api/push/send', '/api/market',
     '/api/notion',
     '/api/automation',
+    '/api/embeddings',
   ]
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
