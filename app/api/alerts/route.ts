@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 import { randomBytes } from 'crypto'
+import { safeCompare } from '@/lib/safeCompare'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AlertSubscription {
@@ -392,7 +393,7 @@ export async function GET(req: NextRequest) {
     const secret = process.env.CRON_SECRET ?? process.env.ADMIN_SECRET
     // Internal cron or authorized admin
     const isCron = req.headers.get('x-vercel-cron') === '1'
-    if (!isCron && secret && authHeader !== `Bearer ${secret}`) {
+    if (!isCron && secret && !safeCompare(authHeader ?? '', `Bearer ${secret}`)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -407,7 +408,7 @@ export async function GET(req: NextRequest) {
 
   // Admin-only full list
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+  if (!safeCompare(authHeader ?? '', `Bearer ${process.env.ADMIN_SECRET ?? ''}`)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

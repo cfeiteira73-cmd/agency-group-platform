@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { safeCompare } from '@/lib/safeCompare'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN ?? ''
 const NOTION_CRM   = process.env.NOTION_CRM_DB || '385a010f42244ef79b0a2ead4f258698'
@@ -225,7 +226,7 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
   if (!cronSecret) return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 })
-  if (authHeader !== `Bearer ${cronSecret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!safeCompare(authHeader ?? '', `Bearer ${cronSecret}`)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!NOTION_TOKEN || !RESEND_KEY) {
     return NextResponse.json({ error: 'Missing credentials', sent: 0 })

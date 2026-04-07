@@ -7,6 +7,8 @@ import { CurrencyProvider } from './components/CurrencyWidget'
 import PWAInstallBanner from './components/PWAInstallBanner'
 import SofiaWidgetWrapper from './components/SofiaWidgetWrapper'
 import BottomNav from './components/BottomNav'
+import { LanguageSwitcher } from './components/LanguageSwitcher'
+import { PushNotificationSetup } from './components/PushNotificationSetup'
 
 const cormorant = Cormorant({
   subsets: ['latin'],
@@ -80,7 +82,6 @@ export const metadata: Metadata = {
     'geo.placename': 'Lisboa',
     'geo.position': '38.7169;-9.1399',
     'ICBM':         '38.7169, -9.1399',
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https:; frame-src https:;",
   },
 }
 
@@ -260,7 +261,7 @@ const schemaAggregateRatingExpanded = {
   name: 'Agency Group – Mediação Imobiliária Lda',
   aggregateRating: {
     '@type': 'AggregateRating',
-    ratingValue: '4.9',
+    ratingValue: '4.8',
     reviewCount: '8',
     bestRating: '5',
     worstRating: '1',
@@ -268,10 +269,10 @@ const schemaAggregateRatingExpanded = {
   review: [
     { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '5' }, author: { '@type': 'Person', name: 'James & Sarah Mitchell' }, reviewBody: 'A equipa da Agency Group encontrou a nossa villa de sonho em Cascais em menos de 3 semanas. Profissionalismo de nível mundial.', datePublished: '2026-01-15' },
     { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '5' }, author: { '@type': 'Person', name: 'Mohammed Al-Rashidi' }, reviewBody: 'A Agency Group conhece o mercado melhor do que qualquer outra imobiliária que consultámos. O retorno supera as expectativas.', datePublished: '2025-12-10' },
-    { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '5' }, author: { '@type': 'Person', name: 'Chen Wei' }, reviewBody: 'Sentimo-nos completamente seguros durante todo o processo. Excelente conhecimento do mercado da Comporta.', datePublished: '2025-11-22' },
+    { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '4' }, author: { '@type': 'Person', name: 'Chen Wei' }, reviewBody: 'Sentimo-nos completamente seguros durante todo o processo. Excelente conhecimento do mercado da Comporta.', datePublished: '2025-11-22' },
     { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '5' }, author: { '@type': 'Person', name: 'Sophie & Marc Dubois' }, reviewBody: 'Incrível eficiência. Do primeiro contacto à escritura em 67 dias. O NHR foi tratado pelos parceiros da Agency Group sem qualquer stress.', datePublished: '2026-02-03' },
     { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '5' }, author: { '@type': 'Person', name: 'David Harrington' }, reviewBody: 'Como britânico pós-Brexit, a Agency Group guiou-nos em cada detalhe do crédito, vistos e impostos. Excelência rara neste sector.', datePublished: '2026-01-28' },
-    { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '5' }, author: { '@type': 'Person', name: 'Ana Beatriz Ferreira' }, reviewBody: 'Calculadora de mais-valias e NHR online são de nível profissional. Poupei €18.000 em impostos com as ferramentas e o encaminhamento da Agency Group.', datePublished: '2026-03-10' },
+    { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '4' }, author: { '@type': 'Person', name: 'Ana Beatriz Ferreira' }, reviewBody: 'Calculadora de mais-valias e NHR online são de nível profissional. Poupei €18.000 em impostos com as ferramentas e o encaminhamento da Agency Group.', datePublished: '2026-03-10' },
     { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '5' }, author: { '@type': 'Person', name: 'Khalid Al-Mansouri' }, reviewBody: 'Apreciei especialmente o conhecimento da Agency Group sobre Islamic Finance para o nosso financiamento. Únicos no mercado português a oferecer isto.', datePublished: '2026-02-20' },
     { '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '5' }, author: { '@type': 'Person', name: 'Thomas & Ingrid Weber' }, reviewBody: 'Das Deutschland — Agency Group hat uns den besten Kauf in Portugal ermöglicht. AVM-Tool und Steuerrechner sind ausgezeichnet.', datePublished: '2026-03-05' },
   ],
@@ -283,6 +284,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <meta name="author" content="Agency Group – Mediação Imobiliária Lda" />
         {/* Resource hints — preconnect to critical origins */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://vercel.live" />
@@ -335,6 +337,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <main id="main-content">{children}</main>
         <PWAInstallBanner />
         <SofiaWidgetWrapper />
+        <LanguageSwitcher />
+        <PushNotificationSetup />
         <BottomNav />
         <script dangerouslySetInnerHTML={{ __html: `
   if ('serviceWorker' in navigator) {

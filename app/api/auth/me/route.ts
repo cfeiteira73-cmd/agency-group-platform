@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
+import { safeCompare } from '@/lib/safeCompare'
 
 const SECRET = process.env.AUTH_SECRET
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
     const sig = cookieValue.slice(dotIdx + 1)
     const expected = createHmac('sha256', SECRET).update(payload).digest('hex')
 
-    if (sig !== expected) {
+    if (!safeCompare(sig, expected)) {
       return NextResponse.json({ ok: false }, { status: 401 })
     }
 

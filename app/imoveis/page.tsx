@@ -32,6 +32,21 @@ function getRecentActivity(id: string): string {
   return hours <= 2 ? 'Última visita há 1h' : `Última visita há ${hours}h`
 }
 
+// ─── Mobile bottom sheet select style ────────────────────────────────────────
+const mobileSelectStyle: CSSProperties = {
+  background: 'rgba(12,31,21,.06)',
+  border: '1px solid rgba(12,31,21,.2)',
+  color: '#0c1f15',
+  padding: '12px 14px',
+  fontFamily: "'Jost', sans-serif",
+  fontSize: '.85rem',
+  letterSpacing: '.04em',
+  cursor: 'pointer',
+  outline: 'none',
+  width: '100%',
+  borderRadius: 6,
+}
+
 export default function ImoveisPage() {
   const [zona,       setZona]       = useState('')
   const [tipo,       setTipo]       = useState('')
@@ -46,6 +61,19 @@ export default function ImoveisPage() {
   const [mapSelectedId, setMapSelectedId] = useState<string | undefined>(undefined)
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
+
+  const activeFilterCount = [
+    zona ? 1 : 0,
+    tipo ? 1 : 0,
+    preco ? 1 : 0,
+    quartos ? 1 : 0,
+    features.includes('piscina') ? 1 : 0,
+    features.includes('garagem') ? 1 : 0,
+    features.includes('vista-mar') ? 1 : 0,
+    features.includes('off-market') ? 1 : 0,
+    lifestyle ? 1 : 0,
+  ].reduce((a, b) => a + b, 0)
 
   function toggleFeature(f: string) {
     setFeatures(prev =>
@@ -243,7 +271,7 @@ export default function ImoveisPage() {
         </div>
 
         {/* ── STICKY FILTER BAR ── */}
-        <div style={{
+        <div className="desktop-filter-bar" style={{
           position: 'sticky', top: '68px', zIndex: 800,
           background: 'rgba(10,22,14,.97)', backdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(201,169,110,.1)',
@@ -423,13 +451,13 @@ export default function ImoveisPage() {
 
         {/* ── MAP SPLIT VIEW ── */}
         {viewMode === 'map' && (
-          <div style={{
+          <div className="map-split-container" style={{
             display: 'flex',
             height: 'calc(100vh - 136px)', /* 68px nav + 68px filter bar */
             overflow: 'hidden',
           }}>
             {/* Left: scrollable property list */}
-            <div style={{
+            <div className="map-split-list" style={{
               width: '44%',
               overflowY: 'auto',
               padding: '16px',
@@ -471,7 +499,7 @@ export default function ImoveisPage() {
             </div>
 
             {/* Right: sticky map */}
-            <div style={{ width: '56%', position: 'relative', height: '100%' }}>
+            <div className="map-split-map" style={{ width: '56%', position: 'relative', height: '100%' }}>
               <Suspense fallback={
                 <div style={{
                   width: '100%', height: '100%', background: '#0e2318',
@@ -575,6 +603,149 @@ export default function ImoveisPage() {
 
       {/* ── FAVORITES DRAWER ── */}
       <FavoritesDrawer />
+
+      {/* ── MOBILE FILTER FAB ── */}
+      <button
+        type="button"
+        onClick={() => setMobileFilterOpen(true)}
+        style={{
+          position: 'fixed',
+          bottom: 'calc(72px + env(safe-area-inset-bottom))',
+          right: 20,
+          zIndex: 100,
+          background: '#0c1f15',
+          color: '#c9a96e',
+          border: '1px solid #c9a96e',
+          borderRadius: 24,
+          padding: '10px 20px',
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 14,
+          fontWeight: 500,
+          cursor: 'pointer',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        }}
+        className="mobile-filter-fab"
+        aria-label="Abrir filtros"
+      >
+        ⚡ Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+      </button>
+
+      {/* ── MOBILE FILTER BOTTOM SHEET ── */}
+      {mobileFilterOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Filtros de pesquisa"
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+          }}
+        >
+          {/* Backdrop */}
+          <div
+            onClick={() => setMobileFilterOpen(false)}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }}
+          />
+          {/* Sheet */}
+          <div style={{
+            position: 'relative', background: '#f4f0e6',
+            borderRadius: '20px 20px 0 0',
+            padding: '20px 20px calc(20px + env(safe-area-inset-bottom))',
+            maxHeight: '85vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.4rem', color: '#0c1f15', margin: 0 }}>Filtros</h2>
+              <button type="button" onClick={() => setMobileFilterOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#0c1f15', lineHeight: 1 }}
+                aria-label="Fechar filtros"
+              >×</button>
+            </div>
+
+            {/* Filters stacked vertically */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <select value={zona} onChange={e => setZona(e.target.value)} style={mobileSelectStyle}>
+                <option value="">Todas as Zonas</option>
+                {ZONAS.map(z => <option key={z} value={z}>{z}</option>)}
+              </select>
+
+              <select value={tipo} onChange={e => setTipo(e.target.value)} style={mobileSelectStyle}>
+                <option value="">Todos os Tipos</option>
+                {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+
+              <select value={preco} onChange={e => setPreco(e.target.value)} style={mobileSelectStyle}>
+                <option value="">Preço</option>
+                <option value="500k-1m">€500K – €1M</option>
+                <option value="1m-2m">€1M – €2M</option>
+                <option value="2m-4m">€2M – €4M</option>
+                <option value="4m+">€4M+</option>
+              </select>
+
+              <select value={quartos} onChange={e => setQuartos(e.target.value)} style={mobileSelectStyle}>
+                <option value="">Quartos</option>
+                <option value="1">T1+</option>
+                <option value="2">T2+</option>
+                <option value="3">T3+</option>
+                <option value="4">T4+</option>
+                <option value="5">T5+</option>
+              </select>
+
+              <select value={lifestyle} onChange={e => setLifestyle(e.target.value)} style={mobileSelectStyle}>
+                <option value="">🌍 Lifestyle</option>
+                <option value="golf">⛳ Golf</option>
+                <option value="surf">🏄 Surf</option>
+                <option value="seafront">🌊 Frente Mar</option>
+                <option value="nature">🌿 Natureza</option>
+                <option value="historic">🏛️ Histórico</option>
+                <option value="marina">⛵ Marina</option>
+                <option value="city">🌆 Cidade</option>
+                <option value="equestrian">🐎 Equestre</option>
+              </select>
+
+              {/* Feature toggles */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[
+                  { key: 'piscina',    label: 'Piscina' },
+                  { key: 'garagem',    label: 'Garagem' },
+                  { key: 'vista-mar',  label: 'Vista Mar' },
+                  { key: 'off-market', label: 'Off-Market' },
+                ].map(f => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => toggleFeature(f.key)}
+                    style={{
+                      background: features.includes(f.key) ? '#0c1f15' : 'rgba(12,31,21,.08)',
+                      color: features.includes(f.key) ? '#c9a96e' : '#0c1f15',
+                      border: `1px solid ${features.includes(f.key) ? '#0c1f15' : 'rgba(12,31,21,.2)'}`,
+                      padding: '8px 16px',
+                      fontFamily: 'Jost, sans-serif', fontSize: '.7rem',
+                      letterSpacing: '.1em', textTransform: 'uppercase' as const,
+                      cursor: 'pointer', borderRadius: 4,
+                    }}
+                  >{f.label}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+              <button type="button" onClick={() => { clearAll(); setMobileFilterOpen(false) }}
+                style={{ flex: 1, padding: '12px', border: '1px solid #0c1f15', background: 'none',
+                  color: '#0c1f15', borderRadius: 8, fontFamily: 'Jost, sans-serif',
+                  fontSize: '.8rem', cursor: 'pointer' }}>
+                Limpar
+              </button>
+              <button type="button" onClick={() => setMobileFilterOpen(false)}
+                style={{ flex: 2, padding: '12px', background: '#0c1f15', color: '#c9a96e',
+                  border: 'none', borderRadius: 8, fontFamily: 'Jost, sans-serif',
+                  fontWeight: 500, fontSize: '.8rem', cursor: 'pointer' }}>
+                Ver {filtered.length} imóve{filtered.length !== 1 ? 'is' : 'l'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Responsive grid override */}
       <style>{`

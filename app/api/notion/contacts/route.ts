@@ -8,6 +8,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
+import { safeCompare } from '@/lib/safeCompare'
+import { auth } from '@/auth'
 
 const DB_ID = process.env.NOTION_CRM_DB
 const TOKEN = process.env.NOTION_TOKEN
@@ -33,7 +35,7 @@ function validateMagicToken(req: NextRequest): boolean {
     const payload = rawToken.slice(0, dotIdx)
     const sig = rawToken.slice(dotIdx + 1)
     const expected = createHmac('sha256', SECRET).update(payload).digest('hex')
-    if (sig !== expected) return false
+    if (!safeCompare(sig, expected)) return false
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString())
     return data.type === 'magic' && Date.now() < data.exp
   } catch {
@@ -43,8 +45,8 @@ function validateMagicToken(req: NextRequest): boolean {
 
 // GET — list contacts, optional ?agent= filter (not supported in this DB, returns all)
 export async function GET(req: NextRequest) {
-  // Accept magic-link token OR no token (graceful for portal direct use)
-  // Strict auth only needed for write operations
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN || !DB_ID) return NextResponse.json({ contacts: [] })
   try {
     const zona = req.nextUrl.searchParams.get('zona') || ''

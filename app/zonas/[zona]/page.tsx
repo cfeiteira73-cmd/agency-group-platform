@@ -48,7 +48,14 @@ export async function generateMetadata({ params }: { params: Promise<{ zona: str
     title: `Imóveis em ${z.nome} 2026 | Comprar, Vender, Investir · Agency Group`,
     description: `Guia completo do mercado imobiliário de ${z.nome} em 2026. Preço médio €${z.preco.toLocaleString('pt-PT')}/m², yield ${z.yield}%, valorização +${z.yoy}% YoY. Agency Group AMI 22506.`,
     keywords: `imóveis ${z.nome}, comprar casa ${z.nome}, investir ${z.nome}, preço m2 ${z.nome} 2026, imobiliário ${z.nome} luxo`,
-    alternates: { canonical: `https://www.agencygroup.pt/zonas/${zona}` },
+    alternates: {
+      canonical: `https://www.agencygroup.pt/zonas/${zona}`,
+      languages: {
+        'pt': `https://www.agencygroup.pt/zonas/${zona}`,
+        'en': `https://www.agencygroup.pt/en/zones/${zona}`,
+        'x-default': `https://www.agencygroup.pt/zonas/${zona}`,
+      },
+    },
     openGraph: {
       title: `Imóveis em ${z.nome} 2026 · Agency Group`,
       description: `${z.desc} Preço médio €${z.preco.toLocaleString('pt-PT')}/m². Agency Group AMI 22506.`,

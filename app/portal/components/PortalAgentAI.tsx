@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
 
 interface AgentToolResult {
@@ -256,8 +256,17 @@ export function PortalAgentAI() {
   const [result, setResult] = useState<AgentResult | null>(null)
   const [error, setError] = useState('')
   const [task, setTask] = useState('analyze_stalled_deals')
+  const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    return () => { abortRef.current?.abort() }
+  }, [])
 
   async function runAgent() {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
     setRunning(true)
     setError('')
     setResult(null)
@@ -266,11 +275,13 @@ export function PortalAgentAI() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ task }),
+        signal: controller.signal,
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json() as AgentResult
       setResult(data)
     } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') return
       setError(e instanceof Error ? e.message : 'Erro desconhecido')
     } finally {
       setRunning(false)
@@ -319,7 +330,7 @@ export function PortalAgentAI() {
           </div>
           <div>
             <h2 style={s.title}>Sofia AI Agent</h2>
-            <p style={s.subtitle}>Automacao CRM autonoma</p>
+            <p style={s.subtitle}>Automação CRM autónoma</p>
           </div>
         </div>
 

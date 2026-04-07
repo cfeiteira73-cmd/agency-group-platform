@@ -403,7 +403,7 @@ export default function PortalDashboard({
   useEffect(() => {
     const controller = new AbortController()
     loadDashboardData(controller.signal)
-    const interval = setInterval(() => loadDashboardData(controller.signal), 5 * 60 * 1000)
+    const interval = setInterval(() => loadDashboardData(controller.signal), 90000) // 90 seconds
     return () => {
       controller.abort()
       clearInterval(interval)

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -265,6 +266,9 @@ function generateDailyBrief(date: Date): DailyBrief {
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief | { error: string }>> {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     // Allow overriding date via query param for testing: ?date=2026-04-10
     const { searchParams } = new URL(request.url)

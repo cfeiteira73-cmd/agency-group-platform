@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 
 // ─── HeyGen Streaming Session Proxy ───────────────────────────────────────────
 // Keeps HEYGEN_API_KEY server-side only — never exposed to browser
@@ -7,6 +8,9 @@ const HEYGEN_API = 'https://api.heygen.com'
 
 // POST /api/heygen/session — create a new streaming session
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const apiKey = process.env.HEYGEN_API_KEY
   if (!apiKey) {
     return NextResponse.json({ error: 'HeyGen não configurado. Adicionar HEYGEN_API_KEY ao .env.local' }, { status: 503 })
@@ -46,6 +50,9 @@ export async function POST(req: NextRequest) {
 
 // DELETE /api/heygen/session — stop a streaming session
 export async function DELETE(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const apiKey = process.env.HEYGEN_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'HeyGen não configurado' }, { status: 503 })
 

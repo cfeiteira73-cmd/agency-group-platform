@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@/auth'
 
 export const runtime = 'nodejs'
 
 export async function GET() {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const apiKey = process.env.HEYGEN_API_KEY
   if (!apiKey) {
     return NextResponse.json({ avatars: [], voices: [], configured: false })

@@ -188,7 +188,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const agentId = searchParams.get('agentId') || 'carlos'
+  const agentId = searchParams.get('agentId') || session.user?.id || session.user?.email || ''
 
   if (isSupabaseConfigured()) {
     const cols = await dbGetByAgent(agentId)
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
         const collection: Collection = {
           id,
           name: data.name || 'Nova Colecção',
-          agentId: data.agentId || 'carlos',
+          agentId: data.agentId || session.user?.id || session.user?.email || '',
           clientEmail: data.clientEmail,
           clientName: data.clientName,
           shareToken: randomBytes(32).toString('hex'),
@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
       case 'add_property': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Colecção não encontrada' }, { status: 404 })
-        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
         // Avoid duplicates
@@ -262,7 +262,7 @@ export async function POST(req: NextRequest) {
       case 'update_item': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
         col = {
@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
       case 'remove_property': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
         col = {
@@ -300,7 +300,7 @@ export async function POST(req: NextRequest) {
       case 'add_comment': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
         col = {
@@ -320,7 +320,7 @@ export async function POST(req: NextRequest) {
       case 'ai_recommend': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col || !col.items.length) return NextResponse.json({ success: true, recommendations: [], clientProfile: '', nextStep: '' })
-        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
@@ -367,7 +367,7 @@ Responde em JSON:
       case 'translate_comment': {
         if (collectionId) {
           const col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
-          if (col && col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+          if (col && col.agentId !== session.user?.id && col.agentId !== session.user?.email) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
           }
         }
@@ -385,7 +385,7 @@ Responde em JSON:
 
       case 'delete': {
         const colToDelete = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
-        if (colToDelete && colToDelete.agentId !== session.user?.id && colToDelete.agentId !== session.user?.email && colToDelete.agentId !== 'carlos') {
+        if (colToDelete && colToDelete.agentId !== session.user?.id && colToDelete.agentId !== session.user?.email) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
         if (useSupabase) {

@@ -5,9 +5,14 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'FAQ — Perguntas Frequentes sobre Imobiliário em Portugal | Agency Group',
   description:
-    'Respostas completas a todas as perguntas sobre comprar casa em Portugal: Golden Visa, NHR/IFICI, IMT, crédito habitação estrangeiros, Visto D7, mais-valias, preços por m² e processo de compra. Agency Group · AMI 22506.',
+    'Guia completo para comprar casa em Portugal: Golden Visa, NHR/IFICI, IMT, crédito habitação estrangeiros, Visto D7, mais-valias. Agency Group AMI 22506.',
   alternates: {
     canonical: 'https://www.agencygroup.pt/faq',
+    languages: {
+      'pt': 'https://www.agencygroup.pt/faq',
+      'en': 'https://www.agencygroup.pt/en/faq',
+      'x-default': 'https://www.agencygroup.pt/faq',
+    },
   },
   openGraph: {
     title: 'FAQ Imobiliário Portugal 2026 · Agency Group',

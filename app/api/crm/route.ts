@@ -11,6 +11,7 @@ import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import type { CRMContact } from '@/app/portal/components/types'
+import { safeCompare } from '@/lib/safeCompare'
 
 // Typed shorthand for contacts table operations
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -426,7 +427,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
-  if (authHeader !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!safeCompare(authHeader ?? '', `Bearer ${secret}`)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const body: unknown = await request.json()
@@ -581,7 +582,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
-  if (authHeader !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!safeCompare(authHeader ?? '', `Bearer ${secret}`)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const { searchParams } = new URL(request.url)

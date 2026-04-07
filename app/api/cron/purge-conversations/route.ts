@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { safeCompare } from '@/lib/safeCompare'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  if (!process.env.CRON_SECRET) {
+    console.error('[Cron] CRON_SECRET env var not set — refusing to run')
+    return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
+  }
   // Verify cron secret to prevent unauthorized calls
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const expected = `Bearer ${process.env.CRON_SECRET}`
+  if (!safeCompare(authHeader ?? '', expected)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

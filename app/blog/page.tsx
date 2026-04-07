@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BreadcrumbJsonLd } from '@/app/components/BreadcrumbJsonLd'
+import { ARTICLES } from './[slug]/articles'
 
 export const metadata: Metadata = {
   title: 'Blog · Mercado Imobiliário Portugal 2026 · Agency Group',
@@ -8,6 +9,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.agencygroup.pt/blog',
     languages: {
+      'pt': 'https://www.agencygroup.pt/blog',
+      'en': 'https://www.agencygroup.pt/en/blog',
       'x-default': 'https://www.agencygroup.pt/blog',
     },
   },
@@ -19,50 +22,32 @@ export const metadata: Metadata = {
   },
 }
 
-const ARTICLES = [
-  {
-    slug: 'comprar-casa-portugal-2026',
-    category: 'Guia de Compra',
-    title: 'Comprar Casa em Portugal 2026: O Guia Definitivo',
-    excerpt: 'NIF, conta bancária, CPCV, escritura — o processo completo de ponta a ponta. IMT, IS, custos reais. O que mudou em 2026.',
-    readTime: '12 min',
-    date: '2026-03-01',
-    image_gradient: 'linear-gradient(135deg,#1c4a35,#0c1f15)',
-    featured: true,
-  },
-  {
-    slug: 'nhr-ifici-guia-completo',
-    category: 'Fiscalidade',
-    title: 'NHR vs IFICI 2024: Guia Completo para Estrangeiros em Portugal',
-    excerpt: '10 anos de tributação reduzida. Como funciona, quem pode candidatar-se, diferenças entre NHR clássico e IFICI 2024. Comparação com UK, EUA, França.',
-    readTime: '15 min',
-    date: '2026-02-15',
-    image_gradient: 'linear-gradient(135deg,#2e1f08,#0c1f15)',
-    featured: true,
-  },
-  {
-    slug: 'investir-imoveis-portugal',
-    category: 'Investimento',
-    title: 'Investir em Imobiliário em Portugal: Yields, ROI e Zonas em 2026',
-    excerpt: 'Comporta +28%, Quinta do Lago yield 2.8%, Lisboa yield 3.8%. Análise zona a zona. Onde investir em 2026 para maximizar retorno.',
-    readTime: '10 min',
-    date: '2026-01-20',
-    image_gradient: 'linear-gradient(135deg,#0c2030,#0c1f15)',
-    featured: false,
-  },
-  {
-    slug: 'mercado-luxo-portugal-2026',
-    category: 'Mercado de Luxo',
-    title: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial',
-    excerpt: 'Lisboa Top 5 Savills, Comporta +28%, Quinta do Lago €12.000/m². Análise completa do mercado prime — zonas, compradores internacionais e previsões 2026.',
-    readTime: '12 min',
-    date: '2026-02-15',
-    image_gradient: 'linear-gradient(135deg,#1a0a2e,#0c1f15)',
-    featured: false,
-  },
-]
+// Sort articles by date descending
+const SORTED_ARTICLES = [...ARTICLES].sort(
+  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+)
+
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  'Guias de Compra':     'linear-gradient(135deg,#1c4a35,#0c1f15)',
+  'Fiscalidade':         'linear-gradient(135deg,#2e1f08,#0c1f15)',
+  'Investimento':        'linear-gradient(135deg,#0c2030,#0c1f15)',
+  'Mercado de Luxo':     'linear-gradient(135deg,#1a0a2e,#0c1f15)',
+  'Compradores Internacionais': 'linear-gradient(135deg,#1a2030,#0c1f15)',
+  'Legal & Fiscal':      'linear-gradient(135deg,#2a1a08,#0c1f15)',
+  'Mercado':             'linear-gradient(135deg,#0c2020,#0c1f15)',
+  'Tendências':          'linear-gradient(135deg,#1c1040,#0c1f15)',
+  'Guias Internacionais':'linear-gradient(135deg,#102030,#0c1f15)',
+  'Ferramentas':         'linear-gradient(135deg,#0c2c1a,#0c1f15)',
+}
+
+function getGradient(category: string): string {
+  return CATEGORY_GRADIENTS[category] ?? 'linear-gradient(135deg,#1c4a35,#0c1f15)'
+}
 
 export default function BlogPage() {
+  const featured = SORTED_ARTICLES[0]
+  const rest = SORTED_ARTICLES.slice(1)
+
   return (
     <>
       <BreadcrumbJsonLd items={[
@@ -86,18 +71,21 @@ export default function BlogPage() {
         .blog-h1{font-family:var(--font-cormorant),serif;font-size:clamp(2.5rem,5vw,4rem);font-weight:300;color:#f4f0e6;line-height:1.08;letter-spacing:-.01em;margin-bottom:20px}
         .blog-h1 em{font-style:italic;color:#c9a96e}
         .blog-sub{font-size:.85rem;color:rgba(244,240,230,.45);max-width:480px;line-height:1.8}
+        .blog-count{font-family:var(--font-dm-mono),monospace;font-size:.5rem;letter-spacing:.2em;color:rgba(201,169,110,.5);margin-top:16px}
         .blog-body{max-width:1160px;margin:0 auto;padding:80px 56px}
-        .blog-grid{display:grid;grid-template-columns:2fr 1fr;gap:48px;align-items:start}
-        .article-featured{background:#fff;border:1px solid rgba(14,14,13,.08);overflow:hidden;text-decoration:none;display:block;transition:transform .3s,box-shadow .3s}
+        .blog-featured-wrap{margin-bottom:64px}
+        .article-featured{background:#fff;border:1px solid rgba(14,14,13,.08);overflow:hidden;text-decoration:none;display:grid;grid-template-columns:1.2fr 1fr;transition:transform .3s,box-shadow .3s}
         .article-featured:hover{transform:translateY(-3px);box-shadow:0 20px 60px rgba(14,14,13,.1)}
-        .art-img{height:280px}
-        .art-body{padding:36px}
+        .art-img{min-height:320px}
+        .art-body{padding:48px}
+        .art-badge{display:inline-block;background:#c9a96e;color:#0c1f15;font-family:var(--font-dm-mono),monospace;font-size:.42rem;letter-spacing:.2em;text-transform:uppercase;padding:4px 12px;margin-bottom:16px}
         .art-cat{font-family:var(--font-dm-mono),monospace;font-size:.48rem;letter-spacing:.22em;text-transform:uppercase;color:#c9a96e;margin-bottom:12px}
-        .art-title{font-family:var(--font-cormorant),serif;font-size:1.6rem;font-weight:300;color:#0e0e0d;line-height:1.2;margin-bottom:12px}
+        .art-title{font-family:var(--font-cormorant),serif;font-size:1.8rem;font-weight:300;color:#0e0e0d;line-height:1.2;margin-bottom:12px}
         .art-excerpt{font-size:.83rem;line-height:1.78;color:rgba(14,14,13,.55);margin-bottom:20px}
         .art-meta{display:flex;align-items:center;gap:16px;font-family:var(--font-dm-mono),monospace;font-size:.46rem;letter-spacing:.12em;color:rgba(14,14,13,.35)}
         .art-meta span{color:#1c4a35;font-weight:500}
-        .blog-sidebar{display:flex;flex-direction:column;gap:24px}
+        .blog-section-title{font-family:var(--font-cormorant),serif;font-size:1.6rem;font-weight:300;color:#0e0e0d;margin-bottom:40px;padding-bottom:16px;border-bottom:1px solid rgba(14,14,13,.08)}
+        .blog-grid-all{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
         .article-card{background:#fff;border:1px solid rgba(14,14,13,.08);overflow:hidden;text-decoration:none;display:block;transition:transform .3s,box-shadow .3s}
         .article-card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(14,14,13,.08)}
         .art-card-img{height:160px}
@@ -112,10 +100,15 @@ export default function BlogPage() {
         .blog-cta-btn:hover{background:#e2c99a}
         footer{background:#0e0e0d;padding:40px 56px;text-align:center}
         footer p{font-family:var(--font-dm-mono),monospace;font-size:.5rem;letter-spacing:.18em;color:rgba(255,255,255,.25)}
+        @media(max-width:1024px){
+          .blog-grid-all{grid-template-columns:repeat(2,1fr)}
+          .article-featured{grid-template-columns:1fr}
+          .art-img{min-height:240px}
+        }
         @media(max-width:800px){
           nav{padding:16px 24px}
           .blog-hero-inner,.blog-body{padding-left:24px;padding-right:24px}
-          .blog-grid{grid-template-columns:1fr}
+          .blog-grid-all{grid-template-columns:1fr}
           .blog-cta{padding:60px 24px}
           footer{padding:32px 24px}
         }
@@ -185,44 +178,48 @@ export default function BlogPage() {
             Dados INE/AT, Savills, Knight Frank. 169.812 transacções. +17,6%.
             Lisboa Top 5 Mundial. O mercado por dentro.
           </p>
+          <p className="blog-count">{SORTED_ARTICLES.length} artigos publicados</p>
         </div>
       </section>
 
       <div className="blog-body">
-        <div className="blog-grid">
-          {/* Featured article */}
-          <Link href={`/blog/${ARTICLES[0].slug}`} className="article-featured">
-            <div className="art-img" style={{background: ARTICLES[0].image_gradient}}></div>
+        {/* Featured article */}
+        <div className="blog-featured-wrap">
+          <Link href={`/blog/${featured.slug}`} className="article-featured">
+            <div className="art-img" style={{ background: getGradient(featured.category) }} />
             <div className="art-body">
-              <div className="art-cat">{ARTICLES[0].category}</div>
-              <h2 className="art-title">{ARTICLES[0].title}</h2>
-              <p className="art-excerpt">{ARTICLES[0].excerpt}</p>
+              <div className="art-badge">Destaque</div>
+              <div className="art-cat">{featured.category}</div>
+              <h2 className="art-title">{featured.title}</h2>
+              <p className="art-excerpt">{featured.description}</p>
               <div className="art-meta">
-                <span>{ARTICLES[0].readTime} leitura</span>
+                <span>{featured.readingTime} min leitura</span>
                 <span>·</span>
-                <span>{new Date(ARTICLES[0].date).toLocaleDateString('pt-PT', {year:'numeric',month:'long',day:'numeric'})}</span>
+                <span>{new Date(featured.date).toLocaleDateString('pt-PT', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                {featured.zona && <><span>·</span><span>{featured.zona}</span></>}
               </div>
             </div>
           </Link>
+        </div>
 
-          {/* Sidebar articles */}
-          <div className="blog-sidebar">
-            {ARTICLES.slice(1).map(art => (
-              <Link key={art.slug} href={`/blog/${art.slug}`} className="article-card">
-                <div className="art-card-img" style={{background: art.image_gradient}}></div>
-                <div className="art-card-body">
-                  <div className="art-cat">{art.category}</div>
-                  <h3 className="art-card-title">{art.title}</h3>
-                  <p className="art-card-excerpt">{art.excerpt.substring(0,120)}...</p>
-                  <div className="art-meta">
-                    <span>{art.readTime} leitura</span>
-                    <span>·</span>
-                    <span>{new Date(art.date).toLocaleDateString('pt-PT', {year:'numeric',month:'short',day:'numeric'})}</span>
-                  </div>
+        {/* All remaining articles */}
+        <h2 className="blog-section-title">Todos os artigos</h2>
+        <div className="blog-grid-all">
+          {rest.map(art => (
+            <Link key={art.slug} href={`/blog/${art.slug}`} className="article-card">
+              <div className="art-card-img" style={{ background: getGradient(art.category) }} />
+              <div className="art-card-body">
+                <div className="art-cat">{art.category}</div>
+                <h3 className="art-card-title">{art.title}</h3>
+                <p className="art-card-excerpt">{art.description.substring(0, 110)}…</p>
+                <div className="art-meta">
+                  <span>{art.readingTime} min</span>
+                  <span>·</span>
+                  <span>{new Date(art.date).toLocaleDateString('pt-PT', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                 </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 

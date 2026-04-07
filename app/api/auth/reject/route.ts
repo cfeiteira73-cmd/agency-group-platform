@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
+import { safeCompare } from '@/lib/safeCompare'
 
 const FROM = 'Agency Group <geral@agencygroup.pt>'
 
@@ -10,7 +11,7 @@ function verifyToken(token: string, secret: string): Record<string, unknown> | n
   const payload = token.slice(0, dotIdx)
   const sig = token.slice(dotIdx + 1)
   const expected = createHmac('sha256', secret).update(payload).digest('hex')
-  if (sig !== expected) return null
+  if (!safeCompare(sig, expected)) return null
   try { return JSON.parse(Buffer.from(payload, 'base64url').toString()) }
   catch { return null }
 }

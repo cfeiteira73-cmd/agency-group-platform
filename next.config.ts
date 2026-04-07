@@ -13,8 +13,6 @@ const securityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   // Câmara e microfone bloqueados; geolocalização apenas para o próprio site
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), interest-cohort=(), payment=()' },
-  // XSS protection browsers antigos
-  { key: 'X-XSS-Protection', value: '1; mode=block' },
   // Isola o processo do browser — protege contra Spectre/Meltdown e ataques de timing
   { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
   // Isola recursos cross-origin — protege contra data leaks

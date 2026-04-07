@@ -8,9 +8,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.agencygroup.pt/imoveis',
     languages: {
+      'pt': 'https://www.agencygroup.pt/imoveis',
       'en': 'https://www.agencygroup.pt/en/properties',
       'fr': 'https://www.agencygroup.pt/fr/proprietes',
-      'pt': 'https://www.agencygroup.pt/imoveis',
+      'de': 'https://www.agencygroup.pt/de/immobilien',
+      'zh-Hans': 'https://www.agencygroup.pt/zh/fangchan',
+      'ar': 'https://www.agencygroup.pt/ar/aqarat',
       'x-default': 'https://www.agencygroup.pt/imoveis',
     },
   },

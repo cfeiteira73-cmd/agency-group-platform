@@ -1,7 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, createHash } from 'crypto'
-import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
 import { supabaseAdmin } from '@/lib/supabase'
+import { safeCompare } from '@/lib/safeCompare'
+
+async function checkVerifyRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      const key = `rl:auth:verify:${ip}`
+      const now = Date.now()
+      const window = 900 // 15 minutes
+      const limit = 10
+      const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          ['ZADD', key, now, `${now}`],
+          ['ZREMRANGEBYSCORE', key, '-inf', now - window * 1000],
+          ['ZCARD', key],
+          ['EXPIRE', key, window],
+        ]),
+      })
+      const results = await response.json() as Array<{ result: number }>
+      const count = results[2]?.result ?? 0
+      return { allowed: count <= limit, remaining: Math.max(0, limit - count) }
+    } catch {
+      return { allowed: true, remaining: 10 }
+    }
+  }
+  return { allowed: true, remaining: 10 }
+}
 
 const SECRET = process.env.AUTH_SECRET
 if (!SECRET) {
@@ -14,12 +44,11 @@ const SESSION_MAX_AGE = 8 * 60 * 60 // 8 horas em segundos
 
 export async function GET(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const limit = rateLimit(ip, { maxAttempts: 10, windowMs: 15 * 60 * 1000 })
-  if (!limit.success) {
-    const minutes = getRetryAfterMinutes(limit.reset)
+  const rl = await checkVerifyRateLimit(ip)
+  if (!rl.allowed) {
     return NextResponse.json(
-      { error: `Demasiadas tentativas. Tente novamente em ${minutes} minuto${minutes !== 1 ? 's' : ''}.` },
-      { status: 429, headers: { 'Retry-After': String(minutes * 60) } }
+      { error: 'Demasiadas tentativas. Tente novamente em 15 minutos.' },
+      { status: 429, headers: { 'Retry-After': '900' } }
     )
   }
 
@@ -37,7 +66,7 @@ export async function GET(req: NextRequest) {
     const sig = token.slice(dotIdx + 1)
     const expected = createHmac('sha256', SECRET).update(payload).digest('hex')
 
-    if (sig !== expected) {
+    if (!safeCompare(sig, expected)) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
     }
 

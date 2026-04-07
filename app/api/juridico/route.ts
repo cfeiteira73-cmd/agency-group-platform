@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { auth } from '@/auth'
 
 const MessageParamSchema = z.object({
   role:    z.enum(['user', 'assistant']),
@@ -12,14 +13,35 @@ const JuridicoSchema = z.object({
 })
 
 
-// Rate limiting — 30 req/hr por IP
-const rateMap = new Map<string, { count: number; reset: number }>()
-function checkRate(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateMap.get(ip)
-  if (!entry || now > entry.reset) { rateMap.set(ip, { count: 1, reset: now + 3_600_000 }); return true }
-  if (entry.count >= 30) return false
-  entry.count++; return true
+// Rate limiting — 30 req/hr por IP (Upstash Redis)
+async function checkRate(ip: string): Promise<boolean> {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      const key = `rl:juridico:${ip}`
+      const now = Date.now()
+      const window = 3600 // 1 hour
+      const limit = 30
+      const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          ['ZADD', key, now, `${now}`],
+          ['ZREMRANGEBYSCORE', key, '-inf', now - window * 1000],
+          ['ZCARD', key],
+          ['EXPIRE', key, window],
+        ]),
+      })
+      const results = await response.json() as Array<{ result: number }>
+      const count = results[2]?.result ?? 0
+      return count <= limit
+    } catch {
+      return true // fail open
+    }
+  }
+  return true
 }
 
 const SYSTEM = `És o melhor especialista jurídico-processual de Portugal em direito imobiliário, fiscalidade e imigração. Tens 25 anos de experiência como advogado em Lisboa especializado em transacções imobiliárias de luxo, fiscalidade imobiliária e vistos de residência.
@@ -355,9 +377,12 @@ interface MessageParam {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
-  if (!checkRate(ip)) {
+  if (!(await checkRate(ip))) {
     return NextResponse.json({ error: 'Limite de pedidos atingido. Tenta em 1 hora.' }, { status: 429 })
   }
 

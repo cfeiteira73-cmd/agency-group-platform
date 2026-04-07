@@ -4,8 +4,9 @@
 // Script · Hooks · Social Captions · Shot List · All powered by Claude
 // =============================================================================
 
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { auth } from '@/auth'
 
 export const runtime = 'nodejs'
 
@@ -42,6 +43,9 @@ const LANG_NAME: Record<string, string> = {
 // ─── POST /api/studio/generate ────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await req.json() as {
       property: {

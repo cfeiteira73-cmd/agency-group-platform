@@ -1,11 +1,5 @@
+# This file is intentionally minimal.
+# The canonical robots.txt is served dynamically by app/robots.ts (Next.js route handler).
 User-agent: *
 Allow: /
-Disallow: /portal
-Disallow: /portal/
-Disallow: /api/
-Disallow: /_vercel/
-Disallow: /_next/
-Disallow: /admin/
-Disallow: /*.json$
-
 Sitemap: https://www.agencygroup.pt/sitemap.xml

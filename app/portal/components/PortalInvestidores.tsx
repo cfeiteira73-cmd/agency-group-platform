@@ -281,7 +281,7 @@ function fmtFull(n: number): string {
 
 function daysSince(dateStr: string): number {
   const d = new Date(dateStr)
-  const now = new Date('2026-04-05')
+  const now = new Date()
   return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
 }
 

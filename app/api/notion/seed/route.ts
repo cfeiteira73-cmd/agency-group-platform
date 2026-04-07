@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 
 const TOKEN = process.env.NOTION_TOKEN
 const CRM_DB = process.env.NOTION_CRM_DB || '385a010f42244ef79b0a2ead4f258698'
@@ -191,6 +192,9 @@ function buildContactProps(c: SeedContact) {
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(_req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (session.user?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
   try {
 

@@ -22,8 +22,8 @@ export default function HomeLoader() {
       }, 400)
     }
 
-    // Safety: force loader out after 400ms for faster LCP
-    const ldrSafetyTimer = setTimeout(finishLoader, 400)
+    // Safety: force loader out after 2800ms — allows full GSAP timeline (~2.5s) to complete
+    const ldrSafetyTimer = setTimeout(finishLoader, 2800)
     window.addEventListener('load', finishLoader, { once: true })
 
     gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })

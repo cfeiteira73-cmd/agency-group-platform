@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 
 const DB_ID = process.env.NOTION_PIPELINE_DB || '37682f4dd3bb488c9c969bcf140c1f94'
 const TOKEN = process.env.NOTION_TOKEN
@@ -11,6 +12,8 @@ const headers = () => ({
 
 // GET — list deals
 export async function GET(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
   try {
     const zona = req.nextUrl.searchParams.get('zona') || ''
@@ -66,6 +69,8 @@ export async function GET(req: NextRequest) {
 
 // POST — create deal
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
   try {
     const body = await req.json()
@@ -92,6 +97,8 @@ export async function POST(req: NextRequest) {
 
 // PATCH — update deal
 export async function PATCH(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
   try {
     const body = await req.json()

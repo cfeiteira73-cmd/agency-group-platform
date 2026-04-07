@@ -169,31 +169,6 @@ export default function HomeAnimations() {
               onUpdate() { el.innerHTML = `${pre}${Math.round(obj.n)}<sup>${suf}</sup>` }
             })
           })
-          // Counter animation for credenciais (decimal support)
-          const credNumbers = document.querySelectorAll<HTMLElement>('.cred-n')
-          credNumbers.forEach((el) => {
-            const text = el.innerText || el.textContent || ''
-            const numMatch = text.match(/[\d.]+/)
-            if (!numMatch) return
-            const target = parseFloat(numMatch[0])
-            const isDecimal = numMatch[0].includes('.')
-            ScrollTrigger.create({
-              trigger: el,
-              start: 'top 85%',
-              once: true,
-              onEnter: () => {
-                const sup = el.querySelector('sup')?.outerHTML || ''
-                gsap.fromTo({ val: 0 }, { val: target }, {
-                  duration: 1.8,
-                  ease: 'power2.out',
-                  onUpdate: function() {
-                    const v = isDecimal ? this.targets()[0].val.toFixed(1) : Math.round(this.targets()[0].val)
-                    el.innerHTML = v + sup
-                  }
-                })
-              }
-            })
-          })
           // MAGNETIC BUTTONS
           document.querySelectorAll<HTMLElement>('.btn-gold, .btn-outline').forEach(btn => {
             btn.addEventListener('mousemove', (e: MouseEvent) => {
