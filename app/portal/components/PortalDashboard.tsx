@@ -18,6 +18,7 @@ interface PortalDashboardProps {
   onCloseWeeklyReport: () => void
   exportToPDF: (title: string, html: string) => void
   onSetSection: (s: SectionId) => void
+  onSetPriceHistoryId?: (id: string) => void
 }
 
 // ─── KPI Card Interface ────────────────────────────────────────────────────────
@@ -144,16 +145,16 @@ function parseValorLocal(s: string | undefined): number {
 
 // ─── Ticker data ──────────────────────────────────────────────────────────────
 const TICKER_ITEMS = [
-  '🏠 Lisboa €8.200/m² · +18% YoY',
-  '🌊 Cascais €5.890/m² · +22% YoY',
-  '☀️ Algarve €4.100/m² · +15% YoY',
-  '🏙️ Porto €3.643/m² · +12% YoY',
-  '🌴 Madeira €3.760/m² · +31% YoY',
-  '🏝️ Açores €1.952/m² · +8% YoY',
-  '📊 169.812 transacções 2025 · +7,2%',
+  '🏠 Lisboa €5.000/m² · mediana nacional €3.076/m²',
+  '🌊 Cascais €4.713/m² · +17,6% YoY',
+  '☀️ Algarve €3.941/m² · +17,6% YoY',
+  '🏙️ Porto €3.643/m² · +17,6% YoY',
+  '🌴 Madeira €3.760/m² · +17,6% YoY',
+  '🏝️ Açores €1.952/m² · mercado emergente',
+  '📊 169.812 transacções 2026 · recorde absoluto',
+  '⏱️ Tempo médio venda: 210 dias',
   '💰 Luxo Lisboa top 5 mundial',
-  '🇫🇷 Franceses 13% compradores PT',
-  '🇺🇸 Norte-americanos 16% compradores PT',
+  '🇺🇸 Norte-americanos 16% · Franceses 13% compradores PT',
 ]
 
 // ─── Stage velocity targets ───────────────────────────────────────────────────
@@ -268,6 +269,7 @@ export default function PortalDashboard({
   onCloseWeeklyReport,
   exportToPDF,
   onSetSection,
+  onSetPriceHistoryId,
 }: PortalDashboardProps) {
   const { darkMode } = useUIStore()
   const activeSection = useUIStore(s => s.section)
@@ -2101,7 +2103,10 @@ export default function PortalDashboard({
                     borderBottom: `1px solid ${borderCol}`,
                     transition: 'background .15s',
                   }}
-                  onClick={() => onSetSection('pipeline')}
+                  onClick={() => {
+                    onSetSection('pipeline')
+                    if (onSetPriceHistoryId && d.imovel) onSetPriceHistoryId(d.imovel)
+                  }}
                 >
                   <div
                     style={{

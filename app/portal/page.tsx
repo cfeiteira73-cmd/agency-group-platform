@@ -212,7 +212,6 @@ export default function Portal() {
     setImoveisList(updated)
     localStorage.setItem(`ag_imoveis_${agentEmail}`, JSON.stringify(updated))
   }
-  void saveImoveis
 
   function logout() {
     localStorage.removeItem('ag_auth')
@@ -701,7 +700,8 @@ export default function Portal() {
 
     // Fallback: check server-side cookie via /api/auth/me
     // (covers cases where localStorage is cleared but cookie is still valid)
-    fetch('/api/auth/me')
+    const meAbort = new AbortController()
+    fetch('/api/auth/me', { signal: meAbort.signal })
       .then(r => r.json())
       .then(data => {
         if (data.ok && data.email) {
@@ -714,7 +714,8 @@ export default function Portal() {
           window.location.href = '/portal/login'
         }
       })
-      .catch(() => { window.location.href = '/portal/login' })
+      .catch(e => { if (e.name !== 'AbortError') window.location.href = '/portal/login' })
+    return () => meAbort.abort()
   }, [])
 
   // Load deals
@@ -729,7 +730,8 @@ export default function Portal() {
     if (!agentEmail) return
     const stored = localStorage.getItem(`ag_crm_${agentEmail}`)
     if (stored) { try { setCrmContacts(JSON.parse(stored)) } catch { } }
-    fetch(`/api/notion/contacts?agent=${encodeURIComponent(agentEmail)}`)
+    const ac = new AbortController()
+    fetch(`/api/notion/contacts?agent=${encodeURIComponent(agentEmail)}`, { signal: ac.signal })
       .then(r => r.json())
       .then(data => {
         if (data.contacts && data.contacts.length > 0) {
@@ -737,7 +739,8 @@ export default function Portal() {
           localStorage.setItem(`ag_crm_${agentEmail}`, JSON.stringify(data.contacts))
         }
       })
-      .catch(() => { })
+      .catch(e => { if (e.name !== 'AbortError') console.warn('[CRM] notion sync failed', e) })
+    return () => ac.abort()
   }, [agentEmail, setCrmContacts])
 
   // Load imoveis
@@ -963,6 +966,7 @@ export default function Portal() {
                 onCloseWeeklyReport={() => setWeeklyReport(null)}
                 exportToPDF={exportToPDF}
                 onSetSection={(s) => navigateTo(s)}
+                onSetPriceHistoryId={setPriceHistoryId}
               />
             )}
 
@@ -1099,7 +1103,7 @@ export default function Portal() {
             )}
 
             {section === 'imoveis' && (
-              <PortalImoveis />
+              <PortalImoveis onSave={saveImoveis} />
             )}
 
             {section === 'campanhas' && (

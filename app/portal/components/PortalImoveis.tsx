@@ -1133,7 +1133,8 @@ function MapView({ properties, onSelect }: { properties: ImovelFull[]; onSelect:
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-export default function PortalImoveis() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => void }) {
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [search, setSearch] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -1154,7 +1155,8 @@ export default function PortalImoveis() {
 
   useEffect(() => {
     try { localStorage.setItem('ag_imoveis', JSON.stringify(customProperties)) } catch { /* ignore */ }
-  }, [customProperties])
+    if (onSave) onSave(customProperties)
+  }, [customProperties, onSave])
 
   useEffect(() => {
     let cancelled = false
