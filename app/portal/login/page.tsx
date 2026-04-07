@@ -7,7 +7,7 @@ export default function PortalLogin() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
 
-  // Handle magic link token return
+  // Handle magic link token — /api/auth/verify sets the ag-auth-token cookie on success
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
@@ -17,13 +17,16 @@ export default function PortalLogin() {
       .then(r => r.json())
       .then(data => {
         if (data.ok && data.email) {
+          // Also persist to localStorage for the portal page's client-side auth check
           localStorage.setItem('ag_auth', JSON.stringify({
             v: '1',
             exp: Date.now() + 8 * 60 * 60 * 1000,
             email: data.email,
             token,
           }))
-          window.location.href = `/portal?token=${encodeURIComponent(token)}`
+          // Redirect to /portal without the token — the cookie set by /api/auth/verify
+          // will allow proxy.ts to pass the request through
+          window.location.href = '/portal'
         } else {
           setError('Link inválido ou expirado.')
         }

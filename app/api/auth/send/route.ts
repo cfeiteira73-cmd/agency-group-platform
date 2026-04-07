@@ -3,11 +3,11 @@ import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
 
-const PORTAL_URL = (process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/portal'
+const PORTAL_LOGIN_URL = (process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.agencygroup.pt') + '/portal/login'
 
 function makeToken(email: string, secret: string): string {
   const payload = Buffer.from(
-    JSON.stringify({ email, exp: Date.now() + 30 * 60 * 1000 })
+    JSON.stringify({ type: 'magic', email, exp: Date.now() + 30 * 60 * 1000 })
   ).toString('base64url')
   const sig = createHmac('sha256', secret).update(payload).digest('hex')
   return `${payload}.${sig}`
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const token = makeToken(email, SECRET)
-    const link = `${PORTAL_URL}?token=${token}`
+    const link = `${PORTAL_LOGIN_URL}?token=${token}`
 
     const { error } = await resend.emails.send({
       from: 'Agency Group <noreply@agencygroup.pt>',

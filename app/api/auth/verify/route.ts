@@ -8,6 +8,9 @@ if (!SECRET) {
   // Não faz throw — deixa a rota tratar como 500 normalmente
 }
 
+const IS_PRODUCTION = process.env.NODE_ENV === 'production'
+const SESSION_MAX_AGE = 8 * 60 * 60 // 8 horas em segundos
+
 export async function GET(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const limit = rateLimit(ip, { maxAttempts: 10, windowMs: 15 * 60 * 1000 })
@@ -46,7 +49,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Link expirado. Pede um novo acesso.' }, { status: 401 })
     }
 
-    return NextResponse.json({ ok: true, email: data.email })
+    // Build session cookie value (signed with AUTH_SECRET so it can't be forged)
+    const sessionPayload = Buffer.from(JSON.stringify({
+      email: data.email,
+      exp: Date.now() + SESSION_MAX_AGE * 1000,
+    })).toString('base64url')
+    const sessionSig = createHmac('sha256', SECRET).update(sessionPayload).digest('hex')
+    const sessionCookieValue = `${sessionPayload}.${sessionSig}`
+
+    const res = NextResponse.json({ ok: true, email: data.email })
+
+    // Set ag-auth-token cookie — this is what proxy.ts checks to allow /portal access
+    const cookieName = IS_PRODUCTION ? '__Secure-ag-auth-token' : 'ag-auth-token'
+    res.cookies.set(cookieName, sessionCookieValue, {
+      httpOnly: true,
+      secure: IS_PRODUCTION,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: SESSION_MAX_AGE,
+    })
+
+    return res
   } catch {
     return NextResponse.json({ error: 'Token inválido' }, { status: 400 })
   }

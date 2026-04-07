@@ -639,7 +639,9 @@ export default function Portal() {
     else document.documentElement.classList.remove('dark')
   }, [darkMode])
 
-  // Auth gate — localStorage magic link (sistema original)
+  // Auth gate — magic link token in URL → verify → set localStorage + cookie → ready
+  // Fallback: localStorage session → ready
+  // Fallback 2: /api/auth/me (reads httpOnly cookie) → sync localStorage → ready
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const urlToken = params.get('token')
@@ -661,6 +663,8 @@ export default function Portal() {
         .catch(() => { window.location.href = '/portal/login' })
       return
     }
+
+    // Check localStorage first (fastest path)
     const stored = localStorage.getItem('ag_auth')
     if (stored) {
       try {
@@ -674,7 +678,23 @@ export default function Portal() {
         }
       } catch {}
     }
-    window.location.href = '/portal/login'
+
+    // Fallback: check server-side cookie via /api/auth/me
+    // (covers cases where localStorage is cleared but cookie is still valid)
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && data.email) {
+          localStorage.setItem('ag_auth', JSON.stringify({ v: '1', exp: Date.now() + 8 * 60 * 60 * 1000, email: data.email, token: '' }))
+          setAgentEmail(data.email)
+          const n = data.email.split('@')[0].split('.')[0]
+          setAgentName(n.charAt(0).toUpperCase() + n.slice(1))
+          setReady(true)
+        } else {
+          window.location.href = '/portal/login'
+        }
+      })
+      .catch(() => { window.location.href = '/portal/login' })
   }, [])
 
   // Load deals
