@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import type { MessageParam } from '@anthropic-ai/sdk/resources/messages/messages'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
@@ -272,8 +273,8 @@ export async function POST(req: NextRequest) {
 
     // Validate message format
     const validMessages = messages.filter(
-      m => m && typeof m.role === 'string' && typeof m.content === 'string' && m.content.trim()
-    ).slice(-20) // Keep last 20 messages for context
+      m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim()
+    ).slice(-20) as MessageParam[] // Keep last 20 messages for context
 
     if (validMessages.length === 0) {
       return new Response('No valid messages', { status: 400 })
@@ -339,7 +340,8 @@ export async function POST(req: NextRequest) {
     })
 
     // Fire-and-forget: persist preference signals after response starts streaming
-    const lastUserMessage = validMessages.filter(m => m.role === 'user').at(-1)?.content ?? ''
+    const lastUserMessageContent = validMessages.filter(m => m.role === 'user').at(-1)?.content ?? ''
+    const lastUserMessage = typeof lastUserMessageContent === 'string' ? lastUserMessageContent : ''
     void updateSofiaMemory(sessionId, {
       conversation_count: memory?.conversation_count ?? 0,
       ...(memory?.budget_min != null ? { budget_min: memory.budget_min } : {}),

@@ -239,7 +239,7 @@ export default function ArticleInvestirAlgarve() {
         <h2 className="s">7. Questions Fréquentes</h2>
         <div className="faq-item">
           <div className="faq-q">Faut-il créer une société pour investir en Algarve ?</div>
-          <div className="faq-a">Pour un bien ou deux, l&apos;achat en nom propre est généralement plus simple. Pour un portefeuille de plusieurs biens (>€2M), une Lda (SARL portugaise) peut offrir des avantages fiscaux sur la gestion locative et les amortissements. Consultez un expert-comptable franco-portugais.</div>
+          <div className="faq-a">Pour un bien ou deux, l&apos;achat en nom propre est généralement plus simple. Pour un portefeuille de plusieurs biens ({'>'}€2M), une Lda (SARL portugaise) peut offrir des avantages fiscaux sur la gestion locative et les amortissements. Consultez un expert-comptable franco-portugais.</div>
         </div>
         <div className="faq-item">
           <div className="faq-q">La plus-value est-elle imposable en France si je vends ?</div>
