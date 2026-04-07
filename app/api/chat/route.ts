@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 
 export const runtime = 'edge'
 
@@ -244,6 +245,15 @@ function extractPreferenceSignals(
   return signals
 }
 
+const ChatRequestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.string().min(1).max(20),
+    content: z.string().min(1).max(4000),
+  })).min(1).max(40),
+  language: z.string().max(10).optional(),
+  sessionId: z.string().max(100).optional(),
+})
+
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
@@ -251,15 +261,14 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'Rate limit: 30 mensagens/hora' }), { status: 429, headers: { 'Content-Type': 'application/json' } })
     }
 
-    const { messages, language, sessionId = `anon-${Date.now()}` } = await req.json() as {
-      messages: Array<{ role: string; content: string }>
-      language?: string
-      sessionId?: string
+    const rawBody = await req.json()
+    const validation = ChatRequestSchema.safeParse(rawBody)
+    if (!validation.success) {
+      const errors = validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+      return new Response(JSON.stringify({ error: `Validation failed: ${errors}` }), { status: 400, headers: { 'Content-Type': 'application/json' } })
     }
 
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return new Response('Invalid messages', { status: 400 })
-    }
+    const { messages, language, sessionId = `anon-${Date.now()}` } = validation.data
 
     // Validate message format
     const validMessages = messages.filter(

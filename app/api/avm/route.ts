@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import Anthropic from '@anthropic-ai/sdk'
 import { avmCache, CacheKeys } from '@/lib/cache'
 
 const AVMSchema = z.object({
@@ -17,7 +18,63 @@ const AVMSchema = z.object({
   anoConstr:  z.coerce.number().int().min(1800).max(2030).optional().default(2000),
   uso:        z.string().optional().default('habitacao'),
   casasBanho: z.coerce.number().int().min(0).optional().default(1),
+  photos:     z.array(z.string().url()).max(8).optional(),
 })
+
+// ─── Photo quality scoring (inline, no HTTP roundtrip) ────────────────────────
+
+interface PhotoQualityResult {
+  overall_score: number
+  value_impact_pct: number
+  grade: 'A' | 'B' | 'C' | 'D' | 'F'
+}
+
+async function scorePhotos(photos: string[]): Promise<PhotoQualityResult | null> {
+  if (!photos || photos.length === 0) return null
+  const validUrls = photos.filter(u => u.startsWith('http')).slice(0, 8)
+  if (validUrls.length === 0) return null
+
+  try {
+    const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const imageContents: Anthropic.ImageBlockParam[] = validUrls.map(url => ({
+      type: 'image' as const,
+      source: { type: 'url' as const, url },
+    }))
+
+    const response = await anthropicClient.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: [
+          ...imageContents,
+          {
+            type: 'text',
+            text: `You are a luxury real estate photography expert. Analyze these ${validUrls.length} property photos for the Portuguese luxury market.
+
+Return ONLY valid JSON (no markdown):
+{"overall_score": 75, "value_impact_pct": 2.5, "grade": "B"}
+
+overall_score: 0-100 weighted quality score
+value_impact_pct: -5 to +8, impact on perceived property value vs average photos
+grade: A(90+), B(75-89), C(60-74), D(45-59), F(<45)`,
+          },
+        ],
+      }],
+    })
+
+    const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+    const jsonMatch = text.match(/\{[\s\S]*?\}/)
+    const parsed = JSON.parse(jsonMatch?.[0] || '{}') as Partial<PhotoQualityResult>
+    return {
+      overall_score: typeof parsed.overall_score === 'number' ? parsed.overall_score : 50,
+      value_impact_pct: typeof parsed.value_impact_pct === 'number' ? parsed.value_impact_pct : 0,
+      grade: (['A', 'B', 'C', 'D', 'F'].includes(parsed.grade ?? '') ? parsed.grade : 'C') as PhotoQualityResult['grade'],
+    }
+  } catch {
+    return null
+  }
+}
 
 // ─── Zone Market Data ── Portugal Q1 2026 ────────────────────────────────────
 // Sources: INE, AT/Autoridade Tributária, Confidencial Imobiliário, APEMIP
@@ -483,7 +540,16 @@ export async function POST(req: NextRequest) {
 
     // Weighted average
     const totalWeight = methods.reduce((s, m) => s + m.peso, 0)
-    const estimativa = Math.round(methods.reduce((s, m) => s + m.valor * m.peso, 0) / totalWeight / 1000) * 1000
+    let estimativa = Math.round(methods.reduce((s, m) => s + m.valor * m.peso, 0) / totalWeight / 1000) * 1000
+
+    // ── Photo quality scoring (optional — only if photos passed) ──
+    const photoResult = body.photos && body.photos.length > 0
+      ? await scorePhotos(body.photos)
+      : null
+
+    if (photoResult && photoResult.value_impact_pct !== 0) {
+      estimativa = Math.round(estimativa * (1 + photoResult.value_impact_pct / 100) / 1000) * 1000
+    }
 
     // ── Confidence score ──
     let confScore = 50
@@ -594,6 +660,11 @@ export async function POST(req: NextRequest) {
       },
       fonte: `Agency Group AVM v4.0 · Dados INE/AT Q1 2026 · 5 Metodologias RICS · ${new Date().toLocaleDateString('pt-PT')}`,
       data: new Date().toISOString(),
+      ...(photoResult ? {
+        photo_quality_score: photoResult.overall_score,
+        photo_grade: photoResult.grade,
+        photo_value_impact_pct: photoResult.value_impact_pct,
+      } : {}),
     }
 
     avmCache.set(cacheKey, avmResult, 30 * 60)
