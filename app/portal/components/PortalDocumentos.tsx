@@ -306,7 +306,11 @@ function StorageBar() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function PortalDocumentos() {
+interface PortalDocumentosProps {
+  onExportPDF?: (title: string, htmlContent: string) => void
+}
+
+export default function PortalDocumentos({ onExportPDF }: PortalDocumentosProps = {}) {
   const [activeTab, setActiveTab] = useState<DocTab>('biblioteca')
 
   // Biblioteca state
@@ -759,7 +763,19 @@ export default function PortalDocumentos() {
                               fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.08em',
                               textTransform: 'uppercase', cursor: 'pointer', borderRadius: '6px',
                             }}
-                            onClick={() => alert('Função de export PDF — integração com API de geração em breve.')}
+                            onClick={() => {
+                              const title = `Checklist — ${activeStageData.label}`
+                              const rows = activeStageData.items.map(i =>
+                                `<tr><td style="padding:6px 8px;border-bottom:1px solid rgba(14,14,13,.06)">${i.name}</td><td style="padding:6px 8px;border-bottom:1px solid rgba(14,14,13,.06);white-space:nowrap">${i.responsible}</td><td style="padding:6px 8px;border-bottom:1px solid rgba(14,14,13,.06);white-space:nowrap">${i.deadline}</td><td style="padding:6px 8px;border-bottom:1px solid rgba(14,14,13,.06);text-align:center">${i.required ? '✓' : '—'}</td></tr>`
+                              ).join('')
+                              const html = `<table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr style="background:rgba(14,14,13,.05)"><th style="padding:8px;text-align:left;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase">Tarefa</th><th style="padding:8px;text-align:left;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase">Responsável</th><th style="padding:8px;text-align:left;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase">Prazo</th><th style="padding:8px;text-align:center;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase">Obrig.</th></tr></thead><tbody>${rows}</tbody></table>`
+                              if (onExportPDF) {
+                                onExportPDF(title, html)
+                              } else {
+                                document.title = `Agency Group — ${title}`
+                                window.print()
+                              }
+                            }}
                           >
                             Gerar PDF
                           </button>

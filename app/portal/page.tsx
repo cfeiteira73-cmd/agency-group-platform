@@ -1059,7 +1059,7 @@ export default function Portal() {
             )}
 
             {section === 'documentos' && (
-              <PortalDocumentos />
+              <PortalDocumentos onExportPDF={exportToPDF} />
             )}
 
             {section === 'imt' && (

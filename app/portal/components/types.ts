@@ -118,3 +118,4 @@ export type SectionId =
   | 'agenda' | 'visitas' | 'imt' | 'comissoes' | 'exitSim'
   | 'pulse' | 'crossCompare' | 'voz' | 'collections' | 'draftOffer'
   | 'analytics' | 'investidores' | 'outbound' | 'videoStudio'
+  | 'photos' | 'agentai'

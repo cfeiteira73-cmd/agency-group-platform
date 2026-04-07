@@ -179,14 +179,16 @@ export function PortalVideoStudio() {
 
   // Fetch HeyGen avatars & voices on mount
   useEffect(() => {
-    fetch('/api/studio/avatars')
+    const ac = new AbortController()
+    fetch('/api/studio/avatars', { signal: ac.signal })
       .then(r => r.json())
       .then(d => {
         setHeygenConfigured(d.configured ?? false)
         if (Array.isArray(d.avatars) && d.avatars.length) setAvatars(d.avatars)
         if (Array.isArray(d.voices) && d.voices.length)   setVoices(d.voices)
       })
-      .catch(() => {})
+      .catch(e => { if (e.name !== 'AbortError') console.error('Avatar fetch failed:', e) })
+    return () => ac.abort()
   }, [])
 
   // Teleprompter auto-scroll

@@ -34,6 +34,8 @@ export const NAV: NavItem[] = [
   { id:'investidores', label:'Motor Investidores', icon:'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', group:'INTELIGÊNCIA' },
   { id:'outbound', label:'Captação Off-Market', icon:'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', group:'INTELIGÊNCIA' },
   { id:'videoStudio', label:'Sofia Video Studio', icon:'M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', group:'FERRAMENTAS IA' },
+  { id:'photos', label:'📸 Photo Scorer', icon:'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z', group:'FERRAMENTAS IA' },
+  { id:'agentai', label:'🤖 Agente IA', icon:'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1', group:'FERRAMENTAS IA' },
 ]
 
 export const PIPELINE_STAGES = ['Angariação','Proposta Enviada','Proposta Aceite','Due Diligence','CPCV Assinado','Financiamento','Escritura Marcada','Escritura Concluída']
