@@ -47,13 +47,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     if (!res.ok) {
       const errText = await res.text()
-      console.error('[sofia/session] HeyGen error:', errText)
+      console.error('[sofia/session] HeyGen error status:', res.status, 'body:', errText)
+      let parsedErr: unknown = errText
+      try { parsedErr = JSON.parse(errText) } catch { /* keep raw */ }
       return NextResponse.json({
         session_id: `fallback-${Date.now()}`,
         status: 'error',
-        message: 'Falha ao criar sessão Sofia. Tenta novamente.',
+        message: 'Falha ao criar sessão HeyGen.',
+        heygen_status: res.status,
+        heygen_error: parsedErr,
+        avatar_id_used: avatarId,
         language,
-      }, { status: 500 })
+      }, { status: 502 })
     }
 
     const data = await res.json()
