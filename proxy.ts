@@ -28,6 +28,7 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/voice-search':  { max: 20,  window: 3_600_000 },
   '/api/heygen':        { max: 10,  window: 3_600_000 },
   '/api/automation':   { max: 5,   window: 3_600_000 },
+  '/api/tts':          { max: 50,  window: 3_600_000 },
 }
 
 // ─── Bot blacklist (User-Agent) ──────────────────────────────────────────────

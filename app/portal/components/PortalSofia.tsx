@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode, type RefObject } from 'react'
 import { useUIStore } from '../stores/uiStore'
 import { PORTAL_PROPERTIES } from './constants'
+import { useSofiaVoice } from './useSofiaVoice'
 
 interface PortalSofiaProps {
   sofiaSessionId: string | null
@@ -136,6 +137,7 @@ export default function PortalSofia({
   onGenerateScript,
 }: PortalSofiaProps) {
   const { darkMode } = useUIStore()
+  const { speak, toggleVoice, speaking: voiceSpeaking, voiceEnabled } = useSofiaVoice()
 
   const [sofiaMode, setSofiaMode] = useState<SofiaMode>('avatar')
   const [assistantMode, setAssistantMode] = useState<AssistantMode>('deal')
@@ -255,6 +257,8 @@ export default function PortalSofia({
       setChatMessages(prev => prev.map(m =>
         m.id === assistantId ? { ...m, isStreaming: false } : m
       ))
+      // Speak the final accumulated response
+      speak(accumulated)
     } catch {
       setChatMessages(prev => prev.map(m =>
         m.id === assistantId
@@ -320,6 +324,37 @@ export default function PortalSofia({
               {l}
             </button>
           ))}
+
+          {/* Voice toggle — only in chat mode */}
+          {sofiaMode === 'chat' && (
+            <button
+              type="button"
+              onClick={toggleVoice}
+              title={voiceEnabled ? 'Desativar voz da Sofia' : 'Ativar voz da Sofia'}
+              aria-label={voiceEnabled ? 'Desativar voz' : 'Ativar voz'}
+              className={`p-2 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-[#1c4a35] focus-visible:outline-offset-2 ${
+                voiceEnabled
+                  ? 'bg-[#1c4a35] text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+              style={{ padding: '6px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: voiceEnabled ? '#1c4a35' : 'rgba(14,14,13,.06)', color: voiceEnabled ? '#f4f0e6' : 'rgba(14,14,13,.4)', transition: 'all .2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {voiceSpeaking ? (
+                <svg className="w-4 h-4 animate-pulse" style={{ width: '16px', height: '16px', animation: 'pulse 1s infinite' }} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                </svg>
+              ) : voiceEnabled ? (
+                <svg style={{ width: '16px', height: '16px' }} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg style={{ width: '16px', height: '16px' }} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217z" clipRule="evenodd" />
+                  <path d="M12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" />
+                </svg>
+              )}
+            </button>
+          )}
 
           {sofiaMode === 'avatar' && (
             !sofiaConnected ? (
