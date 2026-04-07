@@ -80,7 +80,7 @@ export async function GET(): Promise<NextResponse> {
     phone_id: phoneId ? `${phoneId.slice(0, 4)}...` : 'NOT SET',
     token_set: token && token !== 'PREENCHER' ? true : false,
     webhook_url: `${process.env.NEXTAUTH_URL || 'https://your-domain.com'}/api/whatsapp/webhook`,
-    verify_token: 'agencygroup2026',
+    verify_token_configured: !!process.env.WHATSAPP_VERIFY_TOKEN,
     test_with: 'POST /api/whatsapp/test { "to": "+351912345678", "message": "Test" }',
   })
 }

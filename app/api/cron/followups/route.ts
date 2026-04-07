@@ -224,9 +224,8 @@ export async function GET(req: NextRequest) {
   // Verify it's a Vercel cron call (or our own internal call with secret)
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!cronSecret) return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 })
+  if (authHeader !== `Bearer ${cronSecret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   if (!NOTION_TOKEN || !RESEND_KEY) {
     return NextResponse.json({ error: 'Missing credentials', sent: 0 })

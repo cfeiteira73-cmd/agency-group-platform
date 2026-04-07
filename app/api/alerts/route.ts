@@ -208,7 +208,7 @@ async function sendEmail(params: {
         port: Number(process.env.SMTP_PORT || 587),
         secure: process.env.SMTP_SECURE === 'true',
         auth: { user: smtpUser, pass: smtpPass },
-        tls: { rejectUnauthorized: false },
+        tls: { rejectUnauthorized: process.env.NODE_ENV === 'production' },
       })
       await transporter.sendMail({
         from: `"Agency Group" <${smtpUser}>`,

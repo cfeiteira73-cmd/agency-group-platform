@@ -52,10 +52,10 @@ export async function GET(): Promise<NextResponse> {
     'SUPABASE_SERVICE_ROLE_KEY',
     'ANTHROPIC_API_KEY',
   ]
-  const missingEnv = requiredEnv.filter(k => !process.env[k])
+  const missingVars = requiredEnv.filter(k => !process.env[k])
   report.services.env = {
-    ok: missingEnv.length === 0,
-    details: missingEnv.length > 0 ? { missing: missingEnv } : { all_present: true },
+    ok: missingVars.length === 0,
+    details: missingVars.length > 0 ? { missingCount: missingVars.length } : { all_present: true },
   }
 
   // Check Supabase
@@ -90,7 +90,7 @@ export async function GET(): Promise<NextResponse> {
   const anthropicKey = process.env.ANTHROPIC_API_KEY
   report.services.anthropic = {
     ok: Boolean(anthropicKey && anthropicKey.startsWith('sk-ant-')),
-    details: anthropicKey ? { key_prefix: anthropicKey.slice(0, 12) + '...' } : { error: 'Key missing' },
+    details: { anthropic: !!process.env.ANTHROPIC_API_KEY },
   }
 
   // Determine overall status

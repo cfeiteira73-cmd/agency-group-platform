@@ -22,9 +22,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization') || ''
   const secret = process.env.CRON_SECRET
-  if (secret && auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  if (!secret) return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 })
+  if (auth !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   return runRefresh()
 }
 

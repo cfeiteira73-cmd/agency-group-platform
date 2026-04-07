@@ -20,7 +20,7 @@ export async function GET() {
       port: smtpPort,
       secure: smtpSecure,
       auth: { user: smtpUser, pass: smtpPass },
-      tls: { rejectUnauthorized: false },
+      tls: { rejectUnauthorized: process.env.NODE_ENV === 'production' },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 10000,

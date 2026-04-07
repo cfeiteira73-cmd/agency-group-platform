@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const VALID_CODES = (process.env.OFFMARKET_CODES || 'offmarket2026,ag2026').split(',')
+// Set OFFMARKET_CODES=code1,code2 in Vercel env vars
+const VALID_CODES = process.env.OFFMARKET_CODES?.split(',') ?? []
 
 export async function POST(req: NextRequest) {
   try {
