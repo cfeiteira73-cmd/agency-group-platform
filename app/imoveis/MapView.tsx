@@ -6,6 +6,7 @@ interface MapViewProps {
   properties: Property[]
   onPropertyClick?: (id: string) => void
   onDrawFilter?: (ids: string[]) => void
+  selectedId?: string
 }
 
 // ─── Point-in-polygon (ray-casting) ───────────────────────────────────────────
@@ -33,10 +34,11 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-export default function MapView({ properties, onPropertyClick, onDrawFilter }: MapViewProps) {
+export default function MapView({ properties, onPropertyClick, onDrawFilter, selectedId }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<unknown>(null)
   const drawLayerRef = useRef<unknown>(null)
+  const markersMapRef = useRef<Map<string, unknown>>(new Map())
   const [drawMode, setDrawMode] = useState<null | 'polygon' | 'circle'>(null)
   const [filteredCount, setFilteredCount] = useState<number | null>(null)
   const [drawHint, setDrawHint] = useState('')
@@ -175,6 +177,8 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
         marker.on('click', () => {
           if (onPropertyClick) onPropertyClick(p.id)
         })
+
+        markersMapRef.current.set(p.id, marker)
       })
 
       // Custom popup CSS
@@ -253,11 +257,53 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
       })
       const popupHtml = `<div style="background:#0e2318;color:#f4f0e6;font-family:var(--font-jost),sans-serif;border:1px solid rgba(201,169,110,.25);padding:16px;min-width:220px;max-width:260px;"><div style="font-family:var(--font-dm-mono),monospace;font-size:10px;letter-spacing:.14em;color:rgba(201,169,110,.7);margin-bottom:6px;text-transform:uppercase;">${p.zona} · ${p.bairro}</div><div style="font-family:var(--font-cormorant),serif;font-size:1.1rem;font-weight:300;color:#f4f0e6;margin-bottom:8px;line-height:1.3;">${p.nome}</div><div style="font-size:11px;color:rgba(244,240,230,.45);margin-bottom:10px;">${p.area}m² · T${p.quartos}</div><div style="font-family:var(--font-cormorant),serif;font-size:1.25rem;color:#c9a96e;margin-bottom:12px;">${formatPriceFull(p.preco)}</div><a href="/imoveis/${p.id}" style="display:block;background:#c9a96e;color:#0c1f15;text-align:center;padding:8px;font-family:var(--font-jost),sans-serif;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;">Ver Imóvel →</a></div>`
 
-      L.marker([p.lat, p.lng], { icon })
+      const marker = L.marker([p.lat, p.lng], { icon })
         .addTo(map)
         .bindPopup(popupHtml, { className: 'ag-popup', maxWidth: 280, closeButton: false })
+
+      marker.on('click', () => {
+        if (onPropertyClick) onPropertyClick(p.id)
+      })
+
+      markersMapRef.current.set(p.id, marker)
     })
-  }, [properties])
+  }, [properties]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pan to + highlight selected marker when selectedId changes
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const L = (window as any).L
+    if (!L || !mapInstanceRef.current) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const map = mapInstanceRef.current as any
+
+    markersMapRef.current.forEach((markerRaw, id) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const marker = markerRaw as any
+      const isSelected = id === selectedId
+      const color = isSelected ? '#f4f0e6' : '#c9a96e'
+      const bg = isSelected ? '#1c4a35' : '#0c1f15'
+      const scale = isSelected ? 'scale(1.15)' : 'scale(1)'
+      const p = properties.find(pr => pr.id === id)
+      if (!p) return
+      const priceLabel = p.preco >= 1000000
+        ? '€' + (p.preco / 1000000).toFixed(1).replace('.', ',') + 'M'
+        : '€' + Math.round(p.preco / 1000) + 'K'
+      const newIcon = L.divIcon({
+        className: '',
+        html: `<div style="background:${bg};border:2px solid ${color};color:${color};font-family:var(--font-dm-mono),monospace;font-size:10px;letter-spacing:.08em;padding:5px 10px;white-space:nowrap;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.6);position:relative;transform:${scale};transition:transform .15s;">${priceLabel}<div style="position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid ${color};"></div></div>`,
+        iconAnchor: [40, 32], popupAnchor: [0, -35],
+      })
+      marker.setIcon(newIcon)
+    })
+
+    if (selectedId) {
+      const selectedMarker = markersMapRef.current.get(selectedId) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (selectedMarker) {
+        map.panTo(selectedMarker.getLatLng(), { animate: true, duration: 0.5 })
+      }
+    }
+  }, [selectedId, properties])
 
   // Activate draw tool
   const activateDraw = useCallback((mode: 'polygon' | 'circle') => {
@@ -283,7 +329,7 @@ export default function MapView({ properties, onPropertyClick, onDrawFilter }: M
   }, [clearDraw])
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '600px' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '600px' }}>
       <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
 
       {/* Draw-to-Search toolbar */}

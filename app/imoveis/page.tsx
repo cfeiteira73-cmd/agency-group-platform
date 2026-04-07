@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useCallback, lazy, Suspense, type CSSProperties } from 'react'
+import { useState, useMemo, useCallback, lazy, Suspense, useRef, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { PROPERTIES, ZONAS, TIPOS, formatPriceFull } from './data'
 import FavoriteButton, { FavoritesDrawer } from './FavoriteButton'
@@ -30,6 +30,9 @@ export default function ImoveisPage() {
   const [sort,       setSort]       = useState<SortKey>('recente')
   const [viewMode,   setViewMode]   = useState<ViewMode>('grid')
   const [compareIds, setCompareIds] = useState<string[]>([])
+  const [hoveredId,  setHoveredId]  = useState<string | undefined>(undefined)
+  const [mapSelectedId, setMapSelectedId] = useState<string | undefined>(undefined)
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   function toggleFeature(f: string) {
     setFeatures(prev =>
@@ -79,6 +82,15 @@ export default function ImoveisPage() {
       if (prev.length >= 3) return prev
       return [...prev, id]
     })
+  }, [])
+
+  // When a map pin is clicked → highlight + scroll to card
+  const handleMapPropertyClick = useCallback((id: string) => {
+    setMapSelectedId(id)
+    const card = cardRefs.current.get(id)
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
   }, [])
 
   // JSON-LD
@@ -369,25 +381,83 @@ export default function ImoveisPage() {
           )}
         </div>
 
-        {/* ── MAP VIEW ── */}
+        {/* ── MAP SPLIT VIEW ── */}
         {viewMode === 'map' && (
           <div style={{
-            maxWidth: '1400px', margin: '20px auto 0',
-            padding: '0 40px',
+            display: 'flex',
+            height: 'calc(100vh - 136px)', /* 68px nav + 68px filter bar */
+            overflow: 'hidden',
           }}>
-            <Suspense fallback={
-              <div style={{
-                height: '600px', background: '#0e2318',
-                border: '1px solid rgba(201,169,110,.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
-                letterSpacing: '.2em', color: 'rgba(201,169,110,.5)',
-              }}>
-                A carregar mapa...
-              </div>
-            }>
-              <MapView properties={filtered} />
-            </Suspense>
+            {/* Left: scrollable property list */}
+            <div style={{
+              width: '44%',
+              overflowY: 'auto',
+              padding: '16px',
+              background: '#0c1f15',
+              borderRight: '1px solid rgba(201,169,110,.1)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}>
+              {filtered.length === 0 ? (
+                <div style={{
+                  textAlign: 'center', padding: '60px 20px',
+                  border: '1px solid rgba(201,169,110,.12)',
+                }}>
+                  <div style={{
+                    fontFamily: "'Cormorant', serif", fontSize: '1.6rem',
+                    fontWeight: 300, color: 'rgba(201,169,110,.6)', marginBottom: '12px',
+                  }}>Nenhum imóvel encontrado</div>
+                  <p style={{
+                    fontFamily: "'Jost', sans-serif", fontSize: '.8rem',
+                    color: 'rgba(244,240,230,.35)', lineHeight: 1.75,
+                  }}>Tente outros filtros ou contacte-nos.</p>
+                </div>
+              ) : (
+                filtered.map(p => (
+                  <div
+                    key={p.id}
+                    ref={el => { if (el) cardRefs.current.set(p.id, el); else cardRefs.current.delete(p.id) }}
+                    onMouseEnter={() => setHoveredId(p.id)}
+                    onMouseLeave={() => setHoveredId(undefined)}
+                  >
+                    <MapListCard
+                      property={p}
+                      isHighlighted={mapSelectedId === p.id || hoveredId === p.id}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Right: sticky map */}
+            <div style={{ width: '56%', position: 'relative', height: '100%' }}>
+              <Suspense fallback={
+                <div style={{
+                  width: '100%', height: '100%', background: '#0e2318',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
+                  letterSpacing: '.2em', color: 'rgba(201,169,110,.5)',
+                }}>
+                  A carregar mapa...
+                </div>
+              }>
+                <div style={{ height: '100%' }}>
+                  <MapView
+                    properties={filtered}
+                    selectedId={hoveredId ?? mapSelectedId}
+                    onPropertyClick={handleMapPropertyClick}
+                    onDrawFilter={ids => {
+                      // Filter the visible list to drawn area
+                      // We signal this via a custom event for now — the draw filter
+                      // already updates the map markers; filtered list stays as-is
+                      // unless the user also triggers a zone/filter change
+                      void ids
+                    }}
+                  />
+                </div>
+              </Suspense>
+            </div>
           </div>
         )}
 
@@ -703,4 +773,101 @@ const iconChipStyle: CSSProperties = {
   background: 'rgba(12,31,21,.65)', backdropFilter: 'blur(8px)',
   color: 'rgba(201,169,110,.8)',
   border: '1px solid rgba(201,169,110,.2)',
+}
+
+// ─── Map List Card (compact card for split-view left panel) ──────────────────
+function MapListCard({
+  property: p,
+  isHighlighted,
+}: {
+  property: (typeof PROPERTIES)[0]
+  isHighlighted: boolean
+}) {
+  const { formatConverted, currency } = useCurrency()
+
+  return (
+    <Link href={`/imoveis/${p.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+      <div style={{
+        background: isHighlighted ? '#0e2318' : 'rgba(14,35,24,.6)',
+        border: `1px solid ${isHighlighted ? 'rgba(201,169,110,.5)' : 'rgba(201,169,110,.12)'}`,
+        transition: 'border-color .2s, background .2s, box-shadow .2s',
+        boxShadow: isHighlighted ? '0 8px 32px rgba(0,0,0,.4)' : 'none',
+        display: 'flex',
+        gap: '14px',
+        padding: '14px',
+        cursor: 'pointer',
+        transform: isHighlighted ? 'translateX(2px)' : 'none',
+      }}>
+        {/* Color swatch (gradient thumbnail) */}
+        <div style={{
+          width: '90px',
+          minWidth: '90px',
+          height: '70px',
+          background: `linear-gradient(${p.grad})`,
+          position: 'relative',
+          overflow: 'hidden',
+          flexShrink: 0,
+        }}>
+          {p.badge && (
+            <div style={{
+              position: 'absolute', bottom: '4px', left: '4px',
+              background: 'rgba(12,31,21,.85)',
+              fontFamily: "'DM Mono', monospace",
+              fontSize: '.42rem', letterSpacing: '.12em',
+              color: '#c9a96e', padding: '2px 6px',
+              textTransform: 'uppercase',
+            }}>{p.badge}</div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+            letterSpacing: '.14em', color: 'rgba(201,169,110,.6)',
+            marginBottom: '4px', textTransform: 'uppercase',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {p.zona} · {p.bairro}
+          </div>
+          <div style={{
+            fontFamily: "'Cormorant', serif", fontWeight: 300,
+            fontSize: '.95rem', color: '#f4f0e6',
+            lineHeight: 1.2, marginBottom: '6px',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>{p.nome}</div>
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+            letterSpacing: '.08em', color: 'rgba(244,240,230,.35)',
+            marginBottom: '6px',
+          }}>
+            {p.area}m² · T{p.quartos} · {p.casasBanho} WC
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{
+                fontFamily: "'Cormorant', serif", fontWeight: 300,
+                fontSize: '1.05rem', color: '#c9a96e',
+              }}>
+                {formatPriceFull(p.preco)}
+              </div>
+              {currency !== 'EUR' && (
+                <div style={{
+                  fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                  letterSpacing: '.06em', color: 'rgba(201,169,110,.45)',
+                }}>{formatConverted(p.preco)}</div>
+              )}
+            </div>
+            <div style={{
+              fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+              letterSpacing: '.1em', color: isHighlighted ? '#c9a96e' : 'rgba(244,240,230,.25)',
+              transition: 'color .2s',
+            }}>
+              Ver →
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
 }
