@@ -1203,7 +1203,7 @@ export default function Home() {
           {/* LEFT — Text */}
           <div>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.18em',textTransform:'uppercase',color:'rgba(14,14,13,.4)',marginBottom:'28px'}}>Avaliação Privada · Dados Reais · Sem Estimativas</div>
-            <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.4rem,4vw,4rem)',fontWeight:300,color:'#0e0e0d',lineHeight:1.08,margin:'0 0 28px',letterSpacing:'-.01em'}}>
+            <h2 style={{fontFamily:"'Cormorant',serif",fontSize:'clamp(2.2rem,3.8vw,3.8rem)',fontWeight:300,color:'#0e0e0d',lineHeight:1.08,margin:'0 0 28px',letterSpacing:'-.01em'}}>
               O seu imóvel vale<br/>quanto vale.<br/><em style={{fontStyle:'italic',color:'#1c4a35'}}>Não mais. Não menos.</em>
             </h2>
             <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.92rem',fontWeight:300,color:'rgba(14,14,13,.55)',lineHeight:1.78,marginBottom:'40px',maxWidth:'400px'}}>
