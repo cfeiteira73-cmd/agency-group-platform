@@ -88,11 +88,15 @@ export default auth(async (req) => {
 
   // 2a. Portal routes — require ag-auth-token cookie (magic link) or NextAuth session
   if (pathname.startsWith('/portal') && pathname !== '/portal/login') {
+    // Check plain name first — verify route now always sets 'ag-auth-token'
+    // (without __Secure- prefix) so Chrome doesn't silently drop it during
+    // the www-redirect chain. The __Secure- variants remain as fallback for
+    // any cookies set by a previous deployment.
     const authCookie =
-      req.cookies.get('next-auth.session-token')?.value ||
-      req.cookies.get('__Secure-next-auth.session-token')?.value ||
       req.cookies.get('ag-auth-token')?.value ||
-      req.cookies.get('__Secure-ag-auth-token')?.value
+      req.cookies.get('__Secure-ag-auth-token')?.value ||
+      req.cookies.get('next-auth.session-token')?.value ||
+      req.cookies.get('__Secure-next-auth.session-token')?.value
     if (!authCookie) {
       const loginUrl = new URL('/portal/login', req.url)
       loginUrl.searchParams.set('callbackUrl', pathname)

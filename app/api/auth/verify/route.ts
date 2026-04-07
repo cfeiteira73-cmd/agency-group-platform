@@ -62,10 +62,16 @@ export async function GET(req: NextRequest) {
     const acceptHeader = req.headers.get('accept') || ''
     const wantsJson = acceptHeader.includes('application/json') && !acceptHeader.includes('text/html')
 
-    const cookieName = IS_PRODUCTION ? '__Secure-ag-auth-token' : 'ag-auth-token'
+    // Use a plain cookie name without the __Secure- prefix.
+    // Chrome silently drops __Secure- cookies when they arrive via a redirect
+    // chain (agencygroup.pt → www.agencygroup.pt → /api/auth/verify) because
+    // the prefix requires the cookie to be set in a "secure context" with no
+    // cross-origin hops — a constraint Chrome enforces strictly while IE ignores.
+    // proxy.ts already checks both variants so the fallback is preserved.
+    const cookieName = 'ag-auth-token'
     const cookieOptions = {
       httpOnly: true,
-      secure: IS_PRODUCTION,
+      secure: IS_PRODUCTION,   // HTTPS-only in production, as required
       sameSite: 'lax' as const,
       path: '/',
       maxAge: SESSION_MAX_AGE,
@@ -79,9 +85,15 @@ export async function GET(req: NextRequest) {
     }
 
     // Direct browser navigation from email link — set cookie ON the redirect response
-    // so the browser has it before hitting /portal (avoids race condition with fetch+navigate)
-    const redirectRes = NextResponse.redirect(new URL('/portal', req.url))
+    // so the browser has it before hitting /portal (avoids race condition with fetch+navigate).
+    // Use req.nextUrl.origin so the URL is always the public-facing origin
+    // (www.agencygroup.pt) rather than any internal Vercel proxy URL.
+    const redirectRes = NextResponse.redirect(new URL('/portal', req.nextUrl.origin))
     redirectRes.cookies.set(cookieName, sessionCookieValue, cookieOptions)
+    // Prevent any intermediate proxy from caching this response and replaying
+    // a stale Set-Cookie header to a different user.
+    redirectRes.headers.set('Cache-Control', 'no-store, no-cache')
+    redirectRes.headers.set('Pragma', 'no-cache')
     return redirectRes
   } catch {
     return NextResponse.json({ error: 'Token inválido' }, { status: 400 })
