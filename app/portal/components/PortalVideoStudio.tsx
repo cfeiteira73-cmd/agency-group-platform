@@ -207,8 +207,9 @@ export function PortalVideoStudio() {
     return () => { if (scrollRef.current) clearInterval(scrollRef.current) }
   }, [tpScrolling, tpSpeed])
 
-  // Copy handler
+  // Copy handler — 'video' tab has no text content to copy
   const copyContent = useCallback(async (tab: ContentTab) => {
+    if (tab === 'video') return
     const content = { script, hooks, captions, shotlist }[tab]
     if (!content) return
     try {

@@ -421,7 +421,7 @@ export default function Portal() {
       const data = await res.json()
       if (data.success) setNhrResult(data)
     } catch (e) {
-      setNhrResult(JSON.stringify({ error: 'Erro de ligação. Tente novamente.' }))
+      setNhrResult({ error: 'Erro de ligação. Tente novamente.' })
     } finally { setNhrLoading(false) }
   }
 
@@ -584,7 +584,7 @@ export default function Portal() {
       const data = await res.json()
       if (data.success) setDealRiskAnalysis(data.analysis)
     } catch (e) {
-      setDealRiskAnalysis(JSON.stringify({ error: 'Erro de ligação. Tente novamente.' }))
+      setDealRiskAnalysis({ error: 'Erro de ligação. Tente novamente.' })
     } finally { setDealRiskLoading(false) }
   }
 
@@ -598,7 +598,7 @@ export default function Portal() {
       const data = await res.json()
       if (data.success) setDealNego(data.strategy)
     } catch (e) {
-      setDealNego(JSON.stringify({ error: 'Erro de ligação. Tente novamente.' }))
+      setDealNego({ error: 'Erro de ligação. Tente novamente.' })
     } finally { setDealNegoLoading(false) }
   }
 
