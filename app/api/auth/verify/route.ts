@@ -57,19 +57,32 @@ export async function GET(req: NextRequest) {
     const sessionSig = createHmac('sha256', SECRET).update(sessionPayload).digest('hex')
     const sessionCookieValue = `${sessionPayload}.${sessionSig}`
 
-    const res = NextResponse.json({ ok: true, email: data.email })
+    // Detect whether the client wants JSON (called via fetch from login page)
+    // or a browser navigation (direct GET from email link)
+    const acceptHeader = req.headers.get('accept') || ''
+    const wantsJson = acceptHeader.includes('application/json') && !acceptHeader.includes('text/html')
 
-    // Set ag-auth-token cookie — this is what proxy.ts checks to allow /portal access
     const cookieName = IS_PRODUCTION ? '__Secure-ag-auth-token' : 'ag-auth-token'
-    res.cookies.set(cookieName, sessionCookieValue, {
+    const cookieOptions = {
       httpOnly: true,
       secure: IS_PRODUCTION,
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       path: '/',
       maxAge: SESSION_MAX_AGE,
-    })
+    }
 
-    return res
+    if (wantsJson) {
+      // Called via fetch() from login page — return JSON with cookie
+      const res = NextResponse.json({ ok: true, email: data.email })
+      res.cookies.set(cookieName, sessionCookieValue, cookieOptions)
+      return res
+    }
+
+    // Direct browser navigation from email link — set cookie ON the redirect response
+    // so the browser has it before hitting /portal (avoids race condition with fetch+navigate)
+    const redirectRes = NextResponse.redirect(new URL('/portal', req.url))
+    redirectRes.cookies.set(cookieName, sessionCookieValue, cookieOptions)
+    return redirectRes
   } catch {
     return NextResponse.json({ error: 'Token inválido' }, { status: 400 })
   }

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     // Pre-approved agents: skip admin approval, send magic link directly
     if (ALLOWED.includes(email.toLowerCase())) {
       const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
-      const magicLink = `${BASE_URL}/portal/login?token=${magicToken}`
+      const magicLink = `${BASE_URL}/api/auth/verify?token=${magicToken}`
       const { data: magicData, error: magicErr } = await resend.emails.send({
         from: FROM,
         to: email,
