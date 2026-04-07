@@ -670,6 +670,7 @@ export async function POST(req: NextRequest) {
     avmCache.set(cacheKey, avmResult, 30 * 60)
     return NextResponse.json(avmResult)
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Erro interno' }, { status: 500 })
+    console.error('[AVM] Internal error:', e)
+    return NextResponse.json({ error: 'Erro interno. Tenta novamente.' }, { status: 500 })
   }
 }

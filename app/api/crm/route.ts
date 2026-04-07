@@ -465,6 +465,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       gdpr_consent_at:     input.gdpr_consent === true ? new Date().toISOString() : null,
     }
 
+    // ── Deduplication check ─────────────────────────────────────────────────
+    // Before inserting, look for an existing contact by email OR phone.
+    // If found, return the existing record (no duplicate created).
+    try {
+      const orFilter = [
+        contact.email    ? `email.eq.${contact.email}`    : '',
+        contact.phone    ? `phone.eq.${contact.phone}`    : '',
+        contact.whatsapp ? `whatsapp.eq.${contact.whatsapp}` : '',
+      ].filter(Boolean).join(',')
+
+      if (orFilter) {
+        const { data: existing } = await contactsTable()
+          .select('id, full_name, email, phone')
+          .or(orFilter)
+          .limit(1)
+          .single()
+
+        if (existing) {
+          // Update last-seen timestamp so CRM stays fresh
+          await contactsTable()
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', existing.id)
+
+          return NextResponse.json(
+            {
+              id: existing.id,
+              merged: true,
+              message: 'Contacto existente actualizado',
+              source: 'supabase',
+            },
+            { status: 200, headers: rateLimitHeaders() }
+          )
+        }
+      }
+    } catch {
+      // Dedup query failed — proceed to insert (fail-open to avoid data loss)
+    }
+
     // Try Supabase insert
     try {
       const { data, error } = await contactsTable()

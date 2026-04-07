@@ -35,7 +35,7 @@ export function PushNotificationSetup() {
 
   async function subscribe() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      alert('Push notifications are not supported in this browser')
+      console.warn('[Push] Push notifications are not supported in this browser')
       return
     }
 

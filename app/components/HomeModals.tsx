@@ -20,6 +20,20 @@ export default function HomeModals() {
   const [agSent, setAgSent] = useState(false)
   const [agSending, setAgSending] = useState(false)
 
+  // Exit intent: open off-market modal when cursor leaves viewport top
+  useEffect(() => {
+    let triggered = false
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (triggered) return
+      if (e.clientY <= 10) {
+        triggered = true
+        setTimeout(() => setModalOpen(true), 300)
+      }
+    }
+    document.addEventListener('mouseleave', handleMouseLeave)
+    return () => document.removeEventListener('mouseleave', handleMouseLeave)
+  }, [])
+
   // Listen for custom events from other client islands
   useEffect(() => {
     const openOffMarket = () => openModal()
