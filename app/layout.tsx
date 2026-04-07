@@ -5,6 +5,7 @@ import './globals.css'
 import Script from 'next/script'
 import { CurrencyProvider } from './components/CurrencyWidget'
 import PWAInstallBanner from './components/PWAInstallBanner'
+import SofiaAgentWidget from './components/SofiaAgentWidget'
 
 const cormorant = Cormorant({
   subsets: ['latin'],
@@ -398,6 +399,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <CurrencyProvider>
         <main id="main-content">{children}</main>
         <PWAInstallBanner />
+        <SofiaAgentWidget />
         <script dangerouslySetInnerHTML={{ __html: `
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
