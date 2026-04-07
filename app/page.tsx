@@ -1156,7 +1156,7 @@ export default function Home() {
         <div className="sw">
           <div style={{marginBottom:'40px'}}>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(14,14,13,.35)',marginBottom:'10px'}}>Simulação · Crédito Habitação · Portugal</div>
-            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2.2rem,4vw,4rem)',color:'#0e0e0d',lineHeight:1.05,marginBottom:'12px',letterSpacing:'-.012em'}}>A Verdade <em style={{fontStyle:'italic',color:'#1c4a35'}}>Sobre o Crédito</em></h2>
+            <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2.2rem,3.8vw,3.8rem)',color:'#0e0e0d',lineHeight:1.05,marginBottom:'12px',letterSpacing:'-.012em'}}>A Verdade <em style={{fontStyle:'italic',color:'#1c4a35'}}>Sobre o Crédito</em></h2>
             <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.86rem',lineHeight:1.8,color:'rgba(14,14,13,.5)',maxWidth:'560px'}}>Euribor 6M em tempo real · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização · DSTI Banco de Portugal · IMT + IS incluído</p>
           </div>
           <HomeMortgage />
