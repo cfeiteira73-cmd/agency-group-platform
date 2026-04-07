@@ -119,9 +119,16 @@ export default auth(async (req) => {
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
   if (isProtected && !req.auth) {
-    const loginUrl = new URL('/auth/login', req.url)
-    loginUrl.searchParams.set('callbackUrl', pathname)
-    return NextResponse.redirect(loginUrl)
+    // Also accept magic-link portal auth cookie (ag-auth-token set by /api/auth/verify)
+    // HttpOnly + SameSite=Lax prevents cross-site forgery; HMAC verified at login time
+    const magicCookie =
+      req.cookies.get('ag-auth-token')?.value ||
+      req.cookies.get('__Secure-ag-auth-token')?.value
+    if (!magicCookie) {
+      const loginUrl = new URL('/auth/login', req.url)
+      loginUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
   // 3. Rate limiting
