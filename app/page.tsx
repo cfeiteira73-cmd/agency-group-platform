@@ -60,7 +60,7 @@ function HomeMortgage() {
   }
 
   return (
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1.4fr',gap:'40px',alignItems:'start'}}>
+    <div className="home-mtg-grid">
       {/* ── Form ── */}
       <div style={{background:'#fff',borderTop:'2px solid #1c4a35',padding:'32px',boxShadow:'0 12px 56px rgba(14,14,13,.08)'}}>
         <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.35rem',color:'#0e0e0d',marginBottom:'16px',letterSpacing:'-.01em'}}>Simulação · Crédito Habitação</h3>
@@ -787,9 +787,9 @@ export default function Home() {
       <div id="pgb"></div>
 
       {/* MODAL OFF-MARKET */}
-      <div className={`modal-ov${modalOpen?' open':''}`} id="offModal" onClick={e=>{if(e.target===e.currentTarget)closeModal()}}>
+      <div className={`modal-ov${modalOpen?' open':''}`} id="offModal" role="dialog" aria-modal="true" aria-label="Acesso ao Portfolio Off-Market" onClick={e=>{if(e.target===e.currentTarget)closeModal()}}>
         <div className="modal-box">
-          <button className="modal-x" onClick={closeModal}>✕</button>
+          <button className="modal-x" onClick={closeModal} aria-label="Fechar modal">✕</button>
           <div className="modal-eye">Acesso Restrito</div>
           <h2 className="modal-h2">Portfolio<br/><em style={{fontStyle:'italic',color:'var(--g)'}}>Off-Market</em></h2>
           <p className="modal-desc">As propriedades mais raras nunca chegam aos portais. Este portfolio existe apenas para quem foi convidado.</p>
@@ -849,9 +849,9 @@ export default function Home() {
         </a>
         <ul className="nav-links">
           <li><a href="/imoveis">Imóveis</a></li>
-          <li><a href="#zonas">Zonas</a></li>
-          <li><a href="#simulador">Crédito</a></li>
-          <li><a href="/reports" style={{color:'var(--gold)'}}>Reports</a></li>
+          <li><a href="/#zonas">Zonas</a></li>
+          <li><a href="/#simulador">Crédito</a></li>
+          <li><a href="/reports">Reports</a></li>
           <li><a href="#" onClick={e=>{e.preventDefault();openModal()}}>Off-Market</a></li>
           <li><a href="#contacto">Contacto</a></li>
         </ul>
@@ -878,9 +878,9 @@ export default function Home() {
         <nav className="nav-drawer-panel" aria-label="Menu móvel">
           <div className="nav-drawer-links">
             <a href="/imoveis" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Imóveis</a>
-            <a href="#zonas" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Zonas</a>
-            <a href="#simulador" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Crédito</a>
-            <a href="/reports" style={{color:'var(--gold)'}} onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Reports</a>
+            <a href="/#zonas" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Zonas</a>
+            <a href="/#simulador" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Crédito</a>
+            <a href="/reports" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Reports</a>
             <a href="#" onClick={e=>{e.preventDefault();setMenuOpen(false);document.body.style.overflow='';openModal()}}>Off-Market</a>
             <a href="#contacto" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Contacto</a>
           </div>
@@ -1198,7 +1198,7 @@ export default function Home() {
       {/* BLOCO 2 — Avaliação Privada */}
       <section id="avaliacao" style={{background:'#f4f0e6',padding:'112px 0',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg, transparent, rgba(201,169,110,.6), transparent)'}}/>
-        <div className="sw" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'80px',alignItems:'center'}}>
+        <div className="sw avaliacao-grid">
 
           {/* LEFT — Text */}
           <div>
@@ -1256,7 +1256,7 @@ export default function Home() {
       </section>
 
       {/* BLOCO 3 — Viver e Investir em Portugal · Editorial 2 colunas */}
-      <section style={{background:'#0c1f15',minHeight:'560px',display:'grid',gridTemplateColumns:'1fr 1fr',overflow:'hidden',position:'relative'}}>
+      <section className="editorial-2col" style={{background:'#0c1f15',minHeight:'560px'}}>
 
         {/* LEFT — Lifestyle image simulation: mesa de jantar em Comporta */}
         <div style={{position:'relative',minHeight:'560px',overflow:'hidden'}}>
@@ -1305,7 +1305,7 @@ export default function Home() {
       </section>
 
       {/* ACESSO PRIVADO — Private Client · Split editorial */}
-      <section style={{background:'#070f0a',minHeight:'640px',position:'relative',overflow:'hidden',display:'grid',gridTemplateColumns:'1fr 1fr'}}>
+      <section className="editorial-2col" style={{background:'#070f0a',minHeight:'640px',position:'relative',overflow:'hidden'}}>
 
         {/* LEFT — Editorial photo simulation: villa ao pôr do sol */}
         <div style={{position:'relative',minHeight:'640px',overflow:'hidden'}}>
@@ -1662,8 +1662,8 @@ export default function Home() {
         <div className="ft-inner">
           <div className="ft-top">
             <div><div className="ft-la">Agency</div><div className="ft-lg">Group</div><p className="ft-tag">Portugal. Para quem não aceita menos.</p></div>
-            <div className="ft-col"><div className="ft-col-h">Zonas</div><ul><li><a href="#">Lisboa</a></li><li><a href="#">Cascais</a></li><li><a href="#">Comporta</a></li><li><a href="#">Porto</a></li><li><a href="#">Algarve</a></li><li><a href="#">Madeira</a></li></ul></div>
-            <div className="ft-col"><div className="ft-col-h">Serviços</div><ul><li><a href="#" onClick={e=>{e.preventDefault();openModal()}}>Off-Market</a></li><li><a href="/portal">Portal Agentes</a></li><li><a href="#contacto">NHR / Vistos</a></li><li><a href="#simulador">Simulador IMT</a></li></ul></div>
+            <div className="ft-col"><div className="ft-col-h">Zonas</div><ul><li><a href="/imoveis?zona=Lisboa">Lisboa</a></li><li><a href="/imoveis?zona=Cascais">Cascais</a></li><li><a href="/imoveis?zona=Comporta">Comporta</a></li><li><a href="/imoveis?zona=Porto">Porto</a></li><li><a href="/imoveis?zona=Algarve">Algarve</a></li><li><a href="/imoveis?zona=Madeira">Madeira</a></li></ul></div>
+            <div className="ft-col"><div className="ft-col-h">Serviços</div><ul><li><a href="#" onClick={e=>{e.preventDefault();openModal()}}>Off-Market</a></li><li><a href="/portal">Portal Agentes</a></li><li><a href="#contacto">NHR / Vistos</a></li><li><a href="/#simulador">Simulador IMT</a></li></ul></div>
             <div className="ft-col"><div className="ft-col-h">Empresa</div><ul><li><a href="#contacto">Sobre Nós</a></li><li><a href="#agentes">Agentes</a></li><li><a href="/relatorio-2026" style={{color:'var(--gold)',fontWeight:500}}>Market Report 2026 ↗</a></li><li><a href="mailto:geral@agencygroup.pt">Email</a></li></ul></div>
           </div>
           <div className="ft-bot">

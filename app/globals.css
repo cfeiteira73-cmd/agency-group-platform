@@ -800,6 +800,17 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
   .hero-stats{position:static;display:flex;flex-direction:row;gap:32px;margin-top:32px;flex-wrap:wrap}
 }
 
+/* ── Page inline grids — responsive fallbacks ── */
+.home-mtg-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:40px;align-items:start}
+.avaliacao-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.editorial-2col{display:grid;grid-template-columns:1fr 1fr;overflow:hidden;position:relative}
+@media(max-width:900px){
+  .home-mtg-grid{grid-template-columns:1fr;gap:32px}
+  .avaliacao-grid{grid-template-columns:1fr;gap:48px}
+  .editorial-2col{grid-template-columns:1fr}
+  .editorial-2col>*:first-child{min-height:320px}
+}
+
 /* ─── Accessibility: prefers-reduced-motion ─────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,

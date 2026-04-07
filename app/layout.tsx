@@ -36,19 +36,20 @@ export const viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'AgencyGroup.App · Imobiliário de Luxo Portugal · AMI 22506',
+  title: 'Agency Group · Imobiliário de Luxo Portugal · AMI 22506',
   description: 'Boutique imobiliária de luxo. Lisboa, Cascais, Comporta, Porto, Algarve, Madeira. €500K–€10M. AVM gratuito. AMI 22506.',
-  robots: 'index, follow, max-image-preview:large',
+  robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
   manifest: '/manifest.json',
   alternates: {
     canonical: 'https://www.agencygroup.pt/',
     languages: {
-      'pt-PT':   'https://www.agencygroup.pt/',
-      'en':      'https://www.agencygroup.pt/en/',
-      'fr':      'https://www.agencygroup.pt/fr/',
-      'de':      'https://www.agencygroup.pt/de/',
-      'zh-Hans': 'https://www.agencygroup.pt/zh',
-      'ar':      'https://www.agencygroup.pt/ar',
+      'x-default': 'https://www.agencygroup.pt/',
+      'pt-PT':     'https://www.agencygroup.pt/',
+      'en':        'https://www.agencygroup.pt/en/',
+      'fr':        'https://www.agencygroup.pt/fr/',
+      'de':        'https://www.agencygroup.pt/de/',
+      'zh-Hans':   'https://www.agencygroup.pt/zh/',
+      'ar':        'https://www.agencygroup.pt/ar/',
     },
   },
   openGraph: {
@@ -349,6 +350,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://vercel.live" />
+        {/* Preload LCP hero poster image */}
+        <link rel="preload" as="image" href="/hero-poster.jpg" fetchPriority="high" />
         {/* JSON-LD Structured Data */}
         <script
           type="application/ld+json"

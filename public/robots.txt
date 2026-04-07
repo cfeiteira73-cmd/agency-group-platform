@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+User-agent: Googlebot
+Allow: /_next/static/
+
+Sitemap: https://www.agencygroup.pt/sitemap.xml
