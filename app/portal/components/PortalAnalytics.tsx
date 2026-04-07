@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, createContext, useContext } from 'react'
 import { useCRMStore } from '../stores/crmStore'
 import { useDealStore } from '../stores/dealStore'
 import { useUIStore } from '../stores/uiStore'
 import { exportToPDF } from '../utils/export'
+import type { AnalyticsSummary } from '@/app/api/analytics/summary/route'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,11 @@ interface AgentData {
 
 type SortKey = keyof AgentData
 type SortDir = 'asc' | 'desc'
+
+// ─── ANALYTICS CONTEXT ────────────────────────────────────────────────────────
+
+const AnalyticsCtx = createContext<AnalyticsSummary | null>(null)
+function useAnalytics(): AnalyticsSummary | null { return useContext(AnalyticsCtx) }
 
 // ─── MOCK DATA ─────────────────────────────────────────────────────────────────
 
@@ -606,9 +612,13 @@ function SectionHeader({ title, sub }: { title: string; sub?: string }) {
 // ─── TAB: OVERVIEW ─────────────────────────────────────────────────────────────
 
 function TabOverview({ darkMode = false }: { darkMode?: boolean }) {
-  const gciMensal = GCI_12M[GCI_12M.length - 1]
-  const gciYTD = GCI_12M.slice(-12).reduce((a, b) => a + b, 0)
-  const pipelineAtivo = PIPELINE_STAGES.reduce((acc, s) => acc + s.valor * (s.prob / 100), 0)
+  const live = useAnalytics()
+  const gciMensal = live?.gciMensal ?? GCI_12M[GCI_12M.length - 1]
+  const gciYTD    = live?.gciYTD    ?? GCI_12M.slice(-12).reduce((a, b) => a + b, 0)
+  const pipelineAtivo = live?.pipelineAtivo ?? PIPELINE_STAGES.reduce((acc, s) => acc + s.valor * (s.prob / 100), 0)
+  const liveGCI12m = live?.gci12m ?? GCI_12M
+  const liveGCI12mLabels = live?.gci12mLabels ?? MONTHS_LABELS
+  const liveZonas = live?.conversionsByZona ?? ZONAS_GCI
 
   const maxFunil = FUNIL[0].valor
 
@@ -628,8 +638,8 @@ function TabOverview({ darkMode = false }: { darkMode?: boolean }) {
       <div className="p-card">
         <SectionHeader title="GCI Últimos 12 Meses" sub="3 meses topo destacados a gold — linha tendência a vermelho" />
         <BarChart
-          data={GCI_12M}
-          labels={MONTHS_LABELS}
+          data={liveGCI12m}
+          labels={liveGCI12mLabels}
           height={140}
           color="#1c4a35"
           highlightTop={3}
@@ -682,7 +692,7 @@ function TabOverview({ darkMode = false }: { darkMode?: boolean }) {
         <div className="p-card">
           <SectionHeader title="Top 5 Zonas por GCI" sub="Percentagem do total de receita" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-            {ZONAS_GCI.map(z => (
+            {liveZonas.map(z => (
               <div key={z.zona}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: '#0e0e0d' }}>{z.zona}</span>
@@ -704,7 +714,9 @@ function TabOverview({ darkMode = false }: { darkMode?: boolean }) {
 // ─── TAB: PIPELINE ─────────────────────────────────────────────────────────────
 
 function TabPipeline({ darkMode = false }: { darkMode?: boolean }) {
-  const totalPipeline = PIPELINE_STAGES.reduce((a, s) => a + s.valor, 0)
+  const live = useAnalytics()
+  const pipelineStages = live?.dealsCountByStage ?? PIPELINE_STAGES
+  const totalPipeline = pipelineStages.reduce((a, s) => a + s.valor, 0)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, animation: 'fadeIn 0.35s ease' }}>
@@ -712,7 +724,7 @@ function TabPipeline({ darkMode = false }: { darkMode?: boolean }) {
       <div className="p-card">
         <SectionHeader title="Pipeline por Stage" sub="Cor por probabilidade: vermelho &lt;30% · gold 30–70% · verde &gt;70%" />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginTop: 8 }}>
-          {PIPELINE_STAGES.map(s => (
+          {pipelineStages.map(s => (
             <div key={s.stage} style={{
               background: '#f4f0e6',
               border: `2px solid ${s.color}`,
@@ -879,12 +891,18 @@ function TabMercado({ darkMode = false }: { darkMode?: boolean }) {
 // ─── TAB: EQUIPA ───────────────────────────────────────────────────────────────
 
 function TabEquipa() {
+  const live = useAnalytics()
+  const agentsData: AgentData[] = (live?.topAgents ?? AGENTS).map(a => ({
+    name: a.name, gciMes: a.gciMes, gciYTD: a.gciYTD, dealsFechados: a.dealsFechados,
+    pipeline: a.pipeline, conversao: a.conversao, diasCiclo: a.diasCiclo, score: a.score,
+    calls: a.calls, emails: a.emails, visitas: a.visitas, propostas: a.propostas,
+  }))
   const [sortKey, setSortKey] = useState<SortKey>('gciYTD')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null)
 
   const sorted = useMemo(() => {
-    return [...AGENTS].sort((a, b) => {
+    return [...agentsData].sort((a, b) => {
       const av = a[sortKey]
       const bv = b[sortKey]
       if (typeof av === 'number' && typeof bv === 'number') {
@@ -892,27 +910,29 @@ function TabEquipa() {
       }
       return 0
     })
-  }, [sortKey, sortDir])
+  }, [agentsData, sortKey, sortDir])
 
   const teamAvg: AgentData = useMemo(() => {
-    const n = AGENTS.length
+    const n = agentsData.length || 1
     return {
       name: 'Média Equipa',
-      gciMes:        AGENTS.reduce((a, x) => a + x.gciMes, 0) / n,
-      gciYTD:        AGENTS.reduce((a, x) => a + x.gciYTD, 0) / n,
-      dealsFechados: AGENTS.reduce((a, x) => a + x.dealsFechados, 0) / n,
-      pipeline:      AGENTS.reduce((a, x) => a + x.pipeline, 0) / n,
-      conversao:     AGENTS.reduce((a, x) => a + x.conversao, 0) / n,
-      diasCiclo:     AGENTS.reduce((a, x) => a + x.diasCiclo, 0) / n,
-      score:         AGENTS.reduce((a, x) => a + x.score, 0) / n,
-      calls:         AGENTS.reduce((a, x) => a + x.calls, 0) / n,
-      emails:        AGENTS.reduce((a, x) => a + x.emails, 0) / n,
-      visitas:       AGENTS.reduce((a, x) => a + x.visitas, 0) / n,
-      propostas:     AGENTS.reduce((a, x) => a + x.propostas, 0) / n,
+      gciMes:        agentsData.reduce((a, x) => a + x.gciMes, 0) / n,
+      gciYTD:        agentsData.reduce((a, x) => a + x.gciYTD, 0) / n,
+      dealsFechados: agentsData.reduce((a, x) => a + x.dealsFechados, 0) / n,
+      pipeline:      agentsData.reduce((a, x) => a + x.pipeline, 0) / n,
+      conversao:     agentsData.reduce((a, x) => a + x.conversao, 0) / n,
+      diasCiclo:     agentsData.reduce((a, x) => a + x.diasCiclo, 0) / n,
+      score:         agentsData.reduce((a, x) => a + x.score, 0) / n,
+      calls:         agentsData.reduce((a, x) => a + x.calls, 0) / n,
+      emails:        agentsData.reduce((a, x) => a + x.emails, 0) / n,
+      visitas:       agentsData.reduce((a, x) => a + x.visitas, 0) / n,
+      propostas:     agentsData.reduce((a, x) => a + x.propostas, 0) / n,
     }
-  }, [])
+  }, [agentsData])
 
-  const topPerformer = AGENTS.reduce((top, a) => a.gciYTD > top.gciYTD ? a : top, AGENTS[0])
+  const topPerformer = agentsData.length > 0
+    ? agentsData.reduce((top, a) => a.gciYTD > top.gciYTD ? a : top, agentsData[0])
+    : AGENTS[0]
 
   function handleSort(key: SortKey) {
     if (key === sortKey) {
@@ -1106,10 +1126,32 @@ export default function PortalAnalytics() {
   const [period, setPeriod] = useState<PeriodId>('ano')
   const [isExporting, setIsExporting] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsSummary | null>(null)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 100)
     return () => clearTimeout(t)
+  }, [])
+
+  // ── Fetch real analytics from Supabase via API ──────────────────────────────
+  useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
+    async function fetchAnalytics() {
+      try {
+        const res = await fetch('/api/analytics/summary', { signal: controller.signal })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = (await res.json()) as AnalyticsSummary
+        if (!cancelled) setAnalyticsData(data)
+      } catch (err) {
+        if (!cancelled && err instanceof Error && err.name !== 'AbortError') {
+          setAnalyticsError(err.message)
+        }
+      }
+    }
+    fetchAnalytics()
+    return () => { cancelled = true; controller.abort() }
   }, [])
 
   // Derive real metrics from stores where available
@@ -1140,7 +1182,13 @@ export default function PortalAnalytics() {
   ]
 
   return (
+    <AnalyticsCtx.Provider value={analyticsData}>
     <>
+      {analyticsError && (
+        <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 6, padding: '8px 14px', marginBottom: 12, fontFamily: "'DM Mono',monospace", fontSize: 11, color: '#856404' }}>
+          Analytics API: usando dados mock ({analyticsError})
+        </div>
+      )}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(8px); }
@@ -1307,5 +1355,6 @@ export default function PortalAnalytics() {
         </div>
       </div>
     </>
+    </AnalyticsCtx.Provider>
   )
 }

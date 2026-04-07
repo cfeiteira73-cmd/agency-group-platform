@@ -1317,10 +1317,44 @@ export default function PortalInvestidores() {
   const [filterZona, setFilterZona] = useState('')
   const [filterCapital, setFilterCapital] = useState('')
   const [showNewModal, setShowNewModal] = useState(false)
+  const [apiLoading, setApiLoading] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
+  const [apiSource, setApiSource] = useState<'supabase' | 'mock' | null>(null)
 
   const properties = PORTAL_PROPERTIES as PortalProperty[]
 
-  // Persist
+  // ── Fetch investors from API on mount ────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
+    async function fetchInvestors() {
+      setApiLoading(true)
+      try {
+        const res = await fetch('/api/investidores', { signal: controller.signal })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const json = await res.json() as { data: Investor[]; source: 'supabase' | 'mock' }
+        if (!cancelled && json.data && json.data.length > 0) {
+          // Merge: prefer API data but keep any local additions not in API response
+          const apiIds = new Set(json.data.map(i => i.id))
+          setInvestors(prev => {
+            const localOnly = prev.filter(i => !apiIds.has(i.id))
+            return [...json.data, ...localOnly]
+          })
+          setApiSource(json.source)
+        }
+      } catch (err) {
+        if (!cancelled && err instanceof Error && err.name !== 'AbortError') {
+          setApiError(err.message)
+        }
+      } finally {
+        if (!cancelled) setApiLoading(false)
+      }
+    }
+    fetchInvestors()
+    return () => { cancelled = true; controller.abort() }
+  }, [])
+
+  // Persist to localStorage as local cache
   useEffect(() => {
     try { localStorage.setItem('ag_investors', JSON.stringify(investors)) } catch {}
   }, [investors])
@@ -1361,9 +1395,19 @@ export default function PortalInvestidores() {
     setInvestors(prev => prev.map(i => i.id === inv.id ? inv : i))
   }
 
-  function handleNewInvestor(inv: Investor) {
+  async function handleNewInvestor(inv: Investor) {
     setInvestors(prev => [...prev, inv])
     setShowNewModal(false)
+    // Persist to Supabase via API (fire-and-forget, errors are non-critical)
+    try {
+      await fetch('/api/investidores', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inv),
+      })
+    } catch {
+      // Non-critical: investor already added to local state
+    }
   }
 
   const allZonas = Array.from(new Set(investors.flatMap(i => i.zonas))).sort()
@@ -1385,13 +1429,27 @@ export default function PortalInvestidores() {
         ::-webkit-scrollbar-thumb { background: #d4cfc4; border-radius: 4px; }
       `}</style>
 
+      {/* API status banner */}
+      {apiError && (
+        <div style={{ background: '#fff3cd', border: '1px solid #ffc107', padding: '8px 16px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#856404' }}>
+          Investidores API: dados mock em uso ({apiError})
+        </div>
+      )}
+      {apiSource === 'supabase' && (
+        <div style={{ background: '#f0faf4', border: '1px solid #a3d9b1', padding: '6px 16px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#1c4a35' }}>
+          ● Supabase · dados em tempo real
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ background: G, padding: '24px 32px', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#c9a96e', letterSpacing: '.1em', marginBottom: 4 }}>AGENCY GROUP · AMI 22506</div>
             <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 32, fontWeight: 300, letterSpacing: '-.02em' }}>Investor Intelligence OS</div>
-            <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: '#ffffff88', marginTop: 4 }}>Motor de Gestão de Investidores Imobiliários</div>
+            <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 13, color: '#ffffff88', marginTop: 4 }}>
+              Motor de Gestão de Investidores Imobiliários{apiLoading ? ' · a carregar...' : ''}
+            </div>
           </div>
           <button type="button" onClick={() => setShowNewModal(true)} style={{
             background: GOLD, color: '#fff', border: 'none', borderRadius: 10,

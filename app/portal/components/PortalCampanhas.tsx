@@ -469,19 +469,61 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
     setSegments(n)
   }
 
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [sendResult, setSendResult] = useState<{ sent: number; failed: number } | null>(null)
+
   const handleLaunch = async () => {
     if (segments.size === 0) return
     setLaunching(true)
-    await new Promise(r => setTimeout(r, 1200))
+    setSendError(null)
+    setSendResult(null)
+
+    const subject = subjectA || (selectedTemplate?.subject ?? 'Agency Group — Nova Campanha')
+    const html = selectedTemplate?.preview
+      ? `<p>${selectedTemplate.preview}</p><p style="margin-top:24px;font-size:12px;color:#888">Agency Group AMI 22506 · Portugal</p>`
+      : `<p>Campanha: ${campaignName || 'Nova Campanha'}</p><p style="margin-top:24px;font-size:12px;color:#888">Agency Group AMI 22506 · Portugal</p>`
+
+    let realSent = 0
+    let realFailed = 0
+
+    // Only send via Resend for email campaigns — other channels simulated
+    if (type === 'email') {
+      try {
+        // Build recipient list from segment counts (real CRM would provide emails)
+        // For now, send a test email to verify Resend is wired up
+        const payload = {
+          to: ['noreply@agencygroup.pt'], // placeholder — real impl would pull emails from CRM
+          subject,
+          html,
+          campaignId: `c${Date.now()}`,
+        }
+        const res = await fetch('/api/campanhas/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const result = await res.json()
+        realSent = result.sent ?? 0
+        realFailed = result.failed ?? 0
+        if (!result.success && result.error) {
+          setSendError(result.error as string)
+        } else {
+          setSendResult({ sent: realSent, failed: realFailed })
+        }
+      } catch (err) {
+        setSendError(err instanceof Error ? err.message : 'Erro ao enviar campanha')
+      }
+    }
+
     const newCamp: Campaign = {
       id: `c${Date.now()}`,
       name: campaignName || 'Nova Campanha',
       type, channel: type,
-      status: scheduleMode === 'agendar' ? 'scheduled' : 'sending',
+      status: scheduleMode === 'agendar' ? 'scheduled' : (type === 'email' && realFailed === 0 ? 'sent' : 'sending'),
       segments: Array.from(segments),
-      sent: 0, total: totalContacts,
+      sent: type === 'email' ? realSent : 0, total: totalContacts,
       openRate: 0, clickRate: 0, replyRate: 0,
-      subject: subjectA || (selectedTemplate?.subject ?? ''),
+      subject,
       scheduledAt: scheduleMode === 'agendar' ? `${scheduleDate}T${scheduleTime}:00Z` : undefined,
       createdAt: new Date().toISOString(),
     }
@@ -726,6 +768,18 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
         )}
       </div>
 
+      {/* Send feedback */}
+      {sendError && (
+        <div style={{ background: '#fff0f0', border: '1px solid #f8b4b4', borderRadius: 6, padding: '10px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.red }}>
+          Erro ao enviar: {sendError}
+        </div>
+      )}
+      {sendResult && !sendError && (
+        <div style={{ background: '#f0faf4', border: '1px solid #a3d9b1', borderRadius: 6, padding: '10px 14px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: C.green }}>
+          Enviado via Resend: {sendResult.sent} mensagens {sendResult.failed > 0 ? `· ${sendResult.failed} falhas` : ''}
+        </div>
+      )}
+
       {/* Launch button */}
       <div style={{ display: 'flex', gap: 12 }}>
         <button type="button"
@@ -734,7 +788,7 @@ function TabCriar({ campaigns, setCampaigns }: { campaigns: Campaign[]; setCampa
           disabled={segments.size === 0 || launching}
           style={{ flex: 1, padding: '14px 24px', fontSize: 15, fontWeight: 700, opacity: segments.size === 0 ? 0.5 : 1 }}
         >
-          {launching ? 'A lançar...' : launched ? '✓ Campanha lançada!' : scheduleMode === 'agendar' ? '🗓 Agendar Campanha' : '🚀 Lançar Campanha'}
+          {launching ? 'A enviar...' : launched ? '✓ Campanha lançada!' : scheduleMode === 'agendar' ? '🗓 Agendar Campanha' : '🚀 Lançar Campanha'}
         </button>
         <button type="button" className="p-btn" style={{ padding: '14px 20px', fontSize: 14 }}>
           Guardar Rascunho
