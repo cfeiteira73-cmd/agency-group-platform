@@ -6,6 +6,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
@@ -15,6 +16,11 @@ function headers(): HeadersInit {
 }
 
 export async function GET(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { searchParams } = new URL(req.url)
     const type       = searchParams.get('type')
@@ -56,6 +62,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await req.json()
     if (!body.type) {

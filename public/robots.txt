@@ -1,7 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /portal
+Disallow: /portal/
+Disallow: /api/
+Disallow: /_vercel/
+Disallow: /_next/
+Disallow: /admin/
+Disallow: /*.json$
 
-User-agent: Googlebot
-Allow: /_next/static/
-
-Sitemap: https://www.agencygroup.pt/sitemap.xml
+Sitemap: https://agencygroup.pt/sitemap.xml

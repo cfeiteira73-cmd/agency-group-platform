@@ -313,10 +313,12 @@ export default function PortalRadar({ onRunRadar, onRunRadarSearch, onGerarPDF }
 
   // ── Live signals fetch ─────────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/signals')
+    const controller = new AbortController()
+    fetch('/api/signals', { signal: controller.signal })
       .then(r => { if (!r.ok) throw new Error('not ok'); return r.json() })
       .then(() => setLiveSource('live'))
-      .catch(() => setLiveSource('demo'))
+      .catch(err => { if (err?.name !== 'AbortError') setLiveSource('demo') })
+    return () => controller.abort()
   }, [])
 
   // Load history from localStorage on mount

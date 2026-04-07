@@ -17,6 +17,14 @@ interface PortalJuridicoProps {
   onExportar: () => void
 }
 
+function sanitizeHTML(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript:\s*/gi, '')
+    .replace(/<iframe[^>]*>/gi, '')
+}
+
 export default function PortalJuridico({
   jurMsgs,
   jurInput,
@@ -83,7 +91,7 @@ export default function PortalJuridico({
               )}
               <div
                 style={{ fontFamily: "'Jost',sans-serif", fontSize: '.82rem', color: darkMode ? 'rgba(244,240,230,.85)' : '#0e0e0d', lineHeight: 1.75 }}
-                dangerouslySetInnerHTML={{ __html: renderJurMarkdown(msg.content) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(renderJurMarkdown(msg.content)) }}
               />
               <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: darkMode ? 'rgba(244,240,230,.2)' : 'rgba(14,14,13,.25)', marginTop: '6px' }}>{msg.ts}</div>
             </div>

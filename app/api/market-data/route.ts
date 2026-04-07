@@ -143,6 +143,23 @@ const STATIC_FALLBACK: Record<string, { pm2: number; var_yoy: number }> = {
 }
 
 // ---------------------------------------------------------------------------
+// SSRF allowlist — only these domains may be fetched
+// ---------------------------------------------------------------------------
+
+const ALLOWED_MARKET_DOMAINS = [
+  'idealista.com', 'idealista.pt', 'imovirtual.com', 'century21.pt', 'remax.pt',
+  'era.pt', 'jll.pt', 'cushmanwakefield.com', 'ine.pt', 'bportugal.pt',
+  'production-sfo.browserless.io',
+]
+
+function isAllowedMarketUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url)
+    return ALLOWED_MARKET_DOMAINS.some(d => hostname === d || hostname.endsWith('.' + d))
+  } catch { return false }
+}
+
+// ---------------------------------------------------------------------------
 // Scraping helpers (Idealista)
 // ---------------------------------------------------------------------------
 
@@ -170,6 +187,7 @@ async function scrapeIdealistaZone(zona: string): Promise<{ pm2: number; var_yoy
   try {
     const slug = zonaToSlug(zona)
     const url  = `https://www.idealista.pt/comprar-casas/${slug}/`
+    if (!isAllowedMarketUrl(url)) return null
     const res  = await fetch(url, {
       headers: SCRAPE_HEADERS,
       signal:  AbortSignal.timeout(12000),
@@ -215,6 +233,7 @@ async function scrapeIdealistaZone(zona: string): Promise<{ pm2: number; var_yoy
 }
 
 async function scrapeWithBrowserless(url: string, token: string): Promise<string> {
+  if (!isAllowedMarketUrl(url)) return ''
   try {
     const res = await fetch(
       `https://production-sfo.browserless.io/content?token=${token}`,
@@ -369,7 +388,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     console.error('[market-data GET]', err)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Internal error' },
+      { error: 'Internal server error' },
       { status: 500, headers: rateLimitHeaders() }
     )
   }
@@ -402,7 +421,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     console.error('[market-data POST]', err)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Internal error' },
+      { error: 'Internal server error' },
       { status: 500, headers: rateLimitHeaders() }
     )
   }

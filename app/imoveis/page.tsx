@@ -33,6 +33,7 @@ export default function ImoveisPage() {
   const [hoveredId,  setHoveredId]  = useState<string | undefined>(undefined)
   const [mapSelectedId, setMapSelectedId] = useState<string | undefined>(undefined)
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   function toggleFeature(f: string) {
     setFeatures(prev =>
@@ -128,7 +129,7 @@ export default function ImoveisPage() {
         }}>
           Agency<span style={{ color: '#c9a96e' }}>Group</span>
         </Link>
-        <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+        <div className="imoveis-nav-links-desktop" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
           {['/', '#zonas', '#avaliacao', '#simulador', '#contacto'].map((href, i) => {
             const labels = ['Início', 'Zonas', 'Avaliação', 'Crédito', 'Contacto']
             return (
@@ -152,9 +153,36 @@ export default function ImoveisPage() {
             fontFamily: "'Jost', sans-serif", fontSize: '.6rem',
             fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase',
             textDecoration: 'none',
-          }}>Contacto →</a>
+          }} className="imoveis-nav-cta-desktop">Contacto →</a>
+          {/* Hamburger — shown via CSS at <=960px */}
+          <button
+            className={`nav-burger${mobileMenuOpen ? ' open' : ''}`}
+            aria-label={mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen(v => !v)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
         </div>
       </nav>
+
+      {/* Mobile drawer */}
+      <div className={`nav-drawer${mobileMenuOpen ? ' open' : ''}`} aria-hidden={!mobileMenuOpen}>
+        <div className="nav-drawer-ov" onClick={() => setMobileMenuOpen(false)} />
+        <div className="nav-drawer-panel">
+          <nav className="nav-drawer-links" aria-label="Menu mobile">
+            <Link href="/" onClick={() => setMobileMenuOpen(false)}>Início</Link>
+            <Link href="/imoveis" onClick={() => setMobileMenuOpen(false)}>Imóveis</Link>
+            <Link href="/#zonas" onClick={() => setMobileMenuOpen(false)}>Zonas</Link>
+            <Link href="/#avaliacao" onClick={() => setMobileMenuOpen(false)}>Avaliação</Link>
+            <Link href="/#simulador" onClick={() => setMobileMenuOpen(false)}>Crédito</Link>
+            <Link href="/#contacto" onClick={() => setMobileMenuOpen(false)}>Contacto</Link>
+          </nav>
+          <a href="https://wa.me/351919948986" target="_blank" rel="noopener noreferrer" className="nav-drawer-cta">Contacto →</a>
+        </div>
+      </div>
 
       <div style={{ background: '#0c1f15', minHeight: '100vh', paddingTop: '68px' }}>
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 import Anthropic from '@anthropic-ai/sdk'
 import { randomBytes } from 'crypto'
 
@@ -44,19 +45,31 @@ const collectionsStore = new Map<string, Collection>()
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const token = searchParams.get('token')
-  const agentId = searchParams.get('agentId') || 'carlos'
 
+  // Public share-token access for clients — no auth required
   if (token) {
     const col = [...collectionsStore.values()].find(c => c.shareToken === token)
     if (!col) return NextResponse.json({ error: 'Colecção não encontrada' }, { status: 404 })
     return NextResponse.json({ success: true, collection: col })
   }
 
+  // Agent listing requires authentication
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const agentId = searchParams.get('agentId') || 'carlos'
   const cols = [...collectionsStore.values()].filter(c => c.agentId === agentId)
   return NextResponse.json({ success: true, collections: cols })
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { action, collectionId, data } = await req.json()
 

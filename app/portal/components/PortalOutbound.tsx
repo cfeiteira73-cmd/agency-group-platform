@@ -1723,7 +1723,8 @@ export default function PortalOutbound() {
 
   // ── Live contacts/signals fetch ────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/signals')
+    const controller = new AbortController()
+    fetch('/api/signals', { signal: controller.signal })
       .then(r => { if (!r.ok) throw new Error('not ok'); return r.json() })
       .then((data: { signals?: Record<string, unknown>[]; data?: Record<string, unknown>[] }) => {
         const raw = data.signals ?? data.data ?? []
@@ -1738,7 +1739,8 @@ export default function PortalOutbound() {
           setLiveSource('demo')
         }
       })
-      .catch(() => setLiveSource('demo'))
+      .catch(err => { if (err?.name !== 'AbortError') setLiveSource('demo') })
+    return () => controller.abort()
   }, [])
 
   useEffect(() => {

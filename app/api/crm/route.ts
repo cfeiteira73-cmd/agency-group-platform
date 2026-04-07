@@ -7,6 +7,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import type { CRMContact } from '@/app/portal/components/types'
@@ -277,6 +278,11 @@ const MOCK_CONTACTS: ContactRow[] = [
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const limit  = Math.min(parseInt(searchParams.get('limit')  ?? '20'), 100)

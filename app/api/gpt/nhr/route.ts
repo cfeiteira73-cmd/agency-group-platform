@@ -31,7 +31,7 @@ export async function GET(_req: NextRequest) {
       link: 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
     },
     {
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt' },
     }
   )
 }

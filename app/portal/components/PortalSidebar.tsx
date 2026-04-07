@@ -31,7 +31,8 @@ export default function PortalSidebar({
       style={{
         width: '248px', minWidth: '248px', maxWidth: '248px', flexShrink: 0,
         background: '#060e09', display: 'flex', flexDirection: 'column',
-        overflow: 'hidden', borderRight: '1px solid rgba(201,169,110,.08)', zIndex: 10,
+        overflowX: 'hidden', overflowY: 'auto', maxHeight: '100vh',
+        borderRight: '1px solid rgba(201,169,110,.08)', zIndex: 10,
       }}
     >
       {/* Logo */}

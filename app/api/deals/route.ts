@@ -8,6 +8,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
@@ -120,6 +121,11 @@ const VALID_FASES = [
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { searchParams } = new URL(req.url)
     const stage     = searchParams.get('stage')
@@ -248,6 +254,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await req.json() as Record<string, unknown>
 
@@ -329,6 +340,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function PUT(req: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await req.json() as Record<string, unknown>
     const { id, ref, ...updates } = body
@@ -382,6 +398,10 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if ((session.user as { role?: string }).role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
   try {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')

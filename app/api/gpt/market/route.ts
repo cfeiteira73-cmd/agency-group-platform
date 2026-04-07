@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
       agency: 'Agency Group · AMI 22506 · www.agencygroup.pt · +351 919 948 986',
     },
     {
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt' },
     }
   )
 }

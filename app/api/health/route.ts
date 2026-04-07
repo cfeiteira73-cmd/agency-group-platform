@@ -4,6 +4,7 @@
 // =============================================================================
 
 import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
@@ -32,7 +33,14 @@ interface HealthReport {
   }
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const monitoringSecret = process.env.HEALTH_CHECK_SECRET
+  const reqSecret = request.headers.get('x-health-secret')
+  if (!monitoringSecret || reqSecret !== monitoringSecret) {
+    return NextResponse.json({ status: 'ok', timestamp: new Date().toISOString() }, { status: 200 })
+  }
+  // Full response continues below for authenticated monitoring...
+
   const start = Date.now()
   const report: HealthReport = {
     status: 'healthy',

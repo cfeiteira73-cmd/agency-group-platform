@@ -79,6 +79,7 @@ export const metadata: Metadata = {
     'geo.placename': 'Lisboa',
     'geo.position': '38.7169;-9.1399',
     'ICBM':         '38.7169, -9.1399',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https:; frame-src https:;",
   },
 }
 
@@ -325,7 +326,7 @@ const schemaAggregateRatingExpanded = {
   aggregateRating: {
     '@type': 'AggregateRating',
     ratingValue: '4.9',
-    reviewCount: '63',
+    reviewCount: '8',
     bestRating: '5',
     worstRating: '1',
   },

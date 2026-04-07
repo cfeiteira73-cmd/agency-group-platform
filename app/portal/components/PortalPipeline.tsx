@@ -119,9 +119,36 @@ function healthLabel(score: number): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function parseDealValue(valor: string | undefined | null): number {
-  if (!valor) return 0
-  return parseFloat(valor.replace(/[^0-9.]/g, '')) || 0
+function parseDealValue(val: string | number | null | undefined): number {
+  if (typeof val === 'number') return isNaN(val) ? 0 : val
+  if (!val) return 0
+  const str = String(val).trim()
+  // Remove currency symbols, spaces, non-breaking spaces
+  const clean = str.replace(/[€$£\s\u00A0]/g, '')
+  if (!clean) return 0
+
+  // Portuguese format: 1.250.000 or 1.250.000,50
+  // dots = thousands separators, comma = decimal separator
+  const hasComma = clean.includes(',')
+  const dotCount = (clean.match(/\./g) || []).length
+
+  if (hasComma) {
+    // e.g. "1.250.000,50" → remove dots → "1250000,50" → replace comma → "1250000.50"
+    return parseFloat(clean.replace(/\./g, '').replace(',', '.')) || 0
+  } else if (dotCount > 1) {
+    // e.g. "1.250.000" → multiple dots = thousands separators → remove all
+    return parseFloat(clean.replace(/\./g, '')) || 0
+  } else if (dotCount === 1) {
+    // BUT check if it's "1.250" (PT thousands) vs "1.50" (decimal)
+    const parts = clean.split('.')
+    if (parts[1] && parts[1].length === 3) {
+      // "1.250" → thousands separator (3 digits after dot)
+      return parseFloat(clean.replace('.', '')) || 0
+    }
+    // "1250.50" → real decimal
+    return parseFloat(clean) || 0
+  }
+  return parseFloat(clean) || 0
 }
 
 function dealDays(deal: DealWithMeta): number {

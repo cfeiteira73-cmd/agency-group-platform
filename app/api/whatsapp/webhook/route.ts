@@ -95,7 +95,13 @@ export async function POST(req: NextRequest) {
           for (const message of value.messages) {
             const from = message.from // Phone in E.164 format
             const senderName = value.contacts?.[0]?.profile?.name ?? 'Unknown'
-            const text = message.text?.body ?? ''
+            const rawText = message.text?.body ?? ''
+            // Sanitize against prompt injection attacks
+            const text = rawText
+              .slice(0, 2000)
+              .replace(/\[INST\]|\[\/INST\]|<\|im_start\|>|<\|im_end\|>|<\|system\|>/gi, '[filtered]')
+              .replace(/###\s*(System|Human|Assistant|User):/gi, '[filtered]')
+              .trim()
 
             // GDPR compliant: log only truncated identifier, never full phone number
             const phoneHash = from ? `***${from.slice(-4)}` : 'unknown'

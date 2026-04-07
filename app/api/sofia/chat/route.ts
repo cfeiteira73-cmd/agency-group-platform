@@ -3,6 +3,12 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'nodejs'
 
+// ⚠️ TODO: Replace with Upstash Redis for proper serverless rate limiting
+// Current Map-based rate limiting is INEFFECTIVE on Vercel serverless
+// (each function invocation gets a fresh instance, Map is always empty)
+// Implementation: npm install @upstash/ratelimit @upstash/redis
+// See: https://github.com/upstash/ratelimit
+
 // ─── Rate limiting (in-memory, edge-compatible) ───────────────────────────────
 // Edge runtime: per-instance, not global — good enough for abuse protection
 const ipHits = new Map<string, { count: number; resetAt: number }>()
@@ -98,6 +104,14 @@ export async function POST(req: NextRequest) {
 
   const { messages, mode, context, systemHint, lang } = body
 
+  // Sanitize user-supplied systemHint and context to prevent prompt injection
+  const MAX_HINT_LEN = 500
+  const safeHint = systemHint
+    ? String(systemHint).slice(0, MAX_HINT_LEN).replace(/[<>"'\\]/g, '').trim()
+    : undefined
+  const safeContext = context && typeof context === 'object' && !Array.isArray(context)
+    && Object.keys(context).length <= 20 ? context : {}
+
   if (!Array.isArray(messages) || messages.length === 0) {
     return new Response(
       JSON.stringify({ error: 'messages array is required' }),
@@ -123,14 +137,14 @@ export async function POST(req: NextRequest) {
     systemPrompt += `\nRespond in ${langName}.`
   }
 
-  // Append additional system hint from PortalSofia (mode-specific)
-  if (systemHint) {
-    systemPrompt += `\n\nFoco adicional: ${systemHint}`
+  // Append additional system hint from PortalSofia (mode-specific) — sanitized
+  if (safeHint) {
+    systemPrompt += `\n\nFoco adicional: ${safeHint}`
   }
 
-  // Append deal/property context if provided
-  if (context && Object.keys(context).length > 0) {
-    systemPrompt += `\n\nContexto do imóvel/negócio actual: ${JSON.stringify(context)}`
+  // Append deal/property context if provided — sanitized
+  if (safeContext && Object.keys(safeContext).length > 0) {
+    systemPrompt += `\n\nContexto do imóvel/negócio actual: ${JSON.stringify(safeContext)}`
   }
 
   // ── Validate messages ─────────────────────────────────────────────────────
@@ -223,9 +237,8 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error('[Sofia] Anthropic API error:', error)
-    const message = error instanceof Error ? error.message : 'Erro desconhecido'
     return new Response(
-      JSON.stringify({ error: `Erro IA: ${message}` }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }

@@ -766,8 +766,37 @@ nav.solid .nav-burger span{background:var(--cr)}
 
 /* ── iOS: prevent auto-zoom on input focus (font-size >= 16px) ── */
 @media(max-width:960px){
-  input,select,textarea{font-size:16px!important}
-  .avm-inp,.avm-sel,.radar-ta,.nhr-inp,.nhr-sel,.modal-inp,.sim-inp,.sf select{font-size:16px!important}
+  input,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  select,
+  textarea,
+  .avm-inp,.avm-sel,.radar-ta,.nhr-inp,.nhr-sel,.modal-inp,.sim-inp,.sf select,
+  .sf-inp,.sf-sel{font-size:16px!important} /* Prevent iOS auto-zoom — must be >= 16px */
+}
+
+/* ── WCAG 2.1 AA — minimum 44×44px touch targets ── */
+@media(max-width:960px){
+  button:not([aria-hidden="true"]),
+  [role="button"],
+  .nav-link,
+  .nav-cta,
+  .sf-btn,
+  .portal-nav-item,
+  .imc-arr,
+  .wa-btn,
+  .modal-x,
+  a[href]{
+    min-height:44px;
+    min-width:44px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
 }
 
 /* ── Safe area insets (notch / Dynamic Island / home bar) ── */
@@ -863,4 +892,25 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
     display: none !important;
   }
 }
+
+/* ─── Imoveis page mobile nav ──────────────────────────────────────────────── */
+@media(max-width:960px){
+  .imoveis-nav-links-desktop{display:none!important}
+  .imoveis-nav-cta-desktop{display:none!important}
+  .imoveis-nav .nav-burger{display:flex!important}
+}
+
+/* ─── Portal sidebar scroll fix ───────────────────────────────────────────── */
+.portal-sidebar,
+[class*="sidebar"],
+[data-sidebar]{
+  overflow-y:auto;
+  max-height:100vh;
+  height:100%;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(201,169,110,.3) transparent;
+}
+.portal-sidebar::-webkit-scrollbar{width:4px}
+.portal-sidebar::-webkit-scrollbar-track{background:transparent}
+.portal-sidebar::-webkit-scrollbar-thumb{background:rgba(201,169,110,.3);border-radius:2px}
 

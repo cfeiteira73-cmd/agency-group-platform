@@ -6,6 +6,8 @@
 // =============================================================================
 
 import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const runtime = 'nodejs'
@@ -80,7 +82,14 @@ function stageProbability(stage: string): number {
 // GET /api/analytics/summary
 // ---------------------------------------------------------------------------
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  void request // parameter required by Next.js route handler signature
+
   try {
     // ── 1. Try Supabase ─────────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

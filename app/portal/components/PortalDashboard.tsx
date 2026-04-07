@@ -21,6 +21,19 @@ interface PortalDashboardProps {
   onSetPriceHistoryId?: (id: string) => void
 }
 
+// ─── Deterministic sparkline generator ────────────────────────────────────────
+// Generates a trending sparkline from historical base → current value
+function generateSparkline(current: number, periods = 7): number[] {
+  const base = current || 100
+  const trend = 0.02 // slight upward trend
+  return Array.from({ length: periods }, (_, i) => {
+    const trendValue = base * (1 - trend * (periods - 1 - i) / (periods - 1))
+    // Small deterministic variance using index
+    const variance = base * 0.06 * Math.sin(i * 2.3 + 1)
+    return Math.max(1, Math.round((trendValue + variance) * 10) / 10)
+  })
+}
+
 // ─── KPI Card Interface ────────────────────────────────────────────────────────
 interface KPICardData {
   title: string
@@ -593,7 +606,7 @@ export default function PortalDashboard({
       badgeColor: '#4a9c7a',
       badgeBg: 'rgba(74,156,122,.12)',
       color: '#1c4a35',
-      spark: [45, 52, 49, 61, 70, 80, liveGCI > 0 ? Math.min(liveGCI, 120) : 90],
+      spark: generateSparkline(liveGCI > 0 ? liveGCI : 90),
       delta: 12,
       deltaPositive: true,
       highlight: liveGCI > 80,
@@ -606,7 +619,7 @@ export default function PortalDashboard({
       badgeColor: '#c9a96e',
       badgeBg: 'rgba(201,169,110,.12)',
       color: '#c9a96e',
-      spark: [1.2, 1.5, 1.4, 1.8, 2.1, 2.4, livePipeline > 0 ? Math.min(livePipeline / 1e6, 3.5) : 2.6],
+      spark: generateSparkline(livePipeline > 0 ? livePipeline / 1e6 : 2.6),
       delta: 8,
       deltaPositive: true,
     },
@@ -618,7 +631,7 @@ export default function PortalDashboard({
       badgeColor: '#3a7bd5',
       badgeBg: 'rgba(58,123,213,.1)',
       color: '#3a7bd5',
-      spark: [8, 10, 9, 12, 14, 13, Math.max(leadsAtivos, 1)],
+      spark: generateSparkline(Math.max(leadsAtivos, 1)),
       delta: 6,
       deltaPositive: true,
     },
@@ -630,7 +643,7 @@ export default function PortalDashboard({
       badgeColor: followUpsHoje > 0 ? '#dc2626' : '#4a9c7a',
       badgeBg: followUpsHoje > 0 ? 'rgba(220,38,38,.08)' : 'rgba(74,156,122,.08)',
       color: followUpsHoje > 0 ? '#dc2626' : '#4a9c7a',
-      spark: [2, 3, 1, 4, 2, 3, Math.max(followUpsHoje, 0)],
+      spark: generateSparkline(Math.max(followUpsHoje, 1)),
       delta: followUpsHoje > 2 ? -15 : 5,
       deltaPositive: followUpsHoje <= 2,
       action: () => onSetSection('crm'),
@@ -644,7 +657,7 @@ export default function PortalDashboard({
       badgeColor: '#c9a96e',
       badgeBg: 'rgba(201,169,110,.12)',
       color: '#c9a96e',
-      spark: [1, 2, 1, 3, 2, 3, Math.max(cpcvDeals.length, 0)],
+      spark: generateSparkline(Math.max(cpcvDeals.length, 1)),
       delta: 10,
       deltaPositive: true,
     },
@@ -656,7 +669,7 @@ export default function PortalDashboard({
       badgeColor: '#4a9c7a',
       badgeBg: 'rgba(74,156,122,.1)',
       color: '#4a9c7a',
-      spark: [4.2, 4.8, 4.5, 5.1, 5.6, 5.4, parseFloat(convRate) || 5.9],
+      spark: generateSparkline(parseFloat(convRate) || 5.9),
       delta: 3,
       deltaPositive: true,
     },
@@ -668,7 +681,7 @@ export default function PortalDashboard({
       badgeColor: '#888',
       badgeBg: 'rgba(136,136,136,.1)',
       color: '#888',
-      spark: [95, 91, 89, 88, 90, 87, 87],
+      spark: generateSparkline(87),
       delta: -4,
       deltaPositive: true,
       highlight: true,
@@ -681,7 +694,7 @@ export default function PortalDashboard({
       badgeColor: '#c9a96e',
       badgeBg: 'rgba(201,169,110,.08)',
       color: '#c9a96e',
-      spark: [12, 13.5, 14, 15.2, 16, 16.8, 17.6],
+      spark: generateSparkline(17.6),
       delta: 17.6,
       deltaPositive: true,
     },

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       agency: 'Agency Group · AMI 22506 · Free full valuation: www.agencygroup.pt',
     },
     {
-      headers: { 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt' },
     }
   )
 }

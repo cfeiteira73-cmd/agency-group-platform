@@ -7,6 +7,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 // Typed shorthand — bypasses PostgrestVersion: "12" never-type issue
@@ -196,6 +197,11 @@ function generateMockNotifications(): AppNotification[] {
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const userId    = searchParams.get('user_id')
@@ -271,6 +277,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body: unknown = await request.json()
 

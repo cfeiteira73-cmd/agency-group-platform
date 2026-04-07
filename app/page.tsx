@@ -31,6 +31,7 @@ function HomeMortgage() {
   const [result, setResult] = useState<MortRes|null>(null)
   const [loading, setLoading] = useState(false)
   const [subTab, setSubTab] = useState<'cenarios'|'amortizacao'>('cenarios')
+  const [mortgageError, setMortgageError] = useState<string | null>(null)
 
   const PERSONAS = [
     { label: 'Comprador HPP', montante: '400000', entrada: 20, prazo: 35, spread: 0.9, uso: 'habitacao_propria' as const },
@@ -53,9 +54,9 @@ function HomeMortgage() {
       }
       const res = await fetch('/api/mortgage', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
       const data = await res.json()
-      if (data.success) setResult(data as MortRes)
-      else alert(data.error || 'Erro no cálculo')
-    } catch { alert('Erro de ligação.') }
+      if (data.success) { setResult(data as MortRes); setMortgageError(null) }
+      else setMortgageError(data.error || 'Erro no cálculo')
+    } catch { setMortgageError('Erro de ligação.') }
     finally { setLoading(false) }
   }
 
@@ -64,6 +65,7 @@ function HomeMortgage() {
       {/* ── Form ── */}
       <div style={{background:'#fff',borderTop:'2px solid #1c4a35',padding:'32px',boxShadow:'0 12px 56px rgba(14,14,13,.08)'}}>
         <h3 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.35rem',color:'#0e0e0d',marginBottom:'16px',letterSpacing:'-.01em'}}>Simulação · Crédito Habitação</h3>
+        {!!mortgageError && <div role="alert" style={{background:'rgba(176,58,46,.08)',border:'1px solid rgba(176,58,46,.25)',color:'#b03a2e',padding:'10px 14px',marginBottom:'14px',fontFamily:"'DM Mono',monospace",fontSize:'.55rem',letterSpacing:'.06em'}}>{mortgageError}</div>}
         {/* Persona presets */}
         <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginBottom:'18px'}}>
           {PERSONAS.map(p=>(
@@ -274,6 +276,13 @@ export default function Home() {
   ])
   const loaderRef = useRef<HTMLDivElement>(null)
   const gsapInitRef = useRef(false)
+  const [pageToast, setPageToast] = useState<{ msg: string; type: 'success' | 'error' | 'info' } | null>(null)
+  const pageToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function showPageToast(msg: string, type: 'success' | 'error' | 'info' = 'info') {
+    if (pageToastTimerRef.current) clearTimeout(pageToastTimerRef.current)
+    setPageToast({ msg, type })
+    pageToastTimerRef.current = setTimeout(() => setPageToast(null), 4000)
+  }
 
   useEffect(() => {
     // Token in URL always takes priority (magic link flow)
@@ -290,7 +299,7 @@ export default function Home() {
             setIsAgent(true)
             window.location.href = `/portal?token=${encodeURIComponent(token)}`
           } else {
-            alert('Link inválido ou expirado. Pede um novo.')
+            showPageToast('Link inválido ou expirado. Pede um novo.', 'error')
           }
         })
         .catch(() => {})
@@ -384,8 +393,10 @@ export default function Home() {
       setTimeout(heroEntrance, 150)
       setTimeout(() => { if (loaderRef.current) loaderRef.current.style.display = 'none' }, 1200)
     }
-    // Safety: force loader out after 4500ms (cinematic loader needs breathing room)
-    const ldrSafetyTimer = setTimeout(finishLoader, 4500)
+    // Safety: force loader out after 1200ms for faster LCP
+    const ldrSafetyTimer = setTimeout(finishLoader, 1200)
+    // Early exit: fire finishLoader as soon as window load event fires
+    window.addEventListener('load', finishLoader, { once: true })
     // Loader — cinematic luxury entrance
     gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })
     gsap.set('#ldrG', { y: 40, opacity: 0, filter: 'blur(8px)' })
@@ -599,6 +610,7 @@ export default function Home() {
       cancelled = true
       gsapInitRef.current = false   // allow re-init after StrictMode cleanup
       clearTimeout(ldrSafetyTimer)
+      window.removeEventListener('load', finishLoader)
       cancelAnimationFrame(stRafId)
       ctx?.revert()
       document.body.style.overflow = ''
@@ -611,6 +623,37 @@ export default function Home() {
     const timer = setInterval(() => setSlideIdx(s => (s+1)%3), 6500)
     return () => clearInterval(timer)
   }, [])
+
+  // ═══ MODAL FOCUS TRAP + ESCAPE ═══
+  useEffect(() => {
+    if (!modalOpen) return
+    const timer = setTimeout(() => {
+      const modal = document.querySelector('#offModal [role="dialog"], #offModal')
+      const focusable = (modal ?? document.getElementById('offModal'))?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      focusable?.focus()
+    }, 50)
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal() }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => { clearTimeout(timer); document.removeEventListener('keydown', handleKeyDown) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalOpen])
+
+  useEffect(() => {
+    if (!agModal) return
+    const timer = setTimeout(() => {
+      const modal = document.querySelector('[data-agmodal]')
+      const focusable = modal?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      focusable?.focus()
+    }, 50)
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') closeAgModal() }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => { clearTimeout(timer); document.removeEventListener('keydown', handleKeyDown) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agModal])
 
   // ═══ MODAL ═══
   function openModal() { setModalOpen(true); document.body.style.overflow='hidden'; setTimeout(()=>document.getElementById('offPwd')?.focus(),300) }
@@ -628,7 +671,7 @@ export default function Home() {
       if (valid) {
         closeModal()
         localStorage.setItem('ag_offmarket', '1')
-        alert('✅ Acesso concedido. Portfolio off-market a carregar...')
+        showPageToast('Acesso concedido. Portfolio off-market a carregar...', 'success')
       } else {
         const err = document.getElementById('offErr')
         if (err) err.style.display = 'block'
@@ -699,7 +742,7 @@ export default function Home() {
     const emailEl = document.getElementById('agEmail') as HTMLInputElement
     const btn = document.querySelector('.ag-btn') as HTMLButtonElement
     const e = emailEl.value.trim()
-    if (!e || !e.includes('@')) { alert('Introduz o teu email.'); return }
+    if (!e || !e.includes('@')) { showPageToast('Introduz o teu email.', 'error'); return }
     sessionStorage.setItem('ag_pending_email', e)
     btn.textContent = 'A enviar...'
     btn.disabled = true
@@ -715,12 +758,12 @@ export default function Home() {
         emailEl.value = ''
         setTimeout(() => { btn.textContent = 'Entrar'; btn.disabled = false }, 5000)
       } else {
-        alert(data.error || 'Erro no envio. Tenta novamente.')
+        showPageToast(data.error || 'Erro no envio. Tenta novamente.', 'error')
         btn.textContent = 'Entrar'
         btn.disabled = false
       }
     } catch {
-      alert('Erro de rede. Tenta novamente.')
+      showPageToast('Erro de rede. Tenta novamente.', 'error')
       btn.textContent = 'Entrar'
       btn.disabled = false
     }
@@ -728,7 +771,7 @@ export default function Home() {
 
   async function agLoginModal() {
     const e = agEmailVal.trim()
-    if (!e || !e.includes('@')) { alert('Introduz o teu email.'); return }
+    if (!e || !e.includes('@')) { showPageToast('Introduz o teu email.', 'error'); return }
     sessionStorage.setItem('ag_pending_email', e)
     setAgSending(true)
     try {
@@ -741,11 +784,11 @@ export default function Home() {
       if (data.ok) {
         setAgSent(true)
       } else {
-        alert(data.error || 'Erro no envio. Tenta novamente.')
+        showPageToast(data.error || 'Erro no envio. Tenta novamente.', 'error')
         setAgSending(false)
       }
     } catch {
-      alert('Erro de rede. Tenta novamente.')
+      showPageToast('Erro de rede. Tenta novamente.', 'error')
       setAgSending(false)
     }
   }
@@ -801,7 +844,7 @@ export default function Home() {
 
       {/* MODAL ÁREA AGENTES — nunca abre, código inactivo */}
       {agModal && (
-        <div style={{position:'fixed',inset:0,zIndex:2000,background:'rgba(12,31,21,.92)',backdropFilter:'blur(24px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}} onClick={closeAgModal}>
+        <div data-agmodal role="dialog" aria-modal="true" aria-label="Acesso Portal Consultor" style={{position:'fixed',inset:0,zIndex:2000,background:'rgba(12,31,21,.92)',backdropFilter:'blur(24px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}} onClick={closeAgModal}>
           <div style={{background:'#0c1f15',border:'1px solid rgba(201,169,110,.18)',padding:'52px 44px',maxWidth:'420px',width:'100%',position:'relative',boxShadow:'0 40px 100px rgba(0,0,0,.5)'}} onClick={e=>e.stopPropagation()}>
             <button onClick={closeAgModal} style={{position:'absolute',top:'18px',right:'18px',background:'none',border:'none',color:'rgba(244,240,230,.3)',cursor:'pointer',fontSize:'1rem',lineHeight:1,padding:'4px 8px'}}>✕</button>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.22em',textTransform:'uppercase',color:'rgba(201,169,110,.65)',marginBottom:'8px'}}>Acesso Restrito · AMI 22506</div>
@@ -837,6 +880,13 @@ export default function Home() {
               Agency Group · Mediação Imobiliária Lda · AMI 22506
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Page toast notification */}
+      {!!pageToast && (
+        <div role="alert" aria-live="polite" style={{position:'fixed',bottom:'24px',right:'24px',zIndex:9999,background:pageToast.type==='error'?'rgba(176,58,46,.95)':pageToast.type==='success'?'rgba(28,74,53,.95)':'rgba(14,14,13,.92)',color:'#f4f0e6',padding:'12px 20px',fontFamily:"'DM Mono',monospace",fontSize:'.55rem',letterSpacing:'.08em',boxShadow:'0 4px 20px rgba(0,0,0,.35)',maxWidth:'320px',lineHeight:1.6,borderLeft:`3px solid ${pageToast.type==='error'?'#e05454':pageToast.type==='success'?'#c9a96e':'rgba(201,169,110,.5)'}`}}>
+          {pageToast.msg}
         </div>
       )}
 
@@ -1111,7 +1161,7 @@ export default function Home() {
           ) : (
             <div className="im-grid">
               {displayedProperties.map(im=>(
-                <div key={im.id} className={`imc${im.feat?' feat':''}`}>
+                <a key={im.id} href={`/imoveis#${im.id}`} className={`imc${im.feat?' feat':''}`} style={{textDecoration:'none',color:'inherit',display:'block'}}>
                   <div className="imc-img">
                     <div className="imc-img-reveal" id={im.id}></div>
                     <div className="imc-img-inner" style={{backgroundImage:`url(${im.photo})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
@@ -1126,7 +1176,7 @@ export default function Home() {
                       <div className="imc-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
                     </div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           )}
@@ -1240,7 +1290,7 @@ export default function Home() {
                   const nome=(document.getElementById('avalNome') as HTMLInputElement)?.value||''
                   const tel=(document.getElementById('avalTel') as HTMLInputElement)?.value||''
                   const zona=(document.getElementById('avalZona') as HTMLInputElement)?.value||''
-                  if(!nome||!tel){alert('Por favor preenche o nome e telefone.');return}
+                  if(!nome||!tel){showPageToast('Por favor preenche o nome e telefone.','error');return}
                   window.open(`https://wa.me/351919948986?text=${encodeURIComponent(`Pedido de avaliação privada:\nNome: ${nome}\nTelefone: ${tel}\nZona: ${zona}`)}`, '_blank')
                 }}
                 style={{marginTop:'8px',padding:'14px',background:'#1c4a35',color:'#f4f0e6',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.16em',textTransform:'uppercase',cursor:'pointer',fontWeight:400,transition:'background .25s,transform .2s'}}

@@ -121,19 +121,57 @@ export default function BlogPage() {
         }
       `}</style>
 
-      <nav>
+      <nav id="blogNav" className="solid">
         <Link href="/" className="logo">
           <span className="la">Agency</span>
           <span className="lg">Group</span>
         </Link>
         <ul className="nav-links">
+          <li><Link href="/imoveis">Imóveis</Link></li>
           <li><Link href="/#avaliacao">AVM</Link></li>
-          <li><Link href="/#deal-radar">Radar</Link></li>
           <li><Link href="/#simulador">Crédito</Link></li>
           <li><Link href="/#nhr">NHR</Link></li>
-          <li><Link href="/en">EN</Link></li>
+          <li><Link href="/reports">Reports</Link></li>
         </ul>
+        <button
+          className="nav-burger"
+          id="blogBurger"
+          aria-label="Abrir menu"
+          aria-expanded="false"
+          type="button"
+        >
+          <span /><span /><span />
+        </button>
       </nav>
+
+      {/* Mobile drawer */}
+      <div className="nav-drawer" id="blogDrawer">
+        <div className="nav-drawer-ov" id="blogDrawerOv" />
+        <div className="nav-drawer-panel">
+          <nav className="nav-drawer-links" aria-label="Menu mobile">
+            <Link href="/">Início</Link>
+            <Link href="/imoveis">Imóveis</Link>
+            <Link href="/blog">Blog</Link>
+            <Link href="/#simulador">Crédito</Link>
+            <Link href="/reports">Reports</Link>
+            <Link href="/#contacto">Contacto</Link>
+          </nav>
+          <a href="https://wa.me/351919948986" target="_blank" rel="noopener noreferrer" className="nav-drawer-cta">Contacto →</a>
+        </div>
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function(){
+          var burger=document.getElementById('blogBurger');
+          var drawer=document.getElementById('blogDrawer');
+          var ov=document.getElementById('blogDrawerOv');
+          if(!burger||!drawer)return;
+          function open(){burger.classList.add('open');drawer.classList.add('open');burger.setAttribute('aria-expanded','true');burger.setAttribute('aria-label','Fechar menu')}
+          function close(){burger.classList.remove('open');drawer.classList.remove('open');burger.setAttribute('aria-expanded','false');burger.setAttribute('aria-label','Abrir menu')}
+          burger.addEventListener('click',function(){drawer.classList.contains('open')?close():open()});
+          ov.addEventListener('click',close);
+          document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
+        })();
+      ` }} />
 
       <section className="blog-hero">
         <div className="blog-hero-inner">

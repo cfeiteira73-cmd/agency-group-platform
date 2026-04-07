@@ -329,7 +329,22 @@ export default function PortalComissoes() {
   const [commResult, setCommResult] = useState<Record<string, unknown> | null>(null)
   const [commLoading, setCommLoading] = useState(false)
 
-  const parseValor = (v: string) => parseFloat(v.replace(/[^0-9.]/g, '')) || 0
+  const parseValor = (v: string | number | null | undefined): number => {
+    if (typeof v === 'number') return isNaN(v) ? 0 : v
+    if (!v) return 0
+    const clean = String(v).trim().replace(/[€$£\s\u00A0]/g, '')
+    if (!clean) return 0
+    const hasComma = clean.includes(',')
+    const dotCount = (clean.match(/\./g) || []).length
+    if (hasComma) return parseFloat(clean.replace(/\./g, '').replace(',', '.')) || 0
+    if (dotCount > 1) return parseFloat(clean.replace(/\./g, '')) || 0
+    if (dotCount === 1) {
+      const parts = clean.split('.')
+      if (parts[1] && parts[1].length === 3) return parseFloat(clean.replace('.', '')) || 0
+      return parseFloat(clean) || 0
+    }
+    return parseFloat(clean) || 0
+  }
 
   const pipelineWeighted = deals.reduce((s, d) => {
     const val = parseValor(d.valor)

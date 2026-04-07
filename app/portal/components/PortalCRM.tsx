@@ -57,6 +57,23 @@ const STATUS_CONFIG = {
   vip:      { label: 'VIP',      bg: 'rgba(201,169,110,.12)', color: '#c9a96e',  avatar: 'rgba(201,169,110,.15)' },
 }
 
+function parsePTValue(val: string | number | null | undefined): number {
+  if (typeof val === 'number') return isNaN(val) ? 0 : val
+  if (!val) return 0
+  const clean = String(val).trim().replace(/[€$£\s\u00A0]/g, '')
+  if (!clean) return 0
+  const hasComma = clean.includes(',')
+  const dotCount = (clean.match(/\./g) || []).length
+  if (hasComma) return parseFloat(clean.replace(/\./g, '').replace(',', '.')) || 0
+  if (dotCount > 1) return parseFloat(clean.replace(/\./g, '')) || 0
+  if (dotCount === 1) {
+    const parts = clean.split('.')
+    if (parts[1] && parts[1].length === 3) return parseFloat(clean.replace('.', '')) || 0
+    return parseFloat(clean) || 0
+  }
+  return parseFloat(clean) || 0
+}
+
 function ScoreCircle({ score, budgetLabel, engagementLabel, breakdown }: {
   score: number
   budgetLabel?: string
@@ -1019,7 +1036,7 @@ export default function PortalCRM() {
                       const selected = crmContacts.filter(c => crmSelectedIds.has(c.id))
                       const phones = selected.map(c => c.phone?.replace(/\D/g, '')).filter(Boolean)
                       if (phones.length === 1) window.open(`https://wa.me/${phones[0]}`)
-                      else { alert(`Campanha WA para ${phones.length} contactos.`); phones.forEach((p, i) => setTimeout(() => window.open(`https://wa.me/${p}`), i * 500)) }
+                      else { if (enrichToastRef.current) clearTimeout(enrichToastRef.current); setEnrichToast(`Campanha WA para ${phones.length} contactos.`); enrichToastRef.current = setTimeout(() => setEnrichToast(null), 3500); phones.forEach((p, i) => setTimeout(() => window.open(`https://wa.me/${p}`), i * 500)) }
                     }}>💬 WA</button>
                   <button type="button" style={{ padding: '4px 8px', background: 'rgba(201,169,110,.1)', color: '#c9a96e', border: '1px solid rgba(201,169,110,.2)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', cursor: 'pointer' }}
                     onClick={() => setShowBulkStatusModal(true)}>📊 Status</button>
@@ -1746,7 +1763,7 @@ export default function PortalCRM() {
                           if (voiceActive) { setVoiceActive(false); return }
                           // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-                          if (!SR) { alert('Browser não suporta reconhecimento de voz'); return }
+                          if (!SR) { if (enrichToastRef.current) clearTimeout(enrichToastRef.current); setEnrichToast('Browser não suporta reconhecimento de voz'); enrichToastRef.current = setTimeout(() => setEnrichToast(null), 3500); return }
                           const recognition = new SR()
                           recognition.lang = 'pt-PT'; recognition.continuous = false; recognition.interimResults = false
                           setVoiceActive(true); recognition.start()
@@ -1779,12 +1796,12 @@ export default function PortalCRM() {
                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '4px' }}>Smart Matching — Pipeline + Carteira</div>
                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginBottom: '14px' }}>Budget ±20% · Zonas · Tipologias</div>
                     {deals.filter(d => {
-                      const budget = parseFloat(d.valor.replace(/[^0-9.]/g, ''))
+                      const budget = parsePTValue(d.valor)
                       const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0
                       if (!bMin && !bMax) return true
                       return budget >= bMin * 0.8 && budget <= bMax * 1.2
                     }).map(d => {
-                      const budget = parseFloat(d.valor.replace(/[^0-9.]/g, ''))
+                      const budget = parsePTValue(d.valor)
                       const inBudget = budget >= activeContact.budgetMin && budget <= activeContact.budgetMax
                       return (
                         <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', marginBottom: '8px', borderLeft: `3px solid ${inBudget ? '#4a9c7a' : '#c9a96e'}` }}>
@@ -1813,7 +1830,7 @@ export default function PortalCRM() {
                         <button type="button" className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => setSection('imoveis')}>Ver →</button>
                       </div>
                     ))}
-                    {deals.filter(d => { const b = parseFloat(d.valor.replace(/[^0-9.]/g, '')); const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0; return (!bMin && !bMax) || (b >= bMin * 0.8 && b <= bMax * 1.2) }).length === 0 &&
+                    {deals.filter(d => { const b = parsePTValue(d.valor); const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0; return (!bMin && !bMax) || (b >= bMin * 0.8 && b <= bMax * 1.2) }).length === 0 &&
                       PORTAL_PROPERTIES.filter(im => { const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0; return (!bMin && !bMax) || (im.preco >= bMin * 0.8 && im.preco <= bMax * 1.2) }).length === 0 && (
                         <div style={{ padding: '32px', textAlign: 'center', border: '1px dashed rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
                           Nenhum imóvel compatível encontrado com o budget definido

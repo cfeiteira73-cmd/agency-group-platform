@@ -68,6 +68,23 @@ const PortalAgentAI        = dynamic(
   { ssr: false },
 )
 
+function parsePTValue(val: string | number | null | undefined): number {
+  if (typeof val === 'number') return isNaN(val) ? 0 : val
+  if (!val) return 0
+  const clean = String(val).trim().replace(/[€$£\s\u00A0]/g, '')
+  if (!clean) return 0
+  const hasComma = clean.includes(',')
+  const dotCount = (clean.match(/\./g) || []).length
+  if (hasComma) return parseFloat(clean.replace(/\./g, '').replace(',', '.')) || 0
+  if (dotCount > 1) return parseFloat(clean.replace(/\./g, '')) || 0
+  if (dotCount === 1) {
+    const parts = clean.split('.')
+    if (parts[1] && parts[1].length === 3) return parseFloat(clean.replace('.', '')) || 0
+    return parseFloat(clean) || 0
+  }
+  return parseFloat(clean) || 0
+}
+
 export default function Portal() {
   // localStorage auth — no NextAuth
   const [ready, setReady] = useState(false)
@@ -303,7 +320,7 @@ export default function Portal() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         imovel: deal.imovel,
-        valor: parseFloat(deal.valor.replace(/[^0-9.]/g, '')) || 0,
+        valor: parsePTValue(deal.valor),
         fase: deal.fase,
         ref: deal.ref,
         comprador: deal.comprador,
@@ -817,7 +834,7 @@ export default function Portal() {
     </div>
   )
 
-  const pipelineTotal = deals.reduce((s, d) => s + parseFloat(d.valor.replace(/[^0-9.]/g, '')), 0)
+  const pipelineTotal = deals.reduce((s, d) => s + parsePTValue(d.valor), 0)
   void pipelineTotal
 
   return (

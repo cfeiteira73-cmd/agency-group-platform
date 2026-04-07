@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { Resend } from 'resend'
 
 const BASE_URL = process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.agencygroup.pt'
@@ -12,7 +12,10 @@ function verifyToken(token: string, secret: string): Record<string, unknown> | n
   const payload = token.slice(0, dotIdx)
   const sig = token.slice(dotIdx + 1)
   const expected = createHmac('sha256', secret).update(payload).digest('hex')
-  if (sig !== expected) return null
+  if (
+    sig.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+  ) return null
   try { return JSON.parse(Buffer.from(payload, 'base64url').toString()) }
   catch { return null }
 }
