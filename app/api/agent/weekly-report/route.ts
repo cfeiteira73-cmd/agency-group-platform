@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { auth } from '@/auth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -7,6 +8,9 @@ export const maxDuration = 30
 const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const { agent, deals, contacts, properties, period } = await req.json()
 

@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { auth } from '@/auth'
 
 export const runtime = 'nodejs'
 
@@ -72,6 +73,9 @@ function fallbackRiskAnalysis(deal: Record<string, unknown>): DealRiskResponse {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await req.json()
     const { deal } = body as { deal: Record<string, unknown> }

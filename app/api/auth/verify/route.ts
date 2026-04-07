@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac } from 'crypto'
+import { createHmac, createHash } from 'crypto'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
+import { supabaseAdmin } from '@/lib/supabase'
 
 const SECRET = process.env.AUTH_SECRET
 if (!SECRET) {
@@ -48,6 +49,41 @@ export async function GET(req: NextRequest) {
     if (Date.now() > data.exp) {
       return NextResponse.json({ error: 'Link expirado. Pede um novo acesso.' }, { status: 401 })
     }
+
+    // ── One-time-use check: reject already-consumed tokens ──────────────────
+    // We hash the token before DB lookup so the raw token is never stored.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = supabaseAdmin as any
+    const tokenHash = createHash('sha256').update(token).digest('hex')
+    const { data: usedRow } = await db
+      .from('used_magic_tokens')
+      .select('id')
+      .eq('token_hash', tokenHash)
+      .maybeSingle()
+    if (usedRow) {
+      return NextResponse.json({ error: 'Link inválido ou já utilizado' }, { status: 401 })
+    }
+
+    // Mark token as used immediately (before issuing the session cookie)
+    // to prevent race-condition reuse even under concurrent requests.
+    const { error: insertError } = await db
+      .from('used_magic_tokens')
+      .insert({
+        token_hash: tokenHash,
+        email: data.email,
+        expires_at: new Date(data.exp).toISOString(),
+      })
+    if (insertError) {
+      // If insert fails due to unique constraint race, another request already
+      // consumed this token — reject this one.
+      if (insertError.code === '23505') {
+        return NextResponse.json({ error: 'Link inválido ou já utilizado' }, { status: 401 })
+      }
+      // Other DB errors: fail safe (deny access rather than allow duplicate use)
+      console.error('[auth/verify] Failed to record used token:', insertError)
+      return NextResponse.json({ error: 'Erro interno. Tenta novamente.' }, { status: 500 })
+    }
+    // ── End one-time-use check ───────────────────────────────────────────────
 
     // Build session cookie value (signed with AUTH_SECRET so it can't be forged)
     const sessionPayload = Buffer.from(JSON.stringify({

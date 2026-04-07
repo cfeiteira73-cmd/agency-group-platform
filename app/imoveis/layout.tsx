@@ -8,7 +8,8 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.agencygroup.pt/imoveis',
     languages: {
-      'en': 'https://www.agencygroup.pt/properties',
+      'en': 'https://www.agencygroup.pt/en/properties',
+      'fr': 'https://www.agencygroup.pt/fr/proprietes',
       'pt': 'https://www.agencygroup.pt/imoveis',
       'x-default': 'https://www.agencygroup.pt/imoveis',
     },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { auth } from '@/auth'
 
 // ─── RATE LIMIT ───────────────────────────────────────────────────────────────
 
@@ -209,6 +210,9 @@ Agency Group | AMI 22506`
 // ─── ROUTE HANDLER ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   // Rate limiting
   const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'anonymous'
   if (!checkRateLimit(ip)) {

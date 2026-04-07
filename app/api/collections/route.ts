@@ -239,6 +239,9 @@ export async function POST(req: NextRequest) {
       case 'add_property': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Colecção não encontrada' }, { status: 404 })
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
         // Avoid duplicates
         const exists = col.items.find(i => i.property.id === data.property?.id)
         if (exists) return NextResponse.json({ success: true, collection: col, duplicate: true })
@@ -259,6 +262,9 @@ export async function POST(req: NextRequest) {
       case 'update_item': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
         col = {
           ...col,
           items: col.items.map(i => {
@@ -279,6 +285,9 @@ export async function POST(req: NextRequest) {
       case 'remove_property': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
         col = {
           ...col,
           items: col.items.filter(i => i.property.id !== data.propertyId),
@@ -291,6 +300,9 @@ export async function POST(req: NextRequest) {
       case 'add_comment': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
         col = {
           ...col,
           comments: [...col.comments, {
@@ -308,6 +320,9 @@ export async function POST(req: NextRequest) {
       case 'ai_recommend': {
         let col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
         if (!col || !col.items.length) return NextResponse.json({ success: true, recommendations: [], clientProfile: '', nextStep: '' })
+        if (col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
 
         const prompt = `És Carlos Feiteira, consultor sénior da Agency Group (AMI 22506).
 
@@ -350,6 +365,12 @@ Responde em JSON:
       }
 
       case 'translate_comment': {
+        if (collectionId) {
+          const col = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
+          if (col && col.agentId !== session.user?.id && col.agentId !== session.user?.email && col.agentId !== 'carlos') {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+          }
+        }
         const { text, targetLang } = data
         const langNames: Record<string, string> = { pt: 'português europeu', en: 'English', fr: 'français', de: 'Deutsch', es: 'español', it: 'italiano', ar: 'العربية', zh: '中文' }
         const prompt = `Traduz este comentário sobre um imóvel para ${langNames[targetLang] || targetLang} de forma natural e profissional. Responde APENAS com a tradução, sem aspas nem explicação:\n\n${text}`
@@ -363,6 +384,10 @@ Responde em JSON:
       }
 
       case 'delete': {
+        const colToDelete = useSupabase ? await dbGetById(collectionId) : collectionsStore.get(collectionId) ?? null
+        if (colToDelete && colToDelete.agentId !== session.user?.id && colToDelete.agentId !== session.user?.email && colToDelete.agentId !== 'carlos') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
         if (useSupabase) {
           await dbDelete(collectionId)
         } else {

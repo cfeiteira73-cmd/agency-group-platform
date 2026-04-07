@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { auth } from '@/auth'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -308,10 +309,8 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
 // ─── Agentic Loop ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // Auth is enforced by proxy.ts for /api/automation
-  if (!req.headers.get('cookie') && process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({})) as Record<string, unknown>
   const task = (body.task as string) || 'analyze_stalled_deals'

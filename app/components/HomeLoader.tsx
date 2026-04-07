@@ -19,11 +19,11 @@ export default function HomeLoader() {
       document.body.style.overflow = ''
       setTimeout(() => {
         if (loaderRef.current) loaderRef.current.style.display = 'none'
-      }, 1200)
+      }, 400)
     }
 
-    // Safety: force loader out after 1200ms for faster LCP
-    const ldrSafetyTimer = setTimeout(finishLoader, 1200)
+    // Safety: force loader out after 400ms for faster LCP
+    const ldrSafetyTimer = setTimeout(finishLoader, 400)
     window.addEventListener('load', finishLoader, { once: true })
 
     gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })

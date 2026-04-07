@@ -8,4 +8,4 @@ Disallow: /_next/
 Disallow: /admin/
 Disallow: /*.json$
 
-Sitemap: https://agencygroup.pt/sitemap.xml
+Sitemap: https://www.agencygroup.pt/sitemap.xml

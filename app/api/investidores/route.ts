@@ -180,7 +180,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const body = await req.json()
+    const rawBody = await req.json()
+
+    const ALLOWED_INVESTOR_FIELDS = new Set([
+      'nome', 'email', 'telefone', 'whatsapp', 'budget_min', 'budget_max',
+      'paises_interesse', 'tipo_investimento', 'perfil_risco', 'notas',
+      'fonte', 'status', 'nhr_interesse', 'lingua_preferida', 'nacionalidade',
+      'retorno_esperado', 'horizonte_investimento', 'montante_disponivel',
+      // camelCase aliases used in the insert mapping below
+      'name', 'nationality', 'flag', 'type', 'capitalMin', 'capitalMax',
+      'yieldTarget', 'horizonYears', 'riskProfile', 'zonas', 'tipoImovel',
+      'ocupacao', 'lastContact', 'totalInvested', 'dealsHistory', 'phone', 'tags',
+    ])
+    const safeInput: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(rawBody as Record<string, unknown>)) {
+      if (ALLOWED_INVESTOR_FIELDS.has(key)) safeInput[key] = value
+    }
+    const body = safeInput
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any).from('investidores')
@@ -197,14 +213,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         zonas: body.zonas,
         tipo_imovel: body.tipoImovel,
         ocupacao: body.ocupacao,
-        status: body.status ?? 'activo',
+        status: (body.status as string) ?? 'activo',
         last_contact: body.lastContact,
-        total_invested: body.totalInvested ?? 0,
-        deals_history: body.dealsHistory ?? 0,
-        notes: body.notes ?? '',
-        email: body.email ?? '',
-        phone: body.phone ?? '',
-        tags: body.tags ?? [],
+        total_invested: (body.totalInvested as number) ?? 0,
+        deals_history: (body.dealsHistory as number) ?? 0,
+        notes: (body.notes as string) ?? '',
+        email: (body.email as string) ?? '',
+        phone: (body.phone as string) ?? '',
+        tags: (body.tags as string[]) ?? [],
       }])
       .select()
       .single()
