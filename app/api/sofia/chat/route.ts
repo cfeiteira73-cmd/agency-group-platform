@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 // ─── Rate limiting (in-memory, edge-compatible) ───────────────────────────────
 // Edge runtime: per-instance, not global — good enough for abuse protection
@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
   try {
     // Use create() with stream:true — AsyncIterable approach works in edge runtime
     const stream = await client.messages.create({
-      model: 'claude-3-haiku-20240307',
+      model: 'claude-3-5-haiku-latest',
       max_tokens: 1024,
       stream: true,
       system: systemPrompt,
