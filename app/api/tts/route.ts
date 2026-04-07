@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       const err = await res.text()
       console.error('[tts] OpenAI error:', err)
-      return NextResponse.json({ error: 'TTS failed', detail: err, status: res.status }, { status: 500 })
+      return NextResponse.json({ error: 'TTS failed' }, { status: 500 })
     }
 
     const audioBuffer = await res.arrayBuffer()

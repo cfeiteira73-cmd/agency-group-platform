@@ -118,7 +118,17 @@ export function useSofiaVoice() {
 
   const toggleVoice = useCallback(() => {
     setVoiceEnabled(prev => {
-      if (prev) stopSpeaking()
+      if (prev) {
+        stopSpeaking()
+      } else {
+        // Unlock browser speechSynthesis on user gesture — Chrome requires this
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+          window.speechSynthesis.cancel()
+          const unlock = new SpeechSynthesisUtterance(' ')
+          unlock.volume = 0
+          window.speechSynthesis.speak(unlock)
+        }
+      }
       return !prev
     })
   }, [stopSpeaking])
