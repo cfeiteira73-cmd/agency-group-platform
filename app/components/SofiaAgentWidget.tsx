@@ -1,6 +1,43 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 
+// ─── Sofia Avatar — usa /sofia.jpg se existir, fallback ao monograma "S" dourado ──
+function SofiaAvatar({ size = 44, open = false }: { size?: number; open?: boolean }) {
+  const [imgError, setImgError] = useState(false)
+
+  if (open) {
+    return (
+      <span style={{ fontSize: size * 0.4, color: 'rgba(255,255,255,0.7)', fontWeight: 300 }}>✕</span>
+    )
+  }
+
+  return !imgError ? (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src="/sofia.jpg"
+      alt="Sofia — Agency Group AI"
+      onError={() => setImgError(true)}
+      style={{
+        width: size, height: size, borderRadius: '50%',
+        objectFit: 'cover', objectPosition: 'top center',
+        display: 'block',
+      }}
+    />
+  ) : (
+    // Monograma premium quando não há foto
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: 'linear-gradient(135deg, #c9a96e 0%, #a07840 100%)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.42, fontWeight: 700, color: '#0d1f17',
+      letterSpacing: '-0.5px', fontFamily: 'Georgia, serif',
+      flexShrink: 0,
+    }}>
+      S
+    </div>
+  )
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
   role: 'user' | 'assistant'
@@ -400,14 +437,12 @@ export default function SofiaAgentWidget() {
             }}
           >
             <div style={{
-              width: 40, height: 40, borderRadius: '50%',
-              background: 'linear-gradient(135deg, rgba(201,169,110,0.25), rgba(201,169,110,0.1))',
+              width: 42, height: 42, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: open ? 18 : 22,
-              transition: 'all 0.25s ease',
-              transform: open ? 'rotate(90deg)' : 'rotate(0)',
+              overflow: 'hidden', transition: 'all 0.25s ease',
+              border: open ? 'none' : '1.5px solid rgba(201,169,110,0.3)',
             }}>
-              {open ? '✕' : '🤖'}
+              <SofiaAvatar size={42} open={open} />
             </div>
 
             {/* Online dot */}
@@ -466,11 +501,12 @@ export default function SofiaAgentWidget() {
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div style={{
                 width: 46, height: 46, borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(201,169,110,0.25) 0%, rgba(28,74,53,0.4) 100%)',
                 border: '2px solid rgba(201,169,110,0.4)',
+                overflow: 'hidden', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22,
-              }}>🤖</div>
+              }}>
+                <SofiaAvatar size={46} />
+              </div>
               <span style={{
                 position: 'absolute', bottom: 1, right: 1,
                 width: 12, height: 12, borderRadius: '50%',
@@ -535,9 +571,11 @@ export default function SofiaAgentWidget() {
                   {msg.role === 'assistant' && (
                     <div style={{
                       width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                      background: 'rgba(28,74,53,0.5)', border: '1px solid rgba(201,169,110,0.2)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12,
-                    }}>🤖</div>
+                      border: '1px solid rgba(201,169,110,0.25)',
+                      overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <SofiaAvatar size={28} />
+                    </div>
                   )}
                   <div style={{
                     maxWidth: msg.role === 'user' ? '82%' : '88%',
