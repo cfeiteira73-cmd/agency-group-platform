@@ -159,13 +159,13 @@ export default function Portal() {
 
   // ── HELPERS ──────────────────────────────────────────────────────────────────
 
-  function syncContactsToNotion(contacts: CRMContact[], email: string) {
+  async function syncContactsToNotion(contacts: CRMContact[], email: string) {
     // Non-blocking fire-and-forget Notion sync
     // Retrieve magic-link token for X-AG-Token auth header
     const agToken = (() => {
       try { return JSON.parse(localStorage.getItem('ag_auth') || '{}').token || '' } catch { return '' }
     })()
-    contacts.forEach(async (contact) => {
+    await Promise.allSettled(contacts.map(async (contact) => {
       try {
         const payload = {
           ...contact,
@@ -190,7 +190,7 @@ export default function Portal() {
           }
         }
       } catch (e) { console.error('Notion sync error', e) }
-    })
+    }))
   }
 
   function saveCrmContacts(updated: CRMContact[]) {
@@ -411,7 +411,9 @@ export default function Portal() {
       const res = await fetch('/api/nhr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pais, tipo_rendimento: tipo, rendimento_anual: rendimento, regime: 'compare', fonte_estrangeira: fonte }) })
       const data = await res.json()
       if (data.success) setNhrResult(data)
-    } catch { } finally { setNhrLoading(false) }
+    } catch (e) {
+      setNhrResult(JSON.stringify({ error: 'Erro de ligação. Tente novamente.' }))
+    } finally { setNhrLoading(false) }
   }
 
   async function runPortfolio() {
@@ -572,7 +574,9 @@ export default function Portal() {
       const res = await fetch('/api/agent/deal-risk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deal }) })
       const data = await res.json()
       if (data.success) setDealRiskAnalysis(data.analysis)
-    } catch { } finally { setDealRiskLoading(false) }
+    } catch (e) {
+      setDealRiskAnalysis(JSON.stringify({ error: 'Erro de ligação. Tente novamente.' }))
+    } finally { setDealRiskLoading(false) }
   }
 
   async function runDealNego(dealId: number) {
@@ -584,7 +588,9 @@ export default function Portal() {
       const res = await fetch('/api/agent/negotiation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deal }) })
       const data = await res.json()
       if (data.success) setDealNego(data.strategy)
-    } catch { } finally { setDealNegoLoading(false) }
+    } catch (e) {
+      setDealNego(JSON.stringify({ error: 'Erro de ligação. Tente novamente.' }))
+    } finally { setDealNegoLoading(false) }
   }
 
   // Sofia
@@ -624,7 +630,9 @@ export default function Portal() {
       const res = await fetch('/api/sofia/script', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ property, language: sofiaLang }) })
       const data = await res.json()
       if (data.script) setSofiaText(data.script)
-    } catch { } finally { setSofiaScriptLoading(false) }
+    } catch (e) {
+      setSofiaText('Erro de ligação. Tente novamente.')
+    } finally { setSofiaScriptLoading(false) }
   }
 
   // ── EFFECTS ──────────────────────────────────────────────────────────────────
@@ -648,7 +656,8 @@ export default function Portal() {
     const params = new URLSearchParams(window.location.search)
     const urlToken = params.get('token')
     if (urlToken) {
-      fetch(`/api/auth/verify?token=${encodeURIComponent(urlToken)}`)
+      const authAbort = new AbortController()
+      fetch(`/api/auth/verify?token=${encodeURIComponent(urlToken)}`, { signal: authAbort.signal })
         .then(r => r.json())
         .then(data => {
           if (data.ok && data.email) {
@@ -662,8 +671,8 @@ export default function Portal() {
             window.location.href = '/portal/login'
           }
         })
-        .catch(() => { window.location.href = '/portal/login' })
-      return
+        .catch(e => { if (e.name !== 'AbortError') { window.location.href = '/portal/login' } })
+      return () => authAbort.abort()
     }
 
     // Check localStorage first (fastest path)
@@ -869,7 +878,7 @@ export default function Portal() {
         .hamburger span{display:block;width:20px;height:2px;background:#0e0e0d;transition:all .3s;border-radius:1px}
         .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9}
         @media(max-width:900px){.hamburger{display:flex}.mobile-overlay.show{display:block}.portal-main{flex-direction:column}.portal-sidebar{position:fixed;left:0;top:0;bottom:0;z-index:10;transform:translateX(-100%);transition:transform .3s ease}.portal-sidebar.open{transform:translateX(0)}.p-card{padding:16px}.kpi-val{font-size:1.5rem}}
-        @media(max-width:768px){.kpi-grid{grid-template-columns:1fr 1fr!important}.actions-grid{grid-template-columns:1fr 1fr!important}.mkt-grid{grid-template-columns:1fr!important}.p-two-col{grid-template-columns:1fr!important}.crm-layout{flex-direction:column}.crm-list{width:100%!important;min-width:unset!important;border-right:none!important;border-bottom:1px solid rgba(14,14,13,.08)!important}}
+        @media(max-width:768px){.kpi-grid{grid-template-columns:1fr 1fr!important}.actions-grid{grid-template-columns:1fr 1fr!important}.mkt-grid{grid-template-columns:1fr!important}.p-two-col{grid-template-columns:1fr!important}.crm-layout{flex-direction:column}.crm-list{width:100%!important;min-width:unset!important;border-right:none!important;border-bottom:1px solid rgba(14,14,13,.08)!important}.pipeline-section{overflow-x:auto}}
         html.dark .kpi-card{background:#122a1a;border-color:rgba(201,169,110,.12)}
         html.dark .kpi-val{color:#c9a96e!important}
         html.dark .action-card{background:#122a1a;border-color:rgba(201,169,110,.12);color:rgba(244,240,230,.8)}
