@@ -5,7 +5,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import PressSection from './components/PressSection'
 import { CurrencySelector } from './components/CurrencyWidget'
 import { AIPropertySearch } from './components/AIPropertySearch'
-import { PreMarketProperties } from './components/PreMarketProperties'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -1253,13 +1252,6 @@ export default function Home() {
               <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.35)',letterSpacing:'.06em',textTransform:'uppercase',textAlign:'center'}}>Resposta em menos de 2 horas · 100% confidencial</div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* EXCLUSIVOS PRÉ-MERCADO — Compass-style coming soon section */}
-      <section style={{ background: '#f4f0e6', padding: '96px 0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
-          <PreMarketProperties />
         </div>
       </section>
 
