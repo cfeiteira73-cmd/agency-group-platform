@@ -314,7 +314,7 @@ export async function POST(req: NextRequest) {
 
     // Use Claude Haiku to extract structured search criteria from natural language
     const extractionResponse = await client.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-sonnet-4-6',
       max_tokens: 500,
       messages: [{
         role: 'user',
@@ -427,7 +427,7 @@ Rules:
     // Generate AI summary of results in the user's language
     const topResult = results[0]
     const aiSummaryResponse = await client.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-sonnet-4-6',
       max_tokens: 300,
       system: `You are Sofia, Agency Group's AI property advisor. AMI 22506. Be concise, expert and warm. Respond in ${lang === 'en' ? 'English' : 'Portuguese (European)'}.`,
       messages: [{

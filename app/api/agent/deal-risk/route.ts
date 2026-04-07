@@ -100,7 +100,7 @@ Notes: ${deal.notas || deal.notes || 'none'}
 `.trim()
 
       const message = await client.messages.create({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-sonnet-4-6',
         max_tokens: 800,
         messages: [
           {

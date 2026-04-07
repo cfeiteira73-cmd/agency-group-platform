@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
   try {
     // Use create() with stream:true — AsyncIterable approach works in edge runtime
     const stream = await client.messages.create({
-      model: 'claude-3-5-haiku-latest',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       stream: true,
       system: systemPrompt,
