@@ -75,23 +75,45 @@ export function useSofiaVoice() {
       return
     }
 
-    const utterance = new SpeechSynthesisUtterance(cleanText)
-    utteranceRef.current = utterance
+    const doSpeak = (voices: SpeechSynthesisVoice[]) => {
+      // Chrome bug: cancel + small delay before speaking
+      window.speechSynthesis.cancel()
 
-    // Pick a Portuguese or female voice if available
+      const utterance = new SpeechSynthesisUtterance(cleanText)
+      utteranceRef.current = utterance
+
+      const ptVoice = voices.find(v => v.lang === 'pt-PT') ||
+                      voices.find(v => v.lang.startsWith('pt')) ||
+                      voices.find(v => v.lang.startsWith('en')) ||
+                      voices[0]
+      if (ptVoice) utterance.voice = ptVoice
+      utterance.lang = ptVoice?.lang || 'pt-PT'
+      utterance.rate = 1.05
+      utterance.pitch = 1.1
+      utterance.volume = 1.0
+
+      utterance.onend = () => { setSpeaking(false); utteranceRef.current = null }
+      utterance.onerror = () => { setSpeaking(false); utteranceRef.current = null }
+
+      // Chrome requires a tiny delay after cancel()
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance)
+        // Chrome sometimes pauses itself — resume it
+        setTimeout(() => window.speechSynthesis.resume(), 100)
+      }, 50)
+    }
+
     const voices = window.speechSynthesis.getVoices()
-    const ptVoice = voices.find(v => v.lang.startsWith('pt')) ||
-                    voices.find(v => v.name.toLowerCase().includes('female')) ||
-                    voices[0]
-    if (ptVoice) utterance.voice = ptVoice
-    utterance.lang = 'pt-PT'
-    utterance.rate = 1.0
-    utterance.pitch = 1.1
-
-    utterance.onend = () => { setSpeaking(false); utteranceRef.current = null }
-    utterance.onerror = () => { setSpeaking(false); utteranceRef.current = null }
-
-    window.speechSynthesis.speak(utterance)
+    if (voices.length > 0) {
+      doSpeak(voices)
+    } else {
+      // Voices not loaded yet — wait for them
+      window.speechSynthesis.onvoiceschanged = () => {
+        const v = window.speechSynthesis.getVoices()
+        window.speechSynthesis.onvoiceschanged = null
+        doSpeak(v)
+      }
+    }
   }, [voiceEnabled, stopSpeaking])
 
   const toggleVoice = useCallback(() => {
