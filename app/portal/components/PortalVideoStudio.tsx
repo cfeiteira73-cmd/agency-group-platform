@@ -11,8 +11,9 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 type Lang        = 'PT' | 'EN' | 'FR' | 'AR' | 'ZH' | 'DE'
 type Persona     = 'generic' | 'american' | 'french' | 'british' | 'chinese' | 'brazilian' | 'middleeast'
 type VideoFormat = 'reel' | 'youtube' | 'linkedin' | 'whatsapp'
-type ContentTab  = 'script' | 'hooks' | 'captions' | 'shotlist'
-type GenStatus   = 'idle' | 'script' | 'hooks' | 'captions' | 'shotlist' | 'done' | 'error'
+type ContentTab     = 'script' | 'hooks' | 'captions' | 'shotlist' | 'video'
+type GenStatus      = 'idle' | 'script' | 'hooks' | 'captions' | 'shotlist' | 'done' | 'error'
+type VideoGenStatus = 'idle' | 'submitting' | 'queued' | 'processing' | 'completed' | 'error'
 
 interface Property {
   title: string; zone: string; type: string
@@ -88,6 +89,7 @@ const CONTENT_TABS: { code: ContentTab; label: string; icon: string }[] = [
   { code: 'hooks',    label: 'Hooks',     icon: '🎣' },
   { code: 'captions', label: 'Social',    icon: '📲' },
   { code: 'shotlist', label: 'Shot List', icon: '🎬' },
+  { code: 'video',    label: 'Vídeo IA',  icon: '🎥' },
 ]
 
 const GEN_STEPS: { status: GenStatus; label: string }[] = [
@@ -147,10 +149,25 @@ export function PortalVideoStudio() {
   const [tpSpeed,     setTpSpeed]     = useState(2)
   const [tpFontSize,  setTpFontSize]  = useState(38)
 
+  // HeyGen video state
+  const [heygenConfigured,  setHeygenConfigured]  = useState(false)
+  const [avatars,           setAvatars]           = useState<Array<{ avatar_id: string; avatar_name: string; preview_image_url: string; default_voice_id: string }>>([])
+  const [voices,            setVoices]            = useState<Array<{ voice_id: string; name: string; language: string; gender: string }>>([])
+  const [selectedAvatar,    setSelectedAvatar]    = useState('')
+  const [selectedVoice,     setSelectedVoice]     = useState('')
+  const [videoStatus,       setVideoStatus]       = useState<VideoGenStatus>('idle')
+  const [videoProgress,     setVideoProgress]     = useState(0)
+  const [videoUrl,          setVideoUrl]          = useState('')
+  const [videoThumb,        setVideoThumb]        = useState('')
+  const [videoDuration,     setVideoDuration]     = useState(0)
+  const [videoMsg,          setVideoMsg]          = useState('')
+  const [videoGenerating,   setVideoGenerating]   = useState(false)
+
   // Refs
-  const abortRef  = useRef<AbortController | null>(null)
-  const tpRef     = useRef<HTMLDivElement>(null)
-  const scrollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const abortRef     = useRef<AbortController | null>(null)
+  const videoAbort   = useRef<AbortController | null>(null)
+  const tpRef        = useRef<HTMLDivElement>(null)
+  const scrollRef    = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Auto-clear done status after 4s
   useEffect(() => {
@@ -159,6 +176,18 @@ export function PortalVideoStudio() {
       return () => clearTimeout(t)
     }
   }, [genStatus])
+
+  // Fetch HeyGen avatars & voices on mount
+  useEffect(() => {
+    fetch('/api/studio/avatars')
+      .then(r => r.json())
+      .then(d => {
+        setHeygenConfigured(d.configured ?? false)
+        if (Array.isArray(d.avatars) && d.avatars.length) setAvatars(d.avatars)
+        if (Array.isArray(d.voices) && d.voices.length)   setVoices(d.voices)
+      })
+      .catch(() => {})
+  }, [])
 
   // Teleprompter auto-scroll
   useEffect(() => {
@@ -186,6 +215,78 @@ export function PortalVideoStudio() {
       setTimeout(() => setCopiedTab(null), 2000)
     } catch {}
   }, [script, hooks, captions, shotlist])
+
+  // Generate HeyGen video
+  const generateVideo = useCallback(async () => {
+    if (!script.trim() || videoGenerating) return
+    videoAbort.current?.abort()
+    videoAbort.current = new AbortController()
+
+    setVideoGenerating(true)
+    setVideoStatus('submitting')
+    setVideoProgress(0)
+    setVideoUrl('')
+    setVideoThumb('')
+    setVideoDuration(0)
+    setVideoMsg('A preparar script...')
+    setActiveTab('video')
+
+    try {
+      const res = await fetch('/api/studio/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: videoAbort.current.signal,
+        body: JSON.stringify({
+          script,
+          format,
+          avatarId: selectedAvatar || undefined,
+          voiceId:  selectedVoice  || undefined,
+        }),
+      })
+
+      if (!res.ok || !res.body) {
+        const j = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(j.error ?? `HTTP ${res.status}`)
+      }
+
+      const reader  = res.body.getReader()
+      const decoder = new TextDecoder()
+      let   buffer  = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const raw = line.slice(6).trim()
+          if (raw === '[DONE]') { setVideoGenerating(false); continue }
+          try {
+            const data = JSON.parse(raw) as {
+              status: string; message?: string; progress?: number
+              videoUrl?: string; thumbnailUrl?: string; duration?: number
+            }
+            setVideoStatus(data.status as VideoGenStatus)
+            if (data.message)              setVideoMsg(data.message)
+            if (data.progress !== undefined) setVideoProgress(data.progress)
+            if (data.videoUrl)             setVideoUrl(data.videoUrl)
+            if (data.thumbnailUrl)         setVideoThumb(data.thumbnailUrl)
+            if (data.duration !== undefined) setVideoDuration(data.duration)
+          } catch {}
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setVideoStatus('error')
+        setVideoMsg(err instanceof Error ? err.message : 'Erro desconhecido')
+      }
+    } finally {
+      setVideoGenerating(false)
+    }
+  }, [script, format, selectedAvatar, selectedVoice, videoGenerating])
 
   // Build property object
   const getProperty = useCallback((): Property | null => {
@@ -281,7 +382,7 @@ export function PortalVideoStudio() {
   const property       = getProperty()
   const stepIdx        = STEP_IDX[genStatus]
   const hasContent     = !!(script || hooks || captions || shotlist)
-  const activeContent  = { script, hooks, captions, shotlist }[activeTab]
+  const activeContent  = activeTab !== 'video' ? ({ script, hooks, captions, shotlist } as Record<string, string>)[activeTab] ?? '' : ''
   const showStatusBar  = generating || genStatus === 'done' || genStatus === 'error'
 
   // ─── Custom form validation ──────────────────────────────────────────────
@@ -582,6 +683,111 @@ export function PortalVideoStudio() {
             {/* Divider */}
             <div style={{ height: 1, background: 'rgba(28,74,53,0.3)' }} />
 
+            {/* ── 05 · HEYGEN AVATAR ── */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span style={{ color: '#c9a96e' }} className="text-xs font-bold uppercase tracking-widest">
+                  05 · Avatar Sofia · HeyGen
+                </span>
+                <span
+                  className="text-[9px] font-bold px-2 py-0.5 rounded-full border"
+                  style={
+                    heygenConfigured
+                      ? { borderColor: 'rgba(74,222,128,0.4)', color: '#4ade80', background: 'rgba(74,222,128,0.08)' }
+                      : { borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.25)', background: 'transparent' }
+                  }
+                >
+                  {heygenConfigured ? '● ACTIVO' : '○ CONFIGURAR'}
+                </span>
+              </div>
+
+              {!heygenConfigured ? (
+                <div
+                  className="rounded-xl border p-3 text-xs"
+                  style={{ borderColor: 'rgba(201,169,110,0.2)', background: 'rgba(201,169,110,0.04)', color: 'rgba(255,255,255,0.35)' }}
+                >
+                  <p className="mb-1.5">Adiciona <code className="text-[#c9a96e]">HEYGEN_API_KEY</code> ao <code className="text-[#c9a96e]">.env.local</code> para activar a geração de vídeo com avatar.</p>
+                  <p style={{ color: 'rgba(201,169,110,0.5)' }}>Sem chave → geração de conteúdo funciona na mesma.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {/* Avatar selector */}
+                  {avatars.length > 0 ? (
+                    <div>
+                      <label className="text-[10px] mb-1.5 block" style={{ color: 'rgba(255,255,255,0.35)' }}>Avatar</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {/* Default Sofia */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedAvatar('')}
+                          className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg border transition-all text-[10px]"
+                          style={{
+                            borderColor: selectedAvatar === '' ? 'rgba(201,169,110,0.7)' : 'rgba(28,74,53,0.4)',
+                            background:  selectedAvatar === '' ? 'rgba(201,169,110,0.12)' : 'rgba(28,74,53,0.15)',
+                            color: selectedAvatar === '' ? '#c9a96e' : 'rgba(255,255,255,0.4)',
+                          }}
+                        >
+                          <span style={{ fontSize: '1.1rem' }}>🎭</span>
+                          <span className="font-bold">Sofia</span>
+                          <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8 }}>Default</span>
+                        </button>
+                        {avatars.slice(0, 5).map(av => (
+                          <button
+                            key={av.avatar_id}
+                            type="button"
+                            onClick={() => { setSelectedAvatar(av.avatar_id); if (av.default_voice_id) setSelectedVoice(av.default_voice_id) }}
+                            className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg border transition-all text-[10px]"
+                            style={{
+                              borderColor: selectedAvatar === av.avatar_id ? 'rgba(201,169,110,0.7)' : 'rgba(28,74,53,0.4)',
+                              background:  selectedAvatar === av.avatar_id ? 'rgba(201,169,110,0.12)' : 'rgba(28,74,53,0.15)',
+                              color: selectedAvatar === av.avatar_id ? '#c9a96e' : 'rgba(255,255,255,0.4)',
+                            }}
+                          >
+                            {av.preview_image_url ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={av.preview_image_url} alt={av.avatar_name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                            ) : (
+                              <span style={{ fontSize: '1.1rem' }}>👤</span>
+                            )}
+                            <span className="font-medium" style={{ maxWidth: 40, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {av.avatar_name.split('_')[0]}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-[10px] py-2 text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      A carregar avatares...
+                    </div>
+                  )}
+
+                  {/* Voice selector */}
+                  {voices.length > 0 && (
+                    <div>
+                      <label className="text-[10px] mb-1 block" style={{ color: 'rgba(255,255,255,0.35)' }}>Voz</label>
+                      <select
+                        value={selectedVoice}
+                        onChange={e => setSelectedVoice(e.target.value)}
+                        className="w-full rounded-lg px-2 py-1.5 text-xs border outline-none"
+                        style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(28,74,53,0.4)', color: '#fff' }}
+                      >
+                        <option value="" style={{ background: '#0d1f17' }}>Sofia (Default)</option>
+                        {voices.filter(v => v.language?.startsWith('pt') || v.language?.startsWith('en') || v.language?.startsWith('fr')).slice(0, 12).map(v => (
+                          <option key={v.voice_id} value={v.voice_id} style={{ background: '#0d1f17' }}>
+                            {v.name} ({v.language} · {v.gender})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: 'rgba(28,74,53,0.3)' }} />
+
             {/* ── GENERATE BUTTON ── */}
             {!generating ? (
               <button
@@ -625,22 +831,25 @@ export function PortalVideoStudio() {
             {/* ── AI TOOLS ── */}
             <div>
               <span style={{ color: 'rgba(201,169,110,0.5)' }} className="text-xs font-bold uppercase tracking-widest block mb-2">
-                Ferramentas IA · Em Breve
+                Stack IA
               </span>
               <div className="grid grid-cols-3 gap-1.5">
                 {[
-                  { name: 'D-ID', desc: 'Avatar IA', icon: '🎭' },
-                  { name: 'ElevenLabs', desc: 'Voz TTS', icon: '🎙️' },
-                  { name: 'Runway', desc: 'Vídeo IA', icon: '🎥' },
+                  { name: 'Claude', desc: 'Script AI', icon: '⚡', active: true },
+                  { name: 'HeyGen', desc: 'Avatar MP4', icon: '🎥', active: heygenConfigured },
+                  { name: 'ElevenLabs', desc: 'Voz TTS', icon: '🎙️', active: false },
                 ].map(tool => (
                   <div
                     key={tool.name}
                     className="flex flex-col items-center gap-1 py-2.5 rounded-xl border text-center"
-                    style={{ borderColor: 'rgba(28,74,53,0.2)', background: 'rgba(28,74,53,0.08)' }}
+                    style={{
+                      borderColor: tool.active ? 'rgba(74,222,128,0.25)' : 'rgba(28,74,53,0.2)',
+                      background:  tool.active ? 'rgba(74,222,128,0.06)' : 'rgba(28,74,53,0.08)',
+                    }}
                   >
                     <span className="text-lg">{tool.icon}</span>
-                    <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.3)' }}>{tool.name}</span>
-                    <span className="text-[9px]" style={{ color: 'rgba(201,169,110,0.3)' }}>{tool.desc}</span>
+                    <span className="text-[10px] font-bold" style={{ color: tool.active ? 'rgba(74,222,128,0.8)' : 'rgba(255,255,255,0.3)' }}>{tool.name}</span>
+                    <span className="text-[9px]" style={{ color: tool.active ? 'rgba(74,222,128,0.5)' : 'rgba(201,169,110,0.3)' }}>{tool.desc}</span>
                   </div>
                 ))}
               </div>
@@ -724,9 +933,9 @@ export function PortalVideoStudio() {
               style={{ borderColor: 'rgba(28,74,53,0.4)' }}
             >
               {CONTENT_TABS.map(tab => {
-                const tabContent = { script, hooks, captions, shotlist }[tab.code]
+                const tabContent = tab.code !== 'video' ? (({ script, hooks, captions, shotlist } as Record<string, string>)[tab.code] ?? '') : ''
                 const isActive   = activeTab === tab.code
-                const hasData    = tabContent.length > 0
+                const hasData    = tab.code === 'video' ? videoStatus === 'completed' : tabContent.length > 0
                 return (
                   <button
                     key={tab.code}
@@ -757,7 +966,7 @@ export function PortalVideoStudio() {
             {/* ── CONTENT AREA ── */}
             <div className="flex-1 relative">
               {/* Empty state */}
-              {!hasContent && !generating && (
+              {activeTab !== 'video' && !hasContent && !generating && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center">
                   <div
                     className="h-20 w-20 rounded-full flex items-center justify-center"
@@ -788,8 +997,174 @@ export function PortalVideoStudio() {
                 </div>
               )}
 
+              {/* ── VIDEO TAB ── */}
+              {activeTab === 'video' && (
+                <div className="h-full flex flex-col min-w-0 p-5">
+                  {videoStatus === 'idle' && !videoGenerating && (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
+                      <div
+                        className="h-20 w-20 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(28,74,53,0.2)', border: '2px solid rgba(201,169,110,0.2)' }}
+                      >
+                        <span style={{ fontSize: '2rem' }}>🎥</span>
+                      </div>
+                      <div>
+                        <p className="font-bold text-white text-base mb-1">Vídeo com Avatar Sofia</p>
+                        <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                          {!script
+                            ? 'Gera primeiro o conteúdo (⚡ Gerar Conteúdo) e depois clica em 🎬 Criar Vídeo no tab Script.'
+                            : !heygenConfigured
+                            ? 'Adiciona HEYGEN_API_KEY ao .env.local para activar.'
+                            : 'Vai ao tab 📝 Script e clica em 🎬 Criar Vídeo.'}
+                        </p>
+                      </div>
+                      {script && heygenConfigured && (
+                        <button
+                          type="button"
+                          onClick={generateVideo}
+                          disabled={videoGenerating}
+                          className="px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
+                          style={{
+                            background: 'linear-gradient(135deg, #c9a96e 0%, #e0c08a 100%)',
+                            color: '#0d1f17',
+                            boxShadow: '0 4px 20px rgba(201,169,110,0.3)',
+                          }}
+                        >
+                          <span>🎬</span> Criar Vídeo Agora
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {(videoStatus === 'submitting' || videoStatus === 'queued' || videoStatus === 'processing') && (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-6">
+                      {/* Circular progress */}
+                      <div className="relative h-28 w-28">
+                        <svg className="absolute inset-0" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(28,74,53,0.3)" strokeWidth="8" />
+                          <circle
+                            cx="50" cy="50" r="42" fill="none"
+                            stroke="#c9a96e" strokeWidth="8"
+                            strokeDasharray={`${2 * Math.PI * 42}`}
+                            strokeDashoffset={`${2 * Math.PI * 42 * (1 - (videoProgress || 5) / 100)}`}
+                            style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                          />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-2xl font-bold" style={{ color: '#c9a96e' }}>
+                            {videoProgress || (videoStatus === 'submitting' ? 2 : 5)}%
+                          </span>
+                          <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.3)' }}>progresso</span>
+                        </div>
+                      </div>
+
+                      <div className="text-center">
+                        <p className="font-bold text-white text-base mb-1">{videoMsg}</p>
+                        <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                          {videoStatus === 'submitting' && 'A enviar script para HeyGen...'}
+                          {videoStatus === 'queued'     && 'Na fila de renderização · Aguarda...'}
+                          {videoStatus === 'processing' && 'Sofia a gravar o teu vídeo · Pode demorar 1-3 min...'}
+                        </p>
+                      </div>
+
+                      {/* Steps */}
+                      <div className="flex items-center gap-2 text-[10px]">
+                        {(['submitting','queued','processing','completed'] as VideoGenStatus[]).map((s, i) => {
+                          const statusOrder: Record<VideoGenStatus,number> = { idle: -1, submitting: 0, queued: 1, processing: 2, completed: 3, error: -1 }
+                          const cur = statusOrder[videoStatus]
+                          const me  = statusOrder[s]
+                          return (
+                            <div key={s} className="flex items-center gap-1">
+                              <span
+                                className="px-2 py-0.5 rounded-full border font-bold"
+                                style={{
+                                  borderColor: me < cur ? '#c9a96e' : me === cur ? 'rgba(201,169,110,0.5)' : 'rgba(28,74,53,0.4)',
+                                  color:       me < cur ? '#c9a96e' : me === cur ? 'rgba(201,169,110,0.7)' : 'rgba(255,255,255,0.2)',
+                                  background:  me < cur ? 'rgba(201,169,110,0.1)' : 'transparent',
+                                }}
+                              >
+                                {me < cur ? '✓ ' : me === cur ? '● ' : '○ '}
+                                {['Enviar','Fila','Render','Pronto'][i]}
+                              </span>
+                              {i < 3 && <span style={{ color: 'rgba(28,74,53,0.5)' }}>›</span>}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {videoStatus === 'completed' && videoUrl && (
+                    <div className="flex-1 flex flex-col gap-4">
+                      <div
+                        className="rounded-xl overflow-hidden border"
+                        style={{ borderColor: 'rgba(201,169,110,0.2)', background: '#000' }}
+                      >
+                        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                        <video
+                          src={videoUrl}
+                          poster={videoThumb || undefined}
+                          controls
+                          style={{ width: '100%', maxHeight: '380px', display: 'block' }}
+                        />
+                      </div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold" style={{ color: '#4ade80' }}>✅ Vídeo gerado com sucesso!</p>
+                          {videoDuration > 0 && (
+                            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                              Duração: {videoDuration.toFixed(1)}s · Formato: {format.toUpperCase()}
+                            </p>
+                          )}
+                        </div>
+                        <a
+                          href={videoUrl}
+                          download={`sofia-${property?.title?.replace(/\s/g,'-') ?? 'imovel'}-${format}.mp4`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold transition-all"
+                          style={{
+                            borderColor: 'rgba(201,169,110,0.5)',
+                            color: '#c9a96e',
+                            background: 'rgba(201,169,110,0.08)',
+                          }}
+                        >
+                          ⬇ Download MP4
+                        </a>
+                        <button
+                          type="button"
+                          onClick={generateVideo}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-semibold transition-all"
+                          style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)' }}
+                        >
+                          🔄 Gerar Novo
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {videoStatus === 'error' && (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
+                      <span style={{ fontSize: '2.5rem' }}>❌</span>
+                      <div>
+                        <p className="font-bold text-white mb-1">Erro na geração do vídeo</p>
+                        <p className="text-sm" style={{ color: 'rgba(255,80,80,0.7)' }}>{videoMsg}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={generateVideo}
+                        className="px-5 py-2 rounded-xl border text-xs font-bold transition-all"
+                        style={{ borderColor: 'rgba(201,169,110,0.4)', color: '#c9a96e', background: 'rgba(201,169,110,0.07)' }}
+                      >
+                        🔄 Tentar Novamente
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Content display */}
-              {(hasContent || generating) && (
+              {activeTab !== 'video' && (hasContent || generating) && (
                 <div className="h-full flex flex-col min-w-0">
                   <div
                     className="flex-1 overflow-y-auto overflow-x-hidden p-5 min-w-0"
@@ -847,14 +1222,39 @@ export function PortalVideoStudio() {
                       </button>
 
                       {activeTab === 'script' && script && (
-                        <button
-                          type="button"
-                          onClick={() => { setTpOpen(true); setTpScrolling(false) }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all"
-                          style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.65)' }}
-                        >
-                          🎙️ Teleprompter
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => { setTpOpen(true); setTpScrolling(false) }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all"
+                            style={{ borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.65)' }}
+                          >
+                            🎙️ Teleprompter
+                          </button>
+                          {heygenConfigured && (
+                            <button
+                              type="button"
+                              onClick={generateVideo}
+                              disabled={videoGenerating}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all"
+                              style={{
+                                borderColor: videoGenerating ? 'rgba(201,169,110,0.2)' : 'rgba(201,169,110,0.5)',
+                                color:       videoGenerating ? 'rgba(201,169,110,0.4)' : '#c9a96e',
+                                background:  videoGenerating ? 'rgba(201,169,110,0.05)' : 'rgba(201,169,110,0.08)',
+                                cursor: videoGenerating ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              {videoGenerating ? (
+                                <>
+                                  <span
+                                    style={{ display: 'inline-block', width: 10, height: 10, border: '2px solid #c9a96e', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}
+                                  />
+                                  A gerar...
+                                </>
+                              ) : '🎬 Criar Vídeo'}
+                            </button>
+                          )}
+                        </>
                       )}
 
                       <button
