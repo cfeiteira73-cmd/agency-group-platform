@@ -250,7 +250,8 @@ export async function POST(req: NextRequest) {
           // Persist conversation to Supabase (non-blocking — fires after stream completes)
           const assistantMessage = assistantChunks.join('').slice(0, 4000)
           if (assistantMessage) {
-            supabaseAdmin
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(supabaseAdmin as any)
               .from('sofia_conversations')
               .insert({
                 session_id: sessionId,
@@ -261,7 +262,7 @@ export async function POST(req: NextRequest) {
                 property_ref: propertyRef,
                 context: Object.keys(safeContext).length > 0 ? safeContext : null,
               })
-              .then(({ error }) => {
+              .then(({ error }: { error: { message: string } | null }) => {
                 if (error) console.warn('[Sofia] Failed to persist conversation:', error.message)
               })
           }
