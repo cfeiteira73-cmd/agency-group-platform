@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 
 // ─── Staging Styles ────────────────────────────────────────────────────────────
 const STYLE_PROMPTS: Record<string, string> = {
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     // Generate variations (1–3)
     const count = Math.min(Math.max(1, variations), 3)
-    const seeds = Array.from({ length: count }, () => Math.floor(Math.random() * 2147483647))
+    const seeds = Array.from({ length: count }, () => randomBytes(4).readUInt32BE(0) % 2147483647)
 
     const results = await Promise.allSettled(
       seeds.map((seed) =>

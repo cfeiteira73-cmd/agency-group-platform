@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { randomBytes } from 'crypto'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AlertSubscription {
@@ -347,7 +348,7 @@ export async function POST(req: NextRequest) {
     }
 
     const subscription: AlertSubscription = {
-      id: `alert_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      id: `alert_${Date.now()}_${randomBytes(8).toString('hex')}`,
       email, zona, tipo, precoMin, precoMax, quartosMin, piscina,
       createdAt: new Date().toISOString(),
       active: true,

@@ -307,6 +307,11 @@ function calculateRisk(req: PipelineAdvanceRequest): { risk_score: number; risk_
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<NextResponse<PipelineAdvanceResponse | { error: string }>> {
+  const authHeader = request.headers.get('authorization')
+  const secret = process.env.PORTAL_API_SECRET
+  if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
+  if (authHeader !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = (await request.json()) as PipelineAdvanceRequest
 

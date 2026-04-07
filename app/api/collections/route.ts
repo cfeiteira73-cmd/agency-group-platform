@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { randomBytes } from 'crypto'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -61,14 +62,14 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'create': {
-        const id = `col_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+        const id = `col_${Date.now()}_${randomBytes(4).toString('hex')}`
         const collection: Collection = {
           id,
           name: data.name || 'Nova Colecção',
           agentId: data.agentId || 'carlos',
           clientEmail: data.clientEmail,
           clientName: data.clientName,
-          shareToken: Math.random().toString(36).substring(2, 18),
+          shareToken: randomBytes(32).toString('hex'),
           items: [],
           comments: [],
           createdAt: new Date().toISOString(),

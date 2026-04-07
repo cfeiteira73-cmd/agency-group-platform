@@ -3,6 +3,24 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+// ─── SSRF Protection ──────────────────────────────────────────────────────────
+const ALLOWED_HOSTS = [
+  'idealista.com',
+  'imovirtual.com',
+  'century21.pt',
+  'remax.pt',
+  'era.pt',
+  'jll.pt',
+  'cushmanwakefield.com',
+]
+
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'https:' && ALLOWED_HOSTS.some(h => parsed.hostname.endsWith(h))
+  } catch { return false }
+}
+
 interface PhotoScore {
   url: string
   quality: number       // 0-100
@@ -32,6 +50,15 @@ export async function POST(req: NextRequest) {
 
   // Limit to 8 photos max (API cost control)
   const photosToAnalyze = photos.slice(0, 8)
+
+  // SSRF protection — reject URLs not from allowed hosts
+  const unsafeUrls = photosToAnalyze.filter(url => !isSafeUrl(url))
+  if (unsafeUrls.length > 0) {
+    return NextResponse.json(
+      { error: 'URL not allowed. Only photos from trusted real estate portals are accepted.' },
+      { status: 400 }
+    )
+  }
 
   try {
     // Build vision message with all photos

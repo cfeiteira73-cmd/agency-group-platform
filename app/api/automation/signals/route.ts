@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -541,6 +542,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const authHeader = request.headers.get('authorization')
+  const secret = process.env.PORTAL_API_SECRET
+  if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
+  if (authHeader !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body: unknown = await request.json()
 
@@ -602,7 +608,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const daysSince = Math.floor((nowMs - signalMs) / (1000 * 60 * 60 * 24))
 
     const newSignal: Signal = {
-      id: `sig_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      id: `sig_${Date.now()}_${randomBytes(4).toString('hex')}`,
       type: input.type,
       priority,
       probability_score: score,
