@@ -356,16 +356,15 @@ export default function PortalSofia({
             </button>
           )}
 
-          {sofiaMode === 'avatar' && (
-            !sofiaConnected ? (
-              <button type="button" className="p-btn" style={{ padding: '6px 14px' }} onClick={onConnect} disabled={sofiaLoading}>
-                {sofiaLoading ? '✦ A conectar...' : '▶ Conectar Sofia'}
-              </button>
-            ) : (
-              <button type="button" style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(220,38,38,.3)', color: '#dc2626', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.08em', borderRadius: '6px', transition: 'all .2s' }} onClick={onDisconnect}>
-                ■ Desconectar
-              </button>
-            )
+          {sofiaMode === 'avatar' && sofiaConnected && (
+            <button type="button" style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(220,38,38,.3)', color: '#dc2626', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', cursor: 'pointer', letterSpacing: '.08em', borderRadius: '6px', transition: 'all .2s' }} onClick={onDisconnect}>
+              ■ Desconectar
+            </button>
+          )}
+          {sofiaMode === 'avatar' && !sofiaConnected && (
+            <div style={{ padding: '5px 12px', background: 'rgba(201,169,110,.1)', border: '1px solid rgba(201,169,110,.3)', borderRadius: '6px', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.48rem', color: '#c9a96e', letterSpacing: '.1em' }}>
+              ⚙ EM ATUALIZAÇÃO
+            </div>
           )}
         </div>
       </div>
@@ -383,12 +382,25 @@ export default function PortalSofia({
                 style={{ width: '100%', maxWidth: '500px', height: 'auto', borderRadius: '4px' }}
               />
             ) : (
-              <div style={{ textAlign: 'center', padding: '40px' }}>
-                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg,rgba(28,74,53,.5),rgba(201,169,110,.3))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: '1px solid rgba(201,169,110,.2)' }}>
+              <div style={{ textAlign: 'center', padding: '40px', maxWidth: '380px' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg,rgba(28,74,53,.5),rgba(201,169,110,.3))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', border: '1px solid rgba(201,169,110,.2)' }}>
                   <span style={{ fontFamily: "'Cormorant',serif", fontSize: '2rem', color: '#c9a96e' }}>S</span>
                 </div>
-                <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.3rem', fontWeight: 300, color: 'rgba(244,240,230,.6)', marginBottom: '8px' }}>Sofia está offline</div>
-                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(244,240,230,.25)', lineHeight: 1.6 }}>Clique em &ldquo;Conectar Sofia&rdquo; para iniciar<br />apresentação de propriedade com avatar IA</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.5rem', letterSpacing: '.2em', color: '#c9a96e', marginBottom: '10px', textTransform: 'uppercase' }}>Avatar em Atualização</div>
+                <div style={{ fontFamily: "'Cormorant',serif", fontSize: '1.2rem', fontWeight: 300, color: 'rgba(244,240,230,.7)', marginBottom: '16px', lineHeight: 1.5 }}>
+                  O fornecedor de Avatar IA (HeyGen) migrou para uma nova plataforma em Março 2026.
+                </div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.52rem', color: 'rgba(244,240,230,.35)', lineHeight: 1.8, marginBottom: '24px' }}>
+                  A integração com LiveAvatar está a ser configurada.<br/>
+                  Usa o <strong style={{ color: '#c9a96e' }}>Chat IA</strong> enquanto isso — mesma Sofia, sem avatar.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSofiaMode('chat')}
+                  style={{ padding: '10px 24px', background: '#c9a96e', color: '#0c1f15', border: 'none', fontFamily: 'var(--font-dm-mono),monospace', fontSize: '.55rem', letterSpacing: '.15em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '4px', fontWeight: 600 }}
+                >
+                  Ir para Chat IA
+                </button>
               </div>
             )}
             {sofiaSpeaking && (
