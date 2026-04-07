@@ -41,17 +41,16 @@ function formatPrice(price: number): string {
 }
 
 export function AIPropertySearch() {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [query, setQuery]       = useState('')
+  const [results, setResults]   = useState<SearchResult | null>(null)
+  const [loading, setLoading]   = useState(false)
+  const [error, setError]       = useState('')
   const [isListening, setIsListening] = useState(false)
   const [voiceSupported, setVoiceSupported] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const abortRef = useRef<AbortController | null>(null)
+  const inputRef    = useRef<HTMLInputElement>(null)
+  const abortRef    = useRef<AbortController | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
 
-  // Check Web Speech API support on mount (client-only)
   useEffect(() => {
     const SpeechRecognitionAPI =
       (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ||
@@ -62,24 +61,16 @@ export function AIPropertySearch() {
   async function handleSearch(searchQuery?: string) {
     const q = (searchQuery ?? query).trim()
     if (!q) return
-
-    // Cancel any in-flight request
     abortRef.current?.abort()
     abortRef.current = new AbortController()
-
     setLoading(true)
     setError('')
     setResults(null)
-
     try {
       const res = await fetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: q,
-          language: 'pt',
-          sessionId: getOrCreateSessionId(),
-        }),
+        body: JSON.stringify({ query: q, language: 'pt', sessionId: getOrCreateSessionId() }),
         signal: abortRef.current.signal,
       })
       if (!res.ok) {
@@ -100,33 +91,24 @@ export function AIPropertySearch() {
     const SpeechRecognitionAPI =
       (window as unknown as Record<string, unknown>).SpeechRecognition as typeof SpeechRecognition ||
       (window as unknown as Record<string, unknown>).webkitSpeechRecognition as typeof SpeechRecognition
-
     if (!SpeechRecognitionAPI) return
-
     const recognition = new SpeechRecognitionAPI()
     recognitionRef.current = recognition
-
     recognition.lang = 'pt-PT'
     recognition.interimResults = true
     recognition.maxAlternatives = 1
     recognition.continuous = false
-
     recognition.onstart = () => setIsListening(true)
-
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = Array.from({ length: event.results.length }, (_, i) => event.results[i][0].transcript).join('')
       setQuery(transcript)
-
-      // Auto-search on final result
       if (event.results[event.results.length - 1].isFinal) {
         setIsListening(false)
         void handleSearch(transcript)
       }
     }
-
     recognition.onerror = () => setIsListening(false)
-    recognition.onend = () => setIsListening(false)
-
+    recognition.onend   = () => setIsListening(false)
     recognition.start()
   }
 
@@ -146,26 +128,28 @@ export function AIPropertySearch() {
 
   return (
     <section
-      className="w-full max-w-4xl mx-auto px-4 py-8"
+      style={{ width: '100%', maxWidth: '860px', margin: '0 auto', padding: '0 0 8px' }}
       aria-label="Pesquisa inteligente de imóveis por linguagem natural"
     >
-      {/* Search input */}
-      <div className="relative pb-2">
-        <div className="flex items-center gap-3 bg-white border-2 border-[#1c4a35] rounded-2xl px-5 py-4 shadow-xl focus-within:border-[#c9a96e] transition-colors">
-          <svg
-            className="w-5 h-5 text-[#1c4a35] flex-shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
+      {/* ── Search bar ── */}
+      <div style={{ position: 'relative', paddingBottom: '8px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          background: '#ffffff',
+          border: '2px solid #1c4a35',
+          borderRadius: '16px',
+          padding: '14px 20px',
+          boxShadow: '0 8px 32px rgba(14,14,13,.12), 0 2px 8px rgba(14,14,13,.06)',
+          transition: 'border-color .25s',
+        }}>
+          {/* Lupa */}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1c4a35" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
           </svg>
+
+          {/* Input */}
           <input
             ref={inputRef}
             type="text"
@@ -173,88 +157,140 @@ export function AIPropertySearch() {
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Descreva o imóvel que procura em linguagem natural..."
-            className="flex-1 text-base text-gray-800 placeholder-gray-400 outline-none bg-transparent"
             aria-label="Pesquisa de imóveis por linguagem natural"
             autoComplete="off"
+            style={{
+              flex: 1,
+              fontSize: '1rem',
+              color: '#1a1a1a',
+              background: 'transparent',
+              border: 'none',
+              outline: 'none',
+              fontFamily: 'inherit',
+              minWidth: 0,
+            }}
           />
-          {/* Microphone button — voice search */}
+
+          {/* Mic button */}
           {voiceSupported && (
             <button
               type="button"
               onClick={isListening ? stopVoiceSearch : startVoiceSearch}
-              className={`relative flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                isListening
-                  ? 'bg-red-500 text-white shadow-lg shadow-red-200'
-                  : 'text-gray-400 hover:text-[#1c4a35] hover:bg-gray-50'
-              }`}
               aria-label={isListening ? 'Parar gravação de voz' : 'Pesquisar por voz'}
               aria-pressed={isListening}
+              style={{
+                flexShrink: 0,
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                border: 'none',
+                background: isListening ? '#ef4444' : 'transparent',
+                color: isListening ? '#fff' : '#9ca3af',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background .2s, color .2s',
+                position: 'relative',
+              }}
             >
-              {/* Pulse rings when listening */}
               {isListening && (
-                <>
-                  <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-30" aria-hidden="true" />
-                  <span className="absolute inset-0 rounded-full bg-red-300 animate-pulse opacity-20" aria-hidden="true" />
-                </>
+                <span style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  background: 'rgba(239,68,68,0.3)',
+                  animation: 'ping 1s cubic-bezier(0,0,.2,1) infinite',
+                }} aria-hidden="true" />
               )}
-              {/* Microphone / Stop SVG */}
-              <svg className="w-5 h-5 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                {isListening ? (
-                  // Stop icon
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-                ) : (
-                  // Mic icon
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                )}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'relative', zIndex: 1 }} aria-hidden="true">
+                {isListening
+                  ? <><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M12 21a9 9 0 000-18"/></>
+                  : <><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 01-14 0M12 19v3M9 22h6"/></>
+                }
               </svg>
             </button>
           )}
 
+          {/* Search button */}
           <button
             type="button"
             onClick={() => void handleSearch()}
             disabled={loading || !query.trim()}
-            className="bg-[#1c4a35] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#2d6b4f] disabled:opacity-50 transition-colors flex items-center gap-2"
             aria-label="Pesquisar imóveis"
+            style={{
+              flexShrink: 0,
+              background: loading || !query.trim() ? 'rgba(28,74,53,.4)' : '#1c4a35',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '10px 20px',
+              fontSize: '.78rem',
+              fontFamily: "'DM Mono', monospace",
+              letterSpacing: '.1em',
+              textTransform: 'uppercase',
+              fontWeight: 500,
+              cursor: loading || !query.trim() ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background .2s',
+              whiteSpace: 'nowrap',
+            }}
           >
-            {loading ? (
-              <span
-                className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-                aria-hidden="true"
-              />
-            ) : (
-              <span>Pesquisar</span>
-            )}
+            {loading
+              ? <span style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid rgba(255,255,255,.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} aria-hidden="true" />
+              : <span>Pesquisar</span>
+            }
           </button>
         </div>
 
-        {/* Listening indicator — shown while recording */}
+        {/* Listening indicator */}
         {isListening && (
-          <div className="absolute -bottom-1 left-0 right-0 text-center" aria-live="assertive">
-            <span className="text-xs text-red-500 font-medium animate-pulse">
+          <div style={{ textAlign: 'center', marginTop: '6px' }} aria-live="assertive">
+            <span style={{ fontSize: '.75rem', color: '#ef4444', fontWeight: 500 }}>
               🎙️ A ouvir... fale agora
             </span>
           </div>
         )}
 
         {/* Sofia AI badge */}
-        <div
-          className="absolute -top-3 right-4 bg-[#c9a96e] text-white text-xs font-bold px-3 py-1 rounded-full"
-          aria-hidden="true"
-        >
+        <div style={{
+          position: 'absolute',
+          top: '-12px',
+          right: '16px',
+          background: '#c9a96e',
+          color: '#fff',
+          fontSize: '.6rem',
+          fontFamily: "'DM Mono', monospace",
+          fontWeight: 700,
+          letterSpacing: '.12em',
+          padding: '4px 12px',
+          borderRadius: '20px',
+        }} aria-hidden="true">
           ✦ Sofia AI
         </div>
       </div>
 
-      {/* Example queries — shown when no results yet */}
+      {/* ── Example queries ── */}
       {!results && !loading && (
-        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Exemplos de pesquisa">
+        <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px' }} role="group" aria-label="Exemplos de pesquisa">
           {EXAMPLE_QUERIES.map(eq => (
             <button
               key={eq}
               type="button"
               onClick={() => handleExampleClick(eq)}
-              className="text-sm text-[#1c4a35] border border-[#1c4a35]/30 hover:border-[#c9a96e] hover:text-[#c9a96e] px-3 py-1.5 rounded-full transition-colors"
+              style={{
+                fontSize: '.78rem',
+                color: '#1c4a35',
+                border: '1px solid rgba(28,74,53,.25)',
+                background: 'transparent',
+                padding: '6px 14px',
+                borderRadius: '20px',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                transition: 'border-color .2s, color .2s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#c9a96e'; (e.currentTarget as HTMLButtonElement).style.color = '#c9a96e' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(28,74,53,.25)'; (e.currentTarget as HTMLButtonElement).style.color = '#1c4a35' }}
             >
               {eq}
             </button>
@@ -262,45 +298,44 @@ export function AIPropertySearch() {
         </div>
       )}
 
-      {/* Error */}
+      {/* ── Error ── */}
       {error && (
-        <p className="mt-4 text-red-600 text-sm text-center" role="alert">
+        <p style={{ marginTop: '16px', color: '#b03a2e', fontSize: '.85rem', textAlign: 'center' }} role="alert">
           {error}
         </p>
       )}
 
-      {/* Loading state */}
+      {/* ── Loading ── */}
       {loading && (
-        <div
-          className="mt-8 text-center text-[#1c4a35]"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div
-            className="inline-block w-8 h-8 border-[3px] border-[#1c4a35] border-t-transparent rounded-full animate-spin mb-3"
-            aria-hidden="true"
-          />
-          <p className="text-sm font-medium">Sofia está a analisar o seu pedido...</p>
+        <div style={{ marginTop: '32px', textAlign: 'center', color: '#1c4a35' }} aria-live="polite" aria-busy="true">
+          <div style={{ display: 'inline-block', width: '32px', height: '32px', border: '3px solid rgba(28,74,53,.2)', borderTopColor: '#1c4a35', borderRadius: '50%', animation: 'spin 0.7s linear infinite', marginBottom: '12px' }} aria-hidden="true" />
+          <p style={{ fontSize: '.85rem', fontWeight: 500 }}>Sofia está a analisar o seu pedido...</p>
         </div>
       )}
 
-      {/* Results */}
+      {/* ── Results ── */}
       {results && !loading && (
-        <div className="mt-6" aria-live="polite">
-          {/* AI-generated summary */}
+        <div style={{ marginTop: '24px' }} aria-live="polite">
+
+          {/* AI summary */}
           {results.aiMessage && (
-            <div className="bg-[#f4f0e6] border-l-4 border-[#c9a96e] rounded-r-xl px-5 py-4 mb-6">
-              <div className="flex items-start gap-3">
-                <span className="text-[#c9a96e] text-xl flex-shrink-0" aria-hidden="true">
-                  ✦
-                </span>
-                <p className="text-sm text-[#1c4a35] leading-relaxed">{results.aiMessage}</p>
-              </div>
+            <div style={{
+              background: '#f4f0e6',
+              borderLeft: '4px solid #c9a96e',
+              borderRadius: '0 12px 12px 0',
+              padding: '16px 20px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+            }}>
+              <span style={{ color: '#c9a96e', fontSize: '1.2rem', flexShrink: 0 }} aria-hidden="true">✦</span>
+              <p style={{ fontSize: '.88rem', color: '#1c4a35', lineHeight: 1.65, margin: 0 }}>{results.aiMessage}</p>
             </div>
           )}
 
-          {/* Results count */}
-          <p className="text-sm text-gray-500 mb-4">
+          {/* Count */}
+          <p style={{ fontSize: '.82rem', color: '#888', marginBottom: '16px' }}>
             {results.totalFound === 0
               ? 'Nenhuma propriedade encontrada. Tente ajustar a pesquisa.'
               : `${results.totalFound} propriedade${results.totalFound !== 1 ? 's' : ''} encontrada${results.totalFound !== 1 ? 's' : ''}`}
@@ -308,51 +343,97 @@ export function AIPropertySearch() {
 
           {/* Property cards */}
           {results.results.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: '16px',
+            }}>
               {results.results.map(property => (
                 <a
                   key={property.id}
                   href={`/imoveis/${property.id}`}
-                  className="group block bg-white rounded-2xl border border-gray-100 hover:border-[#c9a96e] hover:shadow-lg transition-all overflow-hidden"
                   aria-label={`${property.title} — ${formatPrice(property.price)} — ${property.zone}`}
+                  style={{
+                    display: 'block',
+                    background: '#fff',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(14,14,13,.08)',
+                    overflow: 'hidden',
+                    textDecoration: 'none',
+                    transition: 'border-color .2s, box-shadow .2s, transform .2s',
+                  }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLAnchorElement
+                    el.style.borderColor = '#c9a96e'
+                    el.style.boxShadow = '0 8px 24px rgba(14,14,13,.1)'
+                    el.style.transform = 'translateY(-2px)'
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLAnchorElement
+                    el.style.borderColor = 'rgba(14,14,13,.08)'
+                    el.style.boxShadow = 'none'
+                    el.style.transform = 'translateY(0)'
+                  }}
                 >
-                  {/* Gradient header (placeholder image) */}
-                  <div className="h-44 bg-gradient-to-br from-[#1c4a35] to-[#2d6b4f] relative flex items-end p-4">
-                    <span className="text-white/50 text-xs absolute top-3 right-3 bg-white/10 px-2 py-1 rounded-full">
+                  {/* Card header */}
+                  <div style={{
+                    height: '160px',
+                    background: 'linear-gradient(135deg, #1c4a35 0%, #2d6b4f 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'flex-end',
+                    padding: '16px',
+                    position: 'relative',
+                  }}>
+                    <span style={{
+                      position: 'absolute', top: '12px', right: '12px',
+                      background: 'rgba(255,255,255,.15)', color: '#fff',
+                      fontSize: '.68rem', padding: '3px 10px', borderRadius: '20px',
+                    }}>
                       {property.type}
                     </span>
-                    <div>
-                      <p className="text-[#c9a96e] text-xl font-bold">
-                        {formatPrice(property.price)}
-                      </p>
-                      <p className="text-white/80 text-xs">{property.zone}</p>
-                    </div>
+                    <p style={{ color: '#c9a96e', fontSize: '1.25rem', fontWeight: 700, margin: 0, fontFamily: "'DM Mono', monospace" }}>
+                      {formatPrice(property.price)}
+                    </p>
+                    <p style={{ color: 'rgba(255,255,255,.75)', fontSize: '.75rem', margin: '2px 0 0' }}>
+                      {property.zone}
+                    </p>
                   </div>
 
-                  <div className="p-4">
-                    <h3 className="font-semibold text-[#1c4a35] text-sm group-hover:text-[#c9a96e] transition-colors line-clamp-1">
+                  {/* Card body */}
+                  <div style={{ padding: '16px' }}>
+                    <h3 style={{
+                      fontFamily: "'Cormorant', serif",
+                      fontSize: '1rem', fontWeight: 600,
+                      color: '#1c4a35', margin: '0 0 6px',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
                       {property.title}
                     </h3>
-                    <p className="text-gray-500 text-xs mt-1 line-clamp-2">
+                    <p style={{
+                      fontSize: '.78rem', color: '#888', margin: '0 0 12px',
+                      display: '-webkit-box', WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                    }}>
                       {property.description}
                     </p>
 
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                      <span className="text-xs text-gray-400">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid rgba(14,14,13,.06)' }}>
+                      <span style={{ fontSize: '.75rem', color: '#aaa' }}>
                         {property.bedrooms}Q · {property.area}m²
                       </span>
-                      <span className="text-xs font-semibold text-[#c9a96e]">
+                      <span style={{ fontSize: '.75rem', fontWeight: 700, color: '#c9a96e' }}>
                         {property.rentalYield}% yield
                       </span>
                     </div>
 
                     {/* Feature tags */}
-                    <div className="flex flex-wrap gap-1 mt-2" aria-label="Características">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }} aria-label="Características">
                       {property.features.slice(0, 3).map(f => (
-                        <span
-                          key={f}
-                          className="text-xs bg-[#f4f0e6] text-[#1c4a35] px-2 py-0.5 rounded-full"
-                        >
+                        <span key={f} style={{
+                          fontSize: '.68rem', background: '#f4f0e6',
+                          color: '#1c4a35', padding: '2px 10px', borderRadius: '20px',
+                        }}>
                           {f}
                         </span>
                       ))}
@@ -363,17 +444,23 @@ export function AIPropertySearch() {
             </div>
           )}
 
-          {/* CTA to full portfolio */}
-          <div className="mt-6 text-center">
-            <a
-              href="/imoveis"
-              className="text-sm text-[#1c4a35] hover:text-[#c9a96e] underline transition-colors"
-            >
+          {/* CTA */}
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <a href="/imoveis" style={{
+              fontSize: '.82rem', color: '#1c4a35',
+              textDecoration: 'underline', textUnderlineOffset: '3px',
+            }}>
               Ver todos os imóveis →
             </a>
           </div>
         </div>
       )}
+
+      {/* Keyframe animations */}
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes ping { 75%, 100% { transform: scale(2); opacity: 0 } }
+      `}</style>
     </section>
   )
 }
