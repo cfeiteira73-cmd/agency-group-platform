@@ -593,10 +593,12 @@ export default function Portal() {
     try {
       const res = await fetch('/api/sofia/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ language: sofiaLang }) })
       const data = await res.json()
-      if (data.sessionId) {
-        setSofiaSessionId(data.sessionId)
+      // API returns session_id (snake_case); also accept mock/demo sessions
+      const sid = data.session_id || data.sessionId
+      if (sid) {
+        setSofiaSessionId(sid)
         setSofiaConnected(true)
-      } else { setSofiaError(data.error || 'Erro ao conectar Sofia') }
+      } else { setSofiaError(data.error || data.message || 'Erro ao conectar Sofia') }
     } catch { setSofiaError('Erro de ligação.') }
     finally { setSofiaLoading(false) }
   }
