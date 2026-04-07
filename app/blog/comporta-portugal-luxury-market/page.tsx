@@ -689,6 +689,16 @@ export default function ArticleComportaLuxuryMarket() {
           <p><strong>Agency Group Comporta Mandate:</strong> We actively represent buyers in the €800K–€12M+ segment across the Comporta–Melides–Alcácer corridor. Our off-market access covers Comporta village, Carvalhal, Torre, Pego, and Brejos da Carregueira. <strong>Commission paid exclusively by the seller. Zero cost to buyers.</strong> AMI 22506.</p>
         </div>
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Explore Comporta properties:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/zonas/comporta" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Comporta zone — available properties →</a>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties in Portugal →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Looking for Comporta Villas or Land?</h3>
           <p>Access our off-market Comporta inventory. Carvalhal, Torre, Pego, and Comporta village. Properties from €800K to €12M+. Commission always paid by the seller — zero cost to buyers.</p>

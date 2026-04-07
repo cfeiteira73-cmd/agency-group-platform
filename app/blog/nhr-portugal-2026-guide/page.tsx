@@ -327,6 +327,18 @@ export default function ArticleNHRPortugal2026() {
           </div>
         ))}
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Find your IFICI-optimal property:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties →</a>
+            <a href="/zonas/lisboa" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Lisbon zone →</a>
+            <a href="/zonas/cascais" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Cascais zone →</a>
+            <a href="/zonas/algarve" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Algarve zone →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Relocating to Portugal? Start with the right advice.</h3>
           <p>Agency Group connects international buyers with top-tier Portuguese tax advisers and legal professionals. Explore properties under IFICI-optimal locations — Lisbon, Cascais, Porto, Algarve.</p>

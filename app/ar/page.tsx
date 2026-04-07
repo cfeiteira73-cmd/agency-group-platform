@@ -7,9 +7,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.agencygroup.pt/ar',
     languages: {
-      'ar': 'https://www.agencygroup.pt/ar',
+      'pt': 'https://www.agencygroup.pt/',
       'en': 'https://www.agencygroup.pt/en',
-      'pt-PT': 'https://www.agencygroup.pt',
+      'fr': 'https://www.agencygroup.pt/fr',
+      'de': 'https://www.agencygroup.pt/de',
+      'zh-Hans': 'https://www.agencygroup.pt/zh',
+      'ar': 'https://www.agencygroup.pt/ar',
+      'x-default': 'https://www.agencygroup.pt/',
     },
   },
   openGraph: {

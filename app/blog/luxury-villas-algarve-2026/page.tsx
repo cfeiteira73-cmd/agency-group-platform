@@ -290,6 +290,17 @@ export default function ArticleLuxuryVillasAlgarve() {
           and English-speaking professionals — makes it genuinely accessible.
         </p>
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Explore Algarve properties:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/zonas/algarve" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Algarve zone — available properties →</a>
+            <a href="/imoveis?zona=Algarve" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>All Algarve listings →</a>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties in Portugal →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Ready to find your Algarve villa?</h3>
           <p>Agency Group (AMI 22506) has exclusive access to off-market inventory across Vale do Lobo, Quinta do Lago, Vilamoura, and Lagos. Get matched with properties that never appear on public portals.</p>

@@ -652,6 +652,17 @@ export default function ArticleGoldenVisaAlternatives2026() {
           structuring considerations — our team has worked with all of them.
         </p>
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Explore property options in Portugal:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties →</a>
+            <a href="/zonas/lisboa" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Lisbon zone →</a>
+            <a href="/zonas/algarve" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Algarve zone →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Moving to Portugal in 2026?</h3>
           <p>Get a coordinated property search and immigration law introduction. No registration required. No pressure. Just the right information to make the right decision.</p>

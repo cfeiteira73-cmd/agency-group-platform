@@ -5,7 +5,18 @@ export const metadata: Metadata = {
   title: "Agency Group · Luxury Real Estate Portugal · AMI 22506",
   description: "Buy luxury property in Portugal. Lisbon €6,200/m², Cascais €4,713/m², Comporta €8,500/m². NHR/IFICI tax regime. Free AVM. AMI 22506.",
   robots: "index, follow, max-image-preview:large",
-  alternates: { canonical: "https://www.agencygroup.pt/en" },
+  alternates: {
+    canonical: "https://www.agencygroup.pt/en",
+    languages: {
+      'pt': 'https://www.agencygroup.pt/',
+      'en': 'https://www.agencygroup.pt/en',
+      'fr': 'https://www.agencygroup.pt/fr',
+      'de': 'https://www.agencygroup.pt/de',
+      'zh-Hans': 'https://www.agencygroup.pt/zh',
+      'ar': 'https://www.agencygroup.pt/ar',
+      'x-default': 'https://www.agencygroup.pt/',
+    },
+  },
   openGraph: {
     title: "Agency Group · Luxury Real Estate Portugal",
     description: "Portugal's premier luxury real estate boutique. Lisbon, Cascais, Comporta, Porto, Algarve, Madeira. AMI 22506.",

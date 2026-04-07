@@ -308,6 +308,17 @@ export default function ArticleLuxuryPropertyLisbon() {
           Agency Group&apos;s network provides direct access to off-market Lisbon properties in the €800K–€20M range.
         </p>
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Explore Lisbon properties:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/zonas/lisboa" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Lisbon zone — available properties →</a>
+            <a href="/imoveis?zona=Lisboa" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>All Lisbon listings →</a>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties in Portugal →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Looking for luxury property in Lisbon?</h3>
           <p>Access off-market listings, get a free automated valuation, and connect with our licensed advisors. We represent buyers at zero cost — our commission is paid by the seller.</p>

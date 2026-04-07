@@ -269,6 +269,17 @@ export default function ArticlePortugalRetirement() {
           <p><strong>Agency Group Retirement Support:</strong> We specialise in assisting international retirees relocate to Portugal. Our bilingual team coordinates the property search with your visa timeline, introduces trusted lawyers and fiscal advisors, and handles the entire purchase process in English. We represent buyers at <strong>zero commission cost</strong> — our 5% fee (AMI 22506) is paid exclusively by the seller.</p>
         </div>
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Find your retirement property in Portugal:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties →</a>
+            <a href="/zonas/cascais" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Cascais zone →</a>
+            <a href="/zonas/algarve" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Algarve zone →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Ready to retire in Portugal?</h3>
           <p>We help Americans and Europeans find the right property and navigate the entire relocation process. Start with a free consultation. AMI 22506 · +351 919 948 986 · www.agencygroup.pt</p>

@@ -58,6 +58,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/blog/investir-madeira-2026`,                  lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/primeira-casa-lisboa-guia-2026`,         lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/portugal-vs-spain-tax-residency-2026`,   lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    // ── Wave 7 FR SEO blog articles ───────────────────────────────────────────────
+    { url: `${BASE}/blog/acheter-maison-cascais-portugal`,     lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/investir-immobilier-algarve-2026`,    lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/regime-ifici-nhr-france-portugal`,    lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/acheter-appartement-porto-france`,    lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
+    { url: `${BASE}/blog/vendre-bien-portugal-guide`,          lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
     // /portal is disallowed in robots.txt — excluded from sitemap
   ]
 

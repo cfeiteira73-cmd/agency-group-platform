@@ -276,6 +276,17 @@ export default function ArticleLisbonVsPorto() {
           <p><strong>Agency Group Operates in Both Cities:</strong> We have active inventory and buyer representation in Lisbon, Cascais, and Porto. Our Deal Radar system analyses 16 variables to identify optimal entry points in each market. Whether you&apos;re choosing one city or building a diversified Portuguese portfolio, we provide the data-driven advisory to make it work.</p>
         </div>
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Explore properties in Lisbon and Porto:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/zonas/lisboa" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Lisbon zone →</a>
+            <a href="/zonas/porto" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Porto zone →</a>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Lisbon, Porto, or both — we help you decide.</h3>
           <p>Free automated valuation, off-market access, and bilingual advisory. No cost to the buyer. AMI 22506 · +351 919 948 986 · www.agencygroup.pt</p>

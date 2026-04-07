@@ -284,6 +284,17 @@ export default function ArticleBuyPropertyCascais() {
           <p><strong>Agency Group in Cascais:</strong> We maintain a dedicated off-market database of Cascais villas and prime apartments. If you are looking for Quinta da Marinha, Estoril, or Cascais centro properties that do not appear on Idealista or ERA, <strong>contact us directly</strong>. Our commission is paid by the seller — buyer representation costs you nothing.</p>
         </div>
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Explore Cascais properties:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/zonas/cascais" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Cascais zone — available properties →</a>
+            <a href="/imoveis?zona=Cascais" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>All Cascais listings →</a>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties in Portugal →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Looking for property in Cascais?</h3>
           <p>Access off-market villas and apartments. Free automated valuation tool. Direct connection to our Cascais-based team. AMI 22506.</p>

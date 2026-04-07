@@ -266,6 +266,18 @@ export default function ArticleBuyingPropertyPortugal() {
           never reach public portals.
         </p>
 
+        <div style={{ marginTop: '2rem', padding: '1.5rem', background: '#f4f0e6', border: '1px solid rgba(28,74,53,.15)', borderRadius: '4px' }}>
+          <p style={{ fontSize: '.85rem', color: '#1c4a35', fontWeight: '600', marginBottom: '.75rem' }}>
+            Explore properties across Portugal:
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+            <a href="/imoveis" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>View all properties →</a>
+            <a href="/zonas/lisboa" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Lisbon zone →</a>
+            <a href="/zonas/cascais" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Cascais zone →</a>
+            <a href="/#avm" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Free AVM valuation →</a>
+          </div>
+        </div>
+
         <div className="cta-box">
           <h3>Ready to buy property in Portugal?</h3>
           <p>Get a free property valuation, explore current listings, and connect with our licensed advisors. No registration required.</p>
