@@ -165,24 +165,16 @@ nav.solid .nav-links a{color:var(--g)}
 .zc:hover .zc-tag{max-height:28px;opacity:1}
 .zc-clip-overlay{position:absolute;inset:0;background:rgba(201,169,110,.08);clip-path:inset(100% 0 0 0);transition:clip-path .6s var(--ease-io)}
 .zc:hover .zc-clip-overlay{clip-path:inset(0 0 0 0)}
-/* Lisboa — signature green */
-.z1 .zc-bg-inner,.z1 .zc-bg{background-image:linear-gradient(160deg,#0e2a1a 0%,#1c4a35 35%,#2d7a55 65%,#0a1f12 100%)}
-/* Cascais — Atlantic blue-green */
-.z2 .zc-bg-inner,.z2 .zc-bg{background-image:linear-gradient(160deg,#061018 0%,#0d2540 40%,#1a4a6e 62%,#0a2030 100%)}
-/* Comporta — golden dunes */
-.z3 .zc-bg-inner,.z3 .zc-bg{background-image:linear-gradient(160deg,#1a0d04 0%,#3a1e08 35%,#7a4820 58%,#c9862a 75%,#2a1408 100%)}
-/* Porto — warm terracotta */
-.z4 .zc-bg-inner,.z4 .zc-bg{background-image:linear-gradient(160deg,#100808 0%,#2e1410 40%,#5c2e20 62%,#180c08 100%)}
-/* Algarve — warm gold sun */
-.z5 .zc-bg-inner,.z5 .zc-bg{background-image:linear-gradient(160deg,#100e04 0%,#2a2408 40%,#5a4a14 60%,#8a7028 72%,#140e04 100%)}
-/* Madeira — lush deep green */
-.z6 .zc-bg-inner,.z6 .zc-bg{background-image:linear-gradient(160deg,#040e08 0%,#0a2016 40%,#164830 62%,#042010 100%)}
-/* Sintra — royal violet-green */
-.z7 .zc-bg-inner,.z7 .zc-bg{background-image:linear-gradient(160deg,#0c0814 0%,#1e1030 40%,#341860 58%,#1c4a35 78%,#080610 100%)}
-/* Arrábida — teal sea */
-.z8 .zc-bg-inner,.z8 .zc-bg{background-image:linear-gradient(160deg,#040c0c 0%,#0a1e20 40%,#145060 62%,#042020 100%)}
-/* Ericeira — ocean deep */
-.z9 .zc-bg-inner,.z9 .zc-bg{background-image:linear-gradient(160deg,#040810 0%,#0a1428 40%,#143060 60%,#1c4a35 78%,#040810 100%)}
+/* Zone card fallback — fotos reais via next/Image */
+.z1 .zc-bg{background:#0a1f12}
+.z2 .zc-bg{background:#061018}
+.z3 .zc-bg{background:#1a0d04}
+.z4 .zc-bg{background:#100808}
+.z5 .zc-bg{background:#100e04}
+.z6 .zc-bg{background:#040e08}
+.z7 .zc-bg{background:#0c0814}
+.z8 .zc-bg{background:#040c0c}
+.z9 .zc-bg{background:#040810}
 .imoveis-section{background:var(--cr);padding:112px 0}
 .im-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px}
 .imc{background:var(--w);cursor:none;overflow:hidden;position:relative}
@@ -377,6 +369,7 @@ footer{background:var(--ink);padding:80px 0 32px}
   .avm-submit,.nhr-submit,.radar-btn,.modal-btn{min-height:44px}
   .cpcv-btn-wa{min-height:44px;padding:10px 14px}
   .cpcv-sel{min-height:44px;padding:10px}
+  .nav-burger{display:flex!important}
 }
 
 /* ═══════════════════════════════════════════════
@@ -649,6 +642,12 @@ img, video {
   .avm-row{grid-template-columns:1fr!important}
   .sim-grid{gap:32px!important}
   .sec-h2{font-size:clamp(1.5rem,7.5vw,2.5rem)!important}
+  .zonas-grid{grid-template-columns:1fr!important;grid-auto-rows:280px!important}
+  .zc:nth-child(1),.zc:nth-child(6),.zc:nth-child(8){grid-row:span 1!important;grid-column:span 1!important}
+  .editorial-2col{min-height:auto!important}
+  .editorial-2col>*:first-child{min-height:220px!important}
+  .test-grid{grid-template-columns:1fr!important}
+  .cred-grid{grid-template-columns:1fr!important;padding:32px 16px!important}
 }
 
 .skip-to-content{position:absolute;top:-100%;left:16px;z-index:99999;padding:8px 16px;background:var(--gd);color:var(--gold);font-family:'Jost',sans-serif;font-size:14px;border-radius:0 0 4px 4px;text-decoration:none;transition:top .2s}

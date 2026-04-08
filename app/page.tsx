@@ -126,14 +126,14 @@ export default function Home() {
               {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally',photo:'/zones/ericeira.jpg'},
             ].map(z=>(
               <a key={z.c} href={`/zonas/${z.nome.toLowerCase()}`} className={`zc ${z.c}`}>
-                <div className="zc-bg" style={{position:'relative',overflow:'hidden'}}>
+                <div className="zc-bg">
                   <Image
                     src={z.photo}
                     alt={z.nome}
                     fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    sizes="(max-width: 480px) 100vw, (max-width: 960px) 50vw, (max-width: 1280px) 50vw, 33vw"
                     style={{objectFit:'cover'}}
-                    loading="lazy"
+                    priority={z.c === 'z1'}
                   />
                 </div>
                 <div className="zc-ov"></div>
@@ -409,7 +409,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <div className="test-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(340px, 1fr))',gap:'24px'}}>
+          <div className="test-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',gap:'24px'}}>
             {[
               {name:'James & Sarah Mitchell',country:'🇬🇧 Reino Unido',zone:'Cascais',rating:5,quote:'Três semanas. Villa de sonho. Escritura assinada. Nunca pensámos que seria tão simples — nem que Cascais seria para sempre.',property:'Villa T5 · Cascais · €2.4M',date:'Janeiro 2026'},
               {name:'Mohammed Al-Rashidi',country:'🇸🇦 Arábia Saudita',zone:'Lisboa',rating:5,quote:'Penthouse no Príncipe Real como investimento. O retorno superou todas as projecções. Lisboa está a crescer — e nós estamos dentro.',property:'Penthouse T4 · Lisboa · €3.1M',date:'Dezembro 2025'},
