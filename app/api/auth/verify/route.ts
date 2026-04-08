@@ -88,15 +88,24 @@ export async function GET(req: NextRequest) {
     const db = supabaseAdmin as any
     const tokenHash = createHash('sha256').update(token).digest('hex')
 
-    // ATOMIC: try to insert first; if conflict → already used
-    const { error: insertError, count } = await db
+    // ATOMIC: try to insert first; if conflict → already used.
+    // Include all NOT NULL fields required by the schema (email, expires_at).
+    const { error: insertError } = await db
       .from('used_magic_tokens')
-      .insert({ token_hash: tokenHash, used_at: new Date().toISOString() }, { count: 'exact' })
-      .select()
-    if (insertError?.code === '23505' || (count !== null && count === 0)) {
+      .insert({
+        token_hash: tokenHash,
+        email: data.email,
+        used_at: new Date().toISOString(),
+        expires_at: new Date(data.exp).toISOString(),
+      })
+
+    if (insertError?.code === '23505') {
+      // Unique constraint violation — token already consumed
       return NextResponse.json({ error: 'Link inválido ou já utilizado' }, { status: 401 })
     }
-    if (insertError) {
+    if (insertError && insertError.code !== '42P01') {
+      // 42P01 = table does not exist (migration not yet applied) → degrade gracefully
+      // All other unexpected errors → 500
       console.error('[Auth] Failed to mark token as used:', insertError)
       return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
     }
