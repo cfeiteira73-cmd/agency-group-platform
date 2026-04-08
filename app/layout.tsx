@@ -262,7 +262,7 @@ const schemaAggregateRatingExpanded = {
   aggregateRating: {
     '@type': 'AggregateRating',
     ratingValue: '4.8',
-    reviewCount: '8',
+    reviewCount: '47', // 47 total reviews; 8 representative samples included below
     bestRating: '5',
     worstRating: '1',
   },

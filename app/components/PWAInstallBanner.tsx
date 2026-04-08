@@ -20,14 +20,17 @@ export default function PWAInstallBanner() {
       localStorage.getItem('ag_pwa_dismissed')
     ) return
 
+    // High-intent property detail pages get a shorter delay (8s vs 30s)
+    const delay = window.location.pathname.startsWith('/imoveis/') ? 8_000 : 30_000
+
     // iOS detection
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as unknown as { MSStream: unknown }).MSStream
     setIsIOS(ios)
 
     if (ios) {
-      // iOS: show manual install hint after 30s on mobile
+      // iOS: show manual install hint after delay on mobile
       if (window.innerWidth <= 768) {
-        setTimeout(() => setShow(true), 30_000)
+        setTimeout(() => setShow(true), delay)
       }
       return
     }
@@ -37,7 +40,7 @@ export default function PWAInstallBanner() {
       e.preventDefault()
       setPrompt(e as BeforeInstallPromptEvent)
       if (window.innerWidth <= 768) {
-        setTimeout(() => setShow(true), 30_000)
+        setTimeout(() => setShow(true), delay)
       }
     }
     window.addEventListener('beforeinstallprompt', handler)

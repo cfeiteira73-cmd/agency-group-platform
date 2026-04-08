@@ -12,7 +12,45 @@ function makeToken(payload: object, secret: string): string {
   return `${p}.${sig}`
 }
 
+async function checkRequestRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      const key = `rl:auth:request:${ip}`
+      const now = Date.now()
+      const window = 3600 // 1 hour
+      const limit = 5 // 5 requests per hour
+      const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          ['ZADD', key, now, `${now}`],
+          ['ZREMRANGEBYSCORE', key, '-inf', now - window * 1000],
+          ['ZCARD', key],
+          ['EXPIRE', key, window],
+        ]),
+      })
+      const results = await response.json() as Array<{ result: number }>
+      const count = results[2]?.result ?? 0
+      return { allowed: count <= limit, remaining: Math.max(0, limit - count) }
+    } catch {
+      return { allowed: true, remaining: 5 }
+    }
+  }
+  return { allowed: true, remaining: 5 }
+}
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await checkRequestRateLimit(ip)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas tentativas. Tente novamente em 60 minutos.' },
+      { status: 429, headers: { 'Retry-After': '3600' } }
+    )
+  }
   const SECRET = process.env.AUTH_SECRET!
   const resend = new Resend(process.env.RESEND_API_KEY)
   // Build allowed list from env var (comma-separated) + hardcoded admin

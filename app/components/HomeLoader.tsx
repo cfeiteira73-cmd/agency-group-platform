@@ -22,8 +22,8 @@ export default function HomeLoader() {
       }, 400)
     }
 
-    // Safety: force loader out after 2800ms — allows full GSAP timeline (~2.5s) to complete
-    const ldrSafetyTimer = setTimeout(finishLoader, 2800)
+    // Safety: force loader out after 1800ms — CSS-only intro animation is ~1.5s; GSAP loads lazily
+    const ldrSafetyTimer = setTimeout(finishLoader, 1800)
     window.addEventListener('load', finishLoader, { once: true })
 
     gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })

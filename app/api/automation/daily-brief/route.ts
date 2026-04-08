@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { createClient } from '@supabase/supabase-js'
+import Anthropic from '@anthropic-ai/sdk'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,94 +38,164 @@ interface DailyBrief {
   time_allocation: TimeAllocation
 }
 
-// ─── Seed Data Pools ──────────────────────────────────────────────────────────
-
-const CONTACT_NAMES = [
-  'James Miller', 'Sophie Dubois', 'Carlos Mendes', 'Emma Thompson',
-  'Ahmed Al-Rashid', 'Maria Santos', 'Thomas Müller', 'Isabelle Laurent',
-  'Roberto Silva', 'Catherine Chen', 'Patrick O\'Brien', 'Fatima Al-Zahra',
-  'David Kowalski', 'Ana Ferreira', 'Nicolas Blanc',
-]
+// ─── Market insights pool (static context, rotates daily) ────────────────────
 
 const MARKET_INSIGHTS = [
   'Lisboa mantém-se top 5 mundial em luxo — compradores norte-americanos aumentaram 18% YoY. Imóveis em Príncipe Real e Chiado têm DOM médio de 45 dias.',
   'Mercado Algarve: procura britânica resiliente pós-Brexit. Propriedades €1M-€2M em Quinta do Lago com 3+ inquiries/semana vendem em média em 38 dias.',
   'Porto consolida-se como alternativa premium a Lisboa: €3.643/m² mediana (+14% YoY). Bonfim e Cedofeita lideram procura de compradores franceses.',
-  'Golden Visa: após alterações de 2023, Açores e interior Portugal ganham tracção. Budget médio €500K-€800K, compradores asiáticos 62% do segmento.',
   'Taxas BCE em descida — actividade crédito habitação +23% em Q1. Janela de oportunidade para buyers com financing pendente.',
   'Mercado Madeira: crescimento 31% em transacções premium. Funchal e Calheta com procura alemã e nórdica emergente.',
   'Compradores brasileiros: segmento mais activo em €200K-€500K. Lisboa e Porto dividem quota. Motivação principal: NHR + qualidade de vida.',
   'Investidores Médio Oriente activos em activos €3M+. Deal flow virado para Lisboa riverfront, Cascais e Comporta. Yield mínimo exigido: 4,5%.',
   'Temporada alta aproxima-se: histórico mostra +34% de inquiries Março-Junho. Pipeline de Abril/Maio tende a fechar em Julho-Agosto.',
   'Mercado comparáveis: propriedades com renovação recente vendem +22% acima mediana zona. Buyers premium pagam prémio por turnkey.',
-  'Aumento procura tipologia T3-T4 com espaço exterior. Pós-pandemia, terraços/jardins valorizam +15% face a apartamentos sem exterior equivalentes.',
   'Cascais: €4.713/m² mediana mas linha Estoril regista transacções €8K-€12K/m² em primeira linha. Compradores nórdicos e alemães dominam.',
 ]
 
-const ACTION_TEMPLATES = [
-  {
-    action: 'Ligar — confirmar disponibilidade visita esta semana',
-    reason: 'Score máximo, sem contacto há 2 dias — risco de resfriamento',
-    estimated_time_minutes: 15,
-    base_gci: 15000,
-  },
-  {
-    action: 'WhatsApp — enviar 3 novas propriedades matching perfil',
-    reason: 'Budget confirmado €800K, aguarda opções em Cascais',
-    estimated_time_minutes: 20,
-    base_gci: 40000,
-  },
-  {
-    action: 'Email — seguimento proposta enviada há 48h',
-    reason: 'Proposta em aberto sem resposta — janela crítica de negociação',
-    estimated_time_minutes: 10,
-    base_gci: 22500,
-  },
-  {
-    action: 'Reunião presencial — apresentar análise de investimento',
-    reason: 'Investor profile validado, capital disponível, aguarda deal memo',
-    estimated_time_minutes: 60,
-    base_gci: 75000,
-  },
-  {
-    action: 'Ligar — reactivar após 12 dias sem contacto',
-    reason: 'Lead quente dormiente — timeline de compra era imediato',
-    estimated_time_minutes: 20,
-    base_gci: 18000,
-  },
-  {
-    action: 'Preparar e enviar relatório de proprietário',
-    reason: 'Imóvel há 45 dias no mercado sem oferta — recomendação de revisão de preço',
-    estimated_time_minutes: 25,
-    base_gci: 12500,
-  },
-  {
-    action: 'WhatsApp — follow-up pós-visita de ontem',
-    reason: 'Feedback da visita foi positivo (4/5), janela de 24-48h para proposta',
-    estimated_time_minutes: 10,
-    base_gci: 28000,
-  },
-  {
-    action: 'Email — enviar comparáveis e análise de mercado',
-    reason: 'Cliente em fase de decisão, pediu contexto de mercado para justificar oferta',
-    estimated_time_minutes: 30,
-    base_gci: 35000,
-  },
-  {
-    action: 'Ligar banco — confirmar aprovação de crédito',
-    reason: 'CPCV agendado em 8 dias, financiamento ainda não confirmado',
-    estimated_time_minutes: 15,
-    base_gci: 20000,
-  },
-  {
-    action: 'Visita de avaliação — imóvel novo para mandato',
-    reason: 'Proprietário contactou via referido — oportunidade de mandato exclusivo',
-    estimated_time_minutes: 90,
-    base_gci: 30000,
-  },
-]
+// ─── Claude AI brief generation ────────────────────────────────────────────
 
-// ─── Seeded Random Utilities ──────────────────────────────────────────────────
+const BRIEF_SYSTEM = `És um assistente de produtividade para agentes imobiliários da Agency Group (AMI 22506).
+Analisas dados reais do CRM e géneras briefings diários accionáveis.
+Segmento: €100K–€100M | Comissão: 5% | Core €500K–€3M | Portugal + Espanha + Madeira + Açores.
+Responde SEMPRE em JSON válido, sem markdown, sem texto adicional fora do JSON.`
+
+interface LeadRow {
+  id: string
+  status: string
+  created_at: string
+  contact_name?: string
+  budget?: number
+  zona?: string
+  score?: number
+  last_contact?: string
+}
+
+interface DealRow {
+  id: string
+  stage: string
+  valor?: number
+  contact_name?: string
+  probability?: number
+  expected_close?: string
+  dias_sem_actividade?: number
+}
+
+interface PropertyRow {
+  id: string
+  nome?: string
+  preco?: number
+  zona?: string
+  status: string
+  dias_mercado?: number
+}
+
+async function generateAIBrief(
+  dateStr: string,
+  leads: LeadRow[],
+  deals: DealRow[],
+  properties: PropertyRow[],
+  marketInsight: string
+): Promise<Partial<DailyBrief>> {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey) return {}
+
+  const client = new Anthropic({ apiKey })
+
+  const BRIEF_SYSTEM_CACHED = `És um assistente de produtividade para agentes imobiliários da Agency Group (AMI 22506).
+Analisas dados reais do CRM e géneras briefings diários accionáveis.
+Segmento: €100K–€100M | Comissão: 5% | Core €500K–€3M | Portugal + Espanha + Madeira + Açores.
+Responde SEMPRE em JSON válido, sem markdown, sem texto adicional fora do JSON.`
+
+  const prompt = `Data: ${dateStr}
+
+DADOS REAIS DO CRM:
+
+Novos leads hoje: ${leads.length}
+${leads.length > 0 ? leads.slice(0, 10).map(l =>
+    `- ${l.contact_name ?? 'Lead'} | Status: ${l.status} | Budget: €${(l.budget ?? 0).toLocaleString('pt-PT')} | Zona: ${l.zona ?? '?'} | Score: ${l.score ?? 0}`
+  ).join('\n') : '(sem leads hoje)'}
+
+Deals activos no pipeline: ${deals.length}
+${deals.length > 0 ? deals.slice(0, 10).map(d =>
+    `- ${d.contact_name ?? 'Deal'} | Stage: ${d.stage} | Valor: €${(d.valor ?? 0).toLocaleString('pt-PT')} | Prob: ${d.probability ?? 0}% | Dias sem actividade: ${d.dias_sem_actividade ?? 0}`
+  ).join('\n') : '(sem deals activos)'}
+
+Propriedades activas: ${properties.length}
+${properties.slice(0, 5).map(p =>
+    `- ${p.nome ?? p.id} | €${(p.preco ?? 0).toLocaleString('pt-PT')} | ${p.zona ?? '?'} | ${p.dias_mercado ?? 0} dias no mercado`
+  ).join('\n')}
+
+Insight de mercado hoje: ${marketInsight}
+
+Gera o daily brief em JSON com esta estrutura EXACTA:
+{
+  "headline": "frase curta de 1 linha sobre o estado do pipeline",
+  "priority_actions": [
+    {
+      "priority": 1,
+      "action": "o que fazer",
+      "contact_name": "nome do contacto",
+      "reason": "porquê esta acção agora",
+      "estimated_time_minutes": 15,
+      "potential_gci": 25000
+    }
+  ],
+  "pipeline_summary": {
+    "total_weighted_gci": 450000,
+    "deals_at_risk": 2,
+    "deals_closing_30d": 1,
+    "new_leads_24h": ${leads.length}
+  },
+  "market_insight": "${marketInsight.replace(/"/g, "'")}",
+  "ai_recommendation": "recomendação específica baseada nos dados reais de hoje",
+  "time_allocation": {
+    "calls_minutes": 45,
+    "emails_minutes": 30,
+    "visits_scheduled": 1,
+    "admin_minutes": 30
+  }
+}
+
+Regras:
+- Máximo 5 priority_actions, ordenadas por urgência
+- potential_gci = 5% do valor do deal (comissão AG)
+- deals_at_risk = deals com >7 dias sem actividade ou probability <30%
+- deals_closing_30d = deals com expected_close nos próximos 30 dias
+- total_weighted_gci = soma(valor × probability/100) de todos os deals
+- Se não há dados suficientes, usa valores razoáveis baseados no mercado PT`
+
+  try {
+    const message = await client.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 1500,
+      system: [
+        {
+          type: 'text' as const,
+          text: BRIEF_SYSTEM_CACHED,
+          cache_control: { type: 'ephemeral' as const },
+        },
+      ],
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = message.content
+      .filter(b => b.type === 'text')
+      .map(b => (b as { type: 'text'; text: string }).text)
+      .join('')
+      .trim()
+
+    // Strip markdown fences if present
+    const clean = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+    const parsed = JSON.parse(clean) as Partial<DailyBrief>
+    return parsed
+  } catch (err) {
+    console.error('[daily-brief] Claude error:', err)
+    return {}
+  }
+}
+
+// ─── Seeded fallback (used when Supabase/Claude not available) ─────────────
 
 function seededRandom(seed: number): () => number {
   let s = seed
@@ -133,133 +205,47 @@ function seededRandom(seed: number): () => number {
   }
 }
 
-function pickFromArray<T>(arr: T[], rng: () => number): T {
-  return arr[Math.floor(rng() * arr.length)]
-}
-
-function pickNFromArray<T>(arr: T[], n: number, rng: () => number): T[] {
-  const shuffled = [...arr].sort(() => rng() - 0.5)
-  return shuffled.slice(0, n)
-}
-
-function randomBetween(min: number, max: number, rng: () => number): number {
-  return Math.floor(rng() * (max - min + 1)) + min
-}
-
-// ─── Daily Brief Generator ────────────────────────────────────────────────────
-
-function generateDailyBrief(date: Date): DailyBrief {
-  // Seed based on date (YYYYMMDD) so same day = same data
+function generateFallbackBrief(date: Date, marketInsight: string): DailyBrief {
   const dateSeed =
-    date.getFullYear() * 10000 +
-    (date.getMonth() + 1) * 100 +
-    date.getDate()
+    date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate()
   const rng = seededRandom(dateSeed)
-
   const dateStr = date.toISOString().split('T')[0]
 
-  // Pick contacts for today's actions (avoid repeats)
-  const todayContacts = pickNFromArray(CONTACT_NAMES, 5, rng)
-  const todayActions = pickNFromArray(ACTION_TEMPLATES, 5, rng)
-
-  // Build 3 priority actions
-  const priorityActions: PriorityAction[] = [
-    {
-      priority: 1,
-      action: todayActions[0].action,
-      contact_name: todayContacts[0],
-      reason: todayActions[0].reason,
-      estimated_time_minutes: todayActions[0].estimated_time_minutes,
-      potential_gci: Math.round(todayActions[0].base_gci * (0.9 + rng() * 0.4)),
-    },
-    {
-      priority: 1,
-      action: todayActions[1].action,
-      contact_name: todayContacts[1],
-      reason: todayActions[1].reason,
-      estimated_time_minutes: todayActions[1].estimated_time_minutes,
-      potential_gci: Math.round(todayActions[1].base_gci * (0.9 + rng() * 0.4)),
-    },
-    {
-      priority: 2,
-      action: todayActions[2].action,
-      contact_name: todayContacts[2],
-      reason: todayActions[2].reason,
-      estimated_time_minutes: todayActions[2].estimated_time_minutes,
-      potential_gci: Math.round(todayActions[2].base_gci * (0.9 + rng() * 0.4)),
-    },
-    {
-      priority: 2,
-      action: todayActions[3].action,
-      contact_name: todayContacts[3],
-      reason: todayActions[3].reason,
-      estimated_time_minutes: todayActions[3].estimated_time_minutes,
-      potential_gci: Math.round(todayActions[3].base_gci * (0.9 + rng() * 0.4)),
-    },
-    {
-      priority: 3,
-      action: todayActions[4].action,
-      contact_name: todayContacts[4],
-      reason: todayActions[4].reason,
-      estimated_time_minutes: todayActions[4].estimated_time_minutes,
-      potential_gci: Math.round(todayActions[4].base_gci * (0.9 + rng() * 0.4)),
-    },
-  ]
-
-  // Pipeline metrics (seeded daily variation)
-  const total_weighted_gci =
-    randomBetween(280, 650, rng) * 1000
-  const deals_at_risk = randomBetween(1, 4, rng)
-  const deals_closing_30d = randomBetween(1, 3, rng)
-  const new_leads_24h = randomBetween(1, 6, rng)
-
-  const pipelineSummary: PipelineSummary = {
-    total_weighted_gci,
-    deals_at_risk,
-    deals_closing_30d,
-    new_leads_24h,
-  }
-
-  // Headline
-  const hotLeadCount = priorityActions.filter(a => a.priority === 1).length
-  const headlineTemplates = [
-    `${hotLeadCount} hot leads + ${deals_at_risk} deal${deals_at_risk > 1 ? 's' : ''} no limiar — foca aqui hoje`,
-    `${new_leads_24h} leads novos + €${(total_weighted_gci / 1000).toFixed(0)}K GCI ponderado — pipeline saudável`,
-    `${deals_closing_30d} deal${deals_closing_30d > 1 ? 's' : ''} a fechar em 30 dias — ${deals_at_risk} em risco`,
-    `Pipeline €${(total_weighted_gci / 1000).toFixed(0)}K — ${hotLeadCount} acções críticas para hoje`,
-  ]
-  const headline = pickFromArray(headlineTemplates, rng)
-
-  // Market insight (rotates daily)
-  const insightIndex = dateSeed % MARKET_INSIGHTS.length
-  const market_insight = MARKET_INSIGHTS[insightIndex]
-
-  // AI recommendation
-  const topContact = priorityActions[0].contact_name
-  const topScore = randomBetween(85, 98, rng)
-  const topDays = randomBetween(1, 3, rng)
-  const ai_recommendation = `Hoje foca no ${topContact} — ${topScore} score, não contactado há ${topDays} dia${topDays > 1 ? 's' : ''}. GCI potencial €${(priorityActions[0].potential_gci / 1000).toFixed(0)}K. Janela de acção crítica nas próximas 4h.`
-
-  // Time allocation
-  const totalActionMinutes = priorityActions.reduce(
-    (sum, a) => sum + a.estimated_time_minutes,
-    0
-  )
-  const time_allocation: TimeAllocation = {
-    calls_minutes: Math.round(totalActionMinutes * 0.35),
-    emails_minutes: Math.round(totalActionMinutes * 0.25),
-    visits_scheduled: randomBetween(0, 2, rng),
-    admin_minutes: randomBetween(20, 45, rng),
-  }
+  const total_weighted_gci = Math.floor(rng() * 370000) + 280000
+  const deals_at_risk = Math.floor(rng() * 4) + 1
+  const deals_closing_30d = Math.floor(rng() * 3) + 1
+  const new_leads_24h = Math.floor(rng() * 6) + 1
 
   return {
     date: dateStr,
-    headline,
-    priority_actions: priorityActions,
-    pipeline_summary: pipelineSummary,
-    market_insight,
-    ai_recommendation,
-    time_allocation,
+    headline: `${new_leads_24h} leads novos · €${(total_weighted_gci / 1000).toFixed(0)}K GCI ponderado · ${deals_at_risk} deals em risco`,
+    priority_actions: [
+      {
+        priority: 1,
+        action: 'Ligar — confirmar disponibilidade visita esta semana',
+        contact_name: 'Lead prioritário',
+        reason: 'Score máximo, sem contacto há 2 dias — risco de resfriamento',
+        estimated_time_minutes: 15,
+        potential_gci: 25000,
+      },
+      {
+        priority: 2,
+        action: 'Email — seguimento proposta enviada há 48h',
+        contact_name: 'Prospect em negociação',
+        reason: 'Proposta em aberto sem resposta — janela crítica',
+        estimated_time_minutes: 10,
+        potential_gci: 18000,
+      },
+    ],
+    pipeline_summary: { total_weighted_gci, deals_at_risk, deals_closing_30d, new_leads_24h },
+    market_insight: marketInsight,
+    ai_recommendation: 'Foca nos leads com score >80 que não foram contactados nas últimas 48h.',
+    time_allocation: {
+      calls_minutes: 45,
+      emails_minutes: 25,
+      visits_scheduled: Math.floor(rng() * 2),
+      admin_minutes: Math.floor(rng() * 25) + 20,
+    },
   }
 }
 
@@ -270,7 +256,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    // Allow overriding date via query param for testing: ?date=2026-04-10
     const { searchParams } = new URL(request.url)
     const dateParam = searchParams.get('date')
 
@@ -284,12 +269,126 @@ export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief
       targetDate = new Date()
     }
 
-    const brief = generateDailyBrief(targetDate)
+    const dateStr = targetDate.toISOString().split('T')[0]
+    const dateSeed =
+      targetDate.getFullYear() * 10000 +
+      (targetDate.getMonth() + 1) * 100 +
+      targetDate.getDate()
+    const marketInsight = MARKET_INSIGHTS[dateSeed % MARKET_INSIGHTS.length]
+
+    // ── Real Supabase queries ─────────────────────────────────────────────────
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      // No Supabase configured — return seeded fallback
+      const brief = generateFallbackBrief(targetDate, marketInsight)
+      return NextResponse.json(brief, {
+        headers: { 'Cache-Control': 'private, max-age=300' },
+      })
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Today's window
+    const todayStart = new Date(targetDate)
+    todayStart.setHours(0, 0, 0, 0)
+    const todayStartISO = todayStart.toISOString()
+
+    // Fetch real data in parallel — graceful on individual failures
+    const [leadsRes, dealsRes, propertiesRes] = await Promise.allSettled([
+      supabase
+        .from('leads')
+        .select('id, status, created_at, contact_name, budget, zona, score, last_contact')
+        .gte('created_at', todayStartISO),
+      supabase
+        .from('deals')
+        .select('id, stage, valor, contact_name, probability, expected_close, dias_sem_actividade')
+        .neq('stage', 'fechado')
+        .neq('stage', 'perdido'),
+      supabase
+        .from('properties')
+        .select('id, nome, preco, zona, status, dias_mercado')
+        .eq('status', 'active')
+        .limit(20),
+    ])
+
+    const todayLeads: LeadRow[] =
+      leadsRes.status === 'fulfilled' ? (leadsRes.value.data as LeadRow[] ?? []) : []
+    const activeDeals: DealRow[] =
+      dealsRes.status === 'fulfilled' ? (dealsRes.value.data as DealRow[] ?? []) : []
+    const activeProperties: PropertyRow[] =
+      propertiesRes.status === 'fulfilled' ? (propertiesRes.value.data as PropertyRow[] ?? []) : []
+
+    // Log any Supabase errors without failing the whole request
+    if (leadsRes.status === 'fulfilled' && leadsRes.value.error) {
+      console.warn('[daily-brief] leads query error:', leadsRes.value.error.message)
+    }
+    if (dealsRes.status === 'fulfilled' && dealsRes.value.error) {
+      console.warn('[daily-brief] deals query error:', dealsRes.value.error.message)
+    }
+    if (propertiesRes.status === 'fulfilled' && propertiesRes.value.error) {
+      console.warn('[daily-brief] properties query error:', propertiesRes.value.error.message)
+    }
+
+    // ── Generate AI brief with real data ─────────────────────────────────────
+    const aiBrief = await generateAIBrief(
+      dateStr,
+      todayLeads,
+      activeDeals,
+      activeProperties,
+      marketInsight
+    )
+
+    // ── Merge AI output with computed metrics, fall back gracefully ──────────
+    const dealsAtRisk = activeDeals.filter(
+      d => (d.dias_sem_actividade ?? 0) > 7 || (d.probability ?? 100) < 30
+    ).length
+
+    const dealsClosing30d = activeDeals.filter(d => {
+      if (!d.expected_close) return false
+      const closeDate = new Date(d.expected_close)
+      const diffDays = (closeDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24)
+      return diffDays >= 0 && diffDays <= 30
+    }).length
+
+    const totalWeightedGCI = activeDeals.reduce(
+      (sum, d) => sum + (d.valor ?? 0) * 0.05 * ((d.probability ?? 50) / 100),
+      0
+    )
+
+    const brief: DailyBrief = {
+      date: dateStr,
+      headline:
+        aiBrief.headline ??
+        `${todayLeads.length} leads hoje · ${activeDeals.length} deals activos · €${(totalWeightedGCI / 1000).toFixed(0)}K GCI ponderado`,
+      priority_actions:
+        aiBrief.priority_actions && aiBrief.priority_actions.length > 0
+          ? aiBrief.priority_actions.slice(0, 5)
+          : generateFallbackBrief(targetDate, marketInsight).priority_actions,
+      pipeline_summary: {
+        total_weighted_gci: Math.round(totalWeightedGCI) || (aiBrief.pipeline_summary?.total_weighted_gci ?? 0),
+        deals_at_risk: dealsAtRisk || (aiBrief.pipeline_summary?.deals_at_risk ?? 0),
+        deals_closing_30d: dealsClosing30d || (aiBrief.pipeline_summary?.deals_closing_30d ?? 0),
+        new_leads_24h: todayLeads.length || (aiBrief.pipeline_summary?.new_leads_24h ?? 0),
+      },
+      market_insight: aiBrief.market_insight ?? marketInsight,
+      ai_recommendation:
+        aiBrief.ai_recommendation ??
+        'Foca nos deals com maior probabilidade de fecho nos próximos 30 dias.',
+      time_allocation: aiBrief.time_allocation ?? {
+        calls_minutes: 45,
+        emails_minutes: 30,
+        visits_scheduled: 1,
+        admin_minutes: 30,
+      },
+    }
 
     return NextResponse.json(brief, {
       status: 200,
       headers: {
-        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+        // Cache for 10 minutes — real data, no point serving stale for too long
+        'Cache-Control': 'private, max-age=600, stale-while-revalidate=300',
       },
     })
   } catch (error) {

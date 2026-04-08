@@ -2,24 +2,19 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
-  title: 'Imóveis de Luxo em Portugal | Agency Group',
-  description: 'Descubra imóveis de luxo em Lisboa, Cascais, Algarve, Porto e Madeira. Apartamentos, moradias e propriedades premium de €500K a €10M+. Agency Group AMI 22506.',
+  title: 'Imóveis de Luxo em Portugal | Agency Group · AMI 22506',
+  description: 'Descubra imóveis de luxo em Lisboa, Cascais, Algarve, Porto, Madeira e Comporta. Agency Group — AMI 22506. Propriedades exclusivas €500K–€50M.',
   keywords: ['imóveis luxo portugal', 'apartamentos lisboa', 'moradias cascais', 'propriedades algarve', 'investimento imobiliário portugal'],
   alternates: {
     canonical: 'https://www.agencygroup.pt/imoveis',
     languages: {
       'pt': 'https://www.agencygroup.pt/imoveis',
-      'en': 'https://www.agencygroup.pt/en/properties',
-      'fr': 'https://www.agencygroup.pt/fr/proprietes',
-      'de': 'https://www.agencygroup.pt/de/immobilien',
-      'zh-Hans': 'https://www.agencygroup.pt/zh/fangchan',
-      'ar': 'https://www.agencygroup.pt/ar/aqarat',
       'x-default': 'https://www.agencygroup.pt/imoveis',
     },
   },
   openGraph: {
-    title: 'Imóveis de Luxo em Portugal | Agency Group',
-    description: 'Descubra imóveis de luxo em Lisboa, Cascais, Algarve, Porto e Madeira. Agency Group AMI 22506.',
+    title: 'Imóveis de Luxo em Portugal | Agency Group · AMI 22506',
+    description: 'Descubra imóveis de luxo em Lisboa, Cascais, Algarve, Porto, Madeira e Comporta. Agency Group — AMI 22506. Propriedades exclusivas €500K–€50M.',
     url: 'https://www.agencygroup.pt/imoveis',
     siteName: 'Agency Group',
     locale: 'pt_PT',

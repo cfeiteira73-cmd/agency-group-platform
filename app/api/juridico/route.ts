@@ -403,11 +403,11 @@ export async function POST(req: NextRequest) {
     let webSearchUsed = false
 
     if (precisaSearch) {
-      // Use web search via raw API
+      // Use web search via raw API — system prompt passed as array for prompt caching
       const body = {
         model: 'claude-opus-4-5',
         max_tokens: 4096,
-        system: SYSTEM,
+        system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
         messages: msgSlice,
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       }
@@ -418,7 +418,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
           'x-api-key': process.env.ANTHROPIC_API_KEY!,
           'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'web-search-2025-03-05',
+          'anthropic-beta': 'web-search-2025-03-05,prompt-caching-2024-07-31',
         },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(58000),
@@ -435,10 +435,18 @@ export async function POST(req: NextRequest) {
       webSearchUsed = true
 
     } else {
+      // Prompt caching: cache_control on the long system prompt (~370 lines)
+      // saves significant input token costs across repeated juridico queries.
       const message = await client.messages.create({
         model: 'claude-opus-4-5',
         max_tokens: 4096,
-        system: SYSTEM,
+        system: [
+          {
+            type: 'text' as const,
+            text: SYSTEM,
+            cache_control: { type: 'ephemeral' as const },
+          },
+        ],
         messages: msgSlice,
       })
 

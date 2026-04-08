@@ -156,10 +156,39 @@ export default async function ImovelPage(
     },
   ]
 
+  // Build Property schema (works for both known and mock properties)
+  const prop = PROPERTIES.find(x => x.id === id) ?? generateMockProperty(id)
+  const propertySchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: prop.nome,
+    description: prop.desc,
+    offers: {
+      '@type': 'Offer',
+      price: prop.preco,
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+      seller: {
+        '@type': 'RealEstateAgent',
+        name: 'Agency Group',
+        url: 'https://www.agencygroup.pt',
+      },
+    },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: prop.zona,
+      addressCountry: 'PT',
+    },
+  }
+
   // Known IDs → use the existing rich ImovelClient (photo gallery, modals, etc.)
   if (PROPERTY_IDS.includes(id)) {
     return (
       <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(propertySchema) }}
+        />
         <BreadcrumbJsonLd items={breadcrumbItems} />
         <ImovelClient id={id} />
       </>
@@ -170,6 +199,10 @@ export default async function ImovelPage(
   const p = generateMockProperty(id)
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(propertySchema) }}
+      />
       <BreadcrumbJsonLd items={breadcrumbItems} />
       <PropertyShowcase property={p} />
     </>

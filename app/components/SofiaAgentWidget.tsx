@@ -159,14 +159,33 @@ export default function SofiaAgentWidget() {
     } catch {}
   }, [])
 
+  // ── Message history persistence ──────────────────────────────────────────
+  useEffect(() => {
+    try {
+      const savedMessages = localStorage.getItem('ag_sofia_messages')
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages) as Message[]
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed)
+        }
+      }
+    } catch {}
+  }, [])
+
   // ── Proactive trigger — 45 seconds ──────────────────────────────────────
   useEffect(() => {
     if (proactiveShown) return
     const timer = setTimeout(() => {
       if (!open) {
-        const pathname = window.location.pathname
-        const opener = getProactiveOpener(pathname, isReturning, locationPref || undefined)
-        setMessages([{ role: 'assistant', content: opener, timestamp: Date.now() }])
+        setMessages(prev => {
+          // Don't overwrite a restored history
+          if (prev.length > 0) { setUnread(1); setProactiveShown(true); return prev }
+          const pathname = window.location.pathname
+          const opener = getProactiveOpener(pathname, isReturning, locationPref || undefined)
+          const newMsgs = [{ role: 'assistant' as const, content: opener, timestamp: Date.now() }]
+          try { localStorage.setItem('ag_sofia_messages', JSON.stringify(newMsgs)) } catch {}
+          return newMsgs
+        })
         setUnread(1)
         setProactiveShown(true)
       }
@@ -179,7 +198,9 @@ export default function SofiaAgentWidget() {
     if (open && messages.length === 0) {
       const pathname = window.location.pathname
       const opener = getProactiveOpener(pathname, isReturning, locationPref || undefined)
-      setMessages([{ role: 'assistant', content: opener, timestamp: Date.now() }])
+      const newMsgs: Message[] = [{ role: 'assistant', content: opener, timestamp: Date.now() }]
+      setMessages(newMsgs)
+      try { localStorage.setItem('ag_sofia_messages', JSON.stringify(newMsgs)) } catch {}
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -252,6 +273,14 @@ export default function SofiaAgentWidget() {
     }
   }, [step, msgCount])
 
+  // ── Persist messages to localStorage (max 50) ────────────────────────────
+  const persistMessages = useCallback((msgs: Message[]) => {
+    try {
+      const toStore = msgs.slice(-50)
+      localStorage.setItem('ag_sofia_messages', JSON.stringify(toStore))
+    } catch {}
+  }, [])
+
   // ── Send message ─────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return
@@ -259,6 +288,7 @@ export default function SofiaAgentWidget() {
     const userMsg: Message = { role: 'user', content: text, timestamp: Date.now() }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
+    persistMessages(newMessages)
     setInput('')
     setLoading(true)
     setQuickReplies([])
@@ -271,7 +301,8 @@ export default function SofiaAgentWidget() {
     thinkingIdxRef.current++
     setThinkingMsg(THINKING_MSGS[tIdx])
 
-    setMessages(prev => [...prev, { role: 'assistant', content: '', timestamp: Date.now() }])
+    const withPlaceholder: Message[] = [...newMessages, { role: 'assistant', content: '', timestamp: Date.now() }]
+    setMessages(withPlaceholder)
 
     abortRef.current?.abort()
     abortRef.current = new AbortController()
@@ -320,6 +351,12 @@ export default function SofiaAgentWidget() {
         }
       }
 
+      // Persist final assistant reply
+      setMessages(prev => {
+        persistMessages(prev)
+        return prev
+      })
+
       setTimeout(() => {
         if (step === 0) setQuickReplies(STEP_QUICK_REPLIES.initial)
       }, 100)
@@ -333,6 +370,7 @@ export default function SofiaAgentWidget() {
             content: 'Desculpe, ocorreu um erro técnico. Contacte-nos directamente:\n\n📞 +351 919 948 986\n📧 geral@agencygroup.pt',
             timestamp: Date.now(),
           }
+          persistMessages(updated)
           return updated
         })
       }
@@ -340,7 +378,7 @@ export default function SofiaAgentWidget() {
       setLoading(false)
       setThinkingMsg('')
     }
-  }, [messages, loading, branch, step, locationPref, leadScore, updateLeadScore, advanceStep])
+  }, [messages, loading, branch, step, locationPref, leadScore, updateLeadScore, advanceStep, persistMessages])
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -535,6 +573,24 @@ export default function SofiaAgentWidget() {
                 Agency Group · AMI 22506 · IA 24/7
               </div>
             </div>
+
+            {/* Clear chat history */}
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem('ag_sofia_messages')
+                setMessages([])
+              }}
+              title="Limpar conversa"
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', fontSize: 13, color: 'rgba(255,255,255,0.4)',
+                flexShrink: 0, transition: 'all .15s ease',
+              }}
+              aria-label="Limpar histórico de chat"
+            >🗑</button>
 
             <button
               type="button"

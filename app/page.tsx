@@ -3,6 +3,8 @@
 // All interactive islands are imported as client components below.
 // Google crawls the full HTML on first load.
 
+import { Suspense } from 'react'
+import Image from 'next/image'
 import PressSection from './components/PressSection'
 import { AIPropertySearch } from './components/AIPropertySearch'
 import HomeLoader from './components/HomeLoader'
@@ -94,7 +96,9 @@ export default function Home() {
       </div>
 
       {/* ── SEARCH + PROPERTIES + CPCV (client island) ────────────────────── */}
-      <HomePropertiesSection />
+      <Suspense fallback={null}>
+        <HomePropertiesSection />
+      </Suspense>
 
       {/* ── ZONAS ─────────────────────────────────────────────────────────── */}
       <section className="zonas-section" id="zonas">
@@ -122,7 +126,16 @@ export default function Home() {
               {c:'z9',nome:'Ericeira',pais:'Portugal',pm2:'€3.200/m²',yoy:'+15%',tag:'World surf reserve. Naturally',photo:'/zones/ericeira.jpg'},
             ].map(z=>(
               <a key={z.c} href={`/zonas/${z.nome.toLowerCase()}`} className={`zc ${z.c}`}>
-                <div className="zc-bg" style={{backgroundImage:`url(${z.photo})`}}></div>
+                <div className="zc-bg" style={{position:'relative',overflow:'hidden'}}>
+                  <Image
+                    src={z.photo}
+                    alt={z.nome}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    style={{objectFit:'cover'}}
+                    loading="lazy"
+                  />
+                </div>
                 <div className="zc-ov"></div>
                 <div className="zc-clip-overlay"></div>
                 <div className="zc-c">
@@ -138,7 +151,9 @@ export default function Home() {
       </section>
 
       {/* Zone card click handler (client) */}
-      <HomeZoneCards />
+      <Suspense fallback={null}>
+        <HomeZoneCards />
+      </Suspense>
 
       {/* ── MARKET STATS TICKER ───────────────────────────────────────────── */}
       <div style={{background:'#0c1f15',borderTop:'1px solid rgba(201,169,110,.1)',borderBottom:'1px solid rgba(201,169,110,.1)',overflow:'hidden',padding:'0',position:'relative'}}>
@@ -182,7 +197,9 @@ export default function Home() {
             <h2 style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'clamp(2.2rem,3.8vw,3.8rem)',color:'#0e0e0d',lineHeight:1.05,marginBottom:'12px',letterSpacing:'-.012em'}}>A Verdade <em style={{fontStyle:'italic',color:'#1c4a35'}}>Sobre o Crédito</em></h2>
             <p style={{fontFamily:"'Jost',sans-serif",fontSize:'.86rem',lineHeight:1.8,color:'rgba(14,14,13,.5)',maxWidth:'560px'}}>Euribor 6M em tempo real · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização · DSTI Banco de Portugal · IMT + IS incluído</p>
           </div>
-          <HomeMortgage />
+          <Suspense fallback={null}>
+            <HomeMortgage />
+          </Suspense>
         </div>
       </section>
 

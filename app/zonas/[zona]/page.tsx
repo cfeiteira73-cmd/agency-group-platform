@@ -67,8 +67,71 @@ export async function generateMetadata({ params }: { params: Promise<{ zona: str
   }
 }
 
+const ZONE_GEO: Record<string, { lat: number; lng: number }> = {
+  lisboa:   { lat: 38.7169, lng: -9.1399 },
+  cascais:  { lat: 38.6979, lng: -9.4215 },
+  algarve:  { lat: 37.0179, lng: -7.9307 },
+  porto:    { lat: 41.1579, lng: -8.6291 },
+  comporta: { lat: 38.3817, lng: -8.7775 },
+  madeira:  { lat: 32.6669, lng: -16.9241 },
+  sintra:   { lat: 38.7978, lng: -9.3895 },
+  ericeira: { lat: 38.9637, lng: -9.4178 },
+}
+
 export default async function ZonaPage({ params }: { params: Promise<{ zona: string }> }) {
   const { zona } = await params
   if (!ZONES[zona]) notFound()
-  return <ZonaClient zona={zona} />
+
+  const z = ZONES[zona]
+  const geo = ZONE_GEO[zona]
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.agencygroup.pt' },
+      { '@type': 'ListItem', position: 2, name: 'Imóveis', item: 'https://www.agencygroup.pt/imoveis' },
+      { '@type': 'ListItem', position: 3, name: z.nome, item: `https://www.agencygroup.pt/zonas/${zona}` },
+    ],
+  }
+
+  const localBusinessSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateAgent',
+    '@id': `https://www.agencygroup.pt/zonas/${zona}#localbusiness`,
+    name: `Agency Group — Imóveis em ${z.nome}`,
+    description: z.desc,
+    url: `https://www.agencygroup.pt/zonas/${zona}`,
+    telephone: '+351919948986',
+    email: 'geral@agencygroup.pt',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: z.nome,
+      addressCountry: 'PT',
+    },
+    ...(geo && {
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: geo.lat,
+        longitude: geo.lng,
+      },
+    }),
+    identifier: { '@type': 'PropertyValue', name: 'AMI', value: '22506' },
+    areaServed: z.nome,
+    priceRange: '€€€€',
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
+      <ZonaClient zona={zona} />
+    </>
+  )
 }

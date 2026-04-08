@@ -19,7 +19,8 @@ const securityHeaders = [
   { key: 'Cross-Origin-Resource-Policy', value: 'same-site' },
   // CORS: agencygroup.pt + mobile app (Expo/React Native)
   // Mobile app connects from expo-go and production builds via capacitor/native
-  { key: 'Access-Control-Allow-Origin', value: process.env.NODE_ENV === 'development' ? '*' : 'https://www.agencygroup.pt' },
+  // NOT wildcard * in development — locked to localhost only (security hardening)
+  { key: 'Access-Control-Allow-Origin', value: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.agencygroup.pt' },
   { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
   { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, X-Requested-With, X-AG-Token' },
   // Content Security Policy — define exactamente de onde podem vir scripts, imagens, fonts

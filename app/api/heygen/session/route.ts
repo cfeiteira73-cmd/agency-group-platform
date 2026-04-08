@@ -6,10 +6,48 @@ import { auth } from '@/auth'
 
 const HEYGEN_API = 'https://api.heygen.com'
 
+async function checkHeygenSessionRateLimit(userId: string): Promise<{ allowed: boolean; remaining: number }> {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    try {
+      const key = `rl:heygen:session:${userId}`
+      const now = Date.now()
+      const window = 3600 // 1 hour
+      const limit = 10 // 10 sessions per hour per user
+      const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([
+          ['ZADD', key, now, `${now}`],
+          ['ZREMRANGEBYSCORE', key, '-inf', now - window * 1000],
+          ['ZCARD', key],
+          ['EXPIRE', key, window],
+        ]),
+      })
+      const results = await response.json() as Array<{ result: number }>
+      const count = results[2]?.result ?? 0
+      return { allowed: count <= limit, remaining: Math.max(0, limit - count) }
+    } catch {
+      return { allowed: true, remaining: 10 }
+    }
+  }
+  return { allowed: true, remaining: 10 }
+}
+
 // POST /api/heygen/session — create a new streaming session
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rl = await checkHeygenSessionRateLimit(session.user.id)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiadas sessões. Tente novamente em 60 minutos.' },
+      { status: 429, headers: { 'Retry-After': '3600' } }
+    )
+  }
 
   const apiKey = process.env.HEYGEN_API_KEY
   if (!apiKey) {

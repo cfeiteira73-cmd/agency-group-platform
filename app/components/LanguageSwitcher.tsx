@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 
 const LANGUAGES = [
   { code: 'pt', flag: '🇵🇹', name: 'Português' },
@@ -18,12 +19,32 @@ export function LanguageSwitcher() {
     }
     return 'pt'
   })
+  const router = useRouter()
+  const pathname = usePathname()
 
   function switchLanguage(code: string) {
     document.cookie = `locale=${code}; path=/; max-age=${365 * 24 * 3600}`
+    document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=31536000`
     setCurrent(code)
     setOpen(false)
-    window.location.reload()
+
+    const localeMap: Record<string, string> = {
+      pt: '/',
+      en: '/en',
+      fr: '/fr',
+      de: '/de',
+      es: '/es',
+      it: '/it',
+    }
+
+    // If currently on a locale homepage, navigate to target locale home
+    const isHome = pathname === '/' || /^\/(en|fr|de|es|it)(\/)?$/.test(pathname)
+    if (isHome) {
+      router.push(localeMap[code] ?? '/')
+    } else {
+      // For non-home pages re-render with the new locale cookie in place
+      router.refresh()
+    }
   }
 
   const currentLang = LANGUAGES.find(l => l.code === current) ?? LANGUAGES[0]

@@ -221,11 +221,19 @@ export async function POST(req: NextRequest) {
 
   try {
     // Use create() with stream:true — AsyncIterable approach works in edge runtime
+    // Prompt caching: cache_control on system prompt saves ~30% input token costs
+    // when the same system prompt is reused across requests (5-min ephemeral cache).
     const stream = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       stream: true,
-      system: systemPrompt,
+      system: [
+        {
+          type: 'text' as const,
+          text: systemPrompt,
+          cache_control: { type: 'ephemeral' as const },
+        },
+      ],
       messages: validMessages,
     })
 

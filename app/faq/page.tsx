@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
@@ -22,6 +23,51 @@ export const metadata: Metadata = {
     url: 'https://www.agencygroup.pt/faq',
     siteName: 'Agency Group',
   },
+}
+
+// ─── Acronym expansion — WCAG / accessibility ─────────────────────────────────
+const ACRONYMS: Record<string, string> = {
+  IMT: 'Imposto Municipal sobre Transmissões Onerosas de Imóveis',
+  NHR: 'Regime de Residência Não Habitual',
+  IFICI: 'Incentivo Fiscal à Investigação Científica e Inovação',
+  CPCV: 'Contrato Promessa de Compra e Venda',
+  AL: 'Alojamento Local',
+  IMI: 'Imposto Municipal sobre Imóveis',
+  IRS: 'Imposto sobre o Rendimento das Pessoas Singulares',
+  HPP: 'Habitação Própria Permanente',
+  LTV: 'Loan-to-Value',
+  ARI: 'Autorização de Residência para Investimento',
+}
+
+/** Replaces first occurrence of each known acronym with an <abbr> element. */
+function expandAcronyms(text: string, expanded: Set<string>): ReactNode[] {
+  // Split on acronym boundaries, preserving delimiters
+  const pattern = new RegExp(`\\b(${Object.keys(ACRONYMS).join('|')})\\b`, 'g')
+  const parts: ReactNode[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(text)) !== null) {
+    const acronym = match[1]
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index))
+    }
+    if (!expanded.has(acronym)) {
+      expanded.add(acronym)
+      parts.push(
+        <abbr key={`${acronym}-${match.index}`} title={ACRONYMS[acronym]}>
+          {acronym}
+        </abbr>
+      )
+    } else {
+      parts.push(acronym)
+    }
+    lastIndex = match.index + match[0].length
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+  return parts
 }
 
 // ─── FAQ data ─────────────────────────────────────────────────────────────────
@@ -99,6 +145,9 @@ const breadcrumbSchema = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export default function FAQPage() {
+  // Track which acronyms have been expanded (first-occurrence only, across all answers)
+  const expandedAcronyms = new Set<string>()
+
   return (
     <>
       {/* JSON-LD */}
@@ -307,7 +356,7 @@ export default function FAQPage() {
                     paddingLeft: '36px',
                   }}
                 >
-                  {a}
+                  {expandAcronyms(a, expandedAcronyms)}
                 </p>
               </li>
             ))}

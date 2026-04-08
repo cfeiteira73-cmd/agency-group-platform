@@ -303,6 +303,7 @@ export default function PortalDashboard({
     contactCount: number
     source: 'live' | 'demo'
   }>({ pipeline: 0, deals: 0, commission: 0, closingNow: 0, contactCount: 0, source: 'demo' })
+  const [kpiError, setKpiError] = useState(false)
 
   // ── GSAP animation refs ──────────────────────────────────────────────────────
   const pageRef = useRef<HTMLDivElement>(null)
@@ -322,11 +323,12 @@ export default function PortalDashboard({
   // ── Supabase real data loader ─────────────────────────────────────────────
   const loadDashboardData = useCallback(async (signal?: AbortSignal) => {
     try {
-      const [kpiRes, activityRes, healthRes, dealsRes] = await Promise.allSettled([
+      const [kpiRes, activityRes, healthRes, dealsRes, analyticsRes] = await Promise.allSettled([
         fetch('/api/automation/daily-brief', { signal }),
         fetch('/api/crm?limit=5', { signal }),
         fetch('/api/health', { signal }),
         fetch('/api/deals', { signal }),
+        fetch('/api/analytics/summary', { signal }),
       ])
 
       if (kpiRes.status === 'fulfilled' && kpiRes.value.ok) {
@@ -351,10 +353,35 @@ export default function PortalDashboard({
         if (process.env.NODE_ENV === 'development') { console.warn('[Dashboard] /api/health failed:', healthRes.status === 'rejected' ? healthRes.reason : healthRes.value.status) }
       }
 
+      // ── Parse /api/analytics/summary for GCI + pipeline enrichment ─────────
+      if (analyticsRes.status === 'fulfilled' && analyticsRes.value.ok) {
+        try {
+          const analyticsData = await analyticsRes.value.json() as {
+            gciMensal?: number
+            pipelineAtivo?: number
+            source?: string
+          }
+          if (analyticsData?.source === 'supabase') {
+            setSupabaseConnected(true)
+            // Merge analytics pipeline into liveKPIs if deals fetch doesn't override it
+            setLiveKPIs(prev => ({
+              ...prev,
+              pipeline: analyticsData.pipelineAtivo ?? prev.pipeline,
+              commission: analyticsData.gciMensal ?? prev.commission,
+              source: 'live',
+            }))
+          }
+        } catch { /* silently fall back */ }
+      } else {
+        setKpiError(true)
+        if (process.env.NODE_ENV === 'development') { console.warn('[Dashboard] /api/analytics/summary failed:', analyticsRes.status === 'rejected' ? analyticsRes.reason : analyticsRes.value.status) }
+      }
+
       // ── Parse /api/deals for real pipeline KPIs ────────────────────────────
       if (dealsRes.status === 'fulfilled' && dealsRes.value.ok) {
         // /api/deals succeeded — mark as connected even if health/brief failed
         setSupabaseConnected(true)
+        setKpiError(false)
         try {
           const dealsData = await dealsRes.value.json()
           const rawDeals: { valor?: string; escrituraDate?: string; cpcvDate?: string }[] =
@@ -379,14 +406,14 @@ export default function PortalDashboard({
           ).length
 
           if (activeDealCount > 0 || contactCount > 0) {
-            setLiveKPIs({
-              pipeline: totalPipelineValue,
+            setLiveKPIs(prev => ({
+              pipeline: totalPipelineValue || prev.pipeline,
               deals: activeDealCount,
-              commission: estimatedCommission,
+              commission: estimatedCommission || prev.commission,
               closingNow: closingThisMonth,
               contactCount,
               source: 'live',
-            })
+            }))
           }
         } catch { /* silently fall back */ }
       } else {
@@ -394,6 +421,7 @@ export default function PortalDashboard({
       }
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return
+      setKpiError(true)
       // silently fall back to mock data
     } finally {
       setIsLoadingKPIs(false)
