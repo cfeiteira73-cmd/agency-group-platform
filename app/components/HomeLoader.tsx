@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
 
 export default function HomeLoader() {
   const loaderRef = useRef<HTMLDivElement>(null)
@@ -15,36 +14,63 @@ export default function HomeLoader() {
     function finishLoader() {
       if (!loader) return
       if (loader.classList.contains('done')) return
+      // Strip any GSAP inline opacity so CSS transition takes over cleanly
+      loader.style.removeProperty('opacity')
       loader.classList.add('done')
       document.body.style.overflow = ''
       setTimeout(() => {
         if (loaderRef.current) loaderRef.current.style.display = 'none'
-      }, 400)
+      }, 900)
     }
 
-    // Safety: force loader out after 1800ms — CSS-only intro animation is ~1.5s; GSAP loads lazily
-    const ldrSafetyTimer = setTimeout(finishLoader, 1800)
-    window.addEventListener('load', finishLoader, { once: true })
+    // ── MOBILE / TOUCH: skip GSAP entirely — dismiss after brief brand moment ─
+    const isMobile =
+      window.innerWidth <= 960 ||
+      navigator.maxTouchPoints > 0 ||
+      ('ontouchstart' in window) ||
+      window.matchMedia('(pointer: coarse)').matches
 
-    gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })
-    gsap.set('#ldrG', { y: 40, opacity: 0, filter: 'blur(8px)' })
-    gsap.set('#ldrFill', { scaleX: 0, transformOrigin: 'left center' })
-    gsap.set('#ldrTxt', { opacity: 0, y: 12 })
+    if (isMobile) {
+      const t = setTimeout(finishLoader, 400)
+      return () => { clearTimeout(t); document.body.style.overflow = '' }
+    }
 
-    const ldrTL = gsap.timeline({
-      onComplete: () => { clearTimeout(ldrSafetyTimer); finishLoader() }
-    })
-    ldrTL
-      .to('#ldrA', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' })
-      .to('#ldrG', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' }, '-=0.45')
-      .to('#ldrFill', { scaleX: 1, duration: 1.2, ease: 'power3.out' }, '-=0.4')
-      .to('#ldrTxt', { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, '-=0.9')
-      .to(loader, { opacity: 0, duration: 0.6, ease: 'power2.inOut', delay: 0.3 })
+    // ── DESKTOP: cinematic GSAP entrance ─────────────────────────────────────
+    let cancelled = false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let tl: any = null
+    let safetyTimer: ReturnType<typeof setTimeout> | null = null
+
+    const run = async () => {
+      const { default: gsap } = await import('gsap')
+      if (cancelled) return
+
+      safetyTimer = setTimeout(finishLoader, 2500)
+      window.addEventListener('load', finishLoader, { once: true })
+
+      gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })
+      gsap.set('#ldrG', { y: 40, opacity: 0, filter: 'blur(8px)' })
+      gsap.set('#ldrFill', { scaleX: 0, transformOrigin: 'left center' })
+      gsap.set('#ldrTxt', { opacity: 0, y: 12 })
+
+      tl = gsap.timeline({
+        onComplete: () => { if (safetyTimer) clearTimeout(safetyTimer); finishLoader() }
+      })
+      tl
+        .to('#ldrA', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' })
+        .to('#ldrG', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' }, '-=0.45')
+        .to('#ldrFill', { scaleX: 1, duration: 1.2, ease: 'power3.out' }, '-=0.4')
+        .to('#ldrTxt', { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, '-=0.9')
+        .to(loader, { opacity: 0, duration: 0.55, ease: 'power2.inOut', delay: 0.25 })
+    }
+
+    run()
 
     return () => {
-      clearTimeout(ldrSafetyTimer)
+      cancelled = true
+      if (safetyTimer) clearTimeout(safetyTimer)
       window.removeEventListener('load', finishLoader)
-      ldrTL.kill()
+      tl?.kill()
       document.body.style.overflow = ''
     }
   }, [])
