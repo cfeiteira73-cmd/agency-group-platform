@@ -36,25 +36,29 @@ export default function Home() {
         <div className="hl">
           <div className="hl-bg"></div>
           <div className="hl-grain"></div>
-          <div className="hero-content">
-            <div className="hero-eyebrow" id="hEye">Lisboa · Portugal · AMI 22506</div>
+          {/* SSR inline styles guarantee hero content visible from first HTML byte.
+              Prevents invisible hero on any device/browser regardless of CSS/GSAP timing.
+              GSAP overrides these on desktop (same inline specificity, last write wins).
+              On mobile: content stays visible — no GSAP sets run (isTouch guard). */}
+          <div className="hero-content" style={{opacity:1,visibility:'visible'}}>
+            <div className="hero-eyebrow" id="hEye" style={{opacity:1,visibility:'visible'}}>Lisboa · Portugal · AMI 22506</div>
             <h1 className="hero-h1" id="hTitle">
-              <span className="line"><span className="line-inner">Aqui, o mundo</span></span>
-              <span className="line"><span className="line-inner"><em>veio ter</em></span></span>
-              <span className="line"><span className="line-inner">consigo.</span></span>
+              <span className="line" style={{overflow:'visible'}}><span className="line-inner" style={{display:'block',transform:'none',opacity:1}}>Aqui, o mundo</span></span>
+              <span className="line" style={{overflow:'visible'}}><span className="line-inner" style={{display:'block',transform:'none',opacity:1}}><em>veio ter</em></span></span>
+              <span className="line" style={{overflow:'visible'}}><span className="line-inner" style={{display:'block',transform:'none',opacity:1}}>consigo.</span></span>
             </h1>
-            <p className="hero-sub" id="hSub">Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem chegou primeiro.</p>
-            <div className="hero-btns" id="hBtns">
+            <p className="hero-sub" id="hSub" style={{opacity:1,visibility:'visible'}}>Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem chegou primeiro.</p>
+            <div className="hero-btns" id="hBtns" style={{opacity:1,visibility:'visible'}}>
               <a href="#imoveis" className="btn-gold">Descobrir Portfolio<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
               <a href="#avaliacao" className="btn-outline">Avaliação Privada →</a>
             </div>
           </div>
-          <div className="hero-stats" id="hStats">
+          <div className="hero-stats" id="hStats" style={{opacity:1,visibility:'visible',transform:'none'}}>
             <div><div className="hs-n">169<em>K</em></div><div className="hs-l">Transacções 2025</div></div>
             <div><div className="hs-n">+17<em>%</em></div><div className="hs-l">Valorização · 2025</div></div>
             <div><div className="hs-n">44<em>%</em></div><div className="hs-l">Compradores Internacionais</div></div>
           </div>
-          <div className="hero-scroll" id="hScroll" aria-label="Scroll para explorar">
+          <div className="hero-scroll" id="hScroll" style={{opacity:1,visibility:'visible'}} aria-label="Scroll para explorar">
             <div className="hs-line"></div>
             <div className="hs-txt">↓</div>
           </div>

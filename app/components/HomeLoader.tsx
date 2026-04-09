@@ -8,11 +8,15 @@ export default function HomeLoader() {
   const loaderRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // Touch-capability detection — NOT viewport width.
+    // any-pointer:coarse catches Samsung S-Pen (pointer:fine primary but touch screen present).
+    // maxTouchPoints covers all Android/iOS devices reliably.
+    // Never use innerWidth — Chrome on Android can report 1024+ in landscape/desktop mode.
     const mobile =
-      window.innerWidth <= 1099 ||
       navigator.maxTouchPoints > 0 ||
       ('ontouchstart' in window) ||
-      window.matchMedia('(pointer: coarse)').matches
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.matchMedia('(any-pointer: coarse)').matches
 
     if (mobile) {
       // Remove from DOM — no hiding, no classes, no CSS — element does not exist

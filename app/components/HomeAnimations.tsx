@@ -20,10 +20,14 @@ export default function HomeAnimations() {
 
       if (cancelled) return
 
-      // Detect mobile — multiple signals for maximum reliability across all devices
+      // Detect touch device — touch capability, NOT viewport width.
+      // any-pointer:coarse catches Samsung S-Pen (primary pointer:fine but has touch screen).
+      // maxTouchPoints covers all Android/iOS phones/tablets reliably.
+      // Do NOT check innerWidth — Chrome on Android reports 1024+ in landscape/desktop mode,
+      // causing false desktop detection and running GSAP animations that hide content.
       const isTouch = typeof window !== 'undefined' && (
         window.matchMedia('(pointer: coarse)').matches ||
-        window.innerWidth <= 1099 ||
+        window.matchMedia('(any-pointer: coarse)').matches ||
         ('ontouchstart' in window) ||
         navigator.maxTouchPoints > 0
       )

@@ -288,15 +288,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             Prevents green flash even if service worker serves stale HTML/CSS. */}
         <style dangerouslySetInnerHTML={{ __html:
           /* Body + html always cream — shows during any loading state, before globals.css loads */
-          'html,body{background:#f4f0e6!important}' +
-          /* Hide bailout loading fallback: when BAILOUT happens, the loading fallback
-             is the ONLY element child of #main-content — hide it so cream shows.
-             Once page hydrates, there are many children so :only-child no longer matches. */
-          '#main-content>div:only-child{display:none!important;visibility:hidden!important}'
+          'html,body{background:#f4f0e6!important}'
           /* NOTE: #loader CSS is intentionally NOT here.
              The loader div has SSR inline style="display:none" which keeps it hidden before JS.
-             JS (HomeLoader.tsx) explicitly sets display:flex ONLY on true desktop.
+             JS (HomeLoader.tsx) explicitly sets display:flex ONLY on true desktop (no touch).
              Do NOT add display:flex!important here — it overrides SSR display:none on mobile. */
+          /* NOTE: #main-content>div:only-child rule removed — it could hide page content
+             if React wraps children in a single div during SSR/hydration. */
         }} />
         {/* Resource hints — preconnect to critical origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
