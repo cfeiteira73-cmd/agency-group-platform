@@ -40,9 +40,13 @@ export default function HomeAnimations() {
         window.matchMedia('(max-width: 1099px)').matches
       const skipHeroAnim = isTouch || isNarrow
 
-      // Safety timer: redundant now (heroEntrance no longer hides elements)
-      // but kept to clear any stale styles from previous page states
+      // Safety timer: desktop-only — clears any stale GSAP inline styles after animation.
+      // MOBILE: timer is cancelled immediately (SSR inline styles must NOT be removed —
+      // they are the unconditional hero visibility guarantee with zero JS dependency).
       const heroSafetyTimer = setTimeout(() => {
+        // MOBILE/TOUCH/NARROW: SSR inline styles are the primary guarantee — never remove them.
+        // Only run on desktop where GSAP may have left stale inline styles.
+        if (skipHeroAnim) return
         const sels = ['.hero-h1 .line-inner','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.hero-content','.hero-eyebrow','.hero-sub','.hero-btns']
         sels.forEach(sel => {
           document.querySelectorAll<HTMLElement>(sel).forEach(el => {
@@ -56,12 +60,17 @@ export default function HomeAnimations() {
       }, 2000)
 
       // HERO ENTRANCE — fires after loader completes
-      // CRITICAL: NEVER hide hero elements with GSAP. Dark screen caused by GSAP setting
-      // opacity:0/clip-path:inset/transform:translate BEFORE animating back to visible.
-      // Any delay (slow network, background tab, headless Chrome) = permanent dark screen.
-      // Solution: elements are ALWAYS visible. Only counter animation runs (additive, no hiding).
+      // SUPREME RENDERING RULE: on mobile, hero visibility must depend ONLY on SSR HTML + CSS.
+      // SSR inline styles (opacity:1;visibility:visible) in page.tsx are the unconditional guarantee.
+      // JS must NEVER remove those styles on mobile — any JS removal creates a timing dependency.
       function heroEntrance() {
-        // Remove stale inline styles — let CSS + SSR defaults control visibility
+        // MOBILE/TOUCH/NARROW: SSR inline styles guarantee visibility — return immediately.
+        // Do NOT remove inline styles. Do NOT run GSAP. CSS nuclear rules are belt+suspenders.
+        if (skipHeroAnim) {
+          clearTimeout(heroSafetyTimer)
+          return
+        }
+        // DESKTOP ONLY: Remove stale inline styles — GSAP and CSS govern visibility after this.
         const forceSelectors = ['.hero-content','.hero-h1 .line-inner','.hero-h1 .line','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.hero-eyebrow','.hero-sub','.hero-btns']
         forceSelectors.forEach(sel => {
           document.querySelectorAll<HTMLElement>(sel).forEach(el => {
@@ -72,8 +81,6 @@ export default function HomeAnimations() {
             el.style.removeProperty('visibility')
           })
         })
-        // On mobile/touch/narrow viewport: return — CSS already guarantees visibility
-        if (skipHeroAnim) return
         clearTimeout(heroSafetyTimer)
 
         // Stat counter animation ONLY — additive, never hides content

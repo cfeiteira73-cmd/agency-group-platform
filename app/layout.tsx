@@ -296,7 +296,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
              On desktop (>1099px, pointer:fine): rules don't apply → loader shows normally via JS. */
           '@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}' +
           '@media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}' +
-          '@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}'
+          '@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}' +
+          /* HERO TEXT COLORS: literal hex values so hero text is readable even if CSS variables fail.
+             SSR inline styles (opacity:1;visibility:visible) guarantee presence.
+             These colors guarantee readability against the dark green .hl background (#0c1f15).
+             JS (HomeAnimations) preserves these inline styles on mobile — never removes them.
+             Applied to ALL three mobile signals to cover every Android/headless scenario. */
+          '@media(max-width:1099px){.hero-h1,.hero-h1 .line-inner,.hero-h1 em{color:#ffffff!important}.hero-eyebrow,#hEye{color:#d4b87e!important}.hero-sub,#hSub{color:rgba(255,255,255,.65)!important}.hero-content{opacity:1!important;visibility:visible!important}}' +
+          '@media(pointer:coarse){.hero-h1,.hero-h1 .line-inner,.hero-h1 em{color:#ffffff!important}.hero-eyebrow,#hEye{color:#d4b87e!important}.hero-sub,#hSub{color:rgba(255,255,255,.65)!important}.hero-content{opacity:1!important;visibility:visible!important}}' +
+          '@media(any-pointer:coarse){.hero-h1,.hero-h1 .line-inner,.hero-h1 em{color:#ffffff!important}.hero-eyebrow,#hEye{color:#d4b87e!important}.hero-sub,#hSub{color:rgba(255,255,255,.65)!important}.hero-content{opacity:1!important;visibility:visible!important}}'
         }} />
         {/* Resource hints — preconnect to critical origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
