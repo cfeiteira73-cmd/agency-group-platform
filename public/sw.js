@@ -1,9 +1,9 @@
-// Agency Group Service Worker v6.0
-// HTML pages: NEVER cached (always fresh from server)
+// Agency Group Service Worker v7.0
+// HTML pages: NEVER cached, NEVER served stale (no fallback to cache)
 // Static assets: cache-first for performance
-// v6: Force reload all clients on SW activation to bust stale HTML cache
+// v7: HTML navigate NEVER falls back to cache — prevents stale loader on mobile
 
-const CACHE_NAME = 'agency-group-v6';
+const CACHE_NAME = 'agency-group-v7';
 
 self.addEventListener('install', (event) => {
   // Skip waiting immediately — don't wait for old SW to die
@@ -22,7 +22,7 @@ self.addEventListener('activate', (event) => {
         return self.clients.matchAll({ type: 'window', includeUncontrolled: true })
           .then(clients => {
             clients.forEach(client => {
-              client.postMessage({ type: 'SW_ACTIVATED_V6' });
+              client.postMessage({ type: 'SW_ACTIVATED_V7' });
             });
           });
       })
@@ -33,12 +33,12 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
-  // HTML navigation requests — ALWAYS fetch fresh, never from cache
+  // HTML navigation requests — ALWAYS fresh, NO FALLBACK to cache
+  // Critical: never serve stale HTML even on bad mobile connections
+  // Stale HTML = old loader without display:none = green screen on mobile
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' }).catch(() =>
-        caches.match(event.request)
-      )
+      fetch(event.request, { cache: 'no-store' })
     );
     return;
   }

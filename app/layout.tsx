@@ -283,6 +283,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`}>
       <head>
         <meta name="author" content="Agency Group – Mediação Imobiliária Lda" />
+        {/* CRITICAL: inline style block — hides loader BEFORE any external CSS or JS loads.
+            This is the FIRST thing the browser processes, before sw.js, before globals.css.
+            Prevents green flash even if service worker serves stale HTML/CSS. */}
+        <style dangerouslySetInnerHTML={{ __html:
+          '#loader{display:none!important;visibility:hidden!important;opacity:0!important}' +
+          '@media(min-width:961px){#loader{display:flex!important;visibility:visible!important;opacity:1!important}}'
+        }} />
         {/* Resource hints — preconnect to critical origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -348,8 +355,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   try {
     var loader = document.getElementById('loader');
     var isOldHTML = loader && loader.style.display !== 'none';
-    if (isOldHTML && !sessionStorage.getItem('ag_healed_v6')) {
-      sessionStorage.setItem('ag_healed_v6', '1');
+    if (isOldHTML && !sessionStorage.getItem('ag_healed_v7')) {
+      sessionStorage.setItem('ag_healed_v7', '1');
       // Unregister ALL service workers and clear ALL caches, then hard reload
       var doReload = function() { location.href = location.href; };
       if ('serviceWorker' in navigator) {
@@ -372,9 +379,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.register('/sw.js').then(function(reg) {
         navigator.serviceWorker.addEventListener('message', function(event) {
-          if (event.data && event.data.type === 'SW_ACTIVATED_V6') {
-            if (!sessionStorage.getItem('ag_healed_v6')) {
-              sessionStorage.setItem('ag_healed_v6', '1');
+          if (event.data && event.data.type === 'SW_ACTIVATED_V7') {
+            if (!sessionStorage.getItem('ag_healed_v7')) {
+              sessionStorage.setItem('ag_healed_v7', '1');
               location.href = location.href;
             }
           }

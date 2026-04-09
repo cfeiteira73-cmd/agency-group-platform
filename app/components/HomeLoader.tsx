@@ -1,28 +1,25 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 export default function HomeLoader() {
+  // On mobile: remove loader from DOM entirely — no element = zero chance of green screen
+  const [isMobileDevice, setIsMobileDevice] = useState(false)
   const loaderRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const loader = loaderRef.current
-    if (!loader) return
-
-    // ── MOBILE / TOUCH: kill loader immediately, never lock scroll ────────────
-    const isMobile =
+    const mobile =
       window.innerWidth <= 960 ||
       navigator.maxTouchPoints > 0 ||
       ('ontouchstart' in window) ||
       window.matchMedia('(pointer: coarse)').matches
 
-    if (isMobile) {
-      // loader already has display:none from JSX inline style — belt-and-suspenders:
-      loader.style.display = 'none'
-      loader.classList.add('done')
+    if (mobile) {
+      // Remove from DOM — no hiding, no classes, no CSS — element does not exist
+      setIsMobileDevice(true)
       document.body.style.overflow = ''
 
-      // Force ALL hero elements visible immediately — defeats any GSAP/CSS issue
+      // Force ALL hero elements visible immediately
       const forceVisible = [
         '.hero-h1', '.hero-h1 .line-inner', '.line-inner',
         '#hEye', '#hSub', '#hBtns', '#hStats', '#hScroll', '#searchBox',
@@ -39,6 +36,9 @@ export default function HomeLoader() {
       })
       return
     }
+
+    const loader = loaderRef.current
+    if (!loader) return
 
     // ── DESKTOP ONLY: show loader, lock scroll, run cinematic GSAP entrance ──
     loader.style.display = 'flex'
@@ -101,8 +101,11 @@ export default function HomeLoader() {
     }
   }, [])
 
+  // MOBILE: loader does not exist in DOM — zero chance of green screen
+  if (isMobileDevice) return null
+
   return (
-    // display:none inline — loader is INVISIBLE by default (SSR + mobile)
+    // display:none inline — loader hidden by default (SSR)
     // Desktop JS sets display:flex before running GSAP animation
     <div id="loader" ref={loaderRef} style={{ display: 'none' }}>
       <div className="ldr-logo">
