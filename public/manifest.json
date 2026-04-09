@@ -5,8 +5,8 @@
   "description": "Consultoria imobiliária de luxo em Portugal. Lisboa, Cascais, Algarve, Porto. AMI 22506.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0c1f15",
-  "theme_color": "#0c1f15",
+  "background_color": "#f4f0e6",
+  "theme_color": "#c9a96e",
   "orientation": "portrait-primary",
   "lang": "pt-PT",
   "icons": [

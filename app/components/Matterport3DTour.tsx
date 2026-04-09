@@ -21,9 +21,18 @@ const DEMO_MODELS: Record<string, string> = {
 export default function Matterport3DTour({ modelId, propertyName, propertyPrice, compact = false }: Matterport3DTourProps) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const modalRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+
+  // Auto-dismiss loading overlay after 8s (safety — slow mobile connections)
+  useEffect(() => {
+    if (isOpen && !isLoaded) {
+      loadTimerRef.current = setTimeout(() => setIsLoaded(true), 8000)
+    }
+    return () => { if (loadTimerRef.current) clearTimeout(loadTimerRef.current) }
+  }, [isOpen, isLoaded])
 
   // Focus trap: trap focus inside modal when open, return focus to trigger when closed
   useEffect(() => {
@@ -165,7 +174,7 @@ export default function Matterport3DTour({ modelId, propertyName, propertyPrice,
           {/* Iframe */}
           <div style={{ flex: 1, position: 'relative' }}>
             {!isLoaded && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c1f15' }}>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.92)' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.4rem', fontWeight: 300, color: '#f4f0e6', marginBottom: 8 }}>A carregar tour 3D...</div>
                   <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.52rem', color: 'rgba(201,169,110,.5)', letterSpacing: '.15em' }}>MATTERPORT · AGENCY GROUP</div>
@@ -178,7 +187,7 @@ export default function Matterport3DTour({ modelId, propertyName, propertyPrice,
               allow="xr-spatial-tracking; gyroscope; accelerometer"
               allowFullScreen
               title={`Tour 3D — ${propertyName || 'Imóvel Agency Group'}`}
-              onLoad={() => setIsLoaded(true)}
+              onLoad={() => { if (loadTimerRef.current) clearTimeout(loadTimerRef.current); setIsLoaded(true) }}
             />
           </div>
         </div>
