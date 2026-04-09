@@ -57,8 +57,8 @@ export default function HomeLoader() {
       const { default: gsap } = await import('gsap')
       if (cancelled) return
 
-      safetyTimer = setTimeout(finishLoader, 2500)
-      window.addEventListener('load', finishLoader, { once: true })
+      // Safety net only — GSAP onComplete is the primary trigger
+      safetyTimer = setTimeout(finishLoader, 4000)
 
       gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })
       gsap.set('#ldrG', { y: 40, opacity: 0, filter: 'blur(8px)' })
@@ -81,7 +81,6 @@ export default function HomeLoader() {
     return () => {
       cancelled = true
       if (safetyTimer) clearTimeout(safetyTimer)
-      window.removeEventListener('load', finishLoader)
       tl?.kill()
       document.body.style.overflow = ''
     }
