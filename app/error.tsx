@@ -5,10 +5,10 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   useEffect(() => { console.error(error) }, [error])
   return (
     <div style={{
-      minHeight: '100vh', background: '#0c1f15',
+      minHeight: '100vh', background: '#f4f0e6',
       display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '24px'
     }}>
-      <h1 style={{ color: '#c9a96e', fontFamily: 'Cormorant Garamond, serif', fontSize: '48px', margin: 0 }}>Erro</h1>
+      <h1 style={{ color: '#0c1f15', fontFamily: 'Cormorant Garamond, serif', fontSize: '48px', margin: 0 }}>Erro</h1>
       <p style={{ color: '#9ca3af', fontFamily: 'DM Mono, monospace', fontSize: '14px' }}>
         Algo correu mal. A nossa equipa foi notificada.
       </p>
