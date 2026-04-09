@@ -1,7 +1,7 @@
-// Agency Group Service Worker v3.0
+// Agency Group Service Worker v4.0
 // Caching + Web Push Notifications + Background Sync
 
-const CACHE_NAME = 'agency-group-v3';
+const CACHE_NAME = 'agency-group-v4';
 const STATIC_ASSETS = ['/', '/en', '/fr', '/de', '/es', '/it', '/zh', '/relatorio-2026', '/blog'];
 
 self.addEventListener('install', (event) => {

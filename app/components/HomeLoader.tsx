@@ -14,16 +14,22 @@ export default function HomeLoader() {
     function finishLoader() {
       if (!loader) return
       if (loader.classList.contains('done')) return
-      // Strip any GSAP inline opacity so CSS transition takes over cleanly
+      // Strip any GSAP inline styles so CSS takes over cleanly
       loader.style.removeProperty('opacity')
+      loader.style.removeProperty('visibility')
       loader.classList.add('done')
       document.body.style.overflow = ''
+      // Hard-kill after transition completes
       setTimeout(() => {
-        if (loaderRef.current) loaderRef.current.style.display = 'none'
-      }, 900)
+        if (loaderRef.current) {
+          loaderRef.current.style.display = 'none'
+        }
+      }, 700)
     }
 
-    // ── MOBILE / TOUCH: skip GSAP entirely — dismiss after brief brand moment ─
+    // ── MOBILE / TOUCH: bypass GSAP entirely ─────────────────────────────────
+    // CSS animation already handles visual dismiss (@keyframes ag-ldr-out)
+    // JS adds .done class as belt-and-suspenders safety
     const isMobile =
       window.innerWidth <= 960 ||
       navigator.maxTouchPoints > 0 ||
@@ -31,8 +37,11 @@ export default function HomeLoader() {
       window.matchMedia('(pointer: coarse)').matches
 
     if (isMobile) {
-      const t = setTimeout(finishLoader, 400)
-      return () => { clearTimeout(t); document.body.style.overflow = '' }
+      // Immediately unlock scroll — CSS animation handles visual fade
+      document.body.style.overflow = ''
+      // Belt-and-suspenders: also add .done class after CSS animation finishes
+      const t = setTimeout(finishLoader, 850)
+      return () => { clearTimeout(t) }
     }
 
     // ── DESKTOP: cinematic GSAP entrance ─────────────────────────────────────
