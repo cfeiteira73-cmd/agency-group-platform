@@ -69,10 +69,20 @@ export default function HomeLoader() {
     let tl: any = null
     let safetyTimer: ReturnType<typeof setTimeout> | null = null
 
-    // Safety timer set IMMEDIATELY — before any async work
-    // Guarantees finishLoader runs even if GSAP import fails or hangs
-    // 2000ms: loader animation is ~2.5s total, but we'd rather cut it short than show green screen
+    // Safety timer set IMMEDIATELY — before any async work.
+    // 2000ms: lets most of the GSAP animation play; guarantees exit if GSAP hangs.
     safetyTimer = setTimeout(finishLoader, 2000)
+
+    // visibilitychange safety: if the page was pre-rendered (hidden tab) and becomes visible,
+    // close the loader immediately. Catches Chrome Speculation Rules pre-render on Android
+    // where touch APIs don't fire during pre-render, bypassing mobile detection.
+    const onVisible = () => {
+      if (!document.hidden) {
+        finishLoader()
+        document.removeEventListener('visibilitychange', onVisible)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
 
     const run = async () => {
       try {
@@ -104,6 +114,7 @@ export default function HomeLoader() {
     return () => {
       cancelled = true
       if (safetyTimer) clearTimeout(safetyTimer)
+      document.removeEventListener('visibilitychange', onVisible)
       tl?.kill()
       document.body.style.overflow = ''
     }

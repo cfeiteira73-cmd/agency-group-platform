@@ -356,10 +356,12 @@ footer{background:var(--ink);padding:80px 0 32px}
    JS sets loader.style.display='flex' which beats SSR inline. This is the correct chain. */
 #loader{position:fixed;inset:0;background:var(--gd);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:32px}
 #loader.done{display:none!important;opacity:0!important;pointer-events:none!important;visibility:hidden!important}
-/* NUCLEAR: loader can NEVER show on mobile/touch — all 4 signals cover every device */
-@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}}
-@media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}}
-@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}}
+/* NUCLEAR: loader can NEVER show on mobile/touch — all 4 signals cover every device.
+   z-index:-1 is the final safety net: even if display:flex fires (pre-render edge case),
+   loader renders BEHIND the hero section so content is always visible. */
+@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}}
+@media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}}
+@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}}
 /* NUCLEAR force-visible: hero/scroll content always visible on touch devices.
    any-pointer:coarse catches Samsung S-Pen (primary=fine, but has touch screen).
    These CSS rules are backup — the SSR inline styles in page.tsx JSX are the primary guarantee. */
