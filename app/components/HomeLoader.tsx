@@ -2,13 +2,15 @@
 
 import { useEffect, useRef } from 'react'
 
-// Inline CSS embedded directly in the component — works even with stale SW cache
-// visibility:hidden overrides any GSAP inline opacity on the element
+// Inline CSS — part of HTML payload, bypasses any stale CSS file cache
+// Uses display:none!important — overrides GSAP, overrides everything
 const MOBILE_STYLE = `
-  @keyframes _ag_ldr{to{visibility:hidden;pointer-events:none;opacity:0}}
   @media(max-width:960px),(pointer:coarse){
     #loader{
-      animation:_ag_ldr 0.01s linear 0.6s forwards!important;
+      display:none!important;
+      visibility:hidden!important;
+      pointer-events:none!important;
+      opacity:0!important;
     }
   }
 `
