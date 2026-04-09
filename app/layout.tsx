@@ -341,20 +341,49 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <PushNotificationSetup />
         <BottomNav />
         <script dangerouslySetInnerHTML={{ __html: `
+(function() {
+  // ── SELF-HEAL: detect old cached HTML (loader without display:none) ──────
+  // Old HTML has <div id="loader"> with NO inline style → loader shows on mobile
+  // New HTML has <div id="loader" style="display:none"> → loader always hidden
+  try {
+    var loader = document.getElementById('loader');
+    var isOldHTML = loader && loader.style.display !== 'none';
+    if (isOldHTML && !sessionStorage.getItem('ag_healed_v6')) {
+      sessionStorage.setItem('ag_healed_v6', '1');
+      // Unregister ALL service workers and clear ALL caches, then hard reload
+      var doReload = function() { location.href = location.href; };
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          return Promise.all(regs.map(function(r) { return r.unregister(); }));
+        }).then(function() {
+          if ('caches' in window) {
+            return caches.keys().then(function(keys) {
+              return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+            });
+          }
+        }).then(doReload).catch(doReload);
+      } else { doReload(); }
+      return;
+    }
+  } catch(e) {}
+
+  // ── SERVICE WORKER REGISTRATION ──────────────────────────────────────────
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        // Listen for SW_ACTIVATED_V6 message — new SW took over, reload for fresh HTML
-        navigator.serviceWorker.addEventListener('message', (event) => {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js').then(function(reg) {
+        navigator.serviceWorker.addEventListener('message', function(event) {
           if (event.data && event.data.type === 'SW_ACTIVATED_V6') {
-            window.location.reload();
+            if (!sessionStorage.getItem('ag_healed_v6')) {
+              sessionStorage.setItem('ag_healed_v6', '1');
+              location.href = location.href;
+            }
           }
         });
-        // Force update check on every load
-        reg.update().catch(() => {});
-      }).catch(() => {});
+        reg.update().catch(function(){});
+      }).catch(function(){});
     });
   }
+})();
 `}} />
         </CurrencyProvider>
       </body>
