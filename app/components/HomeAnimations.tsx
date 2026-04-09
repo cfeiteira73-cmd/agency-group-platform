@@ -29,8 +29,9 @@ export default function HomeAnimations() {
       )
 
       // Hard safety: force all hero elements visible after 1.5s regardless of GSAP
+      // On mobile this ALWAYS fires (heroEntrance no longer cancels it for touch devices)
       const heroSafetyTimer = setTimeout(() => {
-        const sels = ['.hero-h1 .line-inner','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.zc','.fade-in','.line-inner']
+        const sels = ['.hero-h1 .line-inner','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.zc','.fade-in','.line-inner','.text-reveal-inner','.clip-reveal','.hero-content','.hero-eyebrow','.hero-sub','.hero-btns']
         sels.forEach(sel => {
           document.querySelectorAll<HTMLElement>(sel).forEach(el => {
             el.style.removeProperty('opacity')
@@ -44,9 +45,10 @@ export default function HomeAnimations() {
 
       // HERO ENTRANCE — fires after loader completes
       function heroEntrance() {
-        clearTimeout(heroSafetyTimer)
-        // On mobile/touch: skip animations — CSS already forces visibility
+        // On mobile/touch: skip animations — CSS + HomeLoader already force visibility
+        // Do NOT cancel heroSafetyTimer on mobile — let it fire to remove any stale inline styles
         if (isTouch) return
+        clearTimeout(heroSafetyTimer)
 
         gsap.set('.hero-h1 .line-inner', { y: '115%' })
         gsap.set('#hSub', { opacity: 0, y: 36, filter: 'blur(4px)' })
