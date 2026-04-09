@@ -45,6 +45,19 @@ export default function HomeAnimations() {
 
       // HERO ENTRANCE — fires after loader completes
       function heroEntrance() {
+        // ALWAYS force hero visible first — zero-latency safety before any GSAP set.
+        // This ensures that even on S-Pen phones (pointer:fine) or unusual configurations
+        // where CSS media queries might not fire, the hero is never stuck invisible.
+        const forceSelectors = ['.hero-content','.hero-h1 .line-inner','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.hero-eyebrow','.hero-sub','.hero-btns']
+        forceSelectors.forEach(sel => {
+          document.querySelectorAll<HTMLElement>(sel).forEach(el => {
+            el.style.setProperty('opacity', '1', 'important')
+            el.style.setProperty('visibility', 'visible', 'important')
+            el.style.removeProperty('transform')
+            el.style.removeProperty('clip-path')
+            el.style.removeProperty('filter')
+          })
+        })
         // On mobile/touch: skip animations — CSS + HomeLoader already force visibility
         // Do NOT cancel heroSafetyTimer on mobile — let it fire to remove any stale inline styles
         if (isTouch) return
@@ -105,23 +118,38 @@ export default function HomeAnimations() {
       }
 
       // Wait for loader to finish before running hero entrance
+      // On mobile (isTouch=true): loader is not in DOM (HomeLoader returns null).
+      // On desktop: loader starts hidden (SSR display:none), JS shows it, then 'done' class added.
+      let heroEntranceFired = false
+      function fireHeroEntrance() {
+        if (heroEntranceFired) return
+        heroEntranceFired = true
+        setTimeout(heroEntrance, 150)
+      }
       const loaderEl = document.getElementById('loader')
       if (loaderEl) {
-        // Observe loader 'done' class
+        // Observe loader 'done' class — fires when loader animation completes
         const observer = new MutationObserver(() => {
           if (loaderEl.classList.contains('done')) {
             observer.disconnect()
-            setTimeout(heroEntrance, 150)
+            fireHeroEntrance()
           }
         })
         observer.observe(loaderEl, { attributes: true, attributeFilter: ['class'] })
-        // Fallback: if loader already done or hidden
-        if (loaderEl.classList.contains('done') || loaderEl.style.display === 'none') {
-          setTimeout(heroEntrance, 150)
+        // Fallback: if loader already 'done' when this runs (fast hydration)
+        if (loaderEl.classList.contains('done')) {
+          fireHeroEntrance()
         }
+        // Desktop: pre-run hero entrance WHILE loader is animating (hero ready when loader fades out).
+        // heroEntranceFired flag ensures it only runs once regardless of which trigger fires first.
+        if (!isTouch) {
+          setTimeout(fireHeroEntrance, 300)
+        }
+        // Safety: if loader never gets 'done' (race/error), fire after 5s
+        setTimeout(fireHeroEntrance, 5000)
       } else {
-        // No loader present — run hero entrance directly
-        setTimeout(heroEntrance, 100)
+        // No loader present (mobile — HomeLoader returned null) — run hero entrance directly
+        fireHeroEntrance()
       }
 
       // ALL SCROLLTRIGGER ANIMATIONS — deferred one frame

@@ -359,7 +359,20 @@ footer{background:var(--ink);padding:80px 0 32px}
 /* NUCLEAR: loader can NEVER show on mobile/touch — protects against any JS/CSS race */
 @media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}}
 @media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}}
-/* NUCLEAR force-visible: touch devices wider than 960px (tablets landscape) — GSAP cannot hide hero */
+/* NUCLEAR force-visible: ALL devices ≤1099px — GSAP initial states cannot hide hero/content.
+   This matches the JS isTouch threshold exactly. Covers: phones portrait+landscape,
+   Samsung S-Pen (pointer:fine), any device where pointer:coarse may not fire. */
+@media(max-width:1099px){
+  .hero-h1 .line-inner,.line-inner,#hEye,#hSub,#hBtns,#hStats,#hScroll,#searchBox,
+  .zc,.imc,.fade-in,.sec-h2,.sec-eye,.cred-c,.hero-content,.hero-eyebrow,.hero-sub,.hero-btns,
+  .text-reveal-inner,.clip-reveal{
+    opacity:1!important;transform:none!important;clip-path:none!important;
+    filter:none!important;visibility:visible!important
+  }
+  .hero-h1 .line{overflow:visible!important}
+  .hero-content{display:flex!important;position:relative!important;z-index:10!important}
+}
+/* Belt+suspenders: same protection for touch devices regardless of width */
 @media(pointer:coarse){
   .hero-h1 .line-inner,.line-inner,#hEye,#hSub,#hBtns,#hStats,#hScroll,#searchBox,
   .zc,.imc,.fade-in,.sec-h2,.sec-eye,.cred-c,.hero-content,.hero-eyebrow,.hero-sub,.hero-btns,
@@ -367,6 +380,8 @@ footer{background:var(--ink);padding:80px 0 32px}
     opacity:1!important;transform:none!important;clip-path:none!important;
     filter:none!important;visibility:visible!important
   }
+  .hero-h1 .line{overflow:visible!important}
+  .hero-content{display:flex!important;position:relative!important;z-index:10!important}
 }
 .ldr-logo{display:flex;flex-direction:column;align-items:center;gap:0}
 .ldr-logo span{font-family:var(--font-cormorant),serif;font-weight:300;font-size:2.2rem;letter-spacing:.52em;text-transform:uppercase;color:var(--w);line-height:1;opacity:0}
