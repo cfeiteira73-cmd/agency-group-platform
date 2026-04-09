@@ -398,6 +398,24 @@ footer{background:var(--ink);padding:80px 0 32px}
   .hero-h1 .line{overflow:visible!important}
   .hero-content{display:flex!important;position:relative!important;z-index:10!important}
 }
+/* ── ROOT CAUSE FIX ────────────────────────────────────────────────────────────
+   #loader{position:fixed;inset:0;z-index:2000} was covering section.hero on mobile.
+   BottomNav{z-index:9999} appeared above the loader — confirming the loader was the issue.
+   Fix: promote section.hero above the loader in the stacking order.
+   nav bumped to 2100 so the logo/burger remain visible above the hero section.
+   ALL three mobile signals covered. Desktop: completely untouched. */
+@media(max-width:1099px){
+  section.hero{position:relative!important;z-index:2001!important}
+  nav{z-index:2100!important}
+}
+@media(pointer:coarse){
+  section.hero{position:relative!important;z-index:2001!important}
+  nav{z-index:2100!important}
+}
+@media(any-pointer:coarse){
+  section.hero{position:relative!important;z-index:2001!important}
+  nav{z-index:2100!important}
+}
 .ldr-logo{display:flex;flex-direction:column;align-items:center;gap:0}
 .ldr-logo span{font-family:var(--font-cormorant),serif;font-weight:300;font-size:2.2rem;letter-spacing:.52em;text-transform:uppercase;color:var(--w);line-height:1;opacity:0}
 .ldr-logo span:nth-child(2){letter-spacing:.82em;margin-left:.18em}
