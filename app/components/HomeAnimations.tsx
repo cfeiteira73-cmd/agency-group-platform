@@ -40,10 +40,10 @@ export default function HomeAnimations() {
         window.matchMedia('(max-width: 1099px)').matches
       const skipHeroAnim = isTouch || isNarrow
 
-      // Hard safety: force all hero elements visible after 1.5s regardless of GSAP
-      // On mobile this ALWAYS fires (heroEntrance no longer cancels it for touch devices)
+      // Safety timer: redundant now (heroEntrance no longer hides elements)
+      // but kept to clear any stale styles from previous page states
       const heroSafetyTimer = setTimeout(() => {
-        const sels = ['.hero-h1 .line-inner','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.zc','.fade-in','.line-inner','.text-reveal-inner','.clip-reveal','.hero-content','.hero-eyebrow','.hero-sub','.hero-btns']
+        const sels = ['.hero-h1 .line-inner','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.hero-content','.hero-eyebrow','.hero-sub','.hero-btns']
         sels.forEach(sel => {
           document.querySelectorAll<HTMLElement>(sel).forEach(el => {
             el.style.removeProperty('opacity')
@@ -53,47 +53,30 @@ export default function HomeAnimations() {
             el.style.removeProperty('visibility')
           })
         })
-      }, 1500)
+      }, 2000)
 
       // HERO ENTRANCE — fires after loader completes
+      // CRITICAL: NEVER hide hero elements with GSAP. Dark screen caused by GSAP setting
+      // opacity:0/clip-path:inset/transform:translate BEFORE animating back to visible.
+      // Any delay (slow network, background tab, headless Chrome) = permanent dark screen.
+      // Solution: elements are ALWAYS visible. Only counter animation runs (additive, no hiding).
       function heroEntrance() {
-        // ALWAYS force hero visible first — zero-latency safety before any GSAP set.
-        // This ensures that even on S-Pen phones (pointer:fine) or unusual configurations
-        // where CSS media queries might not fire, the hero is never stuck invisible.
-        const forceSelectors = ['.hero-content','.hero-h1 .line-inner','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.hero-eyebrow','.hero-sub','.hero-btns']
+        // Remove stale inline styles — let CSS + SSR defaults control visibility
+        const forceSelectors = ['.hero-content','.hero-h1 .line-inner','.hero-h1 .line','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.hero-eyebrow','.hero-sub','.hero-btns']
         forceSelectors.forEach(sel => {
           document.querySelectorAll<HTMLElement>(sel).forEach(el => {
-            el.style.setProperty('opacity', '1', 'important')
-            el.style.setProperty('visibility', 'visible', 'important')
+            el.style.removeProperty('opacity')
             el.style.removeProperty('transform')
-            el.style.removeProperty('clip-path')
             el.style.removeProperty('filter')
+            el.style.removeProperty('clip-path')
+            el.style.removeProperty('visibility')
           })
         })
-        // On mobile/touch/narrow viewport: skip animations — CSS + HomeLoader already force visibility
-        // Do NOT cancel heroSafetyTimer on mobile — let it fire to remove any stale inline styles
+        // On mobile/touch/narrow viewport: return — CSS already guarantees visibility
         if (skipHeroAnim) return
         clearTimeout(heroSafetyTimer)
 
-        gsap.set('.hero-h1 .line-inner', { y: '115%' })
-        gsap.set('#hSub', { opacity: 0, y: 36, filter: 'blur(4px)' })
-        gsap.set('#hBtns', { opacity: 0, y: 32 })
-        gsap.set('#hStats', { opacity: 0, y: 24 })
-        gsap.set('#hScroll', { opacity: 0, y: 12 })
-        gsap.set('#searchBox', { opacity: 0, y: 28 })
-
-        const tl = gsap.timeline()
-        tl.fromTo('#hEye',
-            { clipPath: 'inset(0 100% 0 0)' },
-            { clipPath: 'inset(0 0% 0 0)', duration: 1.0, ease: 'power4.out' })
-          .to('.hero-h1 .line-inner', { y: 0, duration: 1.1, stagger: 0.14, ease: 'power4.out' }, '-=0.55')
-          .to('#hSub', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.9, ease: 'power3.out' }, '-=0.4')
-          .to('#hBtns', { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, '-=0.35')
-          .to('#hStats', { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out' }, '-=0.5')
-          .to('#searchBox', { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, '-=0.5')
-          .to('#hScroll', { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, '-=0.3')
-
-        // Hero stat counters
+        // Stat counter animation ONLY — additive, never hides content
         ;[
           { sel: '#hStats > div:nth-child(1) .hs-n', to: 169, pre: '', suf: 'K', dur: 2.6 },
           { sel: '#hStats > div:nth-child(2) .hs-n', to: 17, pre: '+', suf: '%', dur: 2.0 },
@@ -103,7 +86,7 @@ export default function HomeAnimations() {
           if (!el) return
           const obj = { n: 0 }
           gsap.to(obj, {
-            n: to, duration: dur, ease: 'expo.out', delay: 1.4 + i * 0.18,
+            n: to, duration: dur, ease: 'expo.out', delay: 1.0 + i * 0.18,
             onUpdate() { el.innerHTML = `${pre}${Math.round(obj.n)}<em>${suf}</em>` }
           })
         })
