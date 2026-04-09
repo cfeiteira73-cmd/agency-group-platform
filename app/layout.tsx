@@ -355,8 +355,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   try {
     var loader = document.getElementById('loader');
     var isOldHTML = loader && loader.style.display !== 'none';
-    if (isOldHTML && !sessionStorage.getItem('ag_healed_v7')) {
-      sessionStorage.setItem('ag_healed_v7', '1');
+    if (isOldHTML && !sessionStorage.getItem('ag_healed_v8')) {
+      sessionStorage.setItem('ag_healed_v8', '1');
       // Unregister ALL service workers and clear ALL caches, then hard reload
       var doReload = function() { location.href = location.href; };
       if ('serviceWorker' in navigator) {
@@ -379,9 +379,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.register('/sw.js').then(function(reg) {
         navigator.serviceWorker.addEventListener('message', function(event) {
-          if (event.data && event.data.type === 'SW_ACTIVATED_V7') {
-            if (!sessionStorage.getItem('ag_healed_v7')) {
-              sessionStorage.setItem('ag_healed_v7', '1');
+          if (event.data && event.data.type === 'SW_ACTIVATED_V8') {
+            if (!sessionStorage.getItem('ag_healed_v8')) {
+              sessionStorage.setItem('ag_healed_v8', '1');
               location.href = location.href;
             }
           }

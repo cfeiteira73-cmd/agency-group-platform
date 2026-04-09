@@ -1,12 +1,12 @@
-// Agency Group Service Worker v7.0
+// Agency Group Service Worker v8.0
+// v8: On activate, FORCE NAVIGATE all open tabs to get fresh HTML
 // HTML pages: NEVER cached, NEVER served stale (no fallback to cache)
 // Static assets: cache-first for performance
-// v7: HTML navigate NEVER falls back to cache — prevents stale loader on mobile
 
-const CACHE_NAME = 'agency-group-v7';
+const CACHE_NAME = 'agency-group-v8';
 
 self.addEventListener('install', (event) => {
-  // Skip waiting immediately — don't wait for old SW to die
+  // Skip waiting immediately — activate right away, don't wait for old SW to die
   self.skipWaiting();
 });
 
@@ -18,11 +18,22 @@ self.addEventListener('activate', (event) => {
       ))
       .then(() => self.clients.claim())
       .then(() => {
-        // Tell ALL open tabs to reload so they get fresh HTML
+        // NUCLEAR: force reload ALL open tabs to get fresh HTML
+        // client.navigate() reloads the page — since this SW is now active,
+        // the navigate request is fetched fresh from network (no-store below)
+        // This breaks through ANY stale cache on the user's device
         return self.clients.matchAll({ type: 'window', includeUncontrolled: true })
           .then(clients => {
             clients.forEach(client => {
-              client.postMessage({ type: 'SW_ACTIVATED_V7' });
+              // Try navigate() first (forces page reload with fresh HTML)
+              // Fall back to postMessage if navigate fails
+              try {
+                client.navigate(client.url).catch(() => {
+                  client.postMessage({ type: 'SW_ACTIVATED_V8' });
+                });
+              } catch (e) {
+                client.postMessage({ type: 'SW_ACTIVATED_V8' });
+              }
             });
           });
       })
@@ -33,9 +44,8 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
-  // HTML navigation requests — ALWAYS fresh, NO FALLBACK to cache
+  // HTML navigation requests — ALWAYS fresh from network, NO FALLBACK to cache
   // Critical: never serve stale HTML even on bad mobile connections
-  // Stale HTML = old loader without display:none = green screen on mobile
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })

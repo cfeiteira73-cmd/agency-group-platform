@@ -1,10 +1,5 @@
-// Loading state — transparent/invisible so ZERO green flash on mobile
-// The hero section renders immediately from SSR — no spinner needed
+// Loading state — returns null so body background (#f4f0e6 cream) shows through
+// No color flash possible — zero visual element rendered
 export default function Loading() {
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f4f0e6',
-    }} />
-  )
+  return null
 }
