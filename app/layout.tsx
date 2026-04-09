@@ -346,6 +346,170 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaAggregateRatingExpanded) }}
         />
 
+
+        {/* ── MOBILE HERO DEBUG INSTRUMENTATION (TEMPORARY) ─────────────────────
+            Active ONLY when URL contains ?debug=hero
+            Captures hero subtree state at 0/150/500/1000/2000ms after load.
+            Shows a fixed overlay on screen so data is readable on the phone itself.
+            Desktop: completely unaffected — the overlay only renders on mobile signals.
+            Remove this script block once the Android incident is confirmed resolved. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+(function() {
+  if (typeof window === 'undefined') return;
+  var params = new URLSearchParams(location.search);
+  if (params.get('debug') !== 'hero') return; // no-op unless ?debug=hero
+
+  var log = [];
+  var overlayEl = null;
+
+  function cs(el, p) {
+    try { return el ? window.getComputedStyle(el).getPropertyValue(p) : 'N/A'; } catch(e) { return 'ERR'; }
+  }
+  function bcr(el) {
+    try {
+      if (!el) return 'N/A';
+      var r = el.getBoundingClientRect();
+      return 't:'+Math.round(r.top)+' l:'+Math.round(r.left)+' w:'+Math.round(r.width)+' h:'+Math.round(r.height);
+    } catch(e) { return 'ERR'; }
+  }
+  function topEl() {
+    try {
+      var el = document.elementFromPoint(window.innerWidth/2, window.innerHeight/4);
+      if (!el) return 'null';
+      return (el.id?'#'+el.id:'')+(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(/\\s+/).join('.').substring(0,40):'['+el.tagName+']');
+    } catch(e) { return 'ERR'; }
+  }
+
+  function snap(label) {
+    var hc  = document.querySelector('.hero-content');
+    var h1  = document.querySelector('.hero-h1');
+    var li  = document.querySelector('.hero-h1 .line-inner');
+    var eye = document.getElementById('hEye');
+    var sub = document.getElementById('hSub');
+    var ldr = document.getElementById('loader');
+    var hl  = document.querySelector('.hl');
+
+    var s = {
+      t: label,
+      vp: window.innerWidth+'x'+window.innerHeight,
+      ua: navigator.userAgent.substring(0,80),
+      visState: document.visibilityState,
+      mxTouch: navigator.maxTouchPoints,
+      ptrCoarse: window.matchMedia('(pointer:coarse)').matches,
+      anyPtrCoarse: window.matchMedia('(any-pointer:coarse)').matches,
+      loader: {
+        inDOM: !!ldr,
+        display: cs(ldr,'display'),
+        opacity: cs(ldr,'opacity'),
+        visibility: cs(ldr,'visibility'),
+        zIndex: cs(ldr,'z-index'),
+        inlineStyle: ldr ? ldr.getAttribute('style') : 'N/A'
+      },
+      hl: {
+        bg: cs(hl,'background-color'),
+        overflow: cs(hl,'overflow'),
+        opacity: cs(hl,'opacity')
+      },
+      heroContent: {
+        inDOM: !!hc,
+        inlineStyle: hc ? hc.getAttribute('style') : 'N/A',
+        display: cs(hc,'display'),
+        opacity: cs(hc,'opacity'),
+        visibility: cs(hc,'visibility'),
+        zIndex: cs(hc,'z-index'),
+        position: cs(hc,'position'),
+        clipPath: cs(hc,'clip-path'),
+        transform: cs(hc,'transform').substring(0,30),
+        bcr: bcr(hc)
+      },
+      h1: {
+        inDOM: !!h1,
+        inlineStyle: h1 ? h1.getAttribute('style') : 'N/A',
+        color: cs(h1,'color'),
+        opacity: cs(h1,'opacity'),
+        visibility: cs(h1,'visibility'),
+        fontSize: cs(h1,'font-size')
+      },
+      lineInner: {
+        inlineStyle: li ? li.getAttribute('style') : 'N/A',
+        opacity: cs(li,'opacity'),
+        transform: cs(li,'transform').substring(0,30),
+        visibility: cs(li,'visibility')
+      },
+      eyebrow: {
+        inlineStyle: eye ? eye.getAttribute('style') : 'N/A',
+        color: cs(eye,'color'),
+        opacity: cs(eye,'opacity'),
+        overflow: cs(eye,'overflow')
+      },
+      sub: {
+        inlineStyle: sub ? sub.getAttribute('style') : 'N/A',
+        color: cs(sub,'color'),
+        opacity: cs(sub,'opacity')
+      },
+      topElAtVpCenter: topEl()
+    };
+    log.push(s);
+    window.__heroDebug = log;
+    renderOverlay();
+  }
+
+  function renderOverlay() {
+    // Only render overlay on mobile signals — never on desktop
+    var isMobile = navigator.maxTouchPoints > 0 ||
+      window.matchMedia('(pointer:coarse)').matches ||
+      window.matchMedia('(any-pointer:coarse)').matches ||
+      /Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (!isMobile) return; // desktop: data in window.__heroDebug only
+
+    if (!overlayEl) {
+      overlayEl = document.createElement('div');
+      overlayEl.id = '__heroDbgOverlay';
+      overlayEl.style.cssText = 'position:fixed;top:0;left:0;right:0;max-height:55vh;overflow-y:auto;background:rgba(0,0,0,.88);color:#0f0;font-family:monospace;font-size:10px;line-height:1.4;padding:8px;z-index:99999;border-bottom:2px solid #0f0;white-space:pre-wrap;word-break:break-all';
+      document.body.appendChild(overlayEl);
+    }
+    var txt = '=== HERO DEBUG (' + log.length + ' snaps) ===\\n';
+    log.forEach(function(s) {
+      txt += '\\n[' + s.t + '] vp:' + s.vp + ' vis:' + s.visState + '\\n';
+      txt += ' UA: ' + s.ua + '\\n';
+      txt += ' touch:' + s.mxTouch + ' coarse:' + s.ptrCoarse + ' anyCoarse:' + s.anyPtrCoarse + '\\n';
+      txt += ' LOADER in_dom:' + s.loader.inDOM + ' display:' + s.loader.display + ' op:' + s.loader.opacity + ' zi:' + s.loader.zIndex + '\\n';
+      txt += '  inline:[' + s.loader.inlineStyle + ']\\n';
+      txt += ' HL bg:' + s.hl.bg + ' overflow:' + s.hl.overflow + '\\n';
+      txt += ' HERO-CONTENT in_dom:' + s.heroContent.inDOM + ' display:' + s.heroContent.display + ' op:' + s.heroContent.opacity + ' vis:' + s.heroContent.visibility + ' zi:' + s.heroContent.zIndex + '\\n';
+      txt += '  inline:[' + s.heroContent.inlineStyle + '] clip:' + s.heroContent.clipPath + '\\n';
+      txt += '  bcr:' + s.heroContent.bcr + '\\n';
+      txt += ' H1 color:' + s.h1.color + ' op:' + s.h1.opacity + ' vis:' + s.h1.visibility + '\\n';
+      txt += '  inline:[' + s.h1.inlineStyle + ']\\n';
+      txt += ' LINE-INNER op:' + s.lineInner.opacity + ' tr:' + s.lineInner.transform + '\\n';
+      txt += '  inline:[' + s.lineInner.inlineStyle + ']\\n';
+      txt += ' EYEBROW color:' + s.eyebrow.color + ' op:' + s.eyebrow.opacity + ' overflow:' + s.eyebrow.overflow + '\\n';
+      txt += ' SUB color:' + s.sub.color + ' op:' + s.sub.opacity + '\\n';
+      txt += ' TOP-EL@VP/4:' + s.topElAtVpCenter + '\\n';
+    });
+    txt += '\\n[TAP overlay to copy JSON to clipboard]';
+    overlayEl.textContent = txt;
+    overlayEl.onclick = function() {
+      try { navigator.clipboard.writeText(JSON.stringify(window.__heroDebug, null, 2)); overlayEl.style.borderColor='#ff0'; } catch(e) {}
+    };
+  }
+
+  // Snap at multiple points: immediately, after paint, after hydration, after timers
+  snap('0ms-inline');
+  requestAnimationFrame(function() { snap('rAF-paint'); });
+  setTimeout(function() { snap('150ms'); }, 150);
+  setTimeout(function() { snap('500ms'); }, 500);
+  setTimeout(function() { snap('1000ms'); }, 1000);
+  setTimeout(function() { snap('2000ms'); }, 2000);
+  setTimeout(function() { snap('4000ms'); }, 4000);
+
+  // Also snap on visibilitychange (catches prerender activation)
+  document.addEventListener('visibilitychange', function() {
+    snap('vischange-' + document.visibilityState);
+  });
+})();
+` }} />
+
       </head>
       <body style={{ background: '#f4f0e6' }}>
         {/* Skip-to-content — accessibility (CSS-only, no event handlers) */}
