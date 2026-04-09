@@ -21,6 +21,22 @@ export default function HomeLoader() {
       loader.style.display = 'none'
       loader.classList.add('done')
       document.body.style.overflow = ''
+
+      // Force ALL hero elements visible immediately — defeats any GSAP/CSS issue
+      const forceVisible = [
+        '.hero-h1', '.hero-h1 .line-inner', '.line-inner',
+        '#hEye', '#hSub', '#hBtns', '#hStats', '#hScroll', '#searchBox',
+        '.hero-content', '.hero-eyebrow', '.hero-sub', '.hero-btns',
+      ]
+      forceVisible.forEach(sel => {
+        document.querySelectorAll<HTMLElement>(sel).forEach(el => {
+          el.style.setProperty('opacity', '1', 'important')
+          el.style.setProperty('transform', 'none', 'important')
+          el.style.setProperty('filter', 'none', 'important')
+          el.style.setProperty('clip-path', 'none', 'important')
+          el.style.setProperty('visibility', 'visible', 'important')
+        })
+      })
       return
     }
 
