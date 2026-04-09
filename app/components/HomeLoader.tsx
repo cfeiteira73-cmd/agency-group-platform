@@ -17,6 +17,22 @@ export default function HomeLoader() {
     const loader = loaderRef.current
     if (!loader) return
 
+    // ── MOBILE / TOUCH: kill loader immediately, never lock scroll ────────────
+    const isMobile =
+      window.innerWidth <= 960 ||
+      navigator.maxTouchPoints > 0 ||
+      ('ontouchstart' in window) ||
+      window.matchMedia('(pointer: coarse)').matches
+
+    if (isMobile) {
+      // CSS already hides it via display:none!important — belt-and-suspenders:
+      loader.style.display = 'none'
+      loader.classList.add('done')
+      document.body.style.overflow = ''
+      return
+    }
+
+    // ── DESKTOP ONLY: lock scroll, run cinematic GSAP entrance ───────────────
     document.body.style.overflow = 'hidden'
 
     function finishLoader() {
@@ -29,20 +45,6 @@ export default function HomeLoader() {
       setTimeout(() => {
         if (loaderRef.current) loaderRef.current.style.display = 'none'
       }, 700)
-    }
-
-    // ── MOBILE / TOUCH: bypass GSAP, CSS animation handles visual dismiss ─────
-    const isMobile =
-      window.innerWidth <= 960 ||
-      navigator.maxTouchPoints > 0 ||
-      ('ontouchstart' in window) ||
-      window.matchMedia('(pointer: coarse)').matches
-
-    if (isMobile) {
-      document.body.style.overflow = ''
-      // JS safety: finishLoader at 700ms (CSS hides at 600ms)
-      const t = setTimeout(finishLoader, 700)
-      return () => { clearTimeout(t) }
     }
 
     // ── DESKTOP: cinematic GSAP entrance ─────────────────────────────────────
