@@ -287,7 +287,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             This is the FIRST thing the browser processes, before sw.js, before globals.css.
             Prevents green flash even if service worker serves stale HTML/CSS. */}
         <style dangerouslySetInnerHTML={{ __html:
+          /* Body always cream — shows during any loading state */
+          'body{background:#f4f0e6!important}' +
+          /* Hide old green loading.tsx div: when BAILOUT happens, the loading fallback
+             is the ONLY element child of #main-content — hide it so body cream shows.
+             Once page hydrates, there are many children so :only-child no longer matches. */
+          '#main-content>div:only-child{display:none!important;visibility:hidden!important}' +
+          /* Loader: hidden everywhere by default */
           '#loader{display:none!important;visibility:hidden!important;opacity:0!important}' +
+          /* Loader: only visible on desktop */
           '@media(min-width:961px){#loader{display:flex!important;visibility:visible!important;opacity:1!important}}'
         }} />
         {/* Resource hints — preconnect to critical origins */}
@@ -373,6 +381,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       return;
     }
   } catch(e) {}
+
+  // ── BFCACHE: force reload when restored from Back-Forward Cache ──────────
+  // This fires when Chrome restores a cached page (user went back/forward).
+  // We force a reload so they never see stale green HTML from BFCache.
+  window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+      location.reload();
+    }
+  });
 
   // ── SERVICE WORKER REGISTRATION ──────────────────────────────────────────
   if ('serviceWorker' in navigator) {
