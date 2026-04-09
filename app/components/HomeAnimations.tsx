@@ -20,11 +20,31 @@ export default function HomeAnimations() {
 
       if (cancelled) return
 
-      // Detect touch/mobile — skip all GSAP hidden states on coarse-pointer devices
-      const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+      // Detect mobile — multiple signals for maximum reliability across all devices
+      const isTouch = typeof window !== 'undefined' && (
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.innerWidth <= 960 ||
+        ('ontouchstart' in window) ||
+        navigator.maxTouchPoints > 0
+      )
+
+      // Hard safety: force all hero elements visible after 1.5s regardless of GSAP
+      const heroSafetyTimer = setTimeout(() => {
+        const sels = ['.hero-h1 .line-inner','#hEye','#hSub','#hBtns','#hStats','#hScroll','#searchBox','.zc','.fade-in','.line-inner']
+        sels.forEach(sel => {
+          document.querySelectorAll<HTMLElement>(sel).forEach(el => {
+            el.style.removeProperty('opacity')
+            el.style.removeProperty('transform')
+            el.style.removeProperty('filter')
+            el.style.removeProperty('clip-path')
+            el.style.removeProperty('visibility')
+          })
+        })
+      }, 1500)
 
       // HERO ENTRANCE — fires after loader completes
       function heroEntrance() {
+        clearTimeout(heroSafetyTimer)
         // On mobile/touch: skip animations — CSS already forces visibility
         if (isTouch) return
 
