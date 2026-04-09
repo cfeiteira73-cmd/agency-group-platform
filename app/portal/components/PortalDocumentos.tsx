@@ -16,6 +16,7 @@ interface DocItem {
   date: string
   downloads: number
   description: string
+  url?: string
 }
 
 interface ChecklistItem {
@@ -50,27 +51,33 @@ interface GeneratorDocType {
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
+// ─── Sistema Documental V4 — Agency Group AMI 22506 ──────────────────────────
+// Documentos interactivos com IA: ✦ Colar Texto / ✦ Fotografar Documento / ✦ Ditado de Voz
 const MOCK_DOCUMENTS: DocItem[] = [
-  { id: 'd1',  name: 'CPCV Standard — Habitação 2026',         category: 'Contratos',     type: 'DOCX', size: '124 KB', date: '2026-03-15', downloads: 47, description: 'Contrato promessa compra e venda com cláusulas 2026' },
-  { id: 'd2',  name: 'Contrato Mediação Exclusiva',            category: 'Contratos',     type: 'PDF',  size: '89 KB',  date: '2026-03-10', downloads: 32, description: 'AMI 22506 — angariação em exclusividade' },
-  { id: 'd3',  name: 'Contrato Mediação Não-Exclusiva',        category: 'Contratos',     type: 'PDF',  size: '85 KB',  date: '2026-03-10', downloads: 18, description: 'AMI 22506 — angariação não exclusiva' },
-  { id: 'd4',  name: 'Minuta Distrate Hipoteca',               category: 'Contratos',     type: 'DOCX', size: '67 KB',  date: '2026-02-28', downloads: 9,  description: 'Cancelamento de hipoteca bancária na escritura' },
-  { id: 'd5',  name: 'Certidão Permanente — Guia Prático',     category: 'Jurídico',      type: 'PDF',  size: '210 KB', date: '2026-03-20', downloads: 63, description: 'Como obter, interpretar e validar a certidão predial' },
-  { id: 'd6',  name: 'Guia NHR / IFICI 2026',                  category: 'Jurídico',      type: 'PDF',  size: '340 KB', date: '2026-03-18', downloads: 88, description: 'Regime fiscal de residentes não habituais actualizado' },
-  { id: 'd7',  name: 'Guia Golden Visa / ARI 2026',            category: 'Jurídico',      type: 'PDF',  size: '280 KB', date: '2026-03-01', downloads: 55, description: 'Procedimentos, requisitos e prazos actualizados' },
-  { id: 'd8',  name: 'Obrigações AML — Due Diligence',         category: 'Jurídico',      type: 'PDF',  size: '195 KB', date: '2026-02-15', downloads: 29, description: 'Anti-branqueamento: obrigações do mediador imobiliário' },
-  { id: 'd9',  name: 'Simulador IMT — Tabelas 2026',           category: 'Fiscal',        type: 'XLSX', size: '88 KB',  date: '2026-01-05', downloads: 124,description: 'Escalões IMT habitação própria permanente, secundária, comercial' },
-  { id: 'd10', name: 'Custos de Transacção — Calculadora',     category: 'Fiscal',        type: 'XLSX', size: '112 KB', date: '2026-01-10', downloads: 97, description: 'IMT + IS + Notário + Registo + Comissão AG' },
-  { id: 'd11', name: 'Declaração Rendimentos Arrendamento',    category: 'Fiscal',        type: 'PDF',  size: '78 KB',  date: '2026-02-01', downloads: 34, description: 'IRS categoria F — rendimentos prediais 2025' },
-  { id: 'd12', name: 'Ficha de Imóvel Premium — A4',           category: 'Marketing',     type: 'DOCX', size: '450 KB', date: '2026-03-22', downloads: 41, description: 'Template apresentação imóvel para clientes premium' },
-  { id: 'd13', name: 'Deal Memo Investidor EN',                category: 'Marketing',     type: 'DOCX', size: '230 KB', date: '2026-03-12', downloads: 28, description: 'Investment summary in English for international buyers' },
-  { id: 'd14', name: 'Apresentação Portfólio Agency Group',    category: 'Marketing',     type: 'PDF',  size: '8.2 MB', date: '2026-03-08', downloads: 15, description: 'Credenciais e portfólio 2026 para novos clientes' },
-  { id: 'd15', name: 'Proposta Angariação Exclusiva',          category: 'Templates',     type: 'DOCX', size: '145 KB', date: '2026-03-19', downloads: 52, description: 'Proposta formal para captação de imóvel em exclusividade' },
-  { id: 'd16', name: 'Template Follow-Up Pós-Visita',          category: 'Templates',     type: 'DOCX', size: '68 KB',  date: '2026-03-14', downloads: 39, description: 'Email + WhatsApp sequência após visita a imóvel' },
-  { id: 'd17', name: 'Sequência Captação Off-Market',          category: 'Templates',     type: 'DOCX', size: '92 KB',  date: '2026-03-05', downloads: 23, description: '5 toques para abordagem de imóveis fora de mercado' },
-  { id: 'd18', name: 'Relatório Due Diligence Premium',        category: 'Due Diligence', type: 'DOCX', size: '380 KB', date: '2026-03-17', downloads: 19, description: 'Template completo para imóveis acima de €500K' },
-  { id: 'd19', name: 'Checklist Auditoria Condomínio',         category: 'Due Diligence', type: 'PDF',  size: '156 KB', date: '2026-02-22', downloads: 11, description: 'Dívidas, obras pendentes, regulamento, fracções' },
-  { id: 'd20', name: 'Relatório AVM — Avaliação de Mercado',   category: 'Due Diligence', type: 'DOCX', size: '290 KB', date: '2026-03-03', downloads: 36, description: 'Template de avaliação automática de valor de mercado' },
+  // ── Contratos ──
+  { id: 'cmi',  name: 'CMI — Contrato de Mediação Imobiliária V4', category: 'Contratos',     type: 'Template', size: '72 KB',  date: '2026-04-09', downloads: 0, description: 'Contrato de Mediação Imobiliária · AMI 22506 · Exclusiva / Não exclusiva · com IA', url: '/docs/cmi-v4-final.html' },
+  { id: '07',   name: 'CPCV — Habitação Própria Permanente',        category: 'Contratos',     type: 'Template', size: '42 KB',  date: '2026-04-09', downloads: 0, description: 'Contrato promessa compra e venda HPP com cláusulas 2026 · IA integrada',             url: '/docs/07-cpcv-hpp.html' },
+  { id: '08',   name: 'CPCV — Investimento',                        category: 'Contratos',     type: 'Template', size: '35 KB',  date: '2026-04-09', downloads: 0, description: 'CPCV para imóveis de investimento e rendimento · cláusulas específicas 2026',       url: '/docs/08-cpcv-investimento.html' },
+  { id: '09',   name: 'CPCV — Off-Plan / Em Construção',            category: 'Contratos',     type: 'Template', size: '38 KB',  date: '2026-04-09', downloads: 0, description: 'CPCV para imóveis em construção e lançamentos off-plan · prazos e faseamentos',    url: '/docs/09-cpcv-offplan.html' },
+  { id: '10',   name: 'Adenda ao CPCV',                             category: 'Contratos',     type: 'Template', size: '32 KB',  date: '2026-04-09', downloads: 0, description: 'Adenda para alteração de condições, prazos ou partes do CPCV existente',          url: '/docs/10-adenda-cpcv.html' },
+  // ── Jurídico ──
+  { id: '04',   name: 'Carta de Oferta Formal',                     category: 'Jurídico',      type: 'Template', size: '37 KB',  date: '2026-04-09', downloads: 0, description: 'Carta de oferta estruturada com condições, prazo e financiamento · IA integrada',  url: '/docs/04-carta-oferta.html' },
+  { id: '05',   name: 'Contraproposta',                             category: 'Jurídico',      type: 'Template', size: '32 KB',  date: '2026-04-09', downloads: 0, description: 'Contraproposta formal com condições alternativas e prazo de resposta',              url: '/docs/05-contraproposta.html' },
+  { id: '06',   name: 'Declaração de Fundos (Proof of Funds)',      category: 'Jurídico',      type: 'Template', size: '33 KB',  date: '2026-04-09', downloads: 0, description: 'Declaração formal de disponibilidade de fundos para a transacção',               url: '/docs/06-proof-of-funds.html' },
+  { id: '15',   name: 'Checklist Final — Escritura',                category: 'Jurídico',      type: 'Template', size: '44 KB',  date: '2026-04-09', downloads: 0, description: 'Checklist completo de documentação e requisitos para o dia da escritura',         url: '/docs/15-checklist-escritura.html' },
+  // ── Fiscal ──
+  { id: '13',   name: 'Declaração de Débitos IMI',                  category: 'Fiscal',        type: 'Template', size: '31 KB',  date: '2026-04-09', downloads: 0, description: 'Declaração de situação tributária IMI para apresentação na escritura',           url: '/docs/13-declaracao-imi.html' },
+  { id: '14',   name: 'Guia IMT 2026 — Cálculo Completo',           category: 'Fiscal',        type: 'Template', size: '40 KB',  date: '2026-04-09', downloads: 0, description: 'Guia prático IMT 2026: escalões HPP, habitação secundária e comercial',          url: '/docs/14-guia-imt-2026.html' },
+  { id: '17',   name: 'Recibo de Comissão',                         category: 'Fiscal',        type: 'Template', size: '37 KB',  date: '2026-04-09', downloads: 0, description: 'Recibo de comissão de mediação imobiliária · AMI 22506 · com IVA',               url: '/docs/17-recibo-comissao.html' },
+  // ── Marketing ──
+  { id: '01',   name: 'Ficha de Identificação do Imóvel',           category: 'Marketing',     type: 'Template', size: '58 KB',  date: '2026-04-09', downloads: 0, description: 'Ficha interactiva com IA: ✦ Colar texto · ✦ Fotografar documento · ✦ Ditado',   url: '/docs/01-ficha-imovel.html' },
+  // ── Templates ──
+  { id: '02',   name: 'Checklist de Documentos do Vendedor',        category: 'Templates',     type: 'Template', size: '34 KB',  date: '2026-04-09', downloads: 0, description: 'Checklist completo de documentação obrigatória para o vendedor · 2026',          url: '/docs/02-checklist-vendedor.html' },
+  // ── Due Diligence ──
+  { id: '03',   name: 'Relatório AVM — Avaliação de Mercado',       category: 'Due Diligence', type: 'Template', size: '31 KB',  date: '2026-04-09', downloads: 0, description: 'Relatório automatizado de avaliação de mercado · comparáveis · IA integrada',    url: '/docs/03-relatorio-avm.html' },
+  { id: '11',   name: 'Checklist Due Diligence Premium',            category: 'Due Diligence', type: 'Template', size: '34 KB',  date: '2026-04-09', downloads: 0, description: 'Due diligence completa para imóveis premium: jurídico, fiscal e técnico',        url: '/docs/11-due-diligence.html' },
+  { id: '12',   name: 'Relatório Técnico de Vistoria',              category: 'Due Diligence', type: 'Template', size: '35 KB',  date: '2026-04-09', downloads: 0, description: 'Relatório de vistoria técnica do imóvel com IA: ✦ Fotografar · ✦ Ditado',       url: '/docs/12-relatorio-vistoria.html' },
+  { id: '16',   name: 'Declaração de Entrega de Chaves',            category: 'Due Diligence', type: 'Template', size: '42 KB',  date: '2026-04-09', downloads: 0, description: 'Declaração formal de entrega de chaves com inventário e estado do imóvel',      url: '/docs/16-declaracao-entrega-chaves.html' },
 ]
 
 const DEAL_CHECKLISTS: ChecklistStage[] = [
@@ -627,13 +634,13 @@ export default function PortalDocumentos({ onExportPDF }: PortalDocumentosProps 
                       flex: 1, padding: '6px 8px', background: 'rgba(28,74,53,.06)', border: '1px solid rgba(28,74,53,.12)',
                       color: '#1c4a35', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
                       cursor: 'pointer', transition: 'all .2s', borderRadius: '6px',
-                    }}>Ver</button>
+                    }} onClick={() => doc.url && window.open(doc.url, '_blank')}>Ver</button>
                     <button type="button" style={{
                       flex: 1, padding: '6px 8px', background: '#1c4a35', border: 'none',
                       color: '#f4f0e6', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em',
                       cursor: 'pointer', transition: 'all .2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '6px',
-                    }}>
-                      <IconDownload />Download
+                    }} onClick={() => doc.url && window.open(doc.url, '_blank')}>
+                      <IconDownload />Abrir
                     </button>
                     <button type="button"
                       style={{
