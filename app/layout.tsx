@@ -343,7 +343,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: `
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        // Listen for SW_ACTIVATED_V6 message — new SW took over, reload for fresh HTML
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data && event.data.type === 'SW_ACTIVATED_V6') {
+            window.location.reload();
+          }
+        });
+        // Force update check on every load
+        reg.update().catch(() => {});
+      }).catch(() => {});
     });
   }
 `}} />

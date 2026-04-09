@@ -1,19 +1,31 @@
-// Agency Group Service Worker v5.0
+// Agency Group Service Worker v6.0
 // HTML pages: NEVER cached (always fresh from server)
 // Static assets: cache-first for performance
+// v6: Force reload all clients on SW activation to bust stale HTML cache
 
-const CACHE_NAME = 'agency-group-v5';
+const CACHE_NAME = 'agency-group-v6';
 
 self.addEventListener('install', (event) => {
-  // Do NOT pre-cache HTML pages — they must always be fresh
+  // Skip waiting immediately — don't wait for old SW to die
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    )).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
+      .then(() => {
+        // Tell ALL open tabs to reload so they get fresh HTML
+        return self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+          .then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: 'SW_ACTIVATED_V6' });
+            });
+          });
+      })
   );
 });
 
@@ -22,7 +34,6 @@ self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) return;
 
   // HTML navigation requests — ALWAYS fetch fresh, never from cache
-  // This ensures inline CSS fixes in HomeLoader always reach the user
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' }).catch(() =>
