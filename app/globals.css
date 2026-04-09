@@ -84,7 +84,8 @@ nav.solid .nav-links a{color:var(--g)}
 .nav-cta{font-size:.6rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--w);background:var(--g);padding:11px 22px;text-decoration:none;transition:background .3s,transform .3s var(--ease-out)}
 .nav-cta:hover{background:var(--gm);transform:translateY(-1px)}
 .hero{height:100svh;min-height:640px;display:grid;grid-template-columns:58% 42%;overflow:hidden}
-.hl{position:relative;background:var(--gd);display:flex;flex-direction:column;justify-content:flex-end;padding:0 80px 88px;overflow:hidden;border-right:1px solid rgba(201,169,110,.18)}
+.hl{position:relative;background:var(--gd);display:flex;flex-direction:column;justify-content:flex-start;padding:88px 80px 88px;overflow:hidden;border-right:1px solid rgba(201,169,110,.18)}
+@media(min-width:961px){.hl{justify-content:flex-end;padding:0 80px 88px}}
 .hl-bg{position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 12% 88%,rgba(28,74,53,.55),transparent 62%),radial-gradient(ellipse 55% 85% at 88% 8%,rgba(201,169,110,.05),transparent 58%),radial-gradient(ellipse 40% 50% at 50% 50%,rgba(28,74,53,.08),transparent 70%),linear-gradient(158deg,#060f0a,#1a4530 52%,#081510)}
 .hl-grain{position:absolute;inset:0;opacity:.046;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:220px}
 .hl::before{content:'';position:absolute;top:-30%;left:60%;width:1px;height:160%;background:linear-gradient(180deg,transparent,rgba(201,169,110,.14) 42%,rgba(201,169,110,.08) 70%,transparent);transform:rotate(-8deg)}
@@ -365,7 +366,7 @@ footer{background:var(--ink);padding:80px 0 32px}
   .nav-links{display:none}
   .hero{grid-template-columns:1fr;height:auto}
   .hr{display:none}
-  .hl{padding:88px 28px 80px;min-height:100svh;justify-content:flex-start}
+  .hl{padding:88px 28px 80px;min-height:100svh}
   .hero-stats{position:static!important;right:auto!important;bottom:auto!important;flex-direction:row!important;flex-wrap:wrap!important;gap:20px 32px!important;margin-top:32px!important;opacity:1!important;transform:none!important}
   .search-wrap{padding:0 20px}
   .search-box{flex-wrap:wrap}
