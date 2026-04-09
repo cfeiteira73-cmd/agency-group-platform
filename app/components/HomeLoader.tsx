@@ -62,27 +62,33 @@ export default function HomeLoader() {
     let tl: any = null
     let safetyTimer: ReturnType<typeof setTimeout> | null = null
 
+    // Safety timer set IMMEDIATELY — before any async work
+    // Guarantees finishLoader runs even if GSAP import fails or hangs
+    safetyTimer = setTimeout(finishLoader, 4500)
+
     const run = async () => {
-      const { default: gsap } = await import('gsap')
-      if (cancelled) return
+      try {
+        const { default: gsap } = await import('gsap')
+        if (cancelled) return
 
-      // Safety net only — GSAP onComplete is the primary trigger
-      safetyTimer = setTimeout(finishLoader, 4000)
+        gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })
+        gsap.set('#ldrG', { y: 40, opacity: 0, filter: 'blur(8px)' })
+        gsap.set('#ldrFill', { scaleX: 0, transformOrigin: 'left center' })
+        gsap.set('#ldrTxt', { opacity: 0, y: 12 })
 
-      gsap.set('#ldrA', { y: 40, opacity: 0, filter: 'blur(8px)' })
-      gsap.set('#ldrG', { y: 40, opacity: 0, filter: 'blur(8px)' })
-      gsap.set('#ldrFill', { scaleX: 0, transformOrigin: 'left center' })
-      gsap.set('#ldrTxt', { opacity: 0, y: 12 })
-
-      tl = gsap.timeline({
-        onComplete: () => { if (safetyTimer) clearTimeout(safetyTimer); finishLoader() }
-      })
-      tl
-        .to('#ldrA', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' })
-        .to('#ldrG', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' }, '-=0.45')
-        .to('#ldrFill', { scaleX: 1, duration: 1.2, ease: 'power3.out' }, '-=0.4')
-        .to('#ldrTxt', { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, '-=0.9')
-        .to(loader, { opacity: 0, duration: 0.55, ease: 'power2.inOut', delay: 0.25 })
+        tl = gsap.timeline({
+          onComplete: () => { if (safetyTimer) clearTimeout(safetyTimer); finishLoader() }
+        })
+        tl
+          .to('#ldrA', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' })
+          .to('#ldrG', { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7, ease: 'expo.out' }, '-=0.45')
+          .to('#ldrFill', { scaleX: 1, duration: 1.2, ease: 'power3.out' }, '-=0.4')
+          .to('#ldrTxt', { opacity: 1, y: 0, duration: 0.55, ease: 'power3.out' }, '-=0.9')
+          .to(loader, { opacity: 0, duration: 0.55, ease: 'power2.inOut', delay: 0.25 })
+      } catch {
+        // GSAP failed to load — close loader immediately
+        finishLoader()
+      }
     }
 
     run()
