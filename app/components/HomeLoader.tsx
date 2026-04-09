@@ -11,12 +11,15 @@ export default function HomeLoader() {
     // Touch-capability detection — NOT viewport width.
     // any-pointer:coarse catches Samsung S-Pen (pointer:fine primary but touch screen present).
     // maxTouchPoints covers all Android/iOS devices reliably.
+    // User-Agent catches Android Chrome Custom Tab (Google Search) where touch APIs may not fire.
     // Never use innerWidth — Chrome on Android can report 1024+ in landscape/desktop mode.
+    const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)
     const mobile =
       navigator.maxTouchPoints > 0 ||
       ('ontouchstart' in window) ||
       window.matchMedia('(pointer: coarse)').matches ||
-      window.matchMedia('(any-pointer: coarse)').matches
+      window.matchMedia('(any-pointer: coarse)').matches ||
+      mobileUA
 
     if (mobile) {
       // Remove from DOM — no hiding, no classes, no CSS — element does not exist
@@ -68,7 +71,8 @@ export default function HomeLoader() {
 
     // Safety timer set IMMEDIATELY — before any async work
     // Guarantees finishLoader runs even if GSAP import fails or hangs
-    safetyTimer = setTimeout(finishLoader, 4500)
+    // 2000ms: loader animation is ~2.5s total, but we'd rather cut it short than show green screen
+    safetyTimer = setTimeout(finishLoader, 2000)
 
     const run = async () => {
       try {

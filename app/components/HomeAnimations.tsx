@@ -23,14 +23,22 @@ export default function HomeAnimations() {
       // Detect touch device — touch capability, NOT viewport width.
       // any-pointer:coarse catches Samsung S-Pen (primary pointer:fine but has touch screen).
       // maxTouchPoints covers all Android/iOS phones/tablets reliably.
-      // Do NOT check innerWidth — Chrome on Android reports 1024+ in landscape/desktop mode,
-      // causing false desktop detection and running GSAP animations that hide content.
+      // User-Agent catches Android Chrome Custom Tab (Google Search) where touch APIs may not fire.
+      const mobileUA = typeof navigator !== 'undefined' &&
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)
       const isTouch = typeof window !== 'undefined' && (
         window.matchMedia('(pointer: coarse)').matches ||
         window.matchMedia('(any-pointer: coarse)').matches ||
         ('ontouchstart' in window) ||
-        navigator.maxTouchPoints > 0
+        navigator.maxTouchPoints > 0 ||
+        mobileUA
       )
+      // Narrow viewport guard: skip ALL hero animations if viewport ≤ 1099px.
+      // Belt+suspenders on top of isTouch — catches headless Chrome (Lighthouse/PageSpeed)
+      // which emulates a 360px viewport but reports pointer:fine and maxTouchPoints=0.
+      const isNarrow = typeof window !== 'undefined' &&
+        window.matchMedia('(max-width: 1099px)').matches
+      const skipHeroAnim = isTouch || isNarrow
 
       // Hard safety: force all hero elements visible after 1.5s regardless of GSAP
       // On mobile this ALWAYS fires (heroEntrance no longer cancels it for touch devices)
@@ -62,9 +70,9 @@ export default function HomeAnimations() {
             el.style.removeProperty('filter')
           })
         })
-        // On mobile/touch: skip animations — CSS + HomeLoader already force visibility
+        // On mobile/touch/narrow viewport: skip animations — CSS + HomeLoader already force visibility
         // Do NOT cancel heroSafetyTimer on mobile — let it fire to remove any stale inline styles
-        if (isTouch) return
+        if (skipHeroAnim) return
         clearTimeout(heroSafetyTimer)
 
         gsap.set('.hero-h1 .line-inner', { y: '115%' })
@@ -171,9 +179,9 @@ export default function HomeAnimations() {
               onLeaveBack: () => document.getElementById('mainNav')?.classList.remove('solid'),
             })
 
-            // ── MOBILE/TOUCH: no initial GSAP sets, no ScrollTrigger animations
-            // CSS @media(pointer:coarse) + @media(max-width:960px) ensure all elements visible
-            if (isTouch) return
+            // ── MOBILE/TOUCH/NARROW: no initial GSAP sets, no ScrollTrigger animations
+            // CSS @media(pointer:coarse) + @media(max-width:1099px) ensure all elements visible
+            if (skipHeroAnim) return
 
             // Set initial states (desktop only)
             gsap.set('.text-reveal-inner', { y: '102%' })
@@ -209,8 +217,8 @@ export default function HomeAnimations() {
                   { clipPath:'inset(0 0 0% 0)' },
                   { clipPath:'inset(0 0 100% 0)', duration:1.2, delay: Math.min(i * 0.1, 0.3), ease:'power4.inOut' })
             })
-            // ZONAS STAGGER — skip on touch/mobile (CSS forces visibility)
-            if (!isTouch && document.querySelector('.zc') && document.querySelector('.zonas-grid')) {
+            // ZONAS STAGGER — skip on touch/mobile/narrow (CSS forces visibility)
+            if (!skipHeroAnim && document.querySelector('.zc') && document.querySelector('.zonas-grid')) {
               gsap.fromTo('.zc',
                 { clipPath:'inset(0 0 100% 0)', opacity:0 },
                 { clipPath:'inset(0 0 0% 0)', opacity:1, duration:1.1, stagger:{ amount:0.7, from:'start' }, ease:'power4.inOut',
@@ -221,8 +229,8 @@ export default function HomeAnimations() {
               gsap.set('.mkt-fill', { scaleX: 0, transformOrigin: 'left' })
               gsap.to('.mkt-fill', { scaleX:1, duration:1.4, stagger:0.08, ease:'power3.out', scrollTrigger:{ trigger:'.mkt-zones', start:'top 80%', once:true }})
             }
-            // CREDENCIAIS — skip on touch/mobile
-            if (!isTouch && document.querySelector('.cred-grid')) {
+            // CREDENCIAIS — skip on touch/mobile/narrow
+            if (!skipHeroAnim && document.querySelector('.cred-grid')) {
               gsap.fromTo('.cred-c', { opacity:0, y:56 }, { opacity:1, y:0, duration:1.1, stagger:0.1, ease:'power3.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 82%', once:true }})
             }
             // NUMBER COUNTERS — credenciais
