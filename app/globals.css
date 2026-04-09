@@ -432,6 +432,20 @@ footer{background:var(--ink);padding:80px 0 32px}
     filter: none !important;
     visibility: visible !important;
   }
+  /* HERO: garantir que .hero-content nunca fica invisível em mobile */
+  .hero-content{
+    opacity:1!important;visibility:visible!important;
+    position:relative!important;z-index:10!important;
+    display:flex!important;flex-direction:column!important;
+  }
+  .hero-content *{
+    opacity:1!important;visibility:visible!important;
+    clip-path:none!important;filter:none!important;
+  }
+  .hero-h1 .line{overflow:visible!important}
+  .hero-h1 .line-inner{transform:none!important;opacity:1!important}
+  /* HERO BG: em mobile garantir que se vê a partir do 1º pixel */
+  .hl{min-height:100svh;background:linear-gradient(158deg,#060f0a,#1a4530 52%,#081510)!important}
 }
 
 @media(max-width:640px){
