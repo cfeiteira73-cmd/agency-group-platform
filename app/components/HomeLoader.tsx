@@ -2,6 +2,17 @@
 
 import { useEffect, useRef } from 'react'
 
+// Inline CSS embedded directly in the component — works even with stale SW cache
+// visibility:hidden overrides any GSAP inline opacity on the element
+const MOBILE_STYLE = `
+  @keyframes _ag_ldr{to{visibility:hidden;pointer-events:none;opacity:0}}
+  @media(max-width:960px),(pointer:coarse){
+    #loader{
+      animation:_ag_ldr 0.01s linear 0.6s forwards!important;
+    }
+  }
+`
+
 export default function HomeLoader() {
   const loaderRef = useRef<HTMLDivElement>(null)
 
@@ -14,22 +25,16 @@ export default function HomeLoader() {
     function finishLoader() {
       if (!loader) return
       if (loader.classList.contains('done')) return
-      // Strip any GSAP inline styles so CSS takes over cleanly
       loader.style.removeProperty('opacity')
       loader.style.removeProperty('visibility')
       loader.classList.add('done')
       document.body.style.overflow = ''
-      // Hard-kill after transition completes
       setTimeout(() => {
-        if (loaderRef.current) {
-          loaderRef.current.style.display = 'none'
-        }
+        if (loaderRef.current) loaderRef.current.style.display = 'none'
       }, 700)
     }
 
-    // ── MOBILE / TOUCH: bypass GSAP entirely ─────────────────────────────────
-    // CSS animation already handles visual dismiss (@keyframes ag-ldr-out)
-    // JS adds .done class as belt-and-suspenders safety
+    // ── MOBILE / TOUCH: bypass GSAP, CSS animation handles visual dismiss ─────
     const isMobile =
       window.innerWidth <= 960 ||
       navigator.maxTouchPoints > 0 ||
@@ -37,10 +42,9 @@ export default function HomeLoader() {
       window.matchMedia('(pointer: coarse)').matches
 
     if (isMobile) {
-      // Immediately unlock scroll — CSS animation handles visual fade
       document.body.style.overflow = ''
-      // Belt-and-suspenders: also add .done class after CSS animation finishes
-      const t = setTimeout(finishLoader, 850)
+      // JS safety: finishLoader at 700ms (CSS hides at 600ms)
+      const t = setTimeout(finishLoader, 700)
       return () => { clearTimeout(t) }
     }
 
@@ -85,13 +89,17 @@ export default function HomeLoader() {
   }, [])
 
   return (
-    <div id="loader" ref={loaderRef}>
-      <div className="ldr-logo">
-        <span id="ldrA">Agency</span>
-        <span id="ldrG">Group</span>
+    <>
+      {/* Inline style — travels with the HTML, bypasses any stale CSS cache */}
+      <style dangerouslySetInnerHTML={{ __html: MOBILE_STYLE }} />
+      <div id="loader" ref={loaderRef}>
+        <div className="ldr-logo">
+          <span id="ldrA">Agency</span>
+          <span id="ldrG">Group</span>
+        </div>
+        <div className="ldr-bar"><div className="ldr-fill" id="ldrFill"></div></div>
+        <div className="ldr-txt" id="ldrTxt">Lisboa · Portugal · AMI 22506</div>
       </div>
-      <div className="ldr-bar"><div className="ldr-fill" id="ldrFill"></div></div>
-      <div className="ldr-txt" id="ldrTxt">Lisboa · Portugal · AMI 22506</div>
-    </div>
+    </>
   )
 }
