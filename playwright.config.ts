@@ -36,13 +36,14 @@ export default defineConfig({
   ],
   // Auto-start dev server for local runs only
   webServer: process.env.CI ? {
-    command: 'npm run start',
+    command: 'pnpm run start',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
+    timeout: 60_000,
   } : {
-    command: 'npm run dev',
+    command: 'pnpm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    reuseExistingServer: true,
+    timeout: 120_000,
   },
 })
