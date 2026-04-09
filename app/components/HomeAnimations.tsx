@@ -20,8 +20,14 @@ export default function HomeAnimations() {
 
       if (cancelled) return
 
+      // Detect touch/mobile — skip all GSAP hidden states on coarse-pointer devices
+      const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
       // HERO ENTRANCE — fires after loader completes
       function heroEntrance() {
+        // On mobile/touch: skip animations — CSS already forces visibility
+        if (isTouch) return
+
         gsap.set('.hero-h1 .line-inner', { y: '115%' })
         gsap.set('#hSub', { opacity: 0, y: 36, filter: 'blur(4px)' })
         gsap.set('#hBtns', { opacity: 0, y: 32 })
@@ -143,8 +149,8 @@ export default function HomeAnimations() {
                   { clipPath:'inset(0 0 0% 0)' },
                   { clipPath:'inset(0 0 100% 0)', duration:1.2, delay: Math.min(i * 0.1, 0.3), ease:'power4.inOut' })
             })
-            // ZONAS STAGGER
-            if (document.querySelector('.zc') && document.querySelector('.zonas-grid')) {
+            // ZONAS STAGGER — skip on touch/mobile (CSS forces visibility)
+            if (!isTouch && document.querySelector('.zc') && document.querySelector('.zonas-grid')) {
               gsap.fromTo('.zc',
                 { clipPath:'inset(0 0 100% 0)', opacity:0 },
                 { clipPath:'inset(0 0 0% 0)', opacity:1, duration:1.1, stagger:{ amount:0.7, from:'start' }, ease:'power4.inOut',
@@ -155,8 +161,8 @@ export default function HomeAnimations() {
               gsap.set('.mkt-fill', { scaleX: 0, transformOrigin: 'left' })
               gsap.to('.mkt-fill', { scaleX:1, duration:1.4, stagger:0.08, ease:'power3.out', scrollTrigger:{ trigger:'.mkt-zones', start:'top 80%', once:true }})
             }
-            // CREDENCIAIS
-            if (document.querySelector('.cred-grid')) {
+            // CREDENCIAIS — skip on touch/mobile
+            if (!isTouch && document.querySelector('.cred-grid')) {
               gsap.fromTo('.cred-c', { opacity:0, y:56 }, { opacity:1, y:0, duration:1.1, stagger:0.1, ease:'power3.out', scrollTrigger:{ trigger:'.cred-grid', start:'top 82%', once:true }})
             }
             // NUMBER COUNTERS — credenciais

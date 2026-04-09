@@ -35,6 +35,32 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;o
 /* Film grain — disable on touch devices (performance + accessibility) */
 @media (pointer: coarse) {
   body::after { display: none !important; }
+  /* GSAP sets opacity:0 + clipPath as initial states before animating.
+     On mobile, ScrollTrigger can mis-fire → elements stay invisible.
+     Force all animated elements to be visible on touch devices. */
+  .zc,
+  .imc,
+  .fade-in,
+  .fade-up,
+  .text-reveal-inner,
+  .line-inner,
+  .hero-h1 .line-inner,
+  #hSub,
+  #hBtns,
+  #hStats,
+  #hScroll,
+  #searchBox,
+  .sec-h2,
+  .sec-eye,
+  .cred-item,
+  .cred-c,
+  .mkt-row {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    filter: none !important;
+    visibility: visible !important;
+  }
 }
 #cur{position:fixed;pointer-events:none;z-index:9999;top:0;left:0}
 .c-dot{position:absolute;width:8px;height:8px;background:#ffffff;border-radius:50%;transform:translate(-50%,-50%);transition:width .35s var(--ease-out),height .35s var(--ease-out),background .25s,opacity .25s;mix-blend-mode:exclusion;will-change:transform}
@@ -337,7 +363,7 @@ footer{background:var(--ink);padding:80px 0 32px}
   .nav-links{display:none}
   .hero{grid-template-columns:1fr;height:auto}
   .hr{display:none}
-  .hl{padding:100px 28px 72px;min-height:90svh}
+  .hl{padding:80px 28px 72px;min-height:90svh}
   .hero-stats{right:20px;bottom:60px}
   .search-wrap{padding:0 20px}
   .search-box{flex-wrap:wrap}
@@ -346,8 +372,8 @@ footer{background:var(--ink);padding:80px 0 32px}
   .sw{padding:0 24px}
   .zonas-section,.imoveis-section,.avm-section,.radar-section,.market-section{padding:72px 0}
   .zonas-grid{grid-template-columns:1fr 1fr;grid-template-rows:auto;grid-auto-rows:240px}
-  .zc{min-height:240px}
-  .zc:nth-child(1){grid-row:span 1;min-height:240px}
+  .zc{min-height:240px;height:240px;display:block}
+  .zc:nth-child(1){grid-row:span 1;min-height:240px;height:240px}
   .zc:nth-child(6),.zc:nth-child(8){grid-column:span 1}
   .im-grid{grid-template-columns:1fr}
   .imc.feat{grid-column:span 1}
@@ -370,6 +396,13 @@ footer{background:var(--ink);padding:80px 0 32px}
   .cpcv-btn-wa{min-height:44px;padding:10px 14px}
   .cpcv-sel{min-height:44px;padding:10px}
   .nav-burger{display:flex!important}
+}
+
+@media(max-width:640px){
+  .sw{padding:0 16px}
+  .hero-btns{flex-direction:column;gap:10px;width:100%}
+  .btn-gold,.btn-ghost{width:100%;justify-content:center}
+  .hero-h1{font-size:clamp(1.6rem,7vw,2.8rem)!important}
 }
 
 /* ═══════════════════════════════════════════════
@@ -642,8 +675,9 @@ img, video {
   .avm-row{grid-template-columns:1fr!important}
   .sim-grid{gap:32px!important}
   .sec-h2{font-size:clamp(1.5rem,7.5vw,2.5rem)!important}
-  .zonas-grid{grid-template-columns:1fr!important;grid-auto-rows:280px!important}
-  .zc:nth-child(1),.zc:nth-child(6),.zc:nth-child(8){grid-row:span 1!important;grid-column:span 1!important}
+  .zonas-grid{grid-template-columns:1fr!important;grid-auto-rows:300px!important}
+  .zc{min-height:300px!important;height:300px!important;display:block!important}
+  .zc:nth-child(1),.zc:nth-child(6),.zc:nth-child(8){grid-row:span 1!important;grid-column:span 1!important;height:300px!important}
   .editorial-2col{min-height:auto!important}
   .editorial-2col>*:first-child{min-height:220px!important}
   .test-grid{grid-template-columns:1fr!important}
