@@ -2,17 +2,12 @@
 
 import { useEffect, useRef } from 'react'
 
-// Inline CSS — part of HTML payload, bypasses any stale CSS file cache
-// Uses display:none!important — overrides GSAP, overrides everything
+// Inline CSS — embedded in HTML payload, immune to stale CSS file cache.
+// INVERTED LOGIC: loader is hidden by default, only shown on desktop (>960px).
+// This means mobile NEVER sees the loader regardless of JS, GSAP, or SW state.
 const MOBILE_STYLE = `
-  @media(max-width:960px),(pointer:coarse){
-    #loader{
-      display:none!important;
-      visibility:hidden!important;
-      pointer-events:none!important;
-      opacity:0!important;
-    }
-  }
+  #loader{display:none!important}
+  @media(min-width:961px){#loader{display:flex!important}}
 `
 
 export default function HomeLoader() {
