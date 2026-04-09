@@ -2,14 +2,6 @@
 
 import { useEffect, useRef } from 'react'
 
-// Inline CSS — embedded in HTML payload, immune to stale CSS file cache.
-// INVERTED LOGIC: loader is hidden by default, only shown on desktop (>960px).
-// This means mobile NEVER sees the loader regardless of JS, GSAP, or SW state.
-const MOBILE_STYLE = `
-  #loader{display:none!important}
-  @media(min-width:961px){#loader{display:flex!important}}
-`
-
 export default function HomeLoader() {
   const loaderRef = useRef<HTMLDivElement>(null)
 
@@ -25,14 +17,15 @@ export default function HomeLoader() {
       window.matchMedia('(pointer: coarse)').matches
 
     if (isMobile) {
-      // CSS already hides it via display:none!important — belt-and-suspenders:
+      // loader already has display:none from JSX inline style — belt-and-suspenders:
       loader.style.display = 'none'
       loader.classList.add('done')
       document.body.style.overflow = ''
       return
     }
 
-    // ── DESKTOP ONLY: lock scroll, run cinematic GSAP entrance ───────────────
+    // ── DESKTOP ONLY: show loader, lock scroll, run cinematic GSAP entrance ──
+    loader.style.display = 'flex'
     document.body.style.overflow = 'hidden'
 
     function finishLoader() {
@@ -87,17 +80,15 @@ export default function HomeLoader() {
   }, [])
 
   return (
-    <>
-      {/* Inline style — travels with the HTML, bypasses any stale CSS cache */}
-      <style dangerouslySetInnerHTML={{ __html: MOBILE_STYLE }} />
-      <div id="loader" ref={loaderRef}>
-        <div className="ldr-logo">
-          <span id="ldrA">Agency</span>
-          <span id="ldrG">Group</span>
-        </div>
-        <div className="ldr-bar"><div className="ldr-fill" id="ldrFill"></div></div>
-        <div className="ldr-txt" id="ldrTxt">Lisboa · Portugal · AMI 22506</div>
+    // display:none inline — loader is INVISIBLE by default (SSR + mobile)
+    // Desktop JS sets display:flex before running GSAP animation
+    <div id="loader" ref={loaderRef} style={{ display: 'none' }}>
+      <div className="ldr-logo">
+        <span id="ldrA">Agency</span>
+        <span id="ldrG">Group</span>
       </div>
-    </>
+      <div className="ldr-bar"><div className="ldr-fill" id="ldrFill"></div></div>
+      <div className="ldr-txt" id="ldrTxt">Lisboa · Portugal · AMI 22506</div>
+    </div>
   )
 }
