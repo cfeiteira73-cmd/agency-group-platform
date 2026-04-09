@@ -287,14 +287,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             This is the FIRST thing the browser processes, before sw.js, before globals.css.
             Prevents green flash even if service worker serves stale HTML/CSS. */}
         <style dangerouslySetInnerHTML={{ __html:
-          /* Body + html always cream — shows during any loading state, before globals.css loads */
-          'html,body{background:#f4f0e6!important}'
-          /* NOTE: #loader CSS is intentionally NOT here.
-             The loader div has SSR inline style="display:none" which keeps it hidden before JS.
-             JS (HomeLoader.tsx) explicitly sets display:flex ONLY on true desktop (no touch).
-             Do NOT add display:flex!important here — it overrides SSR display:none on mobile. */
-          /* NOTE: #main-content>div:only-child rule removed — it could hide page content
-             if React wraps children in a single div during SSR/hydration. */
+          /* This runs BEFORE globals.css, BEFORE JS, BEFORE service worker — first bytes of HTML.
+             Any rule here is guaranteed to apply regardless of network speed or SW state. */
+          /* Body + html always cream */
+          'html,body{background:#f4f0e6!important}' +
+          /* NUCLEAR: hide loader on mobile/touch — in <head> so it fires before any external CSS or JS.
+             globals.css has the same rules but loads later; this is the fail-safe.
+             On desktop (>1099px, pointer:fine): rules don't apply → loader shows normally via JS. */
+          '@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}' +
+          '@media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}' +
+          '@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}'
         }} />
         {/* Resource hints — preconnect to critical origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
