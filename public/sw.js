@@ -1,13 +1,11 @@
-// Agency Group Service Worker v4.0
-// Caching + Web Push Notifications + Background Sync
+// Agency Group Service Worker v5.0
+// HTML pages: NEVER cached (always fresh from server)
+// Static assets: cache-first for performance
 
-const CACHE_NAME = 'agency-group-v4';
-const STATIC_ASSETS = ['/', '/en', '/fr', '/de', '/es', '/it', '/zh', '/relatorio-2026', '/blog'];
+const CACHE_NAME = 'agency-group-v5';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS).catch(() => {}))
-  );
+  // Do NOT pre-cache HTML pages — they must always be fresh
   self.skipWaiting();
 });
 
@@ -15,15 +13,26 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    ))
+    )).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  // Skip non-http(s) requests
   if (!event.request.url.startsWith('http')) return;
+
+  // HTML navigation requests — ALWAYS fetch fresh, never from cache
+  // This ensures inline CSS fixes in HomeLoader always reach the user
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).catch(() =>
+        caches.match(event.request)
+      )
+    );
+    return;
+  }
+
+  // Static assets (JS chunks, CSS files, images) — cache-first for speed
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request).then(response => {
@@ -40,13 +49,9 @@ self.addEventListener('fetch', (event) => {
 // ─── Push Notification Handling ──────────────────────────────────────────────
 self.addEventListener('push', (event) => {
   if (!event.data) return;
-
   let data;
-  try {
-    data = event.data.json();
-  } catch {
-    data = { title: 'Agency Group', body: event.data.text() };
-  }
+  try { data = event.data.json(); }
+  catch { data = { title: 'Agency Group', body: event.data.text() }; }
 
   const options = {
     body: data.body,
@@ -60,7 +65,6 @@ self.addEventListener('push', (event) => {
     vibrate: [100, 50, 100],
     silent: false,
   };
-
   event.waitUntil(
     self.registration.showNotification(data.title || 'Agency Group', options)
   );
@@ -69,22 +73,18 @@ self.addEventListener('push', (event) => {
 // ─── Notification Click Handling ─────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
   const url = event.notification.data?.url || '/';
-
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
-        if (client.url === url && 'focus' in client) {
-          return client.focus();
-        }
+        if (client.url === url && 'focus' in client) return client.focus();
       }
       return clients.openWindow(url);
     })
   );
 });
 
-// ─── Background Sync (offline actions) ───────────────────────────────────────
+// ─── Background Sync ─────────────────────────────────────────────────────────
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-contacts') {
     event.waitUntil(syncOfflineActions());
@@ -97,15 +97,9 @@ async function syncOfflineActions() {
     const requests = await cache.keys();
     return Promise.all(
       requests.map(async req => {
-        try {
-          await fetch(req.clone());
-          await cache.delete(req);
-        } catch {
-          // Keep for next sync attempt
-        }
+        try { await fetch(req.clone()); await cache.delete(req); }
+        catch { /* Keep for next sync */ }
       })
     );
-  } catch {
-    // Fail silently
-  }
+  } catch { /* Fail silently */ }
 }
