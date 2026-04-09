@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ── Unit Tests ──────────────────────────────────────────────────────────────
+  # ── Unit Tests (Vitest) ──────────────────────────────────────────────────────
   unit-tests:
-    name: Unit Tests (Jest)
+    name: Unit Tests (Vitest)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,29 +24,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install @swc/jest
-        run: npm install --save-dev @swc/jest @swc/core
-
       - name: Run unit tests
-        run: npx jest --coverage --passWithNoTests
-
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
+        run: npx vitest run --passWithNoTests
 
   # ── Build ───────────────────────────────────────────────────────────────────
   build:
     name: Build (Next.js)
     runs-on: ubuntu-latest
     env:
+      # Real secrets — set in GitHub repo Settings → Secrets
       NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
       NOTION_CRM_DB: ${{ secrets.NOTION_CRM_DB }}
       NOTION_PROPERTIES_DB: ${{ secrets.NOTION_PROPERTIES_DB }}
       NOTION_PIPELINE_DB: ${{ secrets.NOTION_PIPELINE_DB }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      # Stub values for build-time env checks (real values live in Vercel)
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'placeholder' }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-placeholder-secret-32chars-min' }}
+      NEXTAUTH_URL: 'https://www.agencygroup.pt'
+      CRON_SECRET: ${{ secrets.CRON_SECRET || 'placeholder' }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'placeholder' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -77,11 +77,11 @@ jobs:
     env:
       BASE_URL: http://localhost:3000
       NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-      NOTION_CRM_DB: ${{ secrets.NOTION_CRM_DB }}
-      NOTION_PROPERTIES_DB: ${{ secrets.NOTION_PROPERTIES_DB }}
-      NOTION_PIPELINE_DB: ${{ secrets.NOTION_PIPELINE_DB }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder' }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-placeholder-secret-32chars-min' }}
+      NEXTAUTH_URL: 'http://localhost:3000'
     steps:
       - uses: actions/checkout@v4
 
