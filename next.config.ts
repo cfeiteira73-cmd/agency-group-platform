@@ -83,6 +83,26 @@ const config: NextConfig = {
         source: '/(.*)',
         headers: securityHeaders,
       },
+      {
+        // Service worker: NUNCA em cache — browser e CDN devem sempre buscar a versão nova
+        // Se o sw.js ficar em cache, versões antigas do SW continuam a servir HTML antigo
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
+      },
+      {
+        // Manifest PWA: sem cache longo — permite que mudanças (background_color, theme_color) propaguem
+        source: '/manifest.json',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      },
     ]
   },
   async redirects() {
