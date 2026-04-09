@@ -170,7 +170,7 @@ nav.solid .nav-links a{color:var(--g)}
 .lnk-sm:hover{opacity:1;gap:8px;letter-spacing:.02em}
 .sec-h2{font-family:var(--font-cormorant),serif;font-size:clamp(1.7rem,3.5vw,4.2rem);font-weight:300;line-height:1.1;color:var(--ink);letter-spacing:-.022em}
 .sec-h2 em{font-style:italic;color:var(--g)}
-.zonas-grid{display:grid;grid-template-columns:2.2fr 1fr 1fr;grid-template-rows:320px 260px 260px 260px;gap:1px;grid-auto-rows:260px;contain:layout style}
+.zonas-grid{display:grid;grid-template-columns:2.2fr 1fr 1fr;grid-template-rows:320px 260px 260px 260px;gap:1px;grid-auto-rows:260px;grid-auto-flow:row dense;contain:layout style}
 .zc{position:relative;overflow:hidden;cursor:none}
 .zc:nth-child(1){grid-row:span 2}
 .zc:nth-child(6){grid-column:2/span 2}
