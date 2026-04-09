@@ -125,6 +125,7 @@ export default function HomeAnimations() {
       }
 
       // ALL SCROLLTRIGGER ANIMATIONS — deferred one frame
+      // On mobile/touch: skip ALL GSAP sets and ScrollTrigger — CSS handles visibility
       rafId = requestAnimationFrame(() => {
         if (cancelled) return
         try {
@@ -137,7 +138,12 @@ export default function HomeAnimations() {
               onEnter: () => document.getElementById('mainNav')?.classList.add('solid'),
               onLeaveBack: () => document.getElementById('mainNav')?.classList.remove('solid'),
             })
-            // Set initial states
+
+            // ── MOBILE/TOUCH: no initial GSAP sets, no ScrollTrigger animations
+            // CSS @media(pointer:coarse) + @media(max-width:960px) ensure all elements visible
+            if (isTouch) return
+
+            // Set initial states (desktop only)
             gsap.set('.text-reveal-inner', { y: '102%' })
             gsap.set('.clip-reveal', { clipPath: 'inset(0 100% 0 0)' })
             gsap.set('.fade-in', { opacity: 0, y: 48 })
