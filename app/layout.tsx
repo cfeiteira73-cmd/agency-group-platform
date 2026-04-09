@@ -280,23 +280,23 @@ const schemaAggregateRatingExpanded = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`}>
+    <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`} style={{ background: '#f4f0e6' }}>
       <head>
         <meta name="author" content="Agency Group – Mediação Imobiliária Lda" />
         {/* CRITICAL: inline style block — hides loader BEFORE any external CSS or JS loads.
             This is the FIRST thing the browser processes, before sw.js, before globals.css.
             Prevents green flash even if service worker serves stale HTML/CSS. */}
         <style dangerouslySetInnerHTML={{ __html:
-          /* Body always cream — shows during any loading state */
-          'body{background:#f4f0e6!important}' +
-          /* Hide old green loading.tsx div: when BAILOUT happens, the loading fallback
-             is the ONLY element child of #main-content — hide it so body cream shows.
+          /* Body + html always cream — shows during any loading state, before globals.css loads */
+          'html,body{background:#f4f0e6!important}' +
+          /* Hide bailout loading fallback: when BAILOUT happens, the loading fallback
+             is the ONLY element child of #main-content — hide it so cream shows.
              Once page hydrates, there are many children so :only-child no longer matches. */
-          '#main-content>div:only-child{display:none!important;visibility:hidden!important}' +
-          /* Loader: hidden everywhere by default */
-          '#loader{display:none!important;visibility:hidden!important;opacity:0!important}' +
-          /* Loader: only visible on desktop */
-          '@media(min-width:961px){#loader{display:flex!important;visibility:visible!important;opacity:1!important}}'
+          '#main-content>div:only-child{display:none!important;visibility:hidden!important}'
+          /* NOTE: #loader CSS is intentionally NOT here.
+             The loader div has SSR inline style="display:none" which keeps it hidden before JS.
+             JS (HomeLoader.tsx) explicitly sets display:flex ONLY on true desktop.
+             Do NOT add display:flex!important here — it overrides SSR display:none on mobile. */
         }} />
         {/* Resource hints — preconnect to critical origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -339,7 +339,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
 
       </head>
-      <body>
+      <body style={{ background: '#f4f0e6' }}>
         {/* Skip-to-content — accessibility (CSS-only, no event handlers) */}
         <a href="#main-content" className="skip-to-content">
           Saltar para o conteúdo principal

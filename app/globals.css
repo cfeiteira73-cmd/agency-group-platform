@@ -350,12 +350,14 @@ footer{background:var(--ink);padding:80px 0 32px}
 .modal-btn{width:100%;background:var(--g);border:none;padding:14px;font-family:var(--font-jost),sans-serif;font-size:.65rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--w);cursor:none;transition:background .3s,transform .3s var(--ease-out)}
 .modal-btn:hover{background:var(--gm);transform:translateY(-1px)}
 .modal-err{font-family:var(--font-dm-mono),monospace;font-size:.52rem;color:var(--err);text-align:center;margin-top:9px;display:none}
-/* Loader: hidden by default everywhere. Only desktop (>960px) shows it. */
+/* Loader: hidden by default everywhere. JS (HomeLoader.tsx) explicitly shows it on desktop only.
+   IMPORTANT: do NOT add display:flex!important here — JS controls show, CSS only controls hide.
+   The loader div has SSR inline style="display:none" which beats CSS display:flex (no !important).
+   JS sets loader.style.display='flex' which beats SSR inline. This is the correct chain. */
 #loader{position:fixed;inset:0;background:var(--gd);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:32px}
-@media(min-width:961px){#loader{display:flex}}
 #loader.done{display:none!important;opacity:0!important;pointer-events:none!important;visibility:hidden!important}
-/* NUCLEAR: loader can NEVER show on mobile/touch — CSS !important beats any JS inline style */
-@media(max-width:960px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}}
+/* NUCLEAR: loader can NEVER show on mobile/touch — protects against any JS/CSS race */
+@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}}
 @media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}}
 /* NUCLEAR force-visible: touch devices wider than 960px (tablets landscape) — GSAP cannot hide hero */
 @media(pointer:coarse){

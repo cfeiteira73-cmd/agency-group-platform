@@ -9,7 +9,7 @@ export default function HomeLoader() {
 
   useEffect(() => {
     const mobile =
-      window.innerWidth <= 960 ||
+      window.innerWidth <= 1099 ||
       navigator.maxTouchPoints > 0 ||
       ('ontouchstart' in window) ||
       window.matchMedia('(pointer: coarse)').matches

@@ -23,7 +23,7 @@ export default function HomeAnimations() {
       // Detect mobile — multiple signals for maximum reliability across all devices
       const isTouch = typeof window !== 'undefined' && (
         window.matchMedia('(pointer: coarse)').matches ||
-        window.innerWidth <= 960 ||
+        window.innerWidth <= 1099 ||
         ('ontouchstart' in window) ||
         navigator.maxTouchPoints > 0
       )
