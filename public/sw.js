@@ -1,12 +1,15 @@
-// Agency Group Service Worker v8.0
-// v8: On activate, FORCE NAVIGATE all open tabs to get fresh HTML
-// HTML pages: NEVER cached, NEVER served stale (no fallback to cache)
-// Static assets: cache-first for performance
+// Agency Group Service Worker v9.0
+// v9: REMOVED client.navigate() nuclear reload from activate.
+//     The forced-reload was causing green flash on Android:
+//     skipWaiting() activates the SW mid-render → client.navigate() reloads
+//     the page → browser shows background color during reload transition.
+// v9 strategy: soft activate only. HTML is always fresh (no-store fetch).
+//              Stale-HTML recovery is handled by the self-heal script in layout.tsx.
 
-const CACHE_NAME = 'agency-group-v8';
+const CACHE_NAME = 'agency-group-v9';
 
 self.addEventListener('install', (event) => {
-  // Skip waiting immediately — activate right away, don't wait for old SW to die
+  // Skip waiting immediately — activate right away
   self.skipWaiting();
 });
 
@@ -16,27 +19,12 @@ self.addEventListener('activate', (event) => {
       .then(keys => Promise.all(
         keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       ))
+      // claim() takes control of open tabs without forcing a reload.
+      // The page will use this SW on the NEXT navigation, not the current one.
       .then(() => self.clients.claim())
-      .then(() => {
-        // NUCLEAR: force reload ALL open tabs to get fresh HTML
-        // client.navigate() reloads the page — since this SW is now active,
-        // the navigate request is fetched fresh from network (no-store below)
-        // This breaks through ANY stale cache on the user's device
-        return self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-          .then(clients => {
-            clients.forEach(client => {
-              // Try navigate() first (forces page reload with fresh HTML)
-              // Fall back to postMessage if navigate fails
-              try {
-                client.navigate(client.url).catch(() => {
-                  client.postMessage({ type: 'SW_ACTIVATED_V8' });
-                });
-              } catch (e) {
-                client.postMessage({ type: 'SW_ACTIVATED_V8' });
-              }
-            });
-          });
-      })
+      // v9: NO client.navigate() — removed to prevent green flash on Android.
+      // Rationale: client.navigate() fires mid-render, causing Chrome to briefly
+      // show the html/body background colour (#0c1f15 / dark green) between pages.
   );
 });
 
@@ -44,8 +32,8 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
-  // HTML navigation requests — ALWAYS fresh from network, NO FALLBACK to cache
-  // Critical: never serve stale HTML even on bad mobile connections
+  // HTML navigation requests — ALWAYS fresh from network, NO FALLBACK to cache.
+  // Critical: never serve stale HTML even on bad mobile connections.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
@@ -53,7 +41,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets (JS chunks, CSS files, images) — cache-first for speed
+  // Static assets (JS chunks, CSS files, images) — cache-first for speed.
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request).then(response => {

@@ -954,10 +954,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
         <CurrencyProvider>
         <main id="main-content">{children}</main>
-        <PWAInstallBanner />
+        {/* PWAInstallBanner DISABLED — SW investigation: beforeinstallprompt can
+            trigger unexpected re-installs that bypass cache-clear efforts.
+            Re-enable after green screen investigation is concluded. */}
+        {/* <PWAInstallBanner /> */}
         <SofiaWidgetWrapper />
         <LanguageSwitcher />
-        <PushNotificationSetup />
+        {/* PushNotificationSetup DISABLED — requires active SW (unregistered for debug).
+            Re-enable together with SW registration when investigation is done. */}
+        {/* <PushNotificationSetup /> */}
         <BottomNav />
         <script dangerouslySetInnerHTML={{ __html: `
 (function() {
@@ -987,30 +992,53 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   } catch(e) {}
 
   // ── BFCACHE: force reload when restored from Back-Forward Cache ──────────
-  // This fires when Chrome restores a cached page (user went back/forward).
-  // We force a reload so they never see stale green HTML from BFCache.
   window.addEventListener('pageshow', function(event) {
-    if (event.persisted) {
-      location.reload();
-    }
+    if (event.persisted) { location.reload(); }
   });
 
-  // ── SERVICE WORKER REGISTRATION ──────────────────────────────────────────
+  // ── SW ISOLATION — STEP 2 ────────────────────────────────────────────────
+  // Unregister ALL service workers + clear ALL caches on every load.
+  // Isolates whether SW/cache interference is the root cause of green screen.
+  // SW registration is DISABLED while this investigation is active.
+  // Push notifications will not work during this period.
+  // Re-enable by restoring the SW register() call below when investigation done.
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/sw.js').then(function(reg) {
-        navigator.serviceWorker.addEventListener('message', function(event) {
-          if (event.data && event.data.type === 'SW_ACTIVATED_V8') {
-            if (!sessionStorage.getItem('ag_healed_v8')) {
-              sessionStorage.setItem('ag_healed_v8', '1');
-              location.href = location.href;
-            }
-          }
-        });
-        reg.update().catch(function(){});
-      }).catch(function(){});
-    });
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(r) {
+        console.log('[AG-SW] Unregistering:', r.scope);
+        r.unregister();
+      });
+    }).catch(function(){});
   }
+  if ('caches' in window) {
+    caches.keys().then(function(keys) {
+      keys.forEach(function(k) {
+        console.log('[AG-SW] Clearing cache:', k);
+        caches.delete(k);
+      });
+    }).catch(function(){});
+  }
+
+  // ── STEP 5: VALIDATION LOGS ──────────────────────────────────────────────
+  // These log on every Android page load — check Chrome DevTools Remote Debug.
+  try {
+    console.log('[AG] SW controller:', ('serviceWorker' in navigator && navigator.serviceWorker.controller) ? navigator.serviceWorker.controller.scriptURL : 'none (clean)');
+    console.log('[AG] PWA standalone:', window.matchMedia('(display-mode: standalone)').matches);
+    console.log('[AG] UA:', navigator.userAgent.substring(0, 120));
+    console.log('[AG] viewport:', window.innerWidth + 'x' + window.innerHeight);
+    console.log('[AG] maxTouchPoints:', navigator.maxTouchPoints);
+    console.log('[AG] pointer:coarse:', window.matchMedia('(pointer:coarse)').matches);
+  } catch(e) {}
+
+  // ── SW RE-REGISTRATION (DISABLED FOR INVESTIGATION) ──────────────────────
+  // Uncomment to re-enable SW after green screen is confirmed resolved:
+  // if ('serviceWorker' in navigator) {
+  //   window.addEventListener('load', function() {
+  //     navigator.serviceWorker.register('/sw.js')
+  //       .then(function(reg) { reg.update().catch(function(){}); })
+  //       .catch(function(){});
+  //   });
+  // }
 })();
 `}} />
         </CurrencyProvider>
