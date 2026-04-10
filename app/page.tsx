@@ -10,7 +10,6 @@ import { AIPropertySearch } from './components/AIPropertySearch'
 import HomeLoader from './components/HomeLoader'
 import HomeCursor from './components/HomeCursor'
 import HomeAnimations from './components/HomeAnimations'
-import HomeModals from './components/HomeModals'
 import HomeToast from './components/HomeToast'
 import HomeNav from './components/HomeNav'
 import HomePropertiesSection from './components/HomePropertiesSection'
@@ -60,7 +59,6 @@ export default function Home() {
       <HomeLoader />
       <HomeCursor />
       <HomeAnimations />
-      <HomeModals />
       <HomeToast />
 
       {/* ── NAV (client — has auth state + mobile drawer) ─────────────────── */}
@@ -643,7 +641,7 @@ export default function Home() {
           <div className="ft-top">
             <div><div className="ft-la">Agency</div><div className="ft-lg">Group</div><p className="ft-tag">Portugal. Para quem não aceita menos.</p></div>
             <div className="ft-col"><div className="ft-col-h">Zonas</div><ul><li><a href="/imoveis?zona=Lisboa">Lisboa</a></li><li><a href="/imoveis?zona=Cascais">Cascais</a></li><li><a href="/imoveis?zona=Comporta">Comporta</a></li><li><a href="/imoveis?zona=Porto">Porto</a></li><li><a href="/imoveis?zona=Algarve">Algarve</a></li><li><a href="/imoveis?zona=Madeira">Madeira</a></li></ul></div>
-            <div className="ft-col"><div className="ft-col-h">Serviços</div><ul><li><a href="#" data-open-offmarket="">Off-Market</a></li><li><a href="/portal">Portal Agentes</a></li><li><a href="#contacto">NHR / Vistos</a></li><li><a href="/#simulador">Simulador IMT</a></li></ul></div>
+            <div className="ft-col"><div className="ft-col-h">Serviços</div><ul><li><a href="/imoveis">Off-Market</a></li><li><a href="/portal">Portal Agentes</a></li><li><a href="#contacto">NHR / Vistos</a></li><li><a href="/#simulador">Simulador IMT</a></li></ul></div>
             <div className="ft-col"><div className="ft-col-h">Empresa</div><ul><li><a href="#contacto">Sobre Nós</a></li><li><a href="#agentes">Agentes</a></li><li><a href="/relatorio-2026" style={{color:'var(--gold)',fontWeight:500}}>Market Report 2026 ↗</a></li><li><a href="mailto:geral@agencygroup.pt">Email</a></li></ul></div>
           </div>
           <div className="ft-bot">

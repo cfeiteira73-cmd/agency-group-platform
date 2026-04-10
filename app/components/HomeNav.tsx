@@ -57,18 +57,12 @@ export default function HomeNav() {
       if (e.key === 'Escape') {
         setMenuOpen(false)
         document.body.style.overflow = ''
-        // Also close modals via event
-        window.dispatchEvent(new CustomEvent('ag:close-modals'))
       }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
-  function openOffMarket(e: React.MouseEvent) {
-    e.preventDefault()
-    window.dispatchEvent(new CustomEvent('ag:open-offmarket'))
-  }
 
   return (
     <>
@@ -83,7 +77,7 @@ export default function HomeNav() {
           <li><a href="/#zonas">Zonas</a></li>
           <li><a href="/#simulador">Crédito</a></li>
           <li><a href="/reports">Reports</a></li>
-          <li><a href="#" onClick={openOffMarket}>Off-Market</a></li>
+          <li><a href="/imoveis">Off-Market</a></li>
           <li><a href="#contacto">Contacto</a></li>
         </ul>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -113,7 +107,7 @@ export default function HomeNav() {
             <a href="/#zonas" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Zonas</a>
             <a href="/#simulador" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Crédito</a>
             <a href="/reports" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Reports</a>
-            <a href="#" onClick={e=>{e.preventDefault();setMenuOpen(false);document.body.style.overflow='';window.dispatchEvent(new CustomEvent('ag:open-offmarket'))}}>Off-Market</a>
+            <a href="/imoveis" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Off-Market</a>
             <a href="#contacto" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Contacto</a>
           </div>
           {isAgent

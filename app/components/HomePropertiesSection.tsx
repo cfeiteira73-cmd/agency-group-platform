@@ -185,9 +185,9 @@ export default function HomePropertiesSection() {
               <div style={{ fontSize: '16px', fontFamily: 'Jost, sans-serif', color: '#888', marginTop: '12px', fontStyle: 'italic' }}>
                 Os imóveis mais exclusivos não passam por aqui.
               </div>
-              <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('ag:open-offmarket'))} style={{ marginTop: '24px', background: 'transparent', color: '#c9a96e', border: '1px solid rgba(201,169,110,.45)', padding: '12px 32px', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer' }}>
-                Aceder ao Portfolio Off-Market →
-              </button>
+              <a href="/imoveis" style={{ marginTop: '24px', display: 'inline-block', background: 'transparent', color: '#c9a96e', border: '1px solid rgba(201,169,110,.45)', padding: '12px 32px', fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                Ver Todos os Imóveis →
+              </a>
             </div>
           ) : (
             <div className="im-grid">

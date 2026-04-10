@@ -337,19 +337,6 @@ footer{background:var(--ink);padding:80px 0 32px}
 .ft-bot{display:flex;align-items:center;justify-content:space-between;padding-top:26px;flex-wrap:wrap;gap:12px}
 .ft-legal{font-family:var(--font-dm-mono),monospace;font-size:.5rem;letter-spacing:.1em;color:rgba(255,255,255,.18)}
 .ft-ami{font-family:var(--font-dm-mono),monospace;font-size:.5rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);opacity:.5}
-.modal-ov{position:fixed;inset:0;background:rgba(7,18,10,.93);backdrop-filter:blur(16px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s}
-.modal-ov.open{opacity:1;pointer-events:all}
-.modal-box{background:var(--w);max-width:420px;width:90%;padding:56px;transform:translateY(24px);transition:transform .45s var(--ease-out);position:relative;border-top:2px solid var(--gold)}
-.modal-ov.open .modal-box{transform:translateY(0)}
-.modal-x{position:absolute;top:20px;right:20px;background:none;border:none;cursor:none;color:var(--ink2);font-size:1.1rem;line-height:1;transition:color .3s}
-.modal-x:hover{color:var(--ink)}
-.modal-eye{font-family:var(--font-dm-mono),monospace;font-size:.5rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
-.modal-h2{font-family:var(--font-cormorant),serif;font-size:2rem;font-weight:300;color:var(--ink);line-height:1.1;margin-bottom:8px}
-.modal-desc{font-size:.83rem;color:var(--ink2);line-height:1.7;margin-bottom:28px}
-.modal-inp{width:100%;border:none;border-bottom:2px solid var(--g);padding:10px 0;font-family:var(--font-jost),sans-serif;font-size:.9rem;color:var(--ink);outline:none;cursor:text;background:transparent;text-align:center;letter-spacing:.07em;margin-bottom:14px}
-.modal-btn{width:100%;background:var(--g);border:none;padding:14px;font-family:var(--font-jost),sans-serif;font-size:.65rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--w);cursor:none;transition:background .3s,transform .3s var(--ease-out)}
-.modal-btn:hover{background:var(--gm);transform:translateY(-1px)}
-.modal-err{font-family:var(--font-dm-mono),monospace;font-size:.52rem;color:var(--err);text-align:center;margin-top:9px;display:none}
 /* Loader: hidden by default everywhere. JS (HomeLoader.tsx) explicitly shows it on desktop only.
    JS architecture (HomeLoader.tsx): loader div is NOT in SSR HTML (default state=true→null).
    Loader only mounts in DOM after client-side desktop detection confirms desktop.
@@ -497,11 +484,10 @@ footer{background:var(--ink);padding:80px 0 32px}
   .hr-dot{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.18);position:relative}
   .hr-dot.on{background:var(--gold)}
   .hr-dots{align-items:center;gap:8px}
-  .modal-x{width:44px;height:44px;display:flex;align-items:center;justify-content:center;top:10px;right:10px}
   .imc-arr{width:44px;height:44px}
   .wa-btn{min-height:44px;padding:14px 22px}
   .ag-btn{min-height:44px;padding:14px 24px}
-  .avm-submit,.nhr-submit,.radar-btn,.modal-btn{min-height:44px}
+  .avm-submit,.nhr-submit,.radar-btn{min-height:44px}
   .cpcv-btn-wa{min-height:44px;padding:10px 14px}
   .cpcv-sel{min-height:44px;padding:10px}
   .nav-burger{display:flex!important}
@@ -962,7 +948,7 @@ nav.solid .nav-burger span{background:var(--cr)}
   input[type="search"],
   select,
   textarea,
-  .avm-inp,.avm-sel,.radar-ta,.nhr-inp,.nhr-sel,.modal-inp,.sim-inp,.sf select,
+  .avm-inp,.avm-sel,.radar-ta,.nhr-inp,.nhr-sel,.sim-inp,.sf select,
   .sf-inp,.sf-sel{font-size:16px!important} /* Prevent iOS auto-zoom — must be >= 16px */
 }
 
@@ -976,7 +962,6 @@ nav.solid .nav-burger span{background:var(--cr)}
   .portal-nav-item,
   .imc-arr,
   .wa-btn,
-  .modal-x,
   a[href]{
     min-height:44px;
     min-width:44px;

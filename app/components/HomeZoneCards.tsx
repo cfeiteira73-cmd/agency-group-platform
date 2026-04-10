@@ -31,24 +31,6 @@ export default function HomeZoneCards() {
     }
   }, [])
 
-  // Also attach off-market footer link handlers
-  useEffect(() => {
-    const offLinks = document.querySelectorAll<HTMLAnchorElement>('[data-open-offmarket]')
-    const handlers: Array<[HTMLAnchorElement, (e: MouseEvent) => void]> = []
-
-    offLinks.forEach(link => {
-      const handler = (e: MouseEvent) => {
-        e.preventDefault()
-        window.dispatchEvent(new CustomEvent('ag:open-offmarket'))
-      }
-      link.addEventListener('click', handler)
-      handlers.push([link, handler])
-    })
-
-    return () => {
-      handlers.forEach(([link, handler]) => link.removeEventListener('click', handler))
-    }
-  }, [])
 
   return null
 }
