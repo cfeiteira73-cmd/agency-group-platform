@@ -18,9 +18,44 @@ import HomeMortgage from './components/HomeMortgage'
 import HomeAvaliacaoForm from './components/HomeAvaliacaoForm'
 import HomeZoneCards from './components/HomeZoneCards'
 
+// Build token — unique per Vercel deployment, proves Android sees current code
+const BUILD_ID = (process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 8)
+
 export default function Home() {
   return (
     <>
+      {/* ══ PHASE 1+5: MOBILE SSR DIAGNOSTIC MARKER ═══════════════════════
+          position:fixed; z-index:99999 → above ALL overlays including
+          #loader (z-index:2000), BottomNav (9999), SofiaWidget (9999).
+          This is the HIGHEST z-index element in the entire app.
+          If NOT visible on Android → something with z-index ≥ 100000 covers
+          the page, OR the viewport/html/body is collapsed/hidden.
+          BUILD_ID proves whether Android is seeing this deployment.
+          Mobile-only: hidden on desktop via CSS (#__mobileSSRMarker).
+          REMOVE after Android incident confirmed resolved. */}
+      <div
+        id="__mobileSSRMarker"
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          padding: '10px 14px',
+          background: '#cc0000',
+          color: '#ffffff',
+          fontFamily: 'monospace',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          lineHeight: '1.6',
+          zIndex: 99999,
+          boxSizing: 'border-box',
+          pointerEvents: 'none',
+        }}
+      >
+        {`MOBILE MAIN SSR MARKER · BUILD:${BUILD_ID} · IF YOU SEE THIS ON DESKTOP SOMETHING IS WRONG`}
+      </div>
+
       {/* ── CLIENT ISLANDS (non-visual / overlay) ─────────────────────────── */}
       <HomeLoader />
       <HomeCursor />

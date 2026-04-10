@@ -278,9 +278,11 @@ const schemaAggregateRatingExpanded = {
   ],
 }
 
+const LAYOUT_BUILD_ID = (process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 8)
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`} style={{ background: '#f4f0e6' }}>
+    <html lang="pt-PT" className={`${cormorant.variable} ${jost.variable} ${dmMono.variable}`} style={{ background: '#f4f0e6' }} data-build={LAYOUT_BUILD_ID}>
       <head>
         <meta name="author" content="Agency Group – Mediação Imobiliária Lda" />
         {/* CRITICAL: inline style block — hides loader BEFORE any external CSS or JS loads.
@@ -507,6 +509,234 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   document.addEventListener('visibilitychange', function() {
     snap('vischange-' + document.visibilityState);
   });
+})();
+` }} />
+
+        {/* ── ?debug=main — TOP-LEVEL MOBILE RENDERING DIAGNOSTIC ──────────────
+            Active ONLY when URL contains ?debug=main
+            Phase 2: Dumps html/body/main computed styles + overlay on screen
+            Phase 3: Unregisters SW + clears all caches for isolation
+            Phase 4: Shows SW controller, prerender, bfcache, build marker
+            Phase 5: Shows BUILD_ID to prove Android sees current deployment
+            Desktop: unaffected — overlay only renders on mobile signals.
+            REMOVE after incident resolved. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+(function() {
+  if (typeof window === 'undefined') return;
+  var params = new URLSearchParams(location.search);
+  if (params.get('debug') !== 'main') return;
+
+  var BUILD_ID = '${(process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 8)}';
+  var isMobile = navigator.maxTouchPoints > 0 ||
+    ('ontouchstart' in window) ||
+    window.matchMedia('(pointer:coarse)').matches ||
+    window.matchMedia('(any-pointer:coarse)').matches ||
+    /Android|iPhone|iPad/i.test(navigator.userAgent);
+
+  // ── PHASE 3: SW ISOLATION ──────────────────────────────────────────────
+  // Unregister ALL service workers and clear ALL caches for this debug run.
+  // HTML is always fresh (SW no-store). This ensures JS/CSS chunks are also fresh.
+  var swUnregDone = false;
+  var cachesClearedCount = 0;
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(r) { r.unregister(); });
+      swUnregDone = regs.length > 0;
+      if ('caches' in window) {
+        return caches.keys().then(function(keys) {
+          cachesClearedCount = keys.length;
+          return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+        });
+      }
+    }).catch(function(){});
+  }
+
+  // ── PHASE 2+4: DOM STATE DUMP ─────────────────────────────────────────
+  var log = [];
+  var overlayEl = null;
+
+  function cs(el, p) {
+    try { return el ? window.getComputedStyle(el).getPropertyValue(p).trim() : 'N/A'; }
+    catch(e) { return 'ERR'; }
+  }
+  function bcr(el) {
+    try {
+      if (!el) return 'N/A';
+      var r = el.getBoundingClientRect();
+      return 'top:'+Math.round(r.top)+' l:'+Math.round(r.left)+' w:'+Math.round(r.width)+' h:'+Math.round(r.height);
+    } catch(e) { return 'ERR'; }
+  }
+  function topEls() {
+    var pts = [[window.innerWidth/2, 40], [window.innerWidth/2, window.innerHeight/2], [16,16]];
+    return pts.map(function(p) {
+      try {
+        var el = document.elementFromPoint(p[0], p[1]);
+        if (!el) return 'null@'+p;
+        var id = el.id ? '#'+el.id : '';
+        var cls = typeof el.className === 'string' ? '.'+el.className.trim().split(/\\s+/).slice(0,3).join('.') : '';
+        return el.tagName+id+cls+'@'+p;
+      } catch(e) { return 'ERR'; }
+    }).join(' | ');
+  }
+
+  function snap(label) {
+    var htmlEl = document.documentElement;
+    var bodyEl = document.body;
+    var mainEl = document.getElementById('main-content');
+    var markerEl = document.getElementById('__mobileSSRMarker');
+    var loaderEl = document.getElementById('loader');
+    var firstChild = mainEl ? mainEl.firstElementChild : null;
+    var swCtrl = ('serviceWorker' in navigator && navigator.serviceWorker.controller) ? navigator.serviceWorker.controller.scriptURL : 'none';
+
+    var s = {
+      label: label,
+      build: BUILD_ID,
+      url: location.href,
+      vp: window.innerWidth+'x'+window.innerHeight,
+      ua: navigator.userAgent.substring(0,100),
+      visState: document.visibilityState,
+      mxTouch: navigator.maxTouchPoints,
+      ptrCoarse: window.matchMedia('(pointer:coarse)').matches,
+      anyPtrCoarse: window.matchMedia('(any-pointer:coarse)').matches,
+      sw: swCtrl,
+      swUnregDone: swUnregDone,
+      cacheCleared: cachesClearedCount,
+      prerender: window.__wasPrerendered || false,
+      bfcache: window.__wasFromBFCache || false,
+      html: {
+        display: cs(htmlEl,'display'),
+        visibility: cs(htmlEl,'visibility'),
+        opacity: cs(htmlEl,'opacity'),
+        overflow: cs(htmlEl,'overflow'),
+        height: cs(htmlEl,'height'),
+        bg: cs(htmlEl,'background-color'),
+        zIndex: cs(htmlEl,'z-index'),
+        transform: cs(htmlEl,'transform').substring(0,30),
+      },
+      body: {
+        display: cs(bodyEl,'display'),
+        visibility: cs(bodyEl,'visibility'),
+        opacity: cs(bodyEl,'opacity'),
+        overflow: cs(bodyEl,'overflow'),
+        height: cs(bodyEl,'height'),
+        bg: cs(bodyEl,'background-color'),
+        transform: cs(bodyEl,'transform').substring(0,30),
+        position: cs(bodyEl,'position'),
+      },
+      main: {
+        inDOM: !!mainEl,
+        display: cs(mainEl,'display'),
+        visibility: cs(mainEl,'visibility'),
+        opacity: cs(mainEl,'opacity'),
+        overflow: cs(mainEl,'overflow'),
+        height: cs(mainEl,'height'),
+        width: cs(mainEl,'width'),
+        position: cs(mainEl,'position'),
+        zIndex: cs(mainEl,'z-index'),
+        bg: cs(mainEl,'background-color'),
+        transform: cs(mainEl,'transform').substring(0,30),
+        bcr: bcr(mainEl),
+      },
+      firstChild: {
+        tag: firstChild ? firstChild.tagName : 'N/A',
+        id: firstChild ? (firstChild.id||'') : 'N/A',
+        cls: firstChild ? (typeof firstChild.className==='string'?firstChild.className.substring(0,40):'') : 'N/A',
+        display: cs(firstChild,'display'),
+        visibility: cs(firstChild,'visibility'),
+        opacity: cs(firstChild,'opacity'),
+        bcr: bcr(firstChild),
+      },
+      marker: {
+        inDOM: !!markerEl,
+        display: cs(markerEl,'display'),
+        visibility: cs(markerEl,'visibility'),
+        opacity: cs(markerEl,'opacity'),
+        zIndex: cs(markerEl,'z-index'),
+        bcr: bcr(markerEl),
+      },
+      loader: {
+        inDOM: !!loaderEl,
+        display: cs(loaderEl,'display'),
+        visibility: cs(loaderEl,'visibility'),
+        opacity: cs(loaderEl,'opacity'),
+        zIndex: cs(loaderEl,'z-index'),
+        inlineStyle: loaderEl ? (loaderEl.getAttribute('style')||'') : 'N/A',
+        classes: loaderEl ? loaderEl.className : 'N/A',
+      },
+      topEls: topEls(),
+    };
+    log.push(s);
+    window.__mainDebug = log;
+    if (isMobile) renderOverlay();
+  }
+
+  function renderOverlay() {
+    if (!overlayEl) {
+      overlayEl = document.createElement('div');
+      overlayEl.id = '__mainDbgOverlay';
+      overlayEl.style.cssText = 'position:fixed;top:52px;left:0;right:0;max-height:65vh;overflow-y:auto;background:rgba(0,0,40,.93);color:#0ff;font-family:monospace;font-size:9.5px;line-height:1.5;padding:8px 10px;z-index:100000;border-bottom:2px solid #0ff;white-space:pre-wrap;word-break:break-all';
+      document.body.appendChild(overlayEl);
+    }
+    var last = log[log.length-1];
+    if (!last) return;
+    var t = '=== DEBUG MAIN ['+last.label+'] BUILD:'+last.build+' ===\\n';
+    t += 'URL: '+last.url+'\\n';
+    t += 'VP:'+last.vp+' UA:'+last.ua.substring(0,60)+'\\n';
+    t += 'vis:'+last.visState+' touch:'+last.mxTouch+' coarse:'+last.ptrCoarse+' anyCoarse:'+last.anyPtrCoarse+'\\n';
+    t += 'SW:'+last.sw.substring(0,40)+'\\n';
+    t += 'SW_unreg:'+last.swUnregDone+' caches_cleared:'+last.cacheCleared+'\\n';
+    t += 'prerender:'+last.prerender+' bfcache:'+last.bfcache+'\\n';
+    t += '--- HTML ---\\n';
+    t += 'display:'+last.html.display+' vis:'+last.html.visibility+' op:'+last.html.opacity+'\\n';
+    t += 'overflow:'+last.html.overflow+' h:'+last.html.height+' bg:'+last.html.bg+'\\n';
+    t += '--- BODY ---\\n';
+    t += 'display:'+last.body.display+' vis:'+last.body.visibility+' op:'+last.body.opacity+'\\n';
+    t += 'overflow:'+last.body.overflow+' h:'+last.body.height+' pos:'+last.body.position+'\\n';
+    t += 'bg:'+last.body.bg+' tr:'+last.body.transform+'\\n';
+    t += '--- MAIN ---\\n';
+    t += 'inDOM:'+last.main.inDOM+' display:'+last.main.display+' vis:'+last.main.visibility+' op:'+last.main.opacity+'\\n';
+    t += 'overflow:'+last.main.overflow+' h:'+last.main.height+' w:'+last.main.width+'\\n';
+    t += 'pos:'+last.main.position+' zi:'+last.main.zIndex+' bg:'+last.main.bg+'\\n';
+    t += 'tr:'+last.main.transform+' bcr:'+last.main.bcr+'\\n';
+    t += '--- FIRST CHILD OF MAIN ---\\n';
+    t += 'tag:'+last.firstChild.tag+' id:'+last.firstChild.id+' cls:'+last.firstChild.cls+'\\n';
+    t += 'display:'+last.firstChild.display+' vis:'+last.firstChild.visibility+' op:'+last.firstChild.opacity+'\\n';
+    t += 'bcr:'+last.firstChild.bcr+'\\n';
+    t += '--- SSR MARKER ---\\n';
+    t += 'inDOM:'+last.marker.inDOM+' display:'+last.marker.display+' zi:'+last.marker.zIndex+'\\n';
+    t += 'bcr:'+last.marker.bcr+'\\n';
+    t += '--- LOADER ---\\n';
+    t += 'inDOM:'+last.loader.inDOM+' display:'+last.loader.display+' vis:'+last.loader.visibility+'\\n';
+    t += 'op:'+last.loader.opacity+' zi:'+last.loader.zIndex+' cls:['+last.loader.classes+']\\n';
+    t += 'inline:['+last.loader.inlineStyle+']\\n';
+    t += '--- TOP ELEMENTS AT KEY COORDS ---\\n';
+    t += last.topEls+'\\n';
+    t += '--- ALL SNAPS: '+log.length+' ---\\n';
+    t += '[TAP to copy JSON]';
+    overlayEl.textContent = t;
+    overlayEl.onclick = function() {
+      try { navigator.clipboard.writeText(JSON.stringify(window.__mainDebug, null, 2)); overlayEl.style.borderColor='#ff0'; } catch(e) {}
+    };
+  }
+
+  // Track prerender/bfcache
+  window.__wasPrerendered = document.visibilityState === 'hidden';
+  window.__wasFromBFCache = false;
+  window.addEventListener('pageshow', function(e) {
+    if (e.persisted) window.__wasFromBFCache = true;
+    snap('pageshow-persisted:'+e.persisted);
+  });
+  document.addEventListener('visibilitychange', function() {
+    snap('vischange:'+document.visibilityState);
+  });
+
+  // Snap at multiple intervals
+  snap('0ms');
+  requestAnimationFrame(function() { snap('rAF'); });
+  setTimeout(function() { snap('150ms'); }, 150);
+  setTimeout(function() { snap('500ms'); }, 500);
+  setTimeout(function() { snap('1000ms'); }, 1000);
+  setTimeout(function() { snap('2000ms'); }, 2000);
 })();
 ` }} />
 

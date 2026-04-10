@@ -1116,6 +1116,13 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
    Desktop: neither query matches → only .hero-desktop-original is shown.
 ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── MOBILE SSR DIAGNOSTIC MARKER — hidden on desktop, shown on mobile ── */
+/* If this marker is NOT visible on Android, issue is above z-index:99999  */
+#__mobileSSRMarker{display:none!important}
+@media(max-width:1099px){#__mobileSSRMarker{display:block!important}}
+@media(pointer:coarse){#__mobileSSRMarker{display:block!important}}
+@media(any-pointer:coarse){#__mobileSSRMarker{display:block!important}}
+
 /* Base: fallback is always hidden on desktop */
 .hero-mobile-fallback{display:none!important}
 
