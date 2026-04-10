@@ -12,6 +12,16 @@ jobs:
   unit-tests:
     name: Unit Tests (Vitest)
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder' }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'placeholder' }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-placeholder-secret-32chars-min' }}
+      NEXTAUTH_URL: 'https://www.agencygroup.pt'
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'placeholder' }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'placeholder' }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET || 'placeholder' }}
+      NEXT_PUBLIC_BASE_URL: 'https://www.agencygroup.pt'
     steps:
       - uses: actions/checkout@v4
 
