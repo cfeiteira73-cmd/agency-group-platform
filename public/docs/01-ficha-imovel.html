@@ -565,7 +565,7 @@ const EP='Analisa o conteúdo e extrai dados de imóvel português. Responde APE
 
 async function callAI(sys,uc,isImg=false){
   const msg=isImg?[{role:'user',content:[{type:'image',source:{type:'base64',media_type:uc.t,data:uc.d}},{type:'text',text:sys}]}]:[{role:'user',content:sys+'\n\nTexto:\n'+uc}];
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:msg})});
+  const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:msg})});
   const d=await r.json();return d.content?.[0]?.text||'';
 }
 function fill(data){
