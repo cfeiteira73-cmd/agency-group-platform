@@ -184,7 +184,7 @@ body{font-family:'Jost',sans-serif;background:var(--cr);color:var(--bk);font-siz
 
 async function aiCall(sys,uc,isImg){
   const msg=isImg?[{role:'user',content:[{type:'image',source:{type:'base64',media_type:uc.t,data:uc.d}},{type:'text',text:sys}]}]:[{role:'user',content:sys+'\n\n'+uc}];
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,messages:msg})});
+  const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,messages:msg})});
   const d=await r.json();return d.content?.[0]?.text||'';
 }
 function fillAI(data,fmap){Object.entries(fmap).forEach(([k,id])=>{if(data[k]){const el=document.getElementById(id);if(el){el.value=data[k];el.classList.add('af');}}});}
