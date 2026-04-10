@@ -944,6 +944,27 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
       </head>
       <body style={{ background: '#f4f0e6' }}>
+        {/* ── LAYOUT TEST OVERLAY — MOBILE ONLY ────────────────────────────────
+            z-index:2147483647 (max 32-bit int) — renders ABOVE everything.
+            default display:none (desktop). CSS !important flips it on mobile.
+            If this is visible on Android → layout.tsx CAN paint above the green.
+            If green is still visible → problem is outside the app render tree.
+            REMOVE after investigation.                                         */}
+        <style>{`@media(pointer:coarse),(any-pointer:coarse),(max-width:1099px){#layout-test-overlay{display:flex!important}}`}</style>
+        <div id="layout-test-overlay" style={{
+          position:       'fixed',
+          inset:          0,
+          zIndex:         2147483647,
+          background:     '#ffffff',
+          color:          '#000000',
+          display:        'none',
+          alignItems:     'center',
+          justifyContent: 'center',
+          fontSize:       '32px',
+          fontWeight:     700,
+        }}>
+          LAYOUT TEST
+        </div>
         {/* Skip-to-content — accessibility (CSS-only, no event handlers) */}
         <a href="#main-content" className="skip-to-content">
           Saltar para o conteúdo principal
