@@ -529,6 +529,205 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 })();
 ` }} />
 
+        {/* ── ?debug=fallback — HERO FALLBACK CHAIN DIAGNOSTIC ─────────────────
+            Active ONLY when URL contains ?debug=fallback
+            Inspects: html class list, hero-mobile-fallback, hero-desktop-original,
+            .hero, parent chain up to body, elements at viewport center.
+            NO patches. NO side-effects. Read-only diagnostic.
+            REMOVE after incident resolved. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+(function() {
+  if (typeof window === 'undefined') return;
+  if (new URLSearchParams(location.search).get('debug') !== 'fallback') return;
+
+  var overlayEl = null;
+  var snapLog = [];
+
+  function cs(el, p) {
+    try { return el ? window.getComputedStyle(el).getPropertyValue(p) : 'NULL'; } catch(e) { return 'ERR'; }
+  }
+  function bcr(el) {
+    try {
+      if (!el) return 'NULL';
+      var r = el.getBoundingClientRect();
+      return 't:'+Math.round(r.top)+' l:'+Math.round(r.left)+' w:'+Math.round(r.width)+' h:'+Math.round(r.height);
+    } catch(e) { return 'ERR'; }
+  }
+  function elInfo(el, name) {
+    if (!el) return name + ': NOT IN DOM\\n';
+    return name + ':\\n' +
+      '  display:' + cs(el,'display') +
+      ' opacity:' + cs(el,'opacity') +
+      ' vis:' + cs(el,'visibility') + '\\n' +
+      '  pos:' + cs(el,'position') +
+      ' zi:' + cs(el,'z-index') +
+      ' overflow:' + cs(el,'overflow') + '\\n' +
+      '  h:' + cs(el,'height') +
+      ' w:' + cs(el,'width') +
+      ' clip:' + cs(el,'clip-path').substring(0,20) + '\\n' +
+      '  transform:' + cs(el,'transform').substring(0,30) + '\\n' +
+      '  bcr:[' + bcr(el) + ']\\n';
+  }
+  function parentChain(el) {
+    var chain = '';
+    var cur = el ? el.parentElement : null;
+    var depth = 0;
+    while (cur && cur !== document.documentElement && depth < 8) {
+      var tag = cur.tagName.toLowerCase();
+      var id = cur.id ? '#'+cur.id : '';
+      var cls = (cur.className && typeof cur.className === 'string') ? '.'+cur.className.trim().split(/\\s+/).slice(0,2).join('.') : '';
+      var disp = cs(cur,'display');
+      var op = cs(cur,'opacity');
+      var ov = cs(cur,'overflow');
+      var h = cs(cur,'height');
+      var vis = cs(cur,'visibility');
+      var clip = cs(cur,'clip-path').substring(0,15);
+      chain += '  ['+depth+'] '+tag+id+cls+' disp:'+disp+' op:'+op+' vis:'+vis+' h:'+h+' overflow:'+ov+' clip:'+clip+'\\n';
+      cur = cur.parentElement;
+      depth++;
+    }
+    return chain || '  (no parents)\\n';
+  }
+  function elAtCenter() {
+    try {
+      var cx = window.innerWidth / 2;
+      var cy = window.innerHeight / 2;
+      var els = document.elementsFromPoint(cx, cy);
+      return els.slice(0,6).map(function(e) {
+        var tag = e.tagName.toLowerCase();
+        var id = e.id ? '#'+e.id : '';
+        var cls = (e.className && typeof e.className==='string') ? '.'+e.className.trim().split(/\\s+/).slice(0,2).join('.') : '';
+        return tag+id+cls+'(zi:'+cs(e,'z-index')+',op:'+cs(e,'opacity')+')';
+      }).join(' > ');
+    } catch(e) { return 'ERR'; }
+  }
+
+  function snap(label) {
+    var fb  = document.querySelector('.hero-mobile-fallback');
+    var dsk = document.querySelector('.hero-desktop-original');
+    var hero = document.querySelector('.hero');
+    var main = document.getElementById('main-content') || document.querySelector('main');
+
+    var isMobileCls = document.documentElement.classList.contains('is-mobile');
+    var htmlCls = document.documentElement.className;
+
+    var data = {
+      t: label,
+      vp: window.innerWidth + 'x' + window.innerHeight,
+      maxTouch: navigator.maxTouchPoints,
+      ptrCoarse: window.matchMedia('(pointer:coarse)').matches,
+      anyPtrCoarse: window.matchMedia('(any-pointer:coarse)').matches,
+      ua: navigator.userAgent.substring(0, 100),
+      htmlIsMobile: isMobileCls,
+      htmlClasses: htmlCls.substring(0,120),
+      fallback: {
+        inDOM: !!fb,
+        display: cs(fb,'display'),
+        opacity: cs(fb,'opacity'),
+        visibility: cs(fb,'visibility'),
+        position: cs(fb,'position'),
+        zIndex: cs(fb,'z-index'),
+        overflow: cs(fb,'overflow'),
+        height: cs(fb,'height'),
+        width: cs(fb,'width'),
+        clipPath: cs(fb,'clip-path'),
+        transform: cs(fb,'transform').substring(0,40),
+        bcr: bcr(fb),
+        inlineStyle: fb ? (fb.getAttribute('style')||'').substring(0,80) : 'N/A',
+        textLen: fb ? (fb.innerText||'').length : 0,
+        children: fb ? fb.children.length : 0
+      },
+      desktop: {
+        inDOM: !!dsk,
+        display: cs(dsk,'display'),
+        opacity: cs(dsk,'opacity'),
+        visibility: cs(dsk,'visibility'),
+        bcr: bcr(dsk)
+      },
+      hero: {
+        inDOM: !!hero,
+        display: cs(hero,'display'),
+        opacity: cs(hero,'opacity'),
+        visibility: cs(hero,'visibility'),
+        bcr: bcr(hero)
+      },
+      main: {
+        inDOM: !!main,
+        display: cs(main,'display'),
+        opacity: cs(main,'opacity'),
+        visibility: cs(main,'visibility'),
+        overflow: cs(main,'overflow'),
+        height: cs(main,'height'),
+        bcr: bcr(main)
+      },
+      parentChain: fb ? parentChain(fb) : 'fallback not in DOM',
+      vpCenter: elAtCenter()
+    };
+
+    snapLog.push(data);
+    window.__fallbackDebug = snapLog;
+    render();
+  }
+
+  function render() {
+    if (!overlayEl) {
+      overlayEl = document.createElement('div');
+      overlayEl.style.cssText = 'position:fixed;top:0;left:0;right:0;max-height:70vh;overflow-y:auto;background:rgba(0,0,10,.93);color:#0ff;font-family:monospace;font-size:9.5px;line-height:1.45;padding:8px 10px;z-index:200000;border-bottom:2px solid #0ff;white-space:pre;word-break:break-all;pointer-events:auto';
+      document.documentElement.appendChild(overlayEl);
+    }
+    var d = snapLog[snapLog.length - 1];
+    if (!d) return;
+    var t =
+      '=== ?debug=fallback [' + d.t + '] vp:' + d.vp + ' ===\\n' +
+      'html.is-mobile: ' + d.htmlIsMobile + '\\n' +
+      'html.classes: ' + d.htmlClasses + '\\n' +
+      'maxTouchPoints: ' + d.maxTouch + '  pointer:coarse: ' + d.ptrCoarse + '  any-pointer:coarse: ' + d.anyPtrCoarse + '\\n' +
+      'UA: ' + d.ua + '\\n\\n' +
+
+      '--- .hero-mobile-fallback ---\\n' +
+      'inDOM: ' + d.fallback.inDOM + '\\n' +
+      'display: ' + d.fallback.display + '  opacity: ' + d.fallback.opacity + '  visibility: ' + d.fallback.visibility + '\\n' +
+      'position: ' + d.fallback.position + '  z-index: ' + d.fallback.zIndex + '\\n' +
+      'overflow: ' + d.fallback.overflow + '  height: ' + d.fallback.height + '  width: ' + d.fallback.width + '\\n' +
+      'clip-path: ' + d.fallback.clipPath + '\\n' +
+      'transform: ' + d.fallback.transform + '\\n' +
+      'bcr: ' + d.fallback.bcr + '\\n' +
+      'inline: [' + d.fallback.inlineStyle + ']\\n' +
+      'textLen: ' + d.fallback.textLen + '  children: ' + d.fallback.children + '\\n\\n' +
+
+      '--- .hero-desktop-original ---\\n' +
+      'inDOM: ' + d.desktop.inDOM + '  display: ' + d.desktop.display + '  opacity: ' + d.desktop.opacity + '\\n' +
+      'bcr: ' + d.desktop.bcr + '\\n\\n' +
+
+      '--- .hero ---\\n' +
+      'inDOM: ' + d.hero.inDOM + '  display: ' + d.hero.display + '  opacity: ' + d.hero.opacity + '\\n' +
+      'bcr: ' + d.hero.bcr + '\\n\\n' +
+
+      '--- main ---\\n' +
+      'inDOM: ' + d.main.inDOM + '  display: ' + d.main.display + '  op: ' + d.main.opacity + '  overflow: ' + d.main.overflow + '\\n' +
+      'height: ' + d.main.height + '  bcr: ' + d.main.bcr + '\\n\\n' +
+
+      '--- parent chain (fallback → body) ---\\n' +
+      d.parentChain + '\\n' +
+      '--- elementsFromPoint(center) ---\\n' +
+      d.vpCenter + '\\n\\n' +
+      '[' + snapLog.length + ' snaps · tap to copy JSON]';
+
+    overlayEl.textContent = t;
+    overlayEl.onclick = function() {
+      try { navigator.clipboard.writeText(JSON.stringify(snapLog, null, 2)); overlayEl.style.borderColor='#ff0'; } catch(e) {}
+    };
+  }
+
+  snap('0ms');
+  requestAnimationFrame(function() { snap('rAF'); });
+  setTimeout(function() { snap('300ms'); }, 300);
+  setTimeout(function() { snap('1000ms'); }, 1000);
+  setTimeout(function() { snap('2500ms'); }, 2500);
+  document.addEventListener('visibilitychange', function() { snap('vis-'+document.visibilityState); });
+})();
+` }} />
+
         {/* ── ?debug=main — TOP-LEVEL MOBILE RENDERING DIAGNOSTIC ──────────────
             Active ONLY when URL contains ?debug=main
             Phase 2: Dumps html/body/main computed styles + overlay on screen
