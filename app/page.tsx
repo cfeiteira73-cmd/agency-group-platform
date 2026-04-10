@@ -29,6 +29,8 @@ export default async function Home() {
   const mobile = detectMobile(headersList)
 
   // ── MOBILE PATH — BINARY ISOLATION TEST ─────────────────────────────────
+  // Server-side log — visible in Vercel function logs.
+  console.log('MOBILE BRANCH RENDERED')
   // Render nothing but a plain white page with black text.
   // No nav, no hero, no HomeSections, no loader, no animations, no overlays,
   // no gradients, no CSS classes, no shared wrappers, no client components.
@@ -37,6 +39,9 @@ export default async function Home() {
   // If this is visible → the problem is inside MobileHome's component tree.
   if (mobile) {
     return (
+      <>
+      {/* Browser-side log — visible in Chrome DevTools remote inspect */}
+      <script dangerouslySetInnerHTML={{ __html: `console.log('[AG] MOBILE BRANCH RENDERED — page.tsx took mobile path');` }} />
       <section style={{
         background:     '#ffffff',
         color:          '#000000',
@@ -64,6 +69,7 @@ export default async function Home() {
           Test button
         </button>
       </section>
+      </>
     )
   }
 
