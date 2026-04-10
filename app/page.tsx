@@ -627,7 +627,7 @@ export default function Home() {
           <div className="cb-items">
             <div className="cb-item"><span className="cb-lbl">Telefone</span><a href="tel:+351919948986" className="cb-val">+351 919 948 986</a></div>
             <div className="cb-item"><span className="cb-lbl">Email</span><a href="mailto:geral@agencygroup.pt" className="cb-val">geral@agencygroup.pt</a></div>
-            <div className="cb-item"><span className="cb-lbl">Morada</span><span className="cb-val">Amoreiras Square, Lisboa</span></div>
+            <div className="cb-item"><span className="cb-lbl">Morada</span><span className="cb-val">Torre Soleil 1 B, Av. da República 120, 2780-158 Oeiras</span></div>
             <div className="cb-item"><span className="cb-lbl">Licença</span><span className="cb-val" style={{color:'var(--g)',fontWeight:500}}>AMI 22506</span></div>
           </div>
           <a href="https://wa.me/351919948986?text=Bom%20dia%2C%20gostaria%20de%20saber%20mais%20sobre%20im%C3%B3veis%20de%20luxo%20em%20Portugal." target="_blank" rel="noreferrer" className="wa-btn">
