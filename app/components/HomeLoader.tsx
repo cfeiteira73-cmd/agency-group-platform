@@ -3,30 +3,35 @@
 import { useState, useEffect, useRef } from 'react'
 
 export default function HomeLoader() {
-  // On mobile: remove loader from DOM entirely — no element = zero chance of green screen
-  const [isMobileDevice, setIsMobileDevice] = useState(false)
+  // ── NUCLEAR DEFAULT: isMobileDevice starts TRUE ──────────────────────────
+  // SSR renders null → loader div NEVER in SSR HTML → zero risk of green screen.
+  // Client useEffect detects desktop → setIsMobileDevice(false) → loader renders.
+  // Mobile path: isMobileDevice stays true → component remains null forever.
+  // This is the only guaranteed safe default: assume mobile until desktop is proven.
+  const [isMobileDevice, setIsMobileDevice] = useState(true)
   const loaderRef = useRef<HTMLDivElement>(null)
 
+  // ── EFFECT 1: Device detection (synchronous, no async, fires on mount) ───
+  // Runs BEFORE any GSAP, BEFORE any DOM mutation, BEFORE loader is visible.
+  // If mobile detected: stays null. If desktop: renders loader then Effect 2 fires.
   useEffect(() => {
-    // Touch-capability detection — NOT viewport width.
-    // any-pointer:coarse catches Samsung S-Pen (pointer:fine primary but touch screen present).
-    // maxTouchPoints covers all Android/iOS devices reliably.
-    // User-Agent catches Android Chrome Custom Tab (Google Search) where touch APIs may not fire.
-    // Never use innerWidth — Chrome on Android can report 1024+ in landscape/desktop mode.
-    const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)
-    const mobile =
-      navigator.maxTouchPoints > 0 ||
-      ('ontouchstart' in window) ||
+    const mobileUA = typeof navigator !== 'undefined' &&
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)
+    const isMobile = typeof window !== 'undefined' && (
       window.matchMedia('(pointer: coarse)').matches ||
       window.matchMedia('(any-pointer: coarse)').matches ||
+      ('ontouchstart' in window) ||
+      navigator.maxTouchPoints > 0 ||
       mobileUA
+    )
 
-    if (mobile) {
-      // Remove from DOM — no hiding, no classes, no CSS — element does not exist
-      setIsMobileDevice(true)
+    if (isMobile) {
+      // Mobile confirmed — component stays null, loader never mounts.
+      // Unlock scroll (desktop path would have locked it; guard against stale state).
       document.body.style.overflow = ''
 
-      // Force ALL hero elements visible immediately
+      // Belt-and-suspenders: force ALL hero elements visible via inline !important.
+      // These additive overrides never hide content — only guarantee visibility.
       const forceVisible = [
         '.hero-h1', '.hero-h1 .line-inner', '.line-inner',
         '#hEye', '#hSub', '#hBtns', '#hStats', '#hScroll', '#searchBox',
@@ -41,15 +46,29 @@ export default function HomeLoader() {
           el.style.setProperty('visibility', 'visible', 'important')
         })
       })
+      // isMobileDevice stays true → null render — done.
       return
     }
+
+    // Desktop confirmed: render loader, lock scroll.
+    setIsMobileDevice(false)
+    document.body.style.overflow = 'hidden'
+  }, [])
+
+  // ── EFFECT 2: GSAP loader animation — only fires when loader is in DOM ───
+  // Dependency on [isMobileDevice]: fires on mount (true → returns early) and
+  // again when desktop detection flips it to false (loader now in DOM → animate).
+  // No portal, no parent wrapper — loader is a direct DOM child of <main>.
+  useEffect(() => {
+    if (isMobileDevice) return  // mobile path or initial SSR state — skip entirely
 
     const loader = loaderRef.current
     if (!loader) return
 
-    // ── DESKTOP ONLY: show loader, lock scroll, run cinematic GSAP entrance ──
-    loader.style.display = 'flex'
-    document.body.style.overflow = 'hidden'
+    let cancelled = false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let tl: any = null
+    let safetyTimer: ReturnType<typeof setTimeout> | null = null
 
     function finishLoader() {
       if (!loader) return
@@ -63,19 +82,11 @@ export default function HomeLoader() {
       }, 700)
     }
 
-    // ── DESKTOP: cinematic GSAP entrance ─────────────────────────────────────
-    let cancelled = false
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let tl: any = null
-    let safetyTimer: ReturnType<typeof setTimeout> | null = null
-
-    // Safety timer set IMMEDIATELY — before any async work.
-    // 2000ms: lets most of the GSAP animation play; guarantees exit if GSAP hangs.
+    // Safety timer: guarantees loader exits even if GSAP hangs (2s max)
     safetyTimer = setTimeout(finishLoader, 2000)
 
-    // visibilitychange safety: if the page was pre-rendered (hidden tab) and becomes visible,
-    // close the loader immediately. Catches Chrome Speculation Rules pre-render on Android
-    // where touch APIs don't fire during pre-render, bypassing mobile detection.
+    // visibilitychange: if page was pre-rendered (hidden) and becomes visible,
+    // close loader immediately. Catches Chrome Speculation Rules on Android.
     const onVisible = () => {
       if (!document.hidden) {
         finishLoader()
@@ -118,15 +129,17 @@ export default function HomeLoader() {
       tl?.kill()
       document.body.style.overflow = ''
     }
-  }, [])
+  }, [isMobileDevice])
 
-  // MOBILE: loader does not exist in DOM — zero chance of green screen
+  // ── MOBILE: loader does not exist in DOM — zero green screen risk ─────────
+  // SSR default (true) and all mobile paths return null here.
+  // No portal. No parent container. No wrapper. The element simply does not mount.
   if (isMobileDevice) return null
 
   return (
-    // display:none inline — loader hidden by default (SSR)
-    // Desktop JS sets display:flex before running GSAP animation
-    <div id="loader" ref={loaderRef} style={{ display: 'none' }}>
+    // display:flex — loader is already confirmed desktop when this renders.
+    // No display:none needed here: SSR never reaches this branch (returns null above).
+    <div id="loader" ref={loaderRef} style={{ display: 'flex' }}>
       <div className="ldr-logo">
         <span id="ldrA">Agency</span>
         <span id="ldrG">Group</span>

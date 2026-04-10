@@ -296,9 +296,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           /* NUCLEAR: hide loader on mobile/touch — in <head> so it fires before any external CSS or JS.
              globals.css has the same rules but loads later; this is the fail-safe.
              On desktop (>1099px, pointer:fine): rules don't apply → loader shows normally via JS. */
-          '@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}' +
-          '@media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}' +
-          '@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important}}' +
+          '@media(max-width:1099px),(pointer:coarse),(any-pointer:coarse){#loader{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important;z-index:-1!important;content-visibility:hidden!important}}' +
+          '@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important;content-visibility:hidden!important}}' +
+          '@media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important;content-visibility:hidden!important}}' +
+          '@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-1!important;content-visibility:hidden!important}}' +
           /* HERO TEXT COLORS: literal hex values so hero text is readable even if CSS variables fail.
              SSR inline styles (opacity:1;visibility:visible) guarantee presence.
              These colors guarantee readability against the dark green .hl background (#0c1f15).

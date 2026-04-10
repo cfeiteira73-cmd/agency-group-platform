@@ -351,17 +351,31 @@ footer{background:var(--ink);padding:80px 0 32px}
 .modal-btn:hover{background:var(--gm);transform:translateY(-1px)}
 .modal-err{font-family:var(--font-dm-mono),monospace;font-size:.52rem;color:var(--err);text-align:center;margin-top:9px;display:none}
 /* Loader: hidden by default everywhere. JS (HomeLoader.tsx) explicitly shows it on desktop only.
-   IMPORTANT: do NOT add display:flex!important here — JS controls show, CSS only controls hide.
-   The loader div has SSR inline style="display:none" which beats CSS display:flex (no !important).
-   JS sets loader.style.display='flex' which beats SSR inline. This is the correct chain. */
-#loader{position:fixed;inset:0;background:var(--gd);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:32px}
+   JS architecture (HomeLoader.tsx): loader div is NOT in SSR HTML (default state=true→null).
+   Loader only mounts in DOM after client-side desktop detection confirms desktop.
+   On mobile: component returns null → loader never in DOM → no CSS needed to hide it.
+   CSS rules below are belt-and-suspenders for any edge case where loader enters DOM. */
+#loader{position:fixed;inset:0;background:var(--gd);z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:32px}
 #loader.done{display:none!important;opacity:0!important;pointer-events:none!important;visibility:hidden!important}
-/* NUCLEAR: loader can NEVER show on mobile/touch — all 4 signals cover every device.
-   z-index:-1 is the final safety net: even if display:flex fires (pre-render edge case),
-   loader renders BEHIND the hero section so content is always visible. */
-@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}}
-@media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}}
-@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}}
+/* ── DEFINITIVE MOBILE LOADER KILL — combined syntax (OR semantics) ─────────
+   Belt-and-suspenders CSS layer. Even if loader enters DOM on mobile (should never
+   happen with new JS architecture), CSS kills it via combined media query.
+   content-visibility:hidden prevents any paint/compositing even if display somehow fails.
+   z-index:-1 sends it behind all content including hero sections. */
+@media (max-width:1099px),(pointer:coarse),(any-pointer:coarse) {
+  #loader {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    content-visibility: hidden !important;
+  }
+}
+/* Belt-and-suspenders: also keep three separate queries for maximum specificity coverage */
+@media(max-width:1099px){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important;content-visibility:hidden!important}}
+@media(pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important;content-visibility:hidden!important}}
+@media(any-pointer:coarse){#loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important;content-visibility:hidden!important}}
 /* NUCLEAR force-visible + explicit colors — hero must be visible regardless of JS timing.
    Three separate signals cover every Android/iOS/Custom-Tab/headless scenario.
    Selectors expanded to include .hero-h1 itself, * wildcards, and explicit literal colors.
