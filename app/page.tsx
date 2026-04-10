@@ -31,8 +31,10 @@ export default function Home() {
       {/* ── NAV (client — has auth state + mobile drawer) ─────────────────── */}
       <HomeNav />
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="hero" role="region" aria-label="Imóveis em destaque" aria-live="polite">
+      {/* ── HERO (DESKTOP) ────────────────────────────────────────────────── */}
+      {/* hero-desktop-original: hidden on mobile via CSS, shown on desktop.
+          All GSAP, animations, and entrance logic target this section only. */}
+      <section className="hero hero-desktop-original" role="region" aria-label="Imóveis em destaque" aria-live="polite">
         <div className="hl">
           <div className="hl-bg"></div>
           <div className="hl-grain"></div>
@@ -76,6 +78,135 @@ export default function Home() {
             style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
           />
         </aside>
+      </section>
+
+      {/* ── MOBILE SSR HERO FALLBACK ──────────────────────────────────────────
+          Pure server-rendered HTML. Zero JS. Zero GSAP. Zero useEffect.
+          Shown ONLY on mobile (max-width:1099px / pointer:coarse / any-pointer:coarse).
+          Desktop hero above is hidden on mobile. This replaces it completely.
+          All colors are literal hex — no CSS variable dependency for critical props.
+          This section is invisible on desktop (display:none in globals.css base rule). */}
+      <section
+        className="hero-mobile-fallback"
+        role="region"
+        aria-label="Imóveis em destaque"
+        aria-hidden="true"
+        style={{
+          background:'linear-gradient(158deg,#060f0a,#1a4530 52%,#081510)',
+          minHeight:'100svh',
+          padding:'88px 24px 80px',
+          display:'flex',
+          flexDirection:'column',
+          justifyContent:'flex-start',
+          position:'relative',
+          overflow:'hidden',
+          boxSizing:'border-box',
+        }}
+      >
+        {/* Eyebrow */}
+        <div style={{
+          fontFamily:"'DM Mono',monospace",
+          fontSize:'.5rem',
+          letterSpacing:'.48em',
+          textTransform:'uppercase',
+          color:'#d4b87e',
+          opacity:.9,
+          marginBottom:'28px',
+          display:'flex',
+          alignItems:'center',
+          gap:'14px',
+        }}>
+          <span style={{width:'22px',height:'1px',background:'#c9a96e',flexShrink:0,display:'block'}} aria-hidden="true"></span>
+          Lisboa · Portugal · AMI 22506
+        </div>
+        {/* H1 */}
+        <h1 style={{
+          fontFamily:"'Cormorant',serif",
+          fontWeight:300,
+          fontSize:'clamp(1.8rem,7vw,3rem)',
+          lineHeight:1.08,
+          color:'#ffffff',
+          letterSpacing:'-.032em',
+          marginBottom:'40px',
+          margin:'0 0 40px 0',
+        }}>
+          Aqui, o mundo{' '}
+          <em style={{fontStyle:'italic',color:'#e2c99a'}}>veio ter</em>{' '}
+          consigo.
+        </h1>
+        {/* Subtitle */}
+        <p style={{
+          fontFamily:"'Jost',sans-serif",
+          fontSize:'.9rem',
+          lineHeight:1.9,
+          color:'rgba(255,255,255,.72)',
+          maxWidth:'100%',
+          marginBottom:'44px',
+          margin:'0 0 44px 0',
+        }}>
+          Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem chegou primeiro.
+        </p>
+        {/* CTA Buttons */}
+        <div style={{display:'flex',flexDirection:'column',gap:'12px',width:'100%',marginBottom:'40px'}}>
+          <a
+            href="#imoveis"
+            style={{
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              gap:'11px',
+              background:'#c9a96e',
+              color:'#1c4a35',
+              fontFamily:"'Jost',sans-serif",
+              fontSize:'.63rem',
+              fontWeight:600,
+              letterSpacing:'.18em',
+              textTransform:'uppercase',
+              padding:'16px 40px',
+              textDecoration:'none',
+            }}
+          >
+            Descobrir Portfolio
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:'16px',height:'16px',flexShrink:0}} aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a
+            href="#avaliacao"
+            style={{
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              background:'transparent',
+              border:'1px solid rgba(255,255,255,.25)',
+              color:'rgba(255,255,255,.58)',
+              fontFamily:"'Jost',sans-serif",
+              fontSize:'.62rem',
+              fontWeight:400,
+              letterSpacing:'.16em',
+              textTransform:'uppercase',
+              padding:'16px 32px',
+              textDecoration:'none',
+            }}
+          >
+            Avaliação Privada →
+          </a>
+        </div>
+        {/* Stats */}
+        <div style={{display:'flex',flexDirection:'row',flexWrap:'wrap',gap:'20px 32px'}}>
+          {[
+            {n:'169',em:'K',l:'Transacções 2025'},
+            {n:'+17',em:'%',l:'Valorização · 2025'},
+            {n:'44',em:'%',l:'Compradores Int.'},
+          ].map(s=>(
+            <div key={s.l}>
+              <div style={{fontFamily:"'Cormorant',serif",fontSize:'1.8rem',fontWeight:300,color:'#ffffff',lineHeight:1,letterSpacing:'-.03em'}}>
+                {s.n}<em style={{fontStyle:'normal',color:'#e2c99a',fontSize:'1.2rem'}}>{s.em}</em>
+              </div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.5rem',letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(255,255,255,.42)',marginTop:'6px'}}>
+                {s.l}
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ── MARQUEE ───────────────────────────────────────────────────────── */}
