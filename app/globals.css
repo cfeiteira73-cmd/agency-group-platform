@@ -1136,18 +1136,28 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
 @media(pointer:coarse){#__mobileSSRMarker{display:block!important}}
 @media(any-pointer:coarse){#__mobileSSRMarker{display:block!important}}
 
-/* ── HERO VISIBILITY SPLIT ──────────────────────────────────────────────
-   DEFAULT (desktop): fallback hidden, desktop hero visible.
-   MOBILE (combined query — OR logic):
-     – desktop hero hidden
-     – fallback shown, forced visible, no transform interference
-   Single combined query replaces 3 separate blocks — same specificity,
-   same OR semantics, zero desktop leakage.                               */
+/* ── HERO VISIBILITY SPLIT — CLASS-BASED (no media query dependency) ───────
+   'is-mobile' class is added synchronously to <html> by an inline <script>
+   in <head> before first paint. Uses JS APIs that work on ALL Android Chrome
+   variants where CSS pointer:coarse / max-width may not match reliably.
 
-/* DEFAULT: fallback hidden on desktop */
+   DEFAULT (desktop / no class): fallback hidden, desktop hero visible.
+   html.is-mobile: desktop hero hidden, fallback shown + forced visible.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* DEFAULT: fallback always hidden (desktop has no is-mobile class) */
 .hero-mobile-fallback{display:none!important}
 
-/* MOBILE: swap heroes, force full visibility */
+/* MOBILE via JS class — primary control, no media query */
+html.is-mobile .hero-desktop-original{display:none!important}
+html.is-mobile .hero-mobile-fallback{
+  display:flex!important;
+  opacity:1!important;
+  visibility:visible!important;
+  transform:none!important;
+}
+
+/* BELT-AND-SUSPENDERS: keep media query as secondary signal */
 @media(max-width:1099px),(pointer:coarse),(any-pointer:coarse){
   .hero-desktop-original{display:none!important}
   .hero-mobile-fallback{
