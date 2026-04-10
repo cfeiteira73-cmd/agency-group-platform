@@ -1,13 +1,10 @@
 // ─── RSC Homepage — Agency Group ─────────────────────────────────────────────
 // Async RSC. Server-side mobile detection via request headers.
-// Mobile  → MobileHome (pure SSR, zero GSAP, zero loader, zero overlays).
-// Desktop → DesktopHome inline (full GSAP hero, loader, cursor, animations).
-// Single source of content: app/lib/homeContent.ts.
+// Mobile  → MobileTest (binary isolation test — pure white page, zero deps).
+// Desktop → full experience (GSAP hero, loader, cursor, animations).
 // No CSS class toggling. No flash. No dual-hero in the HTML.
 
 import { headers } from 'next/headers'
-import { Suspense } from 'react'
-import MobileHome from './components/MobileHome'
 import HomeSections from './components/HomeSections'
 import HomeLoader from './components/HomeLoader'
 import HomeCursor from './components/HomeCursor'
@@ -31,9 +28,43 @@ export default async function Home() {
   const headersList = await headers()
   const mobile = detectMobile(headersList)
 
-  // ── MOBILE PATH — pure SSR, zero GSAP ────────────────────────────────────
+  // ── MOBILE PATH — BINARY ISOLATION TEST ─────────────────────────────────
+  // Render nothing but a plain white page with black text.
+  // No nav, no hero, no HomeSections, no loader, no animations, no overlays,
+  // no gradients, no CSS classes, no shared wrappers, no client components.
+  // If this is invisible/green → the problem is above this component tree
+  //   (layout.tsx, globals.css, html/body, or Chrome Custom Tab itself).
+  // If this is visible → the problem is inside MobileHome's component tree.
   if (mobile) {
-    return <MobileHome />
+    return (
+      <section style={{
+        background:     '#ffffff',
+        color:          '#000000',
+        minHeight:      '100dvh',
+        padding:        '32px',
+        display:        'flex',
+        flexDirection:  'column',
+        justifyContent: 'center',
+        alignItems:     'flex-start',
+      }}>
+        <h1 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '16px' }}>
+          MOBILE TEST
+        </h1>
+        <p style={{ fontSize: '18px', marginBottom: '24px' }}>
+          If you can see this, the mobile rendering path is working.
+        </p>
+        <button type="button" style={{
+          padding:      '14px 20px',
+          fontSize:     '16px',
+          background:   '#000000',
+          color:        '#ffffff',
+          border:       'none',
+          borderRadius: '8px',
+        }}>
+          Test button
+        </button>
+      </section>
+    )
   }
 
   // ── DESKTOP PATH — full experience ───────────────────────────────────────
