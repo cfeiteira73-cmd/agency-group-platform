@@ -26,7 +26,11 @@ function detectMobile(headersList: Awaited<ReturnType<typeof headers>>): boolean
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function Home() {
   const headersList = await headers()
-  const mobile = detectMobile(headersList)
+  // FORCE-MOBILE: detectMobile() bypassed — all requests take mobile path.
+  // Isolation test: if white page appears on Android → detectMobile() was the bug.
+  // If green still appears → problem is above this component (layout/globals/html).
+  const mobile = true // was: detectMobile(headersList)
+  void headersList    // silence unused-var warning
 
   // ── MOBILE PATH — BINARY ISOLATION TEST ─────────────────────────────────
   // Server-side log — visible in Vercel function logs.
