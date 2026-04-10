@@ -944,27 +944,32 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
       </head>
       <body style={{ background: '#f4f0e6' }}>
-        {/* ── LAYOUT TEST OVERLAY — MOBILE ONLY ────────────────────────────────
-            z-index:2147483647 (max 32-bit int) — renders ABOVE everything.
-            default display:none (desktop). CSS !important flips it on mobile.
-            If this is visible on Android → layout.tsx CAN paint above the green.
-            If green is still visible → problem is outside the app render tree.
-            REMOVE after investigation.                                         */}
-        <style>{`@media(pointer:coarse),(any-pointer:coarse),(max-width:1099px){#layout-test-overlay{display:flex!important}}`}</style>
-        <div id="layout-test-overlay" style={{
-          position:       'fixed',
-          inset:          0,
-          zIndex:         2147483647,
-          background:     '#ffffff',
-          color:          '#000000',
-          display:        'none',
-          alignItems:     'center',
-          justifyContent: 'center',
-          fontSize:       '32px',
-          fontWeight:     700,
-        }}>
-          LAYOUT TEST
-        </div>
+        {/* ── DEFENSIVE LOADER KILL — JS layer (belt-and-suspenders above CSS) ──
+            Runs synchronously before React hydration.
+            If #loader enters DOM on a mobile device for any reason, this script
+            injects a kill stylesheet via JS — more reliable than CSS media queries
+            in edge cases (DeX, Chrome Custom Tab, connected mouse on Android).
+            MutationObserver watches for late #loader DOM insertion after hydration.
+            NEVER fires on desktop (UA check + matchMedia guard). */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){
+  var mob=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)||
+    (typeof window.matchMedia==='function'&&(window.matchMedia('(pointer:coarse)').matches||window.matchMedia('(any-pointer:coarse)').matches))||
+    navigator.maxTouchPoints>0;
+  if(!mob)return;
+  function kill(){
+    if(document.getElementById('ag-ldr-kill'))return;
+    var s=document.createElement('style');
+    s.id='ag-ldr-kill';
+    s.textContent='#loader,#loader *{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-9999!important;pointer-events:none!important;content-visibility:hidden!important}';
+    (document.head||document.documentElement).appendChild(s);
+    var el=document.getElementById('loader');
+    if(el){el.style.setProperty('display','none','important');el.style.setProperty('visibility','hidden','important');}
+  }
+  kill();
+  var obs=new MutationObserver(kill);
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('load',function(){setTimeout(function(){obs.disconnect();},3000);},{once:true});
+})();` }} />
         {/* Skip-to-content — accessibility (CSS-only, no event handlers) */}
         <a href="#main-content" className="skip-to-content">
           Saltar para o conteúdo principal
@@ -974,9 +979,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Vercel Speed Insights */}
         <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
         <CurrencyProvider>
-        {/* DIAGNOSTIC: red background to confirm <main> is in DOM and visible.
-            Remove after diagnosis. */}
-        <main id="main-content" style={{ background: 'red', minHeight: '100dvh' }}>{children}</main>
+        <main id="main-content">{children}</main>
         {/* PWAInstallBanner DISABLED — SW investigation: beforeinstallprompt can
             trigger unexpected re-installs that bypass cache-clear efforts.
             Re-enable after green screen investigation is concluded. */}

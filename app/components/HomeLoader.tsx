@@ -17,14 +17,18 @@ export default function HomeLoader() {
   // If mobile detected: stays null. If desktop: renders loader in same frame.
   // SSR: useLayoutEffect is suppressed on server — no hydration warning (client-only).
   useLayoutEffect(() => {
-    const mobileUA = typeof navigator !== 'undefined' &&
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)
-    const isMobile = typeof window !== 'undefined' && (
+    if (typeof window === 'undefined') return
+
+    const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)
+    // UA check is the most reliable signal — userAgent always contains "Android" on Android Chrome.
+    // matchMedia and touch flags added as belt-and-suspenders; innerWidth < 1100 catches all phones.
+    const isMobile = (
+      mobileUA ||
       window.matchMedia('(pointer: coarse)').matches ||
       window.matchMedia('(any-pointer: coarse)').matches ||
       ('ontouchstart' in window) ||
       navigator.maxTouchPoints > 0 ||
-      mobileUA
+      window.innerWidth < 1100
     )
 
     if (isMobile) {
@@ -56,6 +60,30 @@ export default function HomeLoader() {
     setIsMobileDevice(false)
     document.body.style.overflow = 'hidden'
   }, [])
+
+  // ── EFFECT 2b: Post-mount fallback — runs AFTER paint as belt-and-suspenders ──
+  // If useLayoutEffect misclassified mobile as desktop (edge case: DeX, connected mouse,
+  // Chrome Custom Tab anomaly), this catches it after the first frame and injects
+  // a kill stylesheet that overrides everything including inline styles.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!isMobileDevice) {
+      // We think we're on desktop — double-check UA which is the gold standard.
+      const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)
+      if (mobileUA) {
+        // UA says mobile but detection said desktop — inject kill stylesheet immediately.
+        const s = document.createElement('style')
+        s.id = 'ag-loader-mobile-kill'
+        s.textContent = '#loader,#loader *{display:none!important;visibility:hidden!important;opacity:0!important;z-index:-9999!important;pointer-events:none!important}'
+        if (!document.getElementById('ag-loader-mobile-kill')) {
+          document.head.appendChild(s)
+        }
+        document.body.style.overflow = ''
+        setIsMobileDevice(true)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobileDevice])
 
   // ── EFFECT 2: GSAP loader animation — only fires when loader is in DOM ───
   // Dependency on [isMobileDevice]: fires on mount (true → returns early) and

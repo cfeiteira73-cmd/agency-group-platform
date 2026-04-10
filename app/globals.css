@@ -342,7 +342,10 @@ footer{background:var(--ink);padding:80px 0 32px}
    Loader only mounts in DOM after client-side desktop detection confirms desktop.
    On mobile: component returns null → loader never in DOM → no CSS needed to hide it.
    CSS rules below are belt-and-suspenders for any edge case where loader enters DOM. */
-#loader{position:fixed;inset:0;background:var(--gd);z-index:2000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:32px}
+/* display:none — loader is CSS-hidden by default on every device.
+   HomeLoader.tsx sets display:flex via inline style ONLY after confirming desktop.
+   Mobile kill rules below remain belt-and-suspenders for any edge case. */
+#loader{position:fixed;inset:0;background:var(--gd);z-index:2000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:32px}
 #loader.done{display:none!important;opacity:0!important;pointer-events:none!important;visibility:hidden!important}
 /* ── DEFINITIVE MOBILE LOADER KILL — combined syntax (OR semantics) ─────────
    Belt-and-suspenders CSS layer. Even if loader enters DOM on mobile (should never
