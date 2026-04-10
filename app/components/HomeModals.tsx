@@ -14,56 +14,67 @@ function showToast(msg: string, type: 'success' | 'error' | 'info' = 'info') {
 }
 
 export default function HomeModals() {
+  // ── MOBILE GUARD — computed once at render time, client-side only ─────────
+  // Touch/coarse-pointer/narrow-viewport → all modals permanently disabled.
+  // This is NOT a hook — it's a plain expression evaluated before hooks.
+  // Hooks are still called below (React rules compliance) but each guard bails
+  // immediately, so zero side-effects run on mobile.
+  const isMobile = typeof window !== 'undefined' && (
+    window.innerWidth <= 1099 ||
+    navigator.maxTouchPoints > 0 ||
+    window.matchMedia('(pointer: coarse)').matches ||
+    window.matchMedia('(any-pointer: coarse)').matches ||
+    ('ontouchstart' in window)
+  )
+
   const [modalOpen, setModalOpen] = useState(false)
   const [agModal, setAgModal] = useState(false)
   const [agEmailVal, setAgEmailVal] = useState('')
   const [agSent, setAgSent] = useState(false)
   const [agSending, setAgSending] = useState(false)
 
-  // Exit intent: open off-market modal when cursor leaves viewport top
-  // MOBILE GUARD: skip entirely on touch/coarse-pointer devices.
-  // Android Chrome fires synthetic 'mouseleave' events during touch scrolling,
-  // especially near the top of the viewport — this was triggering the full-screen
-  // dark-green modal-ov overlay on mobile, causing the green screen.
+  // ── EFFECT 1: Exit intent — desktop ONLY ─────────────────────────────────
+  // Android Chrome fires synthetic 'mouseleave' events during touch scrolling
+  // near the top of the viewport — this was triggering the full-screen
+  // dark-green modal-ov overlay (the "green screen" bug).
   useEffect(() => {
-    // Belt-and-suspenders: any coarse pointer, any touch capability, or narrow viewport
-    const isTouch =
-      window.matchMedia('(pointer: coarse)').matches ||
-      window.matchMedia('(any-pointer: coarse)').matches ||
-      ('ontouchstart' in window) ||
-      navigator.maxTouchPoints > 0 ||
-      window.matchMedia('(max-width: 1099px)').matches
-    if (isTouch) return  // mobile — exit intent disabled, never register listener
+    if (isMobile) return  // MOBILE: never register listener, never open modal
 
     let triggered = false
     const handleMouseLeave = (e: MouseEvent) => {
       if (triggered) return
       if (e.clientY <= 10) {
         triggered = true
-        setTimeout(() => setModalOpen(true), 300)
+        setTimeout(() => {
+          if (!isMobile) setModalOpen(true)  // double-guard on the setter
+        }, 300)
       }
     }
     document.addEventListener('mouseleave', handleMouseLeave)
     return () => document.removeEventListener('mouseleave', handleMouseLeave)
-  }, [])
+  }, [isMobile])
 
-  // Listen for custom events from other client islands
+  // ── EFFECT 2: Custom event bus — desktop ONLY ────────────────────────────
   useEffect(() => {
-    const openOffMarket = () => openModal()
-    const openAgModal = () => setAgModal(true)
-    const closeAll = () => { closeModal(); setAgModal(false) }
+    if (isMobile) return  // MOBILE: no listeners, no overlay triggers
+
+    const openOffMarket = () => { if (!isMobile) openModal() }
+    const openAgModal   = () => { if (!isMobile) setAgModal(true) }
+    const closeAll      = () => { closeModal(); setAgModal(false) }
+
     window.addEventListener('ag:open-offmarket', openOffMarket)
-    window.addEventListener('ag:open-agmodal', openAgModal)
-    window.addEventListener('ag:close-modals', closeAll)
+    window.addEventListener('ag:open-agmodal',   openAgModal)
+    window.addEventListener('ag:close-modals',   closeAll)
     return () => {
       window.removeEventListener('ag:open-offmarket', openOffMarket)
-      window.removeEventListener('ag:open-agmodal', openAgModal)
-      window.removeEventListener('ag:close-modals', closeAll)
+      window.removeEventListener('ag:open-agmodal',   openAgModal)
+      window.removeEventListener('ag:close-modals',   closeAll)
     }
-  }, [])
+  }, [isMobile])
 
-  // ═══ MODAL FOCUS TRAP + ESCAPE ═══
+  // ── EFFECT 3: Off-market modal focus trap + Escape ───────────────────────
   useEffect(() => {
+    if (isMobile) return   // MOBILE: never runs (modal never opens)
     if (!modalOpen) return
     const timer = setTimeout(() => {
       const modal = document.querySelector('#offModal [role="dialog"], #offModal')
@@ -76,9 +87,11 @@ export default function HomeModals() {
     document.addEventListener('keydown', handleKeyDown)
     return () => { clearTimeout(timer); document.removeEventListener('keydown', handleKeyDown) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modalOpen])
+  }, [modalOpen, isMobile])
 
+  // ── EFFECT 4: AG portal modal focus trap + Escape ────────────────────────
   useEffect(() => {
+    if (isMobile) return   // MOBILE: never runs (modal never opens)
     if (!agModal) return
     const timer = setTimeout(() => {
       const modal = document.querySelector('[data-agmodal]')
@@ -91,9 +104,11 @@ export default function HomeModals() {
     document.addEventListener('keydown', handleKeyDown)
     return () => { clearTimeout(timer); document.removeEventListener('keydown', handleKeyDown) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agModal])
+  }, [agModal, isMobile])
 
+  // ── HELPERS ───────────────────────────────────────────────────────────────
   function openModal() {
+    if (isMobile) return  // MOBILE: blocked at function level
     setModalOpen(true)
     document.body.style.overflow = 'hidden'
     setTimeout(() => document.getElementById('offPwd')?.focus(), 300)
@@ -156,6 +171,11 @@ export default function HomeModals() {
     setAgSending(false)
     setAgEmailVal('')
   }
+
+  // ── RENDER GUARD — mobile returns null: zero DOM, zero overlay risk ───────
+  // All hooks above were called (React compliance), but no side-effects ran.
+  // modal-ov is NOT in the DOM on mobile → impossible to become visible.
+  if (isMobile) return null
 
   return (
     <>
