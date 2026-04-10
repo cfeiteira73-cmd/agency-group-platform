@@ -21,7 +21,20 @@ export default function HomeModals() {
   const [agSending, setAgSending] = useState(false)
 
   // Exit intent: open off-market modal when cursor leaves viewport top
+  // MOBILE GUARD: skip entirely on touch/coarse-pointer devices.
+  // Android Chrome fires synthetic 'mouseleave' events during touch scrolling,
+  // especially near the top of the viewport — this was triggering the full-screen
+  // dark-green modal-ov overlay on mobile, causing the green screen.
   useEffect(() => {
+    // Belt-and-suspenders: any coarse pointer, any touch capability, or narrow viewport
+    const isTouch =
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.matchMedia('(any-pointer: coarse)').matches ||
+      ('ontouchstart' in window) ||
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia('(max-width: 1099px)').matches
+    if (isTouch) return  // mobile — exit intent disabled, never register listener
+
     let triggered = false
     const handleMouseLeave = (e: MouseEvent) => {
       if (triggered) return
