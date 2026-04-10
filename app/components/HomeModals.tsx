@@ -13,7 +13,12 @@ function showToast(msg: string, type: 'success' | 'error' | 'info' = 'info') {
   window.dispatchEvent(new CustomEvent('ag:toast', { detail: { msg, type } }))
 }
 
+// ── OFF-MARKET MODAL DISABLED ─────────────────────────────────────────────────
+// Removed by request — modal was appearing automatically on page open (exit intent).
+// Returns null everywhere: desktop + mobile. Zero DOM, zero overlay risk.
+// To re-enable: remove the `return null` line below.
 export default function HomeModals() {
+  return null  // DISABLED — remove this line to restore
   // ── MOBILE GUARD — computed once at render time, client-side only ─────────
   // Touch/coarse-pointer/narrow-viewport → all modals permanently disabled.
   // This is NOT a hook — it's a plain expression evaluated before hooks.
