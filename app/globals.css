@@ -1131,45 +1131,30 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
 ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── MOBILE SSR DIAGNOSTIC MARKER — hidden on desktop, shown on mobile ── */
-/* If this marker is NOT visible on Android, issue is above z-index:99999  */
 #__mobileSSRMarker{display:none!important}
 @media(max-width:1099px){#__mobileSSRMarker{display:block!important}}
 @media(pointer:coarse){#__mobileSSRMarker{display:block!important}}
 @media(any-pointer:coarse){#__mobileSSRMarker{display:block!important}}
 
-/* Base: fallback is always hidden on desktop */
+/* ── HERO VISIBILITY SPLIT ──────────────────────────────────────────────
+   DEFAULT (desktop): fallback hidden, desktop hero visible.
+   MOBILE (combined query — OR logic):
+     – desktop hero hidden
+     – fallback shown, forced visible, no transform interference
+   Single combined query replaces 3 separate blocks — same specificity,
+   same OR semantics, zero desktop leakage.                               */
+
+/* DEFAULT: fallback hidden on desktop */
 .hero-mobile-fallback{display:none!important}
 
-/* Signal 1: narrow viewport */
-@media(max-width:1099px){
-  section.hero.hero-desktop-original{display:none!important}
-  .hero-mobile-fallback{display:flex!important;flex-direction:column!important;min-height:100svh}
-}
-
-/* Signal 2: primary pointer is coarse (touch) */
-@media(pointer:coarse){
-  section.hero.hero-desktop-original{display:none!important}
-  .hero-mobile-fallback{display:flex!important;flex-direction:column!important;min-height:100svh}
-}
-
-/* Signal 3: any pointer is coarse (covers Samsung S-Pen, hybrid devices) */
-@media(any-pointer:coarse){
-  section.hero.hero-desktop-original{display:none!important}
-  .hero-mobile-fallback{display:flex!important;flex-direction:column!important;min-height:100svh}
-}
-
-/* ── MOBILE HERO VISIBILITY — opacity / transform / visibility nuclear rule ─
-   Belt-and-suspenders over the JS guard in HomeAnimations.tsx.
-   Prevents any stale GSAP inline style from hiding hero content on mobile.
-   Scoped to .hero and .hero-mobile-fallback only — zero global selector.
-   Desktop (fine pointer, >1099px): neither query matches → no effect.      */
+/* MOBILE: swap heroes, force full visibility */
 @media(max-width:1099px),(pointer:coarse),(any-pointer:coarse){
-  .hero,
-  .hero-desktop-original,
+  .hero-desktop-original{display:none!important}
   .hero-mobile-fallback{
+    display:flex!important;
     opacity:1!important;
-    transform:none!important;
     visibility:visible!important;
+    transform:none!important;
   }
 }
 

@@ -125,7 +125,6 @@ export default function Home() {
         className="hero-mobile-fallback"
         role="region"
         aria-label="Imóveis em destaque"
-        aria-hidden="true"
         style={{
           background:'linear-gradient(158deg,#060f0a,#1a4530 52%,#081510)',
           minHeight:'100svh',
@@ -136,6 +135,8 @@ export default function Home() {
           position:'relative',
           overflow:'hidden',
           boxSizing:'border-box',
+          opacity:1,
+          visibility:'visible',
         }}
       >
         {/* Eyebrow */}
