@@ -324,5 +324,154 @@ function genDoc(){
 }
 window.addEventListener('load',()=>{ld('ag07',IDS);calcCPCV();document.getElementById('dt_cpcv').value=isoToday();});
 </script>
-</body>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     AG·MAIL — Enviar Documento por Email
+     Agency Group · AMI 22506
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+#ag-mail-btn{position:fixed;bottom:24px;right:24px;z-index:9999;background:#1c4a35;color:#c9a96e;border:1px solid rgba(201,169,110,.35);border-radius:6px;padding:10px 18px;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.08em;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.25);transition:background .2s,transform .15s;display:flex;align-items:center;gap:8px}
+#ag-mail-btn:hover{background:#245c43;transform:translateY(-1px)}
+#ag-mail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;align-items:center;justify-content:center}
+#ag-mail-overlay.open{display:flex}
+#ag-mail-modal{background:#0c1f15;border:1px solid rgba(201,169,110,.2);border-radius:8px;padding:32px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#ag-mail-modal h3{margin:0 0 6px;font-family:'Georgia',serif;font-weight:300;color:#c9a96e;font-size:1.15rem}
+#ag-mail-modal p.sub{margin:0 0 24px;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(201,169,110,.4)}
+.ag-ml{display:block;margin-bottom:6px;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(201,169,110,.55)}
+.ag-mi{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(201,169,110,.2);border-radius:5px;padding:10px 13px;color:#e8dfc8;font-size:.82rem;font-family:inherit;margin-bottom:16px;outline:none;transition:border-color .2s}
+.ag-mi:focus{border-color:rgba(201,169,110,.5);background:rgba(255,255,255,.07)}
+.ag-mi::placeholder{color:rgba(201,169,110,.25)}
+textarea.ag-mi{resize:vertical;min-height:72px;line-height:1.6}
+.ag-mbts{display:flex;gap:10px;margin-top:4px}
+.ag-mbts button{flex:1;padding:10px;border-radius:5px;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;transition:background .2s,opacity .2s}
+#ag-mail-send{background:#1c4a35;color:#c9a96e;border:1px solid rgba(201,169,110,.3)!important}
+#ag-mail-send:hover{background:#245c43}
+#ag-mail-send:disabled{opacity:.5;cursor:not-allowed}
+#ag-mail-cancel{background:rgba(255,255,255,.05);color:rgba(201,169,110,.6);border:1px solid rgba(201,169,110,.12)!important}
+#ag-mail-cancel:hover{background:rgba(255,255,255,.09)}
+#ag-mail-msg{margin-top:14px;padding:10px 13px;border-radius:5px;font-size:.78rem;display:none;line-height:1.5}
+#ag-mail-msg.ok{background:rgba(28,74,53,.4);color:#a7d7b8;border:1px solid rgba(28,74,53,.6);display:block}
+#ag-mail-msg.err{background:rgba(120,30,30,.3);color:#f4a8a8;border:1px solid rgba(180,60,60,.4);display:block}
+</style>
+
+<button id="ag-mail-btn" onclick="agMailOpen()">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+  Enviar por Email
+</button>
+
+<div id="ag-mail-overlay" onclick="if(event.target===this)agMailClose()">
+  <div id="ag-mail-modal">
+    <h3>Enviar Documento</h3>
+    <p class="sub">Agency Group · AMI 22506</p>
+    <label class="ag-ml">Para (email destinatário)</label>
+    <input id="ag-mail-to" class="ag-mi" type="email" placeholder="destinatario@email.com" autocomplete="email">
+    <label class="ag-ml">Assunto</label>
+    <input id="ag-mail-subj" class="ag-mi" type="text" placeholder="Assunto do email">
+    <label class="ag-ml">Mensagem (opcional)</label>
+    <textarea id="ag-mail-text" class="ag-mi" placeholder="Mensagem adicional..."></textarea>
+    <div class="ag-mbts">
+      <button id="ag-mail-cancel" onclick="agMailClose()">Cancelar</button>
+      <button id="ag-mail-send" onclick="agMailSend()">✉ Enviar</button>
+    </div>
+    <div id="ag-mail-msg"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var _agDocTitle = (document.title||'Documento Agency Group').replace(/\\s*[|·].*$/, '').trim();
+  document.getElementById('ag-mail-subj').value = _agDocTitle + ' — Agency Group AMI 22506';
+
+  window.agMailOpen = function(){
+    document.getElementById('ag-mail-overlay').classList.add('open');
+    document.getElementById('ag-mail-msg').className='';
+    document.getElementById('ag-mail-msg').textContent='';
+    document.getElementById('ag-mail-to').focus();
+  };
+  window.agMailClose = function(){
+    document.getElementById('ag-mail-overlay').classList.remove('open');
+  };
+
+  function _agCollectFields(){
+    var fields = [];
+    var seen = new Set();
+    document.querySelectorAll('input:not([type=file]):not([type=button]):not([type=submit]):not([type=checkbox]):not([type=radio]), select, textarea').forEach(function(el){
+      if(el.id==='ag-mail-to'||el.id==='ag-mail-subj'||el.id==='ag-mail-text'||el.id==='ptxt'||el.id==='ag-ptxt'||el.id==='ia-ta'||el.id==='imgIn') return;
+      var val = (el.value||'').trim();
+      if(!val) return;
+      var label = '';
+      if(el.id && !seen.has(el.id)){
+        var lbl = document.querySelector('label[for="'+el.id+'"]');
+        if(lbl) label = lbl.textContent.trim().replace(/\\s*\\*\\s*$/,'');
+      }
+      if(!label){
+        var parent = el.closest('.f,.field,.form-group,div');
+        if(parent){
+          var lblEl = parent.querySelector('label');
+          if(lblEl && lblEl !== el) label = lblEl.textContent.trim().replace(/\\s*\\*\\s*$/,'');
+        }
+      }
+      if(!label) label = el.placeholder || el.name || el.id || 'Campo';
+      if(seen.has(label+'::'+val)) return;
+      seen.add(label+'::'+val);
+      if(el.id) seen.add(el.id);
+      fields.push({label: label, value: val});
+    });
+    document.querySelectorAll('input[type=checkbox]:checked').forEach(function(el){
+      var label = '';
+      var lbl = document.querySelector('label[for="'+el.id+'"]');
+      if(lbl) label = lbl.textContent.trim();
+      if(!label){ var p=el.closest('label'); if(p) label=p.textContent.trim(); }
+      if(!label) label = el.value || el.id;
+      if(label && !seen.has('ck::'+label)){
+        seen.add('ck::'+label);
+        fields.push({label: label, value: 'Sim'});
+      }
+    });
+    return fields;
+  }
+
+  window.agMailSend = function(){
+    var to = document.getElementById('ag-mail-to').value.trim();
+    var subj = document.getElementById('ag-mail-subj').value.trim();
+    var msg = document.getElementById('ag-mail-text').value.trim();
+    var msgEl = document.getElementById('ag-mail-msg');
+    var btnEl = document.getElementById('ag-mail-send');
+    if(!to || !to.includes('@')){
+      msgEl.className='err'; msgEl.textContent='⚠ Insere um email válido.'; return;
+    }
+    var fields = _agCollectFields();
+    btnEl.disabled=true; btnEl.textContent='A enviar...';
+    msgEl.className=''; msgEl.textContent='';
+    fetch('/api/send-doc',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        to: to,
+        subject: subj,
+        message: msg,
+        docTitle: _agDocTitle,
+        fields: fields,
+        docUrl: window.location.href
+      })
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.success){
+        msgEl.className='ok';
+        msgEl.textContent='✓ Email enviado com sucesso para '+to;
+        btnEl.textContent='✓ Enviado';
+        setTimeout(function(){ agMailClose(); btnEl.disabled=false; btnEl.textContent='✉ Enviar'; }, 2500);
+      } else {
+        msgEl.className='err';
+        msgEl.textContent='⚠ Erro: '+(d.error||'Não foi possível enviar.');
+        btnEl.disabled=false; btnEl.textContent='✉ Enviar';
+      }
+    }).catch(function(e){
+      msgEl.className='err';
+      msgEl.textContent='⚠ Erro de ligação. Tenta novamente.';
+      btnEl.disabled=false; btnEl.textContent='✉ Enviar';
+    });
+  };
+})();
+</script></body>
 </html>
