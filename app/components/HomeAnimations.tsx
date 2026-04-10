@@ -14,6 +14,22 @@ export default function HomeAnimations() {
     let gsapCtx: { revert: () => void } | null = null
 
     const initAnimations = async () => {
+      // ── MOBILE GUARD: exit before importing GSAP ──────────────────────────
+      // Zero GSAP on mobile — CSS media queries and SSR inline styles handle
+      // all hero visibility. GSAP is not even loaded (no dynamic import) on
+      // mobile, saving bundle weight and eliminating any risk of GSAP setting
+      // opacity:0 / transform / clip-path on hero elements before guards fire.
+      // Desktop (fine pointer, >1099px, no touch): falls through normally.
+      const isMobileDevice =
+        typeof window !== 'undefined' && (
+          window.innerWidth <= 1099 ||
+          navigator.maxTouchPoints > 0 ||
+          window.matchMedia('(pointer: coarse)').matches ||
+          window.matchMedia('(any-pointer: coarse)').matches ||
+          ('ontouchstart' in window)
+        )
+      if (isMobileDevice) return  // MOBILE: stop here, no GSAP at all
+
       const { default: gsap } = await import('gsap')
       const { ScrollTrigger } = await import('gsap/ScrollTrigger')
       gsap.registerPlugin(ScrollTrigger)

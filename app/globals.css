@@ -1158,3 +1158,18 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
   .hero-mobile-fallback{display:flex!important;flex-direction:column!important;min-height:100svh}
 }
 
+/* ── MOBILE HERO VISIBILITY — opacity / transform / visibility nuclear rule ─
+   Belt-and-suspenders over the JS guard in HomeAnimations.tsx.
+   Prevents any stale GSAP inline style from hiding hero content on mobile.
+   Scoped to .hero and .hero-mobile-fallback only — zero global selector.
+   Desktop (fine pointer, >1099px): neither query matches → no effect.      */
+@media(max-width:1099px),(pointer:coarse),(any-pointer:coarse){
+  .hero,
+  .hero-desktop-original,
+  .hero-mobile-fallback{
+    opacity:1!important;
+    transform:none!important;
+    visibility:visible!important;
+  }
+}
+
