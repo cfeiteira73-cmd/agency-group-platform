@@ -288,22 +288,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* CRITICAL: inline style block — hides loader BEFORE any external CSS or JS loads.
             This is the FIRST thing the browser processes, before sw.js, before globals.css.
             Prevents green flash even if service worker serves stale HTML/CSS. */}
-        {/* ── MOBILE DETECTION: synchronous inline script — runs before first paint ──
-            Adds 'is-mobile' class to <html> using JS APIs that work on ALL Android
-            Chrome variants (Custom Tab, WebView, standalone Chrome) where CSS media
-            queries for pointer:coarse / max-width may not match reliably.
-            Fires synchronously in <head> → class is set before any CSS is parsed →
-            html.is-mobile rules apply from the very first frame. No flash.          */}
-        <script dangerouslySetInnerHTML={{ __html:
-          `(function(){try{` +
-          `var m=window.innerWidth<=1099` +
-          `||navigator.maxTouchPoints>0` +
-          `||window.matchMedia('(pointer:coarse)').matches` +
-          `||window.matchMedia('(any-pointer:coarse)').matches` +
-          `||('ontouchstart' in window);` +
-          `if(m)document.documentElement.classList.add('is-mobile');` +
-          `}catch(e){}})();`
-        }} />
+        {/* Mobile detection is now server-side in app/page.tsx via request headers.
+            The html.is-mobile inline script has been removed — no longer needed. */}
         <style dangerouslySetInnerHTML={{ __html:
           /* This runs BEFORE globals.css, BEFORE JS, BEFORE service worker — first bytes of HTML.
              Any rule here is guaranteed to apply regardless of network speed or SW state. */

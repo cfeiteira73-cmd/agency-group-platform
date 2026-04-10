@@ -1103,53 +1103,7 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
   .map-split-map{width:100%!important;height:60vh!important}
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   MOBILE SSR HERO FALLBACK — VISIBILITY SPLIT
-   Strategy: .hero-mobile-fallback is hidden by default (desktop).
-   On mobile (3 signals), the desktop original is hidden and the
-   pure-SSR fallback is shown. Zero JS dependency on mobile hero.
-   Three belt-and-suspenders signals:
-     1. max-width:1099px — viewport-based (headless Chrome / Lighthouse)
-     2. pointer:coarse  — primary pointer is touch (most Android/iOS)
-     3. any-pointer:coarse — any touch pointer present (Samsung S-Pen etc.)
-   Desktop: neither query matches → only .hero-desktop-original is shown.
-═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── MOBILE SSR DIAGNOSTIC MARKER — hidden on desktop, shown on mobile ── */
-#__mobileSSRMarker{display:none!important}
-@media(max-width:1099px){#__mobileSSRMarker{display:block!important}}
-@media(pointer:coarse){#__mobileSSRMarker{display:block!important}}
-@media(any-pointer:coarse){#__mobileSSRMarker{display:block!important}}
-
-/* ── HERO VISIBILITY SPLIT — CLASS-BASED (no media query dependency) ───────
-   'is-mobile' class is added synchronously to <html> by an inline <script>
-   in <head> before first paint. Uses JS APIs that work on ALL Android Chrome
-   variants where CSS pointer:coarse / max-width may not match reliably.
-
-   DEFAULT (desktop / no class): fallback hidden, desktop hero visible.
-   html.is-mobile: desktop hero hidden, fallback shown + forced visible.
-   ──────────────────────────────────────────────────────────────────────── */
-
-/* DEFAULT: fallback always hidden (desktop has no is-mobile class) */
-.hero-mobile-fallback{display:none!important}
-
-/* MOBILE via JS class — primary control, no media query */
-html.is-mobile .hero-desktop-original{display:none!important}
-html.is-mobile .hero-mobile-fallback{
-  display:flex!important;
-  opacity:1!important;
-  visibility:visible!important;
-  transform:none!important;
-}
-
-/* BELT-AND-SUSPENDERS: keep media query as secondary signal */
-@media(max-width:1099px),(pointer:coarse),(any-pointer:coarse){
-  .hero-desktop-original{display:none!important}
-  .hero-mobile-fallback{
-    display:flex!important;
-    opacity:1!important;
-    visibility:visible!important;
-    transform:none!important;
-  }
-}
+/* Mobile/desktop split is now handled server-side in app/page.tsx.
+   MobileHome renders on mobile devices; desktop hero renders on desktop.
+   The CSS hero-toggle block has been removed — no longer needed. */
 
