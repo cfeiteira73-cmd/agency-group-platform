@@ -36,7 +36,8 @@ export default async function Home() {
   return (
     <>
       {/* ── CLIENT ISLANDS (non-visual / overlay) ─────────────────────────── */}
-      <HomeLoader />
+      {/* ISOLATION TEST: HomeLoader temporarily removed — confirming loader as green screen root cause */}
+      {/* <HomeLoader /> */}
       <HomeCursor />
       <HomeAnimations />
       <HomeToast />
