@@ -367,6 +367,10 @@ footer{background:var(--ink);padding:80px 0 32px}
    Selectors expanded to include .hero-h1 itself, * wildcards, and explicit literal colors.
    Literal colors (#fff, #d4b87e) ensure readability even if CSS variables fail to resolve. */
 @media(max-width:1099px){
+  /* ── Kill grain overlay GPU layer: body::after at z-index:9998 is above section.hero(2001).
+     Its animated transform creates a compositor layer that can cause Android Chrome layer-squashing
+     artifacts on mobile. Remove it entirely — grain is a desktop Awwwards effect only. ── */
+  body::after{display:none!important;animation:none!important;content:none!important}
   /* ── Visibility: every hero element, including wildcards ── */
   .hero-content,.hero-content *,
   .hero-h1,.hero-h1 *,.hero-h1 .line,.hero-h1 .line-inner,
@@ -375,7 +379,8 @@ footer{background:var(--ink);padding:80px 0 32px}
   .line-inner,.text-reveal-inner,.clip-reveal,
   .zc,.imc,.fade-in,.sec-h2,.sec-eye,.cred-c{
     opacity:1!important;transform:none!important;translate:none!important;
-    clip-path:none!important;filter:none!important;visibility:visible!important
+    clip-path:none!important;filter:none!important;visibility:visible!important;
+    will-change:auto!important
   }
   .hero-h1 .line{overflow:visible!important}
   .hero-content{display:flex!important;flex-direction:column!important;position:relative!important;z-index:10!important}
@@ -385,6 +390,7 @@ footer{background:var(--ink);padding:80px 0 32px}
   .hero-sub,#hSub{color:rgba(255,255,255,.72)!important}
 }
 @media(pointer:coarse){
+  /* body::after already hidden by the @media(pointer:coarse) block at top of file */
   .hero-content,.hero-content *,
   .hero-h1,.hero-h1 *,.hero-h1 .line,.hero-h1 .line-inner,
   #hEye,#hSub,#hBtns,#hStats,#hScroll,#searchBox,
@@ -392,7 +398,8 @@ footer{background:var(--ink);padding:80px 0 32px}
   .line-inner,.text-reveal-inner,.clip-reveal,
   .zc,.imc,.fade-in,.sec-h2,.sec-eye,.cred-c{
     opacity:1!important;transform:none!important;translate:none!important;
-    clip-path:none!important;filter:none!important;visibility:visible!important
+    clip-path:none!important;filter:none!important;visibility:visible!important;
+    will-change:auto!important
   }
   .hero-h1 .line{overflow:visible!important}
   .hero-content{display:flex!important;flex-direction:column!important;position:relative!important;z-index:10!important}
@@ -402,6 +409,8 @@ footer{background:var(--ink);padding:80px 0 32px}
 }
 /* any-pointer:coarse — Samsung S-Pen, hybrid devices, headless Chrome mobile emulation */
 @media(any-pointer:coarse){
+  /* Kill grain overlay GPU layer — same rationale as max-width:1099px block above */
+  body::after{display:none!important;animation:none!important;content:none!important}
   #loader{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
   .hero-content,.hero-content *,
   .hero-h1,.hero-h1 *,.hero-h1 .line,.hero-h1 .line-inner,
@@ -410,7 +419,8 @@ footer{background:var(--ink);padding:80px 0 32px}
   .line-inner,.text-reveal-inner,.clip-reveal,
   .zc,.imc,.fade-in,.sec-h2,.sec-eye,.cred-c{
     opacity:1!important;transform:none!important;translate:none!important;
-    clip-path:none!important;filter:none!important;visibility:visible!important
+    clip-path:none!important;filter:none!important;visibility:visible!important;
+    will-change:auto!important
   }
   .hero-h1 .line{overflow:visible!important}
   .hero-content{display:flex!important;flex-direction:column!important;position:relative!important;z-index:10!important}
