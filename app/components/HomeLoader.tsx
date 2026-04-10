@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
 export default function HomeLoader() {
   // ── NUCLEAR DEFAULT: isMobileDevice starts TRUE ──────────────────────────
@@ -11,10 +11,12 @@ export default function HomeLoader() {
   const [isMobileDevice, setIsMobileDevice] = useState(true)
   const loaderRef = useRef<HTMLDivElement>(null)
 
-  // ── EFFECT 1: Device detection (synchronous, no async, fires on mount) ───
-  // Runs BEFORE any GSAP, BEFORE any DOM mutation, BEFORE loader is visible.
-  // If mobile detected: stays null. If desktop: renders loader then Effect 2 fires.
-  useEffect(() => {
+  // ── EFFECT 1: Device detection — useLayoutEffect fires BEFORE browser paint ──
+  // Critical for desktop: loader must be in DOM before first paint (no hero flash).
+  // useLayoutEffect: synchronous, blocks paint until re-render is committed.
+  // If mobile detected: stays null. If desktop: renders loader in same frame.
+  // SSR: useLayoutEffect is suppressed on server — no hydration warning (client-only).
+  useLayoutEffect(() => {
     const mobileUA = typeof navigator !== 'undefined' &&
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent)
     const isMobile = typeof window !== 'undefined' && (
