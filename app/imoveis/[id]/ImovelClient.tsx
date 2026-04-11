@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo, useRef, useEffect, type CSSProperties } from 'react'
+import { track } from '@/lib/gtm'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PROPERTIES, ZONE_YIELDS, formatPriceFull } from '../data'
@@ -96,6 +97,7 @@ export default function ImovelClient({ id }: { id: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ property_id: id }),
       }).catch(() => {})
+      track('property_viewed', { property_id: id })
     }, 5000)
     return () => clearTimeout(timer)
   }, [id])

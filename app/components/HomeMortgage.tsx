@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { track } from '@/lib/gtm'
 
 // ─── Mortgage Simulator component (homepage — standalone, sem Zustand) ────────
 
@@ -26,6 +27,9 @@ export default function HomeMortgage() {
   const [loading, setLoading] = useState(false)
   const [subTab, setSubTab] = useState<'cenarios'|'amortizacao'>('cenarios')
   const [mortgageError, setMortgageError] = useState<string | null>(null)
+  // Lead capture after simulation
+  const [simEmail, setSimEmail] = useState('')
+  const [simCaptured, setSimCaptured] = useState(false)
 
   const PERSONAS = [
     { label: 'Comprador HPP', montante: '400000', entrada: 20, prazo: 35, spread: 0.9, uso: 'habitacao_propria' as const },
@@ -48,7 +52,11 @@ export default function HomeMortgage() {
       }
       const res = await fetch('/api/mortgage', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
       const data = await res.json()
-      if (data.success) { setResult(data as MortRes); setMortgageError(null) }
+      if (data.success) {
+        setResult(data as MortRes)
+        setMortgageError(null)
+        track('mortgage_simulated', { montante: body.montante, uso: body.uso })
+      }
       else setMortgageError(data.error || 'Erro no cálculo')
     } catch { setMortgageError('Erro de ligação.') }
     finally { setLoading(false) }
@@ -236,6 +244,42 @@ export default function HomeMortgage() {
               </div>
             )}
             <div style={{marginTop:'10px',fontFamily:"'Jost',sans-serif",fontSize:'.7rem',color:'rgba(14,14,13,.3)',lineHeight:1.5}}>{result.info?.nota_legal}</div>
+
+            {/* ── Simulator lead capture ── */}
+            {!simCaptured ? (
+              <div style={{marginTop:'12px',padding:'14px 16px',background:'rgba(28,74,53,.04)',border:'1px solid rgba(28,74,53,.12)',display:'flex',gap:'8px',flexWrap:'wrap',alignItems:'center'}}>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'rgba(14,14,13,.5)',textTransform:'uppercase',letterSpacing:'.08em',flexShrink:0}}>Receber análise por email</span>
+                <input
+                  type="email"
+                  value={simEmail}
+                  onChange={e=>setSimEmail(e.target.value)}
+                  placeholder="email@exemplo.com"
+                  style={{flex:1,minWidth:'160px',padding:'7px 10px',border:'1px solid rgba(14,14,13,.12)',fontFamily:"'Jost',sans-serif",fontSize:'.78rem',outline:'none',background:'#fff',color:'#0e0e0d'}}
+                />
+                <button
+                  type="button"
+                  disabled={!simEmail.includes('@')}
+                  onClick={()=>{
+                    if(!simEmail.includes('@'))return
+                    fetch('/api/leads',{
+                      method:'POST',
+                      headers:{'Content-Type':'application/json'},
+                      body:JSON.stringify({
+                        email:simEmail.trim(),
+                        source:'mortgage_simulator',
+                        message:`Simulação: €${result.inputs.montante.toLocaleString('pt-PT')} · ${result.inputs.prazo_anos}a · ${uso}`,
+                        budget_max:result.inputs.montante,
+                      }),
+                    }).catch(()=>{})
+                    track('lead_form_submit',{source:'mortgage_simulator'})
+                    setSimCaptured(true)
+                  }}
+                  style={{padding:'7px 14px',background:'#1c4a35',color:'#f4f0e6',border:'none',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',opacity:simEmail.includes('@')?1:0.5}}
+                >Enviar →</button>
+              </div>
+            ) : (
+              <div style={{marginTop:'12px',padding:'10px 14px',background:'rgba(28,74,53,.06)',border:'1px solid rgba(28,74,53,.15)',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#1c4a35',letterSpacing:'.06em'}}>✓ Análise enviada — verifique o seu email em breve.</div>
+            )}
 
             {/* ── Post-result CTA — BLOCO 5 ── */}
             <div style={{

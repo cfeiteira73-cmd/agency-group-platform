@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase'
+import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
@@ -23,11 +24,22 @@ const LeadSchema = z.object({
   use_type:     z.string().max(80).optional(),
   property_ref: z.string().max(40).optional(),
   lang:         z.string().max(5).optional().default('pt'),
+  nationality:  z.string().max(100).optional(),
 }).refine(d => d.email || d.phone, {
   message: 'email or phone required',
 })
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 leads per IP per hour
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = rateLimit(`leads:${ip}`, { maxAttempts: 5, windowMs: 3_600_000 })
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Demasiadas submissões. Tente novamente mais tarde.' },
+      { status: 429, headers: { 'Retry-After': String(getRetryAfterMinutes(rl.reset) * 60) } }
+    )
+  }
+
   try {
     const body = await req.json()
     const parsed = LeadSchema.safeParse(body)
@@ -42,7 +54,7 @@ export async function POST(req: NextRequest) {
     const {
       name, email, phone, source, message,
       zona, budget_min, budget_max, timeline,
-      use_type, property_ref,
+      use_type, property_ref, nationality,
     } = parsed.data
 
     // Build notes from available context
@@ -70,6 +82,7 @@ export async function POST(req: NextRequest) {
           budget_max:          budget_max || null,
           timeline:            timeline || null,
           use_type:            use_type || null,
+          nationality:         nationality || null,
           last_contact_at:     new Date().toISOString(),
           updated_at:          new Date().toISOString(),
         },

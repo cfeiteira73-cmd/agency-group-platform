@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { track } from '@/lib/gtm'
 
 // ─── Sofia Avatar — usa /sofia.jpg se existir, fallback ao monograma "S" dourado ──
 function SofiaAvatar({ size = 44, open = false }: { size?: number; open?: boolean }) {
@@ -428,7 +429,7 @@ export default function SofiaAgentWidget() {
         {/* Proactive tooltip pill */}
         {!open && unread > 0 && (
           <div
-            onClick={() => setOpen(true)}
+            onClick={() => { setOpen(true); track('sofia_started') }}
             style={{
               background: 'linear-gradient(135deg, #1c4a35, #0d2b1f)',
               color: '#fff', fontSize: 13, fontWeight: 600,
@@ -459,7 +460,11 @@ export default function SofiaAgentWidget() {
 
           <button
             type="button"
-            onClick={() => setOpen(v => !v)}
+            onClick={() => {
+              const next = !open
+              setOpen(next)
+              if (next) track('sofia_started')
+            }}
             className="ag-widget-btn"
             aria-label={open ? 'Fechar assistente privada Sofia' : 'Sofia — Assistente Privada Agency Group'}
             style={{
@@ -751,8 +756,10 @@ export default function SofiaAgentWidget() {
                                 source: 'sofia_widget',
                                 zona: locationPref || undefined,
                                 use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
+                                message: leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : undefined,
                               }),
                             }).catch(() => {})
+                            track('lead_form_submit', { source: 'sofia_widget', lead_score: leadScore })
                             setSofiaEmailSent(true)
                           }
                         }}
@@ -769,8 +776,10 @@ export default function SofiaAgentWidget() {
                                 source: 'sofia_widget',
                                 zona: locationPref || undefined,
                                 use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
+                                message: leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : undefined,
                               }),
                             }).catch(() => {})
+                            track('lead_form_submit', { source: 'sofia_widget', lead_score: leadScore })
                             setSofiaEmailSent(true)
                           }}
                           style={{

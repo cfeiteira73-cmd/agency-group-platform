@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { track } from '@/lib/gtm'
 
 interface LeadCaptureFormProps {
   source?: string
@@ -69,6 +70,7 @@ export default function LeadCaptureForm({
       setContactId(data.id || '')
       setStep('qualification')
       onSuccess?.(data.id || '')
+      track('lead_form_submit', { source, zona, lead_tier: data.tier })
     } catch {
       setError('Sem ligação. Continue via WhatsApp →')
     } finally {
@@ -177,6 +179,7 @@ function QualificationInline({ contactId, onComplete, onSkip }: QualInlineProps)
         body: JSON.stringify({ use_type: useType, budget_max: budgetMax, timeline }),
       }).catch(() => {})
     }
+    track('qualification_completed', { use_type: useType, budget_max: budgetMax, timeline })
     onComplete()
   }
 

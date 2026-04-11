@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Property, formatPriceFull } from './data'
+import { track } from '@/lib/gtm'
 
 interface CompareBarProps {
   selected: string[]
@@ -17,6 +18,8 @@ const ENERGY_COLOR: Record<string, string> = {
 
 export default function CompareBar({ selected, properties, onRemove, onClear }: CompareBarProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const [compareEmail, setCompareEmail] = useState('')
+  const [compareCaptured, setCompareCaptured] = useState(false)
   const selProps = properties.filter(p => selected.includes(p.id))
 
   if (selected.length === 0) return null
@@ -291,9 +294,58 @@ export default function CompareBar({ selected, properties, onRemove, onClear }: 
             <div style={{
               padding: '20px 32px',
               borderTop: '1px solid rgba(201,169,110,.12)',
-              display: 'flex', gap: '12px', justifyContent: 'flex-end',
+              display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap',
               flexShrink: 0,
             }}>
+              {/* Optional email capture */}
+              {!compareCaptured ? (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1, minWidth: '220px' }}>
+                  <input
+                    type="email"
+                    value={compareEmail}
+                    onChange={e => setCompareEmail(e.target.value)}
+                    placeholder="Email para receber análise comparativa"
+                    style={{
+                      flex: 1, padding: '9px 12px',
+                      background: 'rgba(255,255,255,.06)',
+                      border: '1px solid rgba(201,169,110,.2)',
+                      color: '#f4f0e6', fontFamily: "'Jost', sans-serif", fontSize: '.72rem',
+                      outline: 'none',
+                    }}
+                  />
+                  {compareEmail.includes('@') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        fetch('/api/leads', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            email: compareEmail.trim(),
+                            source: 'compare_bar',
+                            message: `Comparação: ${selProps.map(p => p.ref).join(', ')}`,
+                          }),
+                        }).catch(() => {})
+                        track('compare_initiated', { refs: selProps.map(p => p.ref) })
+                        setCompareCaptured(true)
+                      }}
+                      style={{
+                        padding: '9px 16px',
+                        background: 'rgba(201,169,110,.15)',
+                        border: '1px solid rgba(201,169,110,.3)',
+                        color: '#c9a96e', fontFamily: "'Jost', sans-serif", fontSize: '.6rem',
+                        fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase',
+                        cursor: 'pointer', flexShrink: 0,
+                      }}
+                    >Guardar →</button>
+                  )}
+                </div>
+              ) : (
+                <span style={{
+                  fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
+                  color: 'rgba(201,169,110,.7)', letterSpacing: '.08em',
+                }}>✓ Análise guardada</span>
+              )}
               <a
                 href={`https://wa.me/351919948986?text=${encodeURIComponent('Olá, estou a comparar os imóveis: ' + selProps.map(p => p.ref).join(', ') + '. Podem ajudar-me a decidir?')}`}
                 target="_blank" rel="noopener noreferrer"
@@ -302,7 +354,7 @@ export default function CompareBar({ selected, properties, onRemove, onClear }: 
                   padding: '12px 28px',
                   fontFamily: "'Jost', sans-serif", fontSize: '.62rem',
                   fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase',
-                  textDecoration: 'none',
+                  textDecoration: 'none', flexShrink: 0,
                 }}
               >Pedir Ajuda ao Consultor →</a>
             </div>

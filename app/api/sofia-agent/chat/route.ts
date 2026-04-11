@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
@@ -97,6 +98,31 @@ Activate premium mode: off-market exclusives, direct partner introductions, disc
 - Always end multi-step conversations with a concrete next step`
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 30 Sofia messages per IP per hour
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = rateLimit(`sofia:${ip}`, { maxAttempts: 30, windowMs: 3_600_000 })
+  if (!rl.success) {
+    const retryMins = getRetryAfterMinutes(rl.reset)
+    const encoder = new TextEncoder()
+    const limitStream = new ReadableStream({
+      start(controller) {
+        const msg = `Olá! Atingiu o limite de mensagens por hora. Pode continuar a conversa em ${retryMins} minuto${retryMins === 1 ? '' : 's'}.\n\nPara apoio imediato: 📱 **+351 919 948 986** (WhatsApp)`
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: msg })}\n\n`))
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        controller.close()
+      },
+    })
+    return new Response(limitStream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+        'Retry-After': String(retryMins * 60),
+      },
+    })
+  }
+
   const body = await req.json() as {
     messages: Array<{ role: string; content: string }>
     branch?: string

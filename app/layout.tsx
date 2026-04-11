@@ -388,6 +388,31 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />
         {/* Vercel Speed Insights */}
         <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
+        {/* Google Tag Manager — only loads when GTM_ID is configured */}
+        {process.env.NEXT_PUBLIC_GTM_ID && (
+          <>
+            <Script
+              id="gtm-init"
+              strategy="beforeInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer=window.dataLayer||[];`,
+              }}
+            />
+            <Script
+              id="gtm-script"
+              strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtm.js?id=${process.env.NEXT_PUBLIC_GTM_ID}`}
+            />
+          </>
+        )}
+        {/* WhatsApp click tracking — delegated, zero-overhead */}
+        <Script
+          id="wa-track"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `document.addEventListener('click',function(e){var a=e.target.closest('a[href*="wa.me"]');if(a){(window.dataLayer=window.dataLayer||[]).push({event:'whatsapp_click',href:a.href})}},{passive:true});`,
+          }}
+        />
         <CurrencyProvider>
         <main id="main-content">{children}</main>
         {/* <PWAInstallBanner /> */}
