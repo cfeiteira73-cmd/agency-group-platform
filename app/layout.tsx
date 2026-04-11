@@ -989,17 +989,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           position:     'relative',
           zIndex:       1,
         }}>{children}</main>
-        {/* PWAInstallBanner DISABLED — SW investigation: beforeinstallprompt can
-            trigger unexpected re-installs that bypass cache-clear efforts.
-            Re-enable after green screen investigation is concluded. */}
+        {/* ── ISOLATION TEST: ALL <main> SIBLINGS REMOVED ─────────────────────
+            SofiaWidgetWrapper, BottomNav, LanguageSwitcher, all scripts removed.
+            If green disappears → one of these siblings is the root cause.
+            If green remains → cause is above CurrencyProvider or in global CSS. */}
         {/* <PWAInstallBanner /> */}
-        <SofiaWidgetWrapper />
-        <LanguageSwitcher />
-        {/* PushNotificationSetup DISABLED — requires active SW (unregistered for debug).
-            Re-enable together with SW registration when investigation is done. */}
+        {/* <SofiaWidgetWrapper /> */}
+        {/* <LanguageSwitcher /> */}
         {/* <PushNotificationSetup /> */}
-        <BottomNav />
-        <script dangerouslySetInnerHTML={{ __html: `
+        {/* <BottomNav /> */}
+        {/* ISOLATION: inline script also removed — catches any script-injected layer */}
+        {/* <script dangerouslySetInnerHTML={{ __html: `
 (function() {
   // ── SELF-HEAL: detect old cached HTML (loader without display:none) ──────
   // Old HTML has <div id="loader"> with NO inline style → loader shows on mobile
@@ -1075,7 +1075,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   //   });
   // }
 })();
-`}} />
+`}} /> */}
         </CurrencyProvider>
       </body>
     </html>
