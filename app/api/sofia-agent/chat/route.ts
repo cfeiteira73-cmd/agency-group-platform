@@ -100,7 +100,7 @@ Activate premium mode: off-market exclusives, direct partner introductions, disc
 export async function POST(req: NextRequest) {
   // Rate limit: 30 Sofia messages per IP per hour
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const rl = rateLimit(`sofia:${ip}`, { maxAttempts: 30, windowMs: 3_600_000 })
+  const rl = await rateLimit(`sofia:${ip}`, { maxAttempts: 30, windowMs: 3_600_000 })
   if (!rl.success) {
     const retryMins = getRetryAfterMinutes(rl.reset)
     const encoder = new TextEncoder()

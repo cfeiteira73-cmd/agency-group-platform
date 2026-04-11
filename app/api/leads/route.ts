@@ -33,7 +33,7 @@ const LeadSchema = z.object({
 export async function POST(req: NextRequest) {
   // Rate limit: 5 leads per IP per hour
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const rl = rateLimit(`leads:${ip}`, { maxAttempts: 5, windowMs: 3_600_000 })
+  const rl = await rateLimit(`leads:${ip}`, { maxAttempts: 5, windowMs: 3_600_000 })
   if (!rl.success) {
     return NextResponse.json(
       { error: 'Demasiadas submissões. Tente novamente mais tarde.' },

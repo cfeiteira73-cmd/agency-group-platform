@@ -13,7 +13,7 @@ export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const limit = rateLimit(ip, { maxAttempts: 3, windowMs: 60 * 60 * 1000 })
+  const limit = await rateLimit(ip, { maxAttempts: 3, windowMs: 60 * 60 * 1000 })
   if (!limit.success) {
     const minutes = getRetryAfterMinutes(limit.reset)
     return NextResponse.json(

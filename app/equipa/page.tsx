@@ -396,18 +396,50 @@ export default function EquipaPage() {
                         style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
                       />
                     ) : (
-                      <span
-                        style={{
-                          fontFamily: "var(--font-cormorant, 'Cormorant', serif)",
-                          fontSize: '3.2rem',
+                      /* Premium monogram placeholder — displays until real headshot is added */
+                      <div style={{
+                        width: '100%', height: '100%',
+                        background: 'linear-gradient(160deg, #0e2a1a 0%, #1c4a35 55%, #0a1f12 100%)',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                        gap: '10px', position: 'relative',
+                      }}>
+                        {/* Subtle radial glow behind monogram */}
+                        <div style={{
+                          position: 'absolute', inset: 0,
+                          background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(201,169,110,.07) 0%, transparent 100%)',
+                          pointerEvents: 'none',
+                        }} />
+                        {/* Thin gold rule */}
+                        <div style={{ width: '28px', height: '1px', background: 'rgba(201,169,110,.35)' }} />
+                        {/* Initials */}
+                        <span style={{
+                          fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)",
+                          fontSize: '3.4rem',
                           fontWeight: 300,
                           color: '#c9a96e',
-                          letterSpacing: '.08em',
+                          letterSpacing: '.18em',
+                          lineHeight: 1,
                           userSelect: 'none',
-                        }}
-                      >
-                        {advisor.initials}
-                      </span>
+                          position: 'relative', zIndex: 1,
+                        }}>
+                          {advisor.initials}
+                        </span>
+                        {/* Thin gold rule */}
+                        <div style={{ width: '28px', height: '1px', background: 'rgba(201,169,110,.35)' }} />
+                        {/* Name caption */}
+                        <span style={{
+                          fontFamily: "'DM Mono', monospace",
+                          fontSize: '.42rem',
+                          letterSpacing: '.22em',
+                          textTransform: 'uppercase',
+                          color: 'rgba(201,169,110,.45)',
+                          userSelect: 'none',
+                          position: 'relative', zIndex: 1,
+                        }}>
+                          {advisor.name.split(' ')[0]}
+                        </span>
+                      </div>
                     )}
                   </div>
 
