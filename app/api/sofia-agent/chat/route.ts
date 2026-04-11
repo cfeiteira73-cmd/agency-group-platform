@@ -3,7 +3,23 @@ import Anthropic from '@anthropic-ai/sdk'
 
 export const runtime = 'nodejs'
 
-const client = new Anthropic()
+// ─── Lazy client — never instantiate at module level ─────────────────────────
+// new Anthropic() throws synchronously if ANTHROPIC_API_KEY is absent.
+// Module-level throws crash the serverless function before it can handle any
+// request, producing a 503 with no useful log.  Instantiate inside the handler
+// so missing keys become a graceful fallback, not an unrecoverable boot failure.
+let _client: Anthropic | null = null
+
+function getClient(): Anthropic | null {
+  if (_client) return _client
+  const key = process.env.ANTHROPIC_API_KEY
+  if (!key) {
+    console.error('[sofia] ANTHROPIC_API_KEY not set — AI responses disabled')
+    return null
+  }
+  _client = new Anthropic({ apiKey: key })
+  return _client
+}
 
 const SYSTEM = `You are Sofia, the world-class AI real estate advisor of Agency Group (AMI 22506), Portugal's premier luxury boutique real estate firm specialising in €500K–€10M properties.
 
@@ -102,10 +118,31 @@ export async function POST(req: NextRequest) {
 
   const encoder = new TextEncoder()
 
+  // ─── Graceful fallback when AI is unavailable ────────────────────────────
+  const anthropic = getClient()
+  if (!anthropic) {
+    const fallback = new ReadableStream({
+      start(controller) {
+        const msg = 'Olá. Sou a Sofia, assistente da Agency Group.\n\nO serviço de IA está temporariamente indisponível. Para apoio imediato, contacte-nos:\n\n📱 **+351 919 948 986** (WhatsApp)\n✉️ **geral@agencygroup.pt**\n\nRespondemos em menos de 2 horas.'
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: msg })}\n\n`))
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        controller.close()
+      },
+    })
+    return new Response(fallback, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      },
+    })
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const res = await client.messages.create({
+        const res = await anthropic.messages.create({
           model: 'claude-sonnet-4-6',
           max_tokens: 500,
           stream: true,
