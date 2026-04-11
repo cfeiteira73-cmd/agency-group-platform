@@ -112,13 +112,16 @@ function getProactiveOpener(pathname: string, isReturning: boolean, lastLocation
   if (pathname.includes('/blog') || pathname.includes('/mercado')) {
     return `Bom dia. Vejo que está a aprofundar o mercado imobiliário português. Posso complementar com dados específicos sobre preços, yields ou regimes fiscais — é só perguntar.`
   }
+  if (pathname.includes('/off-market')) {
+    return `Compreendo que prefere um processo discreto. Posso qualificar o seu ativo e orientar todo o processo sem exposição pública. Como posso ajudar?`
+  }
   if (pathname.includes('/avm') || pathname.includes('/avaliacao')) {
-    return `Boa tarde. A considerar uma avaliação? Posso ajudá-lo a perceber o valor real do seu imóvel com dados de transacções recentes da zona.`
+    return `Posso fazer uma avaliação inicial do seu imóvel com dados de transacções recentes da zona. Quer partilhar alguns dados?`
   }
   if (pathname.includes('/contact') || pathname.includes('/contacto')) {
-    return `Olá. Vejo que procura contacto directo. Posso ligá-lo ao nosso consultor especializado na zona que lhe interessa.`
+    return `Posso ligá-lo ao consultor responsável pela zona que lhe interessa. O que procura?`
   }
-  return `Olá. Sou a Sofia, assistente privada da Agency Group.\n\nAjudo compradores e investidores seleccionados a encontrar imóveis excepcionais em Portugal. Como posso ajudá-lo?`
+  return `Posso ajudar a identificar oportunidades ou esclarecer um ativo. O que procura?`
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -236,6 +239,8 @@ export default function SofiaAgentWidget() {
     if (/cascais|chiado|príncipe real|comporta|quinta/.test(lower)) score += 15
     if (/investimento|yield|rentabilidade/.test(lower)) score += 15
     if (/3-6 meses|este ano/.test(lower)) score += 10
+    // Seller intent = high value lead
+    if (/vender|avaliar|quanto vale|avalia[çc]|sell|vente/.test(lower)) score += 35
     setLeadScore(prev => Math.min(prev + score, 100))
   }, [])
 
@@ -246,7 +251,7 @@ export default function SofiaAgentWidget() {
     if (step === 0) {
       if (/comprar|buy|purchase|acquérir/.test(lower)) { setBranch('buy'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
       else if (/investimento|invest|rendimento|yield/.test(lower)) { setBranch('invest'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
-      else if (/vender|sell|avali/.test(lower)) { setBranch('sell'); setStep(1); setQuickReplies([]) }
+      else if (/vender|sell|avali|quanto vale|vente/.test(lower)) { setBranch('sell'); setStep(1); setQuickReplies([{ label: '📍 Partilhar localização', value: 'Pode partilhar a localização e tipologia do imóvel para eu fazer uma avaliação inicial', emoji: '📍' }, { label: '📞 Falar com consultor', value: 'Prefiro falar directamente com o consultor responsável', emoji: '📞' }]) }
       else { setBranch('explore'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
     } else if (step === 1) {
       const zones = ['lisboa', 'cascais', 'algarve', 'porto', 'madeira', 'açores', 'comporta']
@@ -370,7 +375,7 @@ export default function SofiaAgentWidget() {
           const updated = [...prev]
           updated[updated.length - 1] = {
             role: 'assistant',
-            content: 'Desculpe, ocorreu um erro técnico. Contacte-nos directamente:\n\n📞 +351 919 948 986\n📧 geral@agencygroup.pt',
+            content: 'De momento estou indisponível. Pode falar directamente com a equipa:\n\n📞 +351 919 948 986',
             timestamp: Date.now(),
           }
           persistMessages(updated)

@@ -8,12 +8,12 @@
 
 export const HOME_HERO = {
   eyebrow:      'Lisboa · Portugal · AMI 22506',
-  title1:       'Aqui, o mundo',
-  titleEm:      'veio ter',
-  title3:       'consigo.',
-  subtitle:     'Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem chegou primeiro.',
-  ctaPrimary:   { text: 'Ver Portfolio Privado', href: '#imoveis' },
-  ctaSecondary: { text: 'Avaliação Privada →', href: '#avaliacao' },
+  title1:       'Off-Market.',
+  titleEm:      'Discrição',
+  title3:       'e execução.',
+  subtitle:     'Acesso a compradores qualificados. Processos controlados. Resultados sem exposição pública.',
+  ctaPrimary:   { text: 'Ver Oportunidades', href: '#imoveis' },
+  ctaSecondary: { text: 'Falar com Consultor →', href: '#avaliacao' },
   stats: [
     { n: '169', em: 'K',   label: 'Transacções 2025'          },
     { n: '+17', em: '%',   label: 'Valorização · 2025'         },

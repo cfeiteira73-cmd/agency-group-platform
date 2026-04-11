@@ -2,7 +2,7 @@
 
 // =============================================================================
 // OFF-MARKET CLIENT — Agency Group
-// Invite-only feel. Lead capture → CRM → WhatsApp handoff
+// Captação de vendedores + compradores qualificados.
 // NEVER shows listings. Exclusive access form only.
 // =============================================================================
 
@@ -10,13 +10,26 @@ import { useState } from 'react'
 
 const STATS = [
   { value: '€2.4M', label: 'Valor médio\ntransaccionado' },
-  { value: '72h', label: 'Tempo médio\nde proposta' },
+  { value: '< 72h', label: 'Proposta\na compradores' },
   { value: '100%', label: 'Discrição\ngarantida' },
 ]
 
+const STEPS = [
+  { n: '01', title: 'Avaliação confidencial', desc: 'Analisamos o ativo de forma discreta. Sem visitas públicas, sem anúncios.' },
+  { n: '02', title: 'Qualificação de compradores', desc: 'Selecionamos compradores do nosso network privado. Só acesso qualificado.' },
+  { n: '03', title: 'Processo até escritura', desc: 'Conduzimos todo o processo — proposta, due diligence, escritura. Controlo total.' },
+]
+
+const FOR_WHOM = [
+  'Proprietários de ativos > €400K',
+  'Investidores com portfolio imobiliário',
+  'Famílias com activos premium em Portugal',
+  'Proprietários que valorizam a discrição',
+]
+
 const TYPES = [
-  { id: 'comprador', label: 'Procuro imóvel exclusivo' },
-  { id: 'vendedor', label: 'Quero vender discretamente' },
+  { id: 'vendedor',   label: 'Pretendo vender discretamente' },
+  { id: 'comprador',  label: 'Procuro imóvel exclusivo' },
   { id: 'investidor', label: 'Procuro oportunidade de investimento' },
 ]
 
@@ -34,7 +47,9 @@ export default function OffMarketClient() {
   const [budget, setBudget] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
   const [zona, setZona] = useState('')
+  const [confidential, setConfidential] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -49,18 +64,29 @@ export default function OffMarketClient() {
       '10m+': 50_000_000,
     }
 
+    // Seller leads use dedicated source for higher CRM priority
+    const source = tipo === 'vendedor' ? 'off_market_owner' : 'off_market_page'
+    const intent  = tipo === 'vendedor' ? 'seller' : tipo === 'investidor' ? 'investor' : 'buyer'
+
     try {
       await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: name.trim(),
-          phone: phone.trim().replace(/\s/g, ''),
-          source: 'off_market_page',
-          zona: zona.trim() || undefined,
+          name:       name.trim(),
+          phone:      phone.trim().replace(/\s/g, ''),
+          email:      email.trim() || undefined,
+          source,
+          intent,
+          zona:       zona.trim() || undefined,
           budget_max: budget ? budgetMap[budget] : undefined,
-          use_type: tipo,
-          message: `Off-market: ${TYPES.find(t => t.id === tipo)?.label}${budget ? ` · ${budget}` : ''}${zona ? ` · ${zona}` : ''}`,
+          use_type:   tipo,
+          message: [
+            `Off-market · ${TYPES.find(t => t.id === tipo)?.label}`,
+            budget ? `Orçamento: ${budget}` : null,
+            zona ? `Zona: ${zona}` : null,
+            confidential ? 'Processo confidencial solicitado' : null,
+          ].filter(Boolean).join(' · '),
         }),
       })
     } catch { /* silent — never block redirect */ }
@@ -152,8 +178,8 @@ export default function OffMarketClient() {
           marginBottom: 20,
           letterSpacing: '-0.01em',
         }}>
-          Imóveis que nunca<br />
-          <em style={{ color: '#c9a96e', fontStyle: 'italic' }}>chegam ao mercado.</em>
+          Venda sem exposição.<br />
+          <em style={{ color: '#c9a96e', fontStyle: 'italic' }}>Com controlo total.</em>
         </h1>
 
         <p style={{
@@ -166,8 +192,8 @@ export default function OffMarketClient() {
           marginBottom: 48,
           letterSpacing: '0.03em',
         }}>
-          Transacções privadas entre compradores seleccionados e proprietários discretos.
-          Sem anúncios. Sem intermediários. Apenas resultados.
+          Ligamos proprietários a compradores qualificados, sem exposição pública.
+          Processo discreto. Resultado controlado.
         </p>
 
         {/* Stats row */}
@@ -204,6 +230,74 @@ export default function OffMarketClient() {
           ))}
         </div>
 
+        {/* ── Como Funciona ── */}
+        <div style={{ width: '100%', marginBottom: 48 }}>
+          <div style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: '0.55rem', letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: 'rgba(201,169,110,0.45)',
+            textAlign: 'center', marginBottom: 28,
+          }}>
+            Como funciona
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {STEPS.map(s => (
+              <div key={s.n} style={{
+                display: 'flex', alignItems: 'flex-start', gap: 20,
+                padding: '18px 20px',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(201,169,110,0.08)',
+              }}>
+                <div style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: '0.55rem', color: 'rgba(201,169,110,0.35)',
+                  letterSpacing: '0.08em', flexShrink: 0, paddingTop: 2,
+                }}>{s.n}</div>
+                <div>
+                  <div style={{
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontSize: '1.05rem', fontWeight: 400, color: '#f4f0e6',
+                    marginBottom: 4,
+                  }}>{s.title}</div>
+                  <div style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: '0.6rem', color: 'rgba(244,240,230,0.4)',
+                    letterSpacing: '0.02em', lineHeight: 1.6,
+                  }}>{s.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Para quem é ── */}
+        <div style={{ width: '100%', marginBottom: 48 }}>
+          <div style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: '0.55rem', letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: 'rgba(201,169,110,0.45)',
+            textAlign: 'center', marginBottom: 20,
+          }}>
+            Para quem é
+          </div>
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center',
+          }}>
+            {FOR_WHOM.map(item => (
+              <div key={item} style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: '0.58rem', letterSpacing: '0.04em',
+                color: 'rgba(244,240,230,0.55)',
+                padding: '8px 16px',
+                border: '1px solid rgba(201,169,110,0.12)',
+                background: 'rgba(201,169,110,0.03)',
+              }}>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Form or Confirmation */}
         {step === 'sent' ? (
           <div style={{
@@ -215,7 +309,7 @@ export default function OffMarketClient() {
           }}>
             <div style={{ fontSize: '1.8rem', marginBottom: 16, color: '#c9a96e' }}>✓</div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 400, marginBottom: 12 }}>
-              Pedido recebido
+              {tipo === 'vendedor' ? 'Pedido recebido' : 'Acesso solicitado'}
             </h2>
             <p style={{
               fontFamily: "'DM Mono', monospace",
@@ -225,8 +319,10 @@ export default function OffMarketClient() {
               marginBottom: 28,
               lineHeight: 1.7,
             }}>
-              O Carlos Gomes entrará em contacto em menos de 2 horas.<br />
-              Para acesso imediato, fale directamente via WhatsApp.
+              {tipo === 'vendedor'
+                ? <>O consultor responsável pela sua zona contacta em menos de 2 horas.<br />Para acesso imediato, use o WhatsApp.</>
+                : <>Um consultor entrará em contacto em menos de 24 horas.<br />Para acesso imediato, use o WhatsApp.</>
+              }
             </p>
             <button
               type="button"
@@ -446,6 +542,69 @@ export default function OffMarketClient() {
               </div>
             </div>
 
+            {/* Email (optional) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label
+                htmlFor="om-email"
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: '0.55rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(244,240,230,0.4)',
+                }}
+              >
+                Email <span style={{ opacity: 0.5 }}>(opcional)</span>
+              </label>
+              <input
+                id="om-email"
+                type="email"
+                placeholder="o.seu@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(244,240,230,0.12)',
+                  color: '#f4f0e6',
+                  padding: '12px 16px',
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.04em',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            {/* Confidentiality */}
+            <button
+              type="button"
+              onClick={() => setConfidential(prev => !prev)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: 'transparent', border: 'none',
+                cursor: 'pointer', padding: 0, textAlign: 'left',
+              }}
+            >
+              <div style={{
+                width: 16, height: 16, flexShrink: 0,
+                border: `1px solid ${confidential ? '#c9a96e' : 'rgba(244,240,230,0.2)'}`,
+                background: confidential ? 'rgba(201,169,110,0.15)' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
+              }}>
+                {confidential && <span style={{ color: '#c9a96e', fontSize: '0.55rem' }}>✓</span>}
+              </div>
+              <span style={{
+                fontFamily: "'DM Mono', monospace",
+                fontSize: '0.58rem',
+                color: 'rgba(244,240,230,0.45)',
+                letterSpacing: '0.03em',
+                lineHeight: 1.5,
+              }}>
+                Pretendo um processo discreto e confidencial
+              </span>
+            </button>
+
             {/* Submit */}
             <button
               type="submit"
@@ -466,7 +625,12 @@ export default function OffMarketClient() {
                 transition: 'background 0.25s',
               }}
             >
-              {loading ? 'A processar...' : 'Solicitar Acesso Privado →'}
+              {loading
+                ? 'A processar...'
+                : tipo === 'vendedor'
+                  ? 'Solicitar Avaliação Confidencial →'
+                  : 'Solicitar Acesso Privado →'
+              }
             </button>
 
             <p style={{

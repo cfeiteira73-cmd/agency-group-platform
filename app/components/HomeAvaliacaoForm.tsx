@@ -30,9 +30,10 @@ export default function HomeAvaliacaoForm() {
         body: JSON.stringify({
           name:    nome,
           phone:   tel.replace(/\s/g, ''),
-          source:  'avaliacao_privada',
+          source:  'avm_owner',
+          intent:  'seller',
           zona:    zona || undefined,
-          message: `Pedido de avaliação privada · ${zona || 'zona não indicada'}`,
+          message: `Avaliação inicial confidencial · ${zona || 'zona não indicada'}`,
         }),
       })
     } catch { /* silent — never block the WA redirect */ }
@@ -68,7 +69,7 @@ export default function HomeAvaliacaoForm() {
           textTransform: 'uppercase',
           color: '#1c4a35',
         }}>
-          Pedido recebido — respondemos em menos de 2h
+          Avaliação solicitada — consultor contacta em menos de 2h
         </span>
       </div>
     )
@@ -105,7 +106,7 @@ export default function HomeAvaliacaoForm() {
         ;(e.currentTarget as HTMLButtonElement).style.background = loading ? 'rgba(28,74,53,0.6)' : '#1c4a35'
       }}
     >
-      {loading ? 'A processar...' : 'Pedir Avaliação Privada →'}
+      {loading ? 'A processar...' : 'Avaliação Inicial Confidencial →'}
     </button>
   )
 }

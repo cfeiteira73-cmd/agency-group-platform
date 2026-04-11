@@ -903,6 +903,51 @@ export default function ImovelClient({ id }: { id: string }) {
               }}>Analisar com Deal Radar →</a>
             </div>
 
+            {/* ── Seller CTA — procura ativa ── */}
+            <div style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(201,169,110,0.12)',
+              padding: '24px 28px',
+              marginBottom: '48px',
+              display: 'flex', alignItems: 'center',
+              justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px',
+            }}>
+              <div>
+                <div style={{
+                  fontFamily: "'DM Mono', monospace", fontSize: '.5rem',
+                  letterSpacing: '.18em', color: 'rgba(201,169,110,.45)',
+                  marginBottom: '6px', textTransform: 'uppercase',
+                }}>Procura ativa · {property.zona}</div>
+                <div style={{
+                  fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.15rem',
+                  color: '#f4f0e6', marginBottom: '4px',
+                }}>
+                  Este tipo de ativo está em procura ativa.
+                </div>
+                <div style={{
+                  fontFamily: "'Jost', sans-serif", fontSize: '.78rem',
+                  color: 'rgba(244,240,230,.4)',
+                }}>
+                  Pretende avaliar uma venda discreta?
+                </div>
+              </div>
+              <a
+                href={`/off-market`}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(201,169,110,.35)',
+                  color: '#c9a96e',
+                  padding: '12px 24px',
+                  fontFamily: "'Jost', sans-serif", fontSize: '.62rem',
+                  fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase',
+                  textDecoration: 'none', whiteSpace: 'nowrap',
+                  transition: 'background 0.2s',
+                }}
+              >
+                Avaliação Confidencial →
+              </a>
+            </div>
+
             {/* ── Video Section ── */}
             <VideoSection
               propertyName={property.nome}

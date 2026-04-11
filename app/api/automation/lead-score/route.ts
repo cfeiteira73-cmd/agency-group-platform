@@ -121,7 +121,9 @@ function calculateSourceScore(source?: string): number {
   const normalised = source.toLowerCase().replace(/[\s-]/g, '_')
 
   if (normalised.includes('referral') || normalised.includes('referencia')) return 20
-  if (normalised.includes('off_market'))        return 18  // invite-only page — highest intent
+  if (normalised.includes('off_market_owner'))  return 20  // direct seller lead — max score
+  if (normalised.includes('avm_owner'))         return 18  // seller from AVM tool — high intent
+  if (normalised.includes('off_market'))        return 18  // invite-only page — high intent
   if (normalised.includes('avaliacao_privada')) return 15  // private valuation — sell intent
   if (normalised.includes('avm_tool'))          return 12  // AVM tool — sell/refi intent
   if (normalised.includes('idealista_premium') || normalised.includes('idealista premium')) return 10
@@ -344,8 +346,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         gdpr_consent:         !!(leadData.email || leadData.phone),
         next_followup_at:     (() => {
           const d = new Date()
-          const daysMap: Record<'A' | 'B' | 'C', number> = { A: 1, B: 3, C: 7 }
-          d.setDate(d.getDate() + daysMap[result.tier])
+          const isSeller = deriveIntent(leadData.source, leadData.message) === 'sell'
+          if (isSeller) {
+            // Seller leads → contact within 2h regardless of tier
+            d.setHours(d.getHours() + 2)
+          } else {
+            const daysMap: Record<'A' | 'B' | 'C', number> = { A: 1, B: 3, C: 7 }
+            d.setDate(d.getDate() + daysMap[result.tier])
+          }
           return d.toISOString()
         })(),
         updated_at:           new Date().toISOString(),

@@ -230,6 +230,17 @@ export default function BlogPage() {
           <Link href="/imoveis" className="blog-cta-btn">Ver Portfolio →</Link>
           <a href="https://wa.me/351919948986?text=Olá,%20li%20o%20blog%20da%20Agency%20Group%20e%20quero%20saber%20mais." target="_blank" rel="noopener noreferrer" className="blog-cta-btn" style={{ background: '#25D366', borderColor: '#25D366' }}>Falar com Consultor →</a>
         </div>
+        <div style={{ marginTop: '40px', paddingTop: '32px', borderTop: '1px solid rgba(201,169,110,0.12)' }}>
+          <p style={{ fontFamily: 'var(--font-dm-mono), monospace', fontSize: '.62rem', letterSpacing: '.08em', color: 'rgba(201,169,110,.6)', marginBottom: '8px', textTransform: 'uppercase' }}>
+            Para proprietários
+          </p>
+          <p className="blog-cta-p" style={{ marginBottom: '20px', fontSize: '.82rem' }}>
+            Está a considerar vender em Portugal?<br />Podemos avaliar o seu ativo de forma confidencial.
+          </p>
+          <Link href="/off-market" className="blog-cta-btn" style={{ background: 'transparent', color: '#c9a96e', border: '1px solid rgba(201,169,110,.4)' }}>
+            Avaliação Confidencial →
+          </Link>
+        </div>
       </section>
 
       <footer>

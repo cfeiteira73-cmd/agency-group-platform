@@ -25,6 +25,7 @@ const LeadSchema = z.object({
   property_ref: z.string().max(40).optional(),
   lang:         z.string().max(5).optional().default('pt'),
   nationality:  z.string().max(100).optional(),
+  intent:       z.enum(['buyer', 'seller', 'investor']).optional(),
 }).refine(d => d.email || d.phone, {
   message: 'email or phone required',
 })
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     const {
       name, email, phone, source, message,
       zona, budget_min, budget_max, timeline,
-      use_type, property_ref, nationality,
+      use_type, property_ref, nationality, intent,
     } = parsed.data
 
     // Build notes from available context
@@ -83,6 +84,17 @@ export async function POST(req: NextRequest) {
           timeline:            timeline || null,
           use_type:            use_type || null,
           nationality:         nationality || null,
+          detected_intent:     intent ?? (
+            use_type === 'vendedor'   ? 'seller'   :
+            use_type === 'investidor' ? 'investor' : 'buyer'
+          ),
+          next_followup_at:    (() => {
+            const d = new Date()
+            const isSeller = intent === 'seller' || use_type === 'vendedor'
+            if (isSeller) { d.setHours(d.getHours() + 2) }
+            else          { d.setDate(d.getDate() + 1) }
+            return d.toISOString()
+          })(),
           last_contact_at:     new Date().toISOString(),
           updated_at:          new Date().toISOString(),
         },
@@ -126,7 +138,7 @@ export async function POST(req: NextRequest) {
           body: JSON.stringify({
             from: 'Agency Group CRM <crm@agencygroup.pt>',
             to: [process.env.AGENT_ALERT_EMAIL],
-            subject: `🔔 Novo lead: ${contactLabel}${zonaLabel}${budgetLabel}`,
+            subject: `${intent === 'seller' ? '🏠 VENDEDOR' : intent === 'investor' ? '💼 INVESTIDOR' : '🔔 Novo lead'}: ${contactLabel}${zonaLabel}${budgetLabel}`,
             html: `
               <div style="font-family:sans-serif;max-width:480px;padding:24px;">
                 <h2 style="color:#1c4a35;margin:0 0 16px;">Novo Lead — Agency Group</h2>
