@@ -393,6 +393,8 @@ footer{background:var(--ink);padding:80px 0 32px}
   }
   /* GSAP reveal overlay — hidden on mobile (HomeAnimations not mounted, GSAP never wipes it away) */
   .imc-img-reveal{display:none!important}
+  /* Card body — GSAP never adds .revealed on mobile, so opacity:0 default never clears */
+  .imc-body{opacity:1!important;transform:none!important}
   .hero-h1 .line{overflow:visible!important}
   .hero-content{display:flex!important;flex-direction:column!important;position:relative!important;z-index:10!important}
   /* ── Colors: literal hex — no CSS variable dependency ── */
@@ -413,6 +415,7 @@ footer{background:var(--ink);padding:80px 0 32px}
     will-change:auto!important
   }
   .imc-img-reveal{display:none!important}
+  .imc-body{opacity:1!important;transform:none!important}
   .hero-h1 .line{overflow:visible!important}
   .hero-content{display:flex!important;flex-direction:column!important;position:relative!important;z-index:10!important}
   .hero-h1,.hero-h1 *,.hero-h1 .line-inner,.hero-h1 em{color:#ffffff!important}
@@ -435,6 +438,7 @@ footer{background:var(--ink);padding:80px 0 32px}
     will-change:auto!important
   }
   .imc-img-reveal{display:none!important}
+  .imc-body{opacity:1!important;transform:none!important}
   .hero-h1 .line{overflow:visible!important}
   .hero-content{display:flex!important;flex-direction:column!important;position:relative!important;z-index:10!important}
   .hero-h1,.hero-h1 *,.hero-h1 .line-inner,.hero-h1 em{color:#ffffff!important}
@@ -482,6 +486,10 @@ footer{background:var(--ink);padding:80px 0 32px}
   .zc:nth-child(6),.zc:nth-child(8){grid-column:span 1}
   .im-grid{grid-template-columns:1fr}
   .imc.feat{grid-column:span 1}
+  /* Card body: GSAP never adds .revealed on mobile → opacity:0 stays → body invisible */
+  .imc-body{opacity:1!important;transform:none!important}
+  /* Nav: hide ÁREA AGENTES CTA from top bar on mobile — it lives in the drawer already */
+  nav#mainNav .nav-cta{display:none!important}
   .mkt-grid,.avm-grid,.radar-grid{grid-template-columns:1fr;gap:48px}
   .cred-grid{grid-template-columns:1fr 1fr;padding:0 24px}
   .ft-top{grid-template-columns:1fr 1fr}
