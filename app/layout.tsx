@@ -997,7 +997,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* <SofiaWidgetWrapper /> */}
         {/* <LanguageSwitcher /> */}
         {/* <PushNotificationSetup /> */}
-        {/* <BottomNav /> */}
+        <BottomNav />
         {/* ISOLATION: inline script also removed — catches any script-injected layer */}
         {/* <script dangerouslySetInnerHTML={{ __html: `
 (function() {
