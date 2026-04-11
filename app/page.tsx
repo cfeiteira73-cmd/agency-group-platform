@@ -36,12 +36,9 @@ export default async function Home() {
   return (
     <>
       {/* ── CLIENT ISLANDS (non-visual / overlay) ─────────────────────────── */}
-      {/* ISOLATION TEST: HomeLoader temporarily removed — confirming loader as green screen root cause */}
-      {/* <HomeLoader /> */}
-      {/* ISOLATION TEST: HomeCursor temporarily removed — confirming as green screen root cause */}
-      {/* <HomeCursor /> */}
-      {/* ISOLATION TEST: HomeAnimations temporarily removed — eliminated as root cause */}
-      {/* <HomeAnimations /> */}
+      <HomeLoader />
+      <HomeCursor />
+      <HomeAnimations />
       <HomeToast />
 
       {/* ── NAV (client — has auth state + mobile drawer) ─────────────────── */}

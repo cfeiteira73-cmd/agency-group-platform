@@ -979,27 +979,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Vercel Speed Insights */}
         <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
         <CurrencyProvider>
-        {/* DIAGNOSTIC: explicit visibility + red background on <main> */}
-        <main id="main-content" style={{
-          background:   'red',
-          minHeight:    '100dvh',
-          opacity:      1,
-          visibility:   'visible',
-          transform:    'none',
-          position:     'relative',
-          zIndex:       1,
-        }}>{children}</main>
-        {/* ── ISOLATION TEST: ALL <main> SIBLINGS REMOVED ─────────────────────
-            SofiaWidgetWrapper, BottomNav, LanguageSwitcher, all scripts removed.
-            If green disappears → one of these siblings is the root cause.
-            If green remains → cause is above CurrencyProvider or in global CSS. */}
+        <main id="main-content">{children}</main>
         {/* <PWAInstallBanner /> */}
-        {/* <SofiaWidgetWrapper /> */}
-        {/* <LanguageSwitcher /> */}
+        <SofiaWidgetWrapper />
+        <LanguageSwitcher />
         {/* <PushNotificationSetup /> */}
         <BottomNav />
-        {/* ISOLATION: inline script also removed — catches any script-injected layer */}
-        {/* <script dangerouslySetInnerHTML={{ __html: `
+        <script dangerouslySetInnerHTML={{ __html: `
 (function() {
   // ── SELF-HEAL: detect old cached HTML (loader without display:none) ──────
   // Old HTML has <div id="loader"> with NO inline style → loader shows on mobile
@@ -1075,7 +1061,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   //   });
   // }
 })();
-`}} /> */}
+`}} />
         </CurrencyProvider>
       </body>
     </html>

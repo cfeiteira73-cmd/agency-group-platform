@@ -1,14 +1,5 @@
 /* Fonts self-hosted via next/font — loaded in layout.tsx */
 
-/* ── STATIC BACKGROUND ISOLATION TEST ────────────────────────────────────────
-   TEMPORARY — remove after confirming root cause.
-   Forces all green-background selectors to white so Android sees no #0c1f15.
-   If green disappears → .hl / .hl-bg confirmed as static root cause.
-   If green remains → source is outside these selectors (html/body/global wrapper).
-   Desktop: will look broken (white hero panel) — expected, test only.          */
-html,body{background:yellow!important}
-.hero,.hl,.hl-bg{background:#ffffff!important;background-image:none!important}
-/* ─────────────────────────────────────────────────────────────────────────── */
 
 :root{--g:#1c4a35;--gd:#0c1f15;--gm:#2d6a4f;--gold:#c9a96e;--gold-text:#a8843a;--g2:#e2c99a;--cr:#f4f0e6;--cd:#ece5d3;--ink:#0e0e0d;--ink2:rgba(14,14,13,.48);--ink3:rgba(14,14,13,.12);--ink4:rgba(14,14,13,.04);--w:#ffffff;--err:#b03a2e;--wa:#25d366;--wa-h:#1ead55;--gold-dim:rgba(201,169,110,.12);--gold-border:rgba(201,169,110,.22);--mono-xs:.44rem;--mono-sm:.5rem;--mono-md:.58rem;--ease-out:cubic-bezier(.16,1,.3,1);--ease-io:cubic-bezier(.87,0,.13,1)}
 /* WCAG AA compliant gold for text on light backgrounds — contrast 3.5:1 on #f4f0e6 cream */
@@ -79,8 +70,12 @@ body.hovering .c-dot{width:48px;height:48px;background:var(--gold);opacity:.65;m
 body.hovering .c-ring{width:8px;height:8px;opacity:0;border-width:0}
 body.on-dark .c-ring{border-color:rgba(255,255,255,.25)}
 #pgb{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--g),var(--gold),var(--g2));z-index:1002;transform-origin:left;transform:scaleX(0);will-change:transform;box-shadow:0 0 8px rgba(201,169,110,.5)}
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:32px 64px;display:flex;align-items:center;justify-content:space-between;transition:padding .6s var(--ease-out),background .6s,border-color .6s;border-bottom:1px solid transparent;will-change:padding,background}
-nav.solid{padding:16px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border-bottom-color:var(--ink3)}
+/* ── HomeNav only — scoped to #mainNav to prevent collision with BottomNav.
+   Root cause of green screen: bare `nav{}` selector applied top:0;left:0;right:0
+   to BottomNav (also a <nav>), giving it inset:0 and covering the full viewport
+   with rgba(12,31,21,0.96). Fixed by scoping to the HomeNav id. */
+nav#mainNav{position:fixed;top:0;left:0;right:0;z-index:100;padding:32px 64px;display:flex;align-items:center;justify-content:space-between;transition:padding .6s var(--ease-out),background .6s,border-color .6s;border-bottom:1px solid transparent;will-change:padding,background}
+nav#mainNav.solid{padding:16px 64px;background:rgba(244,240,230,.96);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border-bottom-color:var(--ink3)}
 .logo{text-decoration:none;display:flex;flex-direction:column;line-height:1;gap:1px}
 .la{font-family:var(--font-cormorant),serif;font-weight:300;font-size:.9rem;letter-spacing:.5em;text-transform:uppercase;color:var(--cr);transition:color .6s}
 .lg{font-family:var(--font-cormorant),serif;font-weight:300;font-size:.9rem;letter-spacing:.72em;text-transform:uppercase;color:var(--cr);margin-left:.1em;transition:color .6s}
@@ -450,15 +445,15 @@ footer{background:var(--ink);padding:80px 0 32px}
    ALL three mobile signals covered. Desktop: completely untouched. */
 @media(max-width:1099px){
   section.hero{position:relative!important;z-index:2001!important}
-  nav{z-index:2100!important}
+  nav#mainNav{z-index:2100!important}
 }
 @media(pointer:coarse){
   section.hero{position:relative!important;z-index:2001!important}
-  nav{z-index:2100!important}
+  nav#mainNav{z-index:2100!important}
 }
 @media(any-pointer:coarse){
   section.hero{position:relative!important;z-index:2001!important}
-  nav{z-index:2100!important}
+  nav#mainNav{z-index:2100!important}
 }
 .ldr-logo{display:flex;flex-direction:column;align-items:center;gap:0}
 .ldr-logo span{font-family:var(--font-cormorant),serif;font-weight:300;font-size:2.2rem;letter-spacing:.52em;text-transform:uppercase;color:var(--w);line-height:1;opacity:0}
