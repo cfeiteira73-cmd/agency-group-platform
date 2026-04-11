@@ -77,7 +77,7 @@ export default function HomeNav() {
           <li><a href="/#zonas">Zonas</a></li>
           <li><a href="/#simulador">Crédito</a></li>
           <li><a href="/reports">Reports</a></li>
-          <li><a href="/imoveis">Off-Market</a></li>
+          <li><a href="/off-market">Off-Market</a></li>
           <li><a href="/contacto">Contacto</a></li>
         </ul>
         <div className="nav-end" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -114,7 +114,7 @@ export default function HomeNav() {
             <a href="/#zonas" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Zonas</a>
             <a href="/#simulador" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Crédito</a>
             <a href="/reports" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Reports</a>
-            <a href="/imoveis" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Off-Market</a>
+            <a href="/off-market" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Off-Market</a>
             <a href="/contacto" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Contacto</a>
             <a href="/equipa" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Equipa</a>
             <a href="/vendidos" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Vendidos</a>

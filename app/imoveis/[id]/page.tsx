@@ -14,10 +14,8 @@ import ImovelClient from './ImovelClient'
 import ShareButton from './ShareButton'
 import { BreadcrumbJsonLd } from '@/app/components/BreadcrumbJsonLd'
 import { buildOgImageUrl } from '@/lib/og'
-import dynamic from 'next/dynamic'
-
-const HeyGenEmbed = dynamic(() => import('@/app/components/HeyGenEmbed'), { ssr: false })
-const LeadCaptureForm = dynamic(() => import('@/app/components/LeadCaptureForm'), { ssr: false })
+import HeyGenEmbed from '@/app/components/HeyGenEmbed'
+import LeadCaptureForm from '@/app/components/LeadCaptureForm'
 
 // ─── Static params ─────────────────────────────────────────────────────────────
 export function generateStaticParams() {

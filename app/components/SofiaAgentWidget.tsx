@@ -440,7 +440,7 @@ export default function SofiaAgentWidget() {
             }}
           >
             <span style={{ color: '#c9a96e', marginRight: 4 }}>Sofia:</span>
-            Olá! Posso ajudar a encontrar o imóvel ideal? 🏡
+            A sua pesquisa privada começa aqui.
           </div>
         )}
 
@@ -461,7 +461,7 @@ export default function SofiaAgentWidget() {
             type="button"
             onClick={() => setOpen(v => !v)}
             className="ag-widget-btn"
-            aria-label={open ? 'Fechar assistente Sofia' : 'Falar com Sofia — Agency Group'}
+            aria-label={open ? 'Fechar assistente privada Sofia' : 'Sofia — Assistente Privada Agency Group'}
             style={{
               width: 64, height: 64, borderRadius: '50%',
               background: open
@@ -879,7 +879,7 @@ export default function SofiaAgentWidget() {
             textAlign: 'center', fontSize: 10, flexShrink: 0,
             color: 'rgba(255,255,255,0.18)', letterSpacing: '0.04em',
           }}>
-            Sofia AI · Agency Group · agencygroup.pt · AMI 22506
+            Sofia · Assistente Privada · Agency Group · AMI 22506
           </div>
         </div>
       )}

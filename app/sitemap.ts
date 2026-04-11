@@ -30,6 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/equipa`,          lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/contacto`,        lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vendidos`,        lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${BASE}/off-market`,      lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     // ── Static SEO blog articles (PT) ────────────────────────────────────────────
     { url: `${BASE}/blog/comprar-casa-portugal-2026`,         lastModified: new Date('2026-03-30'), changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/blog/propriedades-luxo-lisboa-2026`,      lastModified: new Date('2026-04-06'), changeFrequency: 'monthly', priority: 0.82 },
