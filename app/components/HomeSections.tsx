@@ -194,6 +194,7 @@ export default function HomeSections() {
                 { id: 'avalNome', label: 'Nome', placeholder: 'O seu nome' },
                 { id: 'avalTel', label: 'Telefone', placeholder: '+351 9XX XXX XXX' },
                 { id: 'avalZona', label: 'Zona', placeholder: 'Ex: Lisboa, Cascais, Comporta...' },
+                { id: 'avalArea', label: 'Área Bruta m² (opcional)', placeholder: 'Ex: 180' },
               ].map(f => (
                 <div key={f.id}>
                   <label style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.5)', display: 'block', marginBottom: '6px' }}>{f.label}</label>
@@ -201,7 +202,7 @@ export default function HomeSections() {
                 </div>
               ))}
               <HomeAvaliacaoForm />
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', textTransform: 'uppercase', textAlign: 'center' }}>Resposta em menos de 2 horas · 100% confidencial</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.06em', textTransform: 'uppercase', textAlign: 'center' }}>Resultado imediato · Consultor contacta em menos de 2h · 100% confidencial</div>
             </div>
           </div>
         </div>

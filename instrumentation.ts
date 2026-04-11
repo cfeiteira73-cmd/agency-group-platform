@@ -16,6 +16,8 @@ export async function register() {
       { key: 'AGENT_ALERT_EMAIL',            description: 'Lead alert emails will not be sent',       severity: 'WARNING' },
       { key: 'UPSTASH_REDIS_REST_URL',       description: 'Rate limiting is in-memory only (single-instance)', severity: 'WARNING' },
       { key: 'UPSTASH_REDIS_REST_TOKEN',     description: 'Rate limiting is in-memory only (single-instance)', severity: 'WARNING' },
+      { key: 'NEXT_PUBLIC_GTM_ID',           description: 'GTM analytics disabled — zero event tracking in production', severity: 'WARNING' },
+      { key: 'PORTAL_API_SECRET',            description: 'Lead scoring disabled — all leads arrive without tier/score',  severity: 'CRITICAL' },
     ]
 
     const missing = REQUIRED.filter(v => !process.env[v.key])

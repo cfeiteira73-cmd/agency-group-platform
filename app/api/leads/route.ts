@@ -115,12 +115,29 @@ export async function POST(req: NextRequest) {
     if (data?.id) {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.agencygroup.pt'
 
-      // 1. Lead scoring
-      fetch(`${siteUrl}/api/automation/lead-score`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact_id: data.id }),
-      }).catch(() => {})
+      // 1. Lead scoring — full payload + auth (was broken: only contact_id → 400)
+      const portalSecret = process.env.PORTAL_API_SECRET
+      if (portalSecret) {
+        fetch(`${siteUrl}/api/automation/lead-score`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${portalSecret}`,
+          },
+          body: JSON.stringify({
+            name:        name || 'Website Lead',
+            email:       email       || undefined,
+            phone:       phone       || undefined,
+            source:      source      || 'website',
+            message:     message     || (noteParts.length ? noteParts.join(' | ') : undefined),
+            budget:      budget_max  || undefined,
+            nationality: nationality || undefined,
+            timeline:    timeline    || undefined,
+          }),
+        }).catch(err => console.error('[leads] scoring error:', err instanceof Error ? err.message : String(err)))
+      } else {
+        console.warn('[leads] PORTAL_API_SECRET not configured — lead scoring skipped')
+      }
 
       // 2. Agent email alert (Resend)
       if (process.env.RESEND_API_KEY && process.env.AGENT_ALERT_EMAIL) {
@@ -163,6 +180,8 @@ export async function POST(req: NextRequest) {
             `,
           }),
         }).catch(() => {})
+      } else {
+        console.warn('[leads] RESEND_API_KEY or AGENT_ALERT_EMAIL not set — email alert skipped')
       }
     }
 

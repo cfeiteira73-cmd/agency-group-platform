@@ -54,6 +54,10 @@ const SOLD_PROPERTIES: SoldProperty[] = [
     rooms: 5,
     price: '€ 3.800.000',
     days: 67,
+    year: 2025,
+    buyer_nationality: 'US',
+    category: 'super-prime',
+    off_market: true,
   },
   {
     id: 2,
@@ -64,6 +68,10 @@ const SOLD_PROPERTIES: SoldProperty[] = [
     rooms: 4,
     price: '€ 2.100.000',
     days: 45,
+    year: 2025,
+    buyer_nationality: 'FR',
+    category: 'prime',
+    off_market: false,
   },
   {
     id: 3,
@@ -74,6 +82,10 @@ const SOLD_PROPERTIES: SoldProperty[] = [
     rooms: 6,
     price: '€ 6.500.000',
     days: 142,
+    year: 2025,
+    buyer_nationality: 'AE',
+    category: 'super-prime',
+    off_market: true,
   },
   {
     id: 4,
@@ -84,6 +96,10 @@ const SOLD_PROPERTIES: SoldProperty[] = [
     rooms: 4,
     price: '€ 2.850.000',
     days: 38,
+    year: 2025,
+    buyer_nationality: 'GB',
+    category: 'super-prime',
+    off_market: true,
   },
   {
     id: 5,
@@ -94,6 +110,10 @@ const SOLD_PROPERTIES: SoldProperty[] = [
     rooms: 4,
     price: '€ 2.200.000',
     days: 91,
+    year: 2024,
+    buyer_nationality: 'DE',
+    category: 'prime',
+    off_market: false,
   },
   {
     id: 6,
@@ -104,6 +124,10 @@ const SOLD_PROPERTIES: SoldProperty[] = [
     rooms: 3,
     price: '€ 1.850.000',
     days: 54,
+    year: 2024,
+    buyer_nationality: 'FR',
+    category: 'prime',
+    off_market: false,
   },
   {
     id: 7,
@@ -114,6 +138,10 @@ const SOLD_PROPERTIES: SoldProperty[] = [
     rooms: 5,
     price: '€ 1.650.000',
     days: 78,
+    year: 2024,
+    buyer_nationality: 'BR',
+    category: 'prime',
+    off_market: false,
   },
   {
     id: 8,
@@ -124,6 +152,10 @@ const SOLD_PROPERTIES: SoldProperty[] = [
     rooms: 3,
     price: '€ 980.000',
     days: 33,
+    year: 2024,
+    buyer_nationality: 'PT',
+    category: 'standard',
+    off_market: false,
   },
 ]
 
@@ -378,7 +410,7 @@ export default function VendidosPage() {
                     {property.price}
                   </p>
 
-                  {/* Bottom row: days badge + status */}
+                  {/* Bottom row: days badge + context */}
                   <div
                     style={{
                       display: 'flex',
@@ -404,7 +436,7 @@ export default function VendidosPage() {
                       Vendido em {property.days} dias
                     </span>
 
-                    {/* Status */}
+                    {/* Year + Status */}
                     <span
                       style={{
                         fontFamily: 'var(--font-dm-mono), monospace',
@@ -415,9 +447,47 @@ export default function VendidosPage() {
                         textTransform: 'uppercase',
                       }}
                     >
-                      ✓ Escritura Concluída
+                      ✓ {property.year ?? 'Concluído'}
                     </span>
                   </div>
+
+                  {/* Tags row: category + off-market + nationality */}
+                  {(property.category || property.off_market || property.buyer_nationality) && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
+                      {property.category === 'super-prime' && (
+                        <span style={{
+                          fontFamily: 'var(--font-dm-mono), monospace', fontSize: '0.58rem',
+                          letterSpacing: '0.08em', color: '#c9a96e',
+                          border: '1px solid rgba(201,169,110,.3)', padding: '2px 8px',
+                          textTransform: 'uppercase',
+                        }}>Super-Prime</span>
+                      )}
+                      {property.category === 'prime' && (
+                        <span style={{
+                          fontFamily: 'var(--font-dm-mono), monospace', fontSize: '0.58rem',
+                          letterSpacing: '0.08em', color: 'rgba(14,14,13,.4)',
+                          border: '1px solid rgba(14,14,13,.12)', padding: '2px 8px',
+                          textTransform: 'uppercase',
+                        }}>Prime</span>
+                      )}
+                      {property.off_market && (
+                        <span style={{
+                          fontFamily: 'var(--font-dm-mono), monospace', fontSize: '0.58rem',
+                          letterSpacing: '0.08em', color: '#1c4a35',
+                          background: 'rgba(28,74,53,.06)',
+                          border: '1px solid rgba(28,74,53,.2)', padding: '2px 8px',
+                          textTransform: 'uppercase',
+                        }}>Off-Market</span>
+                      )}
+                      {property.buyer_nationality && (
+                        <span style={{
+                          fontFamily: 'var(--font-dm-mono), monospace', fontSize: '0.58rem',
+                          letterSpacing: '0.06em', color: 'rgba(14,14,13,.35)',
+                          padding: '2px 0',
+                        }}>Comprador {property.buyer_nationality}</span>
+                      )}
+                    </div>
+                  )}
                 </article>
               ))}
             </div>

@@ -68,10 +68,14 @@ const THINKING_MSGS = [
 
 const STEP_QUICK_REPLIES: Record<string, QuickReply[]> = {
   initial: [
-    { label: '🏠 Comprar', value: 'Quero comprar um imóvel em Portugal', emoji: '🏠' },
-    { label: '📈 Investir', value: 'Tenho interesse em investimento imobiliário em Portugal', emoji: '📈' },
-    { label: '💰 Vender ou Avaliar', value: 'Quero vender ou avaliar o meu imóvel', emoji: '💰' },
+    { label: '🏡 Quanto vale o meu imóvel?', value: 'Quero avaliar o meu imóvel e perceber quanto vale no mercado actual', emoji: '🏡' },
+    { label: '🏠 Comprar imóvel', value: 'Quero comprar um imóvel em Portugal', emoji: '🏠' },
+    { label: '📈 Investir em Portugal', value: 'Tenho interesse em investimento imobiliário em Portugal', emoji: '📈' },
     { label: '🌍 Explorar o mercado', value: 'Estou a explorar o mercado imobiliário português', emoji: '🌍' },
+  ],
+  seller: [
+    { label: '📍 Partilhar zona e tipologia', value: 'O meu imóvel fica em [zona]. É um [tipo] com [quartos] quartos e [área]m²', emoji: '📍' },
+    { label: '📞 Falar com consultor', value: 'Prefiro falar directamente com o consultor responsável pela minha zona', emoji: '📞' },
   ],
   location: [
     { label: '🏙️ Lisboa', value: 'Lisboa e arredores', emoji: '🏙️' },
@@ -251,7 +255,7 @@ export default function SofiaAgentWidget() {
     if (step === 0) {
       if (/comprar|buy|purchase|acquérir/.test(lower)) { setBranch('buy'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
       else if (/investimento|invest|rendimento|yield/.test(lower)) { setBranch('invest'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
-      else if (/vender|sell|avali|quanto vale|vente/.test(lower)) { setBranch('sell'); setStep(1); setQuickReplies([{ label: '📍 Partilhar localização', value: 'Pode partilhar a localização e tipologia do imóvel para eu fazer uma avaliação inicial', emoji: '📍' }, { label: '📞 Falar com consultor', value: 'Prefiro falar directamente com o consultor responsável', emoji: '📞' }]) }
+      else if (/vender|sell|avali|quanto vale|vente/.test(lower)) { setBranch('sell'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.seller) }
       else { setBranch('explore'); setStep(1); setQuickReplies(STEP_QUICK_REPLIES.location) }
     } else if (step === 1) {
       const zones = ['lisboa', 'cascais', 'algarve', 'porto', 'madeira', 'açores', 'comporta']

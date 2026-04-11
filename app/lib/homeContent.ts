@@ -90,5 +90,5 @@ export const HOME_REVIEW_STATS = [
   { val: '4.9/5',   label: 'Avaliação Média'        },
   { val: '47+',     label: 'Famílias Acompanhadas'    },
   { val: '100%',    label: 'Recomendariam'           },
-  { val: '€285M+',  label: 'Volume Transacionado'    },
+  { val: '€285M+',  label: 'Volume · Histórico'        },
 ]
