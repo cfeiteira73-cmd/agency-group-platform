@@ -134,7 +134,7 @@ const ADVISORS = [
 const STATS = [
   { value: '€ 42M+', label: 'Volume transaccionado' },
   { value: '8+ Anos', label: 'No mercado premium' },
-  { value: '6 Idiomas', label: 'Atendimento internacional' },
+  { value: '6 Idiomas', label: 'PT · EN · FR · ES · AR · ZH' },
 ]
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -308,8 +308,8 @@ export default function EquipaPage() {
                 margin: '0 0 40px',
               }}
             >
-              Especialistas em imobiliário de luxo, investimento internacional e mercados
-              premium em Portugal.
+              Acompanhamento personalizado desde a primeira conversa. Especialistas em imobiliário
+              de luxo, compradores internacionais e transacções privadas em Portugal.
             </p>
 
             {/* Gold separator line */}
@@ -673,7 +673,7 @@ export default function EquipaPage() {
               >
                 {/* WhatsApp CTA */}
                 <a
-                  href="https://wa.me/351912000000"
+                  href="https://wa.me/351919948986"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

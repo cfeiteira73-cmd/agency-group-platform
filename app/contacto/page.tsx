@@ -167,7 +167,7 @@ export default function ContactoPage() {
               lineHeight: 1.65,
             }}
           >
-            Sem formulários complexos. Escolhe o canal que preferes — respondemos rapidamente.
+            Uma conversa directa, sem formulários. Escolhe o canal — respondemos em menos de 2h.
           </p>
         </section>
 
@@ -429,7 +429,7 @@ export default function ContactoPage() {
               {/* Info rows */}
               {[
                 { label: 'Morada', value: 'Lisboa, Portugal' },
-                { label: 'Telefone', value: '+351 912 000 000' },
+                { label: 'Telefone', value: '+351 919 948 986' },
                 { label: 'Email', value: 'geral@agencygroup.pt' },
                 { label: 'Horário', value: 'Segunda–Sexta 9h–19h\nSábado 10h–14h' },
                 { label: 'Licença', value: 'AMI 22506' },

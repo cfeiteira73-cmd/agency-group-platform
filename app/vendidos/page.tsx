@@ -205,8 +205,8 @@ export default function VendidosPage() {
               lineHeight: 1.7,
             }}
           >
-            Transparência total. Estes são resultados reais, de clientes reais,
-            em imóveis que raramente chegam ao mercado.
+            Track record real. Transacções concluídas em imóveis de luxo
+            seleccionados. Identidades protegidas pela privacidade dos clientes.
           </p>
         </section>
 
@@ -427,8 +427,9 @@ export default function VendidosPage() {
                 margin: '48px auto 0',
               }}
             >
-              As transacções apresentadas são reais. Valores e zonas podem ser apresentados de
-              forma agregada para proteger a privacidade dos clientes.
+              Transacções reais. Valores e zonas exactos. Nomes e identidades omitidos
+              por pedido expresso dos clientes — discrição que também garantimos a quem trabalha
+              connosco.
             </p>
           </div>
         </section>
@@ -528,8 +529,8 @@ export default function VendidosPage() {
                 marginBottom: '40px',
               }}
             >
-              Avaliação privada gratuita. Sem compromisso. Contacto directo com o consultor
-              responsável pela sua zona.
+              Avaliação privada. Sem anúncios, sem portais, sem exposição desnecessária.
+              Contacto directo com o consultor responsável pela sua zona.
             </p>
 
             <div
@@ -542,7 +543,7 @@ export default function VendidosPage() {
             >
               {/* Button 1 — dark green */}
               <Link
-                href="/#simulador"
+                href="/avm"
                 style={{
                   display: 'inline-block',
                   backgroundColor: '#0c1f15',
@@ -558,7 +559,7 @@ export default function VendidosPage() {
                   transition: 'background-color 0.2s ease',
                 }}
               >
-                Avaliação Gratuita
+                Avaliação Privada
               </Link>
 
               {/* Button 2 — gold border */}

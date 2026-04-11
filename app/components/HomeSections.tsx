@@ -184,7 +184,7 @@ export default function HomeSections() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="13"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
             </a>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em', marginTop: '12px' }}>
-              ✓ ±4.2% precisão mediana · calibrado com 847 transacções Q1 2026
+              ✓ Dados calibrados com transacções registadas INE · Actualizado 2026
             </div>
           </div>
           <div style={{ background: '#fff', padding: '48px', boxShadow: '0 24px 80px rgba(14,14,13,.10),0 4px 16px rgba(14,14,13,.06)', borderTop: '2px solid var(--g)' }}>
