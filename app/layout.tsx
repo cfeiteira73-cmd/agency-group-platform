@@ -979,7 +979,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Vercel Speed Insights */}
         <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
         <CurrencyProvider>
-        <main id="main-content">{children}</main>
+        {/* DIAGNOSTIC: explicit visibility + red background on <main> */}
+        <main id="main-content" style={{
+          background:   'red',
+          minHeight:    '100dvh',
+          opacity:      1,
+          visibility:   'visible',
+          transform:    'none',
+          position:     'relative',
+          zIndex:       1,
+        }}>{children}</main>
         {/* PWAInstallBanner DISABLED — SW investigation: beforeinstallprompt can
             trigger unexpected re-installs that bypass cache-clear efforts.
             Re-enable after green screen investigation is concluded. */}
