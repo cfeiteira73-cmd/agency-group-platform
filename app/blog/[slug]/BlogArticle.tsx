@@ -370,6 +370,94 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
         {/* Main content */}
         <article className="art-content">
           {article.content.map((section, idx) => renderSection(section, idx))}
+
+          {/* Article-end CTA */}
+          <div style={{
+            marginTop: '3rem',
+            borderTop: '1px solid rgba(14,14,13,0.08)',
+            paddingTop: '2.5rem',
+            background: 'linear-gradient(135deg,#0c1f15,#1c4a35)',
+            padding: '2.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-dm-mono), monospace',
+              fontSize: '0.48rem',
+              letterSpacing: '0.22em',
+              textTransform: 'uppercase',
+              color: '#c9a96e',
+              marginBottom: '0.25rem',
+            }}>
+              Agency Group · AMI 22506
+            </div>
+            <p style={{
+              fontFamily: 'var(--font-cormorant), serif',
+              fontSize: 'clamp(1.25rem,2.5vw,1.65rem)',
+              fontWeight: 300,
+              color: '#f4f0e6',
+              lineHeight: 1.35,
+              margin: 0,
+            }}>
+              Tem questões sobre este mercado?<br />
+              <span style={{ color: '#c9a96e' }}>Fale com um especialista — resposta em menos de 2h.</span>
+            </p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <a
+                href="https://wa.me/351910000000"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: '#c9a96e',
+                  color: '#0c1f15',
+                  padding: '13px 24px',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--font-dm-mono), monospace',
+                  fontSize: '0.52rem',
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  fontWeight: 400,
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                WhatsApp →
+              </a>
+              <a
+                href="/imoveis"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'transparent',
+                  color: 'rgba(244,240,230,0.7)',
+                  padding: '13px 24px',
+                  textDecoration: 'none',
+                  fontFamily: 'var(--font-dm-mono), monospace',
+                  fontSize: '0.52rem',
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  fontWeight: 400,
+                  border: '1px solid rgba(244,240,230,0.2)',
+                  transition: 'border-color 0.2s, color 0.2s',
+                }}
+              >
+                Ver Imóveis →
+              </a>
+            </div>
+            <p style={{
+              fontFamily: 'var(--font-dm-mono), monospace',
+              fontSize: '0.45rem',
+              letterSpacing: '0.1em',
+              color: 'rgba(244,240,230,0.3)',
+              margin: 0,
+            }}>
+              Lisboa · Cascais · Porto · Algarve · Comporta · Madeira · Açores
+            </p>
+          </div>
         </article>
 
         {/* Sidebar */}

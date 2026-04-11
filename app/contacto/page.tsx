@@ -449,14 +449,13 @@ export default function ContactoPage() {
                   </p>
                   <p
                     style={{
-                      fontSize: '14px',
+                      fontSize: label === 'Email' ? '12px' : '14px',
                       color: 'rgba(244,240,230,0.85)',
                       margin: 0,
                       lineHeight: 1.55,
                       whiteSpace: 'pre-line',
                       fontFamily: label === 'Email' ? 'var(--font-dm-mono), monospace' : 'inherit',
                       letterSpacing: label === 'Email' ? '0.01em' : 'inherit',
-                      fontSize: label === 'Email' ? '12px' : '14px',
                     } as React.CSSProperties}
                   >
                     {value}

@@ -14,6 +14,10 @@ import ImovelClient from './ImovelClient'
 import ShareButton from './ShareButton'
 import { BreadcrumbJsonLd } from '@/app/components/BreadcrumbJsonLd'
 import { buildOgImageUrl } from '@/lib/og'
+import dynamic from 'next/dynamic'
+
+const HeyGenEmbed = dynamic(() => import('@/app/components/HeyGenEmbed'), { ssr: false })
+const LeadCaptureForm = dynamic(() => import('@/app/components/LeadCaptureForm'), { ssr: false })
 
 // ─── Static params ─────────────────────────────────────────────────────────────
 export function generateStaticParams() {
@@ -825,6 +829,26 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                 </p>
               </section>
 
+              {/* ── VIDEO PRESENTATION ── */}
+              {p.videoUrl && (
+                <section style={{
+                  marginBottom: '56px', paddingBottom: '56px',
+                  borderBottom: '1px solid rgba(201,169,110,.08)',
+                }}>
+                  <div style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: '.5rem',
+                    letterSpacing: '.28em', textTransform: 'uppercase',
+                    color: 'rgba(201,169,110,.5)', marginBottom: '24px',
+                  }}>
+                    Apresentação em Vídeo
+                  </div>
+                  <HeyGenEmbed
+                    videoUrl={p.videoUrl}
+                    title={`Apresentação · ${p.nome}`}
+                  />
+                </section>
+              )}
+
               {/* ── KEY FEATURES ── */}
               <section style={{
                 marginBottom: '56px', paddingBottom: '56px',
@@ -1143,6 +1167,34 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                       }}>{v}</span>
                     </div>
                   ))}
+                </div>
+
+                {/* ── LEAD CAPTURE ── */}
+                <div style={{
+                  background: '#0e2318',
+                  border: '1px solid rgba(201,169,110,.1)',
+                  padding: '22px',
+                }}>
+                  <div style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
+                    letterSpacing: '.22em', textTransform: 'uppercase',
+                    color: 'rgba(201,169,110,.42)', marginBottom: '12px',
+                  }}>
+                    Receber Informações
+                  </div>
+                  <p style={{
+                    fontFamily: "'Jost', sans-serif", fontSize: '.8rem',
+                    color: 'rgba(244,240,230,.45)', lineHeight: 1.5, marginBottom: '14px',
+                  }}>
+                    Deixe o seu contacto e respondemos em menos de 2h.
+                  </p>
+                  <LeadCaptureForm
+                    source="property_page"
+                    zona={p.zona}
+                    propertyRef={p.ref}
+                    placeholder="Email ou telemóvel"
+                    ctaLabel="Contactar"
+                  />
                 </div>
 
                 {/* ── SHARE BUTTON (client island) ── */}

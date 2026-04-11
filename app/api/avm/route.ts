@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import Anthropic from '@anthropic-ai/sdk'
 import { avmCache, CacheKeys } from '@/lib/cache'
+import { supabaseAdmin } from '@/lib/supabase'
 
 const AVMSchema = z.object({
   zona:       z.string().optional().default('Lisboa'),
@@ -19,6 +20,11 @@ const AVMSchema = z.object({
   uso:        z.string().optional().default('habitacao'),
   casasBanho: z.coerce.number().int().min(0).optional().default(1),
   photos:     z.array(z.string().url()).max(8).optional(),
+  // Lead capture (optional — only saves if provided)
+  lead_name:  z.string().max(120).optional(),
+  lead_email: z.string().email().optional(),
+  lead_phone: z.string().max(30).optional(),
+  lead_lang:  z.string().max(5).optional(),
 })
 
 // ─── Photo quality scoring (inline, no HTTP roundtrip) ────────────────────────
@@ -668,6 +674,47 @@ export async function POST(req: NextRequest) {
     }
 
     avmCache.set(cacheKey, avmResult, 30 * 60)
+
+    // ── Lead capture (fire-and-forget) ──
+    const { lead_email, lead_phone, lead_name, lead_lang } = body as {
+      lead_email?: string; lead_phone?: string; lead_name?: string; lead_lang?: string
+    }
+    if (lead_email || lead_phone) {
+      void (async () => {
+        try {
+          const upsertKey = lead_email ? { email: lead_email } : { phone: lead_phone }
+          const { data: d } = await supabaseAdmin
+            .from('contacts')
+            .upsert(
+              {
+                ...upsertKey,
+                full_name:           lead_name || 'AVM Lead',
+                phone:               lead_phone || null,
+                email:               lead_email || null,
+                status:              'lead' as const,
+                source:              'avm_tool',
+                source_detail:       zona,
+                preferred_locations: [zona],
+                notes:               `AVM: ${zona} ${tipo} ${area}m² → ${avmResult.formatted.estimativa}`,
+                last_contact_at:     new Date().toISOString(),
+                created_at:          new Date().toISOString(),
+                updated_at:          new Date().toISOString(),
+              },
+              { onConflict: lead_email ? 'email' : 'phone', ignoreDuplicates: false }
+            )
+            .select('id')
+            .single()
+          if (d?.id) {
+            await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.agencygroup.pt'}/api/automation/lead-score`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contact_id: d.id }),
+            })
+          }
+        } catch { /* silent */ }
+      })()
+    }
+
     return NextResponse.json(avmResult)
   } catch (e) {
     console.error('[AVM] Internal error:', e)
