@@ -153,7 +153,7 @@ const ADVISORS = [
 
 // ─── Stats data ───────────────────────────────────────────────────────────────
 const STATS = [
-  { value: '€ 42M+', label: 'Volume transaccionado' },
+  { value: '€ 42M+', label: 'Volume · 2025' },
   { value: '8+ Anos', label: 'No mercado premium' },
   { value: '6 Idiomas', label: 'PT · EN · FR · ES · AR · ZH' },
 ]

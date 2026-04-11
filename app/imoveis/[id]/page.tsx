@@ -1174,14 +1174,14 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                     fontFamily: "'Jost', sans-serif", fontSize: '.8rem',
                     color: 'rgba(244,240,230,.45)', lineHeight: 1.5, marginBottom: '14px',
                   }}>
-                    Deixe o seu contacto e respondemos em menos de 2h.
+                    Visita privada disponível esta semana. Resposta em menos de 2h.
                   </p>
                   <LeadCaptureForm
                     source="property_page"
                     zona={p.zona}
                     propertyRef={p.ref}
                     placeholder="Email ou telemóvel"
-                    ctaLabel="Contactar"
+                    ctaLabel="Agendar Visita →"
                   />
                 </div>
 

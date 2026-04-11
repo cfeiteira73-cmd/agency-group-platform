@@ -1,6 +1,18 @@
 'use client'
 import { useState, useMemo, useRef, useEffect, type CSSProperties } from 'react'
 import { track } from '@/lib/gtm'
+
+// ─── Zone → advisor mapping (matches ADVISORS data in equipa/page.tsx) ─────────
+const ZONE_ADVISOR: Record<string, { name: string; initials: string; whatsapp: string }> = {
+  'Lisboa':        { name: 'Carlos Gomes',  initials: 'CG', whatsapp: 'https://wa.me/351919948986' },
+  'Cascais':       { name: 'Carlos Gomes',  initials: 'CG', whatsapp: 'https://wa.me/351919948986' },
+  'Sintra':        { name: 'Carlos Gomes',  initials: 'CG', whatsapp: 'https://wa.me/351919948986' },
+  'Comporta':      { name: 'Maria Fonseca', initials: 'MF', whatsapp: 'https://wa.me/351919948986' },
+  'Algarve':       { name: 'Maria Fonseca', initials: 'MF', whatsapp: 'https://wa.me/351919948986' },
+  'Madeira':       { name: 'Maria Fonseca', initials: 'MF', whatsapp: 'https://wa.me/351919948986' },
+  'Porto':         { name: 'Ricardo Pinto', initials: 'RP', whatsapp: 'https://wa.me/351919948986' },
+  'Açores':        { name: 'Ricardo Pinto', initials: 'RP', whatsapp: 'https://wa.me/351919948986' },
+}
 import Link from 'next/link'
 import Image from 'next/image'
 import { PROPERTIES, ZONE_YIELDS, formatPriceFull } from '../data'
@@ -1030,6 +1042,35 @@ export default function ImovelClient({ id }: { id: string }) {
                   marginTop: '4px',
                 }}>€{Math.round(property.preco / property.area).toLocaleString('pt-PT')}/m²</div>
               </div>
+
+              {/* Advisor presence — zone-matched consultant */}
+              {ZONE_ADVISOR[property.zona] && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '10px 12px', marginBottom: '16px',
+                  background: 'rgba(201,169,110,.05)',
+                  border: '1px solid rgba(201,169,110,.12)',
+                }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #1c4a35, #0d2b1f)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '.72rem',
+                    color: '#c9a96e', letterSpacing: '.04em',
+                  }}>{ZONE_ADVISOR[property.zona].initials}</div>
+                  <div>
+                    <div style={{
+                      fontFamily: "'Jost', sans-serif", fontSize: '.68rem',
+                      fontWeight: 600, color: '#f4f0e6',
+                    }}>{ZONE_ADVISOR[property.zona].name}</div>
+                    <div style={{
+                      fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                      letterSpacing: '.1em', color: 'rgba(201,169,110,.55)',
+                      textTransform: 'uppercase', marginTop: '1px',
+                    }}>Consultor · {property.zona}</div>
+                  </div>
+                </div>
+              )}
 
               {/* Premium microsite link (>€3M only) */}
               {property.preco >= 3_000_000 && (
