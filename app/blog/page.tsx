@@ -225,8 +225,11 @@ export default function BlogPage() {
 
       <section className="blog-cta">
         <h2 className="blog-cta-h">Pronto para <em>actuar</em>?</h2>
-        <p className="blog-cta-p">Avaliação AVM gratuita. Deal Radar 16D. Simulador de crédito. Tudo numa plataforma.</p>
-        <Link href="/#avaliacao" className="blog-cta-btn">Avaliar Imóvel Agora →</Link>
+        <p className="blog-cta-p">Ver o portfolio actual ou falar directamente com um consultor — sem formulários, sem espera.</p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link href="/imoveis" className="blog-cta-btn">Ver Portfolio →</Link>
+          <a href="https://wa.me/351919948986?text=Olá,%20li%20o%20blog%20da%20Agency%20Group%20e%20quero%20saber%20mais." target="_blank" rel="noopener noreferrer" className="blog-cta-btn" style={{ background: '#25D366', borderColor: '#25D366' }}>Falar com Consultor →</a>
+        </div>
       </section>
 
       <footer>

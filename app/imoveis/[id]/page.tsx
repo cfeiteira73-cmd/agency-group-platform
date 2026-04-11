@@ -7,6 +7,7 @@
 
 import type { Metadata } from 'next'
 import type { CSSProperties } from 'react'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { PROPERTIES, PROPERTY_IDS, ZONE_YIELDS, formatPriceFull } from '../data'
 import type { Property } from '../data'
@@ -149,6 +150,9 @@ export default async function ImovelPage(
 ) {
   const { id } = await params
 
+  // Unknown IDs → 404 (prevents infinite URL generation / crawl budget waste)
+  if (!PROPERTY_IDS.includes(id)) notFound()
+
   const breadcrumbItems = [
     { name: 'Início', url: 'https://www.agencygroup.pt' },
     { name: 'Imóveis', url: 'https://www.agencygroup.pt/imoveis' },
@@ -158,7 +162,7 @@ export default async function ImovelPage(
     },
   ]
 
-  // Build Property schema (works for both known and mock properties)
+  // Build Property schema — at this point id is always a known ID
   const prop = PROPERTIES.find(x => x.id === id) ?? generateMockProperty(id)
   const propertySchema = {
     '@context': 'https://schema.org',
@@ -184,21 +188,6 @@ export default async function ImovelPage(
   }
 
   // Known IDs → use the existing rich ImovelClient (photo gallery, modals, etc.)
-  if (PROPERTY_IDS.includes(id)) {
-    return (
-      <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(propertySchema) }}
-        />
-        <BreadcrumbJsonLd items={breadcrumbItems} />
-        <ImovelClient id={id} />
-      </>
-    )
-  }
-
-  // Generated / unknown IDs → full server-rendered showcase
-  const p = generateMockProperty(id)
   return (
     <>
       <script
@@ -206,9 +195,10 @@ export default async function ImovelPage(
         dangerouslySetInnerHTML={{ __html: JSON.stringify(propertySchema) }}
       />
       <BreadcrumbJsonLd items={breadcrumbItems} />
-      <PropertyShowcase property={p} />
+      <ImovelClient id={id} />
     </>
   )
+
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -589,7 +579,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
               letterSpacing: '.16em', color: 'rgba(201,169,110,.45)',
             }}>AMI 22506</span>
             <a
-              href={`https://wa.me/351919191919?text=${waMsg}`}
+              href={`https://wa.me/351919948986?text=${waMsg}`}
               target="_blank" rel="noopener noreferrer"
               style={{
                 background: '#c9a96e', color: '#0c1f15', padding: '9px 22px',
@@ -1060,7 +1050,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
                     {/* WhatsApp */}
                     <a
-                      href={`https://wa.me/351919191919?text=${waMsg}`}
+                      href={`https://wa.me/351919948986?text=${waMsg}`}
                       target="_blank" rel="noopener noreferrer"
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
@@ -1079,7 +1069,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
 
                     {/* Phone */}
                     <a
-                      href="tel:+351919191919"
+                      href="tel:+351919948986"
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
                         background: 'rgba(201,169,110,.1)', color: '#c9a96e',
@@ -1243,7 +1233,7 @@ function PropertyShowcase({ property: p }: { property: Property }) {
 
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <a
-                href={`https://wa.me/351919191919?text=${waMsg}`}
+                href={`https://wa.me/351919948986?text=${waMsg}`}
                 target="_blank" rel="noopener noreferrer"
                 className="ag-btn-gold"
               >

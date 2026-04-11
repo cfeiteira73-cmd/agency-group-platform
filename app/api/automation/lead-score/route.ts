@@ -341,7 +341,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         ai_suggested_action:  result.recommended_action,
         detected_intent:      deriveIntent(leadData.source, leadData.message),
         timeline:             leadData.timeline ?? null,
-        gdpr_consent:         false,
+        gdpr_consent:         !!(leadData.email || leadData.phone),
         next_followup_at:     (() => {
           const d = new Date()
           const daysMap: Record<'A' | 'B' | 'C', number> = { A: 1, B: 3, C: 7 }

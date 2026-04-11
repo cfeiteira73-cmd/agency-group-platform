@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
           timeline:            timeline || null,
           use_type:            use_type || null,
           last_contact_at:     new Date().toISOString(),
-          created_at:          new Date().toISOString(),
           updated_at:          new Date().toISOString(),
         },
         {
