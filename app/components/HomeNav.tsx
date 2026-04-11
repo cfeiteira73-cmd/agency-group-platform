@@ -80,12 +80,19 @@ export default function HomeNav() {
           <li><a href="/imoveis">Off-Market</a></li>
           <li><a href="#contacto">Contacto</a></li>
         </ul>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="nav-end" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div className="nav-currency"><CurrencySelector /></div>
-          {isAgent
-            ? <a href={portalHref} className="nav-cta">Portal →</a>
-            : <a href="/portal" className="nav-cta">Área Agentes</a>
-          }
+          {isAgent ? (
+            <>
+              <a href={portalHref} className="nav-cta nav-cta-full">Portal →</a>
+              <a href={portalHref} className="nav-cta nav-cta-short" aria-label="Portal Agentes">AG</a>
+            </>
+          ) : (
+            <>
+              <a href="/portal" className="nav-cta nav-cta-full">Área Agentes</a>
+              <a href="/portal" className="nav-cta nav-cta-short" aria-label="Área Agentes">AG</a>
+            </>
+          )}
           <button
             type="button"
             className={`nav-burger${menuOpen?' open':''}`}

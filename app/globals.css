@@ -88,6 +88,8 @@ nav.solid .nav-links a{color:var(--g)}
 .nav-links a:hover::after{width:100%}
 .nav-cta{font-size:.6rem;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--w);background:var(--g);padding:11px 22px;text-decoration:none;transition:background .3s,transform .3s var(--ease-out)}
 .nav-cta:hover{background:var(--gm);transform:translateY(-1px)}
+/* nav-cta-short: mobile-only AG monogram — hidden on desktop by default */
+.nav-cta-short{display:none}
 .hero{height:100svh;min-height:640px;display:grid;grid-template-columns:58% 42%;overflow:hidden}
 .hl{position:relative;background:var(--gd);display:flex;flex-direction:column;justify-content:flex-start;padding:88px 80px 88px;overflow:hidden;border-right:1px solid rgba(201,169,110,.18)}
 @media(min-width:961px){.hl{justify-content:flex-end;padding:0 80px 88px}}
@@ -488,10 +490,12 @@ footer{background:var(--ink);padding:80px 0 32px}
   .imc.feat{grid-column:span 1}
   /* Card body: GSAP never adds .revealed on mobile → opacity:0 stays → body invisible */
   .imc-body{opacity:1!important;transform:none!important}
-  /* Nav mobile: hide EUR currency selector — ÁREA AGENTES is the primary CTA */
+  /* Nav mobile: EUR hidden, full CTA text hidden, AG monogram shown */
   .nav-currency{display:none!important}
-  /* Nav mobile: restore + refine ÁREA AGENTES — premium sizing, no crowding */
-  nav#mainNav .nav-cta{display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:9px 18px!important;font-size:.55rem!important;letter-spacing:.22em!important;white-space:nowrap!important;min-height:40px!important}
+  nav#mainNav .nav-cta-full{display:none!important}
+  nav#mainNav .nav-cta-short{display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0 13px!important;font-size:.58rem!important;font-weight:600!important;letter-spacing:.32em!important;min-height:36px!important;min-width:42px!important;white-space:nowrap!important}
+  /* BottomNav: removed on mobile — top bar + drawer handles all navigation */
+  .ag-bottom-nav,.ag-bottom-nav-spacer{display:none!important}
   .mkt-grid,.avm-grid,.radar-grid{grid-template-columns:1fr;gap:48px}
   .cred-grid{grid-template-columns:1fr 1fr;padding:0 24px}
   .ft-top{grid-template-columns:1fr 1fr}
