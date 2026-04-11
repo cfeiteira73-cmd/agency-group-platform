@@ -30,6 +30,16 @@ export interface Property {
   lifestyle: string[]
   videoUrl: string | null
   virtualTourEmbed: string | null
+  availability_note?: string  // optional scarcity signal — only set when genuinely applicable
+}
+
+// ─── Price range constants — applied globally to all listing surfaces ─────────
+export const PRICE_FLOOR   = 400_000        // €400K — minimum for AG Elite Activo
+export const PRICE_CEILING = 100_000_000    // €100M — HNWI / family office ceiling
+
+/** Safety net: strips properties outside the AG product range */
+export function filterByPriceRange<T extends { preco: number }>(items: T[]): T[] {
+  return items.filter(p => p.preco >= PRICE_FLOOR && p.preco <= PRICE_CEILING)
 }
 
 export const PROPERTIES: Property[] = [

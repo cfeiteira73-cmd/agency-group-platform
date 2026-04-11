@@ -121,6 +121,9 @@ function calculateSourceScore(source?: string): number {
   const normalised = source.toLowerCase().replace(/[\s-]/g, '_')
 
   if (normalised.includes('referral') || normalised.includes('referencia')) return 20
+  if (normalised.includes('off_market'))        return 18  // invite-only page — highest intent
+  if (normalised.includes('avaliacao_privada')) return 15  // private valuation — sell intent
+  if (normalised.includes('avm_tool'))          return 12  // AVM tool — sell/refi intent
   if (normalised.includes('idealista_premium') || normalised.includes('idealista premium')) return 10
   if (normalised.includes('linkedin')) return 10
   if (normalised.includes('website') || normalised.includes('web')) return 5
@@ -128,6 +131,21 @@ function calculateSourceScore(source?: string): number {
   if (normalised.includes('cold_call') || normalised.includes('prospe')) return 3
 
   return 2
+}
+
+function deriveIntent(source?: string, message?: string): 'buy' | 'invest' | 'sell' {
+  const src = (source ?? '').toLowerCase()
+  const msg = (message ?? '').toLowerCase()
+
+  // Sell signals
+  if (src.includes('avaliacao_privada') || src.includes('avm_tool')) return 'sell'
+  if (msg.includes('vender') || msg.includes('avalia') || msg.includes('sell') || msg.includes('vente')) return 'sell'
+
+  // Invest signals
+  if (src.includes('invest') || msg.includes('invest') || msg.includes('yield') || msg.includes('renda') || msg.includes('rendimento')) return 'invest'
+
+  // Default: buy
+  return 'buy'
 }
 
 function calculateMessageScore(message?: string): { messageLength: number; hasLocation: boolean } {
@@ -321,9 +339,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         lead_score_breakdown: { ...result.breakdown } as Record<string, number>,
         source:               leadData.source ?? null,
         ai_suggested_action:  result.recommended_action,
-        detected_intent:      'buy',
+        detected_intent:      deriveIntent(leadData.source, leadData.message),
         timeline:             leadData.timeline ?? null,
         gdpr_consent:         false,
+        next_followup_at:     (() => {
+          const d = new Date()
+          const daysMap: Record<'A' | 'B' | 'C', number> = { A: 1, B: 3, C: 7 }
+          d.setDate(d.getDate() + daysMap[result.tier])
+          return d.toISOString()
+        })(),
         updated_at:           new Date().toISOString(),
       }
 
@@ -367,6 +391,9 @@ export async function GET(): Promise<NextResponse> {
           max: 20,
           rules: {
             referral: 20,
+            off_market_page: 18,
+            avaliacao_privada: 15,
+            avm_tool: 12,
             idealista_premium: 10,
             linkedin: 10,
             website: 5,

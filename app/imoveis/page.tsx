@@ -1,7 +1,7 @@
 'use client'
 import { useState, useMemo, useCallback, lazy, Suspense, useRef, type CSSProperties } from 'react'
 import Link from 'next/link'
-import { PROPERTIES, ZONAS, TIPOS, formatPriceFull } from './data'
+import { PROPERTIES, ZONAS, TIPOS, formatPriceFull, filterByPriceRange } from './data'
 import FavoriteButton, { FavoritesDrawer } from './FavoriteButton'
 import CompareBar from './CompareBar'
 import { CurrencySelector, useCurrency } from '../components/CurrencyWidget'
@@ -78,7 +78,7 @@ export default function ImoveisPage() {
   }
 
   const filtered = useMemo(() => {
-    let list = [...PROPERTIES]
+    let list = filterByPriceRange([...PROPERTIES])
     if (zona)    list = list.filter(p => p.zona === zona)
     if (tipo)    list = list.filter(p => p.tipo === tipo)
     if (preco) {

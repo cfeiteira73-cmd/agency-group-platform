@@ -71,6 +71,8 @@ export default function HomePropertiesSection() {
 
   // ─── Filtering logic ───────────────────────────────────────────────────────
   const filteredProperties = PROPERTIES.filter(p => {
+    // Global price range guard — AG Elite Activo: €400K–€100M
+    if (p.preco < 400_000 || p.preco > 100_000_000) return false
     if (searchZona && !p.zonaLabel.toLowerCase().includes(searchZona.toLowerCase()) && !p.zona.toLowerCase().includes(searchZona.toLowerCase())) return false
     if (searchTipo && p.tipo !== searchTipo) return false
     if (searchPreco) {
