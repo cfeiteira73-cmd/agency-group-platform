@@ -12,7 +12,7 @@ export const HOME_HERO = {
   titleEm:      'veio ter',
   title3:       'consigo.',
   subtitle:     'Da Comporta a Cascais. Do Chiado ao Algarve. Imóveis que raramente chegam ao mercado — para quem chegou primeiro.',
-  ctaPrimary:   { text: 'Descobrir Portfolio', href: '#imoveis' },
+  ctaPrimary:   { text: 'Ver Portfolio Privado', href: '#imoveis' },
   ctaSecondary: { text: 'Avaliação Privada →', href: '#avaliacao' },
   stats: [
     { n: '169', em: 'K',   label: 'Transacções 2025'          },
@@ -88,7 +88,7 @@ export const HOME_TESTIMONIALS = [
 
 export const HOME_REVIEW_STATS = [
   { val: '4.9/5',   label: 'Avaliação Média'        },
-  { val: '47',      label: 'Avaliações Verificadas'  },
+  { val: '47+',     label: 'Famílias Acompanhadas'    },
   { val: '100%',    label: 'Recomendariam'           },
   { val: '€285M+',  label: 'Volume Transacionado'    },
 ]

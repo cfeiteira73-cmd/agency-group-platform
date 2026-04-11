@@ -67,10 +67,10 @@ const THINKING_MSGS = [
 
 const STEP_QUICK_REPLIES: Record<string, QuickReply[]> = {
   initial: [
-    { label: '🏠 Quero Comprar', value: 'Quero comprar um imóvel em Portugal', emoji: '🏠' },
-    { label: '📈 Investimento', value: 'Tenho interesse em investimento imobiliário em Portugal', emoji: '📈' },
-    { label: '💰 Vender / Avaliar', value: 'Quero vender ou avaliar o meu imóvel', emoji: '💰' },
-    { label: '🌍 Só a explorar', value: 'Estou a explorar o mercado imobiliário português', emoji: '🌍' },
+    { label: '🏠 Comprar', value: 'Quero comprar um imóvel em Portugal', emoji: '🏠' },
+    { label: '📈 Investir', value: 'Tenho interesse em investimento imobiliário em Portugal', emoji: '📈' },
+    { label: '💰 Vender ou Avaliar', value: 'Quero vender ou avaliar o meu imóvel', emoji: '💰' },
+    { label: '🌍 Explorar o mercado', value: 'Estou a explorar o mercado imobiliário português', emoji: '🌍' },
   ],
   location: [
     { label: '🏙️ Lisboa', value: 'Lisboa e arredores', emoji: '🏙️' },
@@ -78,7 +78,7 @@ const STEP_QUICK_REPLIES: Record<string, QuickReply[]> = {
     { label: '☀️ Algarve', value: 'Algarve', emoji: '☀️' },
     { label: '🏛️ Porto', value: 'Porto e Norte', emoji: '🏛️' },
     { label: '🏝️ Madeira', value: 'Madeira ou Açores', emoji: '🏝️' },
-    { label: '✨ Aberto a sugestões', value: 'Estou aberto a sugestões de zona', emoji: '✨' },
+    { label: '✨ Orientar-me', value: 'Estou aberto a sugestões de zona', emoji: '✨' },
   ],
   budget: [
     { label: '< €500K', value: 'Orçamento até €500.000', emoji: '💶' },
@@ -91,7 +91,7 @@ const STEP_QUICK_REPLIES: Record<string, QuickReply[]> = {
     { label: '⚡ Agora mesmo', value: 'Estou pronto para comprar agora, nos próximos 1-2 meses', emoji: '⚡' },
     { label: '📅 3-6 meses', value: 'Estou a planear para os próximos 3 a 6 meses', emoji: '📅' },
     { label: '🗓️ Este ano', value: 'Estou a planear para este ano, talvez 6 a 12 meses', emoji: '🗓️' },
-    { label: '🔭 A explorar', value: 'Estou só a explorar, sem prazo definido', emoji: '🔭' },
+    { label: '🔭 Sem prazo definido', value: 'Estou só a explorar, sem prazo definido', emoji: '🔭' },
   ],
   contact: [
     { label: '💬 WhatsApp', value: 'Prefiro ser contactado via WhatsApp', emoji: '💬' },
@@ -103,21 +103,21 @@ const STEP_QUICK_REPLIES: Record<string, QuickReply[]> = {
 // ─── Context-aware proactive openers ─────────────────────────────────────────
 function getProactiveOpener(pathname: string, isReturning: boolean, lastLocation?: string): string {
   if (isReturning && lastLocation) {
-    return `Bem-vindo de volta! 👋 Da última vez estavas a ver imóveis em **${lastLocation}**. Encontrei ${Math.floor(Math.random() * 3) + 2} novas listagens que podem interessar-te. Queres ver?`
+    return `Bem-vindo de volta. Da última vez explorou imóveis em **${lastLocation}**. Encontrei ${Math.floor(Math.random() * 3) + 2} novas oportunidades que podem interessar-lhe. Deseja ver?`
   }
   if (pathname.includes('/imoveis') || pathname.includes('/properties')) {
-    return `Vejo que estás a explorar os nossos imóveis! 🏡 Sou a Sofia, assistente da Agency Group. Posso ajudar-te a filtrar por zona, orçamento ou tipo — o que procuras?`
+    return `Bom dia. Estou a ver que está a explorar o nosso portfolio. Posso ajudá-lo a encontrar imóveis por zona, orçamento ou perfil — o que procura?`
   }
   if (pathname.includes('/blog') || pathname.includes('/mercado')) {
-    return `Olá! Vejo que estás a ler sobre o mercado português. 📊 Se quiseres dados específicos sobre preços, yields ou regimes fiscais, é só perguntar — tenho toda a informação em tempo real.`
+    return `Bom dia. Vejo que está a aprofundar o mercado imobiliário português. Posso complementar com dados específicos sobre preços, yields ou regimes fiscais — é só perguntar.`
   }
   if (pathname.includes('/avm') || pathname.includes('/avaliacao')) {
-    return `A pensar em vender ou avaliar? 💰 Posso dar-te uma estimativa rápida do valor de mercado do teu imóvel. É grátis e sem compromisso.`
+    return `Boa tarde. A considerar uma avaliação? Posso ajudá-lo a perceber o valor real do seu imóvel com dados de transacções recentes da zona.`
   }
   if (pathname.includes('/contact') || pathname.includes('/contacto')) {
-    return `Olá! 👋 Vejo que queres falar connosco. Sou a Sofia e posso ajudar-te agora mesmo — ou posso conectar-te directamente com o nosso consultor especializado na zona que te interessa.`
+    return `Olá. Vejo que procura contacto directo. Posso ligá-lo ao nosso consultor especializado na zona que lhe interessa.`
   }
-  return `Olá! Sou a Sofia, assistente IA da Agency Group 👋\n\nAjudo compradores internacionais a encontrar o imóvel perfeito em Portugal. Em que posso ajudar?`
+  return `Olá. Sou a Sofia, assistente privada da Agency Group.\n\nAjudo compradores e investidores seleccionados a encontrar imóveis excepcionais em Portugal. Como posso ajudá-lo?`
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────

@@ -17,8 +17,8 @@ export default function LeadCaptureForm({
   source = 'website',
   zona,
   propertyRef,
-  placeholder = 'O seu email ou telemóvel',
-  ctaLabel = 'Receber Informações',
+  placeholder = 'Email ou telemóvel',
+  ctaLabel = 'Receber Proposta Privada',
   variant = 'inline',
   onSuccess,
 }: LeadCaptureFormProps) {
@@ -62,7 +62,7 @@ export default function LeadCaptureForm({
       const data = await res.json()
 
       if (!res.ok) {
-        setError('Erro ao processar. Tente via WhatsApp.')
+        setError('Não foi possível processar. Continue via WhatsApp →')
         return
       }
 
@@ -70,7 +70,7 @@ export default function LeadCaptureForm({
       setStep('qualification')
       onSuccess?.(data.id || '')
     } catch {
-      setError('Erro de ligação. Tente via WhatsApp.')
+      setError('Sem ligação. Continue via WhatsApp →')
     } finally {
       setLoading(false)
     }
@@ -87,7 +87,7 @@ export default function LeadCaptureForm({
           rel="noopener noreferrer"
           style={styles.waBtn}
         >
-          Falar no WhatsApp →
+          WhatsApp Directo →
         </a>
       </div>
     )
@@ -150,7 +150,7 @@ export default function LeadCaptureForm({
         <p style={styles.error}>{error}</p>
       )}
       <p style={styles.privacy}>
-        Sem spam. Dados protegidos conforme RGPD. Pode cancelar a qualquer momento.
+        Confidencial · RGPD · Sem spam.
       </p>
     </form>
   )
@@ -182,7 +182,7 @@ function QualificationInline({ contactId, onComplete, onSkip }: QualInlineProps)
 
   const questions = [
     {
-      q: 'Qual o seu objectivo?',
+      q: 'O que procura?',
       opts: [
         { l: 'Habitação própria', v: 'habitacao' },
         { l: 'Investimento', v: 'investimento' },
@@ -192,7 +192,7 @@ function QualificationInline({ contactId, onComplete, onSkip }: QualInlineProps)
       onPick: (v: string) => { setUseType(v); setStep(1) },
     },
     {
-      q: 'Orçamento?',
+      q: 'Qual o seu investimento?',
       opts: [
         { l: '< €200K', v: '200000' },
         { l: '€200K–€500K', v: '500000' },
@@ -207,7 +207,7 @@ function QualificationInline({ contactId, onComplete, onSkip }: QualInlineProps)
         { l: 'Urgente (< 3m)', v: 'urgent' },
         { l: 'Em breve (3–6m)', v: 'short' },
         { l: 'Este ano', v: 'medium' },
-        { l: 'Só a explorar', v: 'exploring' },
+        { l: 'Só a conhecer', v: 'exploring' },
       ],
       onPick: (v: string) => save(v),
     },

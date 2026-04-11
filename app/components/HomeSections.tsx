@@ -118,7 +118,7 @@ export default function HomeSections() {
           <div style={{ marginBottom: '40px' }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '10px' }}>Simulação · Crédito Habitação · Portugal</div>
             <h2 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(2.2rem,3.8vw,3.8rem)', color: '#0e0e0d', lineHeight: 1.05, marginBottom: '12px', letterSpacing: '-.012em' }}>A Verdade <em style={{ fontStyle: 'italic', color: '#1c4a35' }}>Sobre o Crédito</em></h2>
-            <p style={{ fontFamily: "'Jost',sans-serif", fontSize: '.86rem', lineHeight: 1.8, color: 'rgba(14,14,13,.5)', maxWidth: '560px' }}>Euribor 6M em tempo real · TAEG Newton-Raphson · 4 cenários stress-test · Tabela amortização · DSTI Banco de Portugal · IMT + IS incluído</p>
+            <p style={{ fontFamily: "'Jost',sans-serif", fontSize: '.86rem', lineHeight: 1.8, color: 'rgba(14,14,13,.5)', maxWidth: '560px' }}>Simule com dados reais de mercado — Euribor actualizado, custos totais incluídos e cenários de stress-test, para decidir com clareza total.</p>
           </div>
           <Suspense fallback={null}>
             <HomeMortgage />
@@ -279,7 +279,7 @@ export default function HomeSections() {
               As propriedades mais extraordinárias<br />nunca chegam ao mercado público.<br />Chegam apenas a quem já conhecemos.
             </p>
             <a
-              href="/portal"
+              href="/off-market"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '14px', padding: '17px 44px', background: 'transparent', border: '1px solid rgba(201,169,110,.42)', color: '#c9a96e', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.18em', textTransform: 'uppercase', textDecoration: 'none', fontWeight: 400, width: 'fit-content' }}
             >
               Pedir Acesso Exclusivo
@@ -335,7 +335,7 @@ export default function HomeSections() {
       <section className="test-section" style={{ background: '#070f0a', borderTop: '1px solid rgba(201,169,110,.08)', padding: '112px 40px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.7)', textTransform: 'uppercase', marginBottom: '16px' }}>47 Famílias · 14 Nacionalidades · 4.9/5</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.7)', textTransform: 'uppercase', marginBottom: '16px' }}>Famílias de 14 Nacionalidades · 4.9/5</div>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#f4f0e6', margin: '0 0 8px' }}>Eles chegaram.</h2>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontStyle: 'italic', fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#c9a96e', margin: 0 }}>Eles ficaram.</h2>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '16px' }}>
@@ -419,7 +419,7 @@ export default function HomeSections() {
             <div className="ft-col">
               <div className="ft-col-h">Serviços</div>
               <ul>
-                <li><a href="/imoveis">Off-Market</a></li>
+                <li><a href="/off-market">Off-Market</a></li>
                 <li><a href="/portal">Portal Agentes</a></li>
                 <li><a href="#contacto">NHR / Vistos</a></li>
                 <li><a href="/#simulador">Simulador IMT</a></li>
