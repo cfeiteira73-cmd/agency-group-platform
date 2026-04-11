@@ -1172,18 +1172,14 @@ export default function ImovelClient({ id }: { id: string }) {
                 WhatsApp Imediato
               </a>
 
-              {/* Email CTA */}
-              <a
-                href={`mailto:geral@agencygroup.pt?subject=Interesse%20em%20${property.ref}&body=Olá,%20tenho%20interesse%20no%20imóvel%20${property.ref}%20-%20${encodeURIComponent(property.nome)}.`}
-                style={{
-                  display: 'block', width: '100%', textAlign: 'center',
-                  background: 'transparent', border: '1px solid rgba(201,169,110,.35)',
-                  color: '#c9a96e', padding: '12px',
-                  fontFamily: "'Jost', sans-serif", fontSize: '.62rem',
-                  fontWeight: 600, letterSpacing: '.16em', textTransform: 'uppercase',
-                  textDecoration: 'none', marginBottom: '20px', boxSizing: 'border-box',
-                }}
-              >Enviar Email</a>
+              {/* Post-CTA clarity */}
+              <div style={{
+                fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                letterSpacing: '.1em', color: 'rgba(244,240,230,.3)',
+                textAlign: 'center', marginBottom: '20px', lineHeight: 1.6,
+              }}>
+                Consultor contacta em menos de 2h · Visita confirmada por WhatsApp · 100% privado
+              </div>
 
               {/* Tour Virtual button */}
               {property.tourUrl && (
@@ -1246,23 +1242,22 @@ export default function ImovelClient({ id }: { id: string }) {
                   padding: '13px',
                   fontFamily: "'Jost', sans-serif", fontSize: '.62rem',
                   fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase',
-                  textDecoration: 'none', marginBottom: '10px', boxSizing: 'border-box',
+                  textDecoration: 'none', marginBottom: '14px', boxSizing: 'border-box',
                 }}
               >Enviar via WhatsApp →</a>
 
-              {/* Make offer */}
+              {/* Make offer — text link only */}
               <a
                 href={`https://wa.me/351919948986?text=${encodeURIComponent(`Olá, quero fazer uma proposta para o imóvel ${property.ref} — ${property.nome}. Preço pedido: ${formatPriceFull(property.preco)}.`)}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{
                   display: 'block', width: '100%', textAlign: 'center',
-                  background: 'transparent', border: '1px solid rgba(244,240,230,.1)',
-                  color: 'rgba(244,240,230,.4)', padding: '11px',
-                  fontFamily: "'Jost', sans-serif", fontSize: '.58rem',
-                  fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase',
-                  textDecoration: 'none', boxSizing: 'border-box',
+                  color: 'rgba(244,240,230,.28)',
+                  fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+                  letterSpacing: '.12em', textTransform: 'uppercase',
+                  textDecoration: 'none',
                 }}
-              >Fazer Proposta</a>
+              >Submeter proposta →</a>
             </div>
 
             {/* AMI disclaimer */}

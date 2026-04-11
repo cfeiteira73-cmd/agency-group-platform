@@ -322,7 +322,11 @@ export default function ArticleLuxuryPropertyLisbon() {
         <div className="cta-box">
           <h3>Looking for luxury property in Lisbon?</h3>
           <p>Access off-market listings, get a free automated valuation, and connect with our licensed advisors. We represent buyers at zero cost — our commission is paid by the seller.</p>
-          <Link href="https://www.agencygroup.pt/portal">Explore Properties →</Link>
+          <Link href="/imoveis">Explore Properties →</Link>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', marginTop: '.75rem' }}>
+            <Link href="/off-market" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Off-market access →</Link>
+            <Link href="/zonas/lisboa" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Lisbon zone guide →</Link>
+          </div>
         </div>
       </article>
 

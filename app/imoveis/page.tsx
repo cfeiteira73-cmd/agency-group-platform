@@ -582,6 +582,46 @@ export default function ImoveisPage() {
         )}
       </div>
 
+      {/* ── Portfolio adicional sob consulta ── */}
+      <div style={{
+        background: '#0c1f15',
+        borderTop: '1px solid rgba(201,169,110,.1)',
+        padding: '28px 40px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        flexWrap: 'wrap', gap: '16px',
+      }}>
+        <div>
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: '.5rem',
+            letterSpacing: '.2em', textTransform: 'uppercase',
+            color: 'rgba(201,169,110,.45)', marginBottom: '4px',
+          }}>Portfolio off-market · Acesso restrito</div>
+          <div style={{
+            fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.1rem', color: '#f4f0e6',
+          }}>
+            Portfolio adicional disponível sob consulta.
+          </div>
+          <div style={{
+            fontFamily: "'Jost', sans-serif", fontSize: '.78rem',
+            color: 'rgba(244,240,230,.35)', marginTop: '2px',
+          }}>
+            Imóveis não publicitados — apresentados apenas a compradores qualificados.
+          </div>
+        </div>
+        <a
+          href="/off-market"
+          style={{
+            background: 'transparent', border: '1px solid rgba(201,169,110,.35)',
+            color: '#c9a96e', padding: '12px 28px',
+            fontFamily: "'Jost', sans-serif", fontSize: '.62rem',
+            fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase',
+            textDecoration: 'none', whiteSpace: 'nowrap',
+          }}
+        >
+          Solicitar Acesso →
+        </a>
+      </div>
+
       {/* ── COMPARE BAR ── */}
       <CompareBar
         selected={compareIds}

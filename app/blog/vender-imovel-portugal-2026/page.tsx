@@ -236,6 +236,11 @@ export default function ArticleVenderImovel() {
           <h3>Quanto vale o seu imóvel hoje?</h3>
           <p>AVM gratuito em 30 segundos. Sem registo. Sem custos. Depois, se quiser avançar, os nossos consultores estão disponíveis.</p>
           <Link href="/#avaliacao">Avaliar o meu imóvel →</Link>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', marginTop: '.75rem' }}>
+            <Link href="/vender-imovel-portugal" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Como vendemos →</Link>
+            <Link href="/off-market" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Avaliação confidencial →</Link>
+            <Link href="/vendidos" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Track record →</Link>
+          </div>
         </div>
       </article>
     </>

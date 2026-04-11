@@ -702,7 +702,11 @@ export default function ArticleComportaLuxuryMarket() {
         <div className="cta-box">
           <h3>Looking for Comporta Villas or Land?</h3>
           <p>Access our off-market Comporta inventory. Carvalhal, Torre, Pego, and Comporta village. Properties from €800K to €12M+. Commission always paid by the seller — zero cost to buyers.</p>
-          <Link href="/en">View Comporta Properties →</Link>
+          <Link href="/imoveis">View Comporta Properties →</Link>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem', marginTop: '.75rem' }}>
+            <Link href="/off-market" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Off-market access →</Link>
+            <Link href="/zonas/comporta" style={{ color: '#c9a96e', textDecoration: 'underline', fontSize: '.875rem' }}>Comporta zone guide →</Link>
+          </div>
         </div>
       </article>
 
