@@ -441,12 +441,9 @@ footer{background:var(--ink);padding:80px 0 32px}
   .hero-eyebrow,#hEye{color:#d4b87e!important}
   .hero-sub,#hSub{color:rgba(255,255,255,.72)!important}
 }
-/* ── ROOT CAUSE FIX ────────────────────────────────────────────────────────────
-   #loader{position:fixed;inset:0;z-index:2000} was covering section.hero on mobile.
-   BottomNav{z-index:9999} appeared above the loader — confirming the loader was the issue.
-   Fix: promote section.hero above the loader in the stacking order.
-   nav bumped to 2100 so the logo/burger remain visible above the hero section.
-   ALL three mobile signals covered. Desktop: completely untouched. */
+/* ── MOBILE STACKING ORDER ──────────────────────────────────────────────────────
+   Keeps section.hero above #loader (z-index:2000) on mobile as belt-and-suspenders.
+   nav#mainNav bumped to 2100 so logo/burger remain visible above the hero section. */
 @media(max-width:1099px){
   section.hero{position:relative!important;z-index:2001!important}
   nav#mainNav{z-index:2100!important}
