@@ -36,7 +36,7 @@ const NAV_ITEMS = [
   { href: '/',         label: 'Início',   Icon: HomeIcon },
   { href: '/imoveis',  label: 'Imóveis',  Icon: SearchIcon },
   { href: '/blog',     label: 'Blog',     Icon: ArticleIcon },
-  { href: '/#contacto',label: 'Contacto', Icon: ContactIcon },
+  { href: '/contacto', label: 'Contacto', Icon: ContactIcon },
 ]
 
 export default function BottomNav() {

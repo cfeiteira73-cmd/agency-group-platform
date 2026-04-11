@@ -5,10 +5,9 @@ import './globals.css'
 import Script from 'next/script'
 import { CurrencyProvider } from './components/CurrencyWidget'
 import PWAInstallBanner from './components/PWAInstallBanner'
-import SofiaWidgetWrapper from './components/SofiaWidgetWrapper'
 import BottomNav from './components/BottomNav'
+import SofiaWidgetWrapper from './components/SofiaWidgetWrapper'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
-import { PushNotificationSetup } from './components/PushNotificationSetup'
 
 const cormorant = Cormorant({
   subsets: ['latin'],

@@ -13,11 +13,6 @@ const PROPERTIES = [
 
 type Property = typeof PROPERTIES[number]
 
-// Deterministic viewer count — same hash function used in /imoveis page
-function getViewerCount(id: string): number {
-  const hash = id.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0)
-  return 2 + (Math.abs(hash) % 7)
-}
 
 // ─── CPCV deals ───────────────────────────────────────────────────────────────
 const INITIAL_CPCV = [
@@ -197,25 +192,6 @@ export default function HomePropertiesSection() {
                     <div className="imc-img-reveal" id={im.id}></div>
                     <div className="imc-img-inner" style={{backgroundImage:`url(${im.photo})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
                     {im.badge && <span className={`imc-badge ${im.badge}`}>{im.bl}</span>}
-                    {/* Urgency trigger — deterministic viewer count */}
-                    <span style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      background: 'rgba(12,31,21,.82)',
-                      backdropFilter: 'blur(8px)',
-                      border: '1px solid rgba(201,169,110,.28)',
-                      color: '#c9a96e',
-                      fontFamily: "'DM Mono', monospace",
-                      fontSize: '.48rem',
-                      letterSpacing: '.1em',
-                      textTransform: 'uppercase',
-                      padding: '4px 8px',
-                      pointerEvents: 'none',
-                      lineHeight: 1,
-                    }}>
-                      ● {getViewerCount(im.id)} a ver agora
-                    </span>
                   </div>
                   <div className="imc-body">
                     <div className="imc-zona">{im.zonaLabel}</div>

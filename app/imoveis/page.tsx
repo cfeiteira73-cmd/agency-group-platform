@@ -20,17 +20,6 @@ const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
 type SortKey = 'preco-asc' | 'preco-desc' | 'area-asc' | 'area-desc' | 'recente'
 type ViewMode = 'grid' | 'map'
 
-// ─── Urgency triggers — deterministic, consistent across page loads ───────────
-function getViewerCount(id: string): number {
-  const hash = id.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0)
-  return 2 + (Math.abs(hash) % 7) // Always 2-8 viewers
-}
-
-function getRecentActivity(id: string): string {
-  const hash = id.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0)
-  const hours = 1 + (Math.abs(hash) % 23)
-  return hours <= 2 ? 'Última visita há 1h' : `Última visita há ${hours}h`
-}
 
 // ─── Mobile bottom sheet select style ────────────────────────────────────────
 const mobileSelectStyle: CSSProperties = {
@@ -848,19 +837,6 @@ function PropertyCard({
               }}>{p.badge}</div>
             )}
 
-            {/* Urgency trigger — deterministic viewer count */}
-            <div style={{
-              position: 'absolute', top: 12, right: 12,
-              background: 'rgba(12,31,21,0.85)', backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(201,169,110,0.3)',
-              borderRadius: 4, padding: '4px 10px',
-              fontSize: '0.65rem', letterSpacing: '0.1em',
-              color: '#c9a96e', display: 'flex', alignItems: 'center', gap: 6,
-              zIndex: 2
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block' }} />
-              {getViewerCount(p.id)} a ver agora
-            </div>
 
             {/* Icons bottom-left */}
             <div style={{
