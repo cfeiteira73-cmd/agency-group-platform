@@ -24,6 +24,9 @@ export const metadata: Metadata = {
 }
 
 // ─── Data ──────────────────────────────────────────────────────────────────────
+// ─── Data structure — ready for real transaction data ─────────────────────────
+// When real data is available, populate SOLD_PROPERTIES with verified transactions.
+// Optional fields support richer real-data entries without breaking existing display.
 interface SoldProperty {
   id: number
   name: string
@@ -33,6 +36,12 @@ interface SoldProperty {
   rooms: number
   price: string
   days: number
+  // Optional extended fields — populate with real data when available
+  year?: number                // e.g. 2025
+  buyer_nationality?: string   // e.g. 'FR', 'US', 'UK'
+  category?: 'prime' | 'super-prime' | 'standard'
+  off_market?: boolean
+  image_url?: string           // Real property photo URL
 }
 
 const SOLD_PROPERTIES: SoldProperty[] = [

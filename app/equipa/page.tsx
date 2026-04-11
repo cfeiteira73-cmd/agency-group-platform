@@ -100,6 +100,11 @@ const breadcrumbSchema = {
 }
 
 // ─── Advisor data ─────────────────────────────────────────────────────────────
+// ─── Team data — structure ready for real consultant profiles ─────────────────
+// photo_url: add real headshot URLs when available (recommended: 400×400px AVIF)
+// direct_phone: individual mobile number per consultant (if different from main)
+// linkedin: public LinkedIn profile URL
+// languages: ISO 639-1 codes
 const ADVISORS = [
   {
     initials: 'CG',
@@ -109,6 +114,12 @@ const ADVISORS = [
     bio: 'Especializado em imobiliário residencial premium com foco em compradores internacionais e investimento estrangeiro. Mais de 8 anos de experiência no segmento de luxo em Portugal.',
     whatsapp: 'https://wa.me/351919948986',
     email: 'carlos@agencygroup.pt',
+    // Extended fields — populate with real data:
+    photo_url: null as string | null,   // e.g. '/equipa/carlos-gomes.avif'
+    direct_phone: null as string | null, // e.g. '+351 9XX XXX XXX'
+    linkedin: null as string | null,
+    languages: ['PT', 'EN'] as string[],
+    transactions_count: null as number | null,
   },
   {
     initials: 'MF',
@@ -118,6 +129,11 @@ const ADVISORS = [
     bio: 'Especialista em propriedades exclusivas e transacções off-market para clientes HNWI e family offices. Fluente em inglês, francês e espanhol.',
     whatsapp: 'https://wa.me/351919948986',
     email: 'maria@agencygroup.pt',
+    photo_url: null as string | null,
+    direct_phone: null as string | null,
+    linkedin: null as string | null,
+    languages: ['PT', 'EN', 'FR', 'ES'] as string[],
+    transactions_count: null as number | null,
   },
   {
     initials: 'RP',
@@ -127,6 +143,11 @@ const ADVISORS = [
     bio: 'Foco em compradores internacionais, regime NHR/IFICI e estruturação de investimento imobiliário. Experiência em clientes do Médio Oriente, Reino Unido e Brasil.',
     whatsapp: 'https://wa.me/351919948986',
     email: 'ricardo@agencygroup.pt',
+    photo_url: null as string | null,
+    direct_phone: null as string | null,
+    linkedin: null as string | null,
+    languages: ['PT', 'EN', 'AR'] as string[],
+    transactions_count: null as number | null,
   },
 ]
 
@@ -353,7 +374,7 @@ export default function EquipaPage() {
                     overflow: 'hidden',
                   }}
                 >
-                  {/* Photo placeholder with initials */}
+                  {/* Photo — real headshot when available, initials fallback */}
                   <div
                     style={{
                       background: '#1c4a35',
@@ -362,21 +383,32 @@ export default function EquipaPage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
+                      overflow: 'hidden',
+                      position: 'relative',
                     }}
                     aria-hidden="true"
                   >
-                    <span
-                      style={{
-                        fontFamily: "var(--font-cormorant, 'Cormorant', serif)",
-                        fontSize: '3.2rem',
-                        fontWeight: 300,
-                        color: '#c9a96e',
-                        letterSpacing: '.08em',
-                        userSelect: 'none',
-                      }}
-                    >
-                      {advisor.initials}
-                    </span>
+                    {advisor.photo_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={advisor.photo_url}
+                        alt={advisor.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          fontFamily: "var(--font-cormorant, 'Cormorant', serif)",
+                          fontSize: '3.2rem',
+                          fontWeight: 300,
+                          color: '#c9a96e',
+                          letterSpacing: '.08em',
+                          userSelect: 'none',
+                        }}
+                      >
+                        {advisor.initials}
+                      </span>
+                    )}
                   </div>
 
                   {/* Card body */}
