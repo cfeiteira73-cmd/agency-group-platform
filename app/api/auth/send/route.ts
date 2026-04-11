@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 
-const VERIFY_URL = (process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.agencygroup.pt') + '/api/auth/verify'
+const VERIFY_URL = (process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/api/auth/verify'
 
 function makeToken(email: string, secret: string): string {
   const payload = Buffer.from(

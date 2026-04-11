@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { Resend } from 'resend'
 
-const BASE_URL = process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.agencygroup.pt'
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt'
 const VERIFY_URL = BASE_URL + '/api/auth/verify'
 const FROM = 'Agency Group <noreply@agencygroup.pt>'
 

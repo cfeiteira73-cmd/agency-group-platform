@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
 
-const BASE_URL = process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://www.agencygroup.pt'
+// NEXT_PUBLIC_BASE_URL = https://www.agencygroup.pt (produção, sempre correto)
+// NEXT_PUBLIC_URL pode estar definido como localhost no Vercel dev environment
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'geral@agencygroup.pt'
 const FROM = 'Agency Group <noreply@agencygroup.pt>'
 
