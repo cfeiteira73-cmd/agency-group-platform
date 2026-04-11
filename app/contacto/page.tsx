@@ -24,7 +24,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
   name: 'Agency Group',
-  telephone: '+351912000000',
+  telephone: '+351919948986',
   email: 'geral@agencygroup.pt',
   address: {
     '@type': 'PostalAddress',
@@ -257,7 +257,7 @@ export default function ContactoPage() {
                 </p>
 
                 <a
-                  href="https://wa.me/351912000000?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20im%C3%B3veis%20em%20Portugal."
+                  href="https://wa.me/351919948986?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20im%C3%B3veis%20em%20Portugal."
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

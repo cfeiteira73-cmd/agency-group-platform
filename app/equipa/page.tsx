@@ -38,7 +38,7 @@ const organizationSchema = {
     addressCountry: 'PT',
     addressLocality: 'Lisboa',
   },
-  telephone: '+351912000000',
+  telephone: '+351919948986',
   email: 'geral@agencygroup.pt',
   areaServed: ['Lisboa', 'Cascais', 'Algarve', 'Porto', 'Madeira', 'Açores'],
   employee: [
@@ -56,7 +56,7 @@ const personSchemas = [
     jobTitle: 'Consultor Sénior · Imobiliário Residencial',
     worksFor: { '@type': 'Organization', name: 'Agency Group' },
     email: 'carlos@agencygroup.pt',
-    telephone: '+351912345678',
+    telephone: '+351919948986',
     areaServed: ['Lisboa', 'Cascais', 'Sintra'],
     description:
       'Especializado em imobiliário residencial premium com foco em compradores internacionais e investimento estrangeiro. Mais de 8 anos de experiência no segmento de luxo em Portugal.',
@@ -69,7 +69,7 @@ const personSchemas = [
     jobTitle: 'Consultora · Investimento & Off-Market',
     worksFor: { '@type': 'Organization', name: 'Agency Group' },
     email: 'maria@agencygroup.pt',
-    telephone: '+351912345679',
+    telephone: '+351919948986',
     areaServed: ['Comporta', 'Algarve', 'Madeira'],
     description:
       'Especialista em propriedades exclusivas e transacções off-market para clientes HNWI e family offices. Fluente em inglês, francês e espanhol.',
@@ -82,7 +82,7 @@ const personSchemas = [
     jobTitle: 'Consultor · NHR & Investimento Internacional',
     worksFor: { '@type': 'Organization', name: 'Agency Group' },
     email: 'ricardo@agencygroup.pt',
-    telephone: '+351912345680',
+    telephone: '+351919948986',
     areaServed: ['Porto', 'Douro', 'Açores'],
     description:
       'Foco em compradores internacionais, regime NHR/IFICI e estruturação de investimento imobiliário. Experiência em clientes do Médio Oriente, Reino Unido e Brasil.',
@@ -107,7 +107,7 @@ const ADVISORS = [
     title: 'Consultor Sénior · Imobiliário Residencial',
     zones: ['Lisboa', 'Cascais', 'Sintra'],
     bio: 'Especializado em imobiliário residencial premium com foco em compradores internacionais e investimento estrangeiro. Mais de 8 anos de experiência no segmento de luxo em Portugal.',
-    whatsapp: 'https://wa.me/351912345678',
+    whatsapp: 'https://wa.me/351919948986',
     email: 'carlos@agencygroup.pt',
   },
   {
@@ -116,7 +116,7 @@ const ADVISORS = [
     title: 'Consultora · Investimento & Off-Market',
     zones: ['Comporta', 'Algarve', 'Madeira'],
     bio: 'Especialista em propriedades exclusivas e transacções off-market para clientes HNWI e family offices. Fluente em inglês, francês e espanhol.',
-    whatsapp: 'https://wa.me/351912345679',
+    whatsapp: 'https://wa.me/351919948986',
     email: 'maria@agencygroup.pt',
   },
   {
@@ -125,7 +125,7 @@ const ADVISORS = [
     title: 'Consultor · NHR & Investimento Internacional',
     zones: ['Porto', 'Douro', 'Açores'],
     bio: 'Foco em compradores internacionais, regime NHR/IFICI e estruturação de investimento imobiliário. Experiência em clientes do Médio Oriente, Reino Unido e Brasil.',
-    whatsapp: 'https://wa.me/351912345680',
+    whatsapp: 'https://wa.me/351919948986',
     email: 'ricardo@agencygroup.pt',
   },
 ]

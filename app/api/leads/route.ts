@@ -87,13 +87,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao guardar lead' }, { status: 500 })
     }
 
-    // Fire-and-forget: trigger lead scoring
+    // Fire-and-forget: trigger lead scoring + agent alert
     if (data?.id) {
-      fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.agencygroup.pt'}/api/automation/lead-score`, {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.agencygroup.pt'
+
+      // 1. Lead scoring
+      fetch(`${siteUrl}/api/automation/lead-score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contact_id: data.id }),
       }).catch(() => {})
+
+      // 2. Agent email alert (Resend)
+      if (process.env.RESEND_API_KEY && process.env.AGENT_ALERT_EMAIL) {
+        const contactLabel = name ? `${name} (${email || phone})` : (email || phone)
+        const sourceLabel = source || 'website'
+        const zonaLabel = zona ? ` · ${zona}` : ''
+        const budgetLabel = budget_max ? ` · até €${Number(budget_max).toLocaleString('pt-PT')}` : ''
+
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: 'Agency Group CRM <crm@agencygroup.pt>',
+            to: [process.env.AGENT_ALERT_EMAIL],
+            subject: `🔔 Novo lead: ${contactLabel}${zonaLabel}${budgetLabel}`,
+            html: `
+              <div style="font-family:sans-serif;max-width:480px;padding:24px;">
+                <h2 style="color:#1c4a35;margin:0 0 16px;">Novo Lead — Agency Group</h2>
+                <table style="width:100%;border-collapse:collapse;">
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Nome</td><td style="padding:8px 0;font-size:13px;font-weight:600;">${name || '—'}</td></tr>
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Email</td><td style="padding:8px 0;font-size:13px;">${email || '—'}</td></tr>
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Telefone</td><td style="padding:8px 0;font-size:13px;">${phone || '—'}</td></tr>
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Fonte</td><td style="padding:8px 0;font-size:13px;">${sourceLabel}</td></tr>
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Zona</td><td style="padding:8px 0;font-size:13px;">${zona || '—'}</td></tr>
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Orçamento</td><td style="padding:8px 0;font-size:13px;">${budget_max ? `até €${Number(budget_max).toLocaleString('pt-PT')}` : '—'}</td></tr>
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Prazo</td><td style="padding:8px 0;font-size:13px;">${timeline || '—'}</td></tr>
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Tier</td><td style="padding:8px 0;font-size:13px;color:#c9a96e;font-weight:700;">${data.lead_tier || 'C'}</td></tr>
+                </table>
+                ${message ? `<div style="margin-top:16px;padding:12px;background:#f4f0e6;border-left:3px solid #1c4a35;font-size:13px;">${message}</div>` : ''}
+                <div style="margin-top:20px;">
+                  <a href="${siteUrl}/portal" style="background:#1c4a35;color:#f4f0e6;padding:10px 20px;text-decoration:none;font-size:12px;display:inline-block;">
+                    Abrir no Portal →
+                  </a>
+                </div>
+                <p style="margin-top:20px;color:#999;font-size:11px;">Agency Group · AMI 22506 · ${new Date().toLocaleString('pt-PT')}</p>
+              </div>
+            `,
+          }),
+        }).catch(() => {})
+      }
     }
 
     return NextResponse.json({

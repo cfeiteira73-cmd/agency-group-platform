@@ -82,7 +82,7 @@ export default function LeadCaptureForm({
         <span style={{ color: '#1c4a35', fontSize: '1.2rem' }}>✓</span>
         <p style={styles.doneText}>Recebemos o seu pedido. Respondemos em menos de 2h.</p>
         <a
-          href="https://wa.me/351910000000"
+          href="https://wa.me/351919948986"
           target="_blank"
           rel="noopener noreferrer"
           style={styles.waBtn}

@@ -236,6 +236,54 @@ export default function HomeMortgage() {
               </div>
             )}
             <div style={{marginTop:'10px',fontFamily:"'Jost',sans-serif",fontSize:'.7rem',color:'rgba(14,14,13,.3)',lineHeight:1.5}}>{result.info?.nota_legal}</div>
+
+            {/* ── Post-result CTA — BLOCO 5 ── */}
+            <div style={{
+              marginTop:'20px',
+              padding:'20px 22px',
+              background:'#0c1f15',
+              display:'flex',
+              flexDirection:'column',
+              gap:'10px',
+            }}>
+              <div style={{fontFamily:"'Cormorant',serif",fontWeight:300,fontSize:'1.15rem',color:'#f4f0e6',lineHeight:1.35}}>
+                Prestação de <span style={{color:'#c9a96e',fontWeight:400}}>{fmtM(result.resultado.prestacao_mensal)}/mês</span> —<br />
+                quer ver imóveis neste orçamento?
+              </div>
+              <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                <a
+                  href={`/imoveis?preco=${result.inputs.montante <= 500000 ? '500k-1m' : result.inputs.montante <= 1000000 ? '1m-2m' : result.inputs.montante <= 2000000 ? '2m-4m' : '4m+'}`}
+                  style={{
+                    display:'inline-flex',alignItems:'center',
+                    padding:'10px 18px',
+                    background:'#c9a96e',color:'#0c1f15',
+                    fontFamily:"'DM Mono',monospace",fontSize:'.5rem',
+                    letterSpacing:'.14em',textTransform:'uppercase',
+                    textDecoration:'none',fontWeight:400,
+                    transition:'opacity .2s',
+                  }}
+                >
+                  Ver Imóveis →
+                </a>
+                <a
+                  href="https://wa.me/351919948986?text=Calculei+a+minha+prestação+no+simulador+da+Agency+Group.+Gostaria+de+falar+com+um+especialista."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display:'inline-flex',alignItems:'center',
+                    padding:'10px 18px',
+                    background:'transparent',
+                    border:'1px solid rgba(201,169,110,.3)',
+                    color:'rgba(244,240,230,.6)',
+                    fontFamily:"'DM Mono',monospace",fontSize:'.5rem',
+                    letterSpacing:'.14em',textTransform:'uppercase',
+                    textDecoration:'none',fontWeight:400,
+                  }}
+                >
+                  Falar com Especialista
+                </a>
+              </div>
+            </div>
           </div>
         )}
       </div>

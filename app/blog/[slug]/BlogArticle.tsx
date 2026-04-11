@@ -335,7 +335,7 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
           <li><Link href="/#nhr">NHR</Link></li>
         </ul>
         <a
-          href="https://wa.me/351910000000"
+          href="https://wa.me/351919948986"
           target="_blank"
           rel="noopener noreferrer"
           className="art-nav-wa"
@@ -405,7 +405,7 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
             </p>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <a
-                href="https://wa.me/351910000000"
+                href="https://wa.me/351919948986"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -491,7 +491,7 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
 
           <div className="sidebar-wa">
             <p>Dúvidas sobre este mercado?</p>
-            <a href="https://wa.me/351910000000" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/351919948986" target="_blank" rel="noopener noreferrer">
               Falar no WhatsApp
             </a>
           </div>

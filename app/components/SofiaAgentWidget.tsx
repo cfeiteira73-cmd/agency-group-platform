@@ -137,6 +137,8 @@ export default function SofiaAgentWidget() {
   const [isReturning, setIsReturning] = useState(false)
   const [showWhatsApp, setShowWhatsApp] = useState(false)
   const [msgCount, setMsgCount] = useState(0)
+  const [sofiaEmail, setSofiaEmail] = useState('')
+  const [sofiaEmailSent, setSofiaEmailSent] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -711,26 +713,105 @@ export default function SofiaAgentWidget() {
               </div>
             )}
 
-            {/* ── WHATSAPP CTA ── */}
+            {/* ── WHATSAPP CTA + EMAIL CAPTURE ── */}
             {showWhatsApp && !loading && (
               <div style={{
-                margin: '6px 0', padding: '10px 14px',
-                background: 'rgba(37,211,102,0.07)',
-                border: '1px solid rgba(37,211,102,0.2)',
+                margin: '6px 0', padding: '12px 14px',
+                background: 'rgba(37,211,102,0.06)',
+                border: '1px solid rgba(37,211,102,0.18)',
                 borderRadius: 14, animation: 'ag-fade-in 0.4s ease',
               }}>
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, margin: '0 0 8px' }}>
-                  💬 Continua esta conversa no WhatsApp — mais rápido, com fotos e tours!
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, margin: '0 0 10px', lineHeight: 1.4 }}>
+                  💬 Continua esta conversa no WhatsApp — mais rápido, com fotos e tours exclusivos.
                 </p>
+
+                {/* Email capture (optional) */}
+                {!sofiaEmailSent ? (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input
+                        type="email"
+                        value={sofiaEmail}
+                        onChange={e => setSofiaEmail(e.target.value)}
+                        placeholder="Email (opcional)"
+                        style={{
+                          flex: 1, padding: '7px 10px',
+                          background: 'rgba(255,255,255,0.08)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: 8, color: '#fff',
+                          fontSize: 12, outline: 'none',
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && sofiaEmail.includes('@')) {
+                            fetch('/api/leads', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                email: sofiaEmail.trim(),
+                                source: 'sofia_widget',
+                                zona: locationPref || undefined,
+                                use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
+                              }),
+                            }).catch(() => {})
+                            setSofiaEmailSent(true)
+                          }
+                        }}
+                      />
+                      {sofiaEmail.includes('@') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            fetch('/api/leads', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                email: sofiaEmail.trim(),
+                                source: 'sofia_widget',
+                                zona: locationPref || undefined,
+                                use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
+                              }),
+                            }).catch(() => {})
+                            setSofiaEmailSent(true)
+                          }}
+                          style={{
+                            padding: '7px 10px', borderRadius: 8,
+                            background: 'rgba(201,169,110,0.2)',
+                            border: '1px solid rgba(201,169,110,0.4)',
+                            color: '#c9a96e', fontSize: 11,
+                            cursor: 'pointer', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          ✓ Guardar
+                        </button>
+                      )}
+                    </div>
+                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '4px 0 0', fontStyle: 'italic' }}>
+                      Sem spam. Só para envio de imóveis seleccionados.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{
+                    padding: '6px 10px', borderRadius: 8,
+                    background: 'rgba(28,74,53,0.3)',
+                    border: '1px solid rgba(28,74,53,0.5)',
+                    color: 'rgba(244,240,230,0.6)', fontSize: 11,
+                    marginBottom: 10,
+                  }}>
+                    ✓ Email guardado — enviaremos imóveis seleccionados
+                  </div>
+                )}
+
                 <a
-                  href="https://wa.me/351919948986?text=Ol%C3%A1%20Sofia%2C%20vim%20do%20agencygroup.pt%20e%20quero%20ajuda%20a%20encontrar%20um%20im%C3%B3vel%20em%20Portugal"
+                  href={`https://wa.me/351919948986?text=${encodeURIComponent(
+                    `Olá, vim do agencygroup.pt. ${locationPref ? `Interesse em ${locationPref}.` : ''} ${branch === 'buy' ? 'Quero comprar.' : branch === 'invest' ? 'Quero investir.' : branch === 'sell' ? 'Quero vender.' : 'Quero saber mais.'}`
+                  )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ag-wa-btn"
                   style={{
                     display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '7px 14px', borderRadius: 12,
-                    background: 'rgba(37,211,102,0.1)',
+                    padding: '8px 16px', borderRadius: 12,
+                    background: 'rgba(37,211,102,0.12)',
                     border: '1px solid rgba(37,211,102,0.35)',
                     color: '#25D366', fontSize: 12, fontWeight: 700,
                     textDecoration: 'none', transition: 'all .15s ease',
