@@ -81,7 +81,7 @@ export default function HomeNav() {
           <li><a href="#contacto">Contacto</a></li>
         </ul>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <CurrencySelector />
+          <div className="nav-currency"><CurrencySelector /></div>
           {isAgent
             ? <a href={portalHref} className="nav-cta">Portal →</a>
             : <a href="/portal" className="nav-cta">Área Agentes</a>

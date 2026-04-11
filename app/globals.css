@@ -488,8 +488,10 @@ footer{background:var(--ink);padding:80px 0 32px}
   .imc.feat{grid-column:span 1}
   /* Card body: GSAP never adds .revealed on mobile → opacity:0 stays → body invisible */
   .imc-body{opacity:1!important;transform:none!important}
-  /* Nav: hide ÁREA AGENTES CTA from top bar on mobile — it lives in the drawer already */
-  nav#mainNav .nav-cta{display:none!important}
+  /* Nav mobile: hide EUR currency selector — ÁREA AGENTES is the primary CTA */
+  .nav-currency{display:none!important}
+  /* Nav mobile: restore + refine ÁREA AGENTES — premium sizing, no crowding */
+  nav#mainNav .nav-cta{display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:9px 18px!important;font-size:.55rem!important;letter-spacing:.22em!important;white-space:nowrap!important;min-height:40px!important}
   .mkt-grid,.avm-grid,.radar-grid{grid-template-columns:1fr;gap:48px}
   .cred-grid{grid-template-columns:1fr 1fr;padding:0 24px}
   .ft-top{grid-template-columns:1fr 1fr}
