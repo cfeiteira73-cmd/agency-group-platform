@@ -270,7 +270,7 @@ export default function VendidosPage() {
             }}
           >
             {[
-              { value: '€ 42M+', label: 'Volume total' },
+              { value: '€ 42M+', label: 'Volume · 2025' },
               { value: '28', label: 'Transacções' },
               { value: '94 dias', label: 'Tempo médio de venda' },
               { value: '4.8 / 5', label: 'Satisfação clientes' },
@@ -595,7 +595,7 @@ export default function VendidosPage() {
                 letterSpacing: '-0.01em',
               }}
             >
-              Quer vender o seu imóvel?
+              Tem um imóvel para avaliar?
             </h2>
 
             <p

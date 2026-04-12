@@ -12,8 +12,8 @@ export const HOME_HERO = {
   titleEm:      'Discrição',
   title3:       'e execução.',
   subtitle:     'Acesso a compradores qualificados. Processos controlados. Resultados sem exposição pública.',
-  ctaPrimary:   { text: 'Ver Oportunidades', href: '#imoveis' },
-  ctaSecondary: { text: 'Falar com Consultor →', href: '#avaliacao' },
+  ctaPrimary:   { text: 'Aceder ao Portfólio', href: '#imoveis' },
+  ctaSecondary: { text: 'Falar com um Advisor →', href: '#avaliacao' },
   stats: [
     { n: '169', em: 'K',   label: 'Transacções 2025'          },
     { n: '+17', em: '%',   label: 'Valorização · 2025'         },
@@ -78,17 +78,17 @@ export const HOME_CRED_STATS = [
 // ─── Testimonials ─────────────────────────────────────────────────────────────
 
 export const HOME_TESTIMONIALS = [
-  { name: 'James & Sarah Mitchell',    country: '🇬🇧 Reino Unido',    zone: 'Cascais',  rating: 5, quote: 'Três semanas. Villa de sonho. Escritura assinada. Nunca pensámos que seria tão simples — nem que Cascais seria para sempre.',                              property: 'Villa T5 · Cascais · €2.4M',       date: 'Janeiro 2026'   },
-  { name: 'Mohammed Al-Rashidi',       country: '🇸🇦 Arábia Saudita', zone: 'Lisboa',   rating: 5, quote: 'Penthouse no Príncipe Real como investimento. O retorno superou todas as projecções. Lisboa está a crescer — e nós estamos dentro.',                   property: 'Penthouse T4 · Lisboa · €3.1M',    date: 'Dezembro 2025'  },
-  { name: 'Chen Wei & Li Ming',        country: '🇨🇳 China',          zone: 'Comporta', rating: 5, quote: 'A Comporta era o nosso sonho. Encontraram a propriedade certa. Trataram de tudo. No dia da escritura, soubemos que tínhamos chegado.',                   property: 'Quinta T6 · Comporta · €5.2M',     date: 'Novembro 2025'  },
-  { name: 'Marc & Isabelle Fontaine',  country: '🇫🇷 França',         zone: 'Porto',    rating: 5, quote: 'Investidores há 15 anos. Nunca trabalhámos com uma equipa assim. 5.1% de rentabilidade no primeiro ano. O Porto foi a melhor decisão.',                  property: 'Apartamento T3 · Porto · €890K',   date: 'Outubro 2025'   },
-  { name: 'Robert & Anna Schneider',   country: '🇩🇪 Alemanha',       zone: 'Algarve',  rating: 5, quote: 'Comparámos 6 agências. Escolhemos a Agency Group. A villa no Algarve é exactamente o que imaginámos — e o processo foi impecável.',                      property: 'Villa T5 · Algarve · €1.8M',       date: 'Setembro 2025'  },
-  { name: 'David & Rachel Goldstein',  country: '🇺🇸 Estados Unidos',  zone: 'Madeira',  rating: 5, quote: 'Viemos para a Madeira com o NHR. Trataram de tudo — imóvel, advogado, escola para os filhos. Hoje dizemos que a vida começou aqui.',                    property: 'Moradia T4 · Madeira · €1.2M',     date: 'Agosto 2025'    },
+  { name: 'James & Sarah M.',   country: '🇬🇧 Reino Unido',    zone: 'Cascais',  rating: 5, quote: 'Três semanas. Villa de sonho. Escritura assinada. Nunca pensámos que seria tão simples — nem que Cascais seria para sempre.',                              property: 'Villa T5 · Cascais · €2.4M',       date: 'Janeiro 2026'   },
+  { name: 'Mohammed A.',        country: '🇸🇦 Arábia Saudita', zone: 'Lisboa',   rating: 5, quote: 'Penthouse no Príncipe Real como investimento. O retorno superou todas as projecções. Lisboa está a crescer — e nós estamos dentro.',                   property: 'Penthouse T4 · Lisboa · €3.1M',    date: 'Dezembro 2025'  },
+  { name: 'Chen W. & Li M.',    country: '🇨🇳 China',          zone: 'Comporta', rating: 5, quote: 'A Comporta era o nosso sonho. Encontraram a propriedade certa. Trataram de tudo. No dia da escritura, soubemos que tínhamos chegado.',                   property: 'Quinta T6 · Comporta · €5.2M',     date: 'Novembro 2025'  },
+  { name: 'Marc & Isabelle F.', country: '🇫🇷 França',         zone: 'Porto',    rating: 5, quote: 'Investidores há 15 anos. Nunca trabalhámos com uma equipa assim. 5.1% de rentabilidade no primeiro ano. O Porto foi a melhor decisão.',                  property: 'Apartamento T3 · Porto · €890K',   date: 'Outubro 2025'   },
+  { name: 'Robert & Anna S.',   country: '🇩🇪 Alemanha',       zone: 'Algarve',  rating: 5, quote: 'Comparámos 6 agências. Escolhemos a Agency Group. A villa no Algarve é exactamente o que imaginámos — e o processo foi impecável.',                      property: 'Villa T5 · Algarve · €1.8M',       date: 'Setembro 2025'  },
+  { name: 'David & Rachel G.',  country: '🇺🇸 Estados Unidos',  zone: 'Madeira',  rating: 5, quote: 'Viemos para a Madeira com o NHR. Trataram de tudo — imóvel, advogado, escola para os filhos. Hoje dizemos que a vida começou aqui.',                    property: 'Moradia T4 · Madeira · €1.2M',     date: 'Agosto 2025'    },
 ]
 
 export const HOME_REVIEW_STATS = [
-  { val: '4.9/5',   label: 'Avaliação Média'        },
-  { val: '47+',     label: 'Famílias Acompanhadas'    },
-  { val: '100%',    label: 'Recomendariam'           },
-  { val: '€285M+',  label: 'Volume · Histórico'        },
+  { val: '4.8/5',   label: 'Avaliação Média'             },
+  { val: '47+',     label: 'Famílias Acompanhadas'       },
+  { val: '100%',    label: 'Recomendariam'                },
+  { val: '€285M+',  label: 'Volume Histórico Total'       },
 ]

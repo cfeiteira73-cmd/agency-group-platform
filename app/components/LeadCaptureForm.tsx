@@ -82,7 +82,7 @@ export default function LeadCaptureForm({
     return (
       <div style={styles.done}>
         <span style={{ color: '#1c4a35', fontSize: '1.2rem' }}>✓</span>
-        <p style={styles.doneText}>Recebemos o seu pedido. Respondemos em menos de 2h.</p>
+        <p style={styles.doneText}>Recebemos o seu pedido. Será contactado pelo consultor da sua zona em menos de 2h.</p>
         <a
           href="https://wa.me/351919948986"
           target="_blank"
@@ -197,10 +197,10 @@ function QualificationInline({ contactId, onComplete, onSkip }: QualInlineProps)
     {
       q: 'Qual o seu investimento?',
       opts: [
-        { l: '< €200K', v: '200000' },
-        { l: '€200K–€500K', v: '500000' },
         { l: '€500K–€1M', v: '1000000' },
-        { l: '€1M+', v: '3000000' },
+        { l: '€1M–€3M',   v: '3000000' },
+        { l: '€3M–€10M',  v: '10000000' },
+        { l: '€10M+',     v: '20000000' },
       ],
       onPick: (v: string) => { setBudgetMax(parseInt(v)); setStep(2) },
     },
@@ -236,9 +236,14 @@ function QualificationInline({ contactId, onComplete, onSkip }: QualInlineProps)
           </button>
         ))}
       </div>
-      <button type="button" onClick={onSkip} style={styles.skipBtn}>
-        Saltar →
-      </button>
+      <a
+        href="https://wa.me/351919948986"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={styles.skipBtn}
+      >
+        Prefiro falar directamente →
+      </a>
     </div>
   )
 }

@@ -70,55 +70,67 @@ function expandAcronyms(text: string, expanded: Set<string>): ReactNode[] {
   return parts
 }
 
-// ─── FAQ data ─────────────────────────────────────────────────────────────────
-const FAQS: { q: string; a: string }[] = [
+// ─── FAQ data — each entry can have an optional inline CTA ───────────────────
+const FAQS: { q: string; a: string; cta?: { label: string; href: string } }[] = [
   {
     q: 'Como funciona o Golden Visa em Portugal em 2026?',
     a: 'Desde Outubro 2023, o Golden Visa (ARI) deixou de aceitar investimento imobiliário directo em habitação nas áreas metropolitanas. As modalidades disponíveis em 2026 incluem: fundos de investimento qualificados (€500K mínimo), criação de emprego (10 postos), transferência de capital (€1,5M), investigação científica (€500K) e artes/cultura (€250K). Contacte a Agency Group para encaminhamento a advogados especializados.',
+    cta: { label: 'Falar com um advisor →', href: 'https://wa.me/351919948986' },
   },
   {
     q: 'O que é o regime NHR / IFICI e como se aplica em Portugal?',
     a: 'O NHR (Residente Não Habitual) oferece isenção de IRS sobre rendimentos de fonte estrangeira por 10 anos para novos residentes fiscais em Portugal. O regime IFICI (2024) substituiu parcialmente o NHR com taxa flat de 20% sobre rendimentos qualificados para profissionais de tecnologia, investigação e artes. A Agency Group encaminha para parceiros fiscais especializados.',
+    cta: { label: 'Simulação NHR / IFICI →', href: 'https://wa.me/351919948986' },
   },
   {
     q: 'O que é o IMT e quanto se paga na compra de um imóvel em Portugal?',
     a: 'O IMT (Imposto Municipal sobre Transmissões Onerosas de Imóveis) é calculado sobre o valor de compra. Para habitação própria permanente: isento até €97.064, taxa de 2% até €132.774, 5% até €181.034, 7% até €301.688, 8% até €578.598, e 6% acima desse valor (taxa única). Para investimento: 6% acima de €97.064. A Agency Group fornece simulação detalhada gratuita.',
+    cta: { label: 'Simulação IMT gratuita →', href: '/contacto' },
   },
   {
     q: 'Como comprar uma casa em Portugal sendo estrangeiro?',
     a: 'O processo tem 5 passos: (1) Obter NIF fiscal numa Finanças ou com advogado — 1 dia; (2) Abrir conta bancária portuguesa — 1 semana; (3) Escolher imóvel e negociar proposta; (4) Assinar CPCV com sinal de 10–30%; (5) Escritura pública no Cartório Notarial. O processo total demora 2–3 meses. A Agency Group (AMI 22506) acompanha todo o processo.',
+    cta: { label: 'Começar o processo →', href: 'https://wa.me/351919948986' },
   },
   {
     q: 'Os bancos portugueses financiam compradores estrangeiros?',
     a: 'Sim. Os bancos portugueses financiam não residentes com LTV entre 60–80% dependendo do país de origem: cidadãos UE (França, Alemanha, Brasil) até 80%; britânicos, americanos e emiratenses até 70%; chineses até 60%. Documentação exigida: prova de rendimentos, extractos bancários 6 meses, declaração fiscal do país de origem. Spread típico: 0,85–1,5% + Euribor 6M. A Agency Group tem parcerias com Millennium BCP, Santander e BPI.',
+    cta: { label: 'Simulação de crédito →', href: '/contacto' },
   },
   {
     q: 'O que é o Visto D7 e quem pode candidatar-se?',
     a: 'O Visto D7 (Rendimento Passivo) permite residência em Portugal a quem prove rendimentos regulares mínimos de €820/mês (salário mínimo nacional). Aceita rendimentos de pensões, arrendamentos, dividendos, juros ou trabalho remoto. O processo: obter NIF, conta bancária PT, arrendamento/propriedade, seguro saúde, e agendar na VFS Global ou Consulado. Aprovação em 60–90 dias. Compatível com regime NHR/IFICI para optimização fiscal.',
+    cta: { label: 'Falar sobre o Visto D7 →', href: 'https://wa.me/351919948986' },
   },
   {
     q: 'Qual o preço por m² em Lisboa e nas principais zonas em 2026?',
     a: 'Em 2026 o preço médio em Lisboa ronda os €5.000–€6.500/m² dependendo da zona. Chiado e Santos: €6.200–7.500/m². Príncipe Real: €6.000–7.000/m². Alfama e Mouraria: €4.500–5.500/m². Cascais: €4.713/m² (média). Algarve: €3.941/m². Porto: €3.643/m². Madeira: €3.760/m². Valorização média anual de +17,6%. Fonte: Agency Group / INE 2026.',
+    cta: { label: 'Ver imóveis disponíveis →', href: '/imoveis' },
   },
   {
     q: 'Quais os custos totais de transação na compra de imóvel em Portugal?',
     a: 'Para habitação própria: IMT (0–7,5% consoante valor), Imposto de Selo 0,8%, registo predial ~€500, advogado ~€1.500–3.000. Para imóvel de €500K HPP: IMT ~€28.900 + IS €4.000 + custos legais ~€2.000 = ~€35.000 total (7% do valor). A Agency Group fornece simulação detalhada gratuita.',
+    cta: { label: 'Simulação de custos totais →', href: '/contacto' },
   },
   {
     q: 'Como se calculam as mais-valias imobiliárias em Portugal?',
     a: 'Mais-valia = (Preço Venda - Preço Compra × Coeficiente AT) - Despesas Compra - Despesas Venda - Obras (12 anos). Para residentes: 50% do ganho sujeito a englobamento IRS (Art. 43º CIRS). Para não residentes: taxa liberatória de 28% sobre 100% do ganho (Art. 72º CIRS). Isenção total para HPP se reinvestir noutra HPP (Art. 10º/5 CIRS). Use o calculador gratuito da Agency Group.',
+    cta: { label: 'Calcular as suas mais-valias →', href: '/contacto' },
   },
   {
     q: 'Qual a rentabilidade de imóveis para arrendamento em Portugal?',
     a: 'Yield bruta média em 2026: Lisboa 3,5–4,5%, Cascais 3,8–4,8%, Porto 4,0–5,5%, Algarve (sazonal) 5,0–8,0%, Comporta 4,5–6,0%. Yield líquida após custos e impostos tipicamente 2,5–4,0%. Valorização anual adicional +15–20% nas zonas prime.',
+    cta: { label: 'Ver oportunidades de investimento →', href: '/imoveis' },
   },
   {
     q: 'Qual a comissão da Agency Group na compra e venda de imóveis?',
     a: 'A Agency Group cobra 5% do valor de transação, pago 50% no CPCV e 50% na Escritura. A comissão é paga pelo vendedor salvo acordo em contrário. AMI 22506 — mediação imobiliária licenciada em Portugal.',
+    cta: { label: 'Pedir avaliação privada →', href: '/contacto' },
   },
   {
     q: 'Qual o melhor momento para comprar imóvel em Portugal em 2026?',
     a: 'Em 2026 o mercado valoriza +17,6% YoY com 169.812 transacções previstas. O prazo médio de venda é 210 dias. Os meses de Setembro a Novembro têm tipicamente mais oferta e menos compradores activos — ligeira vantagem negocial. O mercado de luxo (€1M+) em Lisboa está no top 5 mundial de valorização. A Agency Group recomenda agir agora em imóveis de valor — a janela histórica de spreads baixos Euribor pode fechar em 2026.',
+    cta: { label: 'Ver portfolio disponível →', href: '/imoveis' },
   },
 ]
 
@@ -314,7 +326,7 @@ export default function FAQPage() {
           }}
         >
           <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {FAQS.map(({ q, a }, i) => (
+            {FAQS.map(({ q, a, cta }, i) => (
               <li
                 key={i}
                 style={{
@@ -352,12 +364,35 @@ export default function FAQPage() {
                     fontSize: '.9rem',
                     color: 'rgba(244,240,230,.65)',
                     lineHeight: 1.8,
-                    margin: 0,
+                    margin: '0 0 16px',
                     paddingLeft: '36px',
                   }}
                 >
                   {expandAcronyms(a, expandedAcronyms)}
                 </p>
+                {cta && (
+                  <div style={{ paddingLeft: '36px' }}>
+                    <a
+                      href={cta.href}
+                      target={cta.href.startsWith('https://wa.me') ? '_blank' : undefined}
+                      rel={cta.href.startsWith('https://wa.me') ? 'noopener noreferrer' : undefined}
+                      style={{
+                        display: 'inline-block',
+                        fontFamily: "var(--font-dm-mono, 'DM Mono', monospace)",
+                        fontSize: '.5rem',
+                        letterSpacing: '.14em',
+                        textTransform: 'uppercase',
+                        color: '#c9a96e',
+                        textDecoration: 'none',
+                        borderBottom: '1px solid rgba(201,169,110,.3)',
+                        paddingBottom: '2px',
+                        transition: 'border-color .2s',
+                      }}
+                    >
+                      {cta.label}
+                    </a>
+                  </div>
+                )}
               </li>
             ))}
           </ol>

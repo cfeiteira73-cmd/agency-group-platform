@@ -182,16 +182,21 @@ export default function SofiaAgentWidget() {
     } catch {}
   }, [])
 
-  // ── Proactive trigger — 45 seconds ──────────────────────────────────────
+  // ── Proactive trigger — 15s on high-intent pages, 45s elsewhere ────────
   useEffect(() => {
     if (proactiveShown) return
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+    const highIntent = ['/imoveis', '/off-market', '/equipa', '/vender-imovel-portugal'].some(
+      p => pathname.includes(p)
+    )
+    const delay = highIntent ? 15000 : 45000
     const timer = setTimeout(() => {
       if (!open) {
         setMessages(prev => {
           // Don't overwrite a restored history
           if (prev.length > 0) { setUnread(1); setProactiveShown(true); return prev }
-          const pathname = window.location.pathname
-          const opener = getProactiveOpener(pathname, isReturning, locationPref || undefined)
+          const currentPath = window.location.pathname
+          const opener = getProactiveOpener(currentPath, isReturning, locationPref || undefined)
           const newMsgs = [{ role: 'assistant' as const, content: opener, timestamp: Date.now() }]
           try { localStorage.setItem('ag_sofia_messages', JSON.stringify(newMsgs)) } catch {}
           return newMsgs
@@ -199,7 +204,7 @@ export default function SofiaAgentWidget() {
         setUnread(1)
         setProactiveShown(true)
       }
-    }, 45000)
+    }, delay)
     return () => clearTimeout(timer)
   }, [proactiveShown, open, isReturning, locationPref])
 

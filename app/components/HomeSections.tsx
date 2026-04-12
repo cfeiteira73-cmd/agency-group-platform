@@ -336,7 +336,7 @@ export default function HomeSections() {
       <section className="test-section" style={{ background: '#070f0a', borderTop: '1px solid rgba(201,169,110,.08)', padding: '112px 40px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.7)', textTransform: 'uppercase', marginBottom: '16px' }}>Famílias de 14 Nacionalidades · 4.9/5</div>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.7)', textTransform: 'uppercase', marginBottom: '16px' }}>Famílias de 14 Nacionalidades · 4.8/5</div>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#f4f0e6', margin: '0 0 8px' }}>Eles chegaram.</h2>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontStyle: 'italic', fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#c9a96e', margin: 0 }}>Eles ficaram.</h2>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '16px' }}>
