@@ -1,0 +1,125 @@
+{
+  "name": "Agency Group — LinkedIn Institutional Sourcing Playbook",
+  "description": "Systematic approach to identify and engage developers, family offices, asset managers, and HNWI on LinkedIn for off-market sourcing",
+  "version": "1.0.0",
+  "type": "sourcing_playbook",
+
+  "target_profiles": {
+    "developers": {
+      "search_keywords": [
+        "promotor imobiliário Portugal",
+        "real estate developer Portugal",
+        "developer Lisboa Porto",
+        "diretor desenvolvimento imobiliário",
+        "Head of Real Estate Portugal"
+      ],
+      "target_titles": [
+        "CEO", "Sócio", "Partner", "Diretor", "Managing Director",
+        "Head of Real Estate", "Head of Development", "Chief Investment Officer"
+      ],
+      "target_companies": [
+        "Vanguard Properties", "Mercan Properties", "Habitat Imobiliária",
+        "Nhood", "JLL Portugal", "CBRE Portugal", "Savills Portugal",
+        "Cushman & Wakefield", "Imofloresta", "EDP Inovação",
+        "Sonae Sierra", "Fidelidade Property"
+      ],
+      "crm_target_type": "promotor_imobiliario"
+    },
+
+    "family_offices": {
+      "search_keywords": [
+        "family office Portugal",
+        "gestão patrimonial Portugal",
+        "wealth management Portugal Lisboa",
+        "single family office Lisboa",
+        "investimento imobiliário privado"
+      ],
+      "target_titles": [
+        "Wealth Manager", "Gestor Patrimonial", "Investment Manager",
+        "Family Office", "Principal", "Managing Partner"
+      ],
+      "crm_target_type": "family_office"
+    },
+
+    "asset_managers": {
+      "search_keywords": [
+        "asset manager Portugal real estate",
+        "fund manager imobiliário Portugal",
+        "REIT Portugal",
+        "fundo imobiliário Portugal gestor"
+      ],
+      "target_companies": [
+        "Square Asset Management", "GNB Real Estate", "Interfundos",
+        "Norfin", "BPI Gestão de Activos", "Caixagest", "Santander Asset Management"
+      ],
+      "crm_target_type": "gestor_fundo"
+    },
+
+    "hnwi_investors": {
+      "search_keywords": [
+        "investidor imobiliário Portugal",
+        "real estate investor Lisbon",
+        "golden visa property investor Portugal",
+        "NHR Portugal investor"
+      ],
+      "signals": [
+        "Bio mentions 'investor', 'investidor', 'portfolio', 'patrimônio'",
+        "Multiple country presence (Portugal + UK/UAE/Brazil/France)",
+        "Recent activity in real estate content",
+        "Connections to known Portugal RE sector"
+      ],
+      "crm_target_type": "investidor_hnwi"
+    }
+  },
+
+  "outreach_sequence": {
+    "step_1_connection": {
+      "timing": "Day 0 — send connection request",
+      "message": "Bom dia [Nome], a Agency Group actua nos segmentos de imóveis premium em Portugal (€500K–€10M). Temos acesso a activos fora de mercado em Lisboa, Algarve e Porto. Seria um prazer conectarmos.",
+      "note": "No pitch. Just connect."
+    },
+    "step_2_first_message": {
+      "timing": "Day 2 — after connection accepted",
+      "message": "Obrigado por conectar, [Nome]. A Agency Group tem um portfólio exclusivo de imóveis off-market — quintas, moradias de prestígio, hotéis e prédios — não publicados em plataformas. Trabalhámos recentemente com [referência genérica se disponível]. Faz sentido explorar oportunidades juntos?",
+      "note": "One clear value prop. One soft CTA."
+    },
+    "step_3_followup": {
+      "timing": "Day 7 — if no reply",
+      "message": "Retomo o contacto, [Nome]. Temos actualmente 3 activos em Lisboa (€2M–€5M range) e 2 no Algarve disponíveis fora de mercado. Se não for o momento certo, podemos manter em agenda para o futuro.",
+      "note": "Specific numbers create credibility."
+    },
+    "step_4_value_add": {
+      "timing": "Day 14 — if still no reply",
+      "message": "Partilho o nosso relatório de mercado Q2 2026 — Lisboa +17.6% YoY, top 5 mundial em crescimento de luxo. Disponível se for do seu interesse.",
+      "note": "Last touch. Offer something of value, no ask."
+    }
+  },
+
+  "crm_integration": {
+    "description": "Qualified LinkedIn contacts go directly to institutional_partners table",
+    "api_endpoint": "POST /api/institutional-partners",
+    "default_values": {
+      "estado": "novo_contacto",
+      "nivel_prioridade": "B",
+      "source": "linkedin"
+    },
+    "qualification_criteria": {
+      "minimum": "Title matches target_titles AND company operates in Portugal",
+      "preferred": "Active in real estate content in last 30 days OR connection to known AG contact",
+      "immediate_A_priority": "Family office principal OR fund manager with stated AUM > €50M"
+    }
+  },
+
+  "volume_targets": {
+    "daily_new_connections": 10,
+    "daily_followups": 5,
+    "weekly_new_institutional_partners": 3,
+    "monthly_qualified_meetings": 4
+  },
+
+  "tools": {
+    "primary": "LinkedIn Sales Navigator (recommended) or LinkedIn Premium",
+    "automation_note": "Manual outreach only — LinkedIn automation tools violate ToS and risk account ban",
+    "crm_sync": "Manual entry to /api/institutional-partners after qualification call"
+  }
+}

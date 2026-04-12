@@ -1,0 +1,80 @@
+{
+  "name": "Workflow M — Lead Off-Market → Atribuição Automática Advisor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "offmarket-assign",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "m001",
+      "name": "Webhook — Novo Lead Off-Market",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json.body || $input.first().json;\n\nif (!lead.id) throw new Error('lead.id is required');\n\n// Zone-to-advisor assignment matrix\nconst ADVISOR_MAP = [\n  { zones: ['cascais','estoril','sintra','oeiras'], advisor: 'advisor.cascais@agencygroup.pt', name: 'Advisor Cascais/Sintra' },\n  { zones: ['chiado','príncipe real','lapa','santos','bairro alto','campo de ourique','estrela','belém'], advisor: 'advisor.lisboa.centro@agencygroup.pt', name: 'Advisor Lisboa Centro' },\n  { zones: ['parque das nações','expo','oriente','beato','marvila'], advisor: 'advisor.lisboa.oriental@agencygroup.pt', name: 'Advisor Lisboa Oriental' },\n  { zones: ['algarve','vilamoura','quinta do lago','vale do lobo','lagos','faro','albufeira','portimão'], advisor: 'advisor.algarve@agencygroup.pt', name: 'Advisor Algarve' },\n  { zones: ['porto','foz','boavista','matosinhos','leça','gaia'], advisor: 'advisor.porto@agencygroup.pt', name: 'Advisor Porto' },\n  { zones: ['comporta','troia','alcácer do sal','melides'], advisor: 'advisor.comporta@agencygroup.pt', name: 'Advisor Comporta/Troia' },\n  { zones: ['madeira','funchal','câmara de lobos','caniço'], advisor: 'advisor.madeira@agencygroup.pt', name: 'Advisor Madeira' },\n  { zones: ['açores','azores','ponta delgada'], advisor: 'advisor.acores@agencygroup.pt', name: 'Advisor Açores' },\n];\n\nconst SENIOR_ADVISORS = ['advisor.cascais@agencygroup.pt','advisor.algarve@agencygroup.pt','advisor.lisboa.centro@agencygroup.pt'];\nconst DEFAULT_ADVISOR = 'advisor.geral@agencygroup.pt';\n\n// Find zone match\nconst haystack = `${lead.cidade ?? ''} ${lead.localizacao ?? ''}`.toLowerCase();\nlet assigned = DEFAULT_ADVISOR;\nlet advisorName = 'Advisor Geral';\n\nfor (const entry of ADVISOR_MAP) {\n  if (entry.zones.some(z => haystack.includes(z))) {\n    assigned = entry.advisor;\n    advisorName = entry.name;\n    break;\n  }\n}\n\n// High-value override: score >= 80 or price_estimate >= 1M → senior\nif ((lead.score >= 80 || (lead.price_estimate >= 1_000_000)) && !SENIOR_ADVISORS.includes(assigned)) {\n  assigned = 'senior@agencygroup.pt';\n  advisorName = 'Senior Advisor (override por score/valor)';\n}\n\nreturn [{ json: { ...lead, assigned_advisor: assigned, advisor_name: advisorName } }];"
+      },
+      "id": "m002",
+      "name": "Code — Lógica de atribuição",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads/{{ $json.id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{ "name": "assigned_to", "value": "={{ $json.assigned_advisor }}" }]
+        },
+        "options": {}
+      },
+      "id": "m003",
+      "name": "HTTP — PATCH assigned_to",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🎯 LEAD OFF-MARKET ATRIBUÍDO\n\nLead: {{ $json.nome }}\nScore: {{ $json.score ?? '—' }}/100\nTipo: {{ $json.tipo_ativo ?? '—' }}\nCidade: {{ $json.cidade ?? '—' }}\nValor estimado: {{ $json.price_estimate ? '€' + ($json.price_estimate/1000).toFixed(0) + 'K' : '—' }}\nUrgência: {{ $json.urgency ?? '—' }}\n\n👤 Atribuído a: {{ $json.advisor_name }}\n📧 {{ $json.assigned_advisor }}\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal#offmarket",
+        "additionalFields": {}
+      },
+      "id": "m004",
+      "name": "Telegram — Notificar atribuição",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [860, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"assigned_to\": \"{{ $json.assigned_advisor }}\", \"advisor_name\": \"{{ $json.advisor_name }}\" }"
+      },
+      "id": "m005",
+      "name": "Respond — 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [640, 450]
+    }
+  ],
+  "connections": {
+    "Webhook — Novo Lead Off-Market": { "main": [[{ "node": "Code — Lógica de atribuição", "type": "main", "index": 0 }]] },
+    "Code — Lógica de atribuição": { "main": [[
+      { "node": "HTTP — PATCH assigned_to", "type": "main", "index": 0 },
+      { "node": "Respond — 200 OK", "type": "main", "index": 0 }
+    ]]},
+    "HTTP — PATCH assigned_to": { "main": [[{ "node": "Telegram — Notificar atribuição", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
+  "tags": [{ "name": "offmarket" }, { "name": "assignment" }, { "name": "advisors" }]
+}

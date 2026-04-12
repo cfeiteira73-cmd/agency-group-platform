@@ -23,6 +23,7 @@ interface OffmarketLead {
   price_estimate: number | null
   score: number | null
   score_status: ScoreStatus
+  score_reason: string | null
   contacto: string | null
   owner_type: string | null
   urgency: Urgency
@@ -33,6 +34,14 @@ interface OffmarketLead {
   last_contact_at: string | null
   contact_attempts: number
   notes: string | null
+  // Pre-close flags (FASE 13)
+  preclose_candidate: boolean
+  outreach_ready: boolean
+  matched_to_buyers: boolean
+  institutional_priority: boolean
+  matched_buyers_count: number | null
+  best_buyer_match_score: number | null
+  buyer_match_notes: string | null
   created_at: string
   updated_at: string
 }
@@ -44,6 +53,8 @@ interface KPISummary {
   pending_score: number
   active: number
   avg_score: number
+  preclose_candidates?: number
+  outreach_ready?: number
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -264,12 +275,13 @@ export default function PortalOffmarketLeads() {
       {kpi && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 24 }}>
           {([
-            ['Total',        String(kpi.total),         '#c9a96e'],
-            ['Esta Semana',  String(kpi.new_this_week),  '#4a90d9'],
-            ['Score ≥ 70',   String(kpi.high_score),    '#27ae60'],
-            ['Por Avaliar',  String(kpi.pending_score),  '#f39c12'],
-            ['Activos',      String(kpi.active),         '#9b59b6'],
-            ['Score Médio',  String(kpi.avg_score),      '#c9a96e'],
+            ['Total',        String(kpi.total),                           '#c9a96e'],
+            ['Esta Semana',  String(kpi.new_this_week),                   '#4a90d9'],
+            ['Score ≥ 70',   String(kpi.high_score),                     '#27ae60'],
+            ['Por Avaliar',  String(kpi.pending_score),                   '#f39c12'],
+            ['Pré-Fecho',    String(kpi.preclose_candidates ?? 0),        '#9b59b6'],
+            ['Outreach OK',  String(kpi.outreach_ready ?? 0),             '#1abc9c'],
+            ['Score Médio',  String(kpi.avg_score),                       '#c9a96e'],
           ] as [string, string, string][]).map(([label, value, color]) => (
             <div key={label} style={{ background: cardBg, border: `1px solid ${border}`, padding: '14px 16px' }}>
               <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', letterSpacing: '.14em', color: textMuted, textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
@@ -334,7 +346,11 @@ export default function PortalOffmarketLeads() {
             >
               {/* Name + location */}
               <div>
-                <div style={{ fontSize: '.85rem', color: textPrimary, fontWeight: 500, marginBottom: 2 }}>{lead.nome}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                  <span style={{ fontSize: '.85rem', color: textPrimary, fontWeight: 500 }}>{lead.nome}</span>
+                  {lead.preclose_candidate && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', padding: '1px 5px', background: '#9b59b622', border: '1px solid #9b59b655', color: '#9b59b6', letterSpacing: '.08em' }}>PRÉ-FECHO</span>}
+                  {lead.outreach_ready && !lead.preclose_candidate && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', padding: '1px 5px', background: '#1abc9c22', border: '1px solid #1abc9c55', color: '#1abc9c', letterSpacing: '.08em' }}>PRONTO</span>}
+                </div>
                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: textMuted, letterSpacing: '.06em' }}>
                   {[lead.tipo_ativo, lead.cidade || lead.localizacao].filter(Boolean).join(' · ') || '—'}
                 </div>
@@ -374,8 +390,8 @@ export default function PortalOffmarketLeads() {
               </button>
             </div>
 
-            {/* Score badge */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {/* Score badge + pre-close flags */}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
               <div style={{ padding: '4px 12px', background: `${scoreColor(selected.score)}22`, border: `1px solid ${scoreColor(selected.score)}55`, fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: scoreColor(selected.score) }}>
                 Score: {selected.score ?? 'Pendente'}
               </div>
@@ -383,8 +399,49 @@ export default function PortalOffmarketLeads() {
                 {STATUS_LABELS[selected.status]}
               </div>
               <div style={{ padding: '4px 12px', background: `${URGENCY_COLORS[selected.urgency]}22`, border: `1px solid ${URGENCY_COLORS[selected.urgency]}55`, fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: URGENCY_COLORS[selected.urgency] }}>
-                Urgência: {selected.urgency}
+                {selected.urgency}
               </div>
+              {selected.preclose_candidate && <div style={{ padding: '4px 12px', background: '#9b59b622', border: '1px solid #9b59b655', fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: '#9b59b6' }}>⭐ PRÉ-FECHO</div>}
+              {selected.outreach_ready && <div style={{ padding: '4px 12px', background: '#1abc9c22', border: '1px solid #1abc9c55', fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: '#1abc9c' }}>✓ PRONTO OUTREACH</div>}
+              {selected.institutional_priority && <div style={{ padding: '4px 12px', background: '#c9a96e22', border: '1px solid #c9a96e55', fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: '#c9a96e' }}>🏛 INSTITUCIONAL</div>}
+            </div>
+
+            {/* Score reason */}
+            {selected.score_reason && (
+              <div style={{ padding: '10px 14px', background: darkMode ? 'rgba(201,169,110,.06)' : 'rgba(28,74,53,.04)', border: `1px solid ${border}` }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', color: textMuted, textTransform: 'uppercase', marginBottom: 4 }}>Razão do Score</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.5rem', color: textPrimary, lineHeight: 1.5 }}>{selected.score_reason}</div>
+              </div>
+            )}
+
+            {/* Buyer match info */}
+            {selected.matched_to_buyers && (
+              <div style={{ padding: '10px 14px', background: '#9b59b611', border: '1px solid #9b59b633' }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', color: '#9b59b6', textTransform: 'uppercase', marginBottom: 4 }}>Compradores Matched</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.5rem', color: textPrimary, lineHeight: 1.5 }}>
+                  {selected.matched_buyers_count} matches · Best: {selected.best_buyer_match_score}/100
+                </div>
+                {selected.buyer_match_notes && (
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: textMuted, marginTop: 4, lineHeight: 1.5 }}>{selected.buyer_match_notes}</div>
+                )}
+              </div>
+            )}
+
+            {/* Action buttons: Score + Match Buyers */}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <ScoreButton leadId={selected.id} darkMode={darkMode} onScored={(s, r) => {
+                setLeads(prev => prev.map(l => l.id === selected.id ? { ...l, score: s, score_reason: r, score_status: 'scored' } : l))
+              }} />
+              <MatchBuyersButton leadId={selected.id} darkMode={darkMode} onMatched={(count, best, notes) => {
+                setLeads(prev => prev.map(l => l.id === selected.id ? { ...l, matched_buyers_count: count, best_buyer_match_score: best, buyer_match_notes: notes, matched_to_buyers: count > 0 && best >= 60 } : l))
+              }} />
+              <button
+                type="button"
+                onClick={() => patchLead(selected.id, { institutional_priority: !selected.institutional_priority })}
+                style={{ padding: '6px 12px', background: selected.institutional_priority ? '#c9a96e' : 'transparent', color: selected.institutional_priority ? '#0e0e0d' : textMuted, border: `1px solid #c9a96e55`, fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.08em', cursor: 'pointer', textTransform: 'uppercase' }}
+              >
+                🏛 Institucional
+              </button>
             </div>
 
             {/* Info grid */}
@@ -555,6 +612,104 @@ export default function PortalOffmarketLeads() {
             </div>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Score Button ─────────────────────────────────────────────────────────────
+
+function ScoreButton({ leadId, darkMode, onScored }: {
+  leadId: string
+  darkMode: boolean
+  onScored: (score: number, reason: string) => void
+}) {
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  async function handleScore() {
+    setLoading(true)
+    setMsg('')
+    try {
+      const res = await fetch('/api/offmarket-leads/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: leadId }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setMsg(`✓ ${data.score}/100`)
+        onScored(data.score, data.score_reason)
+      } else {
+        setMsg(data.error || 'Erro')
+      }
+    } catch {
+      setMsg('Erro de rede')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <button
+        type="button"
+        onClick={handleScore}
+        disabled={loading}
+        style={{ padding: '6px 14px', background: '#1c4a35', color: '#f4f0e6', border: 'none', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? .6 : 1 }}
+      >
+        {loading ? '...' : '⚡ Score'}
+      </button>
+      {msg && <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', color: msg.startsWith('✓') ? '#27ae60' : '#e74c3c' }}>{msg}</span>}
+    </div>
+  )
+}
+
+// ─── Match Buyers Button ──────────────────────────────────────────────────────
+
+function MatchBuyersButton({ leadId, darkMode, onMatched }: {
+  leadId: string
+  darkMode: boolean
+  onMatched: (count: number, best: number, notes: string) => void
+}) {
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<{ total: number; best: number } | null>(null)
+
+  async function handleMatch() {
+    setLoading(true)
+    setResult(null)
+    try {
+      const res = await fetch(`/api/offmarket-leads/${leadId}/match-buyers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setResult({ total: data.total_matches, best: data.best_match_score })
+        onMatched(data.total_matches, data.best_match_score, data.buyer_match_notes ?? '')
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <button
+        type="button"
+        onClick={handleMatch}
+        disabled={loading}
+        style={{ padding: '6px 14px', background: '#4a2880', color: '#f4f0e6', border: 'none', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? .6 : 1 }}
+      >
+        {loading ? '...' : '🎯 Match Buyers'}
+      </button>
+      {result !== null && (
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', color: result.total > 0 ? '#9b59b6' : '#95a5a6' }}>
+          {result.total} matches · {result.best}/100
+        </span>
       )}
     </div>
   )

@@ -1,0 +1,90 @@
+{
+  "name": "Workflow O — Relatório Semanal de Performance",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 9 * * 5" }] }
+      },
+      "id": "o001",
+      "name": "Schedule — Sexta 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/kpi/offmarket",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "o002",
+      "name": "HTTP — KPI offmarket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?status=captation_active&limit=50",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "o003",
+      "name": "HTTP — Em captação activa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 350]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?status=meeting_scheduled&limit=50",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "o004",
+      "name": "HTTP — Reuniões agendadas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "const kpi = $('HTTP — KPI offmarket').first().json;\nconst captActive = ($('HTTP — Em captação activa').first().json.data || []);\nconst meetings = ($('HTTP — Reuniões agendadas').first().json.data || []);\n\nconst offmarket = kpi.offmarket || {};\nconst partners = kpi.institutional_partners || {};\n\n// Source breakdown summary\nconst srcBreakdown = (offmarket.by_source || []).slice(0,5)\n  .map(s => `${s.source}: ${s.count}`).join(' · ') || '—';\n\n// Status breakdown\nconst statusBreakdown = (offmarket.by_status || [])\n  .filter(s => !['closed_lost','not_interested'].includes(s.status))\n  .map(s => `${s.status}: ${s.count}`).join(' · ') || '—';\n\n// Pipeline value\nconst pipelineValue = captActive\n  .reduce((sum, l) => sum + (l.price_estimate || l.price_ask || 0), 0);\nconst pipelineFormatted = pipelineValue > 0 \n  ? '€' + (pipelineValue / 1_000_000).toFixed(1) + 'M' \n  : '—';\n\n// Top captação leads\nconst topCaptacao = captActive.slice(0,3)\n  .map((l,i) => `${i+1}. ${l.nome} — ${l.tipo_ativo||'?'} ${l.cidade?'('+l.cidade+')':''} — €${l.price_estimate?(l.price_estimate/1000).toFixed(0)+'K':'?'}`)\n  .join('\\n');\n\nconst weekNumber = Math.ceil(new Date().getDate() / 7);\n\nreturn [{ json: {\n  total: offmarket.total || 0,\n  new_this_week: offmarket.new_this_week || 0,\n  high_score: offmarket.high_score || 0,\n  avg_score: offmarket.avg_score ? parseFloat(offmarket.avg_score).toFixed(0) : '—',\n  captation_active: captActive.length,\n  meetings_scheduled: meetings.length,\n  pipeline_value: pipelineFormatted,\n  partners_total: partners.total || 0,\n  src_breakdown: srcBreakdown,\n  status_breakdown: statusBreakdown,\n  top_captacao: topCaptacao || '— sem captações activas —',\n  week: weekNumber,\n  year: new Date().getFullYear()\n}}];"
+      },
+      "id": "o005",
+      "name": "Code — Consolidar métricas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 350]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📈 RELATÓRIO SEMANAL — Semana {{ $json.week }}/{{ $json.year }}\n\n━━━━━━━━━━━━━━━━━━━━━\n🏠 OFF-MARKET PIPELINE\n━━━━━━━━━━━━━━━━━━━━━\nTotal leads: {{ $json.total }}\nNovos esta semana: {{ $json.new_this_week }}\nScore ≥70 (prioritários): {{ $json.high_score }}\nScore médio: {{ $json.avg_score }}/100\n\n📊 Por estado: {{ $json.status_breakdown }}\n📡 Por fonte: {{ $json.src_breakdown }}\n\n━━━━━━━━━━━━━━━━━━━━━\n🎯 NEGÓCIO EM CURSO\n━━━━━━━━━━━━━━━━━━━━━\nEm captação activa: {{ $json.captation_active }}\nReuniões agendadas: {{ $json.meetings_scheduled }}\nValor pipeline estimado: {{ $json.pipeline_value }}\n\n🏆 TOP CAPTAÇÕES:\n{{ $json.top_captacao }}\n\n━━━━━━━━━━━━━━━━━━━━━\n🤝 PARCEIROS INSTITUCIONAIS\nTotal rede: {{ $json.partners_total }}\n\n━━━━━━━━━━━━━━━━━━━━━\n📋 METAS PRÓXIMA SEMANA:\n• {{ Math.ceil($json.new_this_week * 1.1) }} novos leads (meta +10%)\n• 5 novas reuniões de avaliação\n• 3 captações formalizadas\n• 20 outreaches/dia\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "o006",
+      "name": "Telegram — Relatório semanal",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [860, 350],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Schedule — Sexta 09:00": { "main": [[
+      { "node": "HTTP — KPI offmarket", "type": "main", "index": 0 },
+      { "node": "HTTP — Em captação activa", "type": "main", "index": 0 },
+      { "node": "HTTP — Reuniões agendadas", "type": "main", "index": 0 }
+    ]]},
+    "HTTP — KPI offmarket": { "main": [[{ "node": "Code — Consolidar métricas", "type": "main", "index": 0 }]] },
+    "HTTP — Em captação activa": { "main": [[{ "node": "Code — Consolidar métricas", "type": "main", "index": 0 }]] },
+    "HTTP — Reuniões agendadas": { "main": [[{ "node": "Code — Consolidar métricas", "type": "main", "index": 0 }]] },
+    "Code — Consolidar métricas": { "main": [[{ "node": "Telegram — Relatório semanal", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
+  "tags": [{ "name": "weekly" }, { "name": "performance" }, { "name": "report" }]
+}

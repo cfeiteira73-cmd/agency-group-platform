@@ -1,0 +1,92 @@
+{
+  "name": "Workflow N — Digest Diário Off-Market + Parceiros",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1-5" }] }
+      },
+      "id": "n001",
+      "name": "Schedule — Dias úteis 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/kpi/offmarket",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "n002",
+      "name": "HTTP — Fetch KPIs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?status=new&limit=10",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "n003",
+      "name": "HTTP — Leads novos hoje",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 450]
+    },
+    {
+      "parameters": {
+        "jsCode": "const kpi = $('HTTP — Fetch KPIs').first().json;\nconst newLeadsRes = $('HTTP — Leads novos hoje').first().json;\n\nconst offmarket = kpi.offmarket || {};\nconst partners = kpi.institutional_partners || {};\nconst newLeads = (newLeadsRes.data || []).slice(0, 5);\n\n// Top leads list\nconst topList = newLeads.map((l, i) => \n  `${i+1}. ${l.nome} — ${l.tipo_ativo || '?'} ${l.cidade ? '(' + l.cidade + ')' : ''} — Score: ${l.score ?? 'pendente'}`\n).join('\\n');\n\n// Cadence recommendation\nconst totalActive = offmarket.active || 0;\nconst dailyTarget = Math.min(20, Math.ceil(totalActive * 0.15));\n\nreturn [{ json: {\n  total: offmarket.total || 0,\n  new_this_week: offmarket.new_this_week || 0,\n  high_score: offmarket.high_score || 0,\n  pending_score: offmarket.pending_score || 0,\n  avg_score: offmarket.avg_score ? parseFloat(offmarket.avg_score).toFixed(0) : '—',\n  partners_total: partners.total || 0,\n  partners_new: partners.new_this_week || 0,\n  top_leads_list: topList || '— sem leads novos —',\n  daily_target: dailyTarget,\n  date: new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })\n}}];"
+      },
+      "id": "n004",
+      "name": "Code — Preparar digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 370]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📊 DIGEST DIÁRIO — {{ $json.date }}\n\n🏠 OFF-MARKET\nTotal: {{ $json.total }} leads\nNovos esta semana: {{ $json.new_this_week }}\nScore ≥70: {{ $json.high_score }} prioritários\nPor pontuar: {{ $json.pending_score }}\nScore médio: {{ $json.avg_score }}/100\n\n🤝 PARCEIROS INSTITUCIONAIS\nTotal: {{ $json.partners_total }}\nNovos esta semana: {{ $json.partners_new }}\n\n🔥 LEADS A ACTUAR HOJE:\n{{ $json.top_leads_list }}\n\n📋 CADÊNCIA RECOMENDADA:\n• {{ $json.daily_target }} outreaches WhatsApp/chamada\n• Priorizar score ≥70 e urgência alta\n• 1 reunião de avaliação agendada\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal#offmarket",
+        "additionalFields": {}
+      },
+      "id": "n005",
+      "name": "Telegram — Digest diário",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [860, 370],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads/score?limit=20&only_pending=true",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "n006",
+      "name": "HTTP — Auto-score pending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [860, 480],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Schedule — Dias úteis 08:00": { "main": [[
+      { "node": "HTTP — Fetch KPIs", "type": "main", "index": 0 },
+      { "node": "HTTP — Leads novos hoje", "type": "main", "index": 0 }
+    ]]},
+    "HTTP — Fetch KPIs": { "main": [[{ "node": "Code — Preparar digest", "type": "main", "index": 0 }]] },
+    "HTTP — Leads novos hoje": { "main": [[{ "node": "Code — Preparar digest", "type": "main", "index": 0 }]] },
+    "Code — Preparar digest": { "main": [[
+      { "node": "Telegram — Digest diário", "type": "main", "index": 0 },
+      { "node": "HTTP — Auto-score pending", "type": "main", "index": 0 }
+    ]]}
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
+  "tags": [{ "name": "digest" }, { "name": "daily" }, { "name": "offmarket" }]
+}

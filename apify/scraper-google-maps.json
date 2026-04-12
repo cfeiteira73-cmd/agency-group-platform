@@ -1,0 +1,84 @@
+{
+  "name": "Agency Group — Google Maps Commercial & Hotel Scraper",
+  "actor": "compass/google-maps-scraper",
+  "description": "Scrapes Google Maps to identify hotels, quintas, commercial buildings, and guesthouses across target cities for off-market sourcing",
+  "version": "1.0.0",
+
+  "input": {
+    "searchStringsArray": [
+      "hotel venda Lisboa",
+      "hotel à venda Porto",
+      "hotel Algarve",
+      "quinta venda Alentejo",
+      "quinta venda Comporta",
+      "quinta venda Algarve",
+      "herdade venda Alentejo",
+      "edifício venda Lisboa",
+      "edifício venda Porto",
+      "guest house Lisboa",
+      "boutique hotel Lisboa",
+      "boutique hotel Porto",
+      "hotel boutique Algarve",
+      "hotel Funchal Madeira",
+      "empreendimento turístico Açores",
+      "terreno urbano Lisboa venda",
+      "terreno venda Cascais",
+      "quinta para venda Sintra"
+    ],
+    "language": "pt",
+    "maxCrawledPlaces": 200,
+    "includeHistogram": false,
+    "includeOpeningHours": false,
+    "includePeopleAlsoSearch": false,
+    "maxReviews": 0,
+    "maxImages": 0,
+    "exportPlaceUrls": false,
+    "additionalInfo": true,
+    "scrapeDirectories": false,
+    "customGeolocation": {
+      "country": "PT"
+    }
+  },
+
+  "output_schema": {
+    "description": "Google Maps results normalized for off-market ingestion",
+    "target_fields": {
+      "nome": "place.title (business name)",
+      "tipo_ativo": "inferred: hotel|quinta|herdade|comercial|terreno",
+      "localizacao": "place.address",
+      "cidade": "extracted from address",
+      "contacto": "place.phone",
+      "source": "google_maps",
+      "source_listing_id": "place.placeId",
+      "source_url": "place.url",
+      "owner_type": "empresa",
+      "urgency": "unknown (requires follow-up)"
+    }
+  },
+
+  "normalization_transform": {
+    "description": "n8n Code node — Google Maps result normalization",
+    "code": "const place = $input.first().json;\n\nfunction extractCityFromAddress(addr) {\n  if (!addr) return null;\n  const parts = addr.split(',').map(s => s.trim());\n  const CITIES = ['Lisboa','Porto','Cascais','Sintra','Oeiras','Setúbal','Faro','Loulé','Lagoa','Lagos','Portimão','Albufeira','Funchal','Madeira','Ponta Delgada'];\n  for (const part of parts) {\n    const found = CITIES.find(c => part.includes(c));\n    if (found) return found;\n  }\n  return parts[parts.length - 3] || null;\n}\n\nfunction extractTipo(title, search) {\n  const h = `${title} ${search}`.toLowerCase();\n  if (h.includes('hotel')) return 'hotel';\n  if (h.includes('quinta')) return 'quinta';\n  if (h.includes('herdade')) return 'herdade';\n  if (h.includes('edifício') || h.includes('edificio')) return 'prédio';\n  if (h.includes('terreno')) return 'terreno';\n  if (h.includes('guest house') || h.includes('guesthouse')) return 'hotel';\n  return 'comercial';\n}\n\nconst placeId = place.placeId ?? place.id ?? String(Date.now());\n\nreturn [{ json: {\n  source: 'google_maps',\n  source_listing_id: String(placeId),\n  source_url: place.url ?? place.website ?? null,\n  nome: place.title ?? 'Proprietário Google Maps',\n  tipo_ativo: extractTipo(place.title ?? '', place.searchString ?? ''),\n  localizacao: place.address ?? null,\n  cidade: extractCityFromAddress(place.address),\n  contacto: place.phone ?? null,\n  owner_type: 'empresa',\n  urgency: 'unknown',\n  status: 'new',\n  raw_data: {\n    rating: place.totalScore,\n    reviews: place.reviewsCount,\n    category: place.categoryName,\n    website: place.website,\n  }\n}}];"
+  },
+
+  "target_cities": {
+    "tier_1": ["Lisboa", "Porto", "Cascais", "Algarve", "Comporta"],
+    "tier_2": ["Braga", "Aveiro", "Coimbra", "Évora", "Alentejo Litoral"],
+    "tier_3_islands": ["Madeira", "Funchal", "Açores"],
+    "coverage_notes": "Focus on hospitality assets (hotels, quintas, guest houses) and commercial buildings suitable for conversion"
+  },
+
+  "schedule": "0 5 * * 0",
+  "schedule_description": "Run weekly on Sunday 05:00 — hotels/commercial properties change ownership less frequently",
+
+  "qualification_signals": {
+    "description": "Indicators of motivated or available sellers found via Google Maps",
+    "signals": [
+      "Permanently closed business (still listed, owner may want to sell)",
+      "Low review count + old last review = inactive business",
+      "Listed as hotel/B&B but no bookings found on OTA (Booking.com, Airbnb)",
+      "Old business registration + single owner family name",
+      "Near new infrastructure (metro, highway) → land value appreciation signal"
+    ]
+  }
+}

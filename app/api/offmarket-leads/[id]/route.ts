@@ -13,9 +13,15 @@ const TABLE = 'offmarket_leads'
 
 const ALLOWED_PATCH_FIELDS = new Set([
   'status', 'score', 'score_breakdown', 'score_updated_at', 'score_status',
+  'score_reason', 'score_attempts', 'last_score_at',
   'notes', 'assigned_to', 'next_followup_at', 'last_contact_at',
   'contact_attempts', 'urgency', 'price_ask', 'price_estimate',
   'tags', 'contacto', 'owner_type', 'raw_data',
+  // FASE 12: buyer matching
+  'matched_buyers_count', 'best_buyer_match_score', 'buyer_match_notes',
+  'matched_to_buyers', 'buyer_matched_at',
+  // FASE 13: pre-close flags
+  'preclose_candidate', 'outreach_ready', 'institutional_priority',
 ])
 
 export async function GET(
