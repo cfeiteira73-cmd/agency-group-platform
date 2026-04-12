@@ -4,14 +4,19 @@
 // Returns: leads nova, SLA alerts, priority queue, pre-close, follow-ups due
 // =============================================================================
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const isCron = cronSecret && incomingSecret === cronSecret
+    if (!isCron) {
+      const session = await auth()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const s = supabaseAdmin as any

@@ -261,8 +261,13 @@ function scoreOffmarketLead(lead: OffmarketLead): {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const isCron = cronSecret && incomingSecret === cronSecret
+    if (!isCron) {
+      const session = await auth()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const body: unknown = await req.json()
     if (!body || typeof body !== 'object') {
@@ -325,8 +330,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 // Batch scoring: GET ?limit=50&only_pending=true
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const isCron = cronSecret && incomingSecret === cronSecret
+    if (!isCron) {
+      const session = await auth()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const sp = req.nextUrl.searchParams
     const limit = Math.min(100, parseInt(sp.get('limit') ?? '50', 10))
