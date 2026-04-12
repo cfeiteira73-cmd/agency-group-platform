@@ -10,6 +10,7 @@ export type TemplateCategory =
   | 'partner_whatsapp' | 'partner_email' | 'partner_call'
   | 'reactivation' | 'post_meeting'
   | 'buyer_match' | 'pre_close'
+  | 'buyer_first_contact' | 'buyer_qualify_fast' | 'buyer_pressure' | 'buyer_followup'
   | 'negotiation_buyer' | 'negotiation_seller' | 'negotiation_blocked'
   | 'objection_public' | 'objection_price' | 'objection_evaluating'
   | 'objection_agencies' | 'objection_no_urgency' | 'objection_message_only'
@@ -36,7 +37,7 @@ export const OUTREACH_TEMPLATES: OutreachTemplate[] = [
 Temos atualmente procura ativa para ativos com este perfil na sua zona.
 Trabalhamos de forma confidencial e muito focada em execução.
 Faz sentido fazermos uma avaliação sem compromisso?`,
-    tags: ['seller', 'primeiro-contacto', 'off-market'],
+    tags: ['seller', 'primeiro-contacto', 'off-market', 'outreach'],
   },
 
   {
@@ -55,7 +56,7 @@ Faz sentido falarmos 5 minutos?`,
     channel: 'whatsapp',
     body: `Perfeito. Para enquadrarmos corretamente, preciso apenas de perceber três pontos: localização exata, tipologia/área e expectativa de valor.
 A partir daí consigo dizer-lhe se faz mais sentido um circuito reservado ou exposição mais ampla.`,
-    tags: ['seller', 'qualificação'],
+    tags: ['seller', 'qualificacao'],
   },
 
   {
@@ -147,7 +148,7 @@ Há interesse em avaliarmos a situação?`,
 Conforme acordado, o próximo passo é [PRÓXIMO PASSO].
 Fico ao dispor para qualquer questão.
 Agency Group`,
-    tags: ['pos-reuniao', 'follow-up'],
+    tags: ['pos-reuniao', 'follow-up', 'seller'],
   },
 
   // ── BUYER MATCHING ──────────────────────────────────────────────────────────
@@ -173,6 +174,52 @@ Tem disponibilidade para uma chamada esta semana?`,
     tags: ['pre-fecho', 'seller', 'buyer-match'],
   },
 
+  // ── BUYER OUTREACH SCRIPTS (FASE 18) ───────────────────────────────────────
+
+  {
+    id: 'buyer_first_contact',
+    label: 'WhatsApp — Primeiro Contacto (Comprador)',
+    channel: 'whatsapp',
+    body: `Bom dia, [nome].
+Falo da Agency Group. Tenho neste momento um ativo off-market com perfil que pode encaixar no que procura: [tipo] em [zona], estimativa de valor €[valor], fora de qualquer portal.
+Trabalho com total discrição e seleção rigorosa de compradores.
+Faz sentido partilhar os detalhes consigo?`,
+    tags: ['comprador', 'primeiro-contacto', 'off-market', 'outreach'],
+  },
+
+  {
+    id: 'buyer_qualify_fast',
+    label: 'WhatsApp — Qualificação Rápida (Comprador)',
+    channel: 'whatsapp',
+    body: `[nome], para validar o enquadramento correto preciso de confirmar três pontos rapidamente:
+1. Zona prioritária — ainda é [zona]?
+2. Tipologia — foco em [tipo] ou aberto a outras?
+3. Timing — procura ativa agora ou horizonte de X meses?
+Com isso consigo dizer-lhe já se este ativo faz sentido.`,
+    tags: ['comprador', 'qualificacao', 'off-market'],
+  },
+
+  {
+    id: 'buyer_pressure',
+    label: 'WhatsApp — Pressão de Execução (Comprador)',
+    channel: 'whatsapp',
+    body: `[nome], o ativo que partilhei tem neste momento mais de um perfil de comprador ativo.
+Não quero criar pressão artificial, mas a realidade é que ativos com esta relação preço/zona/tipologia fora de mercado são escassos.
+Se existe interesse real, o próximo passo é uma visita ou chamada nos próximos dois dias.
+Consigo garantir?`,
+    tags: ['comprador', 'fecho', 'urgencia', 'off-market'],
+  },
+
+  {
+    id: 'buyer_followup',
+    label: 'WhatsApp — Follow-up Comprador',
+    channel: 'whatsapp',
+    body: `Bom dia, [nome]. Retomo o nosso contacto sobre o ativo em [zona].
+Ainda não consegui dar-lhe seguimento — queria perceber se a procura continua ativa da sua parte.
+Se sim, terei gosto em rever o que temos disponível e atualizar o enquadramento de mercado.`,
+    tags: ['comprador', 'follow-up', 'reativacao'],
+  },
+
   // ── NEGOTIATION SCRIPTS ─────────────────────────────────────────────────────
 
   {
@@ -180,7 +227,7 @@ Tem disponibilidade para uma chamada esta semana?`,
     label: 'Negociação — "O preço está alto" (Comprador)',
     channel: 'universal',
     body: `Compreendo. O ponto não é apenas o valor pedido, mas o equilíbrio entre ativo, escassez, timing e margem de negociação. O ideal é percebermos até onde existe flexibilidade real antes de perdermos a oportunidade.`,
-    tags: ['negociacao', 'comprador', 'objeccao'],
+    tags: ['negociacao', 'comprador', 'objeccao', 'fecho'],
   },
 
   {
@@ -368,10 +415,12 @@ export function getSLARule(score: number | null): SLARule {
 }
 
 export function getSLAMinutesElapsed(createdAt: string): number {
-  return Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000)
+  const t = new Date(createdAt).getTime()
+  if (isNaN(t)) return 0
+  return Math.max(0, Math.floor((Date.now() - t) / 60000))
 }
 
-export function getSLAStatus(score: number | null, createdAt: string, contactedAt: string | null): {
+export function getSLAStatus(score: number | null, createdAt: string | null | undefined, contactedAt: string | null): {
   breached: boolean
   minutesElapsed: number
   minutesLimit: number
@@ -380,21 +429,40 @@ export function getSLAStatus(score: number | null, createdAt: string, contactedA
 } {
   const rule = getSLARule(score)
   if (rule.priority === 'P3') return { breached: false, minutesElapsed: 0, minutesLimit: 0, label: 'Sem SLA', color: '#95a5a6' }
+  if (!createdAt) return { breached: false, minutesElapsed: 0, minutesLimit: rule.limitMinutes, label: 'Data indisponível', color: '#95a5a6' }
 
   const elapsed = getSLAMinutesElapsed(createdAt)
+
+  // effectiveElapsed: if contacted, measure response time (creation → contact)
+  // if not contacted, measure time since creation (running clock)
   const effectiveElapsed = contactedAt
-    ? Math.floor((new Date(contactedAt).getTime() - new Date(createdAt).getTime()) / 60000)
+    ? Math.max(0, Math.floor((new Date(contactedAt).getTime() - new Date(createdAt).getTime()) / 60000))
     : elapsed
 
   const breached = effectiveElapsed > rule.limitMinutes
+
+  // Color: use effectiveElapsed (response time) for contacted leads, elapsed for pending
+  const colorBasis = contactedAt ? effectiveElapsed : elapsed
+  const color = breached
+    ? '#e74c3c'
+    : colorBasis > rule.limitMinutes * 0.75
+    ? '#f39c12'
+    : '#27ae60'
+
+  const minutesLeft = Math.max(0, rule.limitMinutes - elapsed)
+
   return {
     breached,
     minutesElapsed: elapsed,
     minutesLimit: rule.limitMinutes,
     label: contactedAt
-      ? (breached ? `⚠️ SLA breach (${effectiveElapsed}min > ${rule.limitMinutes}min)` : `✓ Contactado a tempo`)
-      : (breached ? `🔴 SLA violado (${elapsed}min)` : `🟡 ${rule.limitMinutes - elapsed}min restantes`),
-    color: breached ? '#e74c3c' : (elapsed > rule.limitMinutes * 0.7 ? '#f39c12' : '#27ae60'),
+      ? (breached
+        ? `⚠️ SLA breach — respondido em ${effectiveElapsed}min (limite: ${rule.limitMinutes}min)`
+        : `✓ Contactado a tempo (${effectiveElapsed}min)`)
+      : (breached
+        ? `🔴 SLA violado — ${elapsed}min sem contacto`
+        : `🟡 ${minutesLeft}min restantes`),
+    color,
   }
 }
 

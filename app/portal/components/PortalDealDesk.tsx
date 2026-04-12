@@ -53,6 +53,13 @@ interface DealLead {
   buyer_match_notes: string | null
   preclose_candidate: boolean
   outreach_ready: boolean
+  // Buyer Intelligence (migration 007)
+  deal_priority_score: number | null
+  attack_recommendation: string | null
+  buyer_triad_notes: string | null
+  primary_buyer_id: string | null
+  secondary_buyer_id: string | null
+  tertiary_buyer_id: string | null
 }
 
 interface RiskFlagLead {
@@ -343,6 +350,29 @@ export default function PortalDealDesk() {
               </div>
             </div>
           )}
+
+          {/* Attack Recommendations — leads with deal_priority_score + attack_recommendation */}
+          {executionQueue.filter(l => l.attack_recommendation).length > 0 && (
+            <div style={{ background: cardBg, border: '1px solid #c9a96e44', padding: 20, gridColumn: '1/-1' }}>
+              <SectionHeader title="🎯 Recomendações de Ataque" textMuted={textMuted} color="#c9a96e" />
+              {executionQueue.filter(l => l.attack_recommendation).slice(0, 5).map(lead => (
+                <div key={lead.id} style={{ padding: '12px 0', borderBottom: `1px solid ${border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 4 }}>
+                    <div style={{ fontSize: '.82rem', color: textPrimary, fontWeight: 500 }}>{lead.nome}</div>
+                    {lead.deal_priority_score != null && (
+                      <div style={{ padding: '2px 10px', background: lead.deal_priority_score >= 70 ? '#e74c3c22' : lead.deal_priority_score >= 50 ? '#f39c1222' : '#4a90d922', border: `1px solid ${lead.deal_priority_score >= 70 ? '#e74c3c' : lead.deal_priority_score >= 50 ? '#f39c12' : '#4a90d9'}55`, fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: lead.deal_priority_score >= 70 ? '#e74c3c' : lead.deal_priority_score >= 50 ? '#f39c12' : '#4a90d9', whiteSpace: 'nowrap' }}>
+                        DPS {lead.deal_priority_score}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.75rem', color: '#c9a96e', lineHeight: 1.5 }}>{lead.attack_recommendation}</div>
+                  {lead.buyer_triad_notes && (
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', color: textMuted, marginTop: 6, whiteSpace: 'pre-line', opacity: .8 }}>{lead.buyer_triad_notes}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -396,19 +426,19 @@ export default function PortalDealDesk() {
           {top5Unlock.length > 0 && (
             <div style={{ background: cardBg, border: `1px solid #c9a96e44`, padding: 20 }}>
               <SectionHeader title="🔑 Top 5 a Destravar" textMuted={textMuted} color="#c9a96e" />
-              {top5Unlock.map((lead: Record<string, unknown>, i: number) => (
-                <div key={lead.id as string} style={{ padding: '10px 0', borderBottom: `1px solid ${border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {top5Unlock.map((lead: DealLead, i: number) => (
+                <div key={lead.id} style={{ padding: '10px 0', borderBottom: `1px solid ${border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: '.8rem', color: textPrimary }}>{i + 1}. {lead.nome as string}</div>
+                    <div style={{ fontSize: '.8rem', color: textPrimary }}>{i + 1}. {lead.nome}</div>
                     <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted, marginTop: 2 }}>
-                      {lead.cidade as string ?? '—'} · Score {lead.score as number ?? '—'}
-                      {lead.deal_risk_reason && <span style={{ color: '#f39c12' }}> · {lead.deal_risk_reason as string}</span>}
+                      {lead.cidade ?? '—'} · Score {lead.score ?? '—'}
+                      {lead.deal_risk_reason && <span style={{ color: '#f39c12' }}> · {lead.deal_risk_reason}</span>}
                     </div>
                     {lead.deal_next_step && (
-                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#4a90d9', marginTop: 2 }}>↳ {lead.deal_next_step as string}</div>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#4a90d9', marginTop: 2 }}>↳ {lead.deal_next_step}</div>
                     )}
                   </div>
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: RISK_COLORS[(lead.deal_risk_level as RiskLevel) ?? 'verde'], flexShrink: 0 }} />
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: RISK_COLORS[lead.deal_risk_level ?? 'verde'], flexShrink: 0 }} />
                 </div>
               ))}
             </div>
@@ -548,11 +578,23 @@ export default function PortalDealDesk() {
       {tab === 'templates' && (
         <div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-            {['all', 'seller', 'parceiro', 'negociacao', 'objeccao', 'fecho', 'comprador', 'reativacao'].map(tag => (
+            {[
+              ['all',        'Todos'],
+              ['seller',     'Seller'],
+              ['parceiro',   'Parceiro'],
+              ['comprador',  'Comprador'],
+              ['negociacao', 'Negociação'],
+              ['objeccao',   'Objeção'],
+              ['fecho',      'Fecho'],
+              ['reativacao', 'Reativação'],
+              ['pos-reuniao','Pós-Reunião'],
+              ['pre-fecho',  'Pré-Fecho'],
+              ['off-market', 'Off-Market'],
+            ].map(([tag, label]) => (
               <button key={tag} type="button"
                 onClick={() => setTemplateFilter(tag)}
                 style={{ padding: '5px 14px', background: templateFilter === tag ? '#1c4a35' : 'transparent', color: templateFilter === tag ? '#f4f0e6' : textMuted, border: `1px solid ${border}`, fontFamily: "'DM Mono', monospace", fontSize: '.45rem', letterSpacing: '.08em', cursor: 'pointer' }}>
-                {tag}
+                {label}
               </button>
             ))}
           </div>
@@ -859,6 +901,120 @@ function DealEditorModal({ lead, darkMode, cardBg, border, textPrimary, textMute
           <div>
             <label style={labelStyle}>Data-Limite Próximo Passo</label>
             <input type="date" value={form.deal_next_step_date} onChange={e => setForm(p => ({ ...p, deal_next_step_date: e.target.value }))} style={inputStyle} />
+          </div>
+        </div>
+
+        {/* ── Buyer Intelligence Panel ── */}
+        {(lead.attack_recommendation || lead.buyer_triad_notes || lead.matched_buyers_count) && (
+          <div style={{ marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', letterSpacing: '.12em', color: textMuted, textTransform: 'uppercase', marginBottom: 10 }}>
+              Buyer Intelligence
+            </div>
+            {lead.deal_priority_score != null && (
+              <div style={{ display: 'flex', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+                <div style={{ padding: '4px 12px', background: '#c9a96e18', border: '1px solid #c9a96e44', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#c9a96e' }}>
+                  Deal Priority Score: {lead.deal_priority_score}/100
+                </div>
+                {lead.best_buyer_match_score != null && (
+                  <div style={{ padding: '4px 12px', background: '#27ae6018', border: '1px solid #27ae6044', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#27ae60' }}>
+                    Best Buyer Match: {lead.best_buyer_match_score}/100
+                  </div>
+                )}
+                {lead.matched_buyers_count != null && (
+                  <div style={{ padding: '4px 12px', background: `${border}`, fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted }}>
+                    {lead.matched_buyers_count} compradores
+                  </div>
+                )}
+              </div>
+            )}
+            {lead.attack_recommendation && (
+              <div style={{ padding: '10px 14px', background: '#c9a96e0a', borderLeft: '3px solid #c9a96e', marginBottom: 10 }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', color: '#c9a96e', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 4 }}>Recomendação de Ataque</div>
+                <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.8rem', color: textPrimary, lineHeight: 1.5 }}>{lead.attack_recommendation}</div>
+              </div>
+            )}
+            {lead.buyer_triad_notes && (
+              <div style={{ padding: '10px 14px', background: darkMode ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)', border: `1px solid ${border}` }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', color: textMuted, textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 4 }}>Top Compradores</div>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textPrimary, lineHeight: 1.7, whiteSpace: 'pre-line' }}>{lead.buyer_triad_notes}</div>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+              {/* Parse buyer names from triad notes: "A: Name | ..." */}
+              {lead.buyer_triad_notes && lead.buyer_triad_notes.split('\n').map((line, i) => {
+                const nameMatch = line.match(/^[ABC]:\s*([^|]+)/)
+                const name = nameMatch ? nameMatch[1].trim() : null
+                if (!name) return null
+                const tplBody = `Bom dia, ${name}.\nFalo da Agency Group. Tenho neste momento um ativo off-market com perfil que pode encaixar no que procura: ${lead.nome}.\nTrabalhamos com total discrição. Faz sentido partilhar os detalhes consigo?`
+                return (
+                  <button key={`buyer-${i}`} type="button"
+                    onClick={() => { navigator.clipboard.writeText(tplBody) }}
+                    style={{ padding: '6px 14px', background: '#1c4a3522', border: '1px solid #1c4a3555', color: '#27ae60', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', cursor: 'pointer', letterSpacing: '.06em' }}>
+                    📱 Buyer {['A','B','C'][i]} — {name.split(' ')[0]}
+                  </button>
+                )
+              })}
+              <button type="button"
+                onClick={() => {
+                  const tpl = `Bom dia, falo da Agency Group.\nTemos atualmente procura ativa para ativos com este perfil na sua zona.\nFaz sentido fazermos uma avaliação sem compromisso?`
+                  navigator.clipboard.writeText(tpl)
+                }}
+                style={{ padding: '6px 14px', background: 'transparent', border: `1px solid ${border}`, color: '#4a90d9', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', cursor: 'pointer' }}>
+                📞 Seller
+              </button>
+              <button type="button"
+                onClick={async () => {
+                  try {
+                    const r = await fetch(`/api/offmarket-leads/${lead.id}/match-buyers`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({}),
+                    })
+                    if (r.ok) {
+                      const d = await r.json()
+                      onPatch({
+                        matched_buyers_count:   d.total_matches,
+                        best_buyer_match_score: d.best_match_score,
+                        buyer_match_notes:      d.buyer_match_notes ?? null,
+                        deal_priority_score:    d.deal_priority_score ?? null,
+                        attack_recommendation:  d.attack_recommendation ?? null,
+                        buyer_triad_notes:      d.buyer_triad_notes ?? null,
+                        matched_to_buyers:      (d.total_matches ?? 0) > 0 && (d.best_match_score ?? 0) >= 60,
+                      })
+                    }
+                  } catch { /* silent */ }
+                }}
+                style={{ padding: '6px 14px', background: 'transparent', border: `1px solid ${border}`, color: textMuted, fontFamily: "'DM Mono', monospace", fontSize: '.42rem', cursor: 'pointer' }}>
+                ↺ Re-Match
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Quick Actions ── */}
+        <div style={{ marginTop: 16, borderTop: `1px solid ${border}`, paddingTop: 14 }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.12em', color: textMuted, textTransform: 'uppercase', marginBottom: 10 }}>Ações Rápidas</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button type="button"
+              onClick={() => onPatch({ negotiation_status: 'offer_received', sla_contacted_at: new Date().toISOString(), deal_next_step: 'Confirmar proposta com vendedor', deal_next_step_date: new Date(Date.now() + 2 * 86400000).toISOString() })}
+              style={{ padding: '8px 16px', background: '#4a90d918', border: '1px solid #4a90d955', color: '#4a90d9', fontFamily: "'DM Mono', monospace", fontSize: '.45rem', cursor: 'pointer', letterSpacing: '.06em' }}>
+              ✉️ Proposta Enviada
+            </button>
+            <button type="button"
+              onClick={() => onPatch({ negotiation_status: 'terms_agreed', deal_next_step: 'Preparar minuta CPCV', deal_path: 'preclose', deal_next_step_date: new Date(Date.now() + 3 * 86400000).toISOString() })}
+              style={{ padding: '8px 16px', background: '#9b59b618', border: '1px solid #9b59b655', color: '#9b59b6', fontFamily: "'DM Mono', monospace", fontSize: '.45rem', cursor: 'pointer', letterSpacing: '.06em' }}>
+              📄 CPCV em Preparação
+            </button>
+            <button type="button"
+              onClick={() => onPatch({ cpcv_signed_at: new Date().toISOString(), deal_next_step: 'Preparar documentação escritura', deal_next_step_date: new Date(Date.now() + 7 * 86400000).toISOString() })}
+              style={{ padding: '8px 16px', background: '#c9a96e18', border: '1px solid #c9a96e55', color: '#c9a96e', fontFamily: "'DM Mono', monospace", fontSize: '.45rem', cursor: 'pointer', letterSpacing: '.06em' }}>
+              ✅ CPCV Assinado
+            </button>
+            <button type="button"
+              onClick={() => onPatch({ status: 'closed_won', escritura_done_at: new Date().toISOString(), deal_next_step: null })}
+              style={{ padding: '8px 16px', background: '#27ae6018', border: '1px solid #27ae6055', color: '#27ae60', fontFamily: "'DM Mono', monospace", fontSize: '.45rem', cursor: 'pointer', letterSpacing: '.06em' }}>
+              🏆 Escritura Concluída
+            </button>
           </div>
         </div>
 

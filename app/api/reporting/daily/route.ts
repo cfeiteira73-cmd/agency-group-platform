@@ -21,7 +21,8 @@ export async function GET(): Promise<NextResponse> {
     todayStart.setHours(0, 0, 0, 0)
     const todayEnd = new Date(now)
     todayEnd.setHours(23, 59, 59, 999)
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    // stale_hot_lead threshold = 14 days (consistent with risk-flags.ts fallback)
+    const staleAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
 
     const [
       r_today_leads,
@@ -40,9 +41,9 @@ export async function GET(): Promise<NextResponse> {
         .gte('created_at', todayStart.toISOString())
         .order('score', { ascending: false }),
 
-      // P0: score >= 80, status = new
+      // P0: score >= 80, status = new — include buyer intelligence for attack recommendations
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason')
+        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score')
         .gte('score', 80)
         .eq('status', 'new')
         .order('score', { ascending: false })
@@ -50,16 +51,16 @@ export async function GET(): Promise<NextResponse> {
 
       // P1: score 70-79, status = new
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason')
+        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score')
         .gte('score', 70)
         .lt('score', 80)
         .eq('status', 'new')
         .order('score', { ascending: false })
         .limit(20),
 
-      // Pre-close candidates
+      // Pre-close candidates — include created_at + sla_contacted_at for SLA display
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,matched_buyers_count,best_buyer_match_score,buyer_match_notes,status,contacto,assigned_to')
+        .select('id,nome,cidade,score,matched_buyers_count,best_buyer_match_score,buyer_match_notes,status,contacto,assigned_to,created_at,sla_contacted_at,deal_priority_score,attack_recommendation,buyer_triad_notes')
         .eq('preclose_candidate', true)
         .not('status', 'in', '("closed_won","closed_lost","not_interested")')
         .order('best_buyer_match_score', { ascending: false })
@@ -78,7 +79,7 @@ export async function GET(): Promise<NextResponse> {
       s.from('offmarket_leads')
         .select('id,nome,cidade,score,status,contacto,last_contact_at,assigned_to')
         .in('status', ['contacted', 'interested'])
-        .lt('last_contact_at', weekAgo.toISOString())
+        .lt('last_contact_at', staleAgo.toISOString())
         .order('score', { ascending: false })
         .limit(20),
 

@@ -30,6 +30,10 @@ const ALLOWED_PATCH_FIELDS = new Set([
   'escritura_target_date', 'escritura_done_at',
   'deal_risk_level', 'deal_risk_reason', 'deal_owner',
   'deal_next_step', 'deal_next_step_date',
+  // Migration 007: buyer intelligence + deal routing
+  'deal_priority_score', 'deal_path', 'attack_recommendation',
+  'preclose_notes', 'buyer_triad_notes',
+  'primary_buyer_id', 'secondary_buyer_id', 'tertiary_buyer_id',
 ])
 
 export async function GET(

@@ -53,41 +53,78 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 }
 
 // Fallback: compute risk flags from raw offmarket_leads if view doesn't exist yet
+// Uses a two-level fallback: try full column set (migrations 004+005), then minimal base columns
 async function computeRiskFlagsInline(req: NextRequest): Promise<NextResponse> {
-  try {
-    const limit = Math.min(100, parseInt(req.nextUrl.searchParams.get('limit') ?? '50', 10))
+  const limit = Math.min(100, parseInt(req.nextUrl.searchParams.get('limit') ?? '50', 10))
 
+  // Level 1: full column list (requires migrations 004 + 005)
+  const FULL_COLS = 'id,nome,score,status,assigned_to,deal_risk_level,created_at,last_contact_at,next_followup_at,sla_breach,sla_contacted_at,matched_to_buyers,buyer_matched_at,cpcv_target_date,cpcv_signed_at,escritura_target_date,escritura_done_at,deal_next_step_date'
+  // Level 2: base columns only (always exist — pre-migration)
+  const BASE_COLS = 'id,nome,score,status,assigned_to,created_at,last_contact_at,next_followup_at'
+
+  let leads: Record<string, unknown>[] | null = null
+  let hasDealCols = true
+
+  try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: leads, error } = await (supabaseAdmin as any)
+    const { data, error } = await (supabaseAdmin as any)
       .from('offmarket_leads')
-      .select('id,nome,score,status,assigned_to,deal_risk_level,created_at,last_contact_at,next_followup_at,sla_breach,sla_contacted_at,matched_to_buyers,buyer_matched_at,cpcv_target_date,cpcv_signed_at,escritura_target_date,escritura_done_at,deal_next_step_date')
+      .select(FULL_COLS)
       .not('status', 'in', '("closed_won","closed_lost")')
       .order('score', { ascending: false })
       .limit(limit)
 
     if (error) throw error
+    leads = data ?? []
+  } catch {
+    // Migrations 004/005 not yet run — fall back to base columns
+    console.warn('[risk-flags fallback] Full cols unavailable, using base cols')
+    hasDealCols = false
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabaseAdmin as any)
+        .from('offmarket_leads')
+        .select(BASE_COLS)
+        .not('status', 'in', '("closed_won","closed_lost")')
+        .order('score', { ascending: false })
+        .limit(limit)
 
-    const now = Date.now()
+      if (error) throw error
+      leads = data ?? []
+    } catch (err2) {
+      console.error('[risk-flags fallback L2]', err2)
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+  }
 
-    const flagged = (leads ?? []).map((lead: Record<string, unknown>) => {
-      const flags: string[] = []
-      const createdAt = new Date(lead.created_at as string).getTime()
-      const lastContact = lead.last_contact_at ? new Date(lead.last_contact_at as string).getTime() : null
-      const score = lead.score as number | null
+  const now = Date.now()
 
+  const flagged = (leads ?? []).map((lead: Record<string, unknown>) => {
+    const flags: string[] = []
+    const createdAt = new Date(lead.created_at as string).getTime()
+    const lastContact = lead.last_contact_at ? new Date(lead.last_contact_at as string).getTime() : null
+    const score = lead.score as number | null
+
+    // Flags available regardless of migration state
+    if (score !== null && score >= 70 && lead.status === 'new') {
+      const hours = (now - createdAt) / 3600000
+      if (hours > 2) flags.push('high_score_no_action')
+    }
+    if (lead.next_followup_at && new Date(lead.next_followup_at as string).getTime() < now) flags.push('no_followup_set')
+    if (!lead.assigned_to) flags.push('no_owner_assigned')
+    if (lastContact && ['contacted', 'interested'].includes(lead.status as string)) {
+      if ((now - lastContact) / 86400000 > 14) flags.push('stale_hot_lead')
+    }
+
+    // Flags that require migration 004+005 columns
+    if (hasDealCols) {
       if (lead.sla_breach) flags.push('sla_breach')
       if (score !== null && score >= 70 && !lead.sla_contacted_at && lead.status === 'new') {
-        const hours = (now - createdAt) / 3600000
-        if (hours > 2) flags.push('high_score_no_action')
+        // More precise: already added high_score_no_action above; skip duplicate
       }
-      if (lead.next_followup_at && new Date(lead.next_followup_at as string).getTime() < now) flags.push('no_followup_set')
-      if (!lead.assigned_to) flags.push('no_owner_assigned')
       if (lead.matched_to_buyers && lead.status === 'new') {
         const matchedAt = lead.buyer_matched_at ? new Date(lead.buyer_matched_at as string).getTime() : createdAt
         if ((now - matchedAt) / 3600000 > 4) flags.push('matched_not_contacted')
-      }
-      if (lastContact && ['contacted','interested'].includes(lead.status as string)) {
-        if ((now - lastContact) / 86400000 > 14) flags.push('stale_hot_lead')
       }
       if (lead.cpcv_target_date && !lead.cpcv_signed_at) {
         const daysLeft = (new Date(lead.cpcv_target_date as string).getTime() - now) / 86400000
@@ -100,13 +137,10 @@ async function computeRiskFlagsInline(req: NextRequest): Promise<NextResponse> {
       if (lead.deal_next_step_date && new Date(lead.deal_next_step_date as string).getTime() < now) {
         flags.push('next_step_overdue')
       }
+    }
 
-      return { ...lead, risk_flags: flags }
-    }).filter((l: { risk_flags: string[] }) => l.risk_flags.length > 0)
+    return { ...lead, risk_flags: flags }
+  }).filter((l: { risk_flags: string[] }) => l.risk_flags.length > 0)
 
-    return NextResponse.json({ data: flagged, total: flagged.length })
-  } catch (err) {
-    console.error('[risk-flags fallback]', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+  return NextResponse.json({ data: flagged, total: flagged.length, partial: !hasDealCols })
 }

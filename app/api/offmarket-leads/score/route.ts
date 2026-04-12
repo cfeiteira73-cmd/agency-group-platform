@@ -40,13 +40,26 @@ const GEO_TIER_MADEIRA_AZORES = [
   'açores', 'azores', 'ponta delgada', 'angra do heroísmo', 'horta',
 ]
 
+// Normalize string: lowercase + remove diacritics
+function normGeo(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+// Pre-normalize all tier arrays for O(1) lookup cost (computed once at module load)
+const GEO_TIER_1_NORM = GEO_TIER_1.map(normGeo)
+const GEO_TIER_2_NORM = GEO_TIER_2.map(normGeo)
+const GEO_TIER_MADEIRA_AZORES_NORM = GEO_TIER_MADEIRA_AZORES.map(normGeo)
+
 function getGeoTier(cidade?: string | null, localizacao?: string | null): 1 | 2 | 3 | 0 {
-  const haystack = `${cidade ?? ''} ${localizacao ?? ''}`.toLowerCase()
-  if (GEO_TIER_1.some(k => haystack.includes(k))) return 1
-  if (GEO_TIER_MADEIRA_AZORES.some(k => haystack.includes(k))) return 2
-  if (GEO_TIER_2.some(k => haystack.includes(k))) return 2
-  if (haystack.trim().length > 0) return 3
-  return 0
+  // Normalize haystack: lowercase + remove diacritics + remove country suffix (", Portugal")
+  const raw = `${cidade ?? ''} ${localizacao ?? ''}`
+  const haystack = normGeo(raw).replace(/,\s*(portugal|espanha|spain|madeira|azores|acores)\s*$/gi, '').trim()
+  if (!haystack) return 0
+
+  if (GEO_TIER_1_NORM.some(k => haystack.includes(k) || k.includes(haystack.split(/[\s,]+/)[0] ?? ''))) return 1
+  if (GEO_TIER_MADEIRA_AZORES_NORM.some(k => haystack.includes(k))) return 2
+  if (GEO_TIER_2_NORM.some(k => haystack.includes(k))) return 2
+  return 3
 }
 
 // ---------------------------------------------------------------------------
@@ -71,8 +84,14 @@ const ASSET_TYPE_SCORE: Record<string, number> = {
 
 function getAssetTypeScore(tipoAtivo?: string | null): number {
   if (!tipoAtivo) return 5
+  // Normalize: lowercase, trim, remove diacritics for reliable lookup
   const norm = tipoAtivo.toLowerCase().trim()
-  return ASSET_TYPE_SCORE[norm] ?? 8
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  // Also try normalized key lookup in ASSET_TYPE_SCORE
+  const normKey = Object.keys(ASSET_TYPE_SCORE).find(k =>
+    k.normalize('NFD').replace(/[\u0300-\u036f]/g, '') === norm
+  )
+  return normKey ? ASSET_TYPE_SCORE[normKey] : (ASSET_TYPE_SCORE[norm] ?? 8)
 }
 
 // ---------------------------------------------------------------------------

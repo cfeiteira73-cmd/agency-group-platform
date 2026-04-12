@@ -15,6 +15,18 @@
     {
       "path": "/api/cron/purge-conversations",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/offmarket-leads/score?limit=100&only_pending=true",
+      "schedule": "0 7 * * 1-5"
+    },
+    {
+      "path": "/api/reporting/daily",
+      "schedule": "30 8 * * 1-5"
+    },
+    {
+      "path": "/api/buyers/score?limit=100",
+      "schedule": "0 6 * * 1-5"
     }
   ]
 }

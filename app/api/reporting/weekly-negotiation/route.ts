@@ -73,21 +73,21 @@ export async function GET(): Promise<NextResponse> {
         .limit(10),
 
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,deal_risk_level,deal_risk_reason,deal_next_step,deal_next_step_date,negotiation_status,cpcv_target_date,escritura_target_date,assigned_to')
+        .select('id,nome,cidade,score,deal_risk_level,deal_risk_reason,deal_next_step,deal_next_step_date,negotiation_status,cpcv_target_date,escritura_target_date,assigned_to,deal_priority_score,attack_recommendation,buyer_triad_notes')
         .eq('deal_risk_level', 'vermelho')
         .is('escritura_done_at', null)
         .order('score', { ascending: false })
         .limit(10),
 
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,deal_risk_level,deal_risk_reason,deal_next_step,deal_next_step_date,negotiation_status,assigned_to')
+        .select('id,nome,cidade,score,deal_risk_level,deal_risk_reason,deal_next_step,deal_next_step_date,negotiation_status,assigned_to,deal_priority_score,attack_recommendation,buyer_triad_notes')
         .eq('deal_risk_level', 'amarelo')
         .is('escritura_done_at', null)
         .order('score', { ascending: false })
         .limit(15),
 
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,deal_risk_reason,deal_next_step,assigned_to')
+        .select('id,nome,cidade,score,deal_risk_reason,deal_next_step,assigned_to,deal_priority_score,attack_recommendation,buyer_triad_notes')
         .eq('negotiation_status', 'blocked')
         .order('score', { ascending: false })
         .limit(10),

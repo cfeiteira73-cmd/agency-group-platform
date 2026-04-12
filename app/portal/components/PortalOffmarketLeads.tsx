@@ -42,6 +42,13 @@ interface OffmarketLead {
   matched_buyers_count: number | null
   best_buyer_match_score: number | null
   buyer_match_notes: string | null
+  // Buyer Intelligence — Migration 007 / Matching 2.0
+  deal_priority_score: number | null
+  attack_recommendation: string | null
+  buyer_triad_notes: string | null
+  primary_buyer_id: string | null
+  secondary_buyer_id: string | null
+  tertiary_buyer_id: string | null
   created_at: string
   updated_at: string
 }
@@ -355,12 +362,17 @@ export default function PortalOffmarketLeads() {
                   {[lead.tipo_ativo, lead.cidade || lead.localizacao].filter(Boolean).join(' · ') || '—'}
                 </div>
               </div>
-              {/* Score */}
-              <div style={{ textAlign: 'right', minWidth: 36 }}>
+              {/* Score + DPS */}
+              <div style={{ textAlign: 'right', minWidth: 52 }}>
                 {lead.score !== null
                   ? <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.65rem', color: scoreColor(lead.score), fontWeight: 600 }}>{lead.score}</span>
                   : <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', color: textMuted }}>—</span>
                 }
+                {lead.deal_priority_score !== null && (
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: '#c9a96e', letterSpacing: '.04em' }}>
+                    DPS {lead.deal_priority_score}
+                  </div>
+                )}
               </div>
               {/* Urgency */}
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: URGENCY_COLORS[lead.urgency], flexShrink: 0 }} title={lead.urgency} />
@@ -414,15 +426,40 @@ export default function PortalOffmarketLeads() {
               </div>
             )}
 
-            {/* Buyer match info */}
-            {selected.matched_to_buyers && (
-              <div style={{ padding: '10px 14px', background: '#9b59b611', border: '1px solid #9b59b633' }}>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', color: '#9b59b6', textTransform: 'uppercase', marginBottom: 4 }}>Compradores Matched</div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.5rem', color: textPrimary, lineHeight: 1.5 }}>
-                  {selected.matched_buyers_count} matches · Best: {selected.best_buyer_match_score}/100
+            {/* Buyer Intelligence — Matching 2.0 */}
+            {(selected.matched_to_buyers || selected.deal_priority_score !== null) && (
+              <div style={{ padding: '12px 14px', background: '#9b59b611', border: '1px solid #9b59b633', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', color: '#9b59b6', textTransform: 'uppercase' }}>Compradores Matched</div>
+                  {selected.deal_priority_score !== null && (
+                    <div style={{ padding: '2px 8px', background: '#c9a96e22', border: '1px solid #c9a96e55', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#c9a96e' }}>
+                      DPS {selected.deal_priority_score}
+                    </div>
+                  )}
                 </div>
+                {selected.matched_buyers_count !== null && (
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.5rem', color: textPrimary, lineHeight: 1.5 }}>
+                    {selected.matched_buyers_count} matches · Best: {selected.best_buyer_match_score}/100
+                  </div>
+                )}
                 {selected.buyer_match_notes && (
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: textMuted, marginTop: 4, lineHeight: 1.5 }}>{selected.buyer_match_notes}</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', color: textMuted, lineHeight: 1.5 }}>{selected.buyer_match_notes}</div>
+                )}
+                {/* Buyer Triad */}
+                {selected.buyer_triad_notes && (
+                  <div style={{ borderTop: '1px solid #9b59b622', paddingTop: 8 }}>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', color: '#9b59b6', textTransform: 'uppercase', marginBottom: 4 }}>Tríade de Compradores</div>
+                    {selected.buyer_triad_notes.split(' | ').map((line, i) => (
+                      <div key={i} style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', color: textPrimary, lineHeight: 1.8 }}>{line}</div>
+                    ))}
+                  </div>
+                )}
+                {/* Attack Recommendation */}
+                {selected.attack_recommendation && (
+                  <div style={{ borderTop: '1px solid #9b59b622', paddingTop: 8 }}>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.1em', color: '#c9a96e', textTransform: 'uppercase', marginBottom: 4 }}>⚡ Recomendação de Ataque</div>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: textPrimary, lineHeight: 1.6 }}>{selected.attack_recommendation}</div>
+                  </div>
                 )}
               </div>
             )}
@@ -432,8 +469,17 @@ export default function PortalOffmarketLeads() {
               <ScoreButton leadId={selected.id} darkMode={darkMode} onScored={(s, r) => {
                 setLeads(prev => prev.map(l => l.id === selected.id ? { ...l, score: s, score_reason: r, score_status: 'scored' } : l))
               }} />
-              <MatchBuyersButton leadId={selected.id} darkMode={darkMode} onMatched={(count, best, notes) => {
-                setLeads(prev => prev.map(l => l.id === selected.id ? { ...l, matched_buyers_count: count, best_buyer_match_score: best, buyer_match_notes: notes, matched_to_buyers: count > 0 && best >= 60 } : l))
+              <MatchBuyersButton leadId={selected.id} darkMode={darkMode} onMatched={(count, best, notes, dps, attackRec, triadNotes) => {
+                setLeads(prev => prev.map(l => l.id === selected.id ? {
+                  ...l,
+                  matched_buyers_count: count,
+                  best_buyer_match_score: best,
+                  buyer_match_notes: notes,
+                  matched_to_buyers: count > 0 && best >= 60,
+                  deal_priority_score: dps ?? l.deal_priority_score,
+                  attack_recommendation: attackRec ?? l.attack_recommendation,
+                  buyer_triad_notes: triadNotes ?? l.buyer_triad_notes,
+                } : l))
               }} />
               <button
                 type="button"
@@ -670,10 +716,19 @@ function ScoreButton({ leadId, darkMode, onScored }: {
 function MatchBuyersButton({ leadId, darkMode, onMatched }: {
   leadId: string
   darkMode: boolean
-  onMatched: (count: number, best: number, notes: string) => void
+  onMatched: (
+    count: number,
+    best: number,
+    notes: string,
+    dps: number | null,
+    attackRec: string | null,
+    triadNotes: string | null,
+  ) => void
 }) {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ total: number; best: number } | null>(null)
+  const [result, setResult] = useState<{ total: number; best: number; dps: number | null } | null>(null)
+  // darkMode consumed to avoid unused-var lint
+  void darkMode
 
   async function handleMatch() {
     setLoading(true)
@@ -686,8 +741,16 @@ function MatchBuyersButton({ leadId, darkMode, onMatched }: {
       })
       const data = await res.json()
       if (res.ok) {
-        setResult({ total: data.total_matches, best: data.best_match_score })
-        onMatched(data.total_matches, data.best_match_score, data.buyer_match_notes ?? '')
+        const dps: number | null = data.deal_priority_score ?? null
+        setResult({ total: data.total_matches, best: data.best_match_score, dps })
+        onMatched(
+          data.total_matches,
+          data.best_match_score,
+          data.buyer_match_notes ?? '',
+          dps,
+          data.attack_recommendation ?? null,
+          data.buyer_triad_notes ?? null,
+        )
       }
     } catch {
       // silent fail
@@ -709,6 +772,7 @@ function MatchBuyersButton({ leadId, darkMode, onMatched }: {
       {result !== null && (
         <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', color: result.total > 0 ? '#9b59b6' : '#95a5a6' }}>
           {result.total} matches · {result.best}/100
+          {result.dps !== null && ` · DPS ${result.dps}`}
         </span>
       )}
     </div>
