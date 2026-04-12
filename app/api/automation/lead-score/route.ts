@@ -327,44 +327,59 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const result = scoreLeadRequest(leadData)
 
-    // --- Upsert to Supabase contacts table (best-effort, non-blocking) ---
-    try {
-      const upsertPayload: Record<string, unknown> = {
-        full_name:            leadData.name,
-        email:                leadData.email ?? null,
-        phone:                leadData.phone ?? null,
-        nationality:          leadData.nationality ?? null,
-        language:             leadData.language ?? null,
-        status:               result.tier === 'A' ? 'active' : result.tier === 'B' ? 'prospect' : 'lead',
-        lead_tier:            result.tier,
-        lead_score:           result.score,
-        lead_score_breakdown: { ...result.breakdown } as Record<string, number>,
-        source:               leadData.source ?? null,
-        ai_suggested_action:  result.recommended_action,
-        detected_intent:      deriveIntent(leadData.source, leadData.message),
-        timeline:             leadData.timeline ?? null,
-        gdpr_consent:         !!(leadData.email || leadData.phone),
-        next_followup_at:     (() => {
-          const d = new Date()
-          const isSeller = deriveIntent(leadData.source, leadData.message) === 'sell'
-          if (isSeller) {
-            // Seller leads → contact within 2h regardless of tier
-            d.setHours(d.getHours() + 2)
-          } else {
-            const daysMap: Record<'A' | 'B' | 'C', number> = { A: 1, B: 3, C: 7 }
-            d.setDate(d.getDate() + daysMap[result.tier])
-          }
-          return d.toISOString()
-        })(),
-        updated_at:           new Date().toISOString(),
-      }
+    // --- Upsert to Supabase contacts table (best-effort, up to 3 retries) ---
+    const upsertPayload: Record<string, unknown> = {
+      full_name:            leadData.name,
+      email:                leadData.email ?? null,
+      phone:                leadData.phone ?? null,
+      nationality:          leadData.nationality ?? null,
+      language:             leadData.language ?? null,
+      status:               result.tier === 'A' ? 'active' : result.tier === 'B' ? 'prospect' : 'lead',
+      lead_tier:            result.tier,
+      lead_score:           result.score,
+      lead_score_breakdown: { ...result.breakdown } as Record<string, number>,
+      source:               leadData.source ?? null,
+      ai_suggested_action:  result.recommended_action,
+      detected_intent:      deriveIntent(leadData.source, leadData.message),
+      timeline:             leadData.timeline ?? null,
+      gdpr_consent:         !!(leadData.email || leadData.phone),
+      next_followup_at:     (() => {
+        const d = new Date()
+        const isSeller = deriveIntent(leadData.source, leadData.message) === 'sell'
+        if (isSeller) {
+          d.setHours(d.getHours() + 2)
+        } else {
+          const daysMap: Record<'A' | 'B' | 'C', number> = { A: 1, B: 3, C: 7 }
+          d.setDate(d.getDate() + daysMap[result.tier])
+        }
+        return d.toISOString()
+      })(),
+      updated_at:           new Date().toISOString(),
+    }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabaseAdmin.from('contacts') as any)
-        .upsert(upsertPayload, { onConflict: 'email', ignoreDuplicates: false })
-    } catch (supabaseError) {
-      // Non-fatal: Supabase unavailable or upsert failed — continue
-      console.warn('[lead-score] Supabase upsert skipped:', supabaseError instanceof Error ? supabaseError.message : 'unknown')
+    let upsertOk = false
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: upsertError } = await (supabaseAdmin.from('contacts') as any)
+          .upsert(upsertPayload, { onConflict: 'email', ignoreDuplicates: false })
+        if (upsertError) throw upsertError
+        console.log(`[lead-score] Supabase upsert OK — attempt ${attempt} — tier ${result.tier} — score ${result.score}`)
+        upsertOk = true
+        break
+      } catch (supabaseError) {
+        const msg = supabaseError instanceof Error ? supabaseError.message : String(supabaseError)
+        if (attempt < 3) {
+          console.warn(`[lead-score] Supabase upsert attempt ${attempt} failed: ${msg} — retrying...`)
+          await new Promise(r => setTimeout(r, attempt * 300))
+        } else {
+          console.error(`[lead-score] Supabase upsert FAILED after 3 attempts: ${msg} — score ${result.score} not persisted`)
+        }
+      }
+    }
+    if (!upsertOk) {
+      // Fallback: log the full payload so ops can manually recover
+      console.error('[lead-score] FALLBACK — upsert payload:', JSON.stringify(upsertPayload))
     }
 
     return NextResponse.json(result, { status: 200 })

@@ -176,6 +176,28 @@ export default function VenderImovelPortugal() {
           </div>
         </section>
 
+        {/* ── Mid CTA ── */}
+        <section style={{ borderTop: '1px solid rgba(14,14,13,.06)', borderBottom: '1px solid rgba(14,14,13,.06)', padding: '32px 24px', background: '#fff' }}>
+          <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+            <div>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.5rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(14,14,13,.3)', marginBottom: 8 }}>
+                Resposta em menos de 2h
+              </div>
+              <p style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)", fontSize: '1.2rem', fontWeight: 300, color: '#0e0e0d', margin: 0, lineHeight: 1.3 }}>
+                Avaliação confidencial do seu imóvel, sem compromisso.
+              </p>
+            </div>
+            <a href="https://wa.me/351919948986?text=Olá,%20pretendo%20saber%20o%20valor%20do%20meu%20imóvel%20de%20forma%20confidencial." target="_blank" rel="noopener noreferrer" style={{
+              background: '#1c4a35', color: '#f4f0e6',
+              padding: '14px 32px', textDecoration: 'none',
+              fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
+              letterSpacing: '.16em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
+            }}>
+              Falar no WhatsApp →
+            </a>
+          </div>
+        </section>
+
         {/* ── Mercado por zona ── */}
         <section style={{ background: '#0c1f15', padding: '72px 24px' }}>
           <div style={{ maxWidth: 720, margin: '0 auto' }}>

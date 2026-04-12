@@ -93,6 +93,8 @@ export default function ImovelClient({ id }: { id: string }) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [schedulingOpen, setSchedulingOpen] = useState(false)
   const [floorplanOpen, setFloorplanOpen] = useState(false)
+  const [sellerCtaVisible, setSellerCtaVisible] = useState(false)
+  const [sellerCtaDismissed, setSellerCtaDismissed] = useState(false)
   // Touch swipe support
   const touchStartX = useRef<number | null>(null)
 
@@ -113,6 +115,22 @@ export default function ImovelClient({ id }: { id: string }) {
     }, 5000)
     return () => clearTimeout(timer)
   }, [id])
+
+  // Seller CTA — appear at 60% scroll depth (once per session)
+  useEffect(() => {
+    if (sellerCtaDismissed) return
+    const dismissed = sessionStorage.getItem('ag_seller_cta_dismissed')
+    if (dismissed) { setSellerCtaDismissed(true); return }
+    const handleScroll = () => {
+      const scrolled = window.scrollY
+      const total = document.body.scrollHeight - window.innerHeight
+      if (total > 0 && scrolled / total >= 0.6 && !sellerCtaVisible) {
+        setSellerCtaVisible(true)
+      }
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [sellerCtaVisible, sellerCtaDismissed])
 
   // Generate gallery frames: use real photos when available, fallback to gradients
   const galleryFrames = useMemo(() => {
@@ -1350,10 +1368,63 @@ export default function ImovelClient({ id }: { id: string }) {
         />
       )}
 
+      {/* ── Seller CTA — slides up at 60% scroll ── */}
+      {sellerCtaVisible && !sellerCtaDismissed && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 800,
+          background: '#0c1f15', borderTop: '1px solid rgba(201,169,110,.2)',
+          padding: '14px 32px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 12,
+          animation: 'slideUp .35s ease-out',
+        }}>
+          <p style={{
+            fontFamily: "'Jost', sans-serif", fontSize: '.82rem',
+            color: 'rgba(244,240,230,.7)', margin: 0,
+          }}>
+            <span style={{ color: '#c9a96e', fontWeight: 600 }}>Também tem um imóvel para vender?</span>
+            {' '}Avaliação confidencial, sem compromisso.
+          </p>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+            <a
+              href="/vender-imovel-portugal"
+              style={{
+                background: '#c9a96e', color: '#0c1f15',
+                padding: '10px 22px', textDecoration: 'none',
+                fontFamily: "'DM Mono', monospace", fontSize: '.5rem',
+                letterSpacing: '.14em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+              }}
+              onClick={() => track('seller_cta_click', { property_id: id })}
+            >
+              Avaliar o meu imóvel →
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                setSellerCtaDismissed(true)
+                try { sessionStorage.setItem('ag_seller_cta_dismissed', '1') } catch {}
+              }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'rgba(244,240,230,.3)', fontSize: '1.1rem', lineHeight: 1,
+                padding: '4px 8px',
+              }}
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Responsive layout */}
       <style>{`
         @media (max-width: 960px) {
           .imovel-layout { grid-template-columns: 1fr !important; }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
         }
       `}</style>
     </>

@@ -369,7 +369,57 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
       <div className="art-layout">
         {/* Main content */}
         <article className="art-content">
-          {article.content.map((section, idx) => renderSection(section, idx))}
+          {article.content.map((section, idx) => {
+            const midpoint = Math.floor(article.content.length / 2)
+            return (
+              <>
+                {renderSection(section, idx)}
+                {idx === midpoint - 1 && (
+                  <div key="mid-cta" style={{
+                    border: '1px solid rgba(201,169,110,0.25)',
+                    background: 'rgba(201,169,110,0.04)',
+                    padding: '1.5rem',
+                    margin: '2rem 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                  }}>
+                    <p style={{
+                      fontFamily: "'Cormorant', serif",
+                      fontSize: '1.05rem',
+                      fontWeight: 300,
+                      color: '#0c1f15',
+                      margin: 0,
+                      lineHeight: 1.4,
+                    }}>
+                      Portfólio exclusivo · imóveis não publicados
+                    </p>
+                    <a
+                      href="https://wa.me/351919948986"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#1c4a35',
+                        color: '#f4f0e6',
+                        padding: '10px 20px',
+                        textDecoration: 'none',
+                        fontFamily: "'DM Mono', monospace",
+                        fontSize: '0.5rem',
+                        letterSpacing: '0.16em',
+                        textTransform: 'uppercase',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                      }}
+                    >
+                      Aceder ao Portfólio →
+                    </a>
+                  </div>
+                )}
+              </>
+            )
+          })}
 
           {/* Article-end CTA */}
           <div style={{

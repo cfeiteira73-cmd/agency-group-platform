@@ -2,22 +2,22 @@
 import { useState } from 'react'
 
 const REVIEWS = [
-  { autor: 'James Mitchell', pais: 'United Kingdom', flag: '🇬🇧', rating: 5, data: 'Jan 2026',
+  { autor: 'James & Sarah M.', pais: 'United Kingdom', flag: '🇬🇧', rating: 5, data: 'Jan 2026',
     texto: 'Carlos and his team found our dream villa in Cascais in under 3 weeks. The level of service, market knowledge and personal attention is truly world-class. We\'ve bought properties in London, Dubai and Monaco — Agency Group surpasses them all.',
     imovel: 'Villa Quinta da Marinha · €3.8M' },
-  { autor: 'Mohammed Al-Rashidi', pais: 'Dubai, UAE', flag: '🇦🇪', rating: 5, data: 'Dez 2025',
+  { autor: 'Mohammed A.', pais: 'Dubai, UAE', flag: '🇦🇪', rating: 5, data: 'Dez 2025',
     texto: 'The Comporta herdade acquisition was seamlessly executed. Carlos anticipated every regulatory challenge before it arose, negotiated masterfully on our behalf, and delivered 15% below the initial asking price. ROI exceeding projections.',
     imovel: 'Herdade Comporta · €6.5M' },
-  { autor: 'Chen Wei', pais: 'Hong Kong', flag: '🇨🇳', rating: 5, data: 'Nov 2025',
+  { autor: 'Chen W.', pais: 'Hong Kong', flag: '🇨🇳', rating: 5, data: 'Nov 2025',
     texto: 'As overseas buyers navigating Portuguese law for the first time, we needed an advisor we could trust completely. Agency Group provided end-to-end support — from NIF to final deed — with exceptional competence and discretion.',
     imovel: 'Penthouse Príncipe Real · €2.85M' },
-  { autor: 'Sophie Marchand', pais: 'Paris, France', flag: '🇫🇷', rating: 5, data: 'Out 2025',
+  { autor: 'Sophie M.', pais: 'Paris, France', flag: '🇫🇷', rating: 5, data: 'Out 2025',
     texto: 'Notre acquisition à Cascais s\'est déroulée parfaitement. Carlos parle un français impeccable et connaît les implications fiscales NHR mieux que notre propre avocat à Paris. Service cinq étoiles absolu.',
     imovel: 'Apartamento Cascais · €1.35M' },
-  { autor: 'Harald & Ingrid Müller', pais: 'Munich, Germany', flag: '🇩🇪', rating: 5, data: 'Set 2025',
+  { autor: 'Harald & Ingrid M.', pais: 'Munich, Germany', flag: '🇩🇪', rating: 5, data: 'Set 2025',
     texto: 'Wir kauften eine Villa in Sintra durch Agency Group. Der gesamte Prozess — von der ersten Besichtigung bis zur Schlüsselübergabe — war makellos professionell. Das beste Immobilienbüro in Portugal.',
     imovel: 'Quinta Histórica Sintra · €2.8M' },
-  { autor: 'Rafael Uchoa', pais: 'São Paulo, Brasil', flag: '🇧🇷', rating: 5, data: 'Ago 2025',
+  { autor: 'Rafael U.', pais: 'São Paulo, Brasil', flag: '🇧🇷', rating: 5, data: 'Ago 2025',
     texto: 'Encontrei meu apartamento no Príncipe Real através da Agency Group. O Carlos é extremamente profissional e honesto — qualidades raras no mercado imobiliário. O processo foi muito mais simples do que eu esperava.',
     imovel: 'T3 Campo de Ourique · €890K' },
 ]
@@ -32,20 +32,16 @@ export default function ReviewsWidget() {
         <div className="reviews-header" style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'flex-end', marginBottom: '48px', gap: '32px' }}>
           <div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.3em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '14px' }}>
-              Testemunhos · Clientes Verificados
+              Testemunhos · Clientes
             </div>
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: 'clamp(2rem, 3.5vw, 3rem)', color: '#f4f0e6', margin: 0, lineHeight: 1.15 }}>
               O que dizem os nossos clientes
             </h2>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: "'Cormorant', serif", fontSize: '3.5rem', color: '#c9a96e', fontWeight: 300, lineHeight: 1 }}>4.9</div>
+            <div style={{ fontFamily: "'Cormorant', serif", fontSize: '3.5rem', color: '#c9a96e', fontWeight: 300, lineHeight: 1 }}>4.8</div>
             <div style={{ color: '#c9a96e', fontSize: '.9rem', letterSpacing: '.08em', margin: '4px 0' }}>★★★★★</div>
             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase' }}>47 avaliações</div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.25)', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', padding: '3px 8px' }}>● Google</span>
-              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.08em', color: 'rgba(244,240,230,.25)', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', padding: '3px 8px' }}>★ Trustpilot</span>
-            </div>
           </div>
         </div>
 
@@ -61,7 +57,7 @@ export default function ReviewsWidget() {
               {/* Stars + verified */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#c9a96e', fontSize: '.85rem', letterSpacing: '.1em' }}>{'★'.repeat(r.rating)}</span>
-                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.5)', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.15)', padding: '2px 8px', textTransform: 'uppercase' }}>✓ Verificado</span>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.1em', color: 'rgba(201,169,110,.5)', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.15)', padding: '2px 8px', textTransform: 'uppercase' }}>Cliente</span>
               </div>
 
               {/* Text */}
@@ -96,9 +92,9 @@ export default function ReviewsWidget() {
 
         {/* CTA */}
         <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <a href="https://g.page/agencygroup" target="_blank" rel="noopener noreferrer"
+          <a href="https://wa.me/351919948986" target="_blank" rel="noopener noreferrer"
             style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.16em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase', textDecoration: 'none', borderBottom: '1px solid rgba(201,169,110,.2)', paddingBottom: '2px' }}>
-            Ver todas as 47 avaliações →
+            Falar com um Advisor →
           </a>
         </div>
       </div>

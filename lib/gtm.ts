@@ -20,6 +20,8 @@ type TrackEvent =
   | 'qualification_completed'
   | 'mortgage_simulated'
   | 'compare_initiated'
+  | 'seller_cta_click'
+  | 'seller_cta_impression'
 
 export function track(event: TrackEvent, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return
