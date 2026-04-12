@@ -22,6 +22,14 @@ const ALLOWED_PATCH_FIELDS = new Set([
   'matched_to_buyers', 'buyer_matched_at',
   // FASE 13: pre-close flags
   'preclose_candidate', 'outreach_ready', 'institutional_priority',
+  // Wave 10+11: SLA + Deal/Negotiation fields
+  'sla_contacted_at', 'sla_breach',
+  'offer_amount', 'offer_date', 'counter_offer_amount', 'counter_offer_date',
+  'negotiation_status', 'cpcv_target_date', 'cpcv_signed_at',
+  'deposit_received', 'legal_status', 'docs_pending',
+  'escritura_target_date', 'escritura_done_at',
+  'deal_risk_level', 'deal_risk_reason', 'deal_owner',
+  'deal_next_step', 'deal_next_step_date',
 ])
 
 export async function GET(
