@@ -79,8 +79,13 @@ function computeBuyerScore(params: {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const isCron = cronSecret && incomingSecret === cronSecret
+    if (!isCron) {
+      const session = await auth()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const body = await req.json().catch(() => ({}))
     const { contact_id } = body as { contact_id?: string }
@@ -125,8 +130,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const isCron = cronSecret && incomingSecret === cronSecret
+    if (!isCron) {
+      const session = await auth()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { searchParams } = new URL(req.url)
     const limit = Math.min(200, parseInt(searchParams.get('limit') ?? '50'))

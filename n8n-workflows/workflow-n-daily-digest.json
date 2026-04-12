@@ -49,14 +49,21 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=📊 DIGEST DIÁRIO — {{ $json.date }}\n\n🏠 OFF-MARKET\nTotal: {{ $json.total }} leads\nNovos esta semana: {{ $json.new_this_week }}\nScore ≥70: {{ $json.high_score }} prioritários\nPor pontuar: {{ $json.pending_score }}\nScore médio: {{ $json.avg_score }}/100\n\n🤝 PARCEIROS INSTITUCIONAIS\nTotal: {{ $json.partners_total }}\nNovos esta semana: {{ $json.partners_new }}\n\n🔥 LEADS A ACTUAR HOJE:\n{{ $json.top_leads_list }}\n\n📋 CADÊNCIA RECOMENDADA:\n• {{ $json.daily_target }} outreaches WhatsApp/chamada\n• Priorizar score ≥70 e urgência alta\n• 1 reunião de avaliação agendada\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal#offmarket",
-        "additionalFields": {}
+        "url": "https://api.resend.com/emails",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": { "parameters": [
+          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ]},
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify({ from: 'Agency Group <noreply@agencygroup.pt>', to: ['geral@agencygroup.pt'], subject: '📊 Digest Diário Off-Market — ' + $json.date, text: 'DIGEST DIÁRIO — ' + $json.date + '\n\nOFF-MARKET\nTotal: ' + $json.total + ' leads\nNovos esta semana: ' + $json.new_this_week + '\nScore ≥70: ' + $json.high_score + ' prioritários\nPor pontuar: ' + $json.pending_score + '\nScore médio: ' + $json.avg_score + '/100\n\nPARCEIROS INSTITUCIONAIS\nTotal: ' + $json.partners_total + '\nNovos esta semana: ' + $json.partners_new + '\n\nLEADS A ACTUAR HOJE:\n' + $json.top_leads_list + '\n\nCADÊNCIA RECOMENDADA:\n• ' + $json.daily_target + ' outreaches WhatsApp/chamada\n• Priorizar score ≥70 e urgência alta\n• 1 reunião de avaliação agendada\n\nPortal → ' + $env.NEXT_PUBLIC_SITE_URL + '/portal' }) }}" }] },
+        "options": {}
       },
       "id": "n005",
-      "name": "Telegram — Digest diário",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "name": "Email — Digest diário",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [860, 370],
       "continueOnFail": true
     },
@@ -83,7 +90,7 @@
     "HTTP — Fetch KPIs": { "main": [[{ "node": "Code — Preparar digest", "type": "main", "index": 0 }]] },
     "HTTP — Leads novos hoje": { "main": [[{ "node": "Code — Preparar digest", "type": "main", "index": 0 }]] },
     "Code — Preparar digest": { "main": [[
-      { "node": "Telegram — Digest diário", "type": "main", "index": 0 },
+      { "node": "Email — Digest diário", "type": "main", "index": 0 },
       { "node": "HTTP — Auto-score pending", "type": "main", "index": 0 }
     ]]}
   },

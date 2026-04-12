@@ -62,14 +62,21 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=📈 RELATÓRIO SEMANAL — Semana {{ $json.week }}/{{ $json.year }}\n\n━━━━━━━━━━━━━━━━━━━━━\n🏠 OFF-MARKET PIPELINE\n━━━━━━━━━━━━━━━━━━━━━\nTotal leads: {{ $json.total }}\nNovos esta semana: {{ $json.new_this_week }}\nScore ≥70 (prioritários): {{ $json.high_score }}\nScore médio: {{ $json.avg_score }}/100\n\n📊 Por estado: {{ $json.status_breakdown }}\n📡 Por fonte: {{ $json.src_breakdown }}\n\n━━━━━━━━━━━━━━━━━━━━━\n🎯 NEGÓCIO EM CURSO\n━━━━━━━━━━━━━━━━━━━━━\nEm captação activa: {{ $json.captation_active }}\nReuniões agendadas: {{ $json.meetings_scheduled }}\nValor pipeline estimado: {{ $json.pipeline_value }}\n\n🏆 TOP CAPTAÇÕES:\n{{ $json.top_captacao }}\n\n━━━━━━━━━━━━━━━━━━━━━\n🤝 PARCEIROS INSTITUCIONAIS\nTotal rede: {{ $json.partners_total }}\n\n━━━━━━━━━━━━━━━━━━━━━\n📋 METAS PRÓXIMA SEMANA:\n• {{ Math.ceil($json.new_this_week * 1.1) }} novos leads (meta +10%)\n• 5 novas reuniões de avaliação\n• 3 captações formalizadas\n• 20 outreaches/dia\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
-        "additionalFields": {}
+        "url": "https://api.resend.com/emails",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": { "parameters": [
+          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ]},
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify({ from: 'Agency Group <noreply@agencygroup.pt>', to: ['geral@agencygroup.pt'], subject: '📈 Relatório Semanal — Semana ' + $json.week + '/' + $json.year, text: 'RELATÓRIO SEMANAL — Semana ' + $json.week + '/' + $json.year + '\n\nOFF-MARKET PIPELINE\nTotal leads: ' + $json.total + '\nNovos esta semana: ' + $json.new_this_week + '\nScore ≥70: ' + $json.high_score + ' prioritários\nScore médio: ' + $json.avg_score + '/100\n\nPor estado: ' + $json.status_breakdown + '\nPor fonte: ' + $json.src_breakdown + '\n\nNEGÓCIO EM CURSO\nEm captação activa: ' + $json.captation_active + '\nReuniões agendadas: ' + $json.meetings_scheduled + '\nValor pipeline: ' + $json.pipeline_value + '\n\nTOP CAPTAÇÕES:\n' + $json.top_captacao + '\n\nPARCEIROS INSTITUCIONAIS\nTotal rede: ' + $json.partners_total + '\n\nMETAS PRÓXIMA SEMANA:\n• ' + Math.ceil($json.new_this_week * 1.1) + ' novos leads\n• 5 novas reuniões\n• 3 captações formalizadas\n\nPortal → ' + $env.NEXT_PUBLIC_SITE_URL + '/portal' }) }}" }] },
+        "options": {}
       },
       "id": "o006",
-      "name": "Telegram — Relatório semanal",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "name": "Email — Relatório semanal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [860, 350],
       "continueOnFail": true
     }
@@ -83,7 +90,7 @@
     "HTTP — KPI offmarket": { "main": [[{ "node": "Code — Consolidar métricas", "type": "main", "index": 0 }]] },
     "HTTP — Em captação activa": { "main": [[{ "node": "Code — Consolidar métricas", "type": "main", "index": 0 }]] },
     "HTTP — Reuniões agendadas": { "main": [[{ "node": "Code — Consolidar métricas", "type": "main", "index": 0 }]] },
-    "Code — Consolidar métricas": { "main": [[{ "node": "Telegram — Relatório semanal", "type": "main", "index": 0 }]] }
+    "Code — Consolidar métricas": { "main": [[{ "node": "Email — Relatório semanal", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
   "tags": [{ "name": "weekly" }, { "name": "performance" }, { "name": "report" }]

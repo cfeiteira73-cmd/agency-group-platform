@@ -44,14 +44,21 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=🎯 LEAD OFF-MARKET ATRIBUÍDO\n\nLead: {{ $json.nome }}\nScore: {{ $json.score ?? '—' }}/100\nTipo: {{ $json.tipo_ativo ?? '—' }}\nCidade: {{ $json.cidade ?? '—' }}\nValor estimado: {{ $json.price_estimate ? '€' + ($json.price_estimate/1000).toFixed(0) + 'K' : '—' }}\nUrgência: {{ $json.urgency ?? '—' }}\n\n👤 Atribuído a: {{ $json.advisor_name }}\n📧 {{ $json.assigned_advisor }}\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal#offmarket",
-        "additionalFields": {}
+        "url": "https://api.resend.com/emails",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": { "parameters": [
+          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ]},
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify({ from: 'Agency Group <noreply@agencygroup.pt>', to: [$json.assigned_advisor, 'geral@agencygroup.pt'], subject: '🎯 Lead Atribuído: ' + $json.nome + ' → ' + $json.advisor_name, text: 'LEAD OFF-MARKET ATRIBUÍDO\n\nLead: ' + $json.nome + '\nScore: ' + ($json.score||'—') + '/100\nTipo: ' + ($json.tipo_ativo||'—') + '\nCidade: ' + ($json.cidade||'—') + '\nValor estimado: ' + ($json.price_estimate ? '€' + ($json.price_estimate/1000).toFixed(0) + 'K' : '—') + '\nUrgência: ' + ($json.urgency||'—') + '\n\nAtribuído a: ' + $json.advisor_name + '\nEmail: ' + $json.assigned_advisor + '\n\nPortal → ' + $env.NEXT_PUBLIC_SITE_URL + '/portal' }) }}" }] },
+        "options": {}
       },
       "id": "m004",
-      "name": "Telegram — Notificar atribuição",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "name": "Email — Notificar atribuição",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [860, 300],
       "continueOnFail": true
     },
@@ -73,7 +80,7 @@
       { "node": "HTTP — PATCH assigned_to", "type": "main", "index": 0 },
       { "node": "Respond — 200 OK", "type": "main", "index": 0 }
     ]]},
-    "HTTP — PATCH assigned_to": { "main": [[{ "node": "Telegram — Notificar atribuição", "type": "main", "index": 0 }]] }
+    "HTTP — PATCH assigned_to": { "main": [[{ "node": "Email — Notificar atribuição", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
   "tags": [{ "name": "offmarket" }, { "name": "assignment" }, { "name": "advisors" }]

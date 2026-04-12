@@ -211,6 +211,9 @@ END $$;
 
 -- =============================================================================
 -- BLOCO C — PARCEIROS INSTITUCIONAIS REAIS (mínimo 3)
+-- nivel_prioridade: 'A' (topo), 'B' (médio), 'C' (baixo)  ← TEXT não integer
+-- estado: 'prospect' | 'contactado' | 'reuniao_feita' | 'parceiro_activo' | 'dormente' | 'inactivo'
+-- origem: 'evento' | 'referral' | 'linkedin' | 'cold_outreach' | 'portal' | 'conference' | 'introducao_directa' | 'outro'
 -- =============================================================================
 
 DO $$
@@ -218,36 +221,36 @@ BEGIN
   INSERT INTO institutional_partners (
     nome, empresa, tipo, cidade,
     email, phone,
-    nivel_prioridade,  -- 1 (máximo) a 5 (mínimo)
-    estado,            -- parceiro_activo / em_negociacao / prospect
-    notas, source
+    nivel_prioridade,  -- 'A' (máximo), 'B' (médio), 'C' (baixo)
+    estado,            -- 'parceiro_activo' / 'contactado' / 'reuniao_feita' / 'prospect'
+    notes, origem
   ) VALUES
   (
     '<Nome Parceiro 1>', '<Escritório de Advogados / Banco / Solicitador>',
     'advogado',  -- advogado / contabilista / banco / gestor_patrimonio / notario / solicitador
     '<Cidade>',
     '<email@parceiro.pt>', '<+351912345684>',
-    1, 'parceiro_activo',
+    'A', 'parceiro_activo',
     'Advogado especializado em imobiliário. Referencia clientes recorrentemente.',
-    'crm_real'
+    'referral'
   ),
   (
     '<Nome Parceiro 2>', '<Empresa>',
     'contabilista', '<Cidade>',
     '<email@parceiro2.pt>', '<+351912345685>',
-    2, 'em_negociacao',
+    'B', 'reuniao_feita',
     'Contabilista com clientela de alto valor. Operações de herança e reestruturação.',
-    'crm_real'
+    'linkedin'
   ),
   (
     '<Nome Parceiro 3>', '<Empresa>',
     'gestor_patrimonio', '<Cidade>',
     '<email@parceiro3.pt>', '<+351912345686>',
-    1, 'parceiro_activo',
+    'A', 'parceiro_activo',
     'Gestor de patrimônio. Múltiplos clientes HNWI com mandato de compra.',
-    'crm_real'
+    'introducao_directa'
   )
-  ON CONFLICT DO NOTHING;
+  ON CONFLICT (email) DO NOTHING;
 
   RAISE NOTICE 'Seed parceiros institucionais: inseridos';
 END $$;

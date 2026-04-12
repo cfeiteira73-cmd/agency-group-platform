@@ -378,12 +378,17 @@ function calcDealPriorityScore(
 // ---------------------------------------------------------------------------
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const isCron = cronSecret && incomingSecret === cronSecret
+    if (!isCron) {
+      const session = await auth()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { id } = await params
 
@@ -535,12 +540,17 @@ export async function POST(
 
 // GET: retrieve current match data without re-running matching
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const isCron = cronSecret && incomingSecret === cronSecret
+    if (!isCron) {
+      const session = await auth()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     const { id } = await params
 

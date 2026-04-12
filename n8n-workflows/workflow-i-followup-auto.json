@@ -59,14 +59,21 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=📅 FOLLOW-UP VENCIDO\n\nTipo: {{ $json._type === 'lead' ? '🏠 Lead Off-Market' : '🤝 Parceiro' }}\nNome: {{ $json.nome }}\n{{ $json._type === 'lead' ? 'Score: ' + ($json.score || '—') + '/100' : 'Tipo: ' + ($json.tipo || '—') }}\nCidade: {{ $json.cidade || '—' }}\nContacto: {{ $json.contacto || $json.phone || $json.email || '—' }}\nÚltimo contacto: {{ $json.last_contact_at ? new Date($json.last_contact_at).toLocaleDateString('pt-PT') : 'Nunca' }}\nTentativas: {{ $json.contact_attempts || 0 }}\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
-        "additionalFields": {}
+        "url": "https://api.resend.com/emails",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": { "parameters": [
+          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ]},
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify({ from: 'Agency Group <noreply@agencygroup.pt>', to: ['geral@agencygroup.pt'], subject: '📅 Follow-up Vencido: ' + $json.nome + ' (' + ($json._type === 'lead' ? 'Lead' : 'Parceiro') + ')', text: 'FOLLOW-UP VENCIDO\n\nTipo: ' + ($json._type === 'lead' ? 'Lead Off-Market' : 'Parceiro') + '\nNome: ' + $json.nome + '\n' + ($json._type === 'lead' ? 'Score: ' + ($json.score||'—') + '/100' : 'Tipo: ' + ($json.tipo||'—')) + '\nCidade: ' + ($json.cidade||'—') + '\nContacto: ' + ($json.contacto||$json.phone||$json.email||'—') + '\nÚltimo contacto: ' + ($json.last_contact_at ? new Date($json.last_contact_at).toLocaleDateString('pt-PT') : 'Nunca') + '\nTentativas: ' + ($json.contact_attempts||0) + '\n\nPortal → ' + $env.NEXT_PUBLIC_SITE_URL + '/portal' }) }}" }] },
+        "options": {}
       },
       "id": "i006",
-      "name": "Telegram — Reminder follow-up",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "name": "Email — Reminder follow-up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [1060, 300],
       "continueOnFail": true
     }
@@ -81,7 +88,7 @@
     },
     "HTTP — Leads para follow-up": { "main": [[{ "node": "Code — Filtrar vencidos", "type": "main", "index": 0 }]] },
     "HTTP — Parceiros para follow-up": { "main": [[{ "node": "Code — Filtrar vencidos", "type": "main", "index": 0 }]] },
-    "Code — Filtrar vencidos": { "main": [[{ "node": "Telegram — Reminder follow-up", "type": "main", "index": 0 }]] }
+    "Code — Filtrar vencidos": { "main": [[{ "node": "Email — Reminder follow-up", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
   "tags": [{ "name": "followup" }, { "name": "offmarket" }, { "name": "parceiros" }]

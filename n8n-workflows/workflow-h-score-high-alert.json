@@ -36,14 +36,21 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=🚨 LEAD HOT — CONTACTAR AGORA\n\n{{ $json.nome }}\nScore: {{ $json.score }}/100\nCidade: {{ $json.cidade || '—' }}\nAtivo: {{ $json.tipo_ativo || '—' }}\nPreço: {{ $json.price_ask ? '€' + ($json.price_ask/1000).toFixed(0) + 'K' : '—' }}\nUrgência: {{ $json.urgency }}\nContacto: {{ $json.contacto || '⚠️ sem contacto' }}\n\nAdicionar ao CRM → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
-        "additionalFields": {}
+        "url": "https://api.resend.com/emails",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": { "parameters": [
+          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ]},
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify({ from: 'Agency Group <noreply@agencygroup.pt>', to: ['geral@agencygroup.pt'], subject: '🚨 Lead Hot — Contactar Agora: ' + $json.nome + ' (' + $json.score + '/100)', text: 'LEAD HOT — CONTACTAR AGORA\n\n' + $json.nome + '\nScore: ' + $json.score + '/100\nCidade: ' + ($json.cidade||'—') + '\nAtivo: ' + ($json.tipo_ativo||'—') + '\nPreço: ' + ($json.price_ask ? '€' + ($json.price_ask/1000).toFixed(0) + 'K' : '—') + '\nUrgência: ' + $json.urgency + '\nContacto: ' + ($json.contacto||'⚠️ sem contacto') + '\n\nPortal → ' + $env.NEXT_PUBLIC_SITE_URL + '/portal' }) }}" }] },
+        "options": {}
       },
       "id": "h004",
-      "name": "Telegram — Alerta por lead",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "name": "Email — Alerta por lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [860, 300],
       "continueOnFail": true
     },
@@ -68,8 +75,8 @@
   "connections": {
     "Schedule — Cada 15 minutos": { "main": [[{ "node": "HTTP — Buscar Leads Hot não contactados", "type": "main", "index": 0 }]] },
     "HTTP — Buscar Leads Hot não contactados": { "main": [[{ "node": "Code — Filtrar leads frescos não contactados", "type": "main", "index": 0 }]] },
-    "Code — Filtrar leads frescos não contactados": { "main": [[{ "node": "Telegram — Alerta por lead", "type": "main", "index": 0 }]] },
-    "Telegram — Alerta por lead": { "main": [[{ "node": "HTTP — Marcar como Contactado", "type": "main", "index": 0 }]] }
+    "Code — Filtrar leads frescos não contactados": { "main": [[{ "node": "Email — Alerta por lead", "type": "main", "index": 0 }]] },
+    "Email — Alerta por lead": { "main": [[{ "node": "HTTP — Marcar como Contactado", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all", "saveDataSuccessExecution": "last" },
   "tags": [{ "name": "offmarket" }, { "name": "alertas" }]

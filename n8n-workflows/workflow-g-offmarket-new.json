@@ -81,14 +81,21 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=🔥 LEAD OFF-MARKET SCORE ALTO\n\nNome: {{ $json.nome }}\nScore: {{ $json.computed_score }}/100 (Tier {{ $json.tier }})\nCidade: {{ $json.cidade || '—' }}\nTipo: {{ $json.tipo_ativo || '—' }}\nPreço: {{ $json.price_ask ? '€' + ($json.price_ask/1000).toFixed(0) + 'K' : '—' }}\nUrgência: {{ $json.urgency }}\nContacto: {{ $json.contacto || '—' }}\nFonte: {{ $json.source }}\n\n🔗 Portal: {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
-        "additionalFields": {}
+        "url": "https://api.resend.com/emails",
+        "method": "POST",
+        "sendHeaders": true,
+        "headers": { "parameters": [
+          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ]},
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify({ from: 'Agency Group <noreply@agencygroup.pt>', to: ['geral@agencygroup.pt'], subject: '🔥 Lead Off-Market Score Alto: ' + $json.nome + ' (' + $json.computed_score + '/100)', text: 'LEAD OFF-MARKET SCORE ALTO\n\nNome: ' + $json.nome + '\nScore: ' + $json.computed_score + '/100 (Tier ' + $json.tier + ')\nCidade: ' + ($json.cidade||'—') + '\nTipo: ' + ($json.tipo_ativo||'—') + '\nPreço: ' + ($json.price_ask ? '€' + ($json.price_ask/1000).toFixed(0) + 'K' : '—') + '\nUrgência: ' + $json.urgency + '\nContacto: ' + ($json.contacto||'—') + '\nFonte: ' + $json.source + '\n\nPortal: ' + $env.NEXT_PUBLIC_SITE_URL + '/portal' }) }}" }] },
+        "options": {}
       },
       "id": "g007",
-      "name": "Telegram — Alerta Score Alto",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "name": "Email — Alerta Score Alto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [1500, 220],
       "continueOnFail": true
     },
@@ -112,11 +119,11 @@
     "HTTP — Actualizar Score": { "main": [[{ "node": "IF — Score Alto (≥70)?", "type": "main", "index": 0 }]] },
     "IF — Score Alto (≥70)?": {
       "main": [
-        [{ "node": "Telegram — Alerta Score Alto", "type": "main", "index": 0 }],
+        [{ "node": "Email — Alerta Score Alto", "type": "main", "index": 0 }],
         [{ "node": "Respond — 200 OK", "type": "main", "index": 0 }]
       ]
     },
-    "Telegram — Alerta Score Alto": { "main": [[{ "node": "Respond — 200 OK", "type": "main", "index": 0 }]] }
+    "Email — Alerta Score Alto": { "main": [[{ "node": "Respond — 200 OK", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all", "saveDataSuccessExecution": "last", "saveManualExecutions": true },
   "tags": [{ "name": "offmarket" }, { "name": "sourcing" }]
