@@ -60,6 +60,15 @@ interface DealLead {
   primary_buyer_id: string | null
   secondary_buyer_id: string | null
   tertiary_buyer_id: string | null
+  // Price Intelligence (migration 009)
+  price_ask: number | null
+  area_m2: number | null
+  price_ask_per_m2: number | null
+  estimated_fair_value: number | null
+  gross_discount_pct: number | null
+  comp_confidence_score: number | null
+  price_opportunity_score: number | null
+  price_reason: string | null
 }
 
 interface RiskFlagLead {
@@ -96,6 +105,23 @@ const RISK_COLORS: Record<RiskLevel, string> = {
   verde: '#27ae60',
   amarelo: '#f39c12',
   vermelho: '#e74c3c',
+}
+
+// Price intelligence helpers
+function getPriceLabel(discountPct: number | null, confidence: number | null): { label: string; color: string } {
+  if (discountPct === null || confidence === null || confidence < 20) {
+    return { label: 'Dados insuficientes', color: '#95a5a6' }
+  }
+  if (discountPct >= 15) return { label: `↓${Math.round(discountPct)}% mercado`, color: '#27ae60' }
+  if (discountPct >= 5)  return { label: `↓${Math.round(discountPct)}% mercado`, color: '#2ecc71' }
+  if (discountPct >= 0)  return { label: 'Preço justo', color: '#4a90d9' }
+  if (discountPct >= -10) return { label: `↑${Math.round(Math.abs(discountPct))}% mercado`, color: '#f39c12' }
+  return { label: `↑${Math.round(Math.abs(discountPct))}% mercado`, color: '#e74c3c' }
+}
+
+function formatPSM(psm: number | null): string {
+  if (!psm) return '—'
+  return `€${Math.round(psm).toLocaleString('pt-PT')}/m²`
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -727,11 +753,22 @@ function LeadRow({ lead, darkMode, cardBg, border, textPrimary, textMuted, onSel
       <div style={{ padding: '2px 8px', background: `${priorityColor}22`, border: `1px solid ${priorityColor}55`, fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: priorityColor, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
         {lead._priority ?? '—'}
       </div>
-      <div>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: '.82rem', color: textPrimary, fontWeight: 500 }}>{lead.nome}</div>
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted, marginTop: 1 }}>
           Score {lead.score ?? '—'} · {lead.cidade ?? '—'} · {lead.contacto ?? '⚠️ sem contacto'}
+          {lead.price_ask != null && ` · €${(lead.price_ask / 1000).toFixed(0)}K`}
+          {lead.price_ask_per_m2 != null && ` · ${formatPSM(lead.price_ask_per_m2)}`}
         </div>
+        {/* Price Intelligence badge */}
+        {(lead.gross_discount_pct !== null && lead.gross_discount_pct !== undefined) && (() => {
+          const pi = getPriceLabel(lead.gross_discount_pct, lead.comp_confidence_score)
+          return (
+            <div style={{ display: 'inline-block', marginTop: 2, padding: '1px 8px', background: `${pi.color}18`, border: `1px solid ${pi.color}44`, fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: pi.color }}>
+              {pi.label}
+            </div>
+          )
+        })()}
         {sla && (
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', color: sla.color, marginTop: 2 }}>{sla.label}</div>
         )}
@@ -902,6 +939,70 @@ function DealEditorModal({ lead, darkMode, cardBg, border, textPrimary, textMute
             <label style={labelStyle}>Data-Limite Próximo Passo</label>
             <input type="date" value={form.deal_next_step_date} onChange={e => setForm(p => ({ ...p, deal_next_step_date: e.target.value }))} style={inputStyle} />
           </div>
+        </div>
+
+        {/* ── Price Intelligence Panel ── */}
+        <div style={{ marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', letterSpacing: '.12em', color: textMuted, textTransform: 'uppercase', marginBottom: 10 }}>
+            Price Intelligence
+          </div>
+
+          {/* Price summary strip */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
+            <div style={{ padding: '8px 10px', background: darkMode ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.03)', border: `1px solid ${border}` }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: textMuted, textTransform: 'uppercase', marginBottom: 2 }}>Preço Pedido</div>
+              <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1rem', color: textPrimary }}>
+                {lead.price_ask ? `€${(lead.price_ask / 1000).toFixed(0)}K` : '—'}
+              </div>
+            </div>
+            <div style={{ padding: '8px 10px', background: darkMode ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.03)', border: `1px solid ${border}` }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: textMuted, textTransform: 'uppercase', marginBottom: 2 }}>€/m² Pedido</div>
+              <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1rem', color: textPrimary }}>
+                {formatPSM(lead.price_ask_per_m2)}
+              </div>
+            </div>
+            <div style={{ padding: '8px 10px', background: darkMode ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.03)', border: `1px solid ${border}` }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: textMuted, textTransform: 'uppercase', marginBottom: 2 }}>Fair Value Est.</div>
+              <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1rem', color: textPrimary }}>
+                {lead.estimated_fair_value ? `€${(lead.estimated_fair_value / 1000).toFixed(0)}K` : '—'}
+              </div>
+            </div>
+          </div>
+
+          {/* Discount + confidence + opportunity score */}
+          {(lead.gross_discount_pct !== null && lead.gross_discount_pct !== undefined) && (() => {
+            const pi = getPriceLabel(lead.gross_discount_pct, lead.comp_confidence_score)
+            return (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                <div style={{ padding: '4px 12px', background: `${pi.color}18`, border: `1px solid ${pi.color}44`, fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: pi.color }}>
+                  {lead.gross_discount_pct >= 0 ? `−${lead.gross_discount_pct.toFixed(1)}%` : `+${Math.abs(lead.gross_discount_pct).toFixed(1)}%`} vs mercado
+                </div>
+                {lead.comp_confidence_score != null && (
+                  <div style={{ padding: '4px 12px', background: '#4a90d918', border: '1px solid #4a90d944', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#4a90d9' }}>
+                    Confiança: {lead.comp_confidence_score}/100
+                  </div>
+                )}
+                {lead.price_opportunity_score != null && (
+                  <div style={{ padding: '4px 12px', background: '#9b59b618', border: '1px solid #9b59b644', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#9b59b6' }}>
+                    Oportunidade Preço: {lead.price_opportunity_score}/25
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
+          {/* Price reason text */}
+          {lead.price_reason ? (
+            <div style={{ padding: '8px 12px', background: darkMode ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)', borderLeft: `3px solid ${border}`, fontFamily: "'Jost', sans-serif", fontSize: '.75rem', color: textMuted, lineHeight: 1.5 }}>
+              {lead.price_reason}
+            </div>
+          ) : (
+            <div style={{ padding: '8px 12px', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted, opacity: .6 }}>
+              {lead.price_ask && !lead.price_ask_per_m2
+                ? 'Adicionar área (m²) para activar análise de preço.'
+                : 'Price intelligence ainda não calculado para este lead.'}
+            </div>
+          )}
         </div>
 
         {/* ── Buyer Intelligence Panel ── */}

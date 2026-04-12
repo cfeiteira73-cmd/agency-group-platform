@@ -185,6 +185,8 @@ interface OffmarketLead {
   contacto?: string | null
   source?: string | null
   score_attempts?: number
+  // Price Intelligence fields (migration 009) — used when price-intel has run
+  price_opportunity_score?: number | null   // 0-25 from /price-intel endpoint
 }
 
 function scoreOffmarketLead(lead: OffmarketLead): {
@@ -197,7 +199,13 @@ function scoreOffmarketLead(lead: OffmarketLead): {
 
   const assetScore = getAssetTypeScore(lead.tipo_ativo)
   const motivationScore = getOwnerMotivationScore(lead.owner_type, lead.urgency)
-  const priceScore = getPriceOpportunityScore(lead.price_ask, lead.price_estimate)
+
+  // PRICE: if price-intel engine has already run (migration 009), use its output (0-25).
+  // Otherwise fall back to legacy getPriceOpportunityScore (0-15, requires price_estimate).
+  const priceScore = (lead.price_opportunity_score != null && lead.price_opportunity_score >= 0)
+    ? Math.min(25, lead.price_opportunity_score)          // elevated: market-reference based
+    : getPriceOpportunityScore(lead.price_ask, lead.price_estimate)  // legacy fallback
+
   const contactScore = getContactScore(lead.contacto)
   const sourceScore = getSourceScore(lead.source)
 
@@ -283,7 +291,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Fetch lead
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: lead, error: fetchError } = await (supabaseAdmin as any).from(TABLE)
-      .select('id, nome, tipo_ativo, localizacao, cidade, area_m2, price_ask, price_estimate, owner_type, urgency, contacto, source, score_attempts')
+      .select('id, nome, tipo_ativo, localizacao, cidade, area_m2, price_ask, price_estimate, owner_type, urgency, contacto, source, score_attempts, price_opportunity_score')
       .eq('id', id)
       .single()
 
@@ -344,7 +352,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = (supabaseAdmin as any).from(TABLE)
-      .select('id, nome, tipo_ativo, localizacao, cidade, area_m2, price_ask, price_estimate, owner_type, urgency, contacto, source, score_attempts')
+      .select('id, nome, tipo_ativo, localizacao, cidade, area_m2, price_ask, price_estimate, owner_type, urgency, contacto, source, score_attempts, price_opportunity_score')
       .lt('score_attempts', 3)  // max 3 attempts
       .order('created_at', { ascending: false })
       .limit(limit)

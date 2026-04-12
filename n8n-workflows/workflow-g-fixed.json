@@ -1,0 +1,191 @@
+{
+  "name": "G — Off-Market Lead Ingestor (Apify → Supabase)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "offmarket-new",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "g001",
+      "name": "Webhook — Novo Lead Off-Market",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "webhookId": "ag-wh-offmarket-new-2026"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst body = raw.body || raw;\nconst lead = {\n  nome: body.nome || body.title || body.address || 'Lead Apify ' + new Date().toISOString().substring(0,10),\n  cidade: body.cidade || body.city || body.location || 'Lisboa',\n  localizacao: body.localizacao || body.morada || body.address || null,\n  price_ask: body.price_ask || body.price || null,\n  tipo_ativo: body.tipo_ativo || body.propertyType || 'apartamento',\n  source: body.source || 'apify',\n  status: 'new',\n  urgency: body.urgency || 'unknown',\n  score_status: 'pending_score',\n  contacto: body.contacto || body.contact || null,\n  notes: body.notes || body.notas || body.description ? (body.notes || body.notas || body.description || '').substring(0, 500) : null\n};\nreturn [{ json: lead }];"
+      },
+      "id": "g002",
+      "name": "Code — Normalizar Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://isbfiofwpxqqpgxoftph.supabase.co/rest/v1/offmarket_leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU" },
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "g003",
+      "name": "Supabase — Inserir Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [640, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const resp = $input.first().json;\nconst lead = Array.isArray(resp) ? resp[0] : resp;\nif (!lead || lead.code || lead.error) {\n  console.log('Supabase insert error:', JSON.stringify(resp));\n  return [{ json: { id: null, _error: true, _raw: JSON.stringify(resp).substring(0,200) } }];\n}\nlet score = 30;\nconst hotCities = ['Lisboa','Cascais','Comporta','Porto','Algarve','Funchal','Sintra'];\nif (hotCities.some(c => (lead.cidade||'').includes(c))) score += 20;\nif (lead.price_ask) {\n  if (lead.price_ask >= 3000000) score += 25;\n  else if (lead.price_ask >= 1000000) score += 20;\n  else if (lead.price_ask >= 500000) score += 10;\n}\nif (lead.urgency === 'high') score += 15;\nelse if (lead.urgency === 'medium') score += 8;\nif (lead.contacto) score += 5;\nscore = Math.min(score, 100);\nconst tier = score >= 70 ? 'A' : score >= 40 ? 'B' : 'C';\nreturn [{ json: { ...lead, computed_score: score, tier } }];"
+      },
+      "id": "g004",
+      "name": "Code — Score + Tier",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://isbfiofwpxqqpgxoftph.supabase.co/rest/v1/offmarket_leads?id=eq.{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU" },
+            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ score: $json.computed_score, score_status: 'scored', score_updated_at: new Date().toISOString() }) }}",
+        "options": {}
+      },
+      "id": "g005",
+      "name": "Supabase — Actualizar Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1080, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.agencygroup.pt/api/offmarket-leads/{{ $(\"Code — Score + Tier\").item.json.id }}/match-buyers",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-cron-secret", "value": "8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "User-Agent", "value": "n8n-railway/2.15.1" }
+          ]
+        },
+        "sendBody": false,
+        "options": {}
+      },
+      "id": "g009",
+      "name": "HTTP — Auto Match-Buyers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const mbResp = $input.first().json;\nconst lead = $(\"Code — Score + Tier\").item.json;\nconst mbData = {};\nif (mbResp && !mbResp.error && !mbResp.code) {\n  if (mbResp.deal_priority_score !== undefined) mbData.deal_priority_score = mbResp.deal_priority_score;\n  if (mbResp.matched_buyers_count !== undefined) mbData.matched_buyers_count = mbResp.matched_buyers_count;\n  if (mbResp.attack_recommendation) mbData.attack_recommendation = mbResp.attack_recommendation;\n  if (mbResp.preclose_candidate !== undefined) mbData.preclose_candidate = mbResp.preclose_candidate;\n}\nreturn [{ json: { ...lead, ...mbData } }];"
+      },
+      "id": "g009b",
+      "name": "Code — Merge Match-Buyers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.computed_score }}", "operation": "largerEqual", "value2": 70 }]
+        }
+      },
+      "id": "g006",
+      "name": "IF — Score ≥70?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1740, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer RESEND_API_KEY_REDACTED" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ from: 'Deal Machine <noreply@agencygroup.pt>', to: ['geral@agencygroup.pt'], subject: '🔥 Off-Market Score Alto: ' + $json.nome + ' (' + $json.computed_score + '/100 Tier ' + $json.tier + ')', text: 'LEAD OFF-MARKET\\n\\nNome: ' + $json.nome + '\\nScore: ' + $json.computed_score + '/100 Tier ' + $json.tier + '\\nCidade: ' + ($json.cidade||'—') + '\\nPreço: ' + ($json.price_ask ? '€' + Number($json.price_ask/1000).toFixed(0) + 'K' : '—') + '\\nDPS: ' + ($json.deal_priority_score||'—') + '\\nAtaque: ' + ($json.attack_recommendation||'—').substring(0,80) + '\\nPreclose: ' + ($json.preclose_candidate ? 'SIM' : 'NAO') + '\\nFonte: ' + $json.source + '\\nPortal: https://www.agencygroup.pt/portal' }) }}",
+        "options": {}
+      },
+      "id": "g007",
+      "name": "Email — Alerta Score Alto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1960, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nreturn [{ json: { status: 'ok', id: lead.id, score: lead.computed_score, tier: lead.tier, nome: lead.nome, dps: lead.deal_priority_score, preclose: lead.preclose_candidate } }];"
+      },
+      "id": "g008",
+      "name": "Code — Done",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1960, 400]
+    }
+  ],
+  "connections": {
+    "Webhook — Novo Lead Off-Market": { "main": [[{ "node": "Code — Normalizar Lead", "type": "main", "index": 0 }]] },
+    "Code — Normalizar Lead": { "main": [[{ "node": "Supabase — Inserir Lead", "type": "main", "index": 0 }]] },
+    "Supabase — Inserir Lead": { "main": [[{ "node": "Code — Score + Tier", "type": "main", "index": 0 }]] },
+    "Code — Score + Tier": { "main": [[{ "node": "Supabase — Actualizar Score", "type": "main", "index": 0 }]] },
+    "Supabase — Actualizar Score": { "main": [[{ "node": "HTTP — Auto Match-Buyers", "type": "main", "index": 0 }]] },
+    "HTTP — Auto Match-Buyers": { "main": [[{ "node": "Code — Merge Match-Buyers", "type": "main", "index": 0 }]] },
+    "Code — Merge Match-Buyers": { "main": [[{ "node": "IF — Score ≥70?", "type": "main", "index": 0 }]] },
+    "IF — Score ≥70?": {
+      "main": [
+        [{ "node": "Email — Alerta Score Alto", "type": "main", "index": 0 }],
+        [{ "node": "Code — Done", "type": "main", "index": 0 }]
+      ]
+    },
+    "Email — Alerta Score Alto": { "main": [[{ "node": "Code — Done", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  }
+}
