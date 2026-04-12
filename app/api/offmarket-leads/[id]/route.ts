@@ -34,6 +34,14 @@ const ALLOWED_PATCH_FIELDS = new Set([
   'deal_priority_score', 'deal_path', 'attack_recommendation',
   'preclose_notes', 'buyer_triad_notes',
   'primary_buyer_id', 'secondary_buyer_id', 'tertiary_buyer_id',
+  // Migration 010: Deal Evaluation Engine
+  'adjusted_discount_score', 'liquidity_score', 'liquidity_reason',
+  'execution_probability', 'execution_reason',
+  'best_buyer_execution_score', 'buyer_execution_reason',
+  'upside_score', 'friction_penalty', 'risk_adjusted_upside_score', 'upside_reason',
+  'asset_quality_score', 'source_quality_score',
+  'deal_evaluation_score', 'deal_evaluation_reason',
+  'master_attack_rank', 'master_attack_reason', 'deal_evaluation_updated_at',
 ])
 
 export async function GET(

@@ -69,6 +69,24 @@ interface DealLead {
   comp_confidence_score: number | null
   price_opportunity_score: number | null
   price_reason: string | null
+  // Deal Evaluation Engine (migration 010)
+  adjusted_discount_score: number | null
+  liquidity_score: number | null
+  liquidity_reason: string | null
+  execution_probability: number | null
+  execution_reason: string | null
+  best_buyer_execution_score: number | null
+  buyer_execution_reason: string | null
+  upside_score: number | null
+  friction_penalty: number | null
+  risk_adjusted_upside_score: number | null
+  upside_reason: string | null
+  asset_quality_score: number | null
+  source_quality_score: number | null
+  deal_evaluation_score: number | null
+  deal_evaluation_reason: string | null
+  master_attack_rank: number | null
+  master_attack_reason: string | null
 }
 
 interface RiskFlagLead {
@@ -105,6 +123,25 @@ const RISK_COLORS: Record<RiskLevel, string> = {
   verde: '#27ae60',
   amarelo: '#f39c12',
   vermelho: '#e74c3c',
+}
+
+// Deal Evaluation helpers (migration 010)
+function classifyDeal(rank: number | null, execProb: number | null, adjDiscount: number | null): string {
+  const r = rank ?? 0; const e = execProb ?? 0; const d = adjDiscount ?? 0
+  if (r >= 80 && e >= 70) return 'Ataque imediato'
+  if (r >= 65 && d >= 40) return 'Oportunidade forte'
+  if (r >= 50) return 'Boa mas não prioritária'
+  if (d >= 40 && e < 40) return 'Produto bom, deal fraco'
+  if (d <= 5 && r < 40) return 'Preço acima do mercado'
+  return 'Dados insuficientes'
+}
+
+function getMasterAttackColor(rank: number | null): string {
+  if (!rank) return '#95a5a6'
+  if (rank >= 80) return '#e74c3c'
+  if (rank >= 65) return '#f39c12'
+  if (rank >= 50) return '#4a90d9'
+  return '#95a5a6'
 }
 
 // Price intelligence helpers
@@ -760,15 +797,31 @@ function LeadRow({ lead, darkMode, cardBg, border, textPrimary, textMuted, onSel
           {lead.price_ask != null && ` · €${(lead.price_ask / 1000).toFixed(0)}K`}
           {lead.price_ask_per_m2 != null && ` · ${formatPSM(lead.price_ask_per_m2)}`}
         </div>
-        {/* Price Intelligence badge */}
-        {(lead.gross_discount_pct !== null && lead.gross_discount_pct !== undefined) && (() => {
-          const pi = getPriceLabel(lead.gross_discount_pct, lead.comp_confidence_score)
-          return (
-            <div style={{ display: 'inline-block', marginTop: 2, padding: '1px 8px', background: `${pi.color}18`, border: `1px solid ${pi.color}44`, fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: pi.color }}>
-              {pi.label}
+        {/* Badges row: Price Intel + Master Attack Rank */}
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 3, alignItems: 'center' }}>
+          {(lead.gross_discount_pct !== null && lead.gross_discount_pct !== undefined) && (() => {
+            const pi = getPriceLabel(lead.gross_discount_pct, lead.comp_confidence_score)
+            return (
+              <div style={{ padding: '1px 7px', background: `${pi.color}18`, border: `1px solid ${pi.color}44`, fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: pi.color }}>
+                {pi.label}
+              </div>
+            )
+          })()}
+          {lead.master_attack_rank != null && (() => {
+            const mc = getMasterAttackColor(lead.master_attack_rank)
+            const cl = classifyDeal(lead.master_attack_rank, lead.execution_probability, lead.adjusted_discount_score)
+            return (
+              <div style={{ padding: '1px 7px', background: `${mc}18`, border: `1px solid ${mc}55`, fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: mc, fontWeight: 600 }}>
+                ★ {lead.master_attack_rank} · {cl}
+              </div>
+            )
+          })()}
+          {lead.execution_probability != null && lead.master_attack_rank == null && (
+            <div style={{ padding: '1px 7px', background: 'rgba(74,144,217,.1)', border: '1px solid rgba(74,144,217,.3)', fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: '#4a90d9' }}>
+              Exec {lead.execution_probability}%
             </div>
-          )
-        })()}
+          )}
+        </div>
         {sla && (
           <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.4rem', color: sla.color, marginTop: 2 }}>{sla.label}</div>
         )}
@@ -940,6 +993,83 @@ function DealEditorModal({ lead, darkMode, cardBg, border, textPrimary, textMute
             <input type="date" value={form.deal_next_step_date} onChange={e => setForm(p => ({ ...p, deal_next_step_date: e.target.value }))} style={inputStyle} />
           </div>
         </div>
+
+        {/* ── Deal Evaluation Engine Panel ── */}
+        {lead.deal_evaluation_score != null && (
+          <div style={{ marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', letterSpacing: '.12em', color: textMuted, textTransform: 'uppercase' }}>
+                Deal Evaluation Engine
+              </div>
+              {lead.master_attack_rank != null && (() => {
+                const mc = getMasterAttackColor(lead.master_attack_rank)
+                const cl = classifyDeal(lead.master_attack_rank, lead.execution_probability, lead.adjusted_discount_score)
+                return (
+                  <div style={{ padding: '3px 12px', background: `${mc}22`, border: `1px solid ${mc}66`, fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: mc, fontWeight: 700 }}>
+                    ★ Rank {lead.master_attack_rank}/100 — {cl}
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* 8-layer score grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 10 }}>
+              {[
+                { label: 'Desconto Adj.', value: lead.adjusted_discount_score, max: 100, color: '#27ae60' },
+                { label: 'Liquidez', value: lead.liquidity_score, max: 100, color: '#4a90d9' },
+                { label: 'Exec. Prob.', value: lead.execution_probability, max: 100, color: '#9b59b6' },
+                { label: 'Comprador', value: lead.best_buyer_execution_score, max: 100, color: '#e67e22' },
+                { label: 'Upside Adj.', value: lead.risk_adjusted_upside_score, max: 100, color: '#1abc9c' },
+                { label: 'Qualid. Activo', value: lead.asset_quality_score, max: 100, color: '#c9a96e' },
+                { label: 'Qualid. Fonte', value: lead.source_quality_score, max: 100, color: '#7f8c8d' },
+                { label: 'Deal Eval', value: lead.deal_evaluation_score, max: 100, color: '#e74c3c' },
+              ].map(({ label, value, color }) => (
+                <div key={label} style={{ padding: '7px 8px', background: darkMode ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.03)', border: `1px solid ${border}`, textAlign: 'center' }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.35rem', color: textMuted, textTransform: 'uppercase', marginBottom: 3 }}>{label}</div>
+                  <div style={{ fontFamily: "'Cormorant', serif", fontSize: '1.1rem', color: value != null ? color : textMuted, fontWeight: 600 }}>
+                    {value != null ? value : '—'}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Friction penalty */}
+            {lead.friction_penalty != null && lead.friction_penalty > 0 && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                <div style={{ padding: '3px 10px', background: '#e74c3c18', border: '1px solid #e74c3c44', fontFamily: "'DM Mono', monospace", fontSize: '.4rem', color: '#e74c3c' }}>
+                  ⚠ Fricção: −{lead.friction_penalty}pts
+                </div>
+                {lead.upside_score != null && (
+                  <div style={{ padding: '3px 10px', background: 'rgba(0,0,0,.04)', border: `1px solid ${border}`, fontFamily: "'DM Mono', monospace", fontSize: '.4rem', color: textMuted }}>
+                    Upside bruto {lead.upside_score} → adj. {lead.risk_adjusted_upside_score}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Reason narratives */}
+            {lead.deal_evaluation_reason && (
+              <div style={{ padding: '7px 12px', background: darkMode ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)', borderLeft: `3px solid ${border}`, fontFamily: "'Jost', sans-serif", fontSize: '.72rem', color: textMuted, lineHeight: 1.5, marginBottom: 6 }}>
+                {lead.deal_evaluation_reason}
+              </div>
+            )}
+            {lead.liquidity_reason && (
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: textMuted, opacity: .7, marginBottom: 3 }}>
+                Liquidez: {lead.liquidity_reason}
+              </div>
+            )}
+            {lead.execution_reason && (
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: textMuted, opacity: .7, marginBottom: 3 }}>
+                Execução: {lead.execution_reason}
+              </div>
+            )}
+            {lead.buyer_execution_reason && (
+              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.38rem', color: textMuted, opacity: .7 }}>
+                Comprador: {lead.buyer_execution_reason}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Price Intelligence Panel ── */}
         <div style={{ marginTop: 20, borderTop: `1px solid ${border}`, paddingTop: 16 }}>

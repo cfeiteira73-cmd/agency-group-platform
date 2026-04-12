@@ -46,29 +46,29 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .gte('created_at', todayStart.toISOString())
         .order('score', { ascending: false }),
 
-      // P0: score >= 80, status = new — include buyer + price intelligence
+      // P0: score >= 80, status = new — include buyer + price + deal evaluation
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes')
+        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason')
         .gte('score', 80)
         .eq('status', 'new')
-        .order('score', { ascending: false })
+        .order('master_attack_rank', { ascending: false })
         .limit(20),
 
-      // P1: score 70-79, status = new — include buyer + price intelligence
+      // P1: score 70-79, status = new — include buyer + price + deal evaluation
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes')
+        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason')
         .gte('score', 70)
         .lt('score', 80)
         .eq('status', 'new')
-        .order('score', { ascending: false })
+        .order('master_attack_rank', { ascending: false })
         .limit(20),
 
-      // Pre-close candidates — include buyer + price intelligence
+      // Pre-close candidates — include buyer + price + deal evaluation
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,matched_buyers_count,best_buyer_match_score,buyer_match_notes,status,contacto,assigned_to,created_at,sla_contacted_at,deal_priority_score,attack_recommendation,buyer_triad_notes,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id')
+        .select('id,nome,cidade,score,matched_buyers_count,best_buyer_match_score,buyer_match_notes,status,contacto,assigned_to,created_at,sla_contacted_at,deal_priority_score,attack_recommendation,buyer_triad_notes,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason')
         .eq('preclose_candidate', true)
         .not('status', 'in', '("closed_won","closed_lost","not_interested")')
-        .order('best_buyer_match_score', { ascending: false })
+        .order('master_attack_rank', { ascending: false })
         .limit(10),
 
       // Follow-ups due today
