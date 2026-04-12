@@ -71,6 +71,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: '"nome" is required' }, { status: 400 })
     }
 
+    const sourceListing = typeof data.source_listing_id === 'string' ? data.source_listing_id : null
+    const source = typeof data.source === 'string' ? data.source : 'manual'
+
+    // --- Anti-duplication: check source_listing_id uniqueness before insert ---
+    if (sourceListing) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: existing } = await (supabaseAdmin as any).from(TABLE)
+        .select('id, nome')
+        .eq('source', source)
+        .eq('source_listing_id', sourceListing)
+        .maybeSingle()
+      if (existing) {
+        console.log(`[offmarket-leads POST] Duplicate blocked: source=${source} listing_id=${sourceListing}`)
+        return NextResponse.json(
+          { error: 'Lead already exists', existing_id: existing.id },
+          { status: 409 }
+        )
+      }
+    }
+
     const payload = {
       nome:              String(data.nome).trim(),
       tipo_ativo:        typeof data.tipo_ativo === 'string' ? data.tipo_ativo : null,
@@ -82,12 +102,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       score:             typeof data.score === 'number' ? Math.min(100, Math.max(0, data.score)) : null,
       score_breakdown:   data.score_breakdown ?? null,
       score_updated_at:  data.score !== undefined ? new Date().toISOString() : null,
+      score_status:      (data.score !== undefined ? 'scored' : 'pending_score') as string,
       contacto:          typeof data.contacto === 'string' ? data.contacto : null,
       owner_type:        typeof data.owner_type === 'string' ? data.owner_type : null,
       urgency:           typeof data.urgency === 'string' ? data.urgency : 'unknown',
-      source:            typeof data.source === 'string' ? data.source : 'manual',
+      source,
       source_url:        typeof data.source_url === 'string' ? data.source_url : null,
-      source_listing_id: typeof data.source_listing_id === 'string' ? data.source_listing_id : null,
+      source_listing_id: sourceListing,
       status:            typeof data.status === 'string' ? data.status : 'new',
       assigned_to:       typeof data.assigned_to === 'string' ? data.assigned_to : null,
       next_followup_at:  typeof data.next_followup_at === 'string' ? data.next_followup_at : null,

@@ -2,7 +2,7 @@
 // Agency Group — Off-Market Lead Detail API
 // GET    /api/offmarket-leads/[id]   — get single lead
 // PATCH  /api/offmarket-leads/[id]   — update status, score, notes, assigned_to
-// DELETE /api/offmarket-leads/[id]   — remove lead (admin only)
+// DELETE /api/offmarket-leads/[id]   — remove lead
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -12,7 +12,7 @@ import { auth } from '@/auth'
 const TABLE = 'offmarket_leads'
 
 const ALLOWED_PATCH_FIELDS = new Set([
-  'status', 'score', 'score_breakdown', 'score_updated_at',
+  'status', 'score', 'score_breakdown', 'score_updated_at', 'score_status',
   'notes', 'assigned_to', 'next_followup_at', 'last_contact_at',
   'contact_attempts', 'urgency', 'price_ask', 'price_estimate',
   'tags', 'contacto', 'owner_type', 'raw_data',
@@ -20,16 +20,17 @@ const ALLOWED_PATCH_FIELDS = new Set([
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const { id } = await params
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any).from(TABLE)
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -42,12 +43,13 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const { id } = await params
     const body: unknown = await req.json()
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
@@ -64,15 +66,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
     }
 
-    // Auto-increment contact_attempts when last_contact_at is set
-    if (patch.last_contact_at && !patch.contact_attempts) {
-      patch.contact_attempts = null // let DB trigger handle, or fetch+increment below
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any).from(TABLE)
       .update(patch)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
@@ -86,16 +83,17 @@ export async function PATCH(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    const { id } = await params
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabaseAdmin as any).from(TABLE)
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) throw error
     return NextResponse.json({ success: true })

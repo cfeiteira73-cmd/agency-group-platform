@@ -1,0 +1,88 @@
+{
+  "name": "Workflow I — Follow-up Automático (Off-Market + Parceiros)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 6 }] }
+      },
+      "id": "i001",
+      "name": "Schedule — A cada 6h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Return current timestamp for queries\nconst now = new Date();\nreturn [{ json: { now: now.toISOString(), today: now.toISOString().slice(0,10) } }];"
+      },
+      "id": "i002",
+      "name": "Code — Preparar timestamp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?status=contacted&limit=50",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "i003",
+      "name": "HTTP — Leads para follow-up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [620, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/institutional-partners?estado=contactado&limit=50",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "i004",
+      "name": "HTTP — Parceiros para follow-up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [620, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leadsRes = $('HTTP — Leads para follow-up').first().json;\nconst partnersRes = $('HTTP — Parceiros para follow-up').first().json;\n\nconst today = new Date();\nconst todayStr = today.toISOString().slice(0, 10);\n\n// Leads due today or overdue\nconst dueleads = (leadsRes.data || []).filter(l => {\n  if (!l.next_followup_at) return false;\n  return l.next_followup_at.slice(0, 10) <= todayStr;\n});\n\n// Partners due today or overdue\nconst duePartners = (partnersRes.data || []).filter(p => {\n  if (!p.next_followup_at) return false;\n  return p.next_followup_at.slice(0, 10) <= todayStr;\n});\n\nconst all = [\n  ...dueleads.map(l => ({ ...l, _type: 'lead' })),\n  ...duePartners.map(p => ({ ...p, _type: 'partner' })),\n];\n\nif (all.length === 0) return [];\n\nreturn all.map(item => ({ json: item }));"
+      },
+      "id": "i005",
+      "name": "Code — Filtrar vencidos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📅 FOLLOW-UP VENCIDO\n\nTipo: {{ $json._type === 'lead' ? '🏠 Lead Off-Market' : '🤝 Parceiro' }}\nNome: {{ $json.nome }}\n{{ $json._type === 'lead' ? 'Score: ' + ($json.score || '—') + '/100' : 'Tipo: ' + ($json.tipo || '—') }}\nCidade: {{ $json.cidade || '—' }}\nContacto: {{ $json.contacto || $json.phone || $json.email || '—' }}\nÚltimo contacto: {{ $json.last_contact_at ? new Date($json.last_contact_at).toLocaleDateString('pt-PT') : 'Nunca' }}\nTentativas: {{ $json.contact_attempts || 0 }}\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "i006",
+      "name": "Telegram — Reminder follow-up",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1060, 300],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Schedule — A cada 6h": { "main": [[{ "node": "Code — Preparar timestamp", "type": "main", "index": 0 }]] },
+    "Code — Preparar timestamp": {
+      "main": [[
+        { "node": "HTTP — Leads para follow-up", "type": "main", "index": 0 },
+        { "node": "HTTP — Parceiros para follow-up", "type": "main", "index": 0 }
+      ]]
+    },
+    "HTTP — Leads para follow-up": { "main": [[{ "node": "Code — Filtrar vencidos", "type": "main", "index": 0 }]] },
+    "HTTP — Parceiros para follow-up": { "main": [[{ "node": "Code — Filtrar vencidos", "type": "main", "index": 0 }]] },
+    "Code — Filtrar vencidos": { "main": [[{ "node": "Telegram — Reminder follow-up", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
+  "tags": [{ "name": "followup" }, { "name": "offmarket" }, { "name": "parceiros" }]
+}

@@ -119,3 +119,4 @@ export type SectionId =
   | 'pulse' | 'crossCompare' | 'voz' | 'collections' | 'draftOffer'
   | 'analytics' | 'investidores' | 'outbound' | 'videoStudio'
   | 'photos' | 'agentai'
+  | 'offmarket' | 'partners'

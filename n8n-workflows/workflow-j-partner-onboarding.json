@@ -1,0 +1,136 @@
+{
+  "name": "Workflow J — Parceiro Novo → Sequência D0 / D7 / D30",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "partner-new",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "j001",
+      "name": "Webhook — Novo Parceiro",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.id && !body.nome) throw new Error('Partner sem id ou nome');\nreturn [{ json: body }];"
+      },
+      "id": "j002",
+      "name": "Code — Validar parceiro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🤝 NOVO PARCEIRO INSTITUCIONAL\n\nNome: {{ $json.nome }}\nEmpresa: {{ $json.empresa || '—' }}\nTipo: {{ $json.tipo }}\nCidade: {{ $json.cidade || '—' }}\nEmail: {{ $json.email || '—' }}\nTelefone: {{ $json.phone || '—' }}\nOrigem: {{ $json.origem || '—' }}\nPrioridade: {{ $json.nivel_prioridade }}\n\n✅ D+0: Contacto inicial\n📅 D+7: Follow-up agendado\n📅 D+30: Check-in mensal\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "j003",
+      "name": "Telegram — Alerta D0",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [640, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/institutional-partners/{{ $json.id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }, { "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [{
+            "name": "=",
+            "value": "={ \"next_followup_at\": \"{{ new Date(Date.now() + 7*24*60*60*1000).toISOString() }}\", \"estado\": \"contactado\" }"
+          }]
+        },
+        "options": {}
+      },
+      "id": "j004",
+      "name": "HTTP — Agendar D7",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [640, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 7,
+        "unit": "days"
+      },
+      "id": "j005",
+      "name": "Wait — 7 dias",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [860, 400]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📅 FOLLOW-UP D+7 — PARCEIRO\n\n{{ $json.nome }} ({{ $json.empresa || $json.tipo }})\nContacto: {{ $json.phone || $json.email || '—' }}\nCidade: {{ $json.cidade || '—' }}\n\nMensagem sugerida:\n\"Bom dia, reforço o contacto da semana passada. Estamos a trabalhar com clientes ativos na sua zona — faz sentido alinharmos uma chamada esta semana?\"\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "j006",
+      "name": "Telegram — Follow-up D7",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1080, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 23,
+        "unit": "days"
+      },
+      "id": "j007",
+      "name": "Wait — 23 dias",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1300, 400]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📅 CHECK-IN D+30 — PARCEIRO\n\n{{ $json.nome }} — Check-in mensal\n\nObjectivo: Avaliar progresso da parceria\nContacto: {{ $json.phone || $json.email || '—' }}\n\nMensagem sugerida:\n\"Bom dia. Passado um mês desde o nosso contacto inicial. Queremos perceber se surgiu alguma oportunidade que faça sentido trabalharmos em conjunto. Disponível para uma chamada rápida?\"\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "j008",
+      "name": "Telegram — Check-in D30",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1520, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"sequence\": \"D0/D7/D30 initiated\" }"
+      },
+      "id": "j009",
+      "name": "Respond — 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [640, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Novo Parceiro": { "main": [[{ "node": "Code — Validar parceiro", "type": "main", "index": 0 }]] },
+    "Code — Validar parceiro": { "main": [[
+      { "node": "Telegram — Alerta D0", "type": "main", "index": 0 },
+      { "node": "HTTP — Agendar D7", "type": "main", "index": 0 },
+      { "node": "Respond — 200 OK", "type": "main", "index": 0 }
+    ]]},
+    "HTTP — Agendar D7": { "main": [[{ "node": "Wait — 7 dias", "type": "main", "index": 0 }]] },
+    "Wait — 7 dias": { "main": [[{ "node": "Telegram — Follow-up D7", "type": "main", "index": 0 }]] },
+    "Telegram — Follow-up D7": { "main": [[{ "node": "Wait — 23 dias", "type": "main", "index": 0 }]] },
+    "Wait — 23 dias": { "main": [[{ "node": "Telegram — Check-in D30", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
+  "tags": [{ "name": "parceiros" }, { "name": "onboarding" }]
+}

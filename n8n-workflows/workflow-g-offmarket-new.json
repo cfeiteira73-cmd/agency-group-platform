@@ -1,0 +1,123 @@
+{
+  "name": "Workflow G — Off-Market New Lead → Score → CRM → Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "offmarket-new",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "g001",
+      "name": "Webhook — Novo Lead Off-Market",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// Validate required fields\nif (!body.nome || body.nome.trim() === '') {\n  throw new Error('Campo obrigatório em falta: nome');\n}\n\n// Set score_status to pending\nbody.score_status = 'pending_score';\nbody.source = body.source || 'manual';\nbody.status = body.status || 'new';\nbody.urgency = body.urgency || 'unknown';\n\nreturn [{ json: body }];"
+      },
+      "id": "g002",
+      "name": "Code — Validar e Normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }, { "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify($json) }}" }] },
+        "options": {}
+      },
+      "id": "g003",
+      "name": "HTTP — Criar Lead no Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [620, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\n\n// Simple scoring: cidade + tipo_ativo + urgency + price_ask\nlet score = 30; // base\n\nconst hotCities = ['Lisboa', 'Cascais', 'Comporta', 'Porto', 'Algarve', 'Funchal'];\nif (hotCities.some(c => (lead.cidade || '').includes(c))) score += 20;\n\nif (lead.price_ask) {\n  if (lead.price_ask >= 3000000) score += 25;\n  else if (lead.price_ask >= 1000000) score += 20;\n  else if (lead.price_ask >= 500000) score += 10;\n}\n\nif (lead.urgency === 'high') score += 15;\nelse if (lead.urgency === 'medium') score += 8;\n\nif (lead.contacto) score += 5;\nif (lead.tipo_ativo === 'herdade' || lead.tipo_ativo === 'quinta') score += 5;\n\nscore = Math.min(score, 100);\n\nconst tier = score >= 70 ? 'A' : score >= 40 ? 'B' : 'C';\n\nreturn [{ json: { ...lead, computed_score: score, tier } }];"
+      },
+      "id": "g004",
+      "name": "Code — Calcular Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [840, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads/{{ $json.id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }, { "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={ \"score\": {{ $json.computed_score }}, \"score_status\": \"scored\", \"score_updated_at\": \"{{ new Date().toISOString() }}\" }" }] },
+        "options": {}
+      },
+      "id": "g005",
+      "name": "HTTP — Actualizar Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1060, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [{ "value1": "={{ $json.computed_score }}", "operation": "largerEqual", "value2": 70 }]
+        }
+      },
+      "id": "g006",
+      "name": "IF — Score Alto (≥70)?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1280, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🔥 LEAD OFF-MARKET SCORE ALTO\n\nNome: {{ $json.nome }}\nScore: {{ $json.computed_score }}/100 (Tier {{ $json.tier }})\nCidade: {{ $json.cidade || '—' }}\nTipo: {{ $json.tipo_ativo || '—' }}\nPreço: {{ $json.price_ask ? '€' + ($json.price_ask/1000).toFixed(0) + 'K' : '—' }}\nUrgência: {{ $json.urgency }}\nContacto: {{ $json.contacto || '—' }}\nFonte: {{ $json.source }}\n\n🔗 Portal: {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "g007",
+      "name": "Telegram — Alerta Score Alto",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1500, 220],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"score\": {{ $json.computed_score }}, \"tier\": \"{{ $json.tier }}\" }"
+      },
+      "id": "g008",
+      "name": "Respond — 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1500, 380]
+    }
+  ],
+  "connections": {
+    "Webhook — Novo Lead Off-Market": { "main": [[{ "node": "Code — Validar e Normalizar", "type": "main", "index": 0 }]] },
+    "Code — Validar e Normalizar": { "main": [[{ "node": "HTTP — Criar Lead no Supabase", "type": "main", "index": 0 }]] },
+    "HTTP — Criar Lead no Supabase": { "main": [[{ "node": "Code — Calcular Score", "type": "main", "index": 0 }]] },
+    "Code — Calcular Score": { "main": [[{ "node": "HTTP — Actualizar Score", "type": "main", "index": 0 }]] },
+    "HTTP — Actualizar Score": { "main": [[{ "node": "IF — Score Alto (≥70)?", "type": "main", "index": 0 }]] },
+    "IF — Score Alto (≥70)?": {
+      "main": [
+        [{ "node": "Telegram — Alerta Score Alto", "type": "main", "index": 0 }],
+        [{ "node": "Respond — 200 OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Telegram — Alerta Score Alto": { "main": [[{ "node": "Respond — 200 OK", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all", "saveDataSuccessExecution": "last", "saveManualExecutions": true },
+  "tags": [{ "name": "offmarket" }, { "name": "sourcing" }]
+}

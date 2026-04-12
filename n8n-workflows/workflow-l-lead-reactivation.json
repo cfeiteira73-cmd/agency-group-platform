@@ -1,0 +1,111 @@
+{
+  "name": "Workflow L — Lead Parado → Reativação (Off-Market + Contacts)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1" }] }
+      },
+      "id": "l001",
+      "name": "Schedule — Segunda-feira 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();\nconst thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();\nreturn [{ json: { fourteenDaysAgo, thirtyDaysAgo, now: now.toISOString() } }];"
+      },
+      "id": "l002",
+      "name": "Code — Calcular datas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?status=contacted&limit=100",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "l003",
+      "name": "HTTP — Leads contactados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [640, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/institutional-partners?estado=contactado&limit=100",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "l004",
+      "name": "HTTP — Parceiros contactados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [640, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const leadsRes = $('HTTP — Leads contactados').first().json;\nconst partnersRes = $('HTTP — Parceiros contactados').first().json;\n\nconst fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);\nconst thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);\n\n// Leads sem resposta há 14+ dias\nconst dormantLeads = (leadsRes.data || []).filter(l => {\n  if (!l.last_contact_at) return false;\n  return new Date(l.last_contact_at) < fourteenDaysAgo;\n});\n\n// Parceiros sem contacto há 30+ dias\nconst dormantPartners = (partnersRes.data || []).filter(p => {\n  if (!p.last_contact_at) return true; // never contacted\n  return new Date(p.last_contact_at) < thirtyDaysAgo;\n});\n\nif (dormantLeads.length === 0 && dormantPartners.length === 0) return [];\n\nconst all = [\n  ...dormantLeads.map(l => ({ ...l, _type: 'lead', _days: Math.floor((Date.now() - new Date(l.last_contact_at).getTime()) / 86400000) })),\n  ...dormantPartners.map(p => ({ ...p, _type: 'partner', _days: p.last_contact_at ? Math.floor((Date.now() - new Date(p.last_contact_at).getTime()) / 86400000) : 999 })),\n];\n\nreturn all.map(item => ({ json: item }));"
+      },
+      "id": "l005",
+      "name": "Code — Filtrar dormentes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=💤 REATIVAÇÃO — {{ $json._type === 'lead' ? '🏠 LEAD' : '🤝 PARCEIRO' }}\n\nNome: {{ $json.nome }}\n{{ $json._type === 'lead' ? 'Score: ' + ($json.score || '—') + '/100' : 'Tipo: ' + ($json.tipo || '—') }}\nCidade: {{ $json.cidade || '—' }}\nDormido há: {{ $json._days }} dias\nContacto: {{ $json.contacto || $json.phone || $json.email || '⚠️ sem contacto' }}\n\nScript sugerido:\n\"Bom dia, retomo o nosso contacto. Continuamos com procura activa na sua zona. Há interesse em avaliarmos a situação?\"\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "l006",
+      "name": "Telegram — Alerta reativação",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1080, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate daily digest summary\nconst items = $input.all();\nconst leads = items.filter(i => i.json._type === 'lead');\nconst partners = items.filter(i => i.json._type === 'partner');\n\nif (leads.length + partners.length === 0) return [];\n\nreturn [{ json: {\n  total_leads: leads.length,\n  total_partners: partners.length,\n  summary: `Leads dormentes: ${leads.length} | Parceiros dormentes: ${partners.length}`\n}}];"
+      },
+      "id": "l007",
+      "name": "Code — Sumário semanal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📊 RESUMO SEMANAL — REATIVAÇÕES\n\nLeads dormentes: {{ $json.total_leads }}\nParceiros dormentes: {{ $json.total_partners }}\n\nCadência recomendada:\n• 20 WhatsApps/dia\n• 5-10 calls/dia\n• 5 novos leads no CRM\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "l008",
+      "name": "Telegram — Resumo semanal",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1520, 300],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Schedule — Segunda-feira 08:00": { "main": [[{ "node": "Code — Calcular datas", "type": "main", "index": 0 }]] },
+    "Code — Calcular datas": { "main": [[
+      { "node": "HTTP — Leads contactados", "type": "main", "index": 0 },
+      { "node": "HTTP — Parceiros contactados", "type": "main", "index": 0 }
+    ]]},
+    "HTTP — Leads contactados": { "main": [[{ "node": "Code — Filtrar dormentes", "type": "main", "index": 0 }]] },
+    "HTTP — Parceiros contactados": { "main": [[{ "node": "Code — Filtrar dormentes", "type": "main", "index": 0 }]] },
+    "Code — Filtrar dormentes": { "main": [[{ "node": "Telegram — Alerta reativação", "type": "main", "index": 0 }]] },
+    "Telegram — Alerta reativação": { "main": [[{ "node": "Code — Sumário semanal", "type": "main", "index": 0 }]] },
+    "Code — Sumário semanal": { "main": [[{ "node": "Telegram — Resumo semanal", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
+  "tags": [{ "name": "reativacao" }, { "name": "offmarket" }, { "name": "parceiros" }]
+}

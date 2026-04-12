@@ -1,0 +1,87 @@
+{
+  "name": "Workflow K — Reunião Agendada → Notificação + Prep",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meeting-scheduled",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "k001",
+      "name": "Webhook — Reunião Agendada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// Required fields\nif (!body.contact_name) throw new Error('contact_name is required');\nif (!body.meeting_date) throw new Error('meeting_date is required');\n\n// Parse and format date\nconst meetingDate = new Date(body.meeting_date);\nbody.meeting_date_formatted = meetingDate.toLocaleDateString('pt-PT', {\n  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',\n  hour: '2-digit', minute: '2-digit'\n});\n\n// Set 24h before reminder\nbody.reminder_at = new Date(meetingDate.getTime() - 24 * 60 * 60 * 1000).toISOString();\nbody.meeting_type = body.meeting_type || 'vendedor';\n\nreturn [{ json: body }];"
+      },
+      "id": "k002",
+      "name": "Code — Validar e preparar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=📅 REUNIÃO CONFIRMADA\n\nContacto: {{ $json.contact_name }}\nTipo: {{ $json.meeting_type }}\nData: {{ $json.meeting_date_formatted }}\nLocalização: {{ $json.location || 'A definir' }}\nImóvel: {{ $json.property_ref || '—' }}\nZona: {{ $json.zona || '—' }}\nValor estimado: {{ $json.price_estimate ? '€' + ($json.price_estimate/1000).toFixed(0) + 'K' : '—' }}\n\n📋 Notas: {{ $json.notes || 'Nenhuma' }}\n\nLembrete automático 24h antes.",
+        "additionalFields": {}
+      },
+      "id": "k003",
+      "name": "Telegram — Confirmação imediata",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [640, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $json.reminder_at }}"
+      },
+      "id": "k004",
+      "name": "Wait — Até 24h antes",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [640, 400]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=⏰ LEMBRETE 24H — REUNIÃO AMANHÃ\n\nContacto: {{ $json.contact_name }}\nTipo: {{ $json.meeting_type }}\nData: {{ $json.meeting_date_formatted }}\n\n📋 Preparação:\n• Análise AVM da zona\n• Listagem de compradores activos na zona\n• Termos e condições a propor\n• Script de avaliação\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "k005",
+      "name": "Telegram — Lembrete 24h",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [860, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"meeting\": \"scheduled\", \"reminder_at\": \"{{ $json.reminder_at }}\" }"
+      },
+      "id": "k006",
+      "name": "Respond — 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [640, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Reunião Agendada": { "main": [[{ "node": "Code — Validar e preparar", "type": "main", "index": 0 }]] },
+    "Code — Validar e preparar": { "main": [[
+      { "node": "Telegram — Confirmação imediata", "type": "main", "index": 0 },
+      { "node": "Wait — Até 24h antes", "type": "main", "index": 0 },
+      { "node": "Respond — 200 OK", "type": "main", "index": 0 }
+    ]]},
+    "Wait — Até 24h antes": { "main": [[{ "node": "Telegram — Lembrete 24h", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all" },
+  "tags": [{ "name": "reunioes" }, { "name": "notificacoes" }]
+}

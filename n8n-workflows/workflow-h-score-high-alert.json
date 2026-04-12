@@ -1,0 +1,76 @@
+{
+  "name": "Workflow H — Score Alto → Alerta Imediato Advisor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "minutes", "minutesInterval": 15 }] }
+      },
+      "id": "h001",
+      "name": "Schedule — Cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?min_score=70&status=new&limit=20",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "options": {}
+      },
+      "id": "h002",
+      "name": "HTTP — Buscar Leads Hot não contactados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const res = $input.first().json;\nconst leads = (res.data || []).filter(l => l.score >= 70 && l.contact_attempts === 0);\n\nif (leads.length === 0) return [];\n\n// Deduplicate: only alert for leads created in last 30 min\nconst thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);\nconst fresh = leads.filter(l => new Date(l.created_at) > thirtyMinAgo);\n\nreturn fresh.map(l => ({ json: l }));"
+      },
+      "id": "h003",
+      "name": "Code — Filtrar leads frescos não contactados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=🚨 LEAD HOT — CONTACTAR AGORA\n\n{{ $json.nome }}\nScore: {{ $json.score }}/100\nCidade: {{ $json.cidade || '—' }}\nAtivo: {{ $json.tipo_ativo || '—' }}\nPreço: {{ $json.price_ask ? '€' + ($json.price_ask/1000).toFixed(0) + 'K' : '—' }}\nUrgência: {{ $json.urgency }}\nContacto: {{ $json.contacto || '⚠️ sem contacto' }}\n\nAdicionar ao CRM → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "additionalFields": {}
+      },
+      "id": "h004",
+      "name": "Telegram — Alerta por lead",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [860, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads/{{ $json.id }}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }, { "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={ \"status\": \"contacted\", \"last_contact_at\": \"{{ new Date().toISOString() }}\", \"contact_attempts\": 1 }" }] },
+        "options": {}
+      },
+      "id": "h005",
+      "name": "HTTP — Marcar como Contactado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1080, 300],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Schedule — Cada 15 minutos": { "main": [[{ "node": "HTTP — Buscar Leads Hot não contactados", "type": "main", "index": 0 }]] },
+    "HTTP — Buscar Leads Hot não contactados": { "main": [[{ "node": "Code — Filtrar leads frescos não contactados", "type": "main", "index": 0 }]] },
+    "Code — Filtrar leads frescos não contactados": { "main": [[{ "node": "Telegram — Alerta por lead", "type": "main", "index": 0 }]] },
+    "Telegram — Alerta por lead": { "main": [[{ "node": "HTTP — Marcar como Contactado", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all", "saveDataSuccessExecution": "last" },
+  "tags": [{ "name": "offmarket" }, { "name": "alertas" }]
+}

@@ -33,6 +33,8 @@ export const NAV: NavItem[] = [
   { id:'analytics', label:'Analytics & BI', icon:'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', group:'INTELIGÊNCIA' },
   { id:'investidores', label:'Motor Investidores', icon:'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', group:'INTELIGÊNCIA' },
   { id:'outbound', label:'Captação Off-Market', icon:'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', group:'INTELIGÊNCIA' },
+  { id:'offmarket', label:'Leads Off-Market', icon:'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', group:'INTELIGÊNCIA' },
+  { id:'partners', label:'Parceiros Institucionais', icon:'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', group:'INTELIGÊNCIA' },
   { id:'videoStudio', label:'Sofia Video Studio', icon:'M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', group:'FERRAMENTAS IA' },
   { id:'photos', label:'📸 Photo Scorer', icon:'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z', group:'FERRAMENTAS IA' },
   { id:'agentai', label:'🤖 Agente IA', icon:'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1', group:'FERRAMENTAS IA' },
@@ -138,6 +140,8 @@ export const SECTION_NAMES: Record<string, string> = {
   analytics:'Analytics & BI · Dashboard de Performance',
   investidores:'Motor de Investidores · Deal Flow',
   outbound:'Captação Off-Market · Prospecção',
+  offmarket:'Leads Off-Market · Pipeline Supabase',
+  partners:'Parceiros Institucionais · Rede Captação',
   videoStudio:'Sofia AI Video Studio · Vídeos de Apresentação',
 }
 
