@@ -1655,3 +1655,17 @@ SELECT 'Migration 017 complete — Data Quality Engine' AS status,
        'data_quality_score','city_normalized','tipo_ativo_normalized'
      )
   ) AS new_columns_added;
+
+
+-- =============================================================================
+-- MIGRATION 018 — RPC Helper Functions
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION increment_alert_count(lead_ids uuid[])
+RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE offmarket_leads
+  SET alert_count = COALESCE(alert_count, 0) + 1
+  WHERE id = ANY(lead_ids);
+$$;
+
+SELECT 'Migration 018 complete — RPC helpers' AS status;

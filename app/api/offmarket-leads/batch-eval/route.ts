@@ -15,13 +15,20 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { auth } from '@/auth'
+
+// ── Auth: CRON_SECRET (automated) OR portal session (manual trigger) ──────────
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const cronSecret = process.env.CRON_SECRET
+  const incoming = req.headers.get('x-cron-secret')
+    ?? req.headers.get('authorization')?.replace('Bearer ', '')
+  if (cronSecret && incoming === cronSecret) return true
+  const session = await auth()
+  return !!session
+}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // Auth: CRON_SECRET only
-  const cronSecret = process.env.CRON_SECRET
-  const incomingSecret = req.headers.get('x-cron-secret')
-    ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  if (!cronSecret || incomingSecret !== cronSecret) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -72,7 +79,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.log(`[batch-eval] Processing ${leads.length} leads (stage=${stage}, force=${force})`)
 
     const headers = {
-      'x-cron-secret': cronSecret,
+      'x-cron-secret': process.env.CRON_SECRET ?? '',
       'Content-Type': 'application/json',
       'User-Agent': 'AgencyGroup-BatchEval/1.0',
     }
@@ -196,10 +203,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
 // GET — dry run: shows how many leads would be processed
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const cronSecret = process.env.CRON_SECRET
-  const incomingSecret = req.headers.get('x-cron-secret')
-    ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  if (!cronSecret || incomingSecret !== cronSecret) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
