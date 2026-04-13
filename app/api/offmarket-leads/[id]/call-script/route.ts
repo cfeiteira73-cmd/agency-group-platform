@@ -38,21 +38,12 @@ export async function GET(
   try {
     const { data: lead, error } = await s
       .from('offmarket_leads')
-      .select(`
-        id, nome, cidade, tipo_ativo, price_ask, area_m2, score,
-        owner_name, contact_phone_owner, contacto,
-        buyer_pressure_class, seller_intent_label,
-        deal_readiness_score, cpcv_probability,
-        matched_buyers_count, best_buyer_match_score,
-        execution_blocker_reason, master_attack_rank,
-        revenue_per_lead_estimate,
-        contact_attempts_count, last_call_at
-      `)
+      .select('*')
       .eq('id', id)
       .single()
 
     if (error || !lead) {
-      return NextResponse.json({ error: 'Lead not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Lead not found', detail: error?.message }, { status: 404 })
     }
 
     const output = generateCallEngineOutput(lead as CallLeadInput)
