@@ -62,7 +62,7 @@ In n8n UI → Settings → Import Workflow, import these files:
 |---|---|---|---|
 | 1 | `workflow-a-lead-inbound.json` | Lead inbound webhook — receives raw lead data | Webhook POST `/lead-inbound` |
 | 2 | `workflow-a-lead-enrichment.json` | Full enrichment: normalise, dedup, score via API, WhatsApp outreach | Webhook POST `/lead-enrichment` |
-| 3 | `workflow-g-offmarket-new.json` | **OFF-MARKET CORE**: receives Apify scrape, deduplicates, calls POST `/api/offmarket-leads`, triggers scoring | Webhook POST `/offmarket-new` |
+| 3 | `wf_g_current.json` | **OFF-MARKET CORE**: receives Apify scrape, deduplicates, calls POST `/api/offmarket-leads`, triggers scoring | Webhook POST `/offmarket-new` |
 | 4 | `workflow-h-score-high-alert.json` | **ALERT**: when score ≥ 80, sends Telegram + WhatsApp to assigned advisor | Webhook POST `/score-high-alert` |
 | 5 | `workflow-n-daily-digest.json` | **DAILY**: calls GET `/api/reporting/daily`, formats and sends digest to Telegram | Cron: Mon–Fri 08:30 UTC |
 

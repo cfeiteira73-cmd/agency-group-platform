@@ -1012,12 +1012,10 @@ function calcExecutionDisciplineScore(
     }
   }
 
-  // 4. Proposta <48h após visita (25pts) — só conta se visita feita mas não contado acima
+  // 4. Proposta <48h após visita (25pts) — só conta se visita feita mas proposta ainda não enviada
   if (firstMeetingAt && offerDate) {
     const h = (new Date(offerDate).getTime() - new Date(firstMeetingAt).getTime()) / 3_600_000
-    // Only add pts if not already counted in step 3
-    if (h <= 48 && !offerDate) { score += 25; parts.push('proposta <48h ✅') }
-    // (already counted in step 3 if offerDate exists)
+    if (h <= 48) { score += 25; parts.push('proposta <48h ✅') }
   } else if (firstMeetingAt && !offerDate) {
     const h = (Date.now() - new Date(firstMeetingAt).getTime()) / 3_600_000
     if (h > 72) parts.push('sem proposta após visita ❌')

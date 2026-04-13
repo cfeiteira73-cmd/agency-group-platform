@@ -307,10 +307,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     for (let d = 6; d >= 0; d--) {
       const dayStart = new Date(now)
-      dayStart.setDate(dayStart.getDate() - d)
-      dayStart.setHours(0, 0, 0, 0)
+      dayStart.setUTCDate(dayStart.getUTCDate() - d)
+      dayStart.setUTCHours(0, 0, 0, 0)
       const dayEnd = new Date(dayStart)
-      dayEnd.setHours(23, 59, 59, 999)
+      dayEnd.setUTCHours(23, 59, 59, 999)
 
       const dayLeads = allLeads.filter((l: { created_at: string }) => {
         const t = new Date(l.created_at)

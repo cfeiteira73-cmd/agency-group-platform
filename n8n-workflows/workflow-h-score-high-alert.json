@@ -15,7 +15,7 @@
       "parameters": {
         "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?min_score=70&status=new&limit=20",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "x-cron-secret", "value": "{{ $env.CRON_SECRET }}" }] },
         "options": {}
       },
       "id": "h002",
@@ -59,7 +59,7 @@
         "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads/{{ $json.id }}",
         "method": "PATCH",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }, { "name": "Content-Type", "value": "application/json" }] },
+        "headers": { "parameters": [{ "name": "x-cron-secret", "value": "{{ $env.CRON_SECRET }}" }, { "name": "Content-Type", "value": "application/json" }] },
         "sendBody": true,
         "bodyParameters": { "parameters": [{ "name": "=", "value": "={ \"status\": \"contacted\", \"last_contact_at\": \"{{ new Date().toISOString() }}\", \"contact_attempts\": 1 }" }] },
         "options": {}

@@ -137,8 +137,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       lead_tier: c.lead_tier,
       missing: [
         ...(c.budget_max == null ? ['budget'] : []),
-        ...(Array.isArray(c.preferred_locations) && c.preferred_locations.length === 0 || !c.preferred_locations ? ['zones'] : []),
-        ...(Array.isArray(c.typologies_wanted) && c.typologies_wanted.length === 0 || !c.typologies_wanted ? ['types'] : []),
+        ...(!Array.isArray(c.preferred_locations) || c.preferred_locations.length === 0 ? ['zones'] : []),
+        ...(!Array.isArray(c.typologies_wanted) || c.typologies_wanted.length === 0 ? ['types'] : []),
       ],
     }))
 
