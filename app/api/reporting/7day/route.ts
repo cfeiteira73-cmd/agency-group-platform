@@ -1,0 +1,321 @@
+// =============================================================================
+// Agency Group — 7-Day Operational Report
+// GET /api/reporting/7day
+//
+// Returns 7-day funnel metrics for measured operation:
+//   - leads/day throughput
+//   - scoring velocity
+//   - matching rate
+//   - price intelligence coverage
+//   - deal evaluation coverage
+//   - classification distribution
+//   - SLA compliance
+//   - conversion funnel
+//   - top leads to attack now
+//   - bottlenecks
+//
+// Auth: CRON_SECRET or session
+// =============================================================================
+
+import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase'
+import { auth } from '@/auth'
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  try {
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret')
+      ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const isCron = cronSecret && incomingSecret === cronSecret
+    if (!isCron) {
+      const session = await auth()
+      if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const s = supabaseAdmin as any
+    const now = new Date()
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const sevenDaysAgoISO = sevenDaysAgo.toISOString()
+
+    // Run all queries in parallel
+    const [
+      r_all_leads,
+      r_scored,
+      r_matched,
+      r_priced,
+      r_evaluated,
+      r_preclose,
+      r_contacted,
+      r_sla_breaches,
+      r_top_attack,
+      r_classifications,
+      r_negotiations,
+      r_cpcv,
+    ] = await Promise.all([
+      // All leads in last 7 days
+      s.from('offmarket_leads')
+        .select('id, created_at, score, status, sla_contacted_at, sla_breach')
+        .gte('created_at', sevenDaysAgoISO)
+        .order('created_at', { ascending: true }),
+
+      // Scored leads (last 7 days)
+      s.from('offmarket_leads')
+        .select('id, score, last_score_at')
+        .gte('last_score_at', sevenDaysAgoISO)
+        .not('score', 'is', null),
+
+      // Buyer-matched leads (last 7 days)
+      s.from('offmarket_leads')
+        .select('id, matched_buyers_count, buyer_matched_at')
+        .gte('buyer_matched_at', sevenDaysAgoISO)
+        .gt('matched_buyers_count', 0),
+
+      // Price-intel leads (last 7 days)
+      s.from('offmarket_leads')
+        .select('id, price_opportunity_score, price_intelligence_updated_at')
+        .gte('price_intelligence_updated_at', sevenDaysAgoISO)
+        .not('price_opportunity_score', 'is', null),
+
+      // Deal-eval leads (last 7 days)
+      s.from('offmarket_leads')
+        .select('id, deal_evaluation_score, master_attack_rank, deal_evaluation_updated_at')
+        .gte('deal_evaluation_updated_at', sevenDaysAgoISO)
+        .not('deal_evaluation_score', 'is', null),
+
+      // Preclose candidates (active)
+      s.from('offmarket_leads')
+        .select('id, nome, score, master_attack_rank, status')
+        .eq('preclose_candidate', true)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")'),
+
+      // Contacted leads (last 7 days)
+      s.from('offmarket_leads')
+        .select('id, sla_contacted_at, status')
+        .gte('sla_contacted_at', sevenDaysAgoISO)
+        .not('sla_contacted_at', 'is', null),
+
+      // SLA breaches (active)
+      s.from('offmarket_leads')
+        .select('id, nome, score, created_at, sla_breach')
+        .eq('sla_breach', true)
+        .not('status', 'in', '("closed_won","closed_lost")'),
+
+      // Top attack leads (master_attack_rank highest)
+      s.from('offmarket_leads')
+        .select('id, nome, score, master_attack_rank, deal_evaluation_score, execution_probability, deal_evaluation_reason, cidade, tipo_ativo, price_ask')
+        .not('master_attack_rank', 'is', null)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('master_attack_rank', { ascending: false })
+        .limit(10),
+
+      // Classification distribution
+      s.from('offmarket_leads')
+        .select('deal_evaluation_reason')
+        .not('deal_evaluation_reason', 'is', null),
+
+      // Active negotiations
+      s.from('offmarket_leads')
+        .select('id, nome, negotiation_status, offer_amount, deal_next_step_date')
+        .not('negotiation_status', 'in', '("idle","withdrawn")')
+        .not('status', 'in', '("closed_won","closed_lost")'),
+
+      // CPCV pipeline
+      s.from('offmarket_leads')
+        .select('id, nome, cpcv_target_date, cpcv_signed_at, escritura_target_date, deal_risk_level')
+        .or('cpcv_target_date.not.is.null,cpcv_signed_at.not.is.null')
+        .is('escritura_done_at', null),
+    ])
+
+    const allLeads = r_all_leads.data ?? []
+    const scored   = r_scored.data ?? []
+    const matched  = r_matched.data ?? []
+    const priced   = r_priced.data ?? []
+    const evaluated = r_evaluated.data ?? []
+    const preclose  = r_preclose.data ?? []
+    const contacted = r_contacted.data ?? []
+    const slaBreaches = r_sla_breaches.data ?? []
+    const topAttack = r_top_attack.data ?? []
+    const allClassifications = r_classifications.data ?? []
+    const negotiations = r_negotiations.data ?? []
+    const cpcvPipeline = r_cpcv.data ?? []
+
+    // ── Daily breakdown (last 7 days) ────────────────────────────────────────
+    const dailyBreakdown: Array<{
+      date: string
+      leads_created: number
+      leads_scored: number
+      avg_score: number | null
+    }> = []
+
+    for (let d = 6; d >= 0; d--) {
+      const dayStart = new Date(now)
+      dayStart.setDate(dayStart.getDate() - d)
+      dayStart.setHours(0, 0, 0, 0)
+      const dayEnd = new Date(dayStart)
+      dayEnd.setHours(23, 59, 59, 999)
+
+      const dayLeads = allLeads.filter((l: { created_at: string }) => {
+        const t = new Date(l.created_at)
+        return t >= dayStart && t <= dayEnd
+      })
+
+      const dayScored = scored.filter((l: { last_score_at: string }) => {
+        const t = new Date(l.last_score_at)
+        return t >= dayStart && t <= dayEnd
+      })
+
+      const avgScore = dayLeads.length > 0
+        ? Math.round(dayLeads.filter((l: { score: number | null }) => l.score !== null)
+            .reduce((sum: number, l: { score: number }) => sum + l.score, 0) / Math.max(dayLeads.length, 1))
+        : null
+
+      dailyBreakdown.push({
+        date: dayStart.toISOString().split('T')[0],
+        leads_created: dayLeads.length,
+        leads_scored: dayScored.length,
+        avg_score: avgScore,
+      })
+    }
+
+    // ── Classification distribution ──────────────────────────────────────────
+    const classificationMap: Record<string, number> = {}
+    for (const item of allClassifications) {
+      const reason = (item.deal_evaluation_reason as string) ?? ''
+      const match = reason.match(/^\[([^\]]+)\]/)
+      const label = match ? match[1] : 'unknown'
+      classificationMap[label] = (classificationMap[label] ?? 0) + 1
+    }
+
+    // ── Funnel metrics ────────────────────────────────────────────────────────
+    // Total active leads (all time)
+    const { count: totalActive } = await s
+      .from('offmarket_leads')
+      .select('id', { count: 'exact', head: true })
+      .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+
+    const { count: totalScored } = await s
+      .from('offmarket_leads')
+      .select('id', { count: 'exact', head: true })
+      .not('score', 'is', null)
+      .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+
+    const { count: totalMatched } = await s
+      .from('offmarket_leads')
+      .select('id', { count: 'exact', head: true })
+      .gt('matched_buyers_count', 0)
+      .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+
+    const { count: totalPriced } = await s
+      .from('offmarket_leads')
+      .select('id', { count: 'exact', head: true })
+      .not('price_opportunity_score', 'is', null)
+      .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+
+    const { count: totalEvaluated } = await s
+      .from('offmarket_leads')
+      .select('id', { count: 'exact', head: true })
+      .not('deal_evaluation_score', 'is', null)
+      .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+
+    // ── SLA compliance ────────────────────────────────────────────────────────
+    const p0Leads = allLeads.filter((l: { score: number | null }) => (l.score ?? 0) >= 80)
+    const p0Contacted = p0Leads.filter((l: { sla_contacted_at: string | null }) => l.sla_contacted_at !== null)
+    const slaComplianceRate = p0Leads.length > 0
+      ? Math.round((p0Contacted.length / p0Leads.length) * 100)
+      : null
+
+    // ── Average scores ────────────────────────────────────────────────────────
+    const evalScores = evaluated.map((l: { deal_evaluation_score: number }) => l.deal_evaluation_score).filter(Boolean)
+    const avgEvalScore = evalScores.length > 0
+      ? Math.round(evalScores.reduce((a: number, b: number) => a + b, 0) / evalScores.length)
+      : null
+
+    const rankScores = evaluated.map((l: { master_attack_rank: number }) => l.master_attack_rank).filter(Boolean)
+    const avgRank = rankScores.length > 0
+      ? Math.round(rankScores.reduce((a: number, b: number) => a + b, 0) / rankScores.length)
+      : null
+
+    // ── Bottleneck analysis ───────────────────────────────────────────────────
+    const bottlenecks: string[] = []
+    if ((totalScored ?? 0) < (totalActive ?? 0) * 0.8) {
+      bottlenecks.push(`${(totalActive ?? 0) - (totalScored ?? 0)} leads sem score`)
+    }
+    if ((totalMatched ?? 0) < (totalScored ?? 0) * 0.5) {
+      bottlenecks.push(`${(totalScored ?? 0) - (totalMatched ?? 0)} leads scored sem buyer match`)
+    }
+    if ((totalEvaluated ?? 0) < (totalScored ?? 0) * 0.6) {
+      bottlenecks.push(`${(totalScored ?? 0) - (totalEvaluated ?? 0)} leads sem deal evaluation`)
+    }
+    if (slaBreaches.length > 0) {
+      bottlenecks.push(`${slaBreaches.length} SLA breaches activos`)
+    }
+
+    return NextResponse.json({
+      period: {
+        from: sevenDaysAgoISO,
+        to: now.toISOString(),
+        days: 7,
+      },
+
+      // 7-day activity
+      activity_7d: {
+        leads_created: allLeads.length,
+        leads_scored: scored.length,
+        leads_matched: matched.length,
+        leads_priced: priced.length,
+        leads_evaluated: evaluated.length,
+        leads_contacted: contacted.length,
+        sla_breaches: slaBreaches.length,
+        p0_sla_compliance_pct: slaComplianceRate,
+      },
+
+      // Daily breakdown
+      daily_breakdown: dailyBreakdown,
+
+      // Full pipeline funnel (all time)
+      funnel_all_time: {
+        active_leads: totalActive ?? 0,
+        scored: totalScored ?? 0,
+        buyer_matched: totalMatched ?? 0,
+        price_intel_done: totalPriced ?? 0,
+        deal_evaluated: totalEvaluated ?? 0,
+        preclose_candidates: preclose.length,
+        active_negotiations: negotiations.length,
+        cpcv_pipeline: cpcvPipeline.length,
+      },
+
+      // Score quality
+      score_quality: {
+        avg_deal_evaluation_score: avgEvalScore,
+        avg_master_attack_rank: avgRank,
+      },
+
+      // Classification distribution (all evaluated leads)
+      classification_distribution: classificationMap,
+
+      // Top leads to attack now
+      top_attack_leads: topAttack,
+
+      // Bottlenecks
+      bottlenecks,
+
+      // Upcoming deadlines
+      upcoming: {
+        cpcv_this_week: cpcvPipeline.filter((l: { cpcv_target_date: string | null }) => {
+          if (!l.cpcv_target_date) return false
+          const d = new Date(l.cpcv_target_date)
+          return d <= new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+        }).length,
+        escritura_this_month: cpcvPipeline.filter((l: { escritura_target_date: string | null }) => {
+          if (!l.escritura_target_date) return false
+          const d = new Date(l.escritura_target_date)
+          return d <= new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+        }).length,
+      },
+    })
+  } catch (err) {
+    console.error('[reporting/7day]', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

@@ -11,12 +11,18 @@
 //   5. Risk-Adjusted Upside     (0-100) — upside bruto − fricção
 //   6. Asset Quality Score      (0-100) — qualidade intrínseca do ativo
 //   7. Source Quality Score     (0-100) — fiabilidade da origem
-//   8. Deal Evaluation Score    (0-100) — composite das 7 camadas
-//   +  Master Attack Rank       (0-100) — DealEval + DPS + ExecProb
+//   8. Deal Evaluation Score    (0-100) — ASSET+PRICE quality composite (5 layers)
+//                                         adjusted_discount(35%) + liquidity(20%)
+//                                         + risk_adj_upside(20%) + asset_quality(15%)
+//                                         + source_quality(10%)
+//                                         NOTE: NÃO inclui execution/buyer (evitar double-count)
+//   +  Master Attack Rank       (0-100) — deal_eval(35%) + execution_prob(25%)
+//                                         + deal_priority_score(25%) + buyer_execution(15%)
 //
 // AUDITORIA: NÃO duplica score engine, buyer matching, price-intel, DPS.
 // Usa campos existentes (gross_discount_pct, comp_confidence_score,
 // deal_priority_score, buyer_score) como inputs.
+// Calibração v2 (2026-04-13): eliminado double-counting de execution_probability
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -367,52 +373,52 @@ function calcSourceQualityScore(source: string | null): number {
 }
 
 // ---------------------------------------------------------------------------
-// 8. Deal Evaluation Score (0-100) — composite
-//    adjusted_discount(25%) + liquidity(15%) + execution(20%)
-//    + buyer_execution(20%) + risk_adj_upside(10%)
-//    + asset_quality(5%) + source_quality(5%)
+// 8. Deal Evaluation Score (0-100) — ASSET+PRICE quality composite (5 layers)
+//    Deliberadamente EXCLUI execution_probability e buyer_execution_score
+//    para evitar double-counting no Master Attack Rank.
+//    adjusted_discount(35%) + liquidity(20%) + risk_adj_upside(20%)
+//    + asset_quality(15%) + source_quality(10%)
 // ---------------------------------------------------------------------------
 
 function calcDealEvaluationScore(
   adjustedDiscountScore: number,
   liquidityScore: number,
-  executionProbability: number,
-  bestBuyerExecutionScore: number,
   riskAdjustedUpsideScore: number,
   assetQualityScore: number,
   sourceQualityScore: number
 ): number {
   return clamp(Math.round(
-    adjustedDiscountScore * 0.25 +
-    liquidityScore * 0.15 +
-    executionProbability * 0.20 +
-    bestBuyerExecutionScore * 0.20 +
-    riskAdjustedUpsideScore * 0.10 +
-    assetQualityScore * 0.05 +
-    sourceQualityScore * 0.05
+    adjustedDiscountScore   * 0.35 +
+    liquidityScore          * 0.20 +
+    riskAdjustedUpsideScore * 0.20 +
+    assetQualityScore       * 0.15 +
+    sourceQualityScore      * 0.10
   ), 0, 100)
 }
 
 // ---------------------------------------------------------------------------
-// Master Attack Rank (0-100)
-//    deal_evaluation_score(50%) + deal_priority_score(30%) + execution_probability(20%)
-//    Combina qualidade do deal + matching compradores + fechabilidade
+// Master Attack Rank (0-100) — v2
+//    deal_eval(35%) + execution_probability(25%) + deal_priority_score(25%)
+//    + buyer_execution_score(15%)
+//    Combina qualidade do activo + fechabilidade + compradores + match AI
 // ---------------------------------------------------------------------------
 
 function calcMasterAttackRank(
   dealEvaluationScore: number,
+  executionProbability: number,
   dealPriorityScore: number | null,
-  executionProbability: number
+  bestBuyerExecutionScore: number
 ): number {
   return clamp(Math.round(
-    dealEvaluationScore * 0.50 +
-    (dealPriorityScore ?? 0) * 0.30 +
-    executionProbability * 0.20
+    dealEvaluationScore       * 0.35 +
+    executionProbability      * 0.25 +
+    (dealPriorityScore ?? 0)  * 0.25 +
+    bestBuyerExecutionScore   * 0.15
   ), 0, 100)
 }
 
 // ---------------------------------------------------------------------------
-// Classification label
+// Classification label — negative signals checked FIRST (fix ordering bug v1)
 // ---------------------------------------------------------------------------
 
 function classifyDeal(
@@ -420,12 +426,36 @@ function classifyDeal(
   executionProbability: number,
   adjustedDiscountScore: number
 ): string {
-  if (masterAttackRank >= 80 && executionProbability >= 70) return 'Ataque imediato'
-  if (masterAttackRank >= 65 && adjustedDiscountScore >= 40) return 'Oportunidade forte'
-  if (masterAttackRank >= 50) return 'Boa mas não prioritária'
-  if (adjustedDiscountScore >= 40 && executionProbability < 40) return 'Produto bom, deal fraco'
+  // Negative signals — must be checked before positive thresholds
   if (adjustedDiscountScore <= 5 && masterAttackRank < 40) return 'Preço acima do mercado'
+  if (executionProbability < 15 && masterAttackRank < 40)  return 'Dados insuficientes'
+  // Positive classifications — ordered by strength
+  if (masterAttackRank >= 80 && executionProbability >= 70)           return 'Ataque imediato'
+  if (masterAttackRank >= 65 && adjustedDiscountScore >= 40)          return 'Oportunidade forte'
+  if (adjustedDiscountScore >= 40 && executionProbability < 40)       return 'Produto bom, deal fraco'
+  if (masterAttackRank >= 50)                                         return 'Boa mas não prioritária'
   return 'Dados insuficientes'
+}
+
+// ---------------------------------------------------------------------------
+// Next action — explicit operator instruction per classification
+// ---------------------------------------------------------------------------
+
+function getNextAction(classification: string): string {
+  switch (classification) {
+    case 'Ataque imediato':
+      return 'Contactar proprietário hoje. Agendar visita nas próximas 48h. Preparar proposta.'
+    case 'Oportunidade forte':
+      return 'Validar dados com visita. Confirmar motivação do vendedor. Apresentar ao buyer primário.'
+    case 'Produto bom, deal fraco':
+      return 'Renegociar preço ou aguardar evento (herança, divórcio). Qualificar melhor o vendedor.'
+    case 'Boa mas não prioritária':
+      return 'Manter contacto mensal. Reactivar se surgir urgência ou nova oferta de buyer.'
+    case 'Preço acima do mercado':
+      return 'Arquivar ou propor preço alinhado com mercado. Revisitar em 90 dias.'
+    default:
+      return 'Completar dados: preço de mercado, contacto directo e matching de compradores.'
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -518,27 +548,29 @@ export async function POST(
     const sourceQualityScore = calcSourceQualityScore(lead.source)
 
     const dealEvaluationScore = calcDealEvaluationScore(
-      adjustedDiscountScore, liquidityScore, executionProbability,
-      bestBuyerExecutionScore, riskAdjustedUpsideScore,
-      assetQualityScore, sourceQualityScore
+      adjustedDiscountScore, liquidityScore,
+      riskAdjustedUpsideScore, assetQualityScore, sourceQualityScore
     )
 
     const masterAttackRank = calcMasterAttackRank(
-      dealEvaluationScore, lead.deal_priority_score, executionProbability
+      dealEvaluationScore, executionProbability,
+      lead.deal_priority_score, bestBuyerExecutionScore
     )
 
     const classification = classifyDeal(masterAttackRank, executionProbability, adjustedDiscountScore)
+    const nextAction = getNextAction(classification)
 
     const dealEvaluationReason = [
       `[${classification}]`,
       `Desconto adj.: ${adjustedDiscountScore}/100`,
       `Liquidez: ${liquidityScore}/100`,
-      `Execução: ${executionProbability}/100`,
-      `Comprador: ${bestBuyerExecutionScore}/100`,
       `Upside adj.: ${riskAdjustedUpsideScore}/100`,
+      `Qualidade activo: ${assetQualityScore}/100`,
+      `Fonte: ${sourceQualityScore}/100`,
+      `→ ${nextAction}`,
     ].join(' · ')
 
-    const masterAttackRankReason = `Rank ${masterAttackRank}/100 — ${classification} · DealEval ${dealEvaluationScore} · DPS ${lead.deal_priority_score ?? 0} · Exec ${executionProbability}`
+    const masterAttackRankReason = `Rank ${masterAttackRank}/100 — ${classification} · DealEval ${dealEvaluationScore} · Exec ${executionProbability} · DPS ${lead.deal_priority_score ?? 0} · Buyer ${bestBuyerExecutionScore} · ${nextAction}`
 
     // ── Persist ──────────────────────────────────────────────────────────────
 
@@ -575,6 +607,7 @@ export async function POST(
       lead_id: id,
       nome: lead.nome,
       classification,
+      next_action: nextAction,
       // 8 layers
       adjusted_discount_score:    adjustedDiscountScore,
       liquidity_score:            liquidityScore,

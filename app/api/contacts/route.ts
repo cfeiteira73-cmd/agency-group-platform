@@ -112,7 +112,16 @@ export async function PUT(req: NextRequest) {
     const supabase = await createClient()
 
     // Build update object (only allowed fields)
-    const allowed = ['name','email','phone','nationality','language','budget_min','budget_max','zonas','tipos','status','notes','origin','last_contact','lead_score','tasks']
+    // Includes migration 007 buyer intelligence fields
+    const allowed = [
+      'name','email','phone','nationality','language',
+      'budget_min','budget_max','zonas','tipos',
+      'status','notes','origin','last_contact','lead_score','tasks',
+      // Migration 007 — buyer intelligence
+      'buyer_score','buyer_type','liquidity_profile','proof_of_funds_status',
+      'ticket_preference','target_strategy','deals_closed_count','avg_close_days',
+      'negotiation_style','reliability_score','response_rate','active_status',
+    ]
     const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
     for (const key of allowed) {
       if (key in updates) updateData[key] = updates[key]
