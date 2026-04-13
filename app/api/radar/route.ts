@@ -480,28 +480,10 @@ async function scrapeBankPortal(url: string, bank: string): Promise<Record<strin
   } catch { return null }
 }
 
-// ─── Apify scraping (Idealista + Imovirtual) ──────────────────────────────────
-async function scrapeApify(
-  platform: Platform, url: string, token: string
-): Promise<Record<string, unknown> | null> {
-  try {
-    if (platform === 'idealista') {
-      const r = await fetch(
-        `https://api.apify.com/v2/acts/dz-omar~idealista-scraper/run-sync-get-dataset-items?token=${token}&timeout=55`,
-        { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ Property_urls:[{ url }] }), signal: AbortSignal.timeout(57000) }
-      )
-      if (r.ok) { const d = await r.json(); if (Array.isArray(d) && d[0]) return d[0] }
-    }
-    if (platform === 'imovirtual') {
-      const r = await fetch(
-        `https://api.apify.com/v2/acts/epctex~imovirtual-scraper/run-sync-get-dataset-items?token=${token}&timeout=55`,
-        { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ startUrls:[{ url }], maxItems:1 }), signal: AbortSignal.timeout(57000) }
-      )
-      if (r.ok) { const d = await r.json(); if (Array.isArray(d) && d[0]) return d[0] }
-    }
-    return null
-  } catch { return null }
-}
+// ─── Idealista / Imovirtual — scrapers de terceiros removidos ────────────────
+// dz-omar~idealista-scraper e epctex~imovirtual-scraper foram removidos por
+// violarem os ToS da Idealista e da Imovirtual.
+// Substituição: Idealista API Oficial (developers.idealista.com) — pendente credenciais AMI 22506
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
@@ -520,7 +502,6 @@ export async function POST(req: NextRequest) {
     const cached = responseCache.get(cacheKey)
     if (cached && Date.now() - cached.ts < CACHE_TTL) return NextResponse.json({ ...cached.data as object, cached: true })
 
-    const APIFY_TOKEN = process.env.APIFY_TOKEN
     const CLAUDE_KEY  = process.env.ANTHROPIC_API_KEY
 
     const platform = detectPlatform(urlStr)
@@ -535,11 +516,8 @@ export async function POST(req: NextRequest) {
 
     const [, liveRates] = await Promise.all([
       (async () => {
-        // 1. Standard portals — Apify
-        if (APIFY_TOKEN && (platform === 'idealista' || platform === 'imovirtual')) {
-          raw = await scrapeApify(platform, urlStr, APIFY_TOKEN)
-          if (raw) { apifyOk = true; return }
-        }
+        // 1. Idealista / Imovirtual — integração via Idealista API Oficial (pendente credenciais)
+        // TODO: substituir por lib/idealista-api.ts quando IDEALISTA_API_KEY configurado
         // 2. e-Leilões (OSAE)
         if (platform === 'eleiloes') {
           specialSaleData = await scrapeEleiloes(urlStr)
