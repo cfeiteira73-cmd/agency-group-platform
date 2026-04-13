@@ -500,9 +500,101 @@ type ExecutionBlocker =
   | 'no_contact'
   | 'no_price_intel'
   | 'no_buyer'
+  | 'no_meeting'
   | 'sla_breach'
   | 'insufficient_data'
+  | 'deal_kill'
+  | 'cpcv_trigger'
   | 'ready_to_attack'
+
+// ---------------------------------------------------------------------------
+// Money Priority Score (0-100) — FASE 20
+//   cpcv_probability(50%) + velocity(20%) + buyer_pressure(20%) + ticket(10%)
+//   Ordena por receita × velocidade — o que fecha mais depressa com mais €
+// ---------------------------------------------------------------------------
+
+function calcMoneyPriorityScore(
+  cpcvProbability: number,
+  dealVelocityScore: number,
+  buyerPressureScore: number,
+  priceAsk: number | null
+): number {
+  const ticketScore = !priceAsk ? 0
+    : priceAsk >= 10_000_000 ? 100
+    : priceAsk >= 5_000_000 ? 90
+    : priceAsk >= 2_000_000 ? 75
+    : priceAsk >= 1_000_000 ? 60
+    : priceAsk >= 500_000 ? 45
+    : priceAsk >= 200_000 ? 30 : 15
+
+  return clamp(Math.round(
+    cpcvProbability    * 0.50 +
+    dealVelocityScore  * 0.20 +
+    buyerPressureScore * 0.20 +
+    ticketScore        * 0.10
+  ), 0, 100)
+}
+
+// ---------------------------------------------------------------------------
+// Deal Kill Flag — FASE 20
+//   Sinaliza leads que devem ser descartadas para limpar a execution queue
+// ---------------------------------------------------------------------------
+
+function calcDealKillFlag(
+  contacto: string | null,
+  createdAt: string | null,
+  score: number | null,
+  matchedBuyersCount: number | null,
+  areaM2: number | null,
+  priceAsk: number | null
+): boolean {
+  const c = contacto?.trim() ?? ''
+  const ageH = createdAt
+    ? (Date.now() - new Date(createdAt).getTime()) / 3_600_000
+    : 0
+  // No contact >72h and low score
+  if (!c && ageH > 72 && (score ?? 0) < 70) return true
+  // No buyers and score below threshold
+  if ((matchedBuyersCount ?? 0) === 0 && (score ?? 0) < 60) return true
+  // Price intel permanently impossible and low score (no area + no price_ask)
+  if (!areaM2 && !priceAsk && (score ?? 0) < 60) return true
+  return false
+}
+
+// ---------------------------------------------------------------------------
+// Buyer Competition Flag — FASE 20
+//   ≥2 matched buyers + high buyer pressure = usar urgência competitiva
+// ---------------------------------------------------------------------------
+
+function calcBuyerCompetitionFlag(
+  matchedBuyersCount: number | null,
+  buyerPressureScore: number
+): boolean {
+  return (matchedBuyersCount ?? 0) >= 2 && buyerPressureScore >= 70
+}
+
+// ---------------------------------------------------------------------------
+// Next Contact Channel — FASE 20
+//   Sequência: call → whatsapp → email → linkedin → loop
+// ---------------------------------------------------------------------------
+
+function getNextContactChannel(
+  contactAttempts: number | null,
+  lastAttemptChannel: string | null
+): string {
+  const attempts = contactAttempts ?? 0
+  if (attempts === 0) return 'LIGAR — primeiro contacto'
+  if (lastAttemptChannel === 'call' || attempts === 1) return 'WHATSAPP — não atendeu chamada'
+  if (lastAttemptChannel === 'whatsapp' || attempts === 2) return 'EMAIL — sem resposta WA'
+  if (lastAttemptChannel === 'email' || attempts === 3) return 'LINKEDIN — tentar via rede'
+  return `LOOP — ${attempts} tentativas. Escalar ou descartar.`
+}
+
+// ---------------------------------------------------------------------------
+// Execution Blocker v2 — FASE 20
+//   Priority (high→low): deal_kill > cpcv_trigger > no_contact > no_price_intel
+//   > no_buyer > no_meeting > sla_breach > insufficient_data > ready_to_attack
+// ---------------------------------------------------------------------------
 
 function getExecutionBlocker(
   contacto: string | null,
@@ -511,13 +603,31 @@ function getExecutionBlocker(
   areaM2: number | null,
   matchedBuyersCount: number | null,
   slaBreached: boolean | null,
-  dataCompletenessScore: number
+  dataCompletenessScore: number,
+  // FASE 20 additions
+  score: number | null,
+  firstMeetingAt: string | null,
+  dealReadinessScore: number,
+  buyerPressureClass: 'HIGH' | 'MED' | 'LOW',
+  cpcvProbability: number,
+  dealKillFlag: boolean
 ): ExecutionBlocker {
+  // 1. Kill — remove from active queue
+  if (dealKillFlag) return 'deal_kill'
+  // 2. CPCV trigger — highest commercial priority
+  if (dealReadinessScore >= 80 && buyerPressureClass === 'HIGH' && cpcvProbability >= 65) return 'cpcv_trigger'
+  // 3. No contact — pipeline cannot start
   const c = contacto?.trim() ?? ''
   if (!c) return 'no_contact'
+  // 4. Price intel missing but possible
   if (grossDiscountPct === null && priceAsk !== null && areaM2 !== null) return 'no_price_intel'
+  // 5. No buyer matched
   if ((matchedBuyersCount ?? 0) === 0) return 'no_buyer'
+  // 6. Meeting enforcement — FASE 3 hard rule (score≥70 requires meeting)
+  if ((score ?? 0) >= 70 && !firstMeetingAt) return 'no_meeting'
+  // 7. SLA violation
   if (slaBreached) return 'sla_breach'
+  // 8. Insufficient data
   if (dataCompletenessScore < 60) return 'insufficient_data'
   return 'ready_to_attack'
 }
@@ -530,19 +640,17 @@ function getEffectiveNextAction(
   blocker: ExecutionBlocker,
   classificationAction: string
 ): string {
+  // Kept for backwards compat (GET handler). POST uses buildNextAction3.
   switch (blocker) {
-    case 'no_contact':
-      return '🚨 OBTER CONTACTO IMEDIATO — sem telefone/email, execução comercial impossível.'
-    case 'no_price_intel':
-      return '⚠️ CORRER PRICE-INTEL — área e preço existem mas desconto desconhecido. Clicar "Analisar Preço".'
-    case 'no_buyer':
-      return '⚠️ ENCONTRAR COMPRADOR — correr matching ou activar buyer list para esta tipologia/zona.'
-    case 'sla_breach':
-      return '🚨 CONTACTAR AGORA — SLA em breach. Ligar imediatamente e registar tentativa.'
-    case 'insufficient_data':
-      return '📋 COMPLETAR DADOS — score de completude baixo. Obter área, contacto e preço de mercado.'
-    case 'ready_to_attack':
-      return classificationAction
+    case 'deal_kill':      return '🚫 DESCARTAR — baixo ROI, sem progressão possível. Arquivar.'
+    case 'cpcv_trigger':   return '🔥 PREPARAR CPCV HOJE — todas as condições verificadas.'
+    case 'no_contact':     return '🚨 OBTER CONTACTO IMEDIATO — sem telefone/email, execução impossível.'
+    case 'no_price_intel': return '⚠️ CORRER PRICE-INTEL — área e preço existem mas desconto desconhecido.'
+    case 'no_buyer':       return '⚠️ ENCONTRAR COMPRADOR — correr matching ou activar buyer list.'
+    case 'no_meeting':     return '🚨 MARCAR VISITA EM 24H — CRÍTICO. Score alto sem visita = sem CPCV.'
+    case 'sla_breach':     return '🚨 CONTACTAR AGORA — SLA em breach. Ligar imediatamente.'
+    case 'insufficient_data': return '📋 COMPLETAR DADOS — obter área, contacto e preço de mercado.'
+    case 'ready_to_attack': return classificationAction
   }
 }
 
@@ -762,27 +870,58 @@ function buildNextAction2(
   buyerPressureReason: string,
   sellerPressureReason: string,
   cpcvProbability: number,
-  dealReadinessScore: number
+  dealReadinessScore: number,
+  // FASE 20 additions
+  buyerCompetitionFlag: boolean,
+  contactAttempts: number | null,
+  lastAttemptChannel: string | null,
+  moneyPriorityScore: number
 ): string {
-  // Hard blockers — operational action required first
-  if (blocker === 'no_contact') {
-    return `🚨 OBTER CONTACTO IMEDIATO — sem telefone/email, pipeline completamente bloqueado. Procurar via LinkedIn, registo predial ou intermediário.`
-  }
-  if (blocker === 'sla_breach') {
-    const buyerCtx = buyerPressureClass === 'HIGH' ? ` Buyer em espera: ${buyerPressureReason}.` : ''
-    return `🚨 LIGAR AGORA — SLA em breach.${buyerCtx} Objectivo: confirmar disponibilidade para visita esta semana.`
-  }
-  if (blocker === 'no_price_intel') {
-    return `⚠️ CORRER PRICE-INTEL — preço e área disponíveis mas desconto desconhecido. Sem este dado, deal-eval é cego. Clicar "Analisar Preço".`
-  }
-  if (blocker === 'no_buyer') {
-    return `⚠️ ACTIVAR BUYER LIST — sem compradores matched. Correr matching manual ou contactar compradores activos para esta zona/tipologia.`
-  }
-  if (blocker === 'insufficient_data') {
-    return `📋 COMPLETAR DADOS — completude insuficiente para execução. Obter: área, contacto e análise de preço.`
+  // ── FASE 20: Kill signal ──────────────────────────────────────────────────
+  if (blocker === 'deal_kill') {
+    return `🚫 DESCARTAR — baixo ROI sem progressão possível. Arquivar lead e libertar tempo de execução.`
   }
 
-  // Ready to attack — rich contextual action
+  // ── FASE 7: CPCV Trigger ──────────────────────────────────────────────────
+  if (blocker === 'cpcv_trigger') {
+    const buyerCtx = buyerPressureClass === 'HIGH'
+      ? `${buyerPressureReason}.`
+      : 'Buyer em posição.'
+    const compCtx = buyerCompetitionFlag ? ' Múltiplos compradores activos — criar urgência.' : ''
+    return `🔥 PREPARAR CPCV HOJE — CPCV ${cpcvProbability}%. ${buyerCtx}${compCtx} Vendedor: ${sellerPressureReason}. Objectivo: minuta CPCV esta semana.`
+  }
+
+  // ── Hard blockers with contact channel ───────────────────────────────────
+  if (blocker === 'no_contact') {
+    const channel = getNextContactChannel(contactAttempts, lastAttemptChannel)
+    return `🚨 OBTER CONTACTO — ${channel}. Tentar LinkedIn, registo predial, intermediário. Sem contacto = pipeline bloqueado.`
+  }
+
+  if (blocker === 'sla_breach') {
+    const channel = getNextContactChannel(contactAttempts, lastAttemptChannel)
+    const buyerCtx = buyerPressureClass === 'HIGH' ? ` ${buyerPressureReason} à espera.` : ''
+    return `🚨 SLA BREACH — ${channel}.${buyerCtx} Registar tentativa. Objectivo: confirmar visita esta semana.`
+  }
+
+  if (blocker === 'no_meeting') {
+    const compCtx = buyerCompetitionFlag ? ' Múltiplos compradores — usar urgência competitiva.' : ''
+    const buyerCtx = buyerPressureClass === 'HIGH' ? ` ${buyerPressureReason}.` : ''
+    return `🚨 MARCAR VISITA EM 24H — CRÍTICO (money score: ${moneyPriorityScore}/100).${buyerCtx}${compCtx} Sem visita não há CPCV.`
+  }
+
+  if (blocker === 'no_price_intel') {
+    return `⚠️ CORRER PRICE-INTEL — preço e área existem mas desconto desconhecido. Sem este dado, deal-eval é cego. Clicar "Analisar Preço".`
+  }
+
+  if (blocker === 'no_buyer') {
+    return `⚠️ ACTIVAR BUYER LIST — sem compradores matched. Correr matching ou contactar compradores activos para esta zona/tipologia.`
+  }
+
+  if (blocker === 'insufficient_data') {
+    return `📋 COMPLETAR DADOS — obter: área do imóvel, contacto directo, análise de preço de mercado.`
+  }
+
+  // ── Ready to attack — full context Next Action 3.0 ───────────────────────
   const urgencyEmoji = cpcvProbability >= 70 ? '🔥' : cpcvProbability >= 50 ? '⚡' : '📌'
   const readinessLabel = dealReadinessScore >= 80 ? 'READY TO CLOSE' : classification
 
@@ -792,7 +931,11 @@ function buildNextAction2(
     ? `Buyer disponível: ${buyerPressureReason}.`
     : 'Buyer com baixa pressão — qualificar disponibilidade.'
 
-  const sellerCtx = sellerPressureReason ? `Vendedor: ${sellerPressureReason}.` : ''
+  const compCtx = buyerCompetitionFlag
+    ? ' Múltiplos compradores HIGH activos — apresentar proposta com urgência.'
+    : ''
+
+  const sellerCtx = sellerPressureReason ? ` Vendedor: ${sellerPressureReason}.` : ''
 
   const objetivo = dealReadinessScore >= 80
     ? 'Objectivo: fechar CPCV esta semana.'
@@ -800,7 +943,7 @@ function buildNextAction2(
     ? 'Objectivo: agendar visita e alinhar proposta.'
     : 'Objectivo: validar interesse e marcar visita.'
 
-  return `${urgencyEmoji} ${readinessLabel} (CPCV ${cpcvProbability}%) — ${buyerCtx} ${sellerCtx} ${objetivo}`.trim()
+  return `${urgencyEmoji} ${readinessLabel} (CPCV ${cpcvProbability}%, €${moneyPriorityScore}ROI) — ${buyerCtx}${compCtx}${sellerCtx} ${objetivo}`.trim()
 }
 
 // ---------------------------------------------------------------------------
@@ -830,6 +973,7 @@ export async function POST(
                owner_type, urgency, contacto, source, score,
                sla_breach, sla_contacted_at, created_at,
                first_contact_at, first_meeting_at, offer_date, cpcv_signed_at,
+               contact_attempts, last_attempt_channel,
                deal_priority_score, matched_buyers_count, best_buyer_match_score,
                matched_to_buyers, preclose_candidate,
                primary_buyer_id,
@@ -918,15 +1062,9 @@ export async function POST(
       lead.matched_buyers_count, sourceQualityScore
     )
 
-    const executionBlocker = getExecutionBlocker(
-      lead.contacto, lead.gross_discount_pct, lead.price_ask,
-      lead.area_m2, lead.matched_buyers_count,
-      lead.sla_breach, dataCompletenessScore
-    )
-
     const priceIntelBlocked = !lead.area_m2 && lead.gross_discount_pct === null
 
-    // ── Closing Engine — FASE 19 ──────────────────────────────────────────────
+    // ── Closing Engine — FASE 19+20 ───────────────────────────────────────────
 
     const { score: dealVelocityScore, velocityReason } = calcDealVelocityScore(
       lead.created_at, lead.first_contact_at, lead.sla_contacted_at,
@@ -950,6 +1088,31 @@ export async function POST(
       dealEvaluationScore, buyerPressureScore, dealVelocityScore, dealReadinessScore
     )
 
+    // ── Money Engine — FASE 20 ────────────────────────────────────────────────
+
+    const dealKillFlag = calcDealKillFlag(
+      lead.contacto, lead.created_at, lead.score,
+      lead.matched_buyers_count, lead.area_m2, lead.price_ask
+    )
+
+    const buyerCompetitionFlag = calcBuyerCompetitionFlag(
+      lead.matched_buyers_count, buyerPressureScore
+    )
+
+    const moneyPriorityScore = calcMoneyPriorityScore(
+      cpcvProbability, dealVelocityScore, buyerPressureScore, lead.price_ask
+    )
+
+    // ── Execution Blocker v2 (FASE 20 — expanded priority chain) ─────────────
+    const executionBlocker = getExecutionBlocker(
+      lead.contacto, lead.gross_discount_pct, lead.price_ask,
+      lead.area_m2, lead.matched_buyers_count,
+      lead.sla_breach, dataCompletenessScore,
+      lead.score, lead.first_meeting_at,
+      dealReadinessScore, buyerPressureClass, cpcvProbability,
+      dealKillFlag
+    )
+
     // ── Micro automation flags ────────────────────────────────────────────────
     const contactAt = lead.first_contact_at ?? lead.sla_contacted_at
     const followUpNeeded = !!(
@@ -963,11 +1126,13 @@ export async function POST(
     )
     const cpcvReady = dealReadinessScore >= 80
 
-    // ── Next Action 2.0 — replaces plain blocker message with rich context ────
+    // ── Next Action 3.0 — full pressure + money context ───────────────────────
     const nextAction = buildNextAction2(
       executionBlocker, classification,
       buyerPressureClass, buyerPressureReason, sellerPressureReason,
-      cpcvProbability, dealReadinessScore
+      cpcvProbability, dealReadinessScore,
+      buyerCompetitionFlag, lead.contact_attempts, lead.last_attempt_channel,
+      moneyPriorityScore
     )
 
     const dealEvaluationReason = [
@@ -1019,6 +1184,10 @@ export async function POST(
         buyer_pressure_reason:      buyerPressureReason,
         deal_readiness_score:       dealReadinessScore,
         cpcv_probability:           cpcvProbability,
+        // FASE 20 — Money Engine
+        money_priority_score:       moneyPriorityScore,
+        buyer_competition_flag:     buyerCompetitionFlag,
+        deal_kill_flag:             dealKillFlag,
         // Promote to sla_breach if not already set and created >24h ago with no contact
         ...(() => {
           if (lead.sla_breach === true) return {}
@@ -1053,6 +1222,10 @@ export async function POST(
       deal_readiness_score:      dealReadinessScore,
       readiness_reason:          readinessReason,
       cpcv_probability:          cpcvProbability,
+      // FASE 20 — Money Engine
+      money_priority_score:      moneyPriorityScore,
+      buyer_competition_flag:    buyerCompetitionFlag,
+      deal_kill_flag:            dealKillFlag,
       // Micro automation flags
       follow_up_needed:          followUpNeeded,
       deal_stalled:              dealStalled,

@@ -61,6 +61,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // FASE 19 — Micro automation
       r_deal_stalled,
       r_cpcv_ready,
+      // FASE 20 — Money Engine
+      r_pipeline_value,
+      r_cpcv_forecast,
     ] = await Promise.all([
       // All leads in last 7 days
       s.from('offmarket_leads')
@@ -110,15 +113,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .eq('sla_breach', true)
         .not('status', 'in', '("closed_won","closed_lost")'),
 
-      // Top attack leads (master_attack_rank highest)
+      // Top attack leads — ordered by money_priority_score (revenue × velocity)
       s.from('offmarket_leads')
-        .select('id, nome, score, master_attack_rank, deal_evaluation_score, execution_probability, deal_evaluation_reason, cidade, tipo_ativo, price_ask, cpcv_probability, deal_readiness_score, buyer_pressure_class, execution_blocker_reason, data_completeness_score')
-        .not('master_attack_rank', 'is', null)
+        .select('id, nome, score, master_attack_rank, money_priority_score, deal_evaluation_score, execution_probability, deal_evaluation_reason, cidade, tipo_ativo, price_ask, cpcv_probability, deal_readiness_score, buyer_pressure_class, buyer_competition_flag, execution_blocker_reason, data_completeness_score, deal_kill_flag')
         .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .neq('execution_blocker_reason', 'deal_kill')
         .not('nome', 'ilike', '%test%')
         .not('nome', 'ilike', '%e2e%')
         .not('nome', 'ilike', '%direct%')
-        .order('master_attack_rank', { ascending: false })
+        .order('money_priority_score', { ascending: false, nullsFirst: false })
+        .order('master_attack_rank', { ascending: false, nullsFirst: false })
         .limit(10),
 
       // Classification distribution
@@ -197,8 +201,24 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       // CPCV ready (deal_readiness_score ≥80)
       s.from('offmarket_leads')
-        .select('id, nome, score, master_attack_rank, deal_readiness_score, cpcv_probability, buyer_pressure_class, next_action')
+        .select('id, nome, score, master_attack_rank, deal_readiness_score, cpcv_probability, buyer_pressure_class, money_priority_score')
         .gte('deal_readiness_score', 80)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('cpcv_probability', { ascending: false })
+        .limit(10),
+
+      // FASE 20 — Pipeline value (active leads with price_ask)
+      s.from('offmarket_leads')
+        .select('price_ask')
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .not('price_ask', 'is', null)
+        .not('nome', 'ilike', '%test%')
+        .not('nome', 'ilike', '%e2e%'),
+
+      // CPCV forecast — leads with cpcv_probability ≥65
+      s.from('offmarket_leads')
+        .select('id, nome, cpcv_probability, money_priority_score, price_ask, buyer_pressure_class')
+        .gte('cpcv_probability', 65)
         .not('status', 'in', '("closed_won","closed_lost","not_interested")')
         .order('cpcv_probability', { ascending: false })
         .limit(10),
@@ -225,6 +245,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // FASE 19 — Micro automation
     const dealStalled          = r_deal_stalled.data ?? []
     const cpcvReady            = r_cpcv_ready.data ?? []
+    // FASE 20 — Money Engine
+    const pipelineLeads        = r_pipeline_value.data ?? []
+    const cpcvForecast         = r_cpcv_forecast.data ?? []
+    const pipelineValueEur     = pipelineLeads
+      .reduce((sum: number, l: { price_ask: number | null }) => sum + (l.price_ask ?? 0), 0)
+    const cpcvForecastValueEur = cpcvForecast
+      .reduce((sum: number, l: { price_ask: number | null }) => sum + (l.price_ask ?? 0), 0)
 
     // ── Daily breakdown (last 7 days) ────────────────────────────────────────
     const dailyBreakdown: Array<{
@@ -426,18 +453,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         },
       },
 
-      // FASE 19 — Closing metrics
+      // FASE 19+20 — Money Engine metrics
       closing_metrics: {
         deals_ready_to_close:    cpcvReady.length,
         deals_stalled:           dealStalled.length,
+        cpcv_forecast_30d:       cpcvForecast.length,
         avg_cpcv_probability:    (() => {
-          const scores = (r_top_attack.data ?? [])
-            .map((l: Record<string, unknown>) => l.cpcv_probability as number)
-            .filter(Boolean)
+          const scores = cpcvForecast
+            .map((l: { cpcv_probability: number | null }) => l.cpcv_probability)
+            .filter(Boolean) as number[]
           return scores.length > 0
-            ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length)
+            ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
             : null
         })(),
+        pipeline_value_eur:      pipelineValueEur,
+        cpcv_forecast_value_eur: cpcvForecastValueEur,
+        commission_forecast_eur: Math.round(cpcvForecastValueEur * 0.05),
+        cpcv_forecast_leads:     cpcvForecast,
       },
 
       // Upcoming deadlines
