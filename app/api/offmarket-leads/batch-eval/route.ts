@@ -37,12 +37,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const s = supabaseAdmin as any
 
-    // Get leads to process
+    // Get leads to process — exclude test leads (cleaned by migration 011)
     let query = s
       .from('offmarket_leads')
-      .select('id, nome, score, cidade, tipo_ativo, price_ask')
+      .select('id, nome, score, cidade, tipo_ativo, price_ask, area_m2, gross_discount_pct')
       .gte('score', minScore)
       .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+      .not('nome', 'ilike', '%test%')
+      .not('nome', 'ilike', '%e2e%')
+      .not('nome', 'ilike', '%direct%')
       .order('score', { ascending: false })
       .limit(limit)
 
@@ -85,17 +88,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     for (let i = 0; i < leads.length; i += CONCURRENCY) {
       const batch = leads.slice(i, i + CONCURRENCY)
       const batchResults = await Promise.allSettled(
-        batch.map(async (lead: { id: string; nome: string; score: number }) => {
+        batch.map(async (lead: {
+          id: string; nome: string; score: number
+          price_ask: number | null; area_m2: number | null; gross_discount_pct: number | null
+        }) => {
           const stagesRun: string[] = []
           let evalData: Record<string, unknown> = {}
 
-          // Stage 1: Price Intel (if stage=all or stage=price)
-          if (stage === 'all' || stage === 'price') {
+          // AUTO-TRIGGER: price-intel when price_ask + area_m2 exist but no discount data
+          const needsPriceIntel = lead.price_ask !== null
+            && lead.area_m2 !== null
+            && lead.gross_discount_pct === null
+          const shouldRunPriceIntel = stage === 'all' || stage === 'price' || needsPriceIntel
+
+          // Stage 1: Price Intel
+          if (shouldRunPriceIntel) {
             try {
               await fetch(`${siteUrl}/api/offmarket-leads/${lead.id}/price-intel`, {
                 method: 'POST', headers,
               })
-              stagesRun.push('price-intel')
+              stagesRun.push(needsPriceIntel ? 'price-intel(auto)' : 'price-intel')
             } catch {
               console.warn(`[batch-eval] price-intel failed for ${lead.id}`)
             }

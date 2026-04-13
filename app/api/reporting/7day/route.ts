@@ -52,6 +52,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       r_classifications,
       r_negotiations,
       r_cpcv,
+      // FASE 18 — Bottleneck detail queries
+      r_high_rank_no_action,
+      r_no_contact_high_value,
+      r_price_intel_missing,
+      r_buyer_missing,
+      r_preclose_not_contacted,
     ] = await Promise.all([
       // All leads in last 7 days
       s.from('offmarket_leads')
@@ -125,6 +131,52 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .select('id, nome, cpcv_target_date, cpcv_signed_at, escritura_target_date, deal_risk_level')
         .or('cpcv_target_date.not.is.null,cpcv_signed_at.not.is.null')
         .is('escritura_done_at', null),
+
+      // FASE 18 — Bottleneck detail: high rank but no SLA contact
+      s.from('offmarket_leads')
+        .select('id, nome, master_attack_rank, score, contacto, cidade, execution_blocker_reason')
+        .gte('master_attack_rank', 70)
+        .is('sla_contacted_at', null)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('master_attack_rank', { ascending: false })
+        .limit(10),
+
+      // No contacto, high value (score ≥70)
+      s.from('offmarket_leads')
+        .select('id, nome, score, master_attack_rank, cidade, tipo_ativo, price_ask')
+        .or('contacto.is.null,contacto.eq.')
+        .gte('score', 70)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('score', { ascending: false })
+        .limit(10),
+
+      // Has price_ask + area_m2 but no price-intel (gross_discount_pct null)
+      s.from('offmarket_leads')
+        .select('id, nome, score, price_ask, area_m2, cidade, tipo_ativo')
+        .not('price_ask', 'is', null)
+        .not('area_m2', 'is', null)
+        .is('gross_discount_pct', null)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('score', { ascending: false })
+        .limit(10),
+
+      // Has score ≥60 but 0 matched buyers
+      s.from('offmarket_leads')
+        .select('id, nome, score, master_attack_rank, cidade, tipo_ativo')
+        .gte('score', 60)
+        .or('matched_buyers_count.is.null,matched_buyers_count.eq.0')
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('score', { ascending: false })
+        .limit(10),
+
+      // Preclose candidates with no SLA contact
+      s.from('offmarket_leads')
+        .select('id, nome, score, master_attack_rank, contacto, cidade, tipo_ativo, price_ask')
+        .eq('preclose_candidate', true)
+        .is('sla_contacted_at', null)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('master_attack_rank', { ascending: false })
+        .limit(10),
     ])
 
     const allLeads = r_all_leads.data ?? []
@@ -139,6 +191,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const allClassifications = r_classifications.data ?? []
     const negotiations = r_negotiations.data ?? []
     const cpcvPipeline = r_cpcv.data ?? []
+    // FASE 18 — Bottleneck detail
+    const highRankNoAction     = r_high_rank_no_action.data ?? []
+    const noContactHighValue   = r_no_contact_high_value.data ?? []
+    const priceIntelMissing    = r_price_intel_missing.data ?? []
+    const buyerMissing         = r_buyer_missing.data ?? []
+    const precloseNotContacted = r_preclose_not_contacted.data ?? []
 
     // ── Daily breakdown (last 7 days) ────────────────────────────────────────
     const dailyBreakdown: Array<{
@@ -297,8 +355,37 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // Top leads to attack now
       top_attack_leads: topAttack,
 
-      // Bottlenecks
+      // Bottlenecks (string array — summary)
       bottlenecks,
+
+      // FASE 18 — Structured bottleneck detail
+      bottleneck_detail: {
+        high_rank_no_action: {
+          count: highRankNoAction.length,
+          label: 'Rank alto sem contacto (≥70)',
+          leads: highRankNoAction,
+        },
+        no_contact_high_value: {
+          count: noContactHighValue.length,
+          label: 'Score alto sem telefone/email (≥70)',
+          leads: noContactHighValue,
+        },
+        price_intel_missing: {
+          count: priceIntelMissing.length,
+          label: 'Tem preço+área mas sem análise de desconto',
+          leads: priceIntelMissing,
+        },
+        buyer_missing: {
+          count: buyerMissing.length,
+          label: 'Score ≥60 sem compradores matched',
+          leads: buyerMissing,
+        },
+        preclose_not_contacted: {
+          count: precloseNotContacted.length,
+          label: 'Preclose candidate sem contacto SLA',
+          leads: precloseNotContacted,
+        },
+      },
 
       // Upcoming deadlines
       upcoming: {

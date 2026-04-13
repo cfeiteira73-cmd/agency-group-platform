@@ -42,6 +42,9 @@ const ALLOWED_PATCH_FIELDS = new Set([
   'asset_quality_score', 'source_quality_score',
   'deal_evaluation_score', 'deal_evaluation_reason',
   'master_attack_rank', 'master_attack_reason', 'deal_evaluation_updated_at',
+  // Migration 011: Execution Engine
+  'first_contact_at', 'last_contact_attempt_at',
+  'execution_blocker_reason', 'data_completeness_score', 'price_intel_blocked',
 ])
 
 export async function GET(

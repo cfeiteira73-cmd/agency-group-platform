@@ -47,19 +47,25 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .order('score', { ascending: false }),
 
       // P0: score >= 80, status = new — include buyer + price + deal evaluation
+      // Excludes test leads (migration 011 sets them to not_interested, but double-filter)
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason')
+        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason,execution_blocker_reason,data_completeness_score,sla_breach')
         .gte('score', 80)
         .eq('status', 'new')
+        .not('nome', 'ilike', '%test%')
+        .not('nome', 'ilike', '%e2e%')
+        .not('nome', 'ilike', '%direct%')
         .order('master_attack_rank', { ascending: false })
         .limit(20),
 
       // P1: score 70-79, status = new — include buyer + price + deal evaluation
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason')
+        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason,execution_blocker_reason,data_completeness_score,sla_breach')
         .gte('score', 70)
         .lt('score', 80)
         .eq('status', 'new')
+        .not('nome', 'ilike', '%e2e%')
+        .not('nome', 'ilike', '%direct%')
         .order('master_attack_rank', { ascending: false })
         .limit(20),
 
@@ -129,12 +135,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         sla_breaches:          (r_sla_breach.data ?? []).length,
       },
 
-      // Daily execution queue — sorted by priority
+      // Daily execution queue — sorted by: sla_breach first, then rank desc
       execution_queue: [
         ...(r_p0.data ?? []).map((l: Record<string, unknown>) => ({ ...l, _priority: 'P0' })),
         ...(r_p1.data ?? []).map((l: Record<string, unknown>) => ({ ...l, _priority: 'P1' })),
         ...(r_preclose.data ?? []).map((l: Record<string, unknown>) => ({ ...l, _priority: 'PRE-CLOSE' })),
-      ],
+      ].sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+        // SLA breaches always first
+        if (a.sla_breach && !b.sla_breach) return -1
+        if (!a.sla_breach && b.sla_breach) return 1
+        // Then by execution_blocker: no_contact first (worst)
+        const blockerOrder = ['no_contact', 'sla_breach', 'no_price_intel', 'no_buyer', 'insufficient_data', 'ready_to_attack']
+        const aIdx = blockerOrder.indexOf((a.execution_blocker_reason as string) ?? '')
+        const bIdx = blockerOrder.indexOf((b.execution_blocker_reason as string) ?? '')
+        if (aIdx !== bIdx) return aIdx - bIdx
+        // Then by rank desc
+        return ((b.master_attack_rank as number) ?? 0) - ((a.master_attack_rank as number) ?? 0)
+      }),
 
       new_leads_today:       r_today_leads.data ?? [],
       followups_due:         r_followup_due.data ?? [],

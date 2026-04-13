@@ -459,6 +459,94 @@ function getNextAction(classification: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Data Completeness Score (0-100) — FASE 18
+//   contacto(30) + area_m2(20) + price_intel(20) + buyer_match(15) + source(15)
+// ---------------------------------------------------------------------------
+
+function calcDataCompletenessScore(
+  contacto: string | null,
+  areaM2: number | null,
+  grossDiscountPct: number | null,
+  matchedBuyersCount: number | null,
+  sourceQualityScore: number
+): { score: number; missing: string[] } {
+  const missing: string[] = []
+
+  const c = contacto?.trim() ?? ''
+  const contactPts = (!c)
+    ? (missing.push('contacto'), 0)
+    : (/^(\+?[0-9\s\-().]{7,20})$/.test(c) || c.includes('@')) ? 30 : 15
+
+  const areaPts = areaM2 ? 20 : (missing.push('area_m2'), 0)
+
+  const pricePts = grossDiscountPct !== null ? 20 : (missing.push('price_intel'), 0)
+
+  const buyerPts = (matchedBuyersCount ?? 0) > 0 ? 15 : (missing.push('buyer_match'), 0)
+
+  // source_quality contributes 15pts — normalize from 0-100 score to 0-15
+  const sourcePts = Math.round((sourceQualityScore / 100) * 15)
+
+  const score = clamp(contactPts + areaPts + pricePts + buyerPts + sourcePts, 0, 100)
+  return { score, missing }
+}
+
+// ---------------------------------------------------------------------------
+// Execution Blocker — FASE 18
+//   Priority: no_contact > no_price_intel > no_buyer > sla_breach
+//             > insufficient_data > ready_to_attack
+// ---------------------------------------------------------------------------
+
+type ExecutionBlocker =
+  | 'no_contact'
+  | 'no_price_intel'
+  | 'no_buyer'
+  | 'sla_breach'
+  | 'insufficient_data'
+  | 'ready_to_attack'
+
+function getExecutionBlocker(
+  contacto: string | null,
+  grossDiscountPct: number | null,
+  priceAsk: number | null,
+  areaM2: number | null,
+  matchedBuyersCount: number | null,
+  slaBreached: boolean | null,
+  dataCompletenessScore: number
+): ExecutionBlocker {
+  const c = contacto?.trim() ?? ''
+  if (!c) return 'no_contact'
+  if (grossDiscountPct === null && priceAsk !== null && areaM2 !== null) return 'no_price_intel'
+  if ((matchedBuyersCount ?? 0) === 0) return 'no_buyer'
+  if (slaBreached) return 'sla_breach'
+  if (dataCompletenessScore < 60) return 'insufficient_data'
+  return 'ready_to_attack'
+}
+
+// ---------------------------------------------------------------------------
+// Effective next action — execution blocker overrides classification action
+// ---------------------------------------------------------------------------
+
+function getEffectiveNextAction(
+  blocker: ExecutionBlocker,
+  classificationAction: string
+): string {
+  switch (blocker) {
+    case 'no_contact':
+      return '🚨 OBTER CONTACTO IMEDIATO — sem telefone/email, execução comercial impossível.'
+    case 'no_price_intel':
+      return '⚠️ CORRER PRICE-INTEL — área e preço existem mas desconto desconhecido. Clicar "Analisar Preço".'
+    case 'no_buyer':
+      return '⚠️ ENCONTRAR COMPRADOR — correr matching ou activar buyer list para esta tipologia/zona.'
+    case 'sla_breach':
+      return '🚨 CONTACTAR AGORA — SLA em breach. Ligar imediatamente e registar tentativa.'
+    case 'insufficient_data':
+      return '📋 COMPLETAR DADOS — score de completude baixo. Obter área, contacto e preço de mercado.'
+    case 'ready_to_attack':
+      return classificationAction
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------
 
@@ -483,6 +571,7 @@ export async function POST(
       .from(TABLE)
       .select(`id, nome, tipo_ativo, cidade, localizacao, area_m2, price_ask,
                owner_type, urgency, contacto, source, score,
+               sla_breach, sla_contacted_at, created_at,
                deal_priority_score, matched_buyers_count, best_buyer_match_score,
                matched_to_buyers, preclose_candidate,
                primary_buyer_id,
@@ -558,7 +647,25 @@ export async function POST(
     )
 
     const classification = classifyDeal(masterAttackRank, executionProbability, adjustedDiscountScore)
-    const nextAction = getNextAction(classification)
+    const classificationNextAction = getNextAction(classification)
+
+    // ── Execution Engine — FASE 18 ────────────────────────────────────────────
+
+    const { score: dataCompletenessScore, missing: dataMissing } = calcDataCompletenessScore(
+      lead.contacto, lead.area_m2, lead.gross_discount_pct,
+      lead.matched_buyers_count, sourceQualityScore
+    )
+
+    const executionBlocker = getExecutionBlocker(
+      lead.contacto, lead.gross_discount_pct, lead.price_ask,
+      lead.area_m2, lead.matched_buyers_count,
+      lead.sla_breach, dataCompletenessScore
+    )
+
+    const priceIntelBlocked = !lead.area_m2 && lead.gross_discount_pct === null
+
+    // Blocker overrides classification action — operator always sees what's blocking
+    const nextAction = getEffectiveNextAction(executionBlocker, classificationNextAction)
 
     const dealEvaluationReason = [
       `[${classification}]`,
@@ -578,24 +685,35 @@ export async function POST(
     const { error: updateError } = await (supabaseAdmin as any)
       .from(TABLE)
       .update({
-        adjusted_discount_score: adjustedDiscountScore,
-        liquidity_score:         liquidityScore,
-        liquidity_reason:        liquidityReason,
-        execution_probability:   executionProbability,
-        execution_reason:        executionReason,
+        adjusted_discount_score:    adjustedDiscountScore,
+        liquidity_score:            liquidityScore,
+        liquidity_reason:           liquidityReason,
+        execution_probability:      executionProbability,
+        execution_reason:           executionReason,
         best_buyer_execution_score: bestBuyerExecutionScore,
-        buyer_execution_reason:  buyerExecutionReason,
-        upside_score:            upsideScore,
-        friction_penalty:        frictionPenalty,
+        buyer_execution_reason:     buyerExecutionReason,
+        upside_score:               upsideScore,
+        friction_penalty:           frictionPenalty,
         risk_adjusted_upside_score: riskAdjustedUpsideScore,
-        upside_reason:           upsideReason,
-        asset_quality_score:     assetQualityScore,
-        source_quality_score:    sourceQualityScore,
-        deal_evaluation_score:   dealEvaluationScore,
-        deal_evaluation_reason:  dealEvaluationReason,
-        master_attack_rank:      masterAttackRank,
-        master_attack_reason:    masterAttackRankReason,
+        upside_reason:              upsideReason,
+        asset_quality_score:        assetQualityScore,
+        source_quality_score:       sourceQualityScore,
+        deal_evaluation_score:      dealEvaluationScore,
+        deal_evaluation_reason:     dealEvaluationReason,
+        master_attack_rank:         masterAttackRank,
+        master_attack_reason:       masterAttackRankReason,
         deal_evaluation_updated_at: new Date().toISOString(),
+        // FASE 18 — Execution Engine
+        data_completeness_score:    dataCompletenessScore,
+        execution_blocker_reason:   executionBlocker,
+        price_intel_blocked:        priceIntelBlocked,
+        // Promote to sla_breach if not already set and created >24h ago with no contact
+        ...(() => {
+          if (lead.sla_breach === true) return {}
+          if (lead.sla_contacted_at) return {}
+          const ageMs = Date.now() - new Date(lead.created_at ?? 0).getTime()
+          return ageMs > 24 * 60 * 60 * 1000 ? { sla_breach: true } : {}
+        })(),
       })
       .eq('id', id)
 
@@ -607,7 +725,12 @@ export async function POST(
       lead_id: id,
       nome: lead.nome,
       classification,
-      next_action: nextAction,
+      // FASE 18 — Execution Engine
+      execution_blocker_reason:  executionBlocker,
+      next_action:               nextAction,
+      data_completeness_score:   dataCompletenessScore,
+      data_missing:              dataMissing,
+      price_intel_blocked:       priceIntelBlocked,
       // 8 layers
       adjusted_discount_score:    adjustedDiscountScore,
       liquidity_score:            liquidityScore,
