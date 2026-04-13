@@ -49,7 +49,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // P0: score >= 80, status = new — include buyer + price + deal evaluation
       // Excludes test leads (migration 011 sets them to not_interested, but double-filter)
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason,execution_blocker_reason,data_completeness_score,sla_breach,money_priority_score,cpcv_probability,deal_readiness_score,buyer_pressure_class,buyer_competition_flag,deal_kill_flag')
+        .select('id,nome,cidade,tipo_ativo,score,urgency,contacto,contact_phone_owner,contact_email_owner,owner_name,contact_research_status,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason,execution_blocker_reason,data_completeness_score,sla_breach,money_priority_score,cpcv_probability,deal_readiness_score,buyer_pressure_class,buyer_competition_flag,deal_kill_flag,seller_intent_score,seller_intent_label,revenue_per_lead_estimate,revenue_potential_class,stale_deal_flag,days_without_action_flag,gate_status,last_alerted_at,last_alert_type,close_window_score,deal_momentum_score,human_failure_flag,time_waste_flag,realistic_cpcv_forecast_flag,execution_discipline_score,source_network_type')
         .gte('score', 80)
         .eq('status', 'new')
         .not('nome', 'ilike', '%test%')
@@ -59,9 +59,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .order('master_attack_rank', { ascending: false, nullsFirst: false })
         .limit(20),
 
-      // P1: score 70-79, status = new — include buyer + price + deal evaluation
+      // P1: score 70-79, status = new — include buyer + price + deal evaluation + new fields
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,urgency,contacto,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason,execution_blocker_reason,data_completeness_score,sla_breach,money_priority_score,cpcv_probability,deal_readiness_score,buyer_pressure_class,buyer_competition_flag,deal_kill_flag')
+        .select('id,nome,cidade,tipo_ativo,score,urgency,contacto,contact_phone_owner,contact_email_owner,owner_name,contact_research_status,sla_contacted_at,created_at,assigned_to,score_reason,deal_priority_score,attack_recommendation,buyer_triad_notes,matched_buyers_count,best_buyer_match_score,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,buyer_match_notes,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason,execution_blocker_reason,data_completeness_score,sla_breach,money_priority_score,cpcv_probability,deal_readiness_score,buyer_pressure_class,buyer_competition_flag,deal_kill_flag,seller_intent_score,seller_intent_label,revenue_per_lead_estimate,revenue_potential_class,stale_deal_flag,days_without_action_flag,gate_status,last_alerted_at,last_alert_type,close_window_score,deal_momentum_score,human_failure_flag,time_waste_flag,realistic_cpcv_forecast_flag,execution_discipline_score')
         .gte('score', 70)
         .lt('score', 80)
         .eq('status', 'new')
@@ -71,9 +71,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .order('master_attack_rank', { ascending: false, nullsFirst: false })
         .limit(20),
 
-      // Pre-close candidates — include buyer + price + deal evaluation
+      // Pre-close candidates — include all evaluation + new fields
       s.from('offmarket_leads')
-        .select('id,nome,cidade,score,matched_buyers_count,best_buyer_match_score,buyer_match_notes,status,contacto,assigned_to,created_at,sla_contacted_at,deal_priority_score,attack_recommendation,buyer_triad_notes,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason')
+        .select('id,nome,cidade,tipo_ativo,score,matched_buyers_count,best_buyer_match_score,buyer_match_notes,status,contacto,contact_phone_owner,owner_name,contact_research_status,assigned_to,created_at,sla_contacted_at,deal_priority_score,attack_recommendation,buyer_triad_notes,price_ask,area_m2,price_ask_per_m2,gross_discount_pct,comp_confidence_score,price_opportunity_score,price_reason,estimated_fair_value,preclose_candidate,outreach_ready,negotiation_status,offer_amount,counter_offer_amount,cpcv_target_date,cpcv_signed_at,deposit_received,legal_status,docs_pending,escritura_target_date,escritura_done_at,deal_risk_level,deal_risk_reason,deal_owner,deal_next_step,deal_next_step_date,primary_buyer_id,secondary_buyer_id,tertiary_buyer_id,deal_evaluation_score,master_attack_rank,execution_probability,adjusted_discount_score,liquidity_score,best_buyer_execution_score,risk_adjusted_upside_score,deal_evaluation_reason,master_attack_reason,execution_blocker_reason,money_priority_score,cpcv_probability,deal_readiness_score,seller_intent_label,revenue_per_lead_estimate,close_window_score,realistic_cpcv_forecast_flag')
         .eq('preclose_candidate', true)
         .not('status', 'in', '("closed_won","closed_lost","not_interested")')
         .order('master_attack_rank', { ascending: false })
@@ -136,6 +136,39 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         cpcv_in_progress:      cpcvPipeline.filter((d: Record<string, unknown>) => d.cpcv_signed_at).length,
         sla_breaches:          (r_sla_breach.data ?? []).length,
         // FASE 21 — top 5 daily execution command (derived from execution_queue)
+        // Revenue forecast
+        pipeline_eur: (() => {
+          const all = [...(r_p0.data ?? []), ...(r_p1.data ?? []), ...(r_preclose.data ?? [])]
+          return all.reduce((sum: number, l: Record<string, unknown>) => sum + ((l.price_ask as number) ?? 0), 0)
+        })(),
+        commission_forecast_eur: (() => {
+          const all = [...(r_p0.data ?? []), ...(r_p1.data ?? []), ...(r_preclose.data ?? [])]
+          return Math.round(all.reduce((sum: number, l: Record<string, unknown>) =>
+            sum + ((l.revenue_per_lead_estimate as number) ?? ((l.price_ask as number ?? 0) * 0.05)), 0))
+        })(),
+        realistic_cpcv_count: (() => {
+          const all = [...(r_p0.data ?? []), ...(r_p1.data ?? []), ...(r_preclose.data ?? [])]
+          return all.filter((l: Record<string, unknown>) => l.realistic_cpcv_forecast_flag === true).length
+        })(),
+        no_contact_high_score: (() => {
+          const all = [...(r_p0.data ?? []), ...(r_p1.data ?? [])]
+          return all.filter((l: Record<string, unknown>) =>
+            !l.contacto && !l.contact_phone_owner && (l.score as number ?? 0) >= 70
+          ).length
+        })(),
+        seller_intent_hot: (() => {
+          const all = [...(r_p0.data ?? []), ...(r_p1.data ?? [])]
+          return all.filter((l: Record<string, unknown>) => l.seller_intent_label === 'hot').length
+        })(),
+        human_failure_count: (() => {
+          const all = [...(r_p0.data ?? []), ...(r_p1.data ?? [])]
+          return all.filter((l: Record<string, unknown>) => l.human_failure_flag === true).length
+        })(),
+        stale_deals: (() => {
+          const all = [...(r_p0.data ?? []), ...(r_p1.data ?? []), ...(r_preclose.data ?? [])]
+          return all.filter((l: Record<string, unknown>) => l.stale_deal_flag === true).length
+        })(),
+
         daily_top5_instruction: (() => {
           const queue: Record<string, unknown>[] = [
             ...(r_p0.data ?? []).map((l: Record<string, unknown>) => ({ ...l, _priority: 'P0' })),
@@ -143,11 +176,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
             ...(r_preclose.data ?? []).map((l: Record<string, unknown>) => ({ ...l, _priority: 'PRE-CLOSE' })),
           ].filter((l) => l.deal_kill_flag !== true).slice(0, 5)
           return queue.map((l, i) => {
-            const name = l.nome ?? 'Lead'
+            const name   = l.nome ?? 'Lead'
+            const city   = l.cidade ?? '—'
             const blocker = l.execution_blocker_reason ?? 'ready_to_attack'
             const cpcvPct = l.cpcv_probability ?? 0
-            const emoji = blocker === 'cpcv_trigger' ? '🔥' : blocker === 'sla_breach' ? '🚨' : blocker === 'no_meeting' ? '📅' : '⚡'
-            return `${i + 1}. ${emoji} ${name} — ${blocker} (CPCV ${cpcvPct}%)`
+            const rev    = l.revenue_per_lead_estimate
+              ? `€${Math.round((l.revenue_per_lead_estimate as number) / 1000)}K comissão`
+              : ''
+            const intent = l.seller_intent_label === 'hot' ? '🔥SELLER HOT' : ''
+            const contact = l.contact_phone_owner ?? l.contacto
+              ? '📞' : '⚠NO CONTACT'
+            const emoji  = blocker === 'cpcv_trigger' ? '🟢' : blocker === 'sla_breach' ? '🚨' : blocker === 'no_meeting' ? '📅' : blocker === 'no_contact' ? '🔍' : '⚡'
+            return `${i + 1}. ${emoji} [${(l._priority as string)}] ${name} · ${city} · ${blocker} · CPCV ${cpcvPct}% · ${rev} ${intent} ${contact}`
           }).join('\n') || 'Sem leads prioritários em execução'
         })(),
       },

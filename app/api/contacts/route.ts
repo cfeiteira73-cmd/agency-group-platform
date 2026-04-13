@@ -121,6 +121,11 @@ export async function PUT(req: NextRequest) {
       'buyer_score','buyer_type','liquidity_profile','proof_of_funds_status',
       'ticket_preference','target_strategy','deals_closed_count','avg_close_days',
       'negotiation_style','reliability_score','response_rate','active_status',
+      // Buyer readiness (deal machine)
+      'buyer_readiness_score','buyer_ready_for_deal',
+      // Extended buyer profile
+      'preferred_locations','typologies_wanted','preferred_asset_types',
+      'buyer_scored_at','buyer_tier',
     ]
     const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
     for (const key of allowed) {

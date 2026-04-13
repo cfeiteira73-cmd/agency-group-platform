@@ -49,6 +49,35 @@ interface OffmarketLead {
   primary_buyer_id: string | null
   secondary_buyer_id: string | null
   tertiary_buyer_id: string | null
+  // Price Intelligence (migration 009)
+  price_ask_per_m2: number | null
+  estimated_fair_value: number | null
+  gross_discount_pct: number | null
+  comp_confidence_score: number | null
+  price_reason: string | null
+  // Deal Eval + Master Rank (migration 010)
+  deal_evaluation_score: number | null
+  master_attack_rank: number | null
+  deal_evaluation_reason: string | null
+  execution_blocker_reason: string | null
+  // Money Engine (migration 013)
+  money_priority_score: number | null
+  cpcv_probability: number | null
+  deal_readiness_score: number | null
+  buyer_pressure_class: string | null
+  deal_kill_flag: boolean | null
+  // Gate + Dedup (migration 015)
+  gate_status: string | null
+  // Contact Intelligence (migration 016)
+  owner_name: string | null
+  contact_phone_owner: string | null
+  contact_research_status: string | null
+  seller_intent_label: string | null
+  seller_intent_score: number | null
+  revenue_per_lead_estimate: number | null
+  revenue_potential_class: string | null
+  stale_deal_flag: boolean | null
+  last_alerted_at: string | null
   created_at: string
   updated_at: string
 }

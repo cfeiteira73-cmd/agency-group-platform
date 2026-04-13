@@ -122,6 +122,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       notes:             typeof data.notes === 'string' ? data.notes : null,
       tags:              Array.isArray(data.tags) ? data.tags : null,
       raw_data:          data.raw_data ?? null,
+      // Contact intelligence fields (migration 016)
+      owner_name:           typeof data.owner_name === 'string' ? data.owner_name : null,
+      owner_type_detail:    typeof data.owner_type_detail === 'string' ? data.owner_type_detail : null,
+      contact_phone_owner:  typeof data.contact_phone_owner === 'string' ? data.contact_phone_owner : null,
+      contact_email_owner:  typeof data.contact_email_owner === 'string' ? data.contact_email_owner : null,
+      source_network_type:  typeof data.source_network_type === 'string' ? data.source_network_type : null,
+      source_network_contact: typeof data.source_network_contact === 'string' ? data.source_network_contact : null,
+      // Gate status (migration 015) — default 'accepted_raw' on intake
+      gate_status:       typeof data.gate_status === 'string' ? data.gate_status : 'accepted_raw',
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

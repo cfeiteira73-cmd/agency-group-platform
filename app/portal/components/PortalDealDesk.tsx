@@ -87,6 +87,37 @@ interface DealLead {
   deal_evaluation_reason: string | null
   master_attack_rank: number | null
   master_attack_reason: string | null
+  execution_blocker_reason: string | null
+  // Money Engine (migration 013)
+  money_priority_score: number | null
+  cpcv_probability: number | null
+  deal_readiness_score: number | null
+  buyer_pressure_class: string | null
+  buyer_competition_flag: boolean | null
+  deal_kill_flag: boolean | null
+  // Discipline Engine (migration 014)
+  close_window_score: number | null
+  deal_momentum_score: number | null
+  human_failure_flag: boolean | null
+  time_waste_flag: boolean | null
+  realistic_cpcv_forecast_flag: boolean | null
+  execution_discipline_score: number | null
+  // Gate + Dedup (migration 015)
+  gate_status: string | null
+  canonical_record_flag: boolean | null
+  // Contact Intelligence (migration 016)
+  owner_name: string | null
+  contact_phone_owner: string | null
+  contact_email_owner: string | null
+  contact_research_status: string | null
+  seller_intent_score: number | null
+  seller_intent_label: string | null
+  revenue_per_lead_estimate: number | null
+  revenue_potential_class: string | null
+  stale_deal_flag: boolean | null
+  days_without_action_flag: boolean | null
+  last_alerted_at: string | null
+  source_network_type: string | null
 }
 
 interface RiskFlagLead {
