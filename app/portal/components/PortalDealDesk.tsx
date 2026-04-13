@@ -12,6 +12,7 @@ import {
   RISK_FLAG_LABELS,
   type OutreachTemplate,
 } from '@/lib/outreach-templates'
+import type { CallEngineOutput } from '@/lib/call-engine'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,6 +119,16 @@ interface DealLead {
   days_without_action_flag: boolean | null
   last_alerted_at: string | null
   source_network_type: string | null
+  // Call Tracking (migration 019)
+  last_call_at: string | null
+  last_whatsapp_at: string | null
+  first_contact_at: string | null
+  first_meeting_at: string | null
+  contact_attempts_count: number | null
+  last_action_type: string | null
+  call_done_today: boolean | null
+  proposal_sent_at: string | null
+  proposal_amount: number | null
 }
 
 interface RiskFlagLead {
@@ -130,7 +141,7 @@ interface RiskFlagLead {
   assigned_to: string | null
 }
 
-type DealDeskTab = 'execution' | 'negotiations' | 'cpcv' | 'risk' | 'templates' | 'checklists'
+type DealDeskTab = 'execution' | 'ligar' | 'negotiations' | 'cpcv' | 'risk' | 'templates' | 'checklists'
 
 const NEG_STATUS_LABELS: Record<NegotiationStatus, string> = {
   idle: 'Aguarda',
@@ -208,6 +219,12 @@ export default function PortalDealDesk() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [checklistState, setChecklistState] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState(false)
+  const [callScript, setCallScript] = useState<CallEngineOutput | null>(null)
+  const [callScriptLeadId, setCallScriptLeadId] = useState<string | null>(null)
+  const [callScriptLoading, setCallScriptLoading] = useState(false)
+  const [logActionMsg, setLogActionMsg] = useState<string>('')
+  const [selectedObjIdx, setSelectedObjIdx] = useState<number | null>(null)
+  const [copiedScript, setCopiedScript] = useState(false)
 
   const bg = darkMode ? '#0a1510' : '#f4f0e6'
   const cardBg = darkMode ? '#0f1e16' : '#fff'
@@ -303,6 +320,51 @@ export default function PortalDealDesk() {
     ? OUTREACH_TEMPLATES
     : OUTREACH_TEMPLATES.filter(t => t.tags.includes(templateFilter))
 
+  // ── Call Engine ────────────────────────────────────────────────────────────
+
+  async function loadCallScript(leadId: string) {
+    if (callScriptLeadId === leadId && callScript) return // already loaded
+    setCallScriptLoading(true)
+    setCallScript(null)
+    setCallScriptLeadId(leadId)
+    try {
+      const res = await fetch(`/api/offmarket-leads/${leadId}/call-script`)
+      if (res.ok) setCallScript(await res.json())
+    } catch { /* silent */ } finally {
+      setCallScriptLoading(false)
+    }
+  }
+
+  async function logAction(leadId: string, actionType: string, notes?: string, proposalAmount?: number, meetingAt?: string) {
+    setLogActionMsg('A registar...')
+    try {
+      const res = await fetch(`/api/offmarket-leads/${leadId}/log-action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action_type: actionType,
+          notes: notes ?? null,
+          proposal_amount: proposalAmount ?? null,
+          meeting_at: meetingAt ?? null,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setLogActionMsg(`✅ ${actionType === 'call' ? 'Chamada' : actionType === 'whatsapp' ? 'WhatsApp' : actionType === 'visit' ? 'Visita' : 'Acção'} registada`)
+        loadAll()
+        // Reload script after action to reflect new attempts count
+        setCallScript(null)
+        setCallScriptLeadId(null)
+        return data
+      } else {
+        setLogActionMsg(`❌ ${data.error ?? 'Erro'}`)
+      }
+    } catch {
+      setLogActionMsg('❌ Erro de rede')
+    }
+    setTimeout(() => setLogActionMsg(''), 3000)
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -356,6 +418,7 @@ export default function PortalDealDesk() {
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: `1px solid ${border}` }}>
         {([
           ['execution', 'Execução Diária'],
+          ['ligar', '📞 Ligar Agora'],
           ['negotiations', 'Negociações'],
           ['cpcv', 'CPCV · Escritura'],
           ['risk', 'Risk Flags'],
@@ -465,6 +528,225 @@ export default function PortalDealDesk() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── LIGAR AGORA TAB ── */}
+      {!loading && tab === 'ligar' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+          {/* Lead Selector */}
+          <div style={{ background: cardBg, border: `1px solid ${border}`, padding: 20, gridColumn: '1/-1' }}>
+            <SectionHeader title="📞 Selecionar Lead para Ligar" textMuted={textMuted} />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+              {[...executionQueue, ...followupsDue].slice(0, 10).map(lead => (
+                <button key={lead.id} type="button"
+                  onClick={() => { loadCallScript(lead.id) }}
+                  style={{
+                    padding: '8px 16px',
+                    background: callScriptLeadId === lead.id ? '#1c4a35' : cardBg,
+                    border: callScriptLeadId === lead.id ? '1px solid #c9a96e' : `1px solid ${border}`,
+                    color: callScriptLeadId === lead.id ? '#c9a96e' : textPrimary,
+                    fontFamily: "'DM Mono', monospace", fontSize: '.45rem', cursor: 'pointer',
+                  }}>
+                  {lead.nome} <span style={{ color: callScriptLeadId === lead.id ? '#c9a96e88' : textMuted }}>· {lead.score ?? '—'}</span>
+                </button>
+              ))}
+              {executionQueue.length === 0 && followupsDue.length === 0 && (
+                <div style={{ color: textMuted, fontFamily: "'DM Mono', monospace", fontSize: '.5rem' }}>
+                  Sem leads em fila. Inserir leads no portal primeiro.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Script Panel */}
+          {callScriptLoading && (
+            <div style={{ gridColumn: '1/-1', padding: 40, textAlign: 'center', color: textMuted, fontFamily: "'DM Mono', monospace", fontSize: '.52rem' }}>
+              A gerar script...
+            </div>
+          )}
+
+          {callScript && !callScriptLoading && (
+            <>
+              {/* Recommended Script */}
+              <div style={{ background: cardBg, border: '1px solid #c9a96e44', padding: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <SectionHeader title="🎯 Script Recomendado" textMuted={textMuted} color="#c9a96e" />
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(callScript.recommended_script.script)
+                        setCopiedScript(true)
+                        setTimeout(() => setCopiedScript(false), 2000)
+                      }}
+                      style={{ padding: '5px 12px', background: copiedScript ? '#27ae6022' : 'transparent', border: `1px solid ${border}`, color: copiedScript ? '#27ae60' : textMuted, fontFamily: "'DM Mono', monospace", fontSize: '.42rem', cursor: 'pointer' }}>
+                      {copiedScript ? '✓ Copiado' : 'Copiar'}
+                    </button>
+                  </div>
+                </div>
+                <div style={{ background: darkMode ? '#0a0a0a' : '#f9f6f0', border: `1px solid ${border}`, padding: '14px 16px', marginBottom: 14, borderLeft: '3px solid #c9a96e' }}>
+                  <pre style={{ fontFamily: "'Jost', sans-serif", fontSize: '.82rem', color: textPrimary, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {callScript.recommended_script.script}
+                  </pre>
+                </div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                  <div style={{ padding: '4px 10px', background: '#c9a96e18', border: '1px solid #c9a96e44', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#c9a96e' }}>
+                    ⏱ {callScript.recommended_script.duration_estimate_sec}s
+                  </div>
+                  <div style={{ padding: '4px 10px', background: '#4a90d918', border: '1px solid #4a90d944', fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#4a90d9', flex: 1 }}>
+                    → {callScript.recommended_script.cta}
+                  </div>
+                </div>
+                {callScript.recommended_script.notes.length > 0 && (
+                  <div style={{ borderTop: `1px solid ${border}`, paddingTop: 10, marginTop: 6 }}>
+                    {callScript.recommended_script.notes.map((note, i) => (
+                      <div key={i} style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted, padding: '2px 0' }}>
+                        · {note}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Janela de chamada */}
+                <div style={{ marginTop: 14, padding: '8px 12px', background: '#27ae6012', border: '1px solid #27ae6033', fontFamily: "'DM Mono', monospace", fontSize: '.45rem', color: '#27ae60' }}>
+                  {callScript.call_window_label}
+                </div>
+              </div>
+
+              {/* Action Buttons + Log */}
+              <div style={{ background: cardBg, border: `1px solid ${border}`, padding: 20 }}>
+                <SectionHeader title="⚡ Ações Imediatas" textMuted={textMuted} />
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.1em' }}>Comprador</div>
+                  <div style={{ fontSize: '.8rem', color: '#c9a96e', fontWeight: 500 }}>{callScript.buyer_summary}</div>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '.1em' }}>Urgência</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: '#f39c12' }}>{callScript.urgency_label}</div>
+                </div>
+
+                {/* Contact info if available */}
+                {callScriptLeadId && (() => {
+                  const lead = [...executionQueue, ...followupsDue].find(l => l.id === callScriptLeadId)
+                  const phone = lead?.contact_phone_owner ?? lead?.contacto
+                  return phone ? (
+                    <div style={{ marginBottom: 16, padding: '10px 14px', background: '#27ae6012', border: '1px solid #27ae6033' }}>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted, marginBottom: 4 }}>CONTACTO DIRETO</div>
+                      <div style={{ fontSize: '.88rem', color: '#27ae60', fontWeight: 600 }}>{phone}</div>
+                    </div>
+                  ) : (
+                    <div style={{ marginBottom: 16, padding: '10px 14px', background: '#e74c3c12', border: '1px solid #e74c3c33' }}>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.45rem', color: '#e74c3c' }}>⚠ Sem contacto direto — obter número</div>
+                    </div>
+                  )
+                })()}
+
+                {/* Action buttons */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+                  <button type="button"
+                    onClick={() => callScriptLeadId && logAction(callScriptLeadId, 'call')}
+                    style={{ padding: '12px', background: '#1c4a35', border: 'none', color: '#f4f0e6', fontFamily: "'DM Mono', monospace", fontSize: '.48rem', cursor: 'pointer', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                    📞 Regist. Chamada
+                  </button>
+                  <button type="button"
+                    onClick={() => {
+                      if (!callScriptLeadId) return
+                      const waScript = callScript.scripts.find(s => s.type === 'whatsapp_d1')
+                      if (waScript) {
+                        navigator.clipboard.writeText(waScript.script)
+                      }
+                      logAction(callScriptLeadId, 'whatsapp')
+                    }}
+                    style={{ padding: '12px', background: '#075E5418', border: '1px solid #075E5455', color: '#25D366', fontFamily: "'DM Mono', monospace", fontSize: '.48rem', cursor: 'pointer', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                    💬 Copiar WA + Log
+                  </button>
+                  <button type="button"
+                    onClick={() => callScriptLeadId && logAction(callScriptLeadId, 'visit', undefined, undefined, new Date().toISOString())}
+                    style={{ padding: '12px', background: '#9b59b618', border: '1px solid #9b59b655', color: '#9b59b6', fontFamily: "'DM Mono', monospace", fontSize: '.48rem', cursor: 'pointer', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                    🏠 Visita Marcada
+                  </button>
+                  <button type="button"
+                    onClick={() => callScriptLeadId && logAction(callScriptLeadId, 'proposal')}
+                    style={{ padding: '12px', background: '#4a90d918', border: '1px solid #4a90d955', color: '#4a90d9', fontFamily: "'DM Mono', monospace", fontSize: '.48rem', cursor: 'pointer', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+                    📄 Proposta Enviada
+                  </button>
+                </div>
+
+                {logActionMsg && (
+                  <div style={{ padding: '8px 12px', background: logActionMsg.startsWith('✅') ? '#27ae6018' : '#e74c3c18', border: `1px solid ${logActionMsg.startsWith('✅') ? '#27ae6044' : '#e74c3c44'}`, fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: logActionMsg.startsWith('✅') ? '#27ae60' : '#e74c3c', marginBottom: 8 }}>
+                    {logActionMsg}
+                  </div>
+                )}
+
+                {/* Follow-up sequence */}
+                <div style={{ borderTop: `1px solid ${border}`, paddingTop: 14, marginTop: 8 }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', letterSpacing: '.12em', color: textMuted, textTransform: 'uppercase', marginBottom: 10 }}>Sequência de Follow-up</div>
+                  {callScript.followup_sequence.map((step, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: `1px solid ${border}` }}>
+                      <div style={{ padding: '2px 8px', background: step.channel === 'call' ? '#e74c3c18' : step.channel === 'whatsapp' ? '#25D36618' : '#4a90d918', border: `1px solid ${step.channel === 'call' ? '#e74c3c' : step.channel === 'whatsapp' ? '#25D366' : '#4a90d9'}44`, fontFamily: "'DM Mono', monospace", fontSize: '.4rem', color: step.channel === 'call' ? '#e74c3c' : step.channel === 'whatsapp' ? '#25D366' : '#4a90d9', whiteSpace: 'nowrap', alignSelf: 'flex-start' }}>
+                        D+{step.day}
+                      </div>
+                      <div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#c9a96e', marginBottom: 2 }}>{step.timing}</div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: textMuted }}>{step.objective}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Objection Handlers */}
+              <div style={{ background: cardBg, border: `1px solid ${border}`, padding: 20, gridColumn: '1/-1' }}>
+                <SectionHeader title="🛡 Tratamento de Objeções" textMuted={textMuted} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8, marginTop: 12 }}>
+                  {callScript.objections.map((obj, i) => (
+                    <div key={i}
+                      onClick={() => setSelectedObjIdx(selectedObjIdx === i ? null : i)}
+                      style={{ padding: '12px 14px', border: `1px solid ${selectedObjIdx === i ? '#c9a96e' : border}`, background: selectedObjIdx === i ? '#c9a96e08' : cardBg, cursor: 'pointer' }}>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', color: '#f39c12', marginBottom: 4 }}>
+                        "{obj.trigger}"
+                      </div>
+                      {selectedObjIdx === i && (
+                        <>
+                          <div style={{ fontFamily: "'Jost', sans-serif", fontSize: '.75rem', color: textPrimary, lineHeight: 1.6, margin: '8px 0', padding: '8px', background: darkMode ? '#0a0a0a' : '#f9f6f0', borderLeft: '2px solid #c9a96e' }}>
+                            {obj.response}
+                          </div>
+                          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.42rem', color: '#4a90d9', marginTop: 6 }}>
+                            ↳ {obj.followup}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* All Scripts Panel */}
+              <div style={{ background: cardBg, border: `1px solid ${border}`, padding: 20, gridColumn: '1/-1' }}>
+                <SectionHeader title="📋 Todos os Scripts" textMuted={textMuted} />
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+                  {callScript.scripts.map((s, i) => (
+                    <button key={i} type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(s.script)
+                        setCopiedScript(true)
+                        setTimeout(() => setCopiedScript(false), 2000)
+                      }}
+                      style={{ padding: '6px 14px', background: cardBg, border: `1px solid ${border}`, color: textMuted, fontFamily: "'DM Mono', monospace", fontSize: '.42rem', cursor: 'pointer', textTransform: 'uppercase' }}>
+                      {s.type.replace('_', ' ')} ⧉
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {!callScript && !callScriptLoading && !callScriptLeadId && (
+            <div style={{ gridColumn: '1/-1', padding: 40, textAlign: 'center', color: textMuted, fontFamily: "'DM Mono', monospace", fontSize: '.52rem', border: `1px solid ${border}`, background: cardBg }}>
+              Selecionar uma lead acima para gerar o script de chamada.
             </div>
           )}
         </div>

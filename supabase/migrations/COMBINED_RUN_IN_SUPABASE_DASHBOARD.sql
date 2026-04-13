@@ -1669,3 +1669,72 @@ RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
 $$;
 
 SELECT 'Migration 018 complete — RPC helpers' AS status;
+
+
+-- =============================================================================
+-- MIGRATION 019 — Call Tracking Engine
+-- =============================================================================
+
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS last_call_at TIMESTAMPTZ;
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS last_whatsapp_at TIMESTAMPTZ;
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS first_contact_at TIMESTAMPTZ;
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS first_meeting_at TIMESTAMPTZ;
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS contact_attempts_count SMALLINT DEFAULT 0;
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS last_action_type TEXT;
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS call_done_today BOOLEAN DEFAULT FALSE;
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS proposal_sent_at TIMESTAMPTZ;
+ALTER TABLE offmarket_leads ADD COLUMN IF NOT EXISTS proposal_amount BIGINT;
+
+CREATE TABLE IF NOT EXISTS agent_daily_discipline (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_email TEXT NOT NULL,
+  discipline_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  calls_made SMALLINT DEFAULT 0,
+  visits_booked SMALLINT DEFAULT 0,
+  proposals_sent SMALLINT DEFAULT 0,
+  cpcv_pushed SMALLINT DEFAULT 0,
+  human_failure_triggered BOOLEAN DEFAULT FALSE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (agent_email, discipline_date)
+);
+
+CREATE OR REPLACE FUNCTION fn_track_contact_action()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  IF (NEW.last_call_at IS NOT NULL OR NEW.last_whatsapp_at IS NOT NULL)
+     AND OLD.first_contact_at IS NULL AND NEW.first_contact_at IS NULL THEN
+    NEW.first_contact_at := COALESCE(NEW.last_call_at, NEW.last_whatsapp_at);
+  END IF;
+  IF NEW.first_meeting_at IS NOT NULL AND OLD.first_meeting_at IS NULL THEN
+    NEW.deal_readiness_score := LEAST(100, COALESCE(OLD.deal_readiness_score, 0) + 15);
+    NEW.status := 'visit_scheduled';
+  END IF;
+  IF NEW.proposal_sent_at IS NOT NULL AND OLD.proposal_sent_at IS NULL THEN
+    NEW.deal_readiness_score := LEAST(100, COALESCE(NEW.deal_readiness_score, OLD.deal_readiness_score, 0) + 20);
+    NEW.status := 'proposal_sent';
+    NEW.negotiation_status := 'offer_received';
+  END IF;
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_track_contact_action ON offmarket_leads;
+CREATE TRIGGER trg_track_contact_action
+  BEFORE UPDATE OF last_call_at, last_whatsapp_at, first_meeting_at, proposal_sent_at
+  ON offmarket_leads FOR EACH ROW EXECUTE FUNCTION fn_track_contact_action();
+
+CREATE OR REPLACE FUNCTION reset_call_done_today()
+RETURNS void LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE offmarket_leads SET call_done_today = FALSE WHERE call_done_today = TRUE;
+$$;
+
+CREATE INDEX IF NOT EXISTS idx_offmarket_first_contact ON offmarket_leads (first_contact_at DESC NULLS LAST) WHERE first_contact_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_offmarket_first_meeting ON offmarket_leads (first_meeting_at DESC NULLS LAST) WHERE first_meeting_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_offmarket_last_call ON offmarket_leads (last_call_at DESC NULLS LAST) WHERE last_call_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_offmarket_proposal_sent ON offmarket_leads (proposal_sent_at DESC NULLS LAST) WHERE proposal_sent_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_agent_discipline ON agent_daily_discipline (agent_email, discipline_date DESC);
+
+SELECT 'Migration 019 complete — Call Tracking Engine' AS status;
