@@ -5,6 +5,43 @@ import type { NextRequest } from 'next/server'
 // ─── Rate limit store (in-memory fallback per Edge worker) ──────────────────
 const store = new Map<string, { count: number; reset: number }>()
 
+// ─── Paths that should not be indexed ────────────────────────────────────────
+const NOINDEX_PREFIXES = ['/portal', '/auth', '/onboarding', '/admin', '/deal', '/api', '/collection', '/_next']
+
+// ─── Add security + cache headers to a response ──────────────────────────────
+function addStandardHeaders(res: NextResponse, pathname: string): NextResponse {
+  // Security headers
+  res.headers.set('X-Content-Type-Options', 'nosniff')
+  res.headers.set('X-Frame-Options', 'SAMEORIGIN')
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)')
+
+  // X-Robots-Tag for private routes
+  if (NOINDEX_PREFIXES.some(p => pathname.startsWith(p))) {
+    res.headers.set('X-Robots-Tag', 'noindex, nofollow')
+  }
+
+  // Cache-Control by route type
+  if (pathname.startsWith('/api/')) {
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+  } else if (pathname.startsWith('/portal') || pathname.startsWith('/auth')) {
+    res.headers.set('Cache-Control', 'private, no-store')
+  } else if (pathname.startsWith('/blog/')) {
+    res.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
+  } else if (pathname.startsWith('/zonas/') || pathname.startsWith('/imoveis/')) {
+    res.headers.set('Cache-Control', 'public, max-age=1800, stale-while-revalidate=7200')
+  } else if (pathname === '/faq' || pathname === '/blog') {
+    res.headers.set('Cache-Control', 'public, max-age=7200, stale-while-revalidate=86400')
+  } else if (pathname === '/') {
+    res.headers.set('Cache-Control', 'public, max-age=900, stale-while-revalidate=3600')
+    res.headers.set('Vary', 'Accept-Language')
+  } else {
+    res.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600')
+  }
+
+  return res
+}
+
 // ─── Limites por rota ────────────────────────────────────────────────────────
 const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/search':       { max: 30,  window: 3_600_000 },
@@ -81,6 +118,14 @@ export default auth(async (req) => {
   const { pathname } = req.nextUrl
   const ua = req.headers.get('user-agent') || ''
 
+  // 0. www → non-www canonical redirect
+  const host = req.headers.get('host') ?? ''
+  if (host.startsWith('www.agencygroup.pt')) {
+    const url = req.nextUrl.clone()
+    url.host = 'agencygroup.pt'
+    return NextResponse.redirect(url, { status: 301 })
+  }
+
   // 1. Bot blacklist
   if (BOT_PATTERNS.some(p => p.test(ua))) {
     return new NextResponse('Forbidden', { status: 403 })
@@ -133,7 +178,7 @@ export default auth(async (req) => {
 
   // 3. Rate limiting
   const entry = Object.entries(LIMITS).find(([k]) => pathname.startsWith(k))
-  if (!entry) return NextResponse.next()
+  if (!entry) return addStandardHeaders(NextResponse.next(), pathname)
 
   const [, { max, window: win }] = entry
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() ||
@@ -163,7 +208,7 @@ export default auth(async (req) => {
     )
   }
 
-  const res = NextResponse.next()
+  const res = addStandardHeaders(NextResponse.next(), pathname)
   res.headers.set('X-RateLimit-Limit',     String(max))
   res.headers.set('X-RateLimit-Remaining', String(remaining))
   res.headers.set('X-RateLimit-Reset',     String(reset))
