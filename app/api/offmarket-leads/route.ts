@@ -13,9 +13,15 @@ const DEFAULT_PAGE_SIZE = 50
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const session = await auth()
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+    const hasValidToken = cronSecret && incomingSecret && incomingSecret === cronSecret
+
+    if (!hasValidToken) {
+      const session = await auth()
+      if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     const sp = req.nextUrl.searchParams
