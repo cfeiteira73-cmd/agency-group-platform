@@ -45,6 +45,11 @@ const ALLOWED_PATCH_FIELDS = new Set([
   // Migration 011: Execution Engine
   'first_contact_at', 'last_contact_attempt_at',
   'execution_blocker_reason', 'data_completeness_score', 'price_intel_blocked',
+  // Migration 012: Closing Engine
+  'first_meeting_at',
+  'deal_velocity_score', 'buyer_pressure_score', 'buyer_pressure_class',
+  'seller_pressure_reason', 'buyer_pressure_reason',
+  'deal_readiness_score', 'cpcv_probability',
 ])
 
 export async function GET(

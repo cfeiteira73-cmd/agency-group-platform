@@ -547,6 +547,263 @@ function getEffectiveNextAction(
 }
 
 // ---------------------------------------------------------------------------
+// FASE 19 — Closing Engine
+// ---------------------------------------------------------------------------
+
+// Deal Velocity Score (0-100) — FASE 19
+//   contacto <2h(25) + visita <24h(25) + proposta <48h(25) + CPCV <7d(25)
+// ---------------------------------------------------------------------------
+
+function calcDealVelocityScore(
+  createdAt: string | null,
+  firstContactAt: string | null,
+  slaContactedAt: string | null,
+  firstMeetingAt: string | null,
+  offerDate: string | null,
+  cpcvSignedAt: string | null
+): { score: number; velocityReason: string } {
+  if (!createdAt) return { score: 0, velocityReason: 'Pipeline não iniciado' }
+
+  const origin = new Date(createdAt).getTime()
+  let score = 0
+  const parts: string[] = []
+
+  // Contact speed (25pts)
+  const contactAt = firstContactAt ?? slaContactedAt
+  if (contactAt) {
+    const h = (new Date(contactAt).getTime() - origin) / 3_600_000
+    if (h <= 2)  { score += 25; parts.push('contacto <2h ⚡') }
+    else if (h <= 24) { score += 15; parts.push('contacto <24h') }
+    else          { score += 5;  parts.push('contacto tardio') }
+  }
+
+  // Meeting speed (25pts)
+  if (firstMeetingAt) {
+    const h = (new Date(firstMeetingAt).getTime() - origin) / 3_600_000
+    if (h <= 24)  { score += 25; parts.push('visita <24h ⚡') }
+    else if (h <= 72)  { score += 15; parts.push('visita <72h') }
+    else           { score += 5;  parts.push('visita lenta') }
+  }
+
+  // Offer speed (25pts)
+  if (offerDate) {
+    const h = (new Date(offerDate).getTime() - origin) / 3_600_000
+    if (h <= 48)  { score += 25; parts.push('proposta <48h ⚡') }
+    else if (h <= 168) { score += 15; parts.push('proposta <7d') }
+    else           { score += 5;  parts.push('proposta lenta') }
+  }
+
+  // CPCV speed (25pts)
+  if (cpcvSignedAt) {
+    const d = (new Date(cpcvSignedAt).getTime() - origin) / 86_400_000
+    if (d <= 7)   { score += 25; parts.push('CPCV <7d ⚡') }
+    else if (d <= 30)  { score += 15; parts.push('CPCV <30d') }
+    else           { score += 5;  parts.push('CPCV lento') }
+  }
+
+  return {
+    score: clamp(score, 0, 100),
+    velocityReason: parts.join(' · ') || 'Pipeline ainda não iniciado',
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Buyer Pressure Score (0-100) — FASE 19
+//   liquidez(30) + histórico(20) + velocidade(20) + response_rate(15) + reliability(15)
+//   × active_status multiplier
+// ---------------------------------------------------------------------------
+
+interface BuyerPressureData {
+  liquidity_profile: string | null
+  deals_closed_count: number | null
+  avg_close_days: number | null
+  response_rate: number | null
+  reliability_score: number | null
+  active_status: string | null
+  name?: string | null
+}
+
+function calcBuyerPressureScore(buyer: BuyerPressureData | null): {
+  score: number
+  pressureClass: 'HIGH' | 'MED' | 'LOW'
+  reason: string
+} {
+  if (!buyer) return { score: 0, pressureClass: 'LOW', reason: 'Sem comprador primário matched' }
+
+  const liqPts = buyer.liquidity_profile === 'immediate' ? 30
+    : buyer.liquidity_profile === 'under_30_days' ? 20
+    : buyer.liquidity_profile === 'financed' ? 10 : 5
+
+  const closedPts = (buyer.deals_closed_count ?? 0) >= 5 ? 20
+    : (buyer.deals_closed_count ?? 0) >= 3 ? 15
+    : (buyer.deals_closed_count ?? 0) >= 1 ? 10 : 0
+
+  const speedPts = (buyer.avg_close_days ?? 999) <= 21 ? 20
+    : (buyer.avg_close_days ?? 999) <= 45 ? 15
+    : (buyer.avg_close_days ?? 999) <= 90 ? 10 : 5
+
+  const responsePts = (buyer.response_rate ?? 0) >= 80 ? 15
+    : (buyer.response_rate ?? 0) >= 50 ? 10 : 5
+
+  const reliabilityPts = (buyer.reliability_score ?? 0) >= 80 ? 15
+    : (buyer.reliability_score ?? 0) >= 60 ? 10 : 5
+
+  const activeMult = buyer.active_status === 'active' ? 1.0
+    : buyer.active_status === 'dormant' ? 0.70
+    : buyer.active_status === 'inactive' ? 0.40 : 0.60
+
+  const raw = liqPts + closedPts + speedPts + responsePts + reliabilityPts
+  const score = clamp(Math.round(raw * activeMult), 0, 100)
+  const pressureClass: 'HIGH' | 'MED' | 'LOW' = score >= 70 ? 'HIGH' : score >= 40 ? 'MED' : 'LOW'
+
+  const parts: string[] = []
+  if (buyer.name) parts.push(buyer.name)
+  if (buyer.liquidity_profile === 'immediate') parts.push('liquidez imediata')
+  else if (buyer.liquidity_profile === 'under_30_days') parts.push('liquidez <30d')
+  else if (buyer.liquidity_profile === 'financed') parts.push('financiado')
+  if ((buyer.deals_closed_count ?? 0) >= 3) parts.push(`${buyer.deals_closed_count} deals fechados`)
+  if ((buyer.avg_close_days ?? 999) <= 30) parts.push(`fecha em ~${buyer.avg_close_days}d`)
+  if (buyer.active_status !== 'active') parts.push(`⚠️ ${buyer.active_status}`)
+
+  return { score, pressureClass, reason: parts.join(' · ') || `Buyer pressure ${pressureClass}` }
+}
+
+// ---------------------------------------------------------------------------
+// Seller Pressure Reason — FASE 19
+// ---------------------------------------------------------------------------
+
+function calcSellerPressureReason(
+  ownerType: string | null,
+  urgency: string | null,
+  grossDiscountPct: number | null,
+  negotiationStatus: string | null,
+  precloseCandidiate: boolean | null
+): string {
+  const parts: string[] = []
+  const ownerN = (ownerType ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  if (ownerN.includes('heranca') || ownerN.includes('herança')) parts.push('herança — pressão máxima')
+  else if (ownerN === 'banco' || ownerN === 'fundo') parts.push('banco/fundo — motivado para liquidar')
+  else if (ownerN === 'empresa') parts.push('empresa — processo racional')
+  else if (ownerN === 'individual') parts.push('individual — emocional, negociável')
+  if (urgency === 'high') parts.push('urgência alta declarada')
+  else if (urgency === 'low') parts.push('sem urgência declarada')
+  if (grossDiscountPct !== null && grossDiscountPct >= 20)
+    parts.push(`preço ${grossDiscountPct.toFixed(0)}% abaixo mercado`)
+  if (precloseCandidiate) parts.push('em processo de pré-fecho')
+  if (negotiationStatus && negotiationStatus !== 'idle') parts.push(`negociação: ${negotiationStatus}`)
+  return parts.join(' · ') || 'Pressão vendedor não avaliada'
+}
+
+// ---------------------------------------------------------------------------
+// Deal Readiness Score (0-100) — FASE 19
+//   contacto(20) + visita(20) + preclose(20) + buyer alinhado(20) + preço ok(20)
+//   ≥80 = READY TO CLOSE
+// ---------------------------------------------------------------------------
+
+function calcDealReadinessScore(
+  contacto: string | null,
+  firstMeetingAt: string | null,
+  precloseCandidiate: boolean | null,
+  bestBuyerMatchScore: number | null,
+  grossDiscountPct: number | null
+): { score: number; readinessReason: string } {
+  const c = contacto?.trim() ?? ''
+  const hasContact = !!(c && (/^(\+?[0-9\s\-().]{7,20})$/.test(c) || c.includes('@')))
+
+  const contactPts  = hasContact ? 20 : 0
+  const meetingPts  = firstMeetingAt ? 20 : 0
+  const preclosePts = precloseCandidiate ? 20 : 0
+  const buyerPts    = (bestBuyerMatchScore ?? 0) >= 70 ? 20 : (bestBuyerMatchScore ?? 0) >= 50 ? 10 : 0
+  const pricePts    = grossDiscountPct !== null && grossDiscountPct >= 0 ? 20 : 0
+
+  const score = clamp(contactPts + meetingPts + preclosePts + buyerPts + pricePts, 0, 100)
+
+  const missing: string[] = []
+  if (!hasContact) missing.push('contacto directo')
+  if (!firstMeetingAt) missing.push('visita/reunião')
+  if (!precloseCandidiate) missing.push('pré-fecho formal')
+  if ((bestBuyerMatchScore ?? 0) < 70) missing.push('buyer alinhado ≥70%')
+  if (grossDiscountPct === null) missing.push('validação de preço')
+
+  const readinessReason = score >= 80
+    ? '✅ READY TO CLOSE — todas as condições verificadas'
+    : `${score}/100 — em falta: ${missing.join(', ')}`
+
+  return { score, readinessReason }
+}
+
+// ---------------------------------------------------------------------------
+// CPCV Probability (0-100) — FASE 19
+//   deal_eval(30%) + buyer_pressure(25%) + velocity(20%) + readiness(25%)
+// ---------------------------------------------------------------------------
+
+function calcCPCVProbability(
+  dealEvaluationScore: number,
+  buyerPressureScore: number,
+  dealVelocityScore: number,
+  dealReadinessScore: number
+): number {
+  return clamp(Math.round(
+    dealEvaluationScore  * 0.30 +
+    buyerPressureScore   * 0.25 +
+    dealVelocityScore    * 0.20 +
+    dealReadinessScore   * 0.25
+  ), 0, 100)
+}
+
+// ---------------------------------------------------------------------------
+// Next Action 2.0 — pressão + contexto buyer + objetivo explícito
+// ---------------------------------------------------------------------------
+
+function buildNextAction2(
+  blocker: ExecutionBlocker,
+  classification: string,
+  buyerPressureClass: 'HIGH' | 'MED' | 'LOW',
+  buyerPressureReason: string,
+  sellerPressureReason: string,
+  cpcvProbability: number,
+  dealReadinessScore: number
+): string {
+  // Hard blockers — operational action required first
+  if (blocker === 'no_contact') {
+    return `🚨 OBTER CONTACTO IMEDIATO — sem telefone/email, pipeline completamente bloqueado. Procurar via LinkedIn, registo predial ou intermediário.`
+  }
+  if (blocker === 'sla_breach') {
+    const buyerCtx = buyerPressureClass === 'HIGH' ? ` Buyer em espera: ${buyerPressureReason}.` : ''
+    return `🚨 LIGAR AGORA — SLA em breach.${buyerCtx} Objectivo: confirmar disponibilidade para visita esta semana.`
+  }
+  if (blocker === 'no_price_intel') {
+    return `⚠️ CORRER PRICE-INTEL — preço e área disponíveis mas desconto desconhecido. Sem este dado, deal-eval é cego. Clicar "Analisar Preço".`
+  }
+  if (blocker === 'no_buyer') {
+    return `⚠️ ACTIVAR BUYER LIST — sem compradores matched. Correr matching manual ou contactar compradores activos para esta zona/tipologia.`
+  }
+  if (blocker === 'insufficient_data') {
+    return `📋 COMPLETAR DADOS — completude insuficiente para execução. Obter: área, contacto e análise de preço.`
+  }
+
+  // Ready to attack — rich contextual action
+  const urgencyEmoji = cpcvProbability >= 70 ? '🔥' : cpcvProbability >= 50 ? '⚡' : '📌'
+  const readinessLabel = dealReadinessScore >= 80 ? 'READY TO CLOSE' : classification
+
+  const buyerCtx = buyerPressureClass === 'HIGH'
+    ? `Buyer HIGH pressure: ${buyerPressureReason}.`
+    : buyerPressureClass === 'MED'
+    ? `Buyer disponível: ${buyerPressureReason}.`
+    : 'Buyer com baixa pressão — qualificar disponibilidade.'
+
+  const sellerCtx = sellerPressureReason ? `Vendedor: ${sellerPressureReason}.` : ''
+
+  const objetivo = dealReadinessScore >= 80
+    ? 'Objectivo: fechar CPCV esta semana.'
+    : dealReadinessScore >= 60
+    ? 'Objectivo: agendar visita e alinhar proposta.'
+    : 'Objectivo: validar interesse e marcar visita.'
+
+  return `${urgencyEmoji} ${readinessLabel} (CPCV ${cpcvProbability}%) — ${buyerCtx} ${sellerCtx} ${objetivo}`.trim()
+}
+
+// ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------
 
@@ -572,6 +829,7 @@ export async function POST(
       .select(`id, nome, tipo_ativo, cidade, localizacao, area_m2, price_ask,
                owner_type, urgency, contacto, source, score,
                sla_breach, sla_contacted_at, created_at,
+               first_contact_at, first_meeting_at, offer_date, cpcv_signed_at,
                deal_priority_score, matched_buyers_count, best_buyer_match_score,
                matched_to_buyers, preclose_candidate,
                primary_buyer_id,
@@ -587,14 +845,18 @@ export async function POST(
 
     // Fetch primary buyer data if available
     let primaryBuyer: BuyerData | null = null
+    let primaryBuyerPressure: BuyerPressureData | null = null
     if (lead.primary_buyer_id) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: buyer } = await (supabaseAdmin as any)
         .from('contacts')
-        .select('buyer_score, active_status, liquidity_profile, deals_closed_count, avg_close_days, reliability_score, response_rate')
+        .select('name, buyer_score, active_status, liquidity_profile, deals_closed_count, avg_close_days, reliability_score, response_rate')
         .eq('id', lead.primary_buyer_id)
         .single()
-      if (buyer) primaryBuyer = buyer as BuyerData
+      if (buyer) {
+        primaryBuyer = buyer as BuyerData
+        primaryBuyerPressure = buyer as BuyerPressureData
+      }
     }
 
     // ── Compute all 8 layers ─────────────────────────────────────────────────
@@ -664,20 +926,62 @@ export async function POST(
 
     const priceIntelBlocked = !lead.area_m2 && lead.gross_discount_pct === null
 
-    // Blocker overrides classification action — operator always sees what's blocking
-    const nextAction = getEffectiveNextAction(executionBlocker, classificationNextAction)
+    // ── Closing Engine — FASE 19 ──────────────────────────────────────────────
+
+    const { score: dealVelocityScore, velocityReason } = calcDealVelocityScore(
+      lead.created_at, lead.first_contact_at, lead.sla_contacted_at,
+      lead.first_meeting_at, lead.offer_date, lead.cpcv_signed_at
+    )
+
+    const { score: buyerPressureScore, pressureClass: buyerPressureClass, reason: buyerPressureReason } =
+      calcBuyerPressureScore(primaryBuyerPressure)
+
+    const sellerPressureReason = calcSellerPressureReason(
+      lead.owner_type, lead.urgency, lead.gross_discount_pct,
+      lead.negotiation_status, lead.preclose_candidate
+    )
+
+    const { score: dealReadinessScore, readinessReason } = calcDealReadinessScore(
+      lead.contacto, lead.first_meeting_at, lead.preclose_candidate,
+      lead.best_buyer_match_score, lead.gross_discount_pct
+    )
+
+    const cpcvProbability = calcCPCVProbability(
+      dealEvaluationScore, buyerPressureScore, dealVelocityScore, dealReadinessScore
+    )
+
+    // ── Micro automation flags ────────────────────────────────────────────────
+    const contactAt = lead.first_contact_at ?? lead.sla_contacted_at
+    const followUpNeeded = !!(
+      contactAt && !lead.first_meeting_at &&
+      (Date.now() - new Date(contactAt).getTime()) > 24 * 3_600_000
+    )
+    const dealStalled = !!(
+      lead.offer_date && !lead.cpcv_signed_at &&
+      lead.negotiation_status && !['idle', 'withdrawn'].includes(lead.negotiation_status) &&
+      (Date.now() - new Date(lead.offer_date).getTime()) > 48 * 3_600_000
+    )
+    const cpcvReady = dealReadinessScore >= 80
+
+    // ── Next Action 2.0 — replaces plain blocker message with rich context ────
+    const nextAction = buildNextAction2(
+      executionBlocker, classification,
+      buyerPressureClass, buyerPressureReason, sellerPressureReason,
+      cpcvProbability, dealReadinessScore
+    )
 
     const dealEvaluationReason = [
       `[${classification}]`,
+      `CPCV ${cpcvProbability}%`,
       `Desconto adj.: ${adjustedDiscountScore}/100`,
       `Liquidez: ${liquidityScore}/100`,
       `Upside adj.: ${riskAdjustedUpsideScore}/100`,
-      `Qualidade activo: ${assetQualityScore}/100`,
-      `Fonte: ${sourceQualityScore}/100`,
+      `Readiness: ${dealReadinessScore}/100`,
+      `Velocity: ${dealVelocityScore}/100`,
       `→ ${nextAction}`,
     ].join(' · ')
 
-    const masterAttackRankReason = `Rank ${masterAttackRank}/100 — ${classification} · DealEval ${dealEvaluationScore} · Exec ${executionProbability} · DPS ${lead.deal_priority_score ?? 0} · Buyer ${bestBuyerExecutionScore} · ${nextAction}`
+    const masterAttackRankReason = `Rank ${masterAttackRank}/100 — ${classification} · CPCV ${cpcvProbability}% · Readiness ${dealReadinessScore} · Buyer ${buyerPressureClass} · ${nextAction}`
 
     // ── Persist ──────────────────────────────────────────────────────────────
 
@@ -707,6 +1011,14 @@ export async function POST(
         data_completeness_score:    dataCompletenessScore,
         execution_blocker_reason:   executionBlocker,
         price_intel_blocked:        priceIntelBlocked,
+        // FASE 19 — Closing Engine
+        deal_velocity_score:        dealVelocityScore,
+        buyer_pressure_score:       buyerPressureScore,
+        buyer_pressure_class:       buyerPressureClass,
+        seller_pressure_reason:     sellerPressureReason,
+        buyer_pressure_reason:      buyerPressureReason,
+        deal_readiness_score:       dealReadinessScore,
+        cpcv_probability:           cpcvProbability,
         // Promote to sla_breach if not already set and created >24h ago with no contact
         ...(() => {
           if (lead.sla_breach === true) return {}
@@ -719,7 +1031,7 @@ export async function POST(
 
     if (updateError) throw updateError
 
-    console.log(`[deal-eval] "${lead.nome}" → eval=${dealEvaluationScore}/100 rank=${masterAttackRank}/100 [${classification}]`)
+    console.log(`[deal-eval] "${lead.nome}" rank=${masterAttackRank} CPCV=${cpcvProbability}% ready=${dealReadinessScore} [${classification}] blocker=${executionBlocker}`)
 
     return NextResponse.json({
       lead_id: id,
@@ -731,6 +1043,20 @@ export async function POST(
       data_completeness_score:   dataCompletenessScore,
       data_missing:              dataMissing,
       price_intel_blocked:       priceIntelBlocked,
+      // FASE 19 — Closing Engine
+      deal_velocity_score:       dealVelocityScore,
+      velocity_reason:           velocityReason,
+      buyer_pressure_score:      buyerPressureScore,
+      buyer_pressure_class:      buyerPressureClass,
+      buyer_pressure_reason:     buyerPressureReason,
+      seller_pressure_reason:    sellerPressureReason,
+      deal_readiness_score:      dealReadinessScore,
+      readiness_reason:          readinessReason,
+      cpcv_probability:          cpcvProbability,
+      // Micro automation flags
+      follow_up_needed:          followUpNeeded,
+      deal_stalled:              dealStalled,
+      cpcv_ready:                cpcvReady,
       // 8 layers
       adjusted_discount_score:    adjustedDiscountScore,
       liquidity_score:            liquidityScore,

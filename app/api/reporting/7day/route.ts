@@ -58,6 +58,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       r_price_intel_missing,
       r_buyer_missing,
       r_preclose_not_contacted,
+      // FASE 19 — Micro automation
+      r_deal_stalled,
+      r_cpcv_ready,
     ] = await Promise.all([
       // All leads in last 7 days
       s.from('offmarket_leads')
@@ -109,9 +112,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       // Top attack leads (master_attack_rank highest)
       s.from('offmarket_leads')
-        .select('id, nome, score, master_attack_rank, deal_evaluation_score, execution_probability, deal_evaluation_reason, cidade, tipo_ativo, price_ask')
+        .select('id, nome, score, master_attack_rank, deal_evaluation_score, execution_probability, deal_evaluation_reason, cidade, tipo_ativo, price_ask, cpcv_probability, deal_readiness_score, buyer_pressure_class, execution_blocker_reason, data_completeness_score')
         .not('master_attack_rank', 'is', null)
         .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .not('nome', 'ilike', '%test%')
+        .not('nome', 'ilike', '%e2e%')
+        .not('nome', 'ilike', '%direct%')
         .order('master_attack_rank', { ascending: false })
         .limit(10),
 
@@ -177,6 +183,25 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .not('status', 'in', '("closed_won","closed_lost","not_interested")')
         .order('master_attack_rank', { ascending: false })
         .limit(10),
+
+      // FASE 19 — Micro automation: deals stalled (has contact, >48h no meeting in active negotiation)
+      s.from('offmarket_leads')
+        .select('id, nome, score, master_attack_rank, negotiation_status, offer_date, deal_readiness_score, cpcv_probability')
+        .not('offer_date', 'is', null)
+        .is('cpcv_signed_at', null)
+        .not('negotiation_status', 'in', '("idle","withdrawn")')
+        .lt('offer_date', new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString())
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('cpcv_probability', { ascending: false })
+        .limit(10),
+
+      // CPCV ready (deal_readiness_score ≥80)
+      s.from('offmarket_leads')
+        .select('id, nome, score, master_attack_rank, deal_readiness_score, cpcv_probability, buyer_pressure_class, next_action')
+        .gte('deal_readiness_score', 80)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('cpcv_probability', { ascending: false })
+        .limit(10),
     ])
 
     const allLeads = r_all_leads.data ?? []
@@ -197,6 +222,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const priceIntelMissing    = r_price_intel_missing.data ?? []
     const buyerMissing         = r_buyer_missing.data ?? []
     const precloseNotContacted = r_preclose_not_contacted.data ?? []
+    // FASE 19 — Micro automation
+    const dealStalled          = r_deal_stalled.data ?? []
+    const cpcvReady            = r_cpcv_ready.data ?? []
 
     // ── Daily breakdown (last 7 days) ────────────────────────────────────────
     const dailyBreakdown: Array<{
@@ -385,6 +413,31 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           label: 'Preclose candidate sem contacto SLA',
           leads: precloseNotContacted,
         },
+        // FASE 19 — Micro automation flags
+        deal_stalled: {
+          count: dealStalled.length,
+          label: 'Deal com proposta enviada >48h sem CPCV (stalled)',
+          leads: dealStalled,
+        },
+        cpcv_ready: {
+          count: cpcvReady.length,
+          label: 'Deal readiness ≥80 — prontos para fechar CPCV',
+          leads: cpcvReady,
+        },
+      },
+
+      // FASE 19 — Closing metrics
+      closing_metrics: {
+        deals_ready_to_close:    cpcvReady.length,
+        deals_stalled:           dealStalled.length,
+        avg_cpcv_probability:    (() => {
+          const scores = (r_top_attack.data ?? [])
+            .map((l: Record<string, unknown>) => l.cpcv_probability as number)
+            .filter(Boolean)
+          return scores.length > 0
+            ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length)
+            : null
+        })(),
       },
 
       // Upcoming deadlines
