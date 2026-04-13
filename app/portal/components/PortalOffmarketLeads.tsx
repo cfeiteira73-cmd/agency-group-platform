@@ -202,37 +202,48 @@ export default function PortalOffmarketLeads() {
   // ── Create lead ─────────────────────────────────────────────────────────────
 
   async function handleCreate() {
-    if (!newLead.nome.trim()) { setSaveMsg('Nome é obrigatório'); return }
+    // Validation: cidade + tipo_ativo required (minimal intake)
+    if (!newLead.cidade.trim()) { setSaveMsg('⚠ Cidade é obrigatória'); return }
+    if (!newLead.tipo_ativo.trim()) { setSaveMsg('⚠ Tipo de ativo é obrigatório'); return }
     setSaving(true)
-    setSaveMsg('')
+    setSaveMsg('A criar e avaliar automaticamente...')
     try {
+      // Use /manual endpoint — triggers full auto-pipeline (score+match+eval)
       const payload: Record<string, unknown> = {
-        nome: newLead.nome.trim(),
-        tipo_ativo: newLead.tipo_ativo || null,
+        cidade:     newLead.cidade.trim(),
+        tipo_ativo: newLead.tipo_ativo.trim(),
         localizacao: newLead.localizacao || null,
-        cidade: newLead.cidade || null,
-        area_m2: newLead.area_m2 ? parseFloat(newLead.area_m2) : null,
-        price_ask: newLead.price_ask ? parseFloat(newLead.price_ask) * 1000 : null, // input in K€
-        contacto: newLead.contacto || null,
+        area_m2:    newLead.area_m2 ? parseFloat(newLead.area_m2) : null,
+        price_ask:  newLead.price_ask ? parseFloat(newLead.price_ask) : null, // K€
+        contacto:   newLead.contacto || null,
         owner_type: newLead.owner_type,
-        urgency: newLead.urgency,
-        source: newLead.source,
-        notes: newLead.notes || null,
+        urgency:    newLead.urgency,
+        source:     newLead.source,
+        notes:      newLead.notes || null,
         assigned_to: newLead.assigned_to || null,
-        score_status: 'pending_score',
+        // descricao maps to nome if provided
+        descricao:  newLead.nome.trim() || null,
       }
-      const res = await fetch('/api/offmarket-leads', {
+      const res = await fetch('/api/offmarket-leads/manual', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
+      const result = await res.json()
       if (!res.ok) {
-        const err = await res.json()
-        setSaveMsg(err.error || 'Erro ao criar lead')
+        setSaveMsg(result.error || 'Erro ao criar lead')
       } else {
-        setSaveMsg('Lead criado com sucesso ✓')
-        setShowNewForm(false)
+        const score = result.result?.score
+        const rank  = result.result?.master_attack_rank
+        const buyers = result.result?.matched_buyers_count ?? 0
+        const warn  = result.duplicate_warning ? `\n⚠ ${result.duplicate_warning}` : ''
+        setSaveMsg(
+          `✅ Lead criada e avaliada!\n` +
+          `Score: ${score ?? '—'} · Rank: ${rank ?? '—'} · Buyers: ${buyers}\n` +
+          `${result.next_action}${warn}`
+        )
         setNewLead({ nome: '', tipo_ativo: '', localizacao: '', cidade: '', area_m2: '', price_ask: '', contacto: '', owner_type: 'individual', urgency: 'unknown', source: 'manual', notes: '', assigned_to: '' })
+        setTimeout(() => { setShowNewForm(false); setSaveMsg('') }, 3000)
         loadLeads()
       }
     } catch {
