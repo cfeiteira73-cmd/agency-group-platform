@@ -138,7 +138,7 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "Bearer RESEND_API_KEY_REDACTED" },
+            { "name": "Authorization", "value": "Bearer {{$env.RESEND_API_KEY}}" },
             { "name": "Content-Type", "value": "application/json" }
           ]
         },
