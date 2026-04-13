@@ -2181,35 +2181,10 @@ const IDEALISTA_TIPO_PATH: Record<TipoImovel, string> = {
   todos:       'comprar-casas',
 }
 
-async function scrapeIdealista(zona: string, token: string, precoMax?: number, tipo?: string, tipos?: TipoImovel[]): Promise<Deal[]> {
-  try {
-    const baseUrl = ZONA_TO_IDEALISTA[zona] || ZONA_TO_IDEALISTA['Lisboa']
-    const tiposList: TipoImovel[] = tipos ?? (tipo ? [tipo as TipoImovel] : ['apartamento', 'moradia'])
-
-    const startUrls = tiposList.flatMap(t => {
-      const path = IDEALISTA_TIPO_PATH[t] ?? 'comprar-casas'
-      let url = baseUrl.replace('comprar-casas', path)
-      if (precoMax && precoMax > 0) url += `preco-ate_${precoMax}/`
-      return [{ url, userData: { precoMax: precoMax || 0, tipoImovel: t } }]
-    })
-
-    const r = await fetch(
-      `https://api.apify.com/v2/acts/apify~playwright-scraper/run-sync-get-dataset-items?token=${token}&timeout=50`,
-      {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          startUrls,
-          pageFunction: buildListingPageFunction('idealista'),
-          maxPagesPerCrawl: startUrls.length,
-        }),
-        signal: AbortSignal.timeout(55000),
-      }
-    )
-    if (!r.ok) return []
-    const items = await r.json() as unknown[]
-    if (!Array.isArray(items)) return []
-    return parseListingItems(items, zona, 'Idealista', precoMax)
-  } catch { return [] }
+// scrapeIdealista removida — violava ToS Idealista.pt
+// Substituição: Idealista API Oficial (developers.idealista.com) — pendente credenciais AMI 22506
+async function scrapeIdealista(_zona: string, _token: string, _precoMax?: number, _tipo?: string, _tipos?: TipoImovel[]): Promise<Deal[]> {
+  return []
 }
 
 // ─── Imovirtual via direct HTML fetch (SSR page, no Apify needed) ─────────────
@@ -2225,93 +2200,16 @@ const IMOVIRTUAL_URLS: Record<TipoImovel, string[]> = {
   todos:       ['comprar/apartamento', 'comprar/moradia', 'comprar/terreno', 'comprar/quinta-herdade', 'comprar/loja', 'comprar/escritorio', 'comprar/predio'],
 }
 
-async function scrapeImovirtual(zona: string, _token: string, precoMax?: number, tipos: TipoImovel[] = ['apartamento', 'moradia']): Promise<Deal[]> {
-  const deals: Deal[] = []
-  try {
-    const ROOMS_MAP: Record<string, number> = {
-      ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5, SIX: 6, SEVEN: 7, EIGHT: 8, ZERO: 0,
-    }
-    const zonaSlug = zona.toLowerCase()
-      .replace(/\s—\s.*/g, '').replace(/[àáâã]/g, 'a').replace(/[éê]/g, 'e')
-      .replace(/[íî]/g, 'i').replace(/[óô]/g, 'o').replace(/[úû]/g, 'u')
-      .replace(/[ç]/g, 'c').replace(/\s+/g, '-')
-
-    // Build URL list from requested tipos
-    const urlEntries: { url: string; tipo: TipoImovel }[] = []
-    for (const tipo of tipos) {
-      const paths = IMOVIRTUAL_URLS[tipo] ?? IMOVIRTUAL_URLS['apartamento']
-      for (const path of paths) {
-        urlEntries.push({ url: `https://www.imovirtual.com/${path}/${zonaSlug}/`, tipo })
-      }
-    }
-
-    for (const { url: searchUrl, tipo } of urlEntries) {
-      try {
-        const res = await fetch(searchUrl, { headers: HEADERS, signal: AbortSignal.timeout(12000) })
-        if (!res.ok) continue
-        const html = await res.text()
-
-        const slugMatches = [...html.matchAll(/"slug":"([\w-]+-ID[\w]+)"/g)]
-        const prices = [...html.matchAll(/"totalPrice":\{"value":(\d+)/g)].map(m => Number(m[1]))
-        const areas = [...html.matchAll(/"areaInSquareMeters":(\d+)/g)].map(m => Number(m[1]))
-        const titles = [...html.matchAll(/"title":"([^"]{5,100})"/g)].map(m => m[1])
-        const rooms = [...html.matchAll(/"roomsNumber":"([A-Z]+)"/g)].map(m => ROOMS_MAP[m[1]] ?? 0)
-        const locations = [...html.matchAll(/"location":"([^"]+\/[^"]+\/[^"]+)"/g)].map(m => m[1])
-
-        let priceIdx = 0, areaIdx = 0, titleIdx = 0, roomIdx = 0, locIdx = 0
-
-        for (const [, slug] of slugMatches.slice(0, 25)) {
-          if (!slug.includes('-ID')) continue
-          const url = `https://www.imovirtual.com/pt/anuncio/${slug}`
-          const preco = prices[priceIdx++] ?? 0
-          const area  = areas[areaIdx++]  ?? 0
-          const titulo = (titles[titleIdx++] ?? slug.replace(/-ID\w+$/, '').replace(/-/g, ' ')).substring(0, 100)
-          const qts    = rooms[roomIdx++]  ?? 0
-          const loc    = locations[locIdx++] ?? ''
-          const morada = loc.split('/').pop()?.replace(/-/g, ' ') ?? zona
-
-          if (preco < 10000) continue
-          if (precoMax && preco > precoMax) continue
-
-          const detectedZona = detectZona(`${morada} ${titulo} ${loc}`) || zona
-          const zm  = getZM(detectedZona)
-          const pm2 = area > 0 ? Math.round(preco / area) : 0
-          const val = computeFullValuation(tipo, preco, area, zm, 'mercado_livre', titulo, qts, Boolean(morada))
-          const yB  = area > 0 && preco > 0 ? parseFloat((zm.renda_m2 * area * 12 / preco * 100).toFixed(2)) : zm.yield_bruto
-          deals.push({
-            url, platform: 'Imovirtual', titulo, morada,
-            zona: detectedZona, preco, area, quartos: qts,
-            pm2, pm2_mercado: zm.pm2_trans,
-            classificacao: getClassificacao(val.score),
-            desconto_mercado_pct: pm2 > 0 ? Math.round((zm.pm2_trans - pm2) / zm.pm2_trans * 100) : 0,
-            yield_bruto_pct: yB, roi5y_pct: 0,
-            tipo_venda: 'mercado_livre', agente: 'Imovirtual', contacto: url, telefone: '',
-            is_leilao: false, is_banca: false, var_yoy: zm.var_yoy, liquidez: zm.liquidez,
-            tipo_imovel: tipo, ...val,
-          })
-        }
-      } catch { /* continue to next type */ }
-    }
-  } catch { /* continue */ }
-  return deals
+// scrapeImovirtual removida — ToS Imovirtual.pt proíbem scraping automatizado
+// Substituição: aguarda parceria ou feed oficial com a Imovirtual
+async function scrapeImovirtual(_zona: string, _token: string, _precoMax?: number, _tipos: TipoImovel[] = ['apartamento', 'moradia']): Promise<Deal[]> {
+  return []
 }
 
-// ─── F) Fetch comparables via Idealista playwright ──────────────────────────
-async function fetchComparables(zona: string, preco: number, area: number, token: string): Promise<number> {
-  try {
-    const deals = await scrapeIdealista(zona, token, preco > 0 ? Math.round(preco * 1.4) : undefined)
-    if (deals.length === 0) return 0
-    const comparables: number[] = []
-    for (const d of deals) {
-      if (d.pm2 < 500) continue
-      if (area > 0 && d.area > 0 && Math.abs(d.area - area) / area > 0.4) continue
-      if (preco > 0 && d.preco > 0 && Math.abs(d.preco - preco) / preco > 0.5) continue
-      comparables.push(d.pm2)
-    }
-    if (comparables.length === 0) return 0
-    const slice = comparables.slice(0, 5)
-    return Math.round(slice.reduce((s, v) => s + v, 0) / slice.length)
-  } catch { return 0 }
+// ─── F) Fetch comparables — pendente Idealista API Oficial ───────────────────
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function fetchComparables(_zona: string, _preco: number, _area: number, _token: string): Promise<number> {
+  return 0 // TODO: implementar com Idealista API Oficial (developers.idealista.com)
 }
 
 // ─── G) Supercasa via JSON-LD (server-side rendered, clean structured data) ───
@@ -2406,33 +2304,7 @@ async function scrapeSupercasa(zona: string, apifyToken?: string, precoMax?: num
         deals.push(...directDeals)
         if (directDeals.length > 0) continue // got results, skip Apify for this tipo
 
-        // 2. Apify fallback (works from datacenter IPs)
-        if (apifyToken) {
-          try {
-            const r = await fetch(
-              `https://api.apify.com/v2/acts/apify~web-scraper/run-sync-get-dataset-items?token=${apifyToken}&timeout=40`,
-              {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  startUrls: [{ url: searchUrl }],
-                  pageFunction: `async function pageFunction(context) {
-                    return [{ html: document.documentElement.outerHTML.substring(0, 300000) }];
-                  }`,
-                  maxPagesPerCrawl: 1,
-                }),
-                signal: AbortSignal.timeout(50000),
-              }
-            )
-            if (r.ok) {
-              const items = await r.json() as unknown[]
-              if (Array.isArray(items) && items.length > 0) {
-                const item = items[0] as Record<string, unknown>
-                const apifyHtml = String(item['html'] ?? '')
-                deals.push(...parseSupercasaHtml(apifyHtml, searchUrl, tipo))
-              }
-            }
-          } catch { /* continue */ }
-        }
+        // Apify fallback removido — usar apenas direct HTML fetch (legal)
       } catch { /* continue to next tipo */ }
     }
   } catch { /* continue */ }
@@ -2568,76 +2440,7 @@ async function scrapeCasaSapo(zona: string, precoMax?: number, apifyToken?: stri
       } catch { /* continue to next URL */ }
     }
 
-    // ── Apify fallback when direct HTML is blocked ──────────────────────────
-    if (!htmlFetchWorked && apifyToken) {
-      try {
-        const searchUrl = `https://casa.sapo.pt/comprar-apartamentos/${zonaSlug}/`
-        const r = await fetch(
-          `https://api.apify.com/v2/acts/apify~web-scraper/run-sync-get-dataset-items?token=${apifyToken}&timeout=40`,
-          {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              startUrls: [{ url: searchUrl }],
-              pageFunction: `async function pageFunction(context) {
-                const blocks = Array.from(document.querySelectorAll('[id^="property_"]'));
-                return blocks.slice(0, 20).map(el => ({
-                  tipo: el.querySelector('.property-type')?.textContent?.trim() || '',
-                  local: el.querySelector('.property-location')?.textContent?.trim() || '',
-                  preco: el.querySelector('.property-price-value')?.textContent?.trim() || '',
-                  area: el.querySelector('.property-features-text')?.textContent?.trim() || '',
-                  url: (function() {
-                    const raw = el.querySelector('a.property-info')?.href || '';
-                    // Extract real URL from tracking link: gespub.casa.sapo.pt/...&l=https://casa.sapo.pt/...
-                    const m = raw.match(/[?&]l=(https:\/\/casa\.sapo\.pt\/[^&"]+\.html)/i);
-                    return m ? m[1] : raw || document.location.href;
-                  })(),
-                }));
-              }`,
-              maxPagesPerCrawl: 1,
-            }),
-            signal: AbortSignal.timeout(45000),
-          }
-        )
-        if (r.ok) {
-          const rows = await r.json() as unknown[]
-          if (Array.isArray(rows)) {
-            for (const rawRow of rows.flat().slice(0, 20)) {
-              const row = rawRow as Record<string, string>
-              const preco = parseNum((row['preco'] ?? '').replace(/[€\s]/g, ''))
-              if (preco < 5000) continue
-              if (precoMax && preco > precoMax) continue
-              const areaM = (row['area'] ?? '').match(/([\d,]+)\s*m²/i)
-              const area = parseNum(areaM?.[1])
-              const roomsM = (row['tipo'] ?? '').match(/T(\d)/i)
-              const quartos = roomsM ? Number(roomsM[1]) : 0
-              const morada = row['local'] ?? ''
-              const titulo = row['tipo'] ?? 'Imóvel Casa Sapo'
-              const detectedZona = detectZona(`${titulo} ${morada} ${zona}`)
-              const zm = getZM(detectedZona)
-              const pm2 = area > 0 && preco > 0 ? Math.round(preco / area) : 0
-              // Apify fallback only fetches apartamentos; use first tipo from the requested list
-              const apifyTipo: TipoImovel = tipos[0] ?? 'apartamento'
-              const val = computeFullValuation(apifyTipo, preco, area, zm, 'mercado_livre', titulo, quartos, Boolean(morada))
-              deals.push({
-                url: row['url'] || searchUrl, platform: 'Casa Sapo',
-                titulo: titulo.substring(0, 80), morada: morada.substring(0, 100),
-                zona: detectedZona, preco, area, quartos, pm2,
-                pm2_mercado: zm.pm2_trans, classificacao: getClassificacao(val.score),
-                desconto_mercado_pct: pm2 > 0 ? Math.round((zm.pm2_trans - pm2) / zm.pm2_trans * 100) : 0,
-                yield_bruto_pct: area > 0 && preco > 0
-                  ? parseFloat((zm.renda_m2 * area * 12 / preco * 100).toFixed(2)) : zm.yield_bruto,
-                roi5y_pct: 0, tipo_venda: 'mercado_livre',
-                tipo_imovel: apifyTipo,
-                agente: 'Casa Sapo', contacto: row['url'] || searchUrl, telefone: '',
-                is_leilao: false, is_banca: false,
-                var_yoy: zm.var_yoy, liquidez: zm.liquidez,
-                ...val,
-              })
-            }
-          }
-        }
-      } catch { /* continue */ }
-    }
+    // Apify fallback removido — usar apenas direct HTML fetch (legal)
   } catch { /* continue */ }
   return deals
 }
