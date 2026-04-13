@@ -118,14 +118,6 @@ export default auth(async (req) => {
   const { pathname } = req.nextUrl
   const ua = req.headers.get('user-agent') || ''
 
-  // 0. www → non-www canonical redirect
-  const host = req.headers.get('host') ?? ''
-  if (host.startsWith('www.agencygroup.pt')) {
-    const url = req.nextUrl.clone()
-    url.host = 'agencygroup.pt'
-    return NextResponse.redirect(url, { status: 301 })
-  }
-
   // 1. Bot blacklist
   if (BOT_PATTERNS.some(p => p.test(ua))) {
     return new NextResponse('Forbidden', { status: 403 })
