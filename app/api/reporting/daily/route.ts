@@ -135,6 +135,21 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         active_negotiations:   (r_active_negotiations.data ?? []).length,
         cpcv_in_progress:      cpcvPipeline.filter((d: Record<string, unknown>) => d.cpcv_signed_at).length,
         sla_breaches:          (r_sla_breach.data ?? []).length,
+        // FASE 21 — top 5 daily execution command (derived from execution_queue)
+        daily_top5_instruction: (() => {
+          const queue: Record<string, unknown>[] = [
+            ...(r_p0.data ?? []).map((l: Record<string, unknown>) => ({ ...l, _priority: 'P0' })),
+            ...(r_p1.data ?? []).map((l: Record<string, unknown>) => ({ ...l, _priority: 'P1' })),
+            ...(r_preclose.data ?? []).map((l: Record<string, unknown>) => ({ ...l, _priority: 'PRE-CLOSE' })),
+          ].filter((l) => l.deal_kill_flag !== true).slice(0, 5)
+          return queue.map((l, i) => {
+            const name = l.nome ?? 'Lead'
+            const blocker = l.execution_blocker_reason ?? 'ready_to_attack'
+            const cpcvPct = l.cpcv_probability ?? 0
+            const emoji = blocker === 'cpcv_trigger' ? '🔥' : blocker === 'sla_breach' ? '🚨' : blocker === 'no_meeting' ? '📅' : '⚡'
+            return `${i + 1}. ${emoji} ${name} — ${blocker} (CPCV ${cpcvPct}%)`
+          }).join('\n') || 'Sem leads prioritários em execução'
+        })(),
       },
 
       // Daily execution queue — sorted by: sla_breach first, then rank desc

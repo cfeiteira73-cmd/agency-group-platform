@@ -53,6 +53,9 @@ const ALLOWED_PATCH_FIELDS = new Set([
   // Migration 013: Money Engine
   'money_priority_score', 'last_attempt_channel',
   'buyer_competition_flag', 'deal_kill_flag',
+  // Migration 014: Discipline Engine
+  'execution_discipline_score', 'close_window_score', 'deal_momentum_score',
+  'human_failure_flag', 'time_waste_flag', 'realistic_cpcv_forecast_flag',
 ])
 
 export async function GET(

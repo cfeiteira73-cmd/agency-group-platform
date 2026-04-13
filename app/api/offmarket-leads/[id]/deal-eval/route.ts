@@ -947,6 +947,279 @@ function buildNextAction2(
 }
 
 // ---------------------------------------------------------------------------
+// FASE 21 — Discipline Engine
+// ---------------------------------------------------------------------------
+
+// Execution Discipline Score (0-100)
+//   Mede disciplina do agente dentro de cada milestone do pipeline:
+//   contacto<2h(25) + visita<24h após contacto(25)
+//   + follow-up<24h após visita(25) + proposta<48h após visita(25)
+// ---------------------------------------------------------------------------
+
+function calcExecutionDisciplineScore(
+  createdAt: string | null,
+  firstContactAt: string | null,
+  slaContactedAt: string | null,
+  firstMeetingAt: string | null,
+  offerDate: string | null,
+  nextFollowupAt: string | null
+): { score: number; disciplineReason: string } {
+  if (!createdAt) return { score: 0, disciplineReason: 'Lead sem data de criação' }
+
+  const origin = new Date(createdAt).getTime()
+  let score = 0
+  const parts: string[] = []
+
+  // 1. Contacto vs criação (25pts)
+  const contactAt = firstContactAt ?? slaContactedAt
+  if (contactAt) {
+    const h = (new Date(contactAt).getTime() - origin) / 3_600_000
+    if (h <= 2)       { score += 25; parts.push('contacto <2h ✅') }
+    else if (h <= 24) { score += 15; parts.push('contacto <24h') }
+    else              { score += 5;  parts.push('contacto tardio ⚠️') }
+  } else {
+    parts.push('sem contacto ❌')
+  }
+
+  // 2. Visita vs primeiro contacto (25pts)
+  if (firstMeetingAt && contactAt) {
+    const h = (new Date(firstMeetingAt).getTime() - new Date(contactAt).getTime()) / 3_600_000
+    if (h <= 24)      { score += 25; parts.push('visita <24h ✅') }
+    else if (h <= 72) { score += 15; parts.push('visita <72h') }
+    else              { score += 5;  parts.push('visita lenta ⚠️') }
+  } else if (contactAt && !firstMeetingAt) {
+    const hoursSinceContact = (Date.now() - new Date(contactAt).getTime()) / 3_600_000
+    if (hoursSinceContact > 48) parts.push('visita não agendada ❌')
+  }
+
+  // 3. Follow-up vs visita (25pts)
+  //    Proxy: next_followup_at was set within 24h of meeting, OR offer exists
+  if (firstMeetingAt) {
+    const meetingMs = new Date(firstMeetingAt).getTime()
+    if (offerDate) {
+      const h = (new Date(offerDate).getTime() - meetingMs) / 3_600_000
+      if (h <= 24)      { score += 25; parts.push('proposta <24h pós-visita ✅') }
+      else if (h <= 48) { score += 18; parts.push('proposta <48h pós-visita') }
+      else              { score += 8;  parts.push('proposta lenta pós-visita ⚠️') }
+    } else if (nextFollowupAt) {
+      const h = (new Date(nextFollowupAt).getTime() - meetingMs) / 3_600_000
+      if (h <= 24)      { score += 20; parts.push('follow-up agendado <24h ✅') }
+      else if (h <= 48) { score += 12; parts.push('follow-up agendado <48h') }
+      else              { score += 5;  parts.push('follow-up agendado tardio') }
+    } else {
+      const h = (Date.now() - meetingMs) / 3_600_000
+      if (h > 48) parts.push('sem follow-up pós-visita ❌')
+    }
+  }
+
+  // 4. Proposta <48h após visita (25pts) — só conta se visita feita mas não contado acima
+  if (firstMeetingAt && offerDate) {
+    const h = (new Date(offerDate).getTime() - new Date(firstMeetingAt).getTime()) / 3_600_000
+    // Only add pts if not already counted in step 3
+    if (h <= 48 && !offerDate) { score += 25; parts.push('proposta <48h ✅') }
+    // (already counted in step 3 if offerDate exists)
+  } else if (firstMeetingAt && !offerDate) {
+    const h = (Date.now() - new Date(firstMeetingAt).getTime()) / 3_600_000
+    if (h > 72) parts.push('sem proposta após visita ❌')
+  }
+
+  return {
+    score: clamp(score, 0, 100),
+    disciplineReason: parts.join(' · ') || `Disciplina ${score}/100`,
+  }
+}
+
+// Close Window Score (0-100)
+//   Janela de fecho AGORA:
+//   visita recente <48h(25) + buyer HIGH pressure(25)
+//   + seller com pressão alta(25) + desconto >15%(25)
+// ---------------------------------------------------------------------------
+
+function calcCloseWindowScore(
+  firstMeetingAt: string | null,
+  buyerPressureClass: 'HIGH' | 'MED' | 'LOW',
+  ownerType: string | null,
+  urgency: string | null,
+  grossDiscountPct: number | null,
+  preclose: boolean | null
+): { score: number; windowReason: string } {
+  const parts: string[] = []
+  let score = 0
+
+  // 1. Visita recente <48h (25pts)
+  if (firstMeetingAt) {
+    const h = (Date.now() - new Date(firstMeetingAt).getTime()) / 3_600_000
+    if (h <= 48)       { score += 25; parts.push('visita recente ⚡') }
+    else if (h <= 168) { score += 12; parts.push('visita <7d') }
+    else               { score += 3;  parts.push('visita antiga') }
+  } else {
+    parts.push('sem visita') // no meeting = window not open
+  }
+
+  // 2. Buyer HIGH pressure (25pts)
+  if (buyerPressureClass === 'HIGH')     { score += 25; parts.push('buyer HIGH pressure') }
+  else if (buyerPressureClass === 'MED') { score += 12; parts.push('buyer MED pressure') }
+  else                                   { parts.push('buyer LOW — risco perder janela') }
+
+  // 3. Seller com pressão alta (25pts)
+  const ownerN = (ownerType ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const highPressureSeller = ownerN.includes('heranca') || ownerN.includes('herança')
+    || ownerN === 'banco' || ownerN === 'fundo'
+    || urgency === 'high'
+    || (preclose === true)
+  const medPressureSeller = ownerN === 'empresa' || urgency === 'medium'
+  if (highPressureSeller)  { score += 25; parts.push('vendedor motivado') }
+  else if (medPressureSeller) { score += 12; parts.push('vendedor parcialmente motivado') }
+  else                        { parts.push('vendedor sem urgência') }
+
+  // 4. Desconto forte >15% (25pts)
+  if (grossDiscountPct !== null) {
+    if (grossDiscountPct >= 25)      { score += 25; parts.push(`desconto ${grossDiscountPct.toFixed(0)}% ⚡`) }
+    else if (grossDiscountPct >= 15) { score += 18; parts.push(`desconto ${grossDiscountPct.toFixed(0)}%`) }
+    else if (grossDiscountPct >= 5)  { score += 8;  parts.push(`desconto leve ${grossDiscountPct.toFixed(0)}%`) }
+    else                             { parts.push('sem desconto real') }
+  } else {
+    parts.push('sem price-intel')
+  }
+
+  return { score: clamp(score, 0, 100), windowReason: parts.join(' · ') || `Janela ${score}/100` }
+}
+
+// Deal Momentum Score (0-100)
+//   Actividade e progressão dos últimos 7 dias:
+//   contacto activo últimos 7d(20) + visita últimos 7d(20)
+//   + proposta activa últimos 7d(20) + negociação viva(20)
+//   + tentativas contacto ≥2(20)
+// ---------------------------------------------------------------------------
+
+function calcDealMomentumScore(
+  firstContactAt: string | null,
+  slaContactedAt: string | null,
+  lastContactAt: string | null,
+  firstMeetingAt: string | null,
+  offerDate: string | null,
+  negotiationStatus: string | null,
+  contactAttempts: number | null
+): { score: number; momentumReason: string } {
+  const SEVEN_DAYS = 7 * 24 * 3_600_000
+  const now = Date.now()
+  let score = 0
+  const parts: string[] = []
+
+  // 1. Contacto activo últimos 7d (20pts)
+  const lastC = lastContactAt ?? firstContactAt ?? slaContactedAt
+  if (lastC && (now - new Date(lastC).getTime()) <= SEVEN_DAYS) {
+    score += 20; parts.push('contacto recente ✅')
+  } else if (lastC) {
+    parts.push('contacto >7d atrás ⚠️')
+  } else {
+    parts.push('sem contacto ❌')
+  }
+
+  // 2. Visita últimos 7d (20pts)
+  if (firstMeetingAt && (now - new Date(firstMeetingAt).getTime()) <= SEVEN_DAYS) {
+    score += 20; parts.push('visita recente ✅')
+  } else if (firstMeetingAt) {
+    score += 8; parts.push('visita feita (>7d)')
+  }
+
+  // 3. Proposta activa últimos 7d (20pts)
+  if (offerDate && (now - new Date(offerDate).getTime()) <= SEVEN_DAYS) {
+    score += 20; parts.push('proposta activa ✅')
+  } else if (offerDate) {
+    score += 8; parts.push('proposta >7d')
+  }
+
+  // 4. Negociação viva (20pts)
+  const activeNegot = negotiationStatus && !['idle', 'withdrawn', 'blocked'].includes(negotiationStatus)
+  if (activeNegot) { score += 20; parts.push(`negociação: ${negotiationStatus}`) }
+
+  // 5. Tentativas de contacto ≥2 (20pts)
+  const attempts = contactAttempts ?? 0
+  if (attempts >= 3)      { score += 20; parts.push(`${attempts} tentativas`) }
+  else if (attempts >= 2) { score += 12; parts.push(`${attempts} tentativas`) }
+  else if (attempts >= 1) { score += 5;  parts.push('1 tentativa') }
+
+  return { score: clamp(score, 0, 100), momentumReason: parts.join(' · ') || 'Pipeline inactivo' }
+}
+
+// Human Failure Flag
+//   TRUE quando o agente (humano) está a falhar SLAs críticos:
+//   sla_breach sem contacto tentado, OU
+//   score ≥70 sem visita após 72h, OU
+//   contacto feito mas sem follow-up em 48h
+// ---------------------------------------------------------------------------
+
+function calcHumanFailureFlag(
+  slaBreached: boolean | null,
+  contactAttempts: number | null,
+  firstContactAt: string | null,
+  slaContactedAt: string | null,
+  score: number | null,
+  firstMeetingAt: string | null,
+  createdAt: string | null,
+  offerDate: string | null,
+  nextFollowupAt: string | null
+): boolean {
+  // 1. SLA breach + nunca tentou contacto
+  if (slaBreached && (contactAttempts ?? 0) === 0) return true
+
+  // 2. Lead de alta qualidade sem visita após 72h de existência
+  const ageH = createdAt ? (Date.now() - new Date(createdAt).getTime()) / 3_600_000 : 0
+  if ((score ?? 0) >= 70 && !firstMeetingAt && ageH > 72) return true
+
+  // 3. Contacto feito mas sem follow-up 48h depois (nem proposta nem follow-up agendado)
+  const contactAt = firstContactAt ?? slaContactedAt
+  if (contactAt && !firstMeetingAt && !offerDate && !nextFollowupAt) {
+    const h = (Date.now() - new Date(contactAt).getTime()) / 3_600_000
+    if (h > 48) return true
+  }
+
+  return false
+}
+
+// Time Waste Flag
+//   TRUE quando o deal consome atenção sem ROI possível AGORA:
+//   sem comprador + sem contacto + >72h + score <65
+//   OR ≥4 tentativas de contacto sem resposta + sem buyer matched
+// ---------------------------------------------------------------------------
+
+function calcTimeWasteFlag(
+  contacto: string | null,
+  matchedBuyersCount: number | null,
+  createdAt: string | null,
+  score: number | null,
+  contactAttempts: number | null,
+  firstMeetingAt: string | null
+): boolean {
+  const c = contacto?.trim() ?? ''
+  const ageH = createdAt ? (Date.now() - new Date(createdAt).getTime()) / 3_600_000 : 0
+  const buyers = matchedBuyersCount ?? 0
+  const attempts = contactAttempts ?? 0
+
+  // Sem contacto + sem buyer + >72h + score baixo
+  if (!c && buyers === 0 && ageH > 72 && (score ?? 0) < 65) return true
+
+  // Muitas tentativas falhadas sem buyer — nenhum caminho para CPCV
+  if (attempts >= 4 && buyers === 0 && !firstMeetingAt) return true
+
+  return false
+}
+
+// Realistic CPCV Forecast Flag
+//   TRUE quando o lead conta para o forecast conservador apresentado à direcção:
+//   visita feita + buyer HIGH pressure + deal_readiness_score ≥60
+// ---------------------------------------------------------------------------
+
+function calcRealisticCPCVForecastFlag(
+  firstMeetingAt: string | null,
+  buyerPressureClass: 'HIGH' | 'MED' | 'LOW',
+  dealReadinessScore: number
+): boolean {
+  return !!(firstMeetingAt) && buyerPressureClass === 'HIGH' && dealReadinessScore >= 60
+}
+
+// ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------
 
@@ -972,8 +1245,8 @@ export async function POST(
       .select(`id, nome, tipo_ativo, cidade, localizacao, area_m2, price_ask,
                owner_type, urgency, contacto, source, score,
                sla_breach, sla_contacted_at, created_at,
-               first_contact_at, first_meeting_at, offer_date, cpcv_signed_at,
-               contact_attempts, last_attempt_channel,
+               first_contact_at, last_contact_at, first_meeting_at, offer_date, cpcv_signed_at,
+               contact_attempts, last_attempt_channel, next_followup_at,
                deal_priority_score, matched_buyers_count, best_buyer_match_score,
                matched_to_buyers, preclose_candidate,
                primary_buyer_id,
@@ -1113,6 +1386,38 @@ export async function POST(
       dealKillFlag
     )
 
+    // ── Discipline Engine — FASE 21 ──────────────────────────────────────────
+
+    const { score: executionDisciplineScore, disciplineReason } = calcExecutionDisciplineScore(
+      lead.created_at, lead.first_contact_at, lead.sla_contacted_at,
+      lead.first_meeting_at, lead.offer_date, lead.next_followup_at ?? null
+    )
+
+    const { score: closeWindowScore, windowReason } = calcCloseWindowScore(
+      lead.first_meeting_at, buyerPressureClass,
+      lead.owner_type, lead.urgency, lead.gross_discount_pct, lead.preclose_candidate
+    )
+
+    const { score: dealMomentumScore, momentumReason } = calcDealMomentumScore(
+      lead.first_contact_at, lead.sla_contacted_at, lead.last_contact_at ?? null,
+      lead.first_meeting_at, lead.offer_date, lead.negotiation_status, lead.contact_attempts
+    )
+
+    const humanFailureFlag = calcHumanFailureFlag(
+      lead.sla_breach, lead.contact_attempts, lead.first_contact_at, lead.sla_contacted_at,
+      lead.score, lead.first_meeting_at, lead.created_at,
+      lead.offer_date, lead.next_followup_at ?? null
+    )
+
+    const timeWasteFlag = calcTimeWasteFlag(
+      lead.contacto, lead.matched_buyers_count, lead.created_at,
+      lead.score, lead.contact_attempts, lead.first_meeting_at
+    )
+
+    const realisticCPCVForecastFlag = calcRealisticCPCVForecastFlag(
+      lead.first_meeting_at, buyerPressureClass, dealReadinessScore
+    )
+
     // ── Micro automation flags ────────────────────────────────────────────────
     const contactAt = lead.first_contact_at ?? lead.sla_contacted_at
     const followUpNeeded = !!(
@@ -1188,6 +1493,13 @@ export async function POST(
         money_priority_score:       moneyPriorityScore,
         buyer_competition_flag:     buyerCompetitionFlag,
         deal_kill_flag:             dealKillFlag,
+        // FASE 21 — Discipline Engine
+        execution_discipline_score:   executionDisciplineScore,
+        close_window_score:           closeWindowScore,
+        deal_momentum_score:          dealMomentumScore,
+        human_failure_flag:           humanFailureFlag,
+        time_waste_flag:              timeWasteFlag,
+        realistic_cpcv_forecast_flag: realisticCPCVForecastFlag,
         // Promote to sla_breach if not already set and created >24h ago with no contact
         ...(() => {
           if (lead.sla_breach === true) return {}
@@ -1226,6 +1538,16 @@ export async function POST(
       money_priority_score:      moneyPriorityScore,
       buyer_competition_flag:    buyerCompetitionFlag,
       deal_kill_flag:            dealKillFlag,
+      // FASE 21 — Discipline Engine
+      execution_discipline_score:   executionDisciplineScore,
+      discipline_reason:            disciplineReason,
+      close_window_score:           closeWindowScore,
+      window_reason:                windowReason,
+      deal_momentum_score:          dealMomentumScore,
+      momentum_reason:              momentumReason,
+      human_failure_flag:           humanFailureFlag,
+      time_waste_flag:              timeWasteFlag,
+      realistic_cpcv_forecast_flag: realisticCPCVForecastFlag,
       // Micro automation flags
       follow_up_needed:          followUpNeeded,
       deal_stalled:              dealStalled,

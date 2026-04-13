@@ -64,6 +64,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // FASE 20 — Money Engine
       r_pipeline_value,
       r_cpcv_forecast,
+      // FASE 21 — Discipline Engine
+      r_human_failure,
+      r_realistic_cpcv,
+      r_time_waste,
+      r_close_window,
     ] = await Promise.all([
       // All leads in last 7 days
       s.from('offmarket_leads')
@@ -222,6 +227,38 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .not('status', 'in', '("closed_won","closed_lost","not_interested")')
         .order('cpcv_probability', { ascending: false })
         .limit(10),
+
+      // FASE 21 — Human failure flag (agente a falhar SLAs)
+      s.from('offmarket_leads')
+        .select('id, nome, score, execution_discipline_score, sla_breach, contact_attempts, first_meeting_at, created_at, cidade')
+        .eq('human_failure_flag', true)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('score', { ascending: false })
+        .limit(20),
+
+      // Realistic CPCV forecast (conservative: visita + buyer HIGH + readiness ≥60)
+      s.from('offmarket_leads')
+        .select('id, nome, price_ask, cpcv_probability, deal_readiness_score, buyer_pressure_class, close_window_score, money_priority_score, cidade, tipo_ativo')
+        .eq('realistic_cpcv_forecast_flag', true)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('cpcv_probability', { ascending: false })
+        .limit(20),
+
+      // Time waste flag (leads consumindo atenção sem ROI)
+      s.from('offmarket_leads')
+        .select('id, nome, score, created_at, contact_attempts, matched_buyers_count, cidade')
+        .eq('time_waste_flag', true)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('score', { ascending: false })
+        .limit(10),
+
+      // Close window opportunities (close_window_score ≥60)
+      s.from('offmarket_leads')
+        .select('id, nome, score, close_window_score, deal_momentum_score, cpcv_probability, buyer_pressure_class, price_ask, cidade, tipo_ativo')
+        .gte('close_window_score', 60)
+        .not('status', 'in', '("closed_won","closed_lost","not_interested")')
+        .order('close_window_score', { ascending: false })
+        .limit(10),
     ])
 
     const allLeads = r_all_leads.data ?? []
@@ -248,6 +285,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // FASE 20 — Money Engine
     const pipelineLeads        = r_pipeline_value.data ?? []
     const cpcvForecast         = r_cpcv_forecast.data ?? []
+    // FASE 21 — Discipline Engine
+    const humanFailureLeads    = r_human_failure.data ?? []
+    const realisticCPCVLeads   = r_realistic_cpcv.data ?? []
+    const timeWasteLeads       = r_time_waste.data ?? []
+    const closeWindowLeads     = r_close_window.data ?? []
+    const realisticCPCVValueEur = realisticCPCVLeads
+      .reduce((sum: number, l: { price_ask: number | null }) => sum + (l.price_ask ?? 0), 0)
     const pipelineValueEur     = pipelineLeads
       .reduce((sum: number, l: { price_ask: number | null }) => sum + (l.price_ask ?? 0), 0)
     const cpcvForecastValueEur = cpcvForecast
@@ -450,6 +494,40 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           count: cpcvReady.length,
           label: 'Deal readiness ≥80 — prontos para fechar CPCV',
           leads: cpcvReady,
+        },
+        // FASE 21 — Discipline flags
+        human_failure: {
+          count: humanFailureLeads.length,
+          label: 'Agente a falhar SLAs — acção humana urgente',
+          leads: humanFailureLeads,
+        },
+        time_waste: {
+          count: timeWasteLeads.length,
+          label: 'Leads a consumir atenção sem ROI possível',
+          leads: timeWasteLeads,
+        },
+      },
+
+      // FASE 21 — Discipline & Scale metrics
+      discipline_metrics: {
+        human_failure_count:          humanFailureLeads.length,
+        human_failure_leads:          humanFailureLeads,
+        time_waste_count:             timeWasteLeads.length,
+        time_waste_leads:             timeWasteLeads,
+        close_window_opportunities:   closeWindowLeads.length,
+        close_window_leads:           closeWindowLeads,
+        // Realistic (conservative) CPCV forecast — only visita+buyer HIGH+readiness≥60
+        realistic_cpcv_count:         realisticCPCVLeads.length,
+        realistic_cpcv_value_eur:     realisticCPCVValueEur,
+        realistic_commission_eur:     Math.round(realisticCPCVValueEur * 0.05),
+        realistic_cpcv_leads:         realisticCPCVLeads,
+        // Scale readiness check (targets for 50 leads, 50 buyers)
+        scale_readiness: {
+          target_active_leads:        50,
+          current_active_leads:       totalActive ?? 0,
+          target_buyers:              50,
+          scale_gap_leads:            Math.max(0, 50 - (totalActive ?? 0)),
+          scale_ready:                (totalActive ?? 0) >= 50,
         },
       },
 
