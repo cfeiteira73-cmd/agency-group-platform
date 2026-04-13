@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import Script from 'next/script'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -478,6 +479,24 @@ export default function FAQPage() {
           Agency Group · Mediação Imobiliária Lda · AMI 22506 · Lisboa, Portugal
         </footer>
       </div>
+
+      {/* ── FAQPage JSON-LD — Rich Snippets ──────────────────────────── */}
+      <Script id="faq-schema" type="application/ld+json" strategy="afterInteractive">{`
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            ${FAQS.map(f => `{
+              "@type": "Question",
+              "name": ${JSON.stringify(f.q)},
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": ${JSON.stringify(f.a)}
+              }
+            }`).join(',\n            ')}
+          ]
+        }
+      `}</Script>
     </>
   )
 }

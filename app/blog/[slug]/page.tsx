@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { ARTICLES, getArticle, getRelatedArticles } from './articles'
 import BlogArticle from './BlogArticle'
 
@@ -57,5 +58,45 @@ export default async function BlogSlugPage({
 
   const related = getRelatedArticles(article, 4)
 
-  return <BlogArticle article={article} relatedArticles={related} />
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.description,
+    author: {
+      '@type': 'Person',
+      name: article.author,
+      url: 'https://www.agencygroup.pt/agente/carlos',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Agency Group — Imobiliário de Luxo Portugal',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.agencygroup.pt/og-logo.png',
+      },
+    },
+    datePublished: article.date,
+    dateModified: article.date,
+    url: `https://www.agencygroup.pt/blog/${article.slug}`,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://www.agencygroup.pt/blog/${article.slug}`,
+    },
+    keywords: article.keywords.join(', '),
+    inLanguage: article.slug.includes('franc') || article.slug.includes('lisbonne') ? 'fr' : 'pt',
+    about: {
+      '@type': 'Thing',
+      name: 'Imobiliário em Portugal',
+    },
+  }
+
+  return (
+    <>
+      <Script id={`article-schema-${article.slug}`} type="application/ld+json" strategy="afterInteractive">
+        {JSON.stringify(articleSchema)}
+      </Script>
+      <BlogArticle article={article} relatedArticles={related} />
+    </>
+  )
 }

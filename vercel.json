@@ -31,6 +31,14 @@
     {
       "path": "/api/offmarket-leads/batch-eval?stage=all&min_score=40",
       "schedule": "30 7 * * 1-5"
+    },
+    {
+      "path": "/api/alerts/push",
+      "schedule": "15 8 * * 1-5"
+    },
+    {
+      "path": "/api/contact-enrichment/run",
+      "schedule": "0 7 * * 1-5"
     }
   ]
 }
