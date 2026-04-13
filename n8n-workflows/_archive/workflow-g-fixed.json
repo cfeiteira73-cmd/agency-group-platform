@@ -94,7 +94,7 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "x-cron-secret", "value": "8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" },
+            { "name": "x-cron-secret", "value": "{{ $env.CRON_SECRET }}" },
             { "name": "Content-Type", "value": "application/json" },
             { "name": "User-Agent", "value": "n8n-railway/2.15.1" }
           ]
