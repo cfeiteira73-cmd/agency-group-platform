@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const { text, voice = 'nova' } = await req.json() as { text: string; voice?: string }
 
   if (!text || text.length > 1000) {

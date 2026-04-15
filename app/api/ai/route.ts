@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rateLimit';
-import { createHmac } from 'crypto';
-import { cookies } from 'next/headers';
+import { isPortalAuth } from '@/lib/portalAuth';
 
 /**
  * AG·AI Proxy — /api/ai
@@ -29,35 +28,8 @@ function resolveModel(model: string): string {
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-async function isAuthorized(req: NextRequest): Promise<boolean> {
-  const cronSecret = process.env.CRON_SECRET ?? process.env.INTERNAL_API_TOKEN;
-  const incoming = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '');
-  if (cronSecret && incoming === cronSecret) return true;
-
-  const secret = process.env.AUTH_SECRET;
-  if (secret) {
-    const cookieStore = await cookies();
-    const cookieValue = cookieStore.get('ag-auth-token')?.value;
-    if (cookieValue) {
-      const dotIdx = cookieValue.lastIndexOf('.');
-      if (dotIdx !== -1) {
-        const payload = cookieValue.slice(0, dotIdx);
-        const sig = cookieValue.slice(dotIdx + 1);
-        const expected = createHmac('sha256', secret).update(payload).digest('hex');
-        if (expected === sig) {
-          try {
-            const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
-            if (data.email && Date.now() < data.exp) return true;
-          } catch { /* invalid */ }
-        }
-      }
-    }
-  }
-  return false;
-}
-
 export async function POST(req: NextRequest) {
-  if (!(await isAuthorized(req))) {
+  if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -11,21 +11,38 @@ const store = new Map<string, { count: number; reset: number }>()
 // ─── Rate limits per route prefix ────────────────────────────────────────────
 // Tighter limits on AI routes to cap cost exposure
 const LIMITS: Record<string, { max: number; windowMs: number }> = {
-  '/api/sofia-agent': { max: 20,  windowMs: 3_600_000 },  // 20/hr public chatbot
-  '/api/search':      { max: 30,  windowMs: 3_600_000 },  // 30/hr public search
-  '/api/avm':         { max: 15,  windowMs: 3_600_000 },  // 15/hr AVM
-  '/api/chat':        { max: 30,  windowMs: 3_600_000 },  // 30/hr generic chat
-  '/api/content':     { max: 15,  windowMs: 3_600_000 },  // 15/hr content gen
-  '/api/draft-offer': { max: 10,  windowMs: 3_600_000 },  // 10/hr offer drafting
-  '/api/ai':          { max: 15,  windowMs:    60_000 },  // 15/min AI proxy
-  '/api/radar':       { max: 20,  windowMs: 3_600_000 },
-  '/api/mortgage':    { max: 200, windowMs: 3_600_000 },
-  '/api/nhr':         { max: 200, windowMs: 3_600_000 },
-  '/api/portfolio':   { max: 30,  windowMs: 3_600_000 },
-  '/api/juridico':    { max: 30,  windowMs: 3_600_000 },
-  '/api/homestaging': { max: 20,  windowMs: 3_600_000 },
-  '/api/mais-valias': { max: 100, windowMs: 3_600_000 },
-  '/api/financing':   { max: 100, windowMs: 3_600_000 },
+  // Public AI routes (website visitors)
+  '/api/sofia-agent':              { max: 20,  windowMs: 3_600_000 },
+  '/api/sofia/chat':               { max: 20,  windowMs: 3_600_000 },
+  '/api/sofia/script':             { max: 10,  windowMs: 3_600_000 },
+  '/api/search':                   { max: 30,  windowMs: 3_600_000 },
+  '/api/properties/search-natural':{ max: 20,  windowMs: 3_600_000 },
+  '/api/avm':                      { max: 15,  windowMs: 3_600_000 },
+  '/api/chat':                     { max: 30,  windowMs: 3_600_000 },
+  // Portal-only AI routes (require auth — also guarded at handler level)
+  '/api/content':                  { max: 15,  windowMs: 3_600_000 },
+  '/api/draft-offer':              { max: 10,  windowMs: 3_600_000 },
+  '/api/ai':                       { max: 15,  windowMs:    60_000 },
+  '/api/investor-pitch':           { max: 10,  windowMs: 3_600_000 },
+  '/api/investment/exit-simulator':{ max: 20,  windowMs: 3_600_000 },
+  '/api/tts':                      { max: 30,  windowMs: 3_600_000 },
+  '/api/voz/process':              { max: 20,  windowMs: 3_600_000 },
+  '/api/properties/analyze-photos':{ max: 10,  windowMs: 3_600_000 },
+  '/api/properties/cma':           { max: 10,  windowMs: 3_600_000 },
+  '/api/properties/generate-description':{ max: 10, windowMs: 3_600_000 },
+  '/api/market/cross-compare':     { max: 20,  windowMs: 3_600_000 },
+  '/api/market/pulse':             { max: 20,  windowMs: 3_600_000 },
+  '/api/send-doc':                 { max: 10,  windowMs: 3_600_000 },
+  '/api/embeddings/sync':          { max: 5,   windowMs: 3_600_000 },
+  // Other rate-limited routes
+  '/api/radar':                    { max: 20,  windowMs: 3_600_000 },
+  '/api/mortgage':                 { max: 200, windowMs: 3_600_000 },
+  '/api/nhr':                      { max: 200, windowMs: 3_600_000 },
+  '/api/portfolio':                { max: 30,  windowMs: 3_600_000 },
+  '/api/juridico':                 { max: 30,  windowMs: 3_600_000 },
+  '/api/homestaging':              { max: 20,  windowMs: 3_600_000 },
+  '/api/mais-valias':              { max: 100, windowMs: 3_600_000 },
+  '/api/financing':                { max: 100, windowMs: 3_600_000 },
 }
 
 // ─── Known scanner/scraper User-Agents ───────────────────────────────────────
@@ -78,12 +95,26 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     '/api/sofia-agent/:path*',
+    '/api/sofia/chat',
+    '/api/sofia/script',
     '/api/search',
+    '/api/properties/search-natural',
     '/api/avm',
     '/api/chat',
     '/api/content',
     '/api/draft-offer',
     '/api/ai',
+    '/api/investor-pitch',
+    '/api/investment/exit-simulator',
+    '/api/tts',
+    '/api/voz/process',
+    '/api/properties/analyze-photos',
+    '/api/properties/cma',
+    '/api/properties/generate-description',
+    '/api/market/cross-compare',
+    '/api/market/pulse',
+    '/api/send-doc',
+    '/api/embeddings/sync',
     '/api/radar/:path*',
     '/api/mortgage',
     '/api/nhr',
