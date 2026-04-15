@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     languages: {
       'x-default': 'https://www.agencygroup.pt/invest-in-portugal-real-estate',
       'en': 'https://www.agencygroup.pt/invest-in-portugal-real-estate',
-      'pt-PT': 'https://www.agencygroup.pt/blog/investir-imoveis-comporta-2026',
+      'pt-PT': 'https://www.agencygroup.pt/invest-in-portugal-real-estate',
     },
   },
   openGraph: {
@@ -61,11 +61,21 @@ const FAQ_SCHEMA = {
   ],
 }
 
+const BREADCRUMB_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.agencygroup.pt' },
+    { '@type': 'ListItem', position: 2, name: 'Invest in Portugal Real Estate', item: 'https://www.agencygroup.pt/invest-in-portugal-real-estate' },
+  ],
+}
+
 export default function InvestPortugalPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(PAGE_SCHEMA) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(BREADCRUMB_SCHEMA) }} />
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
@@ -196,12 +206,12 @@ export default function InvestPortugalPage() {
             </tr>
           </thead>
           <tbody>
-            <tr><td>Lisbon (Chiado, Príncipe Real)</td><td>Apartment</td><td>3.5–4.5%</td><td>+52%</td></tr>
-            <tr><td>Cascais (Estoril, Birre)</td><td>Villa</td><td>4–5.5%</td><td>+48%</td></tr>
-            <tr><td>Algarve (Quinta do Lago)</td><td>Villa (STR)</td><td>6–9%</td><td>+41%</td></tr>
-            <tr><td>Porto (Foz do Douro)</td><td>Apartment</td><td>4–5.5%</td><td>+44%</td></tr>
-            <tr><td>Comporta</td><td>Villa</td><td>4–6%</td><td>+68%</td></tr>
-            <tr><td>Madeira (Funchal)</td><td>Apartment</td><td>4.5–6%</td><td>+61%</td></tr>
+            <tr><td><Link href="/zonas/lisboa" style={{color:'inherit',textDecoration:'underline',textDecorationColor:'rgba(28,74,53,.3)'}}>Lisbon (Chiado, Príncipe Real)</Link></td><td>Apartment</td><td>3.5–4.5%</td><td>+52%</td></tr>
+            <tr><td><Link href="/zonas/cascais" style={{color:'inherit',textDecoration:'underline',textDecorationColor:'rgba(28,74,53,.3)'}}>Cascais (Estoril, Birre)</Link></td><td>Villa</td><td>4–5.5%</td><td>+48%</td></tr>
+            <tr><td><Link href="/zonas/algarve" style={{color:'inherit',textDecoration:'underline',textDecorationColor:'rgba(28,74,53,.3)'}}>Algarve (Quinta do Lago)</Link></td><td>Villa (STR)</td><td>6–9%</td><td>+41%</td></tr>
+            <tr><td><Link href="/zonas/porto" style={{color:'inherit',textDecoration:'underline',textDecorationColor:'rgba(28,74,53,.3)'}}>Porto (Foz do Douro)</Link></td><td>Apartment</td><td>4–5.5%</td><td>+44%</td></tr>
+            <tr><td><Link href="/zonas/comporta" style={{color:'inherit',textDecoration:'underline',textDecorationColor:'rgba(28,74,53,.3)'}}>Comporta</Link></td><td>Villa</td><td>4–6%</td><td>+68%</td></tr>
+            <tr><td><Link href="/zonas/madeira" style={{color:'inherit',textDecoration:'underline',textDecorationColor:'rgba(28,74,53,.3)'}}>Madeira (Funchal)</Link></td><td>Apartment</td><td>4.5–6%</td><td>+61%</td></tr>
             <tr><td>Alentejo (rural tourism)</td><td>Estate</td><td>5–8%</td><td>+35%</td></tr>
           </tbody>
         </table>

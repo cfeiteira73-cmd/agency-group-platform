@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     languages: {
       'x-default': 'https://www.agencygroup.pt/off-market-portugal',
       'en': 'https://www.agencygroup.pt/off-market-portugal',
-      'pt-PT': 'https://www.agencygroup.pt/off-market',
+      'pt-PT': 'https://www.agencygroup.pt/off-market-portugal',
     },
   },
   openGraph: {
@@ -60,11 +60,21 @@ const FAQ_SCHEMA = {
   ],
 }
 
+const BREADCRUMB_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.agencygroup.pt' },
+    { '@type': 'ListItem', position: 2, name: 'Off-Market Properties Portugal', item: 'https://www.agencygroup.pt/off-market-portugal' },
+  ],
+}
+
 export default function OffMarketPortugalPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(PAGE_SCHEMA) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(BREADCRUMB_SCHEMA) }} />
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}

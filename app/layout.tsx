@@ -89,6 +89,7 @@ export const metadata: Metadata = {
 const schemaRealEstateAgent = {
   '@context': 'https://schema.org',
   '@type': 'RealEstateAgent',
+  '@id': 'https://www.agencygroup.pt/#organization',
   name: 'Agency Group – Mediação Imobiliária Lda',
   url: 'https://www.agencygroup.pt',
   logo: 'https://www.agencygroup.pt/logo.png',
@@ -278,7 +279,7 @@ const schemaAggregateRatingExpanded = {
 }
 
 const LAYOUT_BUILD_ID = (process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 8)
-const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-T7SDCPT6'
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-MZF2GB28'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

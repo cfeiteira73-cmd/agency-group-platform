@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import { ARTICLES, getArticle, getRelatedArticles } from './articles'
 import BlogArticle from './BlogArticle'
 
@@ -93,9 +92,10 @@ export default async function BlogSlugPage({
 
   return (
     <>
-      <Script id={`article-schema-${article.slug}`} type="application/ld+json" strategy="afterInteractive">
-        {JSON.stringify(articleSchema)}
-      </Script>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <BlogArticle article={article} relatedArticles={related} />
     </>
   )

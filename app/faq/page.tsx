@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import Script from 'next/script'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -463,6 +462,20 @@ export default function FAQPage() {
           </div>
         </main>
 
+        {/* ── Related Guides ────────────────────────────────────────────────── */}
+        <section style={{ padding: '48px 40px', borderTop: '1px solid rgba(201,169,110,.12)', maxWidth: 900, margin: '0 auto' }}>
+          <p style={{ fontFamily: "var(--font-dm-mono,'DM Mono',monospace)", fontSize: '.6rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(201,169,110,.6)', margin: '0 0 20px' }}>Guias Relacionados</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            {[
+              { href: '/buy-property-portugal', label: 'Buy Property in Portugal 2026 →' },
+              { href: '/invest-in-portugal-real-estate', label: 'Invest in Portugal Real Estate →' },
+              { href: '/off-market-portugal', label: 'Off-Market Properties Portugal →' },
+            ].map(({ href, label }) => (
+              <Link key={href} href={href} style={{ background: 'rgba(201,169,110,.08)', border: '1px solid rgba(201,169,110,.2)', color: '#c9a96e', padding: '10px 20px', fontSize: '.7rem', letterSpacing: '.1em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: "var(--font-dm-mono,'DM Mono',monospace)" }}>{label}</Link>
+            ))}
+          </div>
+        </section>
+
         {/* ── Footer strip ─────────────────────────────────────────────────── */}
         <footer
           style={{
@@ -480,23 +493,6 @@ export default function FAQPage() {
         </footer>
       </div>
 
-      {/* ── FAQPage JSON-LD — Rich Snippets ──────────────────────────── */}
-      <Script id="faq-schema" type="application/ld+json" strategy="afterInteractive">{`
-        {
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          "mainEntity": [
-            ${FAQS.map(f => `{
-              "@type": "Question",
-              "name": ${JSON.stringify(f.q)},
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": ${JSON.stringify(f.a)}
-              }
-            }`).join(',\n            ')}
-          ]
-        }
-      `}</Script>
     </>
   )
 }
