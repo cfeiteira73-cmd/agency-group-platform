@@ -173,7 +173,10 @@ export default auth(async (req) => {
     '/api/contacts', '/api/deals', '/api/visitas/db', '/api/properties/db',
     '/api/radar', '/api/portfolio', '/api/juridico', '/api/financing',
     '/api/marketing', '/api/content', '/api/homestaging', '/api/heygen',
-    '/api/sofia/', '/api/investor', '/api/collections', '/api/learn',
+    // /api/sofia/* is intentionally PUBLIC — it's the website chatbot widget.
+    // Rate-limited via LIMITS table (30/hr). Do NOT add it here.
+    '/api/sofia-agent/', // portal-only agentic sofia (requires session)
+    '/api/investor', '/api/collections', '/api/learn',
     '/api/admin', '/api/push/send', '/api/market',
     '/api/notion',
     // /api/automation intentionally excluded — each route has its own isAuthorized()
