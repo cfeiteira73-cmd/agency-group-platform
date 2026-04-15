@@ -72,8 +72,12 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/whatsapp':      { max: 60,  window: 3_600_000 }, // webhook rate protection
   '/api/signals':       { max: 30,  window: 3_600_000 }, // signal fetch
   '/api/off-market':    { max: 20,  window: 3_600_000 }, // DR parser (auth required)
-  '/api/crm':           { max: 200, window: 3_600_000 }, // portal CRM operations
-  '/api/notion':        { max: 20,  window: 3_600_000 }, // Notion API calls
+  '/api/crm':               { max: 200, window: 3_600_000 }, // portal CRM operations
+  '/api/notion':            { max: 20,  window: 3_600_000 }, // Notion API calls
+  '/api/draft-offer':       { max: 20,  window: 3_600_000 }, // claude-opus-4-5 cost protection (auth required)
+  '/api/investment/exit':   { max: 20,  window: 3_600_000 }, // claude-opus-4-5 cost protection (auth required)
+  '/api/investor-pitch':    { max: 20,  window: 3_600_000 }, // claude-opus-4-5 cost protection (auth required)
+  '/api/gpt/':              { max: 50,  window: 3_600_000 }, // GPT-action endpoints
 }
 
 // ─── Bot blacklist (User-Agent) ──────────────────────────────────────────────
@@ -163,6 +167,8 @@ export default auth(async (req) => {
     // /api/automation intentionally excluded — each route has its own isAuthorized()
     // check that accepts PORTAL_API_SECRET / CRON_SECRET Bearer tokens (used by n8n + crons)
     '/api/embeddings',
+    // Claude Opus routes — must be portal-only (cost protection)
+    '/api/draft-offer', '/api/investment/exit-simulator', '/api/investor-pitch',
   ]
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
