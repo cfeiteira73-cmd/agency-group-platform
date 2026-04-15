@@ -267,6 +267,7 @@ export default function InvestPortugalPage() {
         <div className="cta-btns">
           <Link href="/off-market-portugal" className="btn-gold">Off-Market Access →</Link>
           <Link href="/contacto" className="btn-outline">Investor Consultation</Link>
+          <a href="https://wa.me/351919948986?text=Hello,%20I'm%20interested%20in%20investing%20in%20Portuguese%20real%20estate" target="_blank" rel="noopener noreferrer" className="btn-outline">WhatsApp Us →</a>
         </div>
       </section>
 

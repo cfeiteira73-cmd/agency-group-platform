@@ -266,6 +266,7 @@ export default function OffMarketPortugalPage() {
         <div className="cta-btns">
           <Link href="/contacto" className="btn-gold">Register Buyer Profile →</Link>
           <Link href="/imoveis" className="btn-outline">Browse Public Listings</Link>
+          <a href="https://wa.me/351919948986?text=Hello,%20I'm%20interested%20in%20off-market%20properties%20in%20Portugal" target="_blank" rel="noopener noreferrer" className="btn-outline">WhatsApp Us →</a>
         </div>
       </section>
 
@@ -275,7 +276,7 @@ export default function OffMarketPortugalPage() {
           {[
             { href: '/buy-property-portugal', label: 'Buy Property in Portugal Guide →' },
             { href: '/invest-in-portugal-real-estate', label: 'Investment Returns Guide →' },
-            { href: '/off-market', label: 'Off-Market Access (PT) →' },
+            { href: '/vender-imovel-portugal', label: 'Sell Discreetly in Portugal →' },
             { href: '/imoveis', label: 'Public Property Listings →' },
             { href: '/blog/luxury-property-lisbon', label: 'Luxury Property Lisbon →' },
             { href: '/contacto', label: 'Contact Our Team →' },

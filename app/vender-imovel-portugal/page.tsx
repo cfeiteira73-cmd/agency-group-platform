@@ -26,6 +26,18 @@ export const metadata: Metadata = {
   },
 }
 
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    { '@type': 'Question', name: 'Como posso vender o meu imóvel sem anúncios públicos em Portugal?', acceptedAnswer: { '@type': 'Answer', text: 'Através de um processo off-market: a propriedade é apresentada confidencialmente à nossa rede privada de compradores internacionais qualificados. Sem portais imobiliários, sem visitas abertas, sem exposição pública do preço ou das condições. A Agency Group (AMI 22506) gere todo o processo de forma discreta.' } },
+    { '@type': 'Question', name: 'Quanto tempo demora a vender um imóvel premium em Portugal?', acceptedAnswer: { '@type': 'Answer', text: 'Imóveis premium em Lisboa e Cascais têm tempo médio de absorção de 45–90 dias em processo off-market com compradores qualificados. O processo tradicional em portais públicos pode demorar 6–18 meses. A abordagem discreta acelera a venda ao pré-qualificar o comprador antes da primeira visita.' } },
+    { '@type': 'Question', name: 'Qual é a comissão da Agency Group para venda de imóvel?', acceptedAnswer: { '@type': 'Answer', text: 'A comissão standard da Agency Group é 5% sobre o preço de venda (+ IVA), paga em dois momentos: 50% na assinatura do CPCV e 50% na escritura. Esta estrutura alinha os interesses do consultor com os do proprietário. Não há custos de avaliação ou listagem.' } },
+    { '@type': 'Question', name: 'A Agency Group vende imóveis fora de Lisboa?', acceptedAnswer: { '@type': 'Answer', text: 'Sim. A Agency Group opera em todo o território nacional, com mandatos activos em Lisboa, Cascais, Sintra, Comporta, Porto, Algarve e Madeira. Operamos também em Espanha (Madrid e Barcelona) para proprietários portugueses com activos ibéricos.' } },
+    { '@type': 'Question', name: 'O que é um mandato exclusivo e quais as vantagens?', acceptedAnswer: { '@type': 'Answer', text: 'Um mandato exclusivo atribui à Agency Group a representação exclusiva na venda durante um período acordado (tipicamente 90 dias). As vantagens: investimento de marketing premium, acesso à rede internacional completa, e negociação mais forte porque o consultor não compete contra outros agentes. Proprietários com mandato exclusivo recebem prioridade de apresentação na rede privada.' } },
+  ],
+}
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Service',
@@ -77,6 +89,10 @@ export default function VenderImovelPortugal() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+      />
 
       <main style={{ fontFamily: "var(--font-jost, 'Jost', sans-serif)", color: '#0e0e0d', background: '#f4f0e6' }}>
 
@@ -90,11 +106,11 @@ export default function VenderImovelPortugal() {
             <span style={{ color: '#c9a96e', fontSize: '1rem', letterSpacing: '.08em', fontWeight: 600, fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Agency</span>
             <span style={{ color: '#f4f0e6', fontSize: '1rem', letterSpacing: '.08em', fontWeight: 300, fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}>Group</span>
           </Link>
-          <Link href="/off-market" style={{
+          <Link href="/contacto" style={{
             fontFamily: "'DM Mono', monospace", fontSize: '.6rem', letterSpacing: '.14em',
             textTransform: 'uppercase', color: '#c9a96e', textDecoration: 'none',
           }}>
-            Processo Off-Market →
+            Avaliação Gratuita →
           </Link>
         </nav>
 
@@ -296,15 +312,44 @@ export default function VenderImovelPortugal() {
           }}>
             Consultor contacta em menos de 2 horas. Processo 100% discreto.
           </p>
-          <Link href="/off-market" style={{
+          <Link href="/contacto" style={{
             background: '#c9a96e', color: '#0c1f15',
             padding: '18px 48px', textDecoration: 'none',
             fontFamily: "'Jost', sans-serif", fontSize: '.65rem',
             fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase',
-            display: 'inline-block',
+            display: 'inline-block', marginBottom: 16,
           }}>
             Solicitar Avaliação Confidencial →
           </Link>
+          <div style={{ marginTop: 8 }}>
+            <a href="https://wa.me/351919948986?text=Olá,%20gostaria%20de%20uma%20avaliação%20confidencial%20do%20meu%20imóvel" target="_blank" rel="noopener noreferrer" style={{
+              color: 'rgba(244,240,230,.5)', fontFamily: "'DM Mono', monospace",
+              fontSize: '.55rem', letterSpacing: '.1em', textDecoration: 'none',
+            }}>
+              Ou fala connosco pelo WhatsApp →
+            </a>
+          </div>
+        </section>
+
+        {/* ── Related resources ── */}
+        <section style={{ background: '#f4f0e6', padding: '60px 40px', maxWidth: 860, margin: '0 auto' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.46rem', letterSpacing: '.2em', color: 'rgba(14,14,13,.35)', textTransform: 'uppercase', marginBottom: 24 }}>
+            Recursos Relacionados
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 16 }}>
+            {[
+              { href: '/buy-property-portugal', label: 'Comprar Imóvel em Portugal →' },
+              { href: '/invest-in-portugal-real-estate', label: 'Investimento Imobiliário Portugal →' },
+              { href: '/off-market-portugal', label: 'Propriedades Off-Market →' },
+              { href: '/imoveis', label: 'Ver Imóveis Disponíveis →' },
+              { href: '/agente/carlos', label: 'Consultor Carlos Feiteira →' },
+              { href: '/contacto', label: 'Contacto Directo →' },
+            ].map(l => (
+              <Link key={l.href} href={l.href} style={{ fontFamily: "'Jost', sans-serif", fontSize: '.78rem', color: '#1c4a35', textDecoration: 'none', borderBottom: '1px solid rgba(28,74,53,.15)', paddingBottom: 12 }}>
+                {l.label}
+              </Link>
+            ))}
+          </div>
         </section>
 
         {/* ── Footer ── */}
@@ -316,6 +361,10 @@ export default function VenderImovelPortugal() {
             letterSpacing: '.18em', color: 'rgba(255,255,255,.2)',
           }}>
             © 2026 Agency Group – Mediação Imobiliária Lda · NIPC 516.833.960 · AMI 22506 · Lisboa
+            {' · '}
+            <Link href="/faq" style={{ color: 'rgba(255,255,255,.2)', textDecoration: 'none' }}>FAQ</Link>
+            {' · '}
+            <Link href="/blog" style={{ color: 'rgba(255,255,255,.2)', textDecoration: 'none' }}>Blog</Link>
           </p>
         </footer>
 
