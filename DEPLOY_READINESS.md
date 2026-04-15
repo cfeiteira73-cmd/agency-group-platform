@@ -1,9 +1,31 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v25 → Production**
+**Last updated: 2026-04-15 | v26 → Production**
 
 ---
 
 ## 🟢 ALL CRITICAL ITEMS RESOLVED — Production Green
+
+### -3. ✅ DONE — wf-R Middleware + Credential Fix (2026-04-15)
+**Root cause A — middleware redirect (commits af0e349 → c0071b0 → ebda057):**
+- `proxy.ts` had `/api/automation` in `protectedPaths` → n8n requests (no session cookie) were redirected to `/auth/login`
+- `/auth/login` only has GET → n8n POST returned 405 Method Not Allowed
+- Vercel CDN was caching the 405 response → stale responses persisted even after fixes
+- Fix: Removed `/api/automation` from `protectedPaths` entirely (each automation route has its own `isAuthorized()`)
+- Also added `Cache-Control: no-store, no-cache, must-revalidate` + `Vary: Authorization` to all auth redirects
+- Definitive commit: `ebda057`
+
+**Root cause B — PORTAL_API_SECRET mismatch (n8n PATCH 2026-04-15 13:06:59 UTC):**
+- wf-R had `Bearer b60bd2a0bf…` (PORTAL_API_SECRET) but Vercel's PORTAL_API_SECRET value differs from that
+- CRON_SECRET (`8729a306ef…`) confirmed working → 200 via curl test
+- n8n wf-R patched via `PATCH /rest/workflows/jyDG0tOLE0LQH07c` — both HTTP nodes updated to CRON_SECRET
+- Verified via n8n REST API: Authorization values confirmed as `Bearer 8729a306ef…`
+- Local JSON synced: `n8n-workflows/workflow-r-lead-nurture.json` — commit pending → this commit
+
+**Proof:**
+- `POST /api/automation/nurture-candidates` with `Bearer 8729a306ef…` → 200 `{ candidates: [], count: 0 }`
+- Response headers: `x-matched-path: /api/automation/nurture-candidates`, `x-vercel-cache: MISS`
+- Execution #10 (14:00 UTC) = first run with fixed credentials → expected: success
+- Executions #8 + #9 = error (ran before fix); #7 = success (manual test run)
 
 ### GTM. ✅ DONE — Google Tag Manager + GA4 (2026-04-15)
 - GTM Container created: **GTM-MZF2GB28** (Account: Agency Group, Container: agencygroup.pt, Platform: Web)

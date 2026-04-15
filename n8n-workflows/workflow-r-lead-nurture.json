@@ -32,7 +32,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer b60bd2a0bf052a29fe639c03858819db9626e96ec16409ab2c7022c4c35ec7f8"
+              "value": "=Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b"
             },
             {
               "name": "Content-Type",
@@ -125,7 +125,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer b60bd2a0bf052a29fe639c03858819db9626e96ec16409ab2c7022c4c35ec7f8"
+              "value": "=Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b"
             },
             {
               "name": "Content-Type",
