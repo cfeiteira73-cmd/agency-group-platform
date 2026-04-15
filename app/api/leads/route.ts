@@ -26,6 +26,13 @@ const LeadSchema = z.object({
   lang:         z.string().max(5).optional().default('pt'),
   nationality:  z.string().max(100).optional(),
   intent:       z.enum(['buyer', 'seller', 'investor']).optional(),
+  // UTM source attribution (migration 039)
+  utm_source:   z.string().max(120).optional(),
+  utm_medium:   z.string().max(120).optional(),
+  utm_campaign: z.string().max(200).optional(),
+  utm_term:     z.string().max(200).optional(),
+  utm_content:  z.string().max(200).optional(),
+  utm_landing:  z.string().max(500).optional(),
 }).refine(d => d.email || d.phone, {
   message: 'email or phone required',
 })
@@ -56,6 +63,7 @@ export async function POST(req: NextRequest) {
       name, email, phone, source, message,
       zona, budget_min, budget_max, timeline,
       use_type, property_ref, nationality, intent,
+      utm_source, utm_medium, utm_campaign, utm_term, utm_content, utm_landing,
     } = parsed.data
 
     // Build notes from available context
@@ -104,6 +112,13 @@ export async function POST(req: NextRequest) {
         return d.toISOString()
       })(),
       last_contact_at:  new Date().toISOString(),
+      // UTM attribution — stored only when present (migration 039)
+      ...(utm_source   ? { utm_source }   : {}),
+      ...(utm_medium   ? { utm_medium }   : {}),
+      ...(utm_campaign ? { utm_campaign } : {}),
+      ...(utm_term     ? { utm_term }     : {}),
+      ...(utm_content  ? { utm_content }  : {}),
+      ...(utm_landing  ? { utm_landing }  : {}),
     }
 
     // Find-then-insert/update — contacts.email has no UNIQUE constraint so
