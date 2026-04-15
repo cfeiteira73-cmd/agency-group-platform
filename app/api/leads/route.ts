@@ -141,7 +141,11 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('[leads] db error:', error)
-      return NextResponse.json({ error: 'Erro ao guardar lead' }, { status: 500 })
+      // Temporary debug: expose raw error in non-prod for diagnosis — REMOVE AFTER FIX
+      if (process.env.NODE_ENV !== 'production') {
+        return NextResponse.json({ error: 'Erro ao guardar lead', _debug: error }, { status: 500 })
+      }
+      return NextResponse.json({ error: 'Erro ao guardar lead', _debug: { code: (error as {code?:string}).code, message: (error as {message?:string}).message } }, { status: 500 })
     }
 
     // Fire-and-forget: trigger lead scoring + agent alert
