@@ -278,7 +278,7 @@ const schemaAggregateRatingExpanded = {
 }
 
 const LAYOUT_BUILD_ID = (process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 8)
-const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-MZF2GB28'
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-T7SDCPT6'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
