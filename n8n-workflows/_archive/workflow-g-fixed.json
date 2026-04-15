@@ -32,8 +32,8 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU" },
-            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU" },
+            { "name": "Authorization", "value": "Bearer SUPABASE_SERVICE_ROLE_KEY_REDACTED" },
+            { "name": "apikey", "value": "SUPABASE_SERVICE_ROLE_KEY_REDACTED" },
             { "name": "Content-Type", "value": "application/json" },
             { "name": "Prefer", "value": "return=representation" }
           ]
@@ -68,8 +68,8 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU" },
-            { "name": "apikey", "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU" },
+            { "name": "Authorization", "value": "Bearer SUPABASE_SERVICE_ROLE_KEY_REDACTED" },
+            { "name": "apikey", "value": "SUPABASE_SERVICE_ROLE_KEY_REDACTED" },
             { "name": "Content-Type", "value": "application/json" },
             { "name": "Prefer", "value": "return=representation" }
           ]

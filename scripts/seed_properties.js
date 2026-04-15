@@ -1,6 +1,6 @@
 const https = require('https');
 
-const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''; // SECURITY: never hardcode — use env var
 const HOST = 'isbfiofwpxqqpgxoftph.supabase.co';
 
 const properties = [

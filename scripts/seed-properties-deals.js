@@ -4,7 +4,7 @@
 const https = require('https')
 
 const URL = 'isbfiofwpxqqpgxoftph.supabase.co'
-const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzYmZpb2Z3cHhxcXBneG9mdHBoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTIyMDc4MSwiZXhwIjoyMDkwNzk2NzgxfQ.uqhKUsiEVLzFJ8f5e8ZWQFwJiZqDR-tYkgyOwwv7tcU'
+const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '' // SECURITY: never hardcode — use env var
 const AGENT_ID = '27062d13-aa1e-45c9-b7a6-2b943f88e1ab'
 
 function req(method, path, body) {

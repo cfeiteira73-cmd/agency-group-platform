@@ -5,31 +5,32 @@
 
 ## 🔴 CRITICAL — Do Before Next Deploy
 
-### 1. Apply Migration 036 (Supabase Dashboard)
-```
-Go to: supabase.com → Project isbfiofwpxqqpgxoftph → SQL Editor
-Run file: supabase/migrations/036_public_saved_searches.sql
-```
-Without this: saved search alerts fail silently — data never persists.
+### 1. ✅ DONE — Migration 036 (Supabase)
+Table `public_saved_searches` created on 2026-04-15.
+Columns: id, email, zona, tipo, preco_min, preco_max, quartos_min, piscina, purpose, keyword,
+is_active, last_notified_at, notify_count, source, created_at, updated_at.
+Indexes + RLS disabled + GRANTS applied. Trigger trg_pss_updated_at active.
 
-### 2. Add Env Vars to Vercel
+### 2. ✅ DONE — Env Vars added to Vercel (2026-04-15)
 ```
-N8N_WEBHOOK_URL = https://agencygroup.app.n8n.cloud
-PORTAL_API_SECRET = b60bd2a0bf052a29fe639c03858819db9626e96ec16409ab2c7022c4c35ec7f8
-SITE_URL = https://www.agencygroup.pt
+N8N_WEBHOOK_URL = https://agencygroup.app.n8n.cloud  ✅
+PORTAL_API_SECRET = b60bd2a0bf...                    ✅
+SITE_URL = https://www.agencygroup.pt                ✅
+AGENT_ALERT_EMAIL = (still missing — add geral@agencygroup.pt)
 ```
-Go to: vercel.com → agency-group → Settings → Environment Variables
 
-### 3. Import n8n Workflows (Cloud)
+### 3. ✅ DONE — n8n Workflows imported + active (2026-04-15)
 ```
-Go to: https://agencygroup.app.n8n.cloud
-Import + activate:
-  - workflow-p-saved-search-created.json   ← NEW: blog/imoveis alert → welcome email
-  - workflow-q-property-alert-match.json   ← NEW: property added → notify subscribers
+agencygroup.app.n8n.cloud — Total 3 workflows, all Published:
+  - Workflow P — Saved Search Created  (id: 6sjsxteL4hzLa9Gp) ✅ Published
+  - Workflow Q — Property Alert Matching (id: 7JS7nOMCwfhcZTZ6) ✅ Published
+  - Agency — Lead Capture & Score                              ✅ Published
 ```
-Set env vars in n8n Cloud: SITE_URL, SUPABASE_URL, SUPABASE_SERVICE_KEY, RESEND_API_KEY, PORTAL_API_SECRET, CRON_SECRET
+NOTE: n8n Cloud free plan — Variables not available. Workflows use $env.RESEND_API_KEY,
+$env.PORTAL_API_SECRET, $env.SITE_URL. These need to be set as n8n Credentials or
+upgraded to Pro for Variables support. Emails will fail until RESEND_API_KEY is wired in.
 
-### 4. Rotate Exposed Credentials
+### 4. 🔴 STILL PENDING — Rotate Exposed Credentials
 These credentials were in `.env.local` and may have been committed to git:
 - [ ] ANTHROPIC_API_KEY — rotate at console.anthropic.com
 - [ ] RESEND_API_KEY — rotate at resend.com → API Keys
