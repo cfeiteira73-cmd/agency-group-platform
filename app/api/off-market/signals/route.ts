@@ -6,6 +6,8 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/auth'
+import { safeCompare } from '@/lib/safeCompare'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -442,7 +444,22 @@ const MOCK_DR_SIGNALS: ParsedSignal[] = [
 // Main GET handler
 // ---------------------------------------------------------------------------
 
+// Portal agents + internal tools (CRON_SECRET / PORTAL_API_SECRET) may call this
+function hasBearerToken(req: NextRequest): boolean {
+  const authHeader = req.headers.get('authorization') ?? ''
+  return (
+    safeCompare(authHeader, `Bearer ${process.env.PORTAL_API_SECRET ?? ''}`) ||
+    safeCompare(authHeader, `Bearer ${process.env.CRON_SECRET ?? ''}`) ||
+    safeCompare(authHeader, `Bearer ${process.env.ADMIN_SECRET ?? ''}`)
+  )
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const session = await auth()
+  if (!session?.user && !hasBearerToken(request)) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const forceRefresh = searchParams.get('refresh') === 'true'
