@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Parse and validate the incoming property payload\nconst body = $input.first().json.body || $input.first().json;\n\nif (!body.id || !body.zona) {\n  throw new Error('Property payload missing id or zona');\n}\n\nconst formatEur = (n) => {\n  if (!n) return 'Contacte-nos';\n  if (n >= 1000000) return `€${(n/1000000).toFixed(1)}M`;\n  if (n >= 1000) return `€${Math.round(n/1000)}K`;\n  return `€${n}`;\n};\n\nreturn [{\n  json: {\n    property_id: body.id,\n    zona: body.zona,\n    tipo: body.tipo || 'Todos',\n    preco: body.preco || 0,\n    nome: body.nome || 'Novo Imóvel',\n    quartos: body.quartos || 0,\n    area: body.area || 0,\n    badge: body.badge || null,\n    preco_formatted: formatEur(body.preco),\n    url: `${ $env.SITE_URL }/imoveis/${body.id}`,\n    criteria: {\n      zona: body.zona,\n      tipo: body.tipo || 'Todos',\n      preco: body.preco || 0,\n      quartos: body.quartos || 0,\n      piscina: body.piscina || false,\n    }\n  }\n}];"
+        "jsCode": "// Parse and validate the incoming property payload\nconst body = $input.first().json.body || $input.first().json;\n\nif (!body.id || !body.zona) {\n  throw new Error('Property payload missing id or zona');\n}\n\nconst formatEur = (n) => {\n  if (!n) return 'Contacte-nos';\n  if (n >= 1000000) return `€${(n/1000000).toFixed(1)}M`;\n  if (n >= 1000) return `€${Math.round(n/1000)}K`;\n  return `€${n}`;\n};\n\nreturn [{\n  json: {\n    property_id: body.id,\n    zona: body.zona,\n    tipo: body.tipo || 'Todos',\n    preco: body.preco || 0,\n    nome: body.nome || 'Novo Imóvel',\n    quartos: body.quartos || 0,\n    area: body.area || 0,\n    badge: body.badge || null,\n    preco_formatted: formatEur(body.preco),\n    url: `https://www.agencygroup.pt/imoveis/${body.id}`,\n    criteria: {\n      zona: body.zona,\n      tipo: body.tipo || 'Todos',\n      preco: body.preco || 0,\n      quartos: body.quartos || 0,\n      piscina: body.piscina || false,\n    }\n  }\n}];"
       },
       "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000002",
       "name": "Code — Parse Property",
@@ -27,13 +27,13 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.SITE_URL }}/api/alerts?mode=active&zona={{ $json.zona }}",
+        "url": "=https://www.agencygroup.pt/api/alerts?mode=active&zona={{ $json.zona }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $env.PORTAL_API_SECRET }}"
+              "value": "=Bearer b60bd2a0bf052a29fe639c03858819db9626e96ec16409ab2c7022c4c35ec7f8"
             }
           ]
         },
@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Filter subscribers who match this property\nconst subs = $input.first().json.subscriptions || [];\nconst property = $node['Code — Parse Property'].json;\n\nconst matched = subs.filter(sub => {\n  // Zone match (Todas = all zones)\n  const zonaOk = sub.zona === 'Todas' || sub.zona === property.zona;\n  // Type match\n  const tipoOk = sub.tipo === 'Todos' || sub.tipo === property.tipo;\n  // Price match\n  const precoOk = !sub.preco_max || property.preco <= sub.preco_max;\n  // Bedrooms match\n  const quartosOk = !sub.quartos_min || property.quartos >= sub.quartos_min;\n  // Pool\n  const piscinaOk = !sub.piscina || property.piscina === true;\n  return zonaOk && tipoOk && precoOk && quartosOk && piscinaOk;\n});\n\nconsole.log(`[property-match] ${matched.length} subscribers match property ${property.property_id} in ${property.zona}`);\n\nif (matched.length === 0) {\n  return [{ json: { matched: [], count: 0, property } }];\n}\n\n// Return one item per subscriber for the email loop\nreturn matched.map(sub => ({\n  json: {\n    ...property,\n    subscriber_email: sub.email,\n    subscriber_id: sub.id,\n    subscriber_zona: sub.zona,\n    subscriber_tipo: sub.tipo,\n    unsubscribe_url: `${ $env.SITE_URL }/api/alerts/unsubscribe?email=${encodeURIComponent(sub.email)}&zona=${encodeURIComponent(sub.zona)}&tipo=${encodeURIComponent(sub.tipo)}`,\n  }\n}));"
+        "jsCode": "// Filter subscribers who match this property\nconst subs = $input.first().json.subscriptions || [];\nconst property = $node['Code — Parse Property'].json;\n\nconst matched = subs.filter(sub => {\n  // Zone match (Todas = all zones)\n  const zonaOk = sub.zona === 'Todas' || sub.zona === property.zona;\n  // Type match\n  const tipoOk = sub.tipo === 'Todos' || sub.tipo === property.tipo;\n  // Price match\n  const precoOk = !sub.preco_max || property.preco <= sub.preco_max;\n  // Bedrooms match\n  const quartosOk = !sub.quartos_min || property.quartos >= sub.quartos_min;\n  // Pool\n  const piscinaOk = !sub.piscina || property.piscina === true;\n  return zonaOk && tipoOk && precoOk && quartosOk && piscinaOk;\n});\n\nconsole.log(`[property-match] ${matched.length} subscribers match property ${property.property_id} in ${property.zona}`);\n\nif (matched.length === 0) {\n  return [{ json: { matched: [], count: 0, property } }];\n}\n\n// Return one item per subscriber for the email loop\nreturn matched.map(sub => ({\n  json: {\n    ...property,\n    subscriber_email: sub.email,\n    subscriber_id: sub.id,\n    subscriber_zona: sub.zona,\n    subscriber_tipo: sub.tipo,\n    unsubscribe_url: `https://www.agencygroup.pt/api/alerts/unsubscribe?email=${encodeURIComponent(sub.email)}&zona=${encodeURIComponent(sub.zona)}&tipo=${encodeURIComponent(sub.tipo)}`,\n  }\n}));"
       },
       "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000004",
       "name": "Code — Match Subscribers",

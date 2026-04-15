@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Validate and enrich the saved search payload\nconst body = $input.first().json.body || $input.first().json;\n\nif (!body.email) {\n  throw new Error('Saved search sem email — descartado');\n}\n\n// Normalise fields\nconst zona = body.zona || 'Todas';\nconst tipo = body.tipo || 'Todos';\nconst precoMax = body.preco_max || 10000000;\nconst precoMin = body.preco_min || 0;\nconst quartosMin = body.quartos_min || 0;\nconst purpose = body.purpose || 'buy';\nconst source = body.source || 'imoveis_page';\nconst isBlogSource = source.startsWith('blog_');\nconst articleSlug = isBlogSource ? source.replace('blog_inline_', '').replace('blog_end-of-article_', '') : null;\n\n// Format price for email\nconst formatEur = (n) => {\n  if (n >= 1000000) return `€${(n/1000000).toFixed(1)}M`;\n  if (n >= 1000) return `€${Math.round(n/1000)}K`;\n  return `€${n}`;\n};\n\nconst criteriaLabel = [\n  zona !== 'Todas' ? zona : null,\n  tipo !== 'Todos' ? tipo : null,\n  precoMax < 10000000 ? `até ${formatEur(precoMax)}` : null,\n  quartosMin > 0 ? `T${quartosMin}+` : null,\n  body.piscina ? 'c/ piscina' : null,\n].filter(Boolean).join(' · ') || 'Todos os imóveis';\n\nreturn [{\n  json: {\n    ...body,\n    zona,\n    tipo,\n    preco_max: precoMax,\n    preco_min: precoMin,\n    quartos_min: quartosMin,\n    purpose,\n    source,\n    is_blog_source: isBlogSource,\n    article_slug: articleSlug,\n    criteria_label: criteriaLabel,\n    confirm_url: `${{ $env.SITE_URL }}/api/alerts/confirm?id=${body.id}`,\n    unsubscribe_url: `${{ $env.SITE_URL }}/api/alerts/unsubscribe?email=${encodeURIComponent(body.email)}&zona=${encodeURIComponent(zona)}&tipo=${encodeURIComponent(tipo)}`,\n  }\n}];"
+        "jsCode": "// Validate and enrich the saved search payload\nconst body = $input.first().json.body || $input.first().json;\n\nif (!body.email) {\n  throw new Error('Saved search sem email — descartado');\n}\n\n// Normalise fields\nconst zona = body.zona || 'Todas';\nconst tipo = body.tipo || 'Todos';\nconst precoMax = body.preco_max || 10000000;\nconst precoMin = body.preco_min || 0;\nconst quartosMin = body.quartos_min || 0;\nconst purpose = body.purpose || 'buy';\nconst source = body.source || 'imoveis_page';\nconst isBlogSource = source.startsWith('blog_');\nconst articleSlug = isBlogSource ? source.replace('blog_inline_', '').replace('blog_end-of-article_', '') : null;\n\n// Format price for email\nconst formatEur = (n) => {\n  if (n >= 1000000) return `€${(n/1000000).toFixed(1)}M`;\n  if (n >= 1000) return `€${Math.round(n/1000)}K`;\n  return `€${n}`;\n};\n\nconst criteriaLabel = [\n  zona !== 'Todas' ? zona : null,\n  tipo !== 'Todos' ? tipo : null,\n  precoMax < 10000000 ? `até ${formatEur(precoMax)}` : null,\n  quartosMin > 0 ? `T${quartosMin}+` : null,\n  body.piscina ? 'c/ piscina' : null,\n].filter(Boolean).join(' · ') || 'Todos os imóveis';\n\nreturn [{\n  json: {\n    ...body,\n    zona,\n    tipo,\n    preco_max: precoMax,\n    preco_min: precoMin,\n    quartos_min: quartosMin,\n    purpose,\n    source,\n    is_blog_source: isBlogSource,\n    article_slug: articleSlug,\n    criteria_label: criteriaLabel,\n    confirm_url: `https://www.agencygroup.pt/api/alerts/confirm?id=${body.id}`,\n    unsubscribe_url: `https://www.agencygroup.pt/api/alerts/unsubscribe?email=${encodeURIComponent(body.email)}&zona=${encodeURIComponent(zona)}&tipo=${encodeURIComponent(tipo)}`,\n  }\n}];"
       },
       "id": "p1b2c3d4-e5f6-7890-abcd-ef0000000002",
       "name": "Code — Validate & Enrich",
@@ -81,13 +81,13 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.SITE_URL }}/api/automation/lead-score",
+        "url": "=https://www.agencygroup.pt/api/automation/lead-score",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $env.PORTAL_API_SECRET }}"
+              "value": "=Bearer b60bd2a0bf052a29fe639c03858819db9626e96ec16409ab2c7022c4c35ec7f8"
             },
             {
               "name": "Content-Type",
