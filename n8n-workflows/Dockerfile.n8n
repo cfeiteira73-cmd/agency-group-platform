@@ -1,10 +1,16 @@
 FROM n8nio/n8n:latest
 
-USER root
-RUN npm install -g n8n-nodes-base
+# n8n-nodes-base is already included in the base image — no reinstall needed
+# This keeps the build fast and avoids npm conflicts
 
 USER node
 WORKDIR /home/node
 
+# Expose n8n port
 EXPOSE 5678
+
+# Health check for Railway
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget -qO- http://localhost:5678/healthz || exit 1
+
 CMD ["n8n", "start"]

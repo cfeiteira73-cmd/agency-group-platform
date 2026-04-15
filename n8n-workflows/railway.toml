@@ -1,11 +1,13 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "n8n-workflows/Dockerfile.n8n"
+dockerfilePath = "Dockerfile.n8n"
 
 [deploy]
 startCommand = "n8n start"
 healthcheckPath = "/healthz"
 healthcheckTimeout = 120
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 3
 
 [[services]]
 name = "ag-n8n"

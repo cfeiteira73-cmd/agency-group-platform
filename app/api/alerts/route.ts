@@ -115,15 +115,20 @@ async function findExistingInSupabase(
   }
 }
 
-async function getActiveFromSupabase(): Promise<AlertSubscription[]> {
+async function getActiveFromSupabase(zonaFilter?: string): Promise<AlertSubscription[]> {
   const client = getServiceClient()
   if (!client) return []
-  const { data } = await client
+  let query = client
     .from('public_saved_searches')
     .select('*')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(500)
+  if (zonaFilter && zonaFilter !== 'Todas') {
+    // Match subscribers who want this specific zone OR all zones
+    query = query.or(`zona.eq.${zonaFilter},zona.eq.Todas`)
+  }
+  const { data } = await query
   if (!data) return []
   return data.map(d => ({
     id: d.id,
@@ -351,7 +356,8 @@ export async function GET(req: NextRequest) {
     if (!isCron && secret && !safeCompare(authHeader ?? '', `Bearer ${secret}`)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    const active = await getActiveFromSupabase()
+    const zonaFilter = searchParams.get('zona') ?? undefined
+    const active = await getActiveFromSupabase(zonaFilter)
     return NextResponse.json({ subscriptions: active, count: active.length })
   }
 

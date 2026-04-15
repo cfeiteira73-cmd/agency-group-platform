@@ -1,28 +1,50 @@
 # n8n Workflows — Deployment Guide
 **Agency Group Deal Machine — Off-Market Engine**
 
+> **n8n Cloud**: https://agencygroup.app.n8n.cloud (confirmed active)
+> **Supabase**: https://isbfiofwpxqqpgxoftph.supabase.co
+
 ---
 
-## Option A: Railway (Recommended)
+## ✅ Deploy Status
+
+| Component | Status | URL |
+|---|---|---|
+| n8n Cloud | **ACTIVE** | https://agencygroup.app.n8n.cloud |
+| Vercel | **ACTIVE** | https://www.agencygroup.pt |
+| Supabase | **ACTIVE** | isbfiofwpxqqpgxoftph |
+| Migration 036 | **PENDING** — apply in Supabase Dashboard | `public_saved_searches` table |
+
+---
+
+## Setup: n8n Cloud (Current Setup)
+
+Since n8n Cloud is already active at `agencygroup.app.n8n.cloud`:
+
+1. Go to **https://agencygroup.app.n8n.cloud**
+2. Settings → **Environment Variables** → Add each variable:
+
+```
+SITE_URL=https://www.agencygroup.pt
+SUPABASE_URL=https://isbfiofwpxqqpgxoftph.supabase.co
+SUPABASE_SERVICE_KEY=<from .env.local: SUPABASE_SERVICE_ROLE_KEY>
+ANTHROPIC_API_KEY=<from .env.local: ANTHROPIC_API_KEY>
+RESEND_API_KEY=<from .env.local: RESEND_API_KEY>
+PORTAL_API_SECRET=<from .env.local: PORTAL_API_SECRET — just generated>
+CRON_SECRET=<from .env.local: CRON_SECRET>
+```
+
+3. Import workflows (Settings → Import) — see table below
+4. Activate each workflow
+
+---
+
+## Option B: Railway (Self-hosted, if needed later)
 
 1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
 2. Select `agency-group` repo, Root Directory: `n8n-workflows`
-3. Add the following environment variables (Settings → Variables):
-
-```
-N8N_ENCRYPTION_KEY=<32-char random string>
-N8N_WEBHOOK_URL=https://your-n8n.railway.app
-SUPABASE_URL=<same as .env.local>
-SUPABASE_SERVICE_ROLE_KEY=<same as .env.local>
-ANTHROPIC_API_KEY=<same as .env.local>
-PORTAL_URL=https://agencygroup.pt
-CRON_SECRET=<same as Vercel CRON_SECRET>
-TELEGRAM_BOT_TOKEN=<from @BotFather>
-TELEGRAM_CHAT_ID=<your ops chat ID>
-RESEND_API_KEY=<same as .env.local>
-```
-
-4. Deploy. Visit `https://your-n8n.railway.app` to access n8n UI.
+3. Add environment variables (same as above + `N8N_ENCRYPTION_KEY`)
+4. Deploy. Visit your Railway URL to access n8n UI.
 
 ---
 
@@ -86,11 +108,18 @@ In n8n UI → Settings → Import Workflow, import these files:
 | 14 | `workflow-k-meeting-notify.json` | Meeting scheduled → confirmation WhatsApp/email | Webhook POST `/meeting-notify` |
 | 15 | `workflow-l-lead-reactivation.json` | Reactivation campaign for cold leads (>30d) | Cron: Mon 10:00 UTC |
 
+### Tier 4 — Blog & Alerts Engine (NEW — 2026-04-15)
+
+| # | File | Description | Trigger |
+|---|---|---|---|
+| 16 | `workflow-p-saved-search-created.json` | **NEW**: Blog/imoveis subscriber → welcome email + lead score update | Webhook POST `/saved-search-created` |
+| 17 | `workflow-q-property-alert-match.json` | **NEW**: New property added → query `public_saved_searches` → notify matching subscribers | Webhook POST `/new-property` |
+
 ---
 
-## Webhook URLs (after deploy)
+## Webhook URLs (n8n Cloud)
 
-Replace `https://your-n8n.railway.app` with your actual Railway URL.
+Base URL: `https://agencygroup.app.n8n.cloud`
 
 | Workflow | Path | Usage |
 |---|---|---|
@@ -100,13 +129,15 @@ Replace `https://your-n8n.railway.app` with your actual Railway URL.
 | Daily Digest | *(cron — no webhook)* | Auto-runs Mon–Fri 08:30 UTC |
 | Investor Alert | `/webhook/new-property` | Portal → new property created |
 | Assign Advisor | `/webhook/assign-advisor` | Called on new lead creation |
+| **Saved Search Created** | `/webhook/saved-search-created` | **NEW** — fired by `/api/alerts` POST |
+| **Property Alert Match** | `/webhook/new-property` | **NEW** — fired when new property added |
 
 ---
 
 ## Apify Configuration (External — must do in Apify Console)
 
 Create an **Idealista Scraper** actor with:
-- **Webhook URL**: `https://your-n8n.railway.app/webhook/offmarket-new`
+- **Webhook URL**: `https://agencygroup.app.n8n.cloud/webhook/offmarket-new`
 - **Webhook Headers**: `x-cron-secret: <CRON_SECRET>`
 - **Schedule**: Daily 06:00 UTC
 - **Target**: Portugal listings, price range €100K–€5M, types: moradia/apartamento/quinta/terreno

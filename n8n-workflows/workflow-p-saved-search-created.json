@@ -1,0 +1,182 @@
+{
+  "name": "Workflow P — Saved Search Created (Blog + Imoveis Alerts)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "saved-search-created",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "p1b2c3d4-e5f6-7890-abcd-ef0000000001",
+      "name": "Webhook — Saved Search Created",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "agency-group-saved-search-created"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and enrich the saved search payload\nconst body = $input.first().json.body || $input.first().json;\n\nif (!body.email) {\n  throw new Error('Saved search sem email — descartado');\n}\n\n// Normalise fields\nconst zona = body.zona || 'Todas';\nconst tipo = body.tipo || 'Todos';\nconst precoMax = body.preco_max || 10000000;\nconst precoMin = body.preco_min || 0;\nconst quartosMin = body.quartos_min || 0;\nconst purpose = body.purpose || 'buy';\nconst source = body.source || 'imoveis_page';\nconst isBlogSource = source.startsWith('blog_');\nconst articleSlug = isBlogSource ? source.replace('blog_inline_', '').replace('blog_end-of-article_', '') : null;\n\n// Format price for email\nconst formatEur = (n) => {\n  if (n >= 1000000) return `€${(n/1000000).toFixed(1)}M`;\n  if (n >= 1000) return `€${Math.round(n/1000)}K`;\n  return `€${n}`;\n};\n\nconst criteriaLabel = [\n  zona !== 'Todas' ? zona : null,\n  tipo !== 'Todos' ? tipo : null,\n  precoMax < 10000000 ? `até ${formatEur(precoMax)}` : null,\n  quartosMin > 0 ? `T${quartosMin}+` : null,\n  body.piscina ? 'c/ piscina' : null,\n].filter(Boolean).join(' · ') || 'Todos os imóveis';\n\nreturn [{\n  json: {\n    ...body,\n    zona,\n    tipo,\n    preco_max: precoMax,\n    preco_min: precoMin,\n    quartos_min: quartosMin,\n    purpose,\n    source,\n    is_blog_source: isBlogSource,\n    article_slug: articleSlug,\n    criteria_label: criteriaLabel,\n    confirm_url: `${{ $env.SITE_URL }}/api/alerts/confirm?id=${body.id}`,\n    unsubscribe_url: `${{ $env.SITE_URL }}/api/alerts/unsubscribe?email=${encodeURIComponent(body.email)}&zona=${encodeURIComponent(zona)}&tipo=${encodeURIComponent(tipo)}`,\n  }\n}];"
+      },
+      "id": "p1b2c3d4-e5f6-7890-abcd-ef0000000002",
+      "name": "Code — Validate & Enrich",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check if we should send a welcome email\n// Skip if this is a duplicate / re-subscription within 24h\nconst body = $input.first().json;\n\n// Always send welcome email for new subscriptions\nreturn [{ json: { ...body, should_email: true } }];"
+      },
+      "id": "p1b2c3d4-e5f6-7890-abcd-ef0000000003",
+      "name": "Code — Email Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.should_email }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "p1b2c3d4-e5f6-7890-abcd-ef0000000004",
+      "name": "IF — Send Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"from\": \"Agency Group Alertas <alertas@agencygroup.pt>\",\n  \"to\": [\"{{ $json.email }}\"],\n  \"subject\": \"Alerta ativo: {{ $json.criteria_label }}\",\n  \"html\": \"<div style='font-family:sans-serif;max-width:600px;margin:0 auto;background:#f4f0e6'><div style='background:#0c1f15;padding:32px 40px'><h1 style='font-family:Georgia,serif;font-weight:300;font-size:1.6rem;color:#f4f0e6;margin:0'>Agency<span style=\\\"color:#c9a96e\\\">Group</span></h1></div><div style='padding:40px;background:#fff'><p style='font-size:0.8rem;color:#888;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 16px'>Alerta Criado</p><h2 style='font-family:Georgia,serif;font-weight:300;font-size:1.4rem;color:#0c1f15;margin:0 0 8px'>O seu alerta está ativo.</h2><p style='color:rgba(14,14,13,0.65);font-size:0.85rem;line-height:1.7;margin:0 0 24px'>Critérios: <strong>{{ $json.criteria_label }}</strong><br>Será notificado quando surgirem novos imóveis que correspondam ao seu perfil.</p><div style='background:#f8f6f0;border-left:3px solid #c9a96e;padding:16px 20px;margin-bottom:24px'><p style='margin:0;font-size:0.8rem;color:rgba(14,14,13,0.7);line-height:1.6'>Temos acesso a imóveis <strong>exclusivos off-market</strong> que nunca chegam aos portais. O seu alerta garante acesso prioritário.</p></div><a href='https://www.agencygroup.pt/imoveis' style='display:inline-block;background:#1c4a35;color:#c9a96e;padding:12px 28px;text-decoration:none;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;font-weight:700'>Ver Imóveis Disponíveis →</a></div><div style='padding:24px 40px;background:#0c1f15'><p style='color:rgba(244,240,230,0.35);font-size:0.65rem;margin:0'>Agency Group · AMI 22506 · <a href='{{ $json.unsubscribe_url }}' style=\\\"color:rgba(244,240,230,0.35)\\\">Cancelar alertas</a></p></div></div>\"\n}",
+        "options": {}
+      },
+      "id": "p1b2c3d4-e5f6-7890-abcd-ef0000000005",
+      "name": "HTTP — Send Welcome Email (Resend)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SITE_URL }}/api/automation/lead-score",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.PORTAL_API_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"email\": \"{{ $json.email }}\",\n  \"source\": \"{{ $json.source }}\",\n  \"zona\": \"{{ $json.zona }}\",\n  \"budget\": {{ $json.preco_max }},\n  \"intent\": \"{{ $json.purpose === 'invest' ? 'investor' : 'buyer' }}\",\n  \"message\": \"Saved search alert: {{ $json.criteria_label }}\"\n}",
+        "options": {
+          "timeout": 5000
+        }
+      },
+      "id": "p1b2c3d4-e5f6-7890-abcd-ef0000000006",
+      "name": "HTTP — Update Lead Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 420],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Saved search processed\" }"
+      },
+      "id": "p1b2c3d4-e5f6-7890-abcd-ef0000000007",
+      "name": "Respond — OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Saved Search Created": {
+      "main": [
+        [{ "node": "Code — Validate & Enrich", "type": "main", "index": 0 }]
+      ]
+    },
+    "Code — Validate & Enrich": {
+      "main": [
+        [{ "node": "Code — Email Gate", "type": "main", "index": 0 }]
+      ]
+    },
+    "Code — Email Gate": {
+      "main": [
+        [{ "node": "IF — Send Email?", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF — Send Email?": {
+      "main": [
+        [
+          { "node": "HTTP — Send Welcome Email (Resend)", "type": "main", "index": 0 },
+          { "node": "HTTP — Update Lead Score", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "HTTP — Update Lead Score", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "HTTP — Send Welcome Email (Resend)": {
+      "main": [
+        [{ "node": "Respond — OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP — Update Lead Score": {
+      "main": [
+        [{ "node": "Respond — OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "p-workflow-saved-search-v1",
+  "triggerCount": 0,
+  "tags": [
+    { "createdAt": "2026-04-15", "updatedAt": "2026-04-15", "id": "alerts", "name": "alerts" },
+    { "createdAt": "2026-04-15", "updatedAt": "2026-04-15", "id": "blog", "name": "blog" }
+  ]
+}

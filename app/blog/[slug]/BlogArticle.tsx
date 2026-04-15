@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import type { Article, Section } from './articles'
@@ -377,13 +378,12 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
             const midpoint = Math.floor(total / 2)
             const twoThirds = Math.floor(total * 0.67)
             return (
-              <>
+              <React.Fragment key={idx}>
                 {renderSection(section, idx)}
 
                 {/* Inline email capture at midpoint */}
                 {idx === midpoint - 1 && (
                   <BlogEmailCapture
-                    key="mid-email"
                     articleSlug={article.slug}
                     articleZona={article.zona}
                     variant="inline"
@@ -393,7 +393,6 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
                 {/* Related listings at 2/3 of article */}
                 {idx === twoThirds - 1 && (
                   <BlogRelatedListings
-                    key="related-listings"
                     articleSlug={article.slug}
                     articleZona={article.zona}
                     articleCategory={article.category}
@@ -404,7 +403,7 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
 
                 {/* Saved search CTA if buyer guide */}
                 {idx === twoThirds && article.category !== 'Vistos & Legal' && (
-                  <div key="saved-search-cta" style={{
+                  <div style={{
                     border: '1px solid rgba(201,169,110,.22)',
                     background: 'rgba(201,169,110,.04)',
                     padding: '1.25rem 1.5rem',
@@ -439,7 +438,7 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
                     </a>
                   </div>
                 )}
-              </>
+              </React.Fragment>
             )
           })}
 

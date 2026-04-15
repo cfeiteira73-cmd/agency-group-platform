@@ -1,0 +1,168 @@
+{
+  "name": "Workflow Q — Property Alert Matching (New Property → Notify Subscribers)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-property",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000001",
+      "name": "Webhook — New Property",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "agency-group-new-property"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse and validate the incoming property payload\nconst body = $input.first().json.body || $input.first().json;\n\nif (!body.id || !body.zona) {\n  throw new Error('Property payload missing id or zona');\n}\n\nconst formatEur = (n) => {\n  if (!n) return 'Contacte-nos';\n  if (n >= 1000000) return `€${(n/1000000).toFixed(1)}M`;\n  if (n >= 1000) return `€${Math.round(n/1000)}K`;\n  return `€${n}`;\n};\n\nreturn [{\n  json: {\n    property_id: body.id,\n    zona: body.zona,\n    tipo: body.tipo || 'Todos',\n    preco: body.preco || 0,\n    nome: body.nome || 'Novo Imóvel',\n    quartos: body.quartos || 0,\n    area: body.area || 0,\n    badge: body.badge || null,\n    preco_formatted: formatEur(body.preco),\n    url: `${ $env.SITE_URL }/imoveis/${body.id}`,\n    criteria: {\n      zona: body.zona,\n      tipo: body.tipo || 'Todos',\n      preco: body.preco || 0,\n      quartos: body.quartos || 0,\n      piscina: body.piscina || false,\n    }\n  }\n}];"
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000002",
+      "name": "Code — Parse Property",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SITE_URL }}/api/alerts?mode=active&zona={{ $json.zona }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.PORTAL_API_SECRET }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000003",
+      "name": "HTTP — Fetch Matching Subscribers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter subscribers who match this property\nconst subs = $input.first().json.subscriptions || [];\nconst property = $node['Code — Parse Property'].json;\n\nconst matched = subs.filter(sub => {\n  // Zone match (Todas = all zones)\n  const zonaOk = sub.zona === 'Todas' || sub.zona === property.zona;\n  // Type match\n  const tipoOk = sub.tipo === 'Todos' || sub.tipo === property.tipo;\n  // Price match\n  const precoOk = !sub.preco_max || property.preco <= sub.preco_max;\n  // Bedrooms match\n  const quartosOk = !sub.quartos_min || property.quartos >= sub.quartos_min;\n  // Pool\n  const piscinaOk = !sub.piscina || property.piscina === true;\n  return zonaOk && tipoOk && precoOk && quartosOk && piscinaOk;\n});\n\nconsole.log(`[property-match] ${matched.length} subscribers match property ${property.property_id} in ${property.zona}`);\n\nif (matched.length === 0) {\n  return [{ json: { matched: [], count: 0, property } }];\n}\n\n// Return one item per subscriber for the email loop\nreturn matched.map(sub => ({\n  json: {\n    ...property,\n    subscriber_email: sub.email,\n    subscriber_id: sub.id,\n    subscriber_zona: sub.zona,\n    subscriber_tipo: sub.tipo,\n    unsubscribe_url: `${ $env.SITE_URL }/api/alerts/unsubscribe?email=${encodeURIComponent(sub.email)}&zona=${encodeURIComponent(sub.zona)}&tipo=${encodeURIComponent(sub.tipo)}`,\n  }\n}));"
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000004",
+      "name": "Code — Match Subscribers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.subscriber_email ? 1 : 0 }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000005",
+      "name": "IF — Has Subscribers?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"from\": \"Agency Group Alertas <alertas@agencygroup.pt>\",\n  \"to\": [\"{{ $json.subscriber_email }}\"],\n  \"subject\": \"Novo imóvel em {{ $json.zona }}: {{ $json.nome }}\",\n  \"html\": \"<div style='font-family:sans-serif;max-width:600px;margin:0 auto;background:#f4f0e6'><div style='background:#0c1f15;padding:32px 40px'><h1 style='font-family:Georgia,serif;font-weight:300;font-size:1.6rem;color:#f4f0e6;margin:0'>Agency<span style=\\\"color:#c9a96e\\\">Group</span></h1><p style='color:rgba(244,240,230,0.5);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;margin:8px 0 0'>Alerta de Propriedade</p></div><div style='padding:40px;background:#fff'><p style='font-size:0.7rem;color:#888;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 8px'>{{ $json.zona }} · {{ $json.tipo }}</p><h2 style='font-family:Georgia,serif;font-weight:300;font-size:1.5rem;color:#0c1f15;margin:0 0 16px'>{{ $json.nome }}</h2><div style='display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap'><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:120px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>{{ $json.preco_formatted }}</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Preço</div></div><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:100px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>{{ $json.area }}m²</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Área</div></div><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:100px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>T{{ $json.quartos }}</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Quartos</div></div></div>{{ $json.badge ? '<div style=\\\"display:inline-block;background:#1c4a35;color:#c9a96e;padding:4px 12px;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px\\\">'+$json.badge+'</div>' : '' }}<a href='{{ $json.url }}' style='display:inline-block;background:#1c4a35;color:#c9a96e;padding:14px 32px;text-decoration:none;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;margin-bottom:24px'>Ver Propriedade →</a><p style='color:rgba(14,14,13,0.5);font-size:0.75rem;line-height:1.6;border-top:1px solid rgba(14,14,13,0.08);padding-top:16px;margin:0'>Recebeu este email porque criou um alerta para <strong>{{ $json.subscriber_zona }}</strong> no website agencygroup.pt.</p></div><div style='padding:20px 40px;background:#0c1f15'><p style='color:rgba(244,240,230,0.3);font-size:0.6rem;margin:0'>Agency Group · AMI 22506 · <a href='{{ $json.unsubscribe_url }}' style=\\\"color:rgba(244,240,230,0.3)\\\">Cancelar alerta</a></p></div></div>\"\n}",
+        "options": {}
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000006",
+      "name": "HTTP — Send Property Alert Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Property alert matching complete\" }"
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000007",
+      "name": "Respond — OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 420]
+    }
+  ],
+  "connections": {
+    "Webhook — New Property": {
+      "main": [
+        [{ "node": "Code — Parse Property", "type": "main", "index": 0 }]
+      ]
+    },
+    "Code — Parse Property": {
+      "main": [
+        [{ "node": "HTTP — Fetch Matching Subscribers", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP — Fetch Matching Subscribers": {
+      "main": [
+        [{ "node": "Code — Match Subscribers", "type": "main", "index": 0 }]
+      ]
+    },
+    "Code — Match Subscribers": {
+      "main": [
+        [{ "node": "IF — Has Subscribers?", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF — Has Subscribers?": {
+      "main": [
+        [{ "node": "HTTP — Send Property Alert Email", "type": "main", "index": 0 }],
+        [{ "node": "Respond — OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP — Send Property Alert Email": {
+      "main": [
+        [{ "node": "Respond — OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "q-workflow-property-alert-v1",
+  "triggerCount": 0,
+  "tags": [
+    { "createdAt": "2026-04-15", "updatedAt": "2026-04-15", "id": "alerts", "name": "alerts" },
+    { "createdAt": "2026-04-15", "updatedAt": "2026-04-15", "id": "properties", "name": "properties" }
+  ]
+}
