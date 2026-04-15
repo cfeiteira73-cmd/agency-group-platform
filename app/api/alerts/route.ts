@@ -402,7 +402,7 @@ export async function notifySubscribersOfDeal(deal: Record<string, unknown>): Pr
   let sent = 0
 
   for (const sub of active) {
-    if (sub.zona !== 'Todas' && dealZona && !dealZona.includes(sub.zona.split(' — ')[0])) continue
+    if (sub.zona !== 'Todas' && typeof dealZona === 'string' && dealZona && !dealZona.includes(sub.zona.split(' — ')[0])) continue
     if (dealPreco > 0 && dealPreco < sub.precoMin) continue
     if (dealPreco > 0 && sub.precoMax < 10000000 && dealPreco > sub.precoMax) continue
 

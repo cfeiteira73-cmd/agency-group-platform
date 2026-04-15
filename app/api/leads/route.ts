@@ -63,51 +63,84 @@ export async function POST(req: NextRequest) {
     if (message) noteParts.push(`Mensagem: ${message}`)
     if (property_ref) noteParts.push(`Imóvel: ${property_ref}`)
 
-    // Upsert by email (if provided), else by phone
-    const upsertKey = email ? { email } : { phone }
+    // Build contact payload
+    // nationality is CHAR(2) in DB (ISO 3166-1 alpha-2) — truncate/null if not 2 chars
+    const nationalityVal = nationality && nationality.trim().length === 2
+      ? nationality.trim().toUpperCase()
+      : null
 
-    const { data, error } = await supabaseAdmin
-      .from('contacts')
-      .upsert(
-        {
-          ...upsertKey,
-          full_name:           name || 'Website Lead',
-          phone:               phone || null,
-          email:               email || null,
-          status:              'lead' as const,
-          source:              source || 'website',
-          source_detail:       zona || null,
-          notes:               noteParts.length ? noteParts.join(' | ') : null,
-          preferred_locations: zona ? [zona] : null,
-          budget_min:          budget_min || null,
-          budget_max:          budget_max || null,
-          timeline:            timeline || null,
-          use_type:            use_type || null,
-          nationality:         nationality || null,
-          detected_intent:     intent ?? (
-            use_type === 'vendedor'   ? 'seller'   :
-            use_type === 'investidor' ? 'investor' : 'buyer'
-          ),
-          next_followup_at:    (() => {
-            const d = new Date()
-            const isSeller = intent === 'seller' || use_type === 'vendedor'
-            if (isSeller) { d.setHours(d.getHours() + 2) }
-            else          { d.setDate(d.getDate() + 1) }
-            return d.toISOString()
-          })(),
-          last_contact_at:     new Date().toISOString(),
-          updated_at:          new Date().toISOString(),
-        },
-        {
-          onConflict:          email ? 'email' : 'phone',
-          ignoreDuplicates:    false,
-        }
-      )
-      .select('id, status, lead_tier')
-      .single()
+    const contactPayload = {
+      full_name:           name || 'Website Lead',
+      phone:               phone || null,
+      email:               email || null,
+      status:              'lead' as const,
+      source:              source || 'website',
+      source_detail:       zona || null,
+      notes:               noteParts.length ? noteParts.join(' | ') : null,
+      preferred_locations: zona ? [zona] : null,
+      budget_min:          budget_min || null,
+      budget_max:          budget_max || null,
+      timeline:            timeline || null,
+      use_type:            use_type || null,
+      nationality:         nationalityVal,
+      detected_intent:     intent ?? (
+        use_type === 'vendedor'   ? 'seller'   :
+        use_type === 'investidor' ? 'investor' : 'buyer'
+      ),
+      next_followup_at:    (() => {
+        const d = new Date()
+        const isSeller = intent === 'seller' || use_type === 'vendedor'
+        if (isSeller) { d.setHours(d.getHours() + 2) }
+        else          { d.setDate(d.getDate() + 1) }
+        return d.toISOString()
+      })(),
+      last_contact_at:     new Date().toISOString(),
+      updated_at:          new Date().toISOString(),
+    }
+
+    // Find-then-insert/update — contacts.email has no UNIQUE constraint so
+    // upsert onConflict:'email' raises 42P10. Use explicit check instead.
+    let existingId: string | null = null
+    if (email) {
+      const { data: existing } = await supabaseAdmin
+        .from('contacts')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle()
+      existingId = existing?.id ?? null
+    } else if (phone) {
+      const { data: existing } = await supabaseAdmin
+        .from('contacts')
+        .select('id')
+        .eq('phone', phone)
+        .maybeSingle()
+      existingId = existing?.id ?? null
+    }
+
+    let data, error
+    if (existingId) {
+      // UPDATE existing contact — merge new data on top
+      const result = await supabaseAdmin
+        .from('contacts')
+        .update(contactPayload)
+        .eq('id', existingId)
+        .select('id, status, lead_tier')
+        .single()
+      data = result.data
+      error = result.error
+    } else {
+      // INSERT new contact
+      const result = await supabaseAdmin
+        .from('contacts')
+        .insert(contactPayload)
+        .select('id, status, lead_tier')
+        .single()
+      data = result.data
+      error = result.error
+    }
 
     if (error) {
-      console.error('[leads] upsert error:', error)
+      console.error('[leads] db error:', error)
       return NextResponse.json({ error: 'Erro ao guardar lead' }, { status: 500 })
     }
 
