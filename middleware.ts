@@ -43,6 +43,8 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   '/api/homestaging':              { max: 20,  windowMs: 3_600_000 },
   '/api/mais-valias':              { max: 100, windowMs: 3_600_000 },
   '/api/financing':                { max: 100, windowMs: 3_600_000 },
+  '/api/visitas':                  { max: 30,  windowMs: 3_600_000 },
+  '/api/investors/deal-memo':      { max: 10,  windowMs: 3_600_000 },
 }
 
 // ─── Known scanner/scraper User-Agents ───────────────────────────────────────
