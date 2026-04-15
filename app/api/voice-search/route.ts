@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 15
 
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const formData = await req.formData()
     const audioBlob = formData.get('audio') as File | null

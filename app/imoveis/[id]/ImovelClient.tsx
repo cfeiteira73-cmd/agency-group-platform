@@ -126,6 +126,7 @@ export default function ImovelClient({ id }: { id: string }) {
       const total = document.body.scrollHeight - window.innerHeight
       if (total > 0 && scrolled / total >= 0.6 && !sellerCtaVisible) {
         setSellerCtaVisible(true)
+        track('seller_cta_impression', { property_id: id })
       }
     }
     window.addEventListener('scroll', handleScroll, { passive: true })

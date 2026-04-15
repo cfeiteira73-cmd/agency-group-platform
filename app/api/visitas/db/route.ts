@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
     if (status && status !== 'all') query = query.eq('status', status)
     if (property_id) query = query.eq('property_id', property_id)
-    if (contact_id)  query = query.eq('contact_id', parseInt(contact_id))
+    if (contact_id)  query = query.eq('contact_id', contact_id)
     if (date_from)   query = query.gte('date', date_from)
     if (date_to)     query = query.lte('date', date_to)
 

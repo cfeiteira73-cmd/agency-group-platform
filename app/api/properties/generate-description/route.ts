@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 90
@@ -19,6 +20,9 @@ const ZONE_DATA: Record<string, { avgPriceM2: number; appreciation5y: number; de
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const { property, photoAnalyses, persona, formats } = await req.json()
 

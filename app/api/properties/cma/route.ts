@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { isPortalAuth } from '@/lib/portalAuth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -12,6 +13,9 @@ interface CMARequest {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const body: CMARequest = await req.json();
     const { property, allProperties } = body;
