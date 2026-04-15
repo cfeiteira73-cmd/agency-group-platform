@@ -118,8 +118,29 @@ ALTER TABLE public.contacts ADD COLUMN IF NOT EXISTS preferred_asset_types TEXT[
 ALTER TABLE public.contacts ADD COLUMN IF NOT EXISTS buyer_scored_at      TIMESTAMPTZ;
 ALTER TABLE public.contacts ADD COLUMN IF NOT EXISTS buyer_tier           TEXT     CHECK (buyer_tier IN ('A','B','C','D'));
 
+-- 7. INVESTMENT_ALERTS (used by n8n workflow-d-investor-alert)
+CREATE TABLE IF NOT EXISTS public.investment_alerts (
+  id              UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id      INT     REFERENCES public.contacts(id) ON DELETE CASCADE,
+  deal_id         UUID    REFERENCES public.deals(id)    ON DELETE SET NULL,
+  property_id     INT     REFERENCES public.properties(id) ON DELETE SET NULL,
+  alert_type      TEXT    NOT NULL CHECK (alert_type IN ('price_drop','new_match','deal_stage','market_signal','score_high')),
+  title           TEXT    NOT NULL,
+  message         TEXT    NOT NULL,
+  sent_at         TIMESTAMPTZ,
+  sent_via        TEXT    CHECK (sent_via IN ('email','whatsapp','sms','push')),
+  status          TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','sent','failed','cancelled')),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.investment_alerts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Agents can manage investment alerts" ON public.investment_alerts FOR ALL USING (true);
+CREATE INDEX IF NOT EXISTS idx_investment_alerts_contact_id ON public.investment_alerts(contact_id);
+CREATE INDEX IF NOT EXISTS idx_investment_alerts_status     ON public.investment_alerts(status);
+
 -- VERIFY:
--- SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('visitas','push_tokens','push_subscriptions','users','offmarket_risk_flags');
--- Should return 5 rows.
+-- SELECT table_name FROM information_schema.tables WHERE table_schema='public'
+--   AND table_name IN ('visitas','push_tokens','push_subscriptions','users','offmarket_risk_flags','investment_alerts');
+-- Should return 6 rows.
 -- SELECT column_name FROM information_schema.columns WHERE table_name='contacts' AND column_name='buyer_score';
 -- Should return 1 row.

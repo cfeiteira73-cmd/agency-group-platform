@@ -8,13 +8,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { safeCompare } from '@/lib/safeCompare'
 
 export const runtime = 'nodejs'
 
+function isBearerAuthorized(req: NextRequest): boolean {
+  const authHeader = req.headers.get('authorization') ?? ''
+  const secrets = [
+    process.env.PORTAL_API_SECRET,
+    process.env.CRON_SECRET,
+    process.env.ADMIN_SECRET,
+  ].filter(Boolean) as string[]
+  return secrets.some(s => safeCompare(authHeader, `Bearer ${s}`))
+}
+
 export async function GET(req: NextRequest) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const bearerOk = isBearerAuthorized(req)
+  if (!bearerOk) {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
   }
 
   const { searchParams } = new URL(req.url)
@@ -69,9 +83,8 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    // Send alert email if cron-triggered (has CRON_SECRET header)
-    const cronSecret = req.headers.get('x-cron-secret')
-    if (cronSecret && cronSecret === process.env.CRON_SECRET) {
+    // Send alert email if cron-triggered (Bearer CRON_SECRET — Vercel cron format)
+    if (bearerOk) {
       const critical = classified.filter(l => l.urgency === 'critical' || l.urgency === 'high')
       if (critical.length > 0 && process.env.RESEND_API_KEY && process.env.AGENT_ALERT_EMAIL) {
         const rows = critical.slice(0, 10).map(l => `
