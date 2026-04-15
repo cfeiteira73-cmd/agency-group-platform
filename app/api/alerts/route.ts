@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
-import { randomBytes } from 'crypto'
+
 import { createClient as createSupabaseServiceClient } from '@supabase/supabase-js'
 import { safeCompare } from '@/lib/safeCompare'
 
@@ -309,7 +309,7 @@ export async function POST(req: NextRequest) {
     }
 
     const subscription: AlertSubscription = {
-      id: `pss_${Date.now()}_${randomBytes(8).toString('hex')}`,
+      id: crypto.randomUUID(),
       email, zona, tipo, precoMin, precoMax, quartosMin, piscina,
       purpose, keyword, source,
       createdAt: new Date().toISOString(),
