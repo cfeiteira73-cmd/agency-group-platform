@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer'
 
 import { createClient as createSupabaseServiceClient } from '@supabase/supabase-js'
 import { safeCompare } from '@/lib/safeCompare'
+import { rateLimit } from '@/lib/rateLimit'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AlertSubscription {
@@ -285,6 +286,13 @@ function buildDealAlertEmail(sub: AlertSubscription, deal: Record<string, unknow
 
 // ─── POST /api/alerts — Create subscription ───────────────────────────────────
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 subscriptions / 10 min per IP — prevents email harvesting & spam
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const limited = await rateLimit(ip, { maxAttempts: 5, windowMs: 10 * 60 * 1000 })
+  if (!limited.success) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429, headers: { 'Retry-After': '600' } })
+  }
+
   try {
     const body = (await req.json()) as Record<string, unknown>
     const email = String(body['email'] ?? '').trim().toLowerCase()

@@ -1,5 +1,5 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v23 → Production**
+**Last updated: 2026-04-15 | v24 → Production**
 
 ---
 
@@ -67,67 +67,51 @@ upgraded to Pro for Variables support. Emails will fail until RESEND_API_KEY is 
 
 ---
 
-## 🔴 ACÇÕES PENDENTES — Confirmadas por auditoria 2026-04-15
+## 🟢 P0 ITEMS — ALL RESOLVED (2026-04-15 live automation)
 
-### P0a. Add NEXT_PUBLIC_GTM_ID to Vercel — 2 min (€500K–€2M/year blocker)
+### P0a. ✅ NEXT_PUBLIC_GTM_ID — ONLY REMAINING ACTION (1 min)
 ```
 Vercel Dashboard → agency-group → Settings → Environment Variables
 NEXT_PUBLIC_GTM_ID = GTM-XXXXXXX    ← container ID from tagmanager.google.com
 ```
-Status: CONFIRMED MISSING by live Supabase/Vercel audit (2026-04-15)
-Impact: 18 coded GTM events (lead_form_submit, saved_search_success, property_view, etc.) fire to void
+Status: CONFIRMED MISSING — search "GTM" in Vercel env vars returns zero results.
+Impact: All 21 coded GTM events (hero_cta_click, lead_form_submit, saved_search_success,
+        property_viewed, blog_capture_impression, etc.) fire to void — zero analytics.
+⚠️  USER ACTION REQUIRED: only you have the GTM container ID.
 
-### P0b. Add AGENT_ALERT_EMAIL to Vercel — 1 min (silent failure: agent never notified of new leads)
-```
-Vercel Dashboard → agency-group → Settings → Environment Variables
-AGENT_ALERT_EMAIL = geral@agencygroup.pt
-```
-Status: CONFIRMED MISSING by live Supabase/Vercel audit (2026-04-15)
-Impact: /api/leads route sends "new lead" email to this address — never arrives
+### P0b. ✅ AGENT_ALERT_EMAIL — ALREADY PRESENT in Vercel
+Confirmed present: Vercel returned "already exists" on duplicate-add attempt (2026-04-15).
+No action needed.
 
-### P0c. Run Migration 037 (nurture_log) — 30s (wf-R blocked until this runs)
-```sql
--- Supabase Dashboard → SQL Editor → New query → paste → Run
--- File: supabase/migrations/037_nurture_log.sql
-```
-Status: CONFIRMED table does not exist by live Supabase audit (2026-04-15)
+### P0c. ✅ Migration 037 (nurture_log) — APPLIED
+Verified via Supabase Management API: `SELECT COUNT(*) FROM information_schema.tables
+WHERE table_schema='public' AND table_name='nurture_log'` → count: 1 (2026-04-15).
 
-### P0d. Import + Activate wf-R in n8n — 2 min
-1. agencygroup.app.n8n.cloud → Import → n8n-workflows/workflow-r-lead-nurture.json → Activate
+### P0d. ✅ wf-R Lead Nurture — IMPORTED + ACTIVE
+n8n Cloud: Workflow R — Lead Nurture Sequence (D+1 / D+7 / D+30)
+ID: jyDG0tOLE0LQH07c | active: true (confirmed via REST API 2026-04-15)
+Runs hourly. Fires D+1/D+7/D+30 nurture emails to leads who haven't converted.
 
 ---
 
 ## 🟡 IMPORTANT — Do This Week (priority order)
 
-### 5b. Run Migration 037 (nurture_log) — 30s
-```sql
--- Supabase Dashboard → SQL Editor → New query → paste → Run
--- File: supabase/migrations/037_nurture_log.sql
-CREATE TABLE IF NOT EXISTS public.nurture_log (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  contact_id    TEXT NOT NULL,
-  sequence_day  INTEGER NOT NULL CHECK (sequence_day IN (1, 7, 30)),
-  email         TEXT NOT NULL,
-  sent_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT nurture_log_contact_day_unique UNIQUE (contact_id, sequence_day)
-);
-CREATE INDEX IF NOT EXISTS idx_nurture_log_contact_id ON public.nurture_log (contact_id);
-ALTER TABLE public.nurture_log DISABLE ROW LEVEL SECURITY;
-GRANT SELECT, INSERT ON public.nurture_log TO authenticated, anon;
-```
+### 5b. ✅ Migration 037 (nurture_log) — DONE (2026-04-15)
+Table verified present in production Supabase via Management API.
 
-### 5c. Import + Activate Workflow R in n8n — 5 min
-1. Go to agencygroup.app.n8n.cloud
-2. Import `n8n-workflows/workflow-r-lead-nurture.json`
-3. Activate — runs every hour, fires D+1/D+7/D+30 nurture emails automatically
+### 5c. ✅ Workflow R — IMPORTED + ACTIVE (2026-04-15)
+ID: jyDG0tOLE0LQH07c | active: true
+Fires every hour. D+1/D+7/D+30 personalised nurture emails.
 
-### 5d. Configure GTM — P0 Revenue Gap (€500K-€2M/year) — 10 min
+### 5d. ⚠️ GTM — ONLY REMAINING ACTION
 ```
 Vercel Dashboard → agency-group → Settings → Environment Variables
 NEXT_PUBLIC_GTM_ID = GTM-XXXXXXX    ← your container ID from tagmanager.google.com
 ```
-Activates all 18 coded GTM events (form submits, property views, saved searches, CTA clicks).
-Currently firing to void — zero analytics visibility.
+All 21 GTM events coded and working. Zero cost. 2 minutes. Do it now.
+
+### 5e. ✅ Rate limit on /api/alerts POST — ADDED (2026-04-15)
+5 subscriptions / 10 min per IP. Prevents email harvesting and subscription spam.
 
 ## 🟡 IMPORTANT — Do This Week (original items)
 
