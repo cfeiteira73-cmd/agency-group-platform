@@ -137,7 +137,9 @@ export default auth(async (req) => {
     if (!authCookie) {
       const loginUrl = new URL('/portal/login', req.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(loginUrl)
+      const r = NextResponse.redirect(loginUrl)
+      r.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+      return r
     }
   }
 
@@ -175,7 +177,11 @@ export default auth(async (req) => {
     if (!magicCookie && !hasValidToken) {
       const loginUrl = new URL('/auth/login', req.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(loginUrl)
+      const r = NextResponse.redirect(loginUrl)
+      // Prevent CDN from caching auth redirects — each request must be evaluated individually
+      r.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+      r.headers.set('Vary', 'Authorization')
+      return r
     }
   }
 
