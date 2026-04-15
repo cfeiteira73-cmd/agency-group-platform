@@ -3,6 +3,7 @@ import { z } from 'zod'
 import Anthropic from '@anthropic-ai/sdk'
 import { avmCache, CacheKeys } from '@/lib/cache'
 import { supabaseAdmin } from '@/lib/supabase'
+import { rateLimit } from '@/lib/rateLimit'
 
 const AVMSchema = z.object({
   zona:       z.string().optional().default('Lisboa'),
@@ -429,6 +430,16 @@ function methodMomentum(estimativaBase: number, trendYoy: number, trendQtq: numb
 // ─── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 AVM valuations/minute per IP (expensive Claude Vision call)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const limited = await rateLimit(ip, { maxAttempts: 5, windowMs: 60 * 1000 })
+  if (!limited.success) {
+    return NextResponse.json(
+      { error: 'Limite de avaliações atingido. Aguarde 1 minuto.' },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   try {
     const [rawBody, liveRates] = await Promise.all([req.json(), fetchLiveRates()])
 

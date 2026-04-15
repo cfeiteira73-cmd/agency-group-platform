@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit } from '@/lib/rateLimit';
 
 /**
  * AG·AI Proxy — /api/ai
  * Proxy seguro para Anthropic API com retry automático (3 tentativas).
  * Corrige automaticamente nomes de modelo desatualizados.
+ * Rate limited: 20 req/min per IP to prevent API cost abuse.
  */
 
 // Modelos válidos actuais
@@ -26,6 +28,16 @@ function resolveModel(model: string): string {
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 20 requests/minute per IP (prevents Anthropic API cost abuse)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const limited = await rateLimit(ip, { maxAttempts: 20, windowMs: 60 * 1000 })
+  if (!limited.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Tente de novo em 1 minuto.' },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY não configurada' }, { status: 500 });

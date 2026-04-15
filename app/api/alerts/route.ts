@@ -376,8 +376,19 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ subscriptions, count: subscriptions.length })
 }
 
-// ─── PATCH /api/alerts — Deactivate subscription ─────────────────────────────
+// ─── PATCH /api/alerts — Deactivate subscription (admin / n8n only) ──────────
 export async function PATCH(req: NextRequest) {
+  // Requires ADMIN_SECRET or PORTAL_API_SECRET — not public
+  const authHeader = req.headers.get('authorization')
+  const validSecrets = [
+    process.env.ADMIN_SECRET,
+    process.env.PORTAL_API_SECRET,
+    process.env.CRON_SECRET,
+  ].filter(Boolean) as string[]
+  const isAuthorized = validSecrets.some(s => safeCompare(authHeader ?? '', `Bearer ${s}`))
+  if (!isAuthorized) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const body = (await req.json()) as Record<string, unknown>
     const id = String(body['id'] ?? '')
