@@ -1,9 +1,23 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v21 → Production**
+**Last updated: 2026-04-15 | v22 → Production**
 
 ---
 
 ## 🟢 ALL CRITICAL ITEMS RESOLVED — Production Green
+
+### -2. ✅ DONE — n8n wf-Q integration + Lead Nurture D+1/D+7/D+30 (2026-04-15)
+- `POST /api/properties/db`: now fires `N8N_WEBHOOK_URL/webhook/new-property` after successful insert
+  → triggers wf-Q subscriber matching automatically on every new property (non-blocking, 5s timeout)
+  → status guard: skip for off-market/sold properties
+- `GET /api/alerts?mode=active`: fixed auth to accept `PORTAL_API_SECRET` (wf-Q bearer token)
+  → previous bug: wf-Q sent PORTAL_API_SECRET but route only checked CRON_SECRET → 401 → zero subscribers fetched → zero emails
+- New n8n Workflow R — Lead Nurture Sequence: `workflow-r-lead-nurture.json`
+  → Schedule: every hour → compute D+1/D+7/D+30 windows → fetch candidates → personalised email per window
+  → D+1: "Já viu estes imóveis?" · D+7: "Imóveis off-market reservados" · D+30: "Análise de mercado"
+  → Dedup via nurture_log table (migration 037) — no duplicate sends
+- New API routes: `/api/automation/nurture-candidates` + `/api/automation/nurture-mark-sent`
+- New migration: `037_nurture_log.sql` — RUN IN SUPABASE DASHBOARD SQL EDITOR
+- Commit: 774007f
 
 ### -1. ✅ DONE — n8n P1 Email Fixes (2026-04-15)
 - Root cause: httpRequest nodes in wf-P + wf-Q missing `"method":"POST"` → defaulted to GET → emails never sent
@@ -53,7 +67,39 @@ upgraded to Pro for Variables support. Emails will fail until RESEND_API_KEY is 
 
 ---
 
-## 🟡 IMPORTANT — Do This Week
+## 🟡 IMPORTANT — Do This Week (priority order)
+
+### 5b. Run Migration 037 (nurture_log) — 30s
+```sql
+-- Supabase Dashboard → SQL Editor → New query → paste → Run
+-- File: supabase/migrations/037_nurture_log.sql
+CREATE TABLE IF NOT EXISTS public.nurture_log (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id    TEXT NOT NULL,
+  sequence_day  INTEGER NOT NULL CHECK (sequence_day IN (1, 7, 30)),
+  email         TEXT NOT NULL,
+  sent_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT nurture_log_contact_day_unique UNIQUE (contact_id, sequence_day)
+);
+CREATE INDEX IF NOT EXISTS idx_nurture_log_contact_id ON public.nurture_log (contact_id);
+ALTER TABLE public.nurture_log DISABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT ON public.nurture_log TO authenticated, anon;
+```
+
+### 5c. Import + Activate Workflow R in n8n — 5 min
+1. Go to agencygroup.app.n8n.cloud
+2. Import `n8n-workflows/workflow-r-lead-nurture.json`
+3. Activate — runs every hour, fires D+1/D+7/D+30 nurture emails automatically
+
+### 5d. Configure GTM — P0 Revenue Gap (€500K-€2M/year) — 10 min
+```
+Vercel Dashboard → agency-group → Settings → Environment Variables
+NEXT_PUBLIC_GTM_ID = GTM-XXXXXXX    ← your container ID from tagmanager.google.com
+```
+Activates all 18 coded GTM events (form submits, property views, saved searches, CTA clicks).
+Currently firing to void — zero analytics visibility.
+
+## 🟡 IMPORTANT — Do This Week (original items)
 
 ### 5. Git Security
 ```bash

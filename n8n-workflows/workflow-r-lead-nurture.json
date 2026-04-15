@@ -1,0 +1,203 @@
+{
+  "name": "Workflow R — Lead Nurture Sequence (D+1 / D+7 / D+30)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 1 }]
+        }
+      },
+      "id": "r00000000-0000-0000-0000-000000000001",
+      "name": "Schedule — Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Determine which nurture windows are active right now\n// D+1: 20-28h after created_at, D+7: 7d ±4h, D+30: 30d ±4h\nconst now = Date.now();\nconst windows = [\n  { label: 'D+1',  minMs: 20 * 3600000, maxMs: 28 * 3600000,  sequenceDay: 1  },\n  { label: 'D+7',  minMs: (7*24-4) * 3600000, maxMs: (7*24+4) * 3600000, sequenceDay: 7  },\n  { label: 'D+30', minMs: (30*24-4) * 3600000, maxMs: (30*24+4) * 3600000, sequenceDay: 30 },\n];\nreturn [{ json: { now, windows } }];"
+      },
+      "id": "r00000000-0000-0000-0000-000000000002",
+      "name": "Code — Compute Windows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.agencygroup.pt/api/automation/nurture-candidates",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer b60bd2a0bf052a29fe639c03858819db9626e96ec16409ab2c7022c4c35ec7f8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"windows\": {{ JSON.stringify($json.windows) }},\n  \"now\": {{ $json.now }}\n}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "r00000000-0000-0000-0000-000000000003",
+      "name": "HTTP — Fetch Nurture Candidates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Flatten candidates array — one item per (contact × sequenceDay)\nconst result = $input.first().json;\nconst candidates = result.candidates || [];\nif (candidates.length === 0) {\n  return [{ json: { skip: true, reason: 'no_candidates' } }];\n}\nreturn candidates.map(c => ({ json: c }));"
+      },
+      "id": "r00000000-0000-0000-0000-000000000004",
+      "name": "Code — Flatten Candidates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.skip === true }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "r00000000-0000-0000-0000-000000000005",
+      "name": "IF — Skip?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build personalised email HTML per sequence day\nconst c = $input.first().json;\nconst day = c.sequence_day;\nconst name = c.name || 'Prezado/a';\nconst firstName = name.split(' ')[0];\nconst zona = c.zona || 'Lisboa';\nconst budget = c.budget_max ? `€${Number(c.budget_max).toLocaleString('pt-PT')}` : null;\n\nconst subjects = {\n  1:  `${firstName}, já viu estes imóveis em ${zona}?`,\n  7:  `Reserva exclusiva para si — ${zona} · Agency Group`,\n  30: `Atualização de mercado: ${zona} — Abril 2026`,\n};\n\nconst intros = {\n  1: `Ontem criou um alerta para imóveis em <strong>${zona}</strong>${budget ? ` até <strong>${budget}</strong>` : ''}. Selecionámos 3 opções que correspondem exatamente ao seu perfil.`,\n  7: `Há uma semana ativou o seu alerta Agency Group para <strong>${zona}</strong>. A nossa equipa reservou acesso prioritário a imóveis <em>off-market</em> que nunca chegam aos portais públicos.`,\n  30: `O mercado de <strong>${zona}</strong> registou movimentos relevantes este mês. Como subscritor ativo, partilhamos os dados mais recentes em primeira mão.`,\n};\n\nconst ctas = {\n  1:  { text: 'Ver Seleção →',          url: `https://www.agencygroup.pt/imoveis?zona=${encodeURIComponent(zona)}` },\n  7:  { text: 'Aceder a Imóveis Off-Market →', url: 'https://www.agencygroup.pt/imoveis' },\n  30: { text: 'Ver Análise de Mercado →', url: 'https://www.agencygroup.pt/blog' },\n};\n\nconst badges = { 1: 'D+1', 7: 'D+7', 30: 'D+30' };\n\nconst html = `<div style=\"font-family:sans-serif;max-width:600px;margin:0 auto;background:#f4f0e6\">\n  <div style=\"background:#0c1f15;padding:32px 40px\">\n    <h1 style=\"font-family:Georgia,serif;font-weight:300;font-size:1.6rem;color:#f4f0e6;margin:0\">Agency<span style=\"color:#c9a96e\">Group</span></h1>\n    <p style=\"color:rgba(244,240,230,0.4);font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;margin:6px 0 0\">Sequência ${badges[day]} · ${zona}</p>\n  </div>\n  <div style=\"padding:40px;background:#fff\">\n    <h2 style=\"font-family:Georgia,serif;font-weight:300;font-size:1.35rem;color:#0c1f15;margin:0 0 16px\">${subjects[day]}</h2>\n    <p style=\"color:rgba(14,14,13,0.7);font-size:0.85rem;line-height:1.75;margin:0 0 28px\">\n      ${firstName},<br><br>${intros[day]}\n    </p>\n    <div style=\"background:#f8f6f0;border-left:3px solid #c9a96e;padding:16px 20px;margin-bottom:28px\">\n      <p style=\"margin:0;font-size:0.78rem;color:rgba(14,14,13,0.65);line-height:1.65\">\n        <strong>Agency Group — AMI 22506</strong><br>\n        Acesso exclusivo a imóveis <em>off-market</em> · Boutique de luxo · Lisboa · Cascais · Algarve\n      </p>\n    </div>\n    <a href=\"${ctas[day].url}\" style=\"display:inline-block;background:#1c4a35;color:#c9a96e;padding:14px 32px;text-decoration:none;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;font-weight:700\">${ctas[day].text}</a>\n  </div>\n  <div style=\"padding:20px 40px;background:#0c1f15\">\n    <p style=\"color:rgba(244,240,230,0.25);font-size:0.6rem;margin:0\">\n      Agency Group · AMI 22506 · Torre Soleil 1B, Oeiras ·\n      <a href=\"https://www.agencygroup.pt/api/alerts/unsubscribe?email=${encodeURIComponent(c.email)}&zona=${encodeURIComponent(zona)}&tipo=Todos\" style=\"color:rgba(244,240,230,0.25)\">Cancelar alertas</a>\n    </p>\n  </div>\n</div>`;\n\nreturn [{ json: { ...c, subject: subjects[day], html } }];"
+      },
+      "id": "r00000000-0000-0000-0000-000000000006",
+      "name": "Code — Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 140]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer re_TtQZcoYi_BdzrRivUdkGvXFkLFsHvQ6fe"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"from\": \"Agency Group <alertas@agencygroup.pt>\",\n  \"to\": [\"{{ $json.email }}\"],\n  \"subject\": \"{{ $json.subject }}\",\n  \"html\": {{ JSON.stringify($json.html) }}\n}",
+        "options": {}
+      },
+      "id": "r00000000-0000-0000-0000-000000000007",
+      "name": "HTTP — Send Nurture Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1320, 140]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.agencygroup.pt/api/automation/nurture-mark-sent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer b60bd2a0bf052a29fe639c03858819db9626e96ec16409ab2c7022c4c35ec7f8"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"contact_id\": \"{{ $json.contact_id }}\",\n  \"sequence_day\": {{ $json.sequence_day }},\n  \"email\": \"{{ $json.email }}\"\n}",
+        "options": { "timeout": 5000 },
+        "continueOnFail": true
+      },
+      "id": "r00000000-0000-0000-0000-000000000008",
+      "name": "HTTP — Mark Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1540, 140]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Nurture run complete\" }"
+      },
+      "id": "r00000000-0000-0000-0000-000000000009",
+      "name": "Respond — Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1540, 300]
+    }
+  ],
+  "connections": {
+    "Schedule — Every Hour": {
+      "main": [[{ "node": "Code — Compute Windows", "type": "main", "index": 0 }]]
+    },
+    "Code — Compute Windows": {
+      "main": [[{ "node": "HTTP — Fetch Nurture Candidates", "type": "main", "index": 0 }]]
+    },
+    "HTTP — Fetch Nurture Candidates": {
+      "main": [[{ "node": "Code — Flatten Candidates", "type": "main", "index": 0 }]]
+    },
+    "Code — Flatten Candidates": {
+      "main": [[{ "node": "IF — Skip?", "type": "main", "index": 0 }]]
+    },
+    "IF — Skip?": {
+      "main": [
+        [{ "node": "Code — Build Email", "type": "main", "index": 0 }],
+        [{ "node": "Respond — Done",   "type": "main", "index": 0 }]
+      ]
+    },
+    "Code — Build Email": {
+      "main": [[{ "node": "HTTP — Send Nurture Email", "type": "main", "index": 0 }]]
+    },
+    "HTTP — Send Nurture Email": {
+      "main": [[{ "node": "HTTP — Mark Sent", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": true },
+  "pinData": {},
+  "versionId": "r-workflow-lead-nurture-v1",
+  "triggerCount": 0,
+  "tags": [
+    { "createdAt": "2026-04-15", "updatedAt": "2026-04-15", "id": "nurture",  "name": "nurture"  },
+    { "createdAt": "2026-04-15", "updatedAt": "2026-04-15", "id": "email",    "name": "email"    },
+    { "createdAt": "2026-04-15", "updatedAt": "2026-04-15", "id": "contacts", "name": "contacts" }
+  ]
+}
