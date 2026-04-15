@@ -6,9 +6,9 @@ export const metadata: Metadata = {
   description: 'Complete guide to buying property in Portugal in 2026. NIF, CPCV, IMT, stamp duty, IFICI regime. Real costs, step-by-step process for foreign buyers. AMI 22506.',
   robots: 'index, follow',
   alternates: {
-    canonical: 'https://www.agencygroup.pt/blog/buying-property-portugal-guide-2026',
+    canonical: 'https://www.agencygroup.pt/blog/buying-property-portugal-2026',
     languages: {
-      'x-default': 'https://www.agencygroup.pt/blog/buying-property-portugal-guide-2026',
+      'x-default': 'https://www.agencygroup.pt/blog/buying-property-portugal-2026',
     },
   },
   openGraph: {

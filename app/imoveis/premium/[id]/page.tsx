@@ -20,10 +20,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title: `${p.nome} · ${formatPriceFull(p.preco)} · Agency Group`,
     description: `Imóvel exclusivo em ${p.zona}. ${p.area}m² · T${p.quartos} · ${p.desc.slice(0, 120)}...`,
+    alternates: {
+      canonical: `https://www.agencygroup.pt/imoveis/premium/${id}`,
+    },
     openGraph: {
       title: `${p.nome} — ${formatPriceFull(p.preco)}`,
       description: p.desc,
       type: 'website',
+      url: `https://www.agencygroup.pt/imoveis/premium/${id}`,
     },
   }
 }
