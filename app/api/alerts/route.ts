@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 import { randomBytes } from 'crypto'
+import { createClient as createSupabaseServiceClient } from '@supabase/supabase-js'
 import { safeCompare } from '@/lib/safeCompare'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -13,193 +14,154 @@ interface AlertSubscription {
   precoMax: number
   quartosMin: number
   piscina: boolean
+  purpose: string
+  keyword?: string
+  source?: string
   createdAt: string
   active: boolean
-  notionPageId?: string
 }
 
-// ─── In-memory fallback (resets on cold start) ────────────────────────────────
-const memorySubscriptions: AlertSubscription[] = []
-
-// ─── Notion helpers ────────────────────────────────────────────────────────────
-const NOTION_TOKEN = () => process.env.NOTION_TOKEN ?? ''
-const NOTION_ALERTS_DB = () => process.env.NOTION_ALERTS_DB ?? ''
-
-function notionAvailable(): boolean {
-  return Boolean(NOTION_TOKEN() && NOTION_ALERTS_DB())
+// ─── Supabase service client (bypasses RLS, used for admin ops) ───────────────
+function getServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+  return createSupabaseServiceClient(url, key)
 }
 
-async function notionRequest(
-  path: string,
-  method = 'GET',
-  body?: Record<string, unknown>
-): Promise<Record<string, unknown>> {
-  const res = await fetch(`https://api.notion.com/v1${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${NOTION_TOKEN()}`,
-      'Content-Type': 'application/json',
-      'Notion-Version': '2022-06-28',
+// ─── n8n webhook trigger ──────────────────────────────────────────────────────
+async function triggerN8nSavedSearch(sub: AlertSubscription): Promise<void> {
+  const webhookUrl = process.env.N8N_WEBHOOK_URL
+  if (!webhookUrl) return
+  try {
+    await fetch(`${webhookUrl}/webhook/saved-search-created`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'saved_search_created',
+        id: sub.id,
+        email: sub.email,
+        zona: sub.zona,
+        tipo: sub.tipo,
+        preco_min: sub.precoMin,
+        preco_max: sub.precoMax,
+        quartos_min: sub.quartosMin,
+        piscina: sub.piscina,
+        purpose: sub.purpose,
+        keyword: sub.keyword ?? null,
+        source: sub.source ?? 'imoveis_page',
+        created_at: sub.createdAt,
+      }),
+      signal: AbortSignal.timeout(5000),
+    })
+  } catch {
+    // n8n unavailable — non-blocking, do not fail the request
+  }
+}
+
+// ─── Supabase CRUD ────────────────────────────────────────────────────────────
+async function createInSupabase(sub: AlertSubscription): Promise<boolean> {
+  const client = getServiceClient()
+  if (!client) return false
+  const { error } = await client.from('public_saved_searches').upsert(
+    {
+      id: sub.id,
+      email: sub.email,
+      zona: sub.zona,
+      tipo: sub.tipo,
+      preco_min: sub.precoMin,
+      preco_max: sub.precoMax,
+      quartos_min: sub.quartosMin,
+      piscina: sub.piscina,
+      purpose: sub.purpose,
+      keyword: sub.keyword ?? null,
+      source: sub.source ?? 'imoveis_page',
+      is_active: true,
+      created_at: sub.createdAt,
     },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(10000),
-  })
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(`Notion ${method} ${path} → ${res.status}: ${text}`)
-  }
-  return (await res.json()) as Record<string, unknown>
+    { onConflict: 'email,zona,tipo', ignoreDuplicates: false }
+  )
+  return !error
 }
 
-// ─── Parse Notion page → AlertSubscription ────────────────────────────────────
-function parseNotionPage(page: unknown): AlertSubscription | null {
-  try {
-    const p = page as Record<string, unknown>
-    const props = (p['properties'] as Record<string, unknown>) ?? {}
-
-    const getProp = (key: string): Record<string, unknown> =>
-      (props[key] as Record<string, unknown>) ?? {}
-
-    const titleItems = (getProp('Email')['title'] as unknown[]) ?? []
-    const email = titleItems.length > 0
-      ? String(((titleItems[0] as Record<string, unknown>)['plain_text'] as string) ?? '')
-      : ''
-
-    const zonaSelect = (getProp('Zona')['select'] as Record<string, unknown>) ?? {}
-    const tipoSelect = (getProp('Tipo')['select'] as Record<string, unknown>) ?? {}
-    const statusSelect = (getProp('Status')['select'] as Record<string, unknown>) ?? {}
-    const idRich = (getProp('ID')['rich_text'] as unknown[]) ?? []
-    const createdAtDate = (getProp('CreatedAt')['date'] as Record<string, unknown>) ?? {}
-
-    const id = idRich.length > 0
-      ? String(((idRich[0] as Record<string, unknown>)['plain_text'] as string) ?? '')
-      : String(p['id'] ?? '')
-
-    return {
-      id: id || String(p['id'] ?? ''),
-      email,
-      zona: String(zonaSelect['name'] ?? 'Todas'),
-      tipo: String(tipoSelect['name'] ?? 'Todos'),
-      precoMin: Number(getProp('PrecoMin')['number'] ?? 0),
-      precoMax: Number(getProp('PrecoMax')['number'] ?? 10000000),
-      quartosMin: Number(getProp('QuartosMin')['number'] ?? 0),
-      piscina: String(statusSelect['name'] ?? '').includes('piscina'),
-      createdAt: String(createdAtDate['start'] ?? new Date().toISOString()),
-      active: String(statusSelect['name'] ?? 'active') === 'active',
-      notionPageId: String(p['id'] ?? ''),
-    }
-  } catch {
-    return null
+async function findExistingInSupabase(
+  email: string, zona: string, tipo: string
+): Promise<AlertSubscription | null> {
+  const client = getServiceClient()
+  if (!client) return null
+  const { data } = await client
+    .from('public_saved_searches')
+    .select('*')
+    .eq('email', email)
+    .eq('zona', zona)
+    .eq('tipo', tipo)
+    .eq('is_active', true)
+    .maybeSingle()
+  if (!data) return null
+  return {
+    id: data.id,
+    email: data.email,
+    zona: data.zona,
+    tipo: data.tipo,
+    precoMin: data.preco_min,
+    precoMax: data.preco_max,
+    quartosMin: data.quartos_min,
+    piscina: data.piscina,
+    purpose: data.purpose ?? 'buy',
+    keyword: data.keyword ?? undefined,
+    source: data.source ?? 'imoveis_page',
+    createdAt: data.created_at,
+    active: data.is_active,
   }
 }
 
-// ─── Notion CRUD ──────────────────────────────────────────────────────────────
-async function getSubscriptionsFromNotion(): Promise<AlertSubscription[]> {
-  try {
-    const result = await notionRequest(`/databases/${NOTION_ALERTS_DB()}/query`, 'POST', {
-      filter: { property: 'Status', select: { equals: 'active' } },
-      sorts: [{ timestamp: 'created_time', direction: 'descending' }],
-      page_size: 100,
-    })
-    const results = Array.isArray(result['results']) ? result['results'] : []
-    return results
-      .map((p: unknown) => parseNotionPage(p))
-      .filter((s): s is AlertSubscription => s !== null)
-  } catch {
-    return []
-  }
-}
-
-async function getAllSubscriptionsFromNotion(): Promise<AlertSubscription[]> {
-  try {
-    const result = await notionRequest(`/databases/${NOTION_ALERTS_DB()}/query`, 'POST', {
-      sorts: [{ timestamp: 'created_time', direction: 'descending' }],
-      page_size: 100,
-    })
-    const results = Array.isArray(result['results']) ? result['results'] : []
-    return results
-      .map((p: unknown) => parseNotionPage(p))
-      .filter((s): s is AlertSubscription => s !== null)
-  } catch {
-    return []
-  }
-}
-
-async function createSubscriptionInNotion(sub: AlertSubscription): Promise<string | null> {
-  try {
-    const result = await notionRequest('/pages', 'POST', {
-      parent: { database_id: NOTION_ALERTS_DB() },
-      properties: {
-        Email: { title: [{ text: { content: sub.email } }] },
-        Zona: { select: { name: sub.zona } },
-        Tipo: { select: { name: sub.tipo } },
-        PrecoMin: { number: sub.precoMin },
-        PrecoMax: { number: sub.precoMax },
-        QuartosMin: { number: sub.quartosMin },
-        Status: { select: { name: 'active' } },
-        ID: { rich_text: [{ text: { content: sub.id } }] },
-        CreatedAt: { date: { start: sub.createdAt } },
-      },
-    })
-    return String(result['id'] ?? '')
-  } catch (err) {
-    console.error('Failed to create Notion subscription:', err)
-    return null
-  }
-}
-
-async function updateSubscriptionStatusInNotion(notionPageId: string, status: string): Promise<void> {
-  try {
-    await notionRequest(`/pages/${notionPageId}`, 'PATCH', {
-      properties: {
-        Status: { select: { name: status } },
-      },
-    })
-  } catch (err) {
-    console.error('Failed to update Notion subscription status:', err)
-  }
-}
-
-async function findExistingInNotion(email: string, zona: string, tipo: string): Promise<AlertSubscription | null> {
-  try {
-    const result = await notionRequest(`/databases/${NOTION_ALERTS_DB()}/query`, 'POST', {
-      filter: {
-        and: [
-          { property: 'Email', title: { equals: email } },
-          { property: 'Zona', select: { equals: zona } },
-          { property: 'Tipo', select: { equals: tipo } },
-          { property: 'Status', select: { equals: 'active' } },
-        ],
-      },
-      page_size: 1,
-    })
-    const results = Array.isArray(result['results']) ? result['results'] : []
-    if (results.length === 0) return null
-    return parseNotionPage(results[0])
-  } catch {
-    return null
-  }
+async function getActiveFromSupabase(): Promise<AlertSubscription[]> {
+  const client = getServiceClient()
+  if (!client) return []
+  const { data } = await client
+    .from('public_saved_searches')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(500)
+  if (!data) return []
+  return data.map(d => ({
+    id: d.id,
+    email: d.email,
+    zona: d.zona,
+    tipo: d.tipo,
+    precoMin: d.preco_min,
+    precoMax: d.preco_max,
+    quartosMin: d.quartos_min,
+    piscina: d.piscina,
+    purpose: d.purpose ?? 'buy',
+    keyword: d.keyword ?? undefined,
+    source: d.source ?? 'imoveis_page',
+    createdAt: d.created_at,
+    active: d.is_active,
+  }))
 }
 
 // ─── Email helpers: Resend → nodemailer SMTP fallback ─────────────────────────
-async function sendEmail(params: {
-  to: string; subject: string; html: string
-}): Promise<boolean> {
-  // 1. Try Resend
+async function sendEmail(params: { to: string; subject: string; html: string }): Promise<boolean> {
   const resendKey = process.env.RESEND_API_KEY
   if (resendKey) {
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}` },
-        body: JSON.stringify({ from: 'Agency Group <alertas@agencygroup.pt>', to: [params.to], subject: params.subject, html: params.html }),
+        body: JSON.stringify({
+          from: 'Agency Group <alertas@agencygroup.pt>',
+          to: [params.to],
+          subject: params.subject,
+          html: params.html,
+        }),
         signal: AbortSignal.timeout(12000),
       })
       if (res.ok) return true
     } catch { /* fallthrough */ }
   }
 
-  // 2. Fallback: nodemailer SMTP
   const smtpHost = process.env.SMTP_HOST
   const smtpUser = process.env.SMTP_USER
   const smtpPass = process.env.SMTP_PASS
@@ -221,7 +183,6 @@ async function sendEmail(params: {
       return true
     } catch (e) { console.error('SMTP error:', e) }
   }
-
   return false
 }
 
@@ -232,13 +193,13 @@ function buildConfirmationEmail(sub: AlertSubscription): string {
     sub.precoMax < 10000000 ? `Até €${sub.precoMax.toLocaleString('pt-PT')}` : '',
     sub.quartosMin > 0 ? `T${sub.quartosMin}+` : '',
     sub.piscina ? 'Com Piscina' : '',
+    sub.purpose !== 'buy' ? `Objetivo: ${sub.purpose === 'invest' ? 'Investimento' : 'Compra + Investimento'}` : '',
+    sub.keyword ? `Pesquisa: "${sub.keyword}"` : '',
   ].filter(Boolean)
 
   return `<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-</head>
+<head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f4f0e6;font-family:Georgia,serif;">
   <div style="max-width:600px;margin:0 auto;background:#0a1a10;">
     <div style="padding:48px 40px 32px;border-bottom:1px solid rgba(201,169,110,.2);text-align:center;">
@@ -247,7 +208,7 @@ function buildConfirmationEmail(sub: AlertSubscription): string {
     </div>
     <div style="padding:32px 40px;">
       <p style="color:rgba(244,240,230,.7);font-size:15px;line-height:1.7;margin-bottom:24px;">
-        O seu alerta de imóveis foi criado com sucesso. Irá receber notificações quando novos imóveis corresponderem ao seu perfil.
+        O seu alerta de imóveis foi criado. Será notificado assim que surgir algo que corresponda ao seu perfil.
       </p>
       <div style="background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.2);padding:20px 24px;margin-bottom:32px;">
         <div style="color:#c9a96e;font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px;font-family:'Courier New',monospace;">Critérios de Pesquisa</div>
@@ -260,8 +221,8 @@ function buildConfirmationEmail(sub: AlertSubscription): string {
     </div>
     <div style="padding:24px 40px;border-top:1px solid rgba(201,169,110,.12);text-align:center;">
       <p style="color:rgba(244,240,230,.3);font-size:12px;line-height:1.6;font-family:'Courier New',monospace;">
-        Agency Group · Rua do Alecrim, Lisboa · AMI 22506<br>
-        Para cancelar, contacte <a href="mailto:info@agencygroup.pt" style="color:#c9a96e;">info@agencygroup.pt</a>
+        Agency Group · Torre Soleil 1B, Oeiras · AMI 22506<br>
+        Para cancelar: <a href="mailto:geral@agencygroup.pt" style="color:#c9a96e;">geral@agencygroup.pt</a>
       </p>
     </div>
   </div>
@@ -309,7 +270,7 @@ function buildDealAlertEmail(sub: AlertSubscription, deal: Record<string, unknow
     <div style="padding:20px 40px;border-top:1px solid rgba(201,169,110,.1);text-align:center;">
       <p style="color:rgba(244,240,230,.25);font-size:11px;font-family:'Courier New',monospace;margin:0;">
         Alerta para ${sub.zona} · Agency Group AMI 22506<br>
-        <a href="mailto:info@agencygroup.pt" style="color:rgba(201,169,110,.4);">Cancelar alerta</a>
+        <a href="mailto:geral@agencygroup.pt" style="color:rgba(201,169,110,.4);">Cancelar alerta</a>
       </p>
     </div>
   </div>
@@ -321,60 +282,56 @@ function buildDealAlertEmail(sub: AlertSubscription, deal: Record<string, unknow
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as Record<string, unknown>
-    const email = String(body['email'] ?? '')
+    const email = String(body['email'] ?? '').trim().toLowerCase()
     const zona = String(body['zona'] ?? 'Todas')
     const tipo = String(body['tipo'] ?? 'Todos')
     const precoMin = Number(body['precoMin'] ?? 0)
     const precoMax = Number(body['precoMax'] ?? 10000000)
     const quartosMin = Number(body['quartosMin'] ?? 0)
     const piscina = Boolean(body['piscina'] ?? false)
+    const purpose = String(body['purpose'] ?? 'buy')
+    const keyword = body['keyword'] ? String(body['keyword']).trim().slice(0, 120) : undefined
+    const source = body['source'] ? String(body['source']) : 'imoveis_page'
 
     if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
     }
 
-    // Check for duplicate
-    if (notionAvailable()) {
-      const existing = await findExistingInNotion(email, zona, tipo)
-      if (existing) {
-        return NextResponse.json({ message: 'Already subscribed', id: existing.id })
-      }
-    } else {
-      const existing = memorySubscriptions.find(
-        s => s.email === email && s.zona === zona && s.tipo === tipo && s.active
-      )
-      if (existing) {
-        return NextResponse.json({ message: 'Already subscribed', id: existing.id })
-      }
+    // Dedup check — Supabase first
+    const existing = await findExistingInSupabase(email, zona, tipo)
+    if (existing) {
+      return NextResponse.json({ message: 'Already subscribed', id: existing.id })
     }
 
     const subscription: AlertSubscription = {
-      id: `alert_${Date.now()}_${randomBytes(8).toString('hex')}`,
+      id: `pss_${Date.now()}_${randomBytes(8).toString('hex')}`,
       email, zona, tipo, precoMin, precoMax, quartosMin, piscina,
+      purpose, keyword, source,
       createdAt: new Date().toISOString(),
       active: true,
     }
 
-    // Store in Notion or memory
-    if (notionAvailable()) {
-      const notionPageId = await createSubscriptionInNotion(subscription)
-      if (notionPageId) subscription.notionPageId = notionPageId
-    } else {
-      memorySubscriptions.push(subscription)
+    // 1. Persist to Supabase (primary)
+    const saved = await createInSupabase(subscription)
+    if (!saved) {
+      console.error('Failed to persist saved search to Supabase')
     }
 
-    // Send confirmation email
-    await sendEmail({
+    // 2. Fire n8n webhook (async, non-blocking)
+    triggerN8nSavedSearch(subscription).catch(() => {})
+
+    // 3. Send confirmation email (async, non-blocking)
+    sendEmail({
       to: email,
       subject: 'Alerta de Imóveis Ativado — Agency Group',
       html: buildConfirmationEmail(subscription),
-    })
+    }).catch(() => {})
 
     return NextResponse.json({
       success: true,
       id: subscription.id,
       message: 'Alerta criado com sucesso',
-      stored: notionAvailable() ? 'notion' : 'memory',
+      stored: saved ? 'supabase' : 'degraded',
     })
   } catch (err) {
     console.error('Alert API error:', err)
@@ -382,70 +339,47 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ─── GET /api/alerts — List all subscriptions (admin) ────────────────────────
+// ─── GET /api/alerts — List active subscriptions (admin / cron / n8n) ─────────
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const mode = searchParams.get('mode')
 
-  // /api/alerts?mode=active — returns all active subscriptions (used by digest)
   if (mode === 'active') {
     const authHeader = req.headers.get('authorization')
     const secret = process.env.CRON_SECRET ?? process.env.ADMIN_SECRET
-    // Internal cron or authorized admin
     const isCron = req.headers.get('x-vercel-cron') === '1'
     if (!isCron && secret && !safeCompare(authHeader ?? '', `Bearer ${secret}`)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    let active: AlertSubscription[] = []
-    if (notionAvailable()) {
-      active = await getSubscriptionsFromNotion()
-    } else {
-      active = memorySubscriptions.filter(s => s.active)
-    }
+    const active = await getActiveFromSupabase()
     return NextResponse.json({ subscriptions: active, count: active.length })
   }
 
-  // Admin-only full list
+  // Full admin list
   const authHeader = req.headers.get('authorization')
   if (!safeCompare(authHeader ?? '', `Bearer ${process.env.ADMIN_SECRET ?? ''}`)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  let subscriptions: AlertSubscription[] = []
-  if (notionAvailable()) {
-    subscriptions = await getAllSubscriptionsFromNotion()
-  } else {
-    subscriptions = memorySubscriptions
-  }
-
+  const subscriptions = await getActiveFromSupabase()
   return NextResponse.json({ subscriptions, count: subscriptions.length })
 }
 
-// ─── PATCH /api/alerts — Update subscription status ──────────────────────────
+// ─── PATCH /api/alerts — Deactivate subscription ─────────────────────────────
 export async function PATCH(req: NextRequest) {
   try {
     const body = (await req.json()) as Record<string, unknown>
     const id = String(body['id'] ?? '')
     const status = String(body['status'] ?? 'active')
-    const notionPageId = String(body['notionPageId'] ?? '')
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-    if (!id) {
-      return NextResponse.json({ error: 'id required' }, { status: 400 })
+    const client = getServiceClient()
+    if (client) {
+      await client
+        .from('public_saved_searches')
+        .update({ is_active: status === 'active', updated_at: new Date().toISOString() })
+        .eq('id', id)
     }
-
-    if (notionAvailable() && notionPageId) {
-      await updateSubscriptionStatusInNotion(notionPageId, status)
-      return NextResponse.json({ success: true, id, status, stored: 'notion' })
-    }
-
-    // Update in memory
-    const sub = memorySubscriptions.find(s => s.id === id)
-    if (!sub) {
-      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
-    }
-    sub.active = status === 'active'
-    return NextResponse.json({ success: true, id, status, stored: 'memory' })
+    return NextResponse.json({ success: true, id, status })
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
@@ -454,22 +388,14 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// ─── Notify all active subscribers of a high-score deal ──────────────────────
-// Called internally by the digest when a deal with score ≥ 85 is found.
+// ─── Notify subscribers of a matching deal (called by digest/radar) ───────────
 export async function notifySubscribersOfDeal(deal: Record<string, unknown>): Promise<number> {
-  let active: AlertSubscription[] = []
-  if (notionAvailable()) {
-    active = await getSubscriptionsFromNotion()
-  } else {
-    active = memorySubscriptions.filter(s => s.active)
-  }
-
+  const active = await getActiveFromSupabase()
   const dealZona = String(deal['zona'] ?? '')
   const dealPreco = Number(deal['preco'] ?? 0)
-
   let sent = 0
+
   for (const sub of active) {
-    // Match criteria
     if (sub.zona !== 'Todas' && dealZona && !dealZona.includes(sub.zona.split(' — ')[0])) continue
     if (dealPreco > 0 && dealPreco < sub.precoMin) continue
     if (dealPreco > 0 && sub.precoMax < 10000000 && dealPreco > sub.precoMax) continue

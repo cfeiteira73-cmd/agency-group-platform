@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import type { Article, Section } from './articles'
+import BlogRelatedListings from './BlogRelatedListings'
+import BlogEmailCapture from './BlogEmailCapture'
+import { track } from '@/lib/gtm'
 
 interface BlogArticleProps {
   article: Article
@@ -370,16 +373,42 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
         {/* Main content */}
         <article className="art-content">
           {article.content.map((section, idx) => {
-            const midpoint = Math.floor(article.content.length / 2)
+            const total = article.content.length
+            const midpoint = Math.floor(total / 2)
+            const twoThirds = Math.floor(total * 0.67)
             return (
               <>
                 {renderSection(section, idx)}
+
+                {/* Inline email capture at midpoint */}
                 {idx === midpoint - 1 && (
-                  <div key="mid-cta" style={{
-                    border: '1px solid rgba(201,169,110,0.25)',
-                    background: 'rgba(201,169,110,0.04)',
-                    padding: '1.5rem',
-                    margin: '2rem 0',
+                  <BlogEmailCapture
+                    key="mid-email"
+                    articleSlug={article.slug}
+                    articleZona={article.zona}
+                    variant="inline"
+                  />
+                )}
+
+                {/* Related listings at 2/3 of article */}
+                {idx === twoThirds - 1 && (
+                  <BlogRelatedListings
+                    key="related-listings"
+                    articleSlug={article.slug}
+                    articleZona={article.zona}
+                    articleCategory={article.category}
+                    articleKeywords={article.keywords}
+                    maxListings={3}
+                  />
+                )}
+
+                {/* Saved search CTA if buyer guide */}
+                {idx === twoThirds && article.category !== 'Vistos & Legal' && (
+                  <div key="saved-search-cta" style={{
+                    border: '1px solid rgba(201,169,110,.22)',
+                    background: 'rgba(201,169,110,.04)',
+                    padding: '1.25rem 1.5rem',
+                    margin: '1.5rem 0',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -387,39 +416,39 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
                     gap: '1rem',
                   }}>
                     <p style={{
-                      fontFamily: "'Cormorant', serif",
-                      fontSize: '1.05rem',
-                      fontWeight: 300,
-                      color: '#0c1f15',
-                      margin: 0,
-                      lineHeight: 1.4,
+                      fontFamily: "'Cormorant', serif", fontSize: '1rem',
+                      fontWeight: 300, color: '#0c1f15', margin: 0, lineHeight: 1.4,
                     }}>
-                      Portfólio exclusivo · imóveis não publicados
+                      🔔 Ative alertas automáticos{article.zona ? ` para ${article.zona}` : ''}
                     </p>
                     <a
-                      href="https://wa.me/351919948986"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="/imoveis"
+                      onClick={() => track('blog_saved_search_clicked', {
+                        article: article.slug,
+                        zona: article.zona ?? '',
+                      })}
                       style={{
-                        background: '#1c4a35',
-                        color: '#f4f0e6',
-                        padding: '10px 20px',
-                        textDecoration: 'none',
-                        fontFamily: "'DM Mono', monospace",
-                        fontSize: '0.5rem',
-                        letterSpacing: '0.16em',
-                        textTransform: 'uppercase',
-                        whiteSpace: 'nowrap',
-                        flexShrink: 0,
+                        background: '#1c4a35', color: '#c9a96e',
+                        padding: '9px 18px', textDecoration: 'none',
+                        fontFamily: "'DM Mono', monospace", fontSize: '.5rem',
+                        letterSpacing: '.14em', textTransform: 'uppercase',
+                        whiteSpace: 'nowrap', flexShrink: 0,
                       }}
                     >
-                      Aceder ao Portfólio →
+                      Guardar Pesquisa →
                     </a>
                   </div>
                 )}
               </>
             )
           })}
+
+          {/* End-of-article email capture */}
+          <BlogEmailCapture
+            articleSlug={article.slug}
+            articleZona={article.zona}
+            variant="end-of-article"
+          />
 
           {/* Article-end CTA */}
           <div style={{

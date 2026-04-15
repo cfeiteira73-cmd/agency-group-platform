@@ -22,6 +22,20 @@ type TrackEvent =
   | 'compare_initiated'
   | 'seller_cta_click'
   | 'seller_cta_impression'
+  // Saved searches & alerts
+  | 'saved_search_opened'
+  | 'saved_search_submitted'
+  | 'saved_search_success'
+  | 'alert_optin'
+  // Blog conversion
+  | 'blog_cta_clicked'
+  | 'related_listing_clicked'
+  | 'inline_capture_submitted'
+  | 'blog_saved_search_clicked'
+  // Trust & press
+  | 'press_article_clicked'
+  // Buyer pipeline
+  | 'buyer_lead_submitted'
 
 export function track(event: TrackEvent, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return

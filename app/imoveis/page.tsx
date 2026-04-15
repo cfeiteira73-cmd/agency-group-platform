@@ -6,6 +6,8 @@ import FavoriteButton, { FavoritesDrawer } from './FavoriteButton'
 import CompareBar from './CompareBar'
 import { CurrencySelector, useCurrency } from '../components/CurrencyWidget'
 import { AIPropertySearch } from '../components/AIPropertySearch'
+import AlertSubscribe from './AlertSubscribe'
+import { track } from '@/lib/gtm'
 
 const MapView = lazy(() => import('./MapView'))
 
@@ -51,6 +53,7 @@ export default function ImoveisPage() {
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
+  const [alertOpen, setAlertOpen] = useState(false)
 
   const activeFilterCount = [
     zona ? 1 : 0,
@@ -418,24 +421,65 @@ export default function ImoveisPage() {
           </div>
         </div>
 
-        {/* ── RESULTS COUNT ── */}
+        {/* ── RESULTS COUNT + SAVE SEARCH CTA ── */}
         <div style={{
           maxWidth: '1400px', margin: '0 auto',
           padding: '20px 40px 0',
-          fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
-          letterSpacing: '.16em', color: 'rgba(244,240,230,.35)',
-          textTransform: 'uppercase',
-          display: 'flex', alignItems: 'center', gap: '16px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: '12px',
         }}>
-          <span>
-            <span style={{ color: '#c9a96e' }}>{filtered.length}</span>
-            {' '}imóve{filtered.length !== 1 ? 'is' : 'l'} encontrado{filtered.length !== 1 ? 's' : ''}
-          </span>
-          {compareIds.length > 0 && (
-            <span style={{ color: 'rgba(201,169,110,.6)' }}>
-              · {compareIds.length} selecionado{compareIds.length !== 1 ? 's' : ''} para comparar
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: '.52rem',
+            letterSpacing: '.16em', color: 'rgba(244,240,230,.35)',
+            textTransform: 'uppercase',
+            display: 'flex', alignItems: 'center', gap: '16px',
+          }}>
+            <span>
+              <span style={{ color: '#c9a96e' }}>{filtered.length}</span>
+              {' '}imóve{filtered.length !== 1 ? 'is' : 'l'} encontrado{filtered.length !== 1 ? 's' : ''}
             </span>
-          )}
+            {compareIds.length > 0 && (
+              <span style={{ color: 'rgba(201,169,110,.6)' }}>
+                · {compareIds.length} selecionado{compareIds.length !== 1 ? 's' : ''} para comparar
+              </span>
+            )}
+          </div>
+
+          {/* Save Search CTA — always visible */}
+          <button
+            type="button"
+            onClick={() => {
+              track('saved_search_opened', {
+                zona: zona || 'Todas',
+                tipo: tipo || 'Todos',
+                preco: preco || '',
+                quartos: quartos || '',
+                source: 'imoveis_results_bar',
+              })
+              setAlertOpen(true)
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'rgba(201,169,110,.08)',
+              border: '1px solid rgba(201,169,110,.3)',
+              color: '#c9a96e',
+              padding: '9px 18px',
+              fontFamily: "'Jost', sans-serif", fontSize: '.6rem',
+              fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase',
+              cursor: 'pointer', transition: 'all .2s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(201,169,110,.15)'
+              e.currentTarget.style.borderColor = 'rgba(201,169,110,.5)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(201,169,110,.08)'
+              e.currentTarget.style.borderColor = 'rgba(201,169,110,.3)'
+            }}
+          >
+            <span style={{ fontSize: '.8rem' }}>🔔</span>
+            Guardar Pesquisa
+          </button>
         </div>
 
         {/* ── MAP SPLIT VIEW ── */}
@@ -774,6 +818,25 @@ export default function ImoveisPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── SAVE SEARCH MODAL ── */}
+      {alertOpen && (
+        <AlertSubscribe
+          onClose={() => setAlertOpen(false)}
+          source="imoveis_page"
+          initialCriteria={{
+            zona: zona || 'Todas',
+            tipo: tipo || 'Todos',
+            precoMax: preco === '500k-1m' ? 1000000
+              : preco === '1m-2m' ? 2000000
+              : preco === '2m-4m' ? 4000000
+              : preco === '4m+' ? 99000000
+              : 10000000,
+            quartosMin: quartos ? parseInt(quartos) : 0,
+            piscina: features.includes('piscina'),
+          }}
+        />
       )}
 
       {/* Responsive grid override */}

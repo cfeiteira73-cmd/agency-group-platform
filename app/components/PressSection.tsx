@@ -1,18 +1,69 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
+import { track } from '@/lib/gtm'
 
-// ─── Market Publications (ticker) ──────────────────────────────────────────────
-const MARKET_TICKER = [
-  { name: 'Bloomberg', url: 'https://www.bloomberg.com/news/articles/2024-09-08/wealthy-americans-are-spiking-portugal-s-algarve-housing-market' },
-  { name: 'CNN', url: 'https://www.cnn.com/travel/portugal-american-woman-never-coming-back/index.html' },
-  { name: 'New York Times', url: 'https://www.nytimes.com/shared/interactive/2022/travel/52-places-travel-2022/alentejo.html' },
-  { name: 'Forbes', url: 'https://www.forbes.com/search/?q=portugal+best+country+live+invest' },
-  { name: 'Financial Times', url: 'https://www.ft.com/search?q=portugal+property+investment' },
-  { name: 'Le Figaro', url: 'https://recherche.lefigaro.fr/recherche/immobilier/portugal/' },
-  { name: 'Forbes Brasil', url: 'https://forbes.com.br/?s=portugal+investimento' },
-  { name: 'Vogue', url: 'https://www.vogue.com/search?q=portugal' },
+// ─── Market Publications ─────────────────────────────────────────────────────
+// is_verified = true → direct article link, confirmed live
+// is_verified = false → search/homepage, not a specific article
+const MARKET_TICKER: Array<{
+  name: string
+  url: string
+  is_verified: boolean
+  article_date?: string
+  article_title?: string
+}> = [
+  {
+    name: 'Bloomberg',
+    url: 'https://www.bloomberg.com/news/articles/2024-09-08/wealthy-americans-are-spiking-portugal-s-algarve-housing-market',
+    is_verified: true,
+    article_date: 'Setembro 2024',
+    article_title: 'Wealthy Americans are spiking Portugal\'s Algarve housing market',
+  },
+  {
+    name: 'CNN',
+    url: 'https://www.cnn.com/travel/portugal-american-woman-never-coming-back/index.html',
+    is_verified: true,
+    article_date: '2023',
+    article_title: 'Portugal: the country people move to and never come back from',
+  },
+  {
+    name: 'New York Times',
+    url: 'https://www.nytimes.com/shared/interactive/2022/travel/52-places-travel-2022/alentejo.html',
+    is_verified: true,
+    article_date: '2022',
+    article_title: '52 Places to Go in 2022 — Alentejo, Portugal',
+  },
+  {
+    name: 'Financial Times',
+    url: 'https://www.ft.com/search?q=portugal+property+investment',
+    is_verified: false,
+  },
+  {
+    name: 'Forbes',
+    url: 'https://www.forbes.com/search/?q=portugal+best+country+live+invest',
+    is_verified: false,
+  },
+  {
+    name: 'Le Figaro',
+    url: 'https://recherche.lefigaro.fr/recherche/immobilier/portugal/',
+    is_verified: false,
+  },
+  {
+    name: 'Forbes Brasil',
+    url: 'https://forbes.com.br/?s=portugal+investimento',
+    is_verified: false,
+  },
+  {
+    name: 'Vogue',
+    url: 'https://www.vogue.com/search?q=portugal',
+    is_verified: false,
+  },
 ]
+
+// Only verified articles shown in main ticker; unverified in secondary "as seen in" row
+const VERIFIED_PRESS = MARKET_TICKER.filter(p => p.is_verified)
+const SECONDARY_PRESS = MARKET_TICKER.filter(p => !p.is_verified)
 
 // ─── Lifestyle Cards — 8 life moments ──────────────────────────────────────────
 // Neuromarketing: future pacing · identity anchoring · sensory triggers
@@ -163,77 +214,108 @@ export default function PressSection() {
         </div>
       </section>
 
-      {/* ── 2. PUBLICATION TICKER — horizontal scroll ────────────────────── */}
+      {/* ── 2. VERIFIED PRESS — 3 direct article links with date ─────────── */}
       <section style={{
         background: '#0c1f15',
         borderTop: '1px solid rgba(201,169,110,.08)',
-        borderBottom: '1px solid rgba(201,169,110,.08)',
-        padding: '0',
-        overflow: 'hidden',
-        position: 'relative',
+        borderBottom: '1px solid rgba(201,169,110,.06)',
+        padding: '32px 40px',
       }}>
-        {/* fade edges */}
-        <div style={{
-          position: 'absolute', left: 0, top: 0, bottom: 0, width: '80px', zIndex: 2,
-          background: 'linear-gradient(to right, #0c1f15, transparent)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', right: 0, top: 0, bottom: 0, width: '80px', zIndex: 2,
-          background: 'linear-gradient(to left, #0c1f15, transparent)',
-          pointerEvents: 'none',
-        }} />
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          {/* Label */}
+          <div style={{
+            fontFamily: "'DM Mono', monospace", fontSize: '.48rem',
+            letterSpacing: '.28em', textTransform: 'uppercase',
+            color: 'rgba(201,169,110,.4)', marginBottom: '20px', textAlign: 'center',
+          }}>
+            Cobertura Editorial Verificada
+          </div>
 
-        <div style={{
-          display: 'flex',
-          animation: 'pubTicker 44s linear infinite',
-          whiteSpace: 'nowrap',
-        }}>
-          {[...Array(3)].map((_, rep) => (
-            <span key={rep} style={{ display: 'contents' }}>
-              {MARKET_TICKER.map((pub, i) => (
-                <a
-                  key={`${rep}-${i}`}
-                  href={pub.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '24px',
-                    padding: '20px 40px',
-                    borderRight: '1px solid rgba(201,169,110,.08)',
-                    flexShrink: 0,
-                    textDecoration: 'none',
-                    transition: 'background .2s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,169,110,.04)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
+          {/* Verified articles row */}
+          <div style={{
+            display: 'flex', justifyContent: 'center',
+            flexWrap: 'wrap', gap: '12px', marginBottom: '24px',
+          }}>
+            {VERIFIED_PRESS.map(pub => (
+              <a
+                key={pub.name}
+                href={pub.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => track('press_article_clicked', { publication: pub.name, verified: true })}
+                style={{
+                  display: 'flex', flexDirection: 'column', gap: '4px',
+                  padding: '14px 20px',
+                  border: '1px solid rgba(201,169,110,.2)',
+                  background: 'rgba(201,169,110,.04)',
+                  textDecoration: 'none',
+                  transition: 'all .2s', minWidth: '200px', maxWidth: '320px',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'rgba(201,169,110,.09)'
+                  e.currentTarget.style.borderColor = 'rgba(201,169,110,.4)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(201,169,110,.04)'
+                  e.currentTarget.style.borderColor = 'rgba(201,169,110,.2)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                   <span style={{
-                    fontFamily: "'Cormorant', serif",
-                    fontSize: '15px',
-                    fontWeight: 400,
-                    letterSpacing: '0.04em',
-                    color: 'rgba(220,215,200,.45)',
-                    transition: 'color .2s',
+                    fontFamily: "'Cormorant', serif", fontSize: '1rem',
+                    fontWeight: 400, color: 'rgba(244,240,230,.75)',
+                    letterSpacing: '.02em',
+                  }}>{pub.name}</span>
+                  {pub.article_date && (
+                    <span style={{
+                      fontFamily: "'DM Mono', monospace", fontSize: '.46rem',
+                      letterSpacing: '.1em', color: 'rgba(201,169,110,.45)',
+                      textTransform: 'uppercase', whiteSpace: 'nowrap',
+                    }}>{pub.article_date}</span>
+                  )}
+                </div>
+                {pub.article_title && (
+                  <span style={{
+                    fontFamily: "'Jost', sans-serif", fontSize: '.65rem',
+                    color: 'rgba(244,240,230,.35)', lineHeight: 1.4,
+                    fontStyle: 'italic',
                   }}>
-                    {pub.name}
+                    &ldquo;{pub.article_title.slice(0, 72)}{pub.article_title.length > 72 ? '…' : ''}&rdquo;
                   </span>
-                </a>
-              ))}
-              {/* separator diamond */}
+                )}
+                <span style={{
+                  fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                  letterSpacing: '.1em', color: 'rgba(201,169,110,.35)',
+                  textTransform: 'uppercase', marginTop: '2px',
+                }}>Artigo verificado →</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Secondary "as seen in" row — unverified publications */}
+          {SECONDARY_PRESS.length > 0 && (
+            <div style={{
+              display: 'flex', justifyContent: 'center', alignItems: 'center',
+              flexWrap: 'wrap', gap: '24px',
+              paddingTop: '16px',
+              borderTop: '1px solid rgba(201,169,110,.06)',
+            }}>
               <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '20px 20px',
-                flexShrink: 0,
-                color: 'rgba(201,169,110,.18)',
-                fontFamily: 'serif',
-                fontSize: '8px',
-              }}>◆</span>
-            </span>
-          ))}
+                fontFamily: "'DM Mono', monospace", fontSize: '.44rem',
+                letterSpacing: '.2em', textTransform: 'uppercase',
+                color: 'rgba(244,240,230,.2)',
+              }}>também em</span>
+              {SECONDARY_PRESS.map(pub => (
+                <span
+                  key={pub.name}
+                  style={{
+                    fontFamily: "'Cormorant', serif", fontSize: '.95rem',
+                    color: 'rgba(244,240,230,.22)', letterSpacing: '.03em',
+                  }}
+                >{pub.name}</span>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
