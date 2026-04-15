@@ -278,6 +278,7 @@ const schemaAggregateRatingExpanded = {
 }
 
 const LAYOUT_BUILD_ID = (process.env.VERCEL_GIT_COMMIT_SHA || 'local').slice(0, 8)
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-MZF2GB28'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -355,16 +356,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body style={{ background: '#f4f0e6' }}>
         {/* Google Tag Manager — noscript fallback (must be first element in body) */}
-        {process.env.NEXT_PUBLIC_GTM_ID && (
-          <noscript>
-            <iframe
-              src={`https://www.googletagmanager.com/ns.html?id=${process.env.NEXT_PUBLIC_GTM_ID}`}
-              height="0"
-              width="0"
-              style={{ display: 'none', visibility: 'hidden' }}
-            />
-          </noscript>
-        )}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          />
+        </noscript>
         {/* ── DEFENSIVE LOADER KILL — JS layer (belt-and-suspenders above CSS) ──
             Runs synchronously before React hydration.
             If #loader enters DOM on a mobile device for any reason, this script
@@ -399,23 +398,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />
         {/* Vercel Speed Insights */}
         <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />
-        {/* Google Tag Manager — only loads when GTM_ID is configured */}
-        {process.env.NEXT_PUBLIC_GTM_ID && (
-          <>
-            <Script
-              id="gtm-init"
-              strategy="afterInteractive"
-              dangerouslySetInnerHTML={{
-                __html: `window.dataLayer=window.dataLayer||[];window.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});`,
-              }}
-            />
-            <Script
-              id="gtm-script"
-              strategy="afterInteractive"
-              src={`https://www.googletagmanager.com/gtm.js?id=${process.env.NEXT_PUBLIC_GTM_ID}`}
-            />
-          </>
-        )}
+        {/* Google Tag Manager — always loads (GTM_ID hardcoded as public fallback) */}
+        <Script
+          id="gtm-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];window.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});`,
+          }}
+        />
+        <Script
+          id="gtm-script"
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`}
+        />
         {/* WhatsApp click tracking — delegated, zero-overhead */}
         <Script
           id="wa-track"
