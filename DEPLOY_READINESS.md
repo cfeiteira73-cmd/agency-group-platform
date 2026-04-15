@@ -1,5 +1,5 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v27 → Production**
+**Last updated: 2026-04-15 | v28 → Production**
 
 ---
 
@@ -160,6 +160,59 @@ File: `supabase/migrations/038_fix_rls_policies.sql`
 - `contacts` + `deals`: service_role only (no anon access)
 - `properties`: public SELECT for non-off-market/archived, service_role write
 - **MUST BE RUN MANUALLY** — Supabase Management API SQL exec required
+
+### SEC-4. ✅ Migration 039 — email UNIQUE + UTM columns — commit 691e09d (2026-04-15)
+File: `supabase/migrations/039_contacts_email_unique_utm.sql`
+- Partial UNIQUE index on contacts.email (WHERE email IS NOT NULL)
+- 6 UTM attribution columns (source, medium, campaign, term, content, landing)
+- `/api/leads` accepts + stores UTM params from frontend
+- **MUST BE RUN MANUALLY** (check for email duplicates first with query in migration file)
+
+### SEC-5. ✅ offmarket-leads timing-safe auth + 8 rate limits + Referrer-Policy — commit 1ef0c05 (2026-04-15)
+- `safeCompare()` in both GET+POST handlers of `/api/offmarket-leads`
+- 8 routes added to proxy.ts LIMITS: sofia, offmarket-leads, whatsapp, signals, off-market, crm, notion
+- `/api/auth/gen`: added `Referrer-Policy: no-referrer` to prevent `?s=` leaking
+
+## 🤖 n8n WORKFLOW STATUS — Post-Audit (2026-04-15)
+
+### Active in n8n Cloud (agencygroup.app.n8n.cloud)
+```
+Workflow G  — Off-Market Lead Ingestor      ✅ Active (wf_g_current.json)
+Workflow H  — Score Alto → Alerta 15min     ✅ Active (workflow-h-score-high-alert.json)
+Workflow P  — Saved Search Created          ✅ Published (workflow-p-saved-search-created.json)
+Workflow Q  — Property Alert Matching       ✅ Published (workflow-q-property-alert-match.json)
+Workflow R  — Lead Nurture D+1/D+7/D+30     ✅ Active (workflow-r-lead-nurture.json)
+Agency      — Lead Capture & Score          ✅ Published
+```
+
+### INACTIVE — Import + Activate in n8n Cloud (Priority order)
+```
+1. workflow-a-lead-inbound.json         — Lead inbound entry point (webhook)
+2. workflow-a-lead-enrichment.json      — Full enrichment: Clearbit+Hunter+Claude+DB
+3. workflow-b-lead-scoring.json         — 6h rescore of 200 active contacts
+4. workflow-b-daily-report.json         — Mon-Fri 08:00 market brief → email + WhatsApp
+5. workflow-c-dormant-lead.json         — Daily dormant re-engagement
+6. workflow-d-investor-alert.json       — New property → investor matching + alert
+7. workflow-i-followup-auto.json        — 6h follow-up reminders (leads + partners)
+8. workflow-j-partner-onboarding.json   — Partner D0/D7/D30 sequence (Telegram)
+9. workflow-k-meeting-notify.json       — Meeting 24h reminder (Telegram)
+10. workflow-l-lead-reactivation.json   — Monday dormant inventory
+11. workflow-m-advisor-assignment.json  — Auto-assign advisor by zone/score
+12. workflow-n-daily-digest.json        — Mon-Fri 08:00 off-market digest
+13. workflow-o-weekly-performance.json  — Friday 09:00 weekly performance report
+```
+
+### Dedup Gap Fixed (commit pending)
+- Migration 040: `property_alert_sent` table — UNIQUE (email, property_id)
+- `/api/automation/alert-check-sent` — wf-Q calls this before each send
+  to prevent re-alerting subscribers about the same property twice
+- **MUST import updated wf-Q to n8n Cloud** to use this endpoint
+
+### n8n Security Note
+- Workflows P, Q, R have hardcoded secrets (n8n Cloud free plan has no Variables)
+- RESEND_API_KEY + PORTAL_API_SECRET/CRON_SECRET visible in JSON exports
+- **Risk accepted** for MVP; upgrade to n8n Pro to use Variables (€20/month)
+- Alternative: rotate secrets quarterly (add to ops calendar)
 
 ## 🟡 IMPORTANT — Do This Week (original items)
 
