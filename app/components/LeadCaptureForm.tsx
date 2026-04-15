@@ -177,7 +177,7 @@ function QualificationInline({ contactId, onComplete, onSkip }: QualInlineProps)
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ use_type: useType, budget_max: budgetMax, timeline }),
-      }).catch(() => {})
+      }).catch(err => console.error('[LeadCaptureForm] qualification PATCH failed:', err?.message ?? err))
     }
     track('qualification_completed', { use_type: useType, budget_max: budgetMax, timeline })
     onComplete()

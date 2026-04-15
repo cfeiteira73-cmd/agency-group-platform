@@ -28,7 +28,7 @@ export default function HomeNav() {
             window.dispatchEvent(new CustomEvent('ag:toast', { detail: { msg: 'Link inválido ou expirado. Pede um novo.', type: 'error' } }))
           }
         })
-        .catch(() => {})
+        .catch(err => console.error('[HomeNav] magic-link verify failed:', err?.message ?? err))
       return
     }
 

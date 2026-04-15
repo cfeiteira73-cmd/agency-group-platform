@@ -71,7 +71,7 @@ export default function BlogEmailCapture({
             tipo: 'Todos',
             source: `blog_${variant}_${articleSlug}`,
           }),
-        }).catch(() => {})
+        }).catch(err => console.error('[BlogEmailCapture] alert opt-in failed:', err?.message ?? err))
 
         track('alert_optin', {
           email_domain: email.split('@')[1],

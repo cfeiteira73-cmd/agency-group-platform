@@ -1284,7 +1284,7 @@ export default function PortalCRM() {
                               method: 'PATCH',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ _email: activeContact.email, status: s }),
-                            }).catch(() => {})
+                            }).catch(err => console.error('[PortalCRM] status PATCH failed:', err?.message ?? err))
                           }
                         }}>
                         {s}

@@ -129,7 +129,9 @@ export async function GET(req: NextRequest) {
               </div>
             `,
           }),
-        }).catch(() => {})
+        }).catch(err =>
+          console.error('[forgotten-leads] Resend alert failed:', err?.message ?? err)
+        )
       }
     }
 

@@ -67,7 +67,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
         propertyRef, propertyName, propertyPreco,
         date: dayLabel, time: selectedTime, visitType,
       }),
-    }).catch(() => {})
+    }).catch(err => console.error('[SchedulingModal] booking POST failed:', err?.message ?? err))
     setSuccess(true)
   }
 

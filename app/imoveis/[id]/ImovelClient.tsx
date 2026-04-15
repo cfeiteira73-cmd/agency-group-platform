@@ -110,7 +110,7 @@ export default function ImovelClient({ id }: { id: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ property_id: id }),
-      }).catch(() => {})
+      }).catch(err => console.error('[ImovelClient] track-view failed:', err?.message ?? err))
       track('property_viewed', { property_id: id })
     }, 5000)
     return () => clearTimeout(timer)

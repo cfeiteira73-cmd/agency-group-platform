@@ -772,7 +772,7 @@ export default function SofiaAgentWidget() {
                                 use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
                                 message: leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : undefined,
                               }),
-                            }).catch(() => {})
+                            }).catch(err => console.error('[Sofia] lead POST failed:', err?.message ?? err))
                             track('lead_form_submit', { source: 'sofia_widget', lead_score: leadScore })
                             setSofiaEmailSent(true)
                           }
@@ -792,7 +792,7 @@ export default function SofiaAgentWidget() {
                                 use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
                                 message: leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : undefined,
                               }),
-                            }).catch(() => {})
+                            }).catch(err => console.error('[Sofia] lead POST failed:', err?.message ?? err))
                             track('lead_form_submit', { source: 'sofia_widget', lead_score: leadScore })
                             setSofiaEmailSent(true)
                           }}

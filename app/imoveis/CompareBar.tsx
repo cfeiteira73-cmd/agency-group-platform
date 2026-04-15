@@ -325,7 +325,7 @@ export default function CompareBar({ selected, properties, onRemove, onClear }: 
                             source: 'compare_bar',
                             message: `Comparação: ${selProps.map(p => p.ref).join(', ')}`,
                           }),
-                        }).catch(() => {})
+                        }).catch(err => console.error('[CompareBar] lead POST failed:', err?.message ?? err))
                         track('compare_initiated', { refs: selProps.map(p => p.ref) })
                         setCompareCaptured(true)
                       }}
