@@ -1,9 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { safeCompare } from '@/lib/safeCompare'
 
 export const maxDuration = 30
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Admin-only — requires Bearer ADMIN_SECRET
+  const auth = req.headers.get('authorization') ?? ''
+  if (!safeCompare(auth, `Bearer ${process.env.ADMIN_SECRET ?? ''}`)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const smtpHost = process.env.SMTP_HOST ?? ''
   const smtpUser = process.env.SMTP_USER ?? ''
   const smtpPass = process.env.SMTP_PASS ?? ''
@@ -41,7 +48,7 @@ export async function GET() {
       success: true,
       messageId: info.messageId,
       accepted: info.accepted,
-      config: { host: smtpHost, port: smtpPort, secure: smtpSecure, user: smtpUser },
+      config: { host: smtpHost, port: smtpPort, secure: smtpSecure },
     })
   } catch (e: unknown) {
     const err = e as Error & { code?: string; command?: string; response?: string; responseCode?: number }
@@ -52,7 +59,7 @@ export async function GET() {
       command: err.command,
       response: err.response,
       responseCode: err.responseCode,
-      config: { host: smtpHost, port: smtpPort, secure: smtpSecure, user: smtpUser },
+      config: { host: smtpHost, port: smtpPort, secure: smtpSecure },
     })
   }
 }
