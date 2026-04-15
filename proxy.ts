@@ -152,7 +152,8 @@ export default auth(async (req) => {
     '/api/sofia', '/api/investor', '/api/collections', '/api/learn',
     '/api/admin', '/api/push/send', '/api/market',
     '/api/notion',
-    '/api/automation',
+    // /api/automation intentionally excluded — each route has its own isAuthorized()
+    // check that accepts PORTAL_API_SECRET / CRON_SECRET Bearer tokens (used by n8n + crons)
     '/api/embeddings',
   ]
   const isProtected = protectedPaths.some(p => pathname.startsWith(p))
