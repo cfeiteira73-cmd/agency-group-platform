@@ -110,10 +110,44 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Fire n8n wf-Q: notify subscribers matching this new property
+    // Non-blocking — property creation never fails due to n8n unavailability
+    if (data && body.status !== 'off-market' && body.status !== 'sold') {
+      triggerN8nNewProperty(data).catch(() => {})
+    }
+
     return NextResponse.json({ success: true, property: data }, { status: 201 })
   } catch (error) {
     console.error('POST /api/properties/db error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// ─── n8n wf-Q webhook: new property → subscriber matching ────────────────────
+async function triggerN8nNewProperty(property: Record<string, unknown>): Promise<void> {
+  const webhookUrl = process.env.N8N_WEBHOOK_URL
+  if (!webhookUrl) return
+  try {
+    await fetch(`${webhookUrl}/webhook/new-property`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id:      property['id'],
+        nome:    property['nome'],
+        zona:    property['zona'],
+        tipo:    property['tipo'],
+        preco:   property['preco'],
+        area:    property['area'],
+        quartos: property['quartos'] ?? 0,
+        piscina: !!(property['amenities'] as Record<string, unknown> | null)?.['piscina']
+                 || !!(property['features'] as string[] | null)?.includes('piscina'),
+        badge:   property['badge'] ?? null,
+      }),
+      signal: AbortSignal.timeout(5000),
+    })
+  } catch {
+    // n8n unavailable — non-blocking, property creation already succeeded
   }
 }
 
