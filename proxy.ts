@@ -66,6 +66,14 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/heygen':        { max: 10,  window: 3_600_000 },
   '/api/automation':   { max: 5,   window: 3_600_000 },
   '/api/tts':          { max: 50,  window: 3_600_000 },
+  // Additional limits added post security audit (2026-04-15)
+  '/api/sofia':         { max: 30,  window: 3_600_000 }, // Claude cost protection
+  '/api/offmarket-leads': { max: 20, window: 3_600_000 }, // 200-record endpoint
+  '/api/whatsapp':      { max: 60,  window: 3_600_000 }, // webhook rate protection
+  '/api/signals':       { max: 30,  window: 3_600_000 }, // signal fetch
+  '/api/off-market':    { max: 20,  window: 3_600_000 }, // DR parser (auth required)
+  '/api/crm':           { max: 200, window: 3_600_000 }, // portal CRM operations
+  '/api/notion':        { max: 20,  window: 3_600_000 }, // Notion API calls
 }
 
 // ─── Bot blacklist (User-Agent) ──────────────────────────────────────────────

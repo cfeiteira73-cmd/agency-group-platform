@@ -115,10 +115,12 @@ export async function GET(req: NextRequest) {
   return new Response(html, {
     status: 200,
     headers: {
-      'Content-Type':  'text/html; charset=utf-8',
-      'Set-Cookie':    cookieHeaderValue,
-      'Cache-Control': 'no-store, no-cache, must-revalidate',
-      'Pragma':        'no-cache',
+      'Content-Type':    'text/html; charset=utf-8',
+      'Set-Cookie':      cookieHeaderValue,
+      'Cache-Control':   'no-store, no-cache, must-revalidate, private',
+      'Pragma':          'no-cache',
+      // Prevent secret leaking in Referrer header if page navigates to external resources
+      'Referrer-Policy': 'no-referrer',
     },
   })
 }

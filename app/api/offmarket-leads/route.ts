@@ -7,21 +7,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { safeCompare } from '@/lib/safeCompare'
 
 const TABLE = 'offmarket_leads'
 const DEFAULT_PAGE_SIZE = 50
 
+function isAuthorized(req: NextRequest, session: { user?: unknown } | null): boolean {
+  if (session?.user) return true
+  const authHeader = req.headers.get('authorization') ?? ''
+  const xCronSecret = req.headers.get('x-cron-secret') ?? ''
+  return (
+    safeCompare(authHeader, `Bearer ${process.env.CRON_SECRET ?? ''}`) ||
+    safeCompare(authHeader, `Bearer ${process.env.PORTAL_API_SECRET ?? ''}`) ||
+    safeCompare(xCronSecret, process.env.CRON_SECRET ?? '')
+  )
+}
+
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    const cronSecret = process.env.CRON_SECRET
-    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-    const hasValidToken = cronSecret && incomingSecret && incomingSecret === cronSecret
-
-    if (!hasValidToken) {
-      const session = await auth()
-      if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+    const session = await auth()
+    if (!isAuthorized(req, session)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const sp = req.nextUrl.searchParams
@@ -61,16 +67,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    // Accept either: (1) authenticated portal session, or (2) x-cron-secret for Apify/n8n webhooks
-    const cronSecret = process.env.CRON_SECRET
-    const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-    const hasValidToken = cronSecret && incomingSecret && incomingSecret === cronSecret
-
-    if (!hasValidToken) {
-      const session = await auth()
-      if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+    // Accept either: (1) authenticated portal session, or (2) Bearer/x-cron-secret for Apify/n8n
+    const session = await auth()
+    if (!isAuthorized(req, session)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body: unknown = await req.json()
