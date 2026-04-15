@@ -72,9 +72,6 @@ export async function POST(req: NextRequest) {
     //   full_name (nullable TEXT), preferred_locations, last_contact_at,
     //   next_followup_at, timeline, role, whatsapp, lead_tier, source
     //
-    // agent_email NOT NULL — use system default for public web leads
-    const SYSTEM_AGENT = process.env.ADMIN_EMAIL || 'geral@agencygroup.pt'
-
     const intentLabel = intent ?? (
       use_type === 'vendedor'   ? 'seller'   :
       use_type === 'investidor' ? 'investor' : 'buyer'
@@ -88,22 +85,23 @@ export async function POST(req: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contactPayload: any = {
-      // Live DB (schema.sql) columns
-      agent_email:    SYSTEM_AGENT,
-      name:           name || 'Website Lead',
-      email:          email || null,
-      phone:          phone || null,
-      nationality:    nationality || null,
-      budget_min:     budget_min || 0,
-      budget_max:     budget_max || 0,
-      zonas:          zona ? [zona] : [],
-      status:         'lead',
-      origin:         source || 'website',
-      notes:          noteParts.length ? noteParts.join(' | ') : '',
-      // COMBINED_OFFMARKET_MIGRATIONS additions (may or may not exist)
-      full_name:      name || 'Website Lead',
-      source:         source || 'website',
-      last_contact_at: new Date().toISOString(),
+      // Only COMBINED_OFFMARKET_MIGRATIONS confirmed columns — safe to send
+      full_name:        name || 'Website Lead',
+      email:            email || null,
+      phone:            phone || null,
+      status:           'lead',
+      source:           source || 'website',
+      notes:            noteParts.length ? noteParts.join(' | ') : null,
+      preferred_locations: zona ? [zona] : null,
+      timeline:         timeline || null,
+      next_followup_at: (() => {
+        const d = new Date()
+        const isSeller = intent === 'seller' || use_type === 'vendedor'
+        if (isSeller) { d.setHours(d.getHours() + 2) }
+        else          { d.setDate(d.getDate() + 1) }
+        return d.toISOString()
+      })(),
+      last_contact_at:  new Date().toISOString(),
     }
 
     // Find-then-insert/update — contacts.email has no UNIQUE constraint so

@@ -6,36 +6,25 @@ export async function GET() {
   const ts = Date.now()
   const errors: string[] = []
   
+  // Test ONLY confirmed COMBINED_OFFMARKET_MIGRATIONS columns for contacts:
+  // full_name, email, phone, status, source, notes, preferred_locations,
+  // last_contact_at, next_followup_at, timeline, role, whatsapp, lead_tier
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns: any = {
-    agent_email: 'geral@agencygroup.pt',
-    name: `Debug ${ts}`,
-    full_name: `Debug ${ts}`,
-    email: `debug-col-${ts}@test.com`,
-    status: 'lead',
-    source: 'debug',
-    origin: 'website',
-    notes: 'test',
-    last_contact_at: new Date().toISOString(),
-  }
+  const t1: any = { full_name: `T1 ${ts}`, email: `t1-${ts}@test.com`, status: 'lead', source: 'debug', notes: 'test', last_contact_at: new Date().toISOString() }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const r1 = await supabaseAdmin.from('contacts').insert(t1 as any).select('id').single()
+  if (r1.error) errors.push(`T1(full_name+email+status+source+notes+last_contact_at): ${r1.error.code} — ${r1.error.message}`)
+  else errors.push(`T1: OK — id=${r1.data?.id}`)
 
-  // Try insert with all columns
-  const { data, error } = await supabaseAdmin
-    .from('contacts')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .insert(columns as any)
-    .select('id')
-    .single()
+  // Try with preferred_locations
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const t2: any = { full_name: `T2 ${ts}`, email: `t2-${ts}@test.com`, status: 'lead', preferred_locations: ['Lisboa'], next_followup_at: new Date(Date.now()+86400000).toISOString() }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const r2 = await supabaseAdmin.from('contacts').insert(t2 as any).select('id').single()
+  if (r2.error) errors.push(`T2(+preferred_locations+next_followup_at): ${r2.error.code} — ${r2.error.message}`)
+  else errors.push(`T2: OK`)
 
-  if (error) {
-    errors.push(`full_payload: ${error.code} — ${error.message}`)
-
-    // Try with just the minimal set — name + agent_email (schema.sql NOT NULL)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: e2 } = await supabaseAdmin.from('contacts').insert({ agent_email: 'geral@agencygroup.pt', name: `Min ${ts}`, email: `min-${ts}@test.com`, status: 'lead' } as any).select('id').single()
-    if (e2) errors.push(`minimal: ${e2.code} — ${e2.message}`)
-    else errors.push('minimal: OK')
-  }
+  const { data, error } = r1
   
   return NextResponse.json({ ok: !error, inserted_id: data?.id, errors })
 }
