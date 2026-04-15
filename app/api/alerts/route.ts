@@ -63,24 +63,24 @@ async function triggerN8nSavedSearch(sub: AlertSubscription): Promise<void> {
 async function createInSupabase(sub: AlertSubscription): Promise<boolean> {
   const client = getServiceClient()
   if (!client) return false
-  const { error } = await client.from('public_saved_searches').upsert(
-    {
-      id: sub.id,
-      email: sub.email,
-      zona: sub.zona,
-      tipo: sub.tipo,
-      preco_min: sub.precoMin,
-      preco_max: sub.precoMax,
-      quartos_min: sub.quartosMin,
-      piscina: sub.piscina,
-      purpose: sub.purpose,
-      keyword: sub.keyword ?? null,
-      source: sub.source ?? 'imoveis_page',
-      is_active: true,
-      created_at: sub.createdAt,
-    },
-    { onConflict: 'email,zona,tipo', ignoreDuplicates: false }
-  )
+  // dedup already handled by findExistingInSupabase before this call
+  // use insert (not upsert) — table has no unique constraint on (email,zona,tipo)
+  const { error } = await client.from('public_saved_searches').insert({
+    id: sub.id,
+    email: sub.email,
+    zona: sub.zona,
+    tipo: sub.tipo,
+    preco_min: sub.precoMin,
+    preco_max: sub.precoMax,
+    quartos_min: sub.quartosMin,
+    piscina: sub.piscina,
+    purpose: sub.purpose,
+    keyword: sub.keyword ?? null,
+    source: sub.source ?? 'imoveis_page',
+    is_active: true,
+    created_at: sub.createdAt,
+  })
+  if (error) console.error('Supabase insert error:', error.message, error.code)
   return !error
 }
 
