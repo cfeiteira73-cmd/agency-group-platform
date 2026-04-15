@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { createHmac } from 'crypto'
+import { cookies } from 'next/headers'
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -80,9 +82,42 @@ const TYPE_LABELS: Record<string, Record<string, string>> = {
   offmarket: { PT:'Abordagem Off-Market', EN:'Off-Market Approach', FR:'Approche Off-Market', DE:'Off-Market-Ansatz', AR:'نهج خارج السوق' },
 }
 
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const cronSecret = process.env.CRON_SECRET ?? process.env.INTERNAL_API_TOKEN
+  const incoming = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
+  if (cronSecret && incoming === cronSecret) return true
+
+  const secret = process.env.AUTH_SECRET
+  if (secret) {
+    const cookieStore = await cookies()
+    const cookieValue = cookieStore.get('ag-auth-token')?.value
+    if (cookieValue) {
+      const dotIdx = cookieValue.lastIndexOf('.')
+      if (dotIdx !== -1) {
+        const payload = cookieValue.slice(0, dotIdx)
+        const sig = cookieValue.slice(dotIdx + 1)
+        const expected = createHmac('sha256', secret).update(payload).digest('hex')
+        if (expected === sig) {
+          try {
+            const data = JSON.parse(Buffer.from(payload, 'base64url').toString())
+            if (data.email && Date.now() < data.exp) return true
+          } catch { /* invalid */ }
+        }
+      }
+    }
+  }
+  return false
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  if (!(await isAuthorized(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
   if (!checkRate(ip)) {
     return NextResponse.json({ error: 'Rate limit — máximo 20 propostas/hora por IP' }, { status: 429 })
