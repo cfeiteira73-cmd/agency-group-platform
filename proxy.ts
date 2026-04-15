@@ -78,6 +78,18 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/investment/exit':   { max: 20,  window: 3_600_000 }, // claude-opus-4-5 cost protection (auth required)
   '/api/investor-pitch':    { max: 20,  window: 3_600_000 }, // claude-opus-4-5 cost protection (auth required)
   '/api/gpt/':              { max: 50,  window: 3_600_000 }, // GPT-action endpoints
+  // AI cost-protection routes added 2026-04-15
+  '/api/ai':                { max: 15,  window:    60_000 }, // proxy → Anthropic, 15/min hard cap
+  '/api/properties/analyze-photos':      { max: 10,  window: 3_600_000 },
+  '/api/properties/cma':                 { max: 10,  window: 3_600_000 },
+  '/api/properties/generate-description':{ max: 10,  window: 3_600_000 },
+  '/api/properties/search-natural':      { max: 20,  window: 3_600_000 },
+  '/api/market/cross-compare':           { max: 20,  window: 3_600_000 },
+  '/api/market/pulse':                   { max: 20,  window: 3_600_000 },
+  '/api/send-doc':                       { max: 10,  window: 3_600_000 },
+  '/api/voz/process':                    { max: 20,  window: 3_600_000 },
+  '/api/visitas':                        { max: 30,  window: 3_600_000 },
+  '/api/investors/deal-memo':            { max: 10,  window: 3_600_000 },
 }
 
 // ─── Bot blacklist (User-Agent) ──────────────────────────────────────────────
