@@ -1,5 +1,5 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v18 → Production**
+**Last updated: 2026-04-15 | v19 → Production**
 
 ---
 
@@ -30,12 +30,11 @@ NOTE: n8n Cloud free plan — Variables not available. Workflows use $env.RESEND
 $env.PORTAL_API_SECRET, $env.SITE_URL. These need to be set as n8n Credentials or
 upgraded to Pro for Variables support. Emails will fail until RESEND_API_KEY is wired in.
 
-### 4. 🔴 STILL PENDING — Rotate Exposed Credentials
-These credentials were in `.env.local` and may have been committed to git:
-- [ ] ANTHROPIC_API_KEY — rotate at console.anthropic.com
-- [ ] RESEND_API_KEY — rotate at resend.com → API Keys
-- [ ] OPENAI_API_KEY — rotate at platform.openai.com
-- [ ] SUPABASE_SERVICE_ROLE_KEY — rotate at Supabase → Settings → API
+### 4. ✅ DONE — Rotate Exposed Credentials (2026-04-15)
+- [x] ANTHROPIC_API_KEY — rotated, new key `ag-prod-2026-rotated` active in Vercel + .env.local. Old key `ag-prod-final-2026` → revoke manually at console.anthropic.com
+- [x] RESEND_API_KEY — already rotated 2026-04-13 (re_TtQZcoYi…)
+- [x] OPENAI_API_KEY — new key created, 2 old keys revoked, Vercel updated
+- [x] SUPABASE_SERVICE_ROLE_KEY — new sb_secret format, Vercel + .env.local updated
 
 ---
 
