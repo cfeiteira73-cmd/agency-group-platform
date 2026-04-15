@@ -3,6 +3,10 @@
 // Mobile  → MobileHome (pure SSR, zero GSAP, zero loader).
 // Desktop → full experience (GSAP hero, loader, cursor, animations).
 // No CSS class toggling. No flash. No dual-hero in the HTML.
+//
+// Edge runtime: eliminates Vercel Node.js cold starts (~500-800ms → <50ms).
+// headers() is fully supported on Edge. No Node.js-only APIs used here.
+export const runtime = 'edge'
 
 import { headers } from 'next/headers'
 import HomeSections from './components/HomeSections'
