@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { track } from '@/lib/gtm'
 
 interface Props {
@@ -17,6 +17,16 @@ export default function BlogEmailCapture({
   const [email, setEmail] = useState('')
   const [step, setStep] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+
+  // Track impression — fires once when capture form enters the page
+  useEffect(() => {
+    track('blog_capture_impression', {
+      variant,
+      article_slug: articleSlug,
+      zona: articleZona ?? '',
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally empty — fire once on mount
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -36,6 +36,12 @@ type TrackEvent =
   | 'press_article_clicked'
   // Buyer pipeline
   | 'buyer_lead_submitted'
+  // Hero & homepage CTA tracking (desktop + mobile)
+  | 'hero_cta_click'
+  // Properties section CTA
+  | 'properties_cta_click'
+  // Blog capture impression (fires on mount, before submit)
+  | 'blog_capture_impression'
 
 export function track(event: TrackEvent, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return

@@ -16,6 +16,7 @@ import HomeAnimations from './components/HomeAnimations'
 import HomeToast from './components/HomeToast'
 import HomeNav from './components/HomeNav'
 import MobileHome from './components/MobileHome'
+import HomeHeroTrack from './components/HomeHeroTrack'
 import { HOME_HERO } from './lib/homeContent'
 
 // ─── Server-side mobile detection ────────────────────────────────────────────
@@ -114,6 +115,9 @@ export default async function Home() {
 
       {/* ── ALL SHARED SECTIONS (marquee → footer) ────────────────────────── */}
       <HomeSections />
+
+      {/* ── TRACKING CLIENT ISLAND — attaches click listeners to #hBtns CTAs ── */}
+      <HomeHeroTrack device="desktop" />
     </>
   )
 }

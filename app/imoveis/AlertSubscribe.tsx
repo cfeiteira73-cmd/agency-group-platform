@@ -186,13 +186,13 @@ export default function AlertSubscribe({ onClose, initialCriteria, source = 'imo
               {/* Zona + Tipo */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div>
-                  <label style={labelStyle}>Zona</label>
+                  <label style={labelStyle}>Zona <span style={{ opacity: .5, fontSize: '.85em' }}>(opcional)</span></label>
                   <select value={criteria.zona} onChange={e => update('zona', e.target.value)} style={inputStyle}>
                     {ZONAS.map(z => <option key={z} value={z}>{z}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>Tipo</label>
+                  <label style={labelStyle}>Tipo <span style={{ opacity: .5, fontSize: '.85em' }}>(opcional)</span></label>
                   <select value={criteria.tipo} onChange={e => update('tipo', e.target.value)} style={inputStyle}>
                     {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>

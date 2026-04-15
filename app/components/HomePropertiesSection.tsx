@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { track } from '@/lib/gtm'
 
 // ─── Properties data ──────────────────────────────────────────────────────────
 const PROPERTIES = [
@@ -154,7 +155,7 @@ export default function HomePropertiesSection() {
                 <span className="text-reveal"><span className="text-reveal-inner"><em>Uma História.</em></span></span>
               </h2>
             </div>
-            <a href="/imoveis" className="lnk-sm fade-in">Ver todos os imóveis →</a>
+            <a href="/imoveis" className="lnk-sm fade-in" onClick={() => track('properties_cta_click', { section: 'homepage_properties', context: 'header_link' })}>Ver todos os imóveis →</a>
           </div>
           {/* Results count + clear filters */}
           <div className="im-count" style={{ fontFamily: 'Jost, sans-serif', fontSize: '14px', color: 'rgba(14,14,13,.42)', marginBottom: '16px' }}>
@@ -213,6 +214,7 @@ export default function HomePropertiesSection() {
           <div style={{ textAlign: 'center', marginTop: '48px' }}>
             <a
               href="/imoveis"
+              onClick={() => track('properties_cta_click', { section: 'homepage_properties', context: 'bottom_cta' })}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: '10px',
                 background: 'transparent', border: '1px solid rgba(201,169,110,.45)',

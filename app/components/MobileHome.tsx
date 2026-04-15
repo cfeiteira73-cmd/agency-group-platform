@@ -19,6 +19,7 @@
 import HomeNav from './HomeNav'
 import HomeSections from './HomeSections'
 import { HOME_HERO } from '../lib/homeContent'
+import HomeHeroTrack from './HomeHeroTrack'
 
 // ─── Shared final-state visibility hardening — applied to every hero content node
 // Prevents any inherited CSS, future class bleed, or residual transform from hiding content.
@@ -142,6 +143,7 @@ export default function MobileHome() {
           marginBottom:  '40px',
         }}>
           <a
+            id="mHeroPrimary"
             href={HOME_HERO.ctaPrimary.href}
             style={{
               display:        'flex',
@@ -172,6 +174,7 @@ export default function MobileHome() {
             </svg>
           </a>
           <a
+            id="mHeroSecondary"
             href={HOME_HERO.ctaSecondary.href}
             style={{
               display:        'flex',
@@ -235,6 +238,9 @@ export default function MobileHome() {
 
       {/* ── ALL SHARED SECTIONS (marquee → footer) ────────────────────────── */}
       <HomeSections />
+
+      {/* ── TRACKING CLIENT ISLAND — attaches click listeners to hero CTAs ── */}
+      <HomeHeroTrack device="mobile" />
     </>
   )
 }
