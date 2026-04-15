@@ -1,9 +1,17 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v24 → Production**
+**Last updated: 2026-04-15 | v25 → Production**
 
 ---
 
 ## 🟢 ALL CRITICAL ITEMS RESOLVED — Production Green
+
+### GTM. ✅ DONE — Google Tag Manager + GA4 (2026-04-15)
+- GTM Container created: **GTM-MZF2GB28** (Account: Agency Group, Container: agencygroup.pt, Platform: Web)
+- GA4 tag configured: `Etiqueta Google` → ID `G-HSL1EKS80W` → trigger: Initialization - All Pages
+- GTM container published: Version 2 — Live (15/04/2026 13:10)
+- `NEXT_PUBLIC_GTM_ID = GTM-MZF2GB28` added to Vercel (All Environments)
+- Production redeployed: `5V5VQfQeh` → Ready in 34s — www.agencygroup.pt live
+- All 21 GTM events in `lib/gtm.ts` now fire to GTM-MZF2GB28 → GA4 G-HSL1EKS80W
 
 ### -2. ✅ DONE — n8n wf-Q integration + Lead Nurture D+1/D+7/D+30 (2026-04-15)
 - `POST /api/properties/db`: now fires `N8N_WEBHOOK_URL/webhook/new-property` after successful insert
@@ -69,15 +77,12 @@ upgraded to Pro for Variables support. Emails will fail until RESEND_API_KEY is 
 
 ## 🟢 P0 ITEMS — ALL RESOLVED (2026-04-15 live automation)
 
-### P0a. ✅ NEXT_PUBLIC_GTM_ID — ONLY REMAINING ACTION (1 min)
+### P0a. ✅ NEXT_PUBLIC_GTM_ID — DONE (2026-04-15)
 ```
-Vercel Dashboard → agency-group → Settings → Environment Variables
-NEXT_PUBLIC_GTM_ID = GTM-XXXXXXX    ← container ID from tagmanager.google.com
+NEXT_PUBLIC_GTM_ID = GTM-MZF2GB28   ✅ added to Vercel All Environments
 ```
-Status: CONFIRMED MISSING — search "GTM" in Vercel env vars returns zero results.
-Impact: All 21 coded GTM events (hero_cta_click, lead_form_submit, saved_search_success,
-        property_viewed, blog_capture_impression, etc.) fire to void — zero analytics.
-⚠️  USER ACTION REQUIRED: only you have the GTM container ID.
+GTM container created + GA4 G-HSL1EKS80W linked + published + redeployed.
+All 21 GTM events now active.
 
 ### P0b. ✅ AGENT_ALERT_EMAIL — ALREADY PRESENT in Vercel
 Confirmed present: Vercel returned "already exists" on duplicate-add attempt (2026-04-15).
@@ -103,12 +108,11 @@ Table verified present in production Supabase via Management API.
 ID: jyDG0tOLE0LQH07c | active: true
 Fires every hour. D+1/D+7/D+30 personalised nurture emails.
 
-### 5d. ⚠️ GTM — ONLY REMAINING ACTION
+### 5d. ✅ GTM — DONE (2026-04-15)
 ```
-Vercel Dashboard → agency-group → Settings → Environment Variables
-NEXT_PUBLIC_GTM_ID = GTM-XXXXXXX    ← your container ID from tagmanager.google.com
+NEXT_PUBLIC_GTM_ID = GTM-MZF2GB28   ✅
 ```
-All 21 GTM events coded and working. Zero cost. 2 minutes. Do it now.
+Container created, GA4 G-HSL1EKS80W linked, published v2, redeployed to production.
 
 ### 5e. ✅ Rate limit on /api/alerts POST — ADDED (2026-04-15)
 5 subscriptions / 10 min per IP. Prevents email harvesting and subscription spam.
@@ -200,8 +204,8 @@ Unsubscribe from email link  →  GET /api/alerts/unsubscribe → Supabase PSS u
 - [x] PORTAL_API_SECRET          ✅ confirmed present (b60bd2a0…)
 - [x] SITE_URL                   ✅ confirmed present (https://www.agencygroup.pt)
 - [x] OPENAI_API_KEY             ✅ confirmed present (sk-proj-yFEVOe4Muc…)
-- [ ] NEXT_PUBLIC_GTM_ID         ← 🔴 **MISSING — ADD NOW** (GTM-XXXXXXX)
-- [ ] AGENT_ALERT_EMAIL          ← 🔴 **MISSING — ADD NOW** (geral@agencygroup.pt)
+- [x] NEXT_PUBLIC_GTM_ID         ✅ confirmed present (GTM-MZF2GB28)
+- [x] AGENT_ALERT_EMAIL          ✅ confirmed present (geral@agencygroup.pt)
 
 ### n8n Cloud (agencygroup.app.n8n.cloud → Settings → Env)
 - [ ] SITE_URL = https://www.agencygroup.pt
