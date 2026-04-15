@@ -354,6 +354,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
       </head>
       <body style={{ background: '#f4f0e6' }}>
+        {/* Google Tag Manager — noscript fallback (must be first element in body) */}
+        {process.env.NEXT_PUBLIC_GTM_ID && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${process.env.NEXT_PUBLIC_GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: 'none', visibility: 'hidden' }}
+            />
+          </noscript>
+        )}
         {/* ── DEFENSIVE LOADER KILL — JS layer (belt-and-suspenders above CSS) ──
             Runs synchronously before React hydration.
             If #loader enters DOM on a mobile device for any reason, this script
@@ -393,9 +404,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <>
             <Script
               id="gtm-init"
-              strategy="beforeInteractive"
+              strategy="afterInteractive"
               dangerouslySetInnerHTML={{
-                __html: `window.dataLayer=window.dataLayer||[];`,
+                __html: `window.dataLayer=window.dataLayer||[];window.dataLayer.push({'gtm.start':new Date().getTime(),event:'gtm.js'});`,
               }}
             />
             <Script
