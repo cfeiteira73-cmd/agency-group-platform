@@ -15,9 +15,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // ── Static pages ─────────────────────────────────────────────────────────────
   const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE,                      lastModified: now, changeFrequency: 'weekly',  priority: 1.0 },
-    { url: `${BASE}/imoveis`,         lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
-    { url: `${BASE}/faq`,            lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: BASE,                                          lastModified: now, changeFrequency: 'weekly',  priority: 1.0 },
+    { url: `${BASE}/imoveis`,                            lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
+    // ── SEO Pillar Pages (EN — high-intent commercial) ─────────────────────────
+    { url: `${BASE}/buy-property-portugal`,              lastModified: now, changeFrequency: 'monthly', priority: 0.95 },
+    { url: `${BASE}/invest-in-portugal-real-estate`,     lastModified: now, changeFrequency: 'monthly', priority: 0.93 },
+    { url: `${BASE}/off-market-portugal`,                lastModified: now, changeFrequency: 'weekly',  priority: 0.92 },
+    { url: `${BASE}/faq`,                               lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${BASE}/blog`,            lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${BASE}/agente/carlos`,   lastModified: now, changeFrequency: 'monthly', priority: 0.88 },
     { url: `${BASE}/en`,              lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
