@@ -23,9 +23,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?status=contacted&limit=100",
+        "url": "=https://www.agencygroup.pt/api/offmarket-leads?status=contacted&limit=100",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "options": {}
       },
       "id": "l003",
@@ -36,9 +36,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/institutional-partners?estado=contactado&limit=100",
+        "url": "=https://www.agencygroup.pt/api/institutional-partners?estado=contactado&limit=100",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "options": {}
       },
       "id": "l004",
@@ -60,7 +60,7 @@
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=💤 REATIVAÇÃO — {{ $json._type === 'lead' ? '🏠 LEAD' : '🤝 PARCEIRO' }}\n\nNome: {{ $json.nome }}\n{{ $json._type === 'lead' ? 'Score: ' + ($json.score || '—') + '/100' : 'Tipo: ' + ($json.tipo || '—') }}\nCidade: {{ $json.cidade || '—' }}\nDormido há: {{ $json._days }} dias\nContacto: {{ $json.contacto || $json.phone || $json.email || '⚠️ sem contacto' }}\n\nScript sugerido:\n\"Bom dia, retomo o nosso contacto. Continuamos com procura activa na sua zona. Há interesse em avaliarmos a situação?\"\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "text": "=💤 REATIVAÇÃO — {{ $json._type === 'lead' ? '🏠 LEAD' : '🤝 PARCEIRO' }}\n\nNome: {{ $json.nome }}\n{{ $json._type === 'lead' ? 'Score: ' + ($json.score || '—') + '/100' : 'Tipo: ' + ($json.tipo || '—') }}\nCidade: {{ $json.cidade || '—' }}\nDormido há: {{ $json._days }} dias\nContacto: {{ $json.contacto || $json.phone || $json.email || '⚠️ sem contacto' }}\n\nScript sugerido:\n\"Bom dia, retomo o nosso contacto. Continuamos com procura activa na sua zona. Há interesse em avaliarmos a situação?\"\n\n→ https://www.agencygroup.pt/portal",
         "additionalFields": {}
       },
       "id": "l006",
@@ -83,7 +83,7 @@
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=📊 RESUMO SEMANAL — REATIVAÇÕES\n\nLeads dormentes: {{ $json.total_leads }}\nParceiros dormentes: {{ $json.total_partners }}\n\nCadência recomendada:\n• 20 WhatsApps/dia\n• 5-10 calls/dia\n• 5 novos leads no CRM\n\n→ {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "text": "=📊 RESUMO SEMANAL — REATIVAÇÕES\n\nLeads dormentes: {{ $json.total_leads }}\nParceiros dormentes: {{ $json.total_partners }}\n\nCadência recomendada:\n• 20 WhatsApps/dia\n• 5-10 calls/dia\n• 5 novos leads no CRM\n\n→ https://www.agencygroup.pt/portal",
         "additionalFields": {}
       },
       "id": "l008",

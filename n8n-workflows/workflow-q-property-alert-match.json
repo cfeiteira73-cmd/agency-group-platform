@@ -78,13 +78,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.resend.com/emails",
+        "url": "=https://www.agencygroup.pt/api/automation/alert-check-sent",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+              "value": "=Bearer b60bd2a0bf052a29fe639c03858819db9626e96ec16409ab2c7022c4c35ec7f8"
             },
             {
               "name": "Content-Type",
@@ -94,14 +94,62 @@
         },
         "sendBody": true,
         "bodyContentType": "json",
-        "jsonBody": "={\n  \"from\": \"Agency Group Alertas <alertas@agencygroup.pt>\",\n  \"to\": [\"{{ $json.subscriber_email }}\"],\n  \"subject\": \"Novo imóvel em {{ $json.zona }}: {{ $json.nome }}\",\n  \"html\": \"<div style='font-family:sans-serif;max-width:600px;margin:0 auto;background:#f4f0e6'><div style='background:#0c1f15;padding:32px 40px'><h1 style='font-family:Georgia,serif;font-weight:300;font-size:1.6rem;color:#f4f0e6;margin:0'>Agency<span style=\\\"color:#c9a96e\\\">Group</span></h1><p style='color:rgba(244,240,230,0.5);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;margin:8px 0 0'>Alerta de Propriedade</p></div><div style='padding:40px;background:#fff'><p style='font-size:0.7rem;color:#888;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 8px'>{{ $json.zona }} · {{ $json.tipo }}</p><h2 style='font-family:Georgia,serif;font-weight:300;font-size:1.5rem;color:#0c1f15;margin:0 0 16px'>{{ $json.nome }}</h2><div style='display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap'><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:120px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>{{ $json.preco_formatted }}</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Preço</div></div><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:100px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>{{ $json.area }}m²</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Área</div></div><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:100px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>T{{ $json.quartos }}</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Quartos</div></div></div>{{ $json.badge ? '<div style=\\\"display:inline-block;background:#1c4a35;color:#c9a96e;padding:4px 12px;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:20px\\\">'+$json.badge+'</div>' : '' }}<a href='{{ $json.url }}' style='display:inline-block;background:#1c4a35;color:#c9a96e;padding:14px 32px;text-decoration:none;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;margin-bottom:24px'>Ver Propriedade →</a><p style='color:rgba(14,14,13,0.5);font-size:0.75rem;line-height:1.6;border-top:1px solid rgba(14,14,13,0.08);padding-top:16px;margin:0'>Recebeu este email porque criou um alerta para <strong>{{ $json.subscriber_zona }}</strong> no website agencygroup.pt.</p></div><div style='padding:20px 40px;background:#0c1f15'><p style='color:rgba(244,240,230,0.3);font-size:0.6rem;margin:0'>Agency Group · AMI 22506 · <a href='{{ $json.unsubscribe_url }}' style=\\\"color:rgba(244,240,230,0.3)\\\">Cancelar alerta</a></p></div></div>\"\n}",
+        "jsonBody": "={{ JSON.stringify({ email: $json.subscriber_email, property_id: $json.property_id, zona: $json.subscriber_zona }) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000008",
+      "name": "HTTP — Check Alert Dedup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.sent }}",
+              "value2": true,
+              "operation": "equal"
+            }
+          ]
+        }
+      },
+      "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000009",
+      "name": "IF — Already Sent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1340, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer re_TtQZcoYi_BdzrRivUdkGvXFkLFsHvQ6fe"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"from\": \"Agency Group Alertas <alertas@agencygroup.pt>\",\n  \"to\": [\"{{ $('Code — Match Subscribers').item.json.subscriber_email }}\"],\n  \"subject\": \"Novo imóvel em {{ $('Code — Match Subscribers').item.json.zona }}: {{ $('Code — Match Subscribers').item.json.nome }}\",\n  \"html\": \"<div style='font-family:sans-serif;max-width:600px;margin:0 auto;background:#f4f0e6'><div style='background:#0c1f15;padding:32px 40px'><h1 style='font-family:Georgia,serif;font-weight:300;font-size:1.6rem;color:#f4f0e6;margin:0'>Agency<span style=\\\"color:#c9a96e\\\">Group</span></h1><p style='color:rgba(244,240,230,0.5);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;margin:8px 0 0'>Alerta de Propriedade</p></div><div style='padding:40px;background:#fff'><p style='font-size:0.7rem;color:#888;letter-spacing:0.15em;text-transform:uppercase;margin:0 0 8px'>{{ $('Code — Match Subscribers').item.json.zona }} · {{ $('Code — Match Subscribers').item.json.tipo }}</p><h2 style='font-family:Georgia,serif;font-weight:300;font-size:1.5rem;color:#0c1f15;margin:0 0 16px'>{{ $('Code — Match Subscribers').item.json.nome }}</h2><div style='display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap'><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:120px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>{{ $('Code — Match Subscribers').item.json.preco_formatted }}</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Preço</div></div><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:100px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>{{ $('Code — Match Subscribers').item.json.area }}m²</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Área</div></div><div style='background:#f8f6f0;padding:12px 20px;flex:1;min-width:100px;text-align:center'><div style='font-size:1.1rem;font-weight:600;color:#1c4a35'>T{{ $('Code — Match Subscribers').item.json.quartos }}</div><div style='font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:0.1em'>Quartos</div></div></div><a href='{{ $('Code — Match Subscribers').item.json.url }}' style='display:inline-block;background:#1c4a35;color:#c9a96e;padding:14px 32px;text-decoration:none;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;font-weight:700;margin-bottom:24px'>Ver Propriedade →</a><p style='color:rgba(14,14,13,0.5);font-size:0.75rem;line-height:1.6;border-top:1px solid rgba(14,14,13,0.08);padding-top:16px;margin:0'>Recebeu este email porque criou um alerta para <strong>{{ $('Code — Match Subscribers').item.json.subscriber_zona }}</strong> no website agencygroup.pt.</p></div><div style='padding:20px 40px;background:#0c1f15'><p style='color:rgba(244,240,230,0.3);font-size:0.6rem;margin:0'>Agency Group · AMI 22506 · <a href='{{ $('Code — Match Subscribers').item.json.unsubscribe_url }}' style=\\\"color:rgba(244,240,230,0.3)\\\">Cancelar alerta</a></p></div></div>\"\n}",
         "options": {}
       },
       "id": "q1b2c3d4-e5f6-7890-abcd-ef0000000006",
       "name": "HTTP — Send Property Alert Email",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [1340, 200]
+      "position": [1560, 100]
     },
     {
       "parameters": {
@@ -138,8 +186,19 @@
     },
     "IF — Has Subscribers?": {
       "main": [
-        [{ "node": "HTTP — Send Property Alert Email", "type": "main", "index": 0 }],
+        [{ "node": "HTTP — Check Alert Dedup", "type": "main", "index": 0 }],
         [{ "node": "Respond — OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP — Check Alert Dedup": {
+      "main": [
+        [{ "node": "IF — Already Sent?", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF — Already Sent?": {
+      "main": [
+        [],
+        [{ "node": "HTTP — Send Property Alert Email", "type": "main", "index": 0 }]
       ]
     },
     "HTTP — Send Property Alert Email": {
@@ -160,7 +219,7 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "q-workflow-property-alert-v1",
+  "versionId": "q-workflow-property-alert-v2",
   "triggerCount": 0,
   "tags": [
     { "createdAt": "2026-04-15", "updatedAt": "2026-04-15", "id": "alerts", "name": "alerts" },

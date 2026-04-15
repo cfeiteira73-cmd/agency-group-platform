@@ -23,9 +23,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?status=contacted&limit=50",
+        "url": "=https://www.agencygroup.pt/api/offmarket-leads?status=contacted&limit=50",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "options": {}
       },
       "id": "i003",
@@ -36,9 +36,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/institutional-partners?estado=contactado&limit=50",
+        "url": "=https://www.agencygroup.pt/api/institutional-partners?estado=contactado&limit=50",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "options": {}
       },
       "id": "i004",
@@ -63,7 +63,7 @@
         "method": "POST",
         "sendHeaders": true,
         "headers": { "parameters": [
-          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer re_TtQZcoYi_BdzrRivUdkGvXFkLFsHvQ6fe" },
           { "name": "Content-Type", "value": "application/json" }
         ]},
         "sendBody": true,

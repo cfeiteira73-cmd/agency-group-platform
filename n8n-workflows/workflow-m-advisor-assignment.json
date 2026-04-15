@@ -26,10 +26,10 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads/{{ $json.id }}",
+        "url": "=https://www.agencygroup.pt/api/offmarket-leads/{{ $json.id }}",
         "method": "PATCH",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [{ "name": "assigned_to", "value": "={{ $json.assigned_advisor }}" }]
@@ -48,7 +48,7 @@
         "method": "POST",
         "sendHeaders": true,
         "headers": { "parameters": [
-          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer re_TtQZcoYi_BdzrRivUdkGvXFkLFsHvQ6fe" },
           { "name": "Content-Type", "value": "application/json" }
         ]},
         "sendBody": true,

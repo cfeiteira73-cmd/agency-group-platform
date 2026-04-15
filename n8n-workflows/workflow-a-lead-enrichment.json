@@ -211,8 +211,8 @@
         "operation": "insert",
         "schema": "public",
         "table": "contacts",
-        "columns": "full_name,email,phone,source,budget,zone_interest,typology,timeline,lead_score,intent,urgency,buyer_profile,language_detected,routing,suggested_first_message,next_action,linkedin_url,email_verified,clearbit_data,status,created_at",
-        "values": "={{ $json.full_name }},={{ $json.email }},={{ $json.phone }},={{ $json.source }},={{ $json.budget }},={{ $json.zone_interest }},={{ $json.typology }},={{ $json.timeline }},={{ $json.lead_score }},={{ $json.intent }},={{ $json.urgency }},={{ $json.buyer_profile }},={{ $json.language_detected }},={{ $json.routing }},={{ $json.suggested_first_message }},={{ $json.next_action }},={{ $json.linkedin_url }},={{ $json.email_verified }},={{ JSON.stringify({person: $json.clearbit_person, company: $json.clearbit_company}) }},lead,={{ $json.created_at }}",
+        "columns": "full_name,name,email,phone,source,budget_max,preferred_locations,timeline,lead_score,notes,status,created_at",
+        "values": "={{ $json.full_name }},={{ $json.full_name }},={{ $json.email }},={{ $json.phone }},={{ $json.source }},={{ $json.budget }},={{ JSON.stringify([$json.zone_interest].filter(Boolean)) }},={{ $json.timeline }},={{ $json.lead_score }},={{ JSON.stringify({intent: $json.intent, urgency: $json.urgency, next_action: $json.next_action, linkedin: $json.linkedin_url}) }},lead,={{ $json.created_at }}",
         "options": {
           "queryBatching": "independently"
         }
@@ -280,7 +280,7 @@
     },
     {
       "parameters": {
-        "url": "https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+        "url": "https://graph.facebook.com/v18.0/PLACEHOLDER_WHATSAPP_PHONE_ID/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "method": "POST",

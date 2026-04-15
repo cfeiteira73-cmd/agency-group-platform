@@ -51,7 +51,7 @@
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=⏰ LEMBRETE 24H — REUNIÃO AMANHÃ\n\nContacto: {{ $json.contact_name }}\nTipo: {{ $json.meeting_type }}\nData: {{ $json.meeting_date_formatted }}\n\n📋 Preparação:\n• Análise AVM da zona\n• Listagem de compradores activos na zona\n• Termos e condições a propor\n• Script de avaliação\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "text": "=⏰ LEMBRETE 24H — REUNIÃO AMANHÃ\n\nContacto: {{ $json.contact_name }}\nTipo: {{ $json.meeting_type }}\nData: {{ $json.meeting_date_formatted }}\n\n📋 Preparação:\n• Análise AVM da zona\n• Listagem de compradores activos na zona\n• Termos e condições a propor\n• Script de avaliação\n\nPortal → https://www.agencygroup.pt/portal",
         "additionalFields": {}
       },
       "id": "k005",

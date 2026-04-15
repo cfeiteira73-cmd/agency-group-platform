@@ -27,7 +27,7 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.N8N_WEBHOOK_URL }}/webhook/lead-enrichment",
+        "url": "=https://agencygroup.app.n8n.cloud/webhook/lead-enrichment",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [

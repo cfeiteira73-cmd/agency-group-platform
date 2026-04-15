@@ -27,7 +27,7 @@
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=🤝 NOVO PARCEIRO INSTITUCIONAL\n\nNome: {{ $json.nome }}\nEmpresa: {{ $json.empresa || '—' }}\nTipo: {{ $json.tipo }}\nCidade: {{ $json.cidade || '—' }}\nEmail: {{ $json.email || '—' }}\nTelefone: {{ $json.phone || '—' }}\nOrigem: {{ $json.origem || '—' }}\nPrioridade: {{ $json.nivel_prioridade }}\n\n✅ D+0: Contacto inicial\n📅 D+7: Follow-up agendado\n📅 D+30: Check-in mensal\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "text": "=🤝 NOVO PARCEIRO INSTITUCIONAL\n\nNome: {{ $json.nome }}\nEmpresa: {{ $json.empresa || '—' }}\nTipo: {{ $json.tipo }}\nCidade: {{ $json.cidade || '—' }}\nEmail: {{ $json.email || '—' }}\nTelefone: {{ $json.phone || '—' }}\nOrigem: {{ $json.origem || '—' }}\nPrioridade: {{ $json.nivel_prioridade }}\n\n✅ D+0: Contacto inicial\n📅 D+7: Follow-up agendado\n📅 D+30: Check-in mensal\n\nPortal → https://www.agencygroup.pt/portal",
         "additionalFields": {}
       },
       "id": "j003",
@@ -39,10 +39,10 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/institutional-partners/{{ $json.id }}",
+        "url": "=https://www.agencygroup.pt/api/institutional-partners/{{ $json.id }}",
         "method": "PATCH",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }, { "name": "Content-Type", "value": "application/json" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }, { "name": "Content-Type", "value": "application/json" }] },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [{
@@ -73,7 +73,7 @@
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=📅 FOLLOW-UP D+7 — PARCEIRO\n\n{{ $json.nome }} ({{ $json.empresa || $json.tipo }})\nContacto: {{ $json.phone || $json.email || '—' }}\nCidade: {{ $json.cidade || '—' }}\n\nMensagem sugerida:\n\"Bom dia, reforço o contacto da semana passada. Estamos a trabalhar com clientes ativos na sua zona — faz sentido alinharmos uma chamada esta semana?\"\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "text": "=📅 FOLLOW-UP D+7 — PARCEIRO\n\n{{ $json.nome }} ({{ $json.empresa || $json.tipo }})\nContacto: {{ $json.phone || $json.email || '—' }}\nCidade: {{ $json.cidade || '—' }}\n\nMensagem sugerida:\n\"Bom dia, reforço o contacto da semana passada. Estamos a trabalhar com clientes ativos na sua zona — faz sentido alinharmos uma chamada esta semana?\"\n\nPortal → https://www.agencygroup.pt/portal",
         "additionalFields": {}
       },
       "id": "j006",
@@ -97,7 +97,7 @@
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=📅 CHECK-IN D+30 — PARCEIRO\n\n{{ $json.nome }} — Check-in mensal\n\nObjectivo: Avaliar progresso da parceria\nContacto: {{ $json.phone || $json.email || '—' }}\n\nMensagem sugerida:\n\"Bom dia. Passado um mês desde o nosso contacto inicial. Queremos perceber se surgiu alguma oportunidade que faça sentido trabalharmos em conjunto. Disponível para uma chamada rápida?\"\n\nPortal → {{ $env.NEXT_PUBLIC_SITE_URL }}/portal",
+        "text": "=📅 CHECK-IN D+30 — PARCEIRO\n\n{{ $json.nome }} — Check-in mensal\n\nObjectivo: Avaliar progresso da parceria\nContacto: {{ $json.phone || $json.email || '—' }}\n\nMensagem sugerida:\n\"Bom dia. Passado um mês desde o nosso contacto inicial. Queremos perceber se surgiu alguma oportunidade que faça sentido trabalharmos em conjunto. Disponível para uma chamada rápida?\"\n\nPortal → https://www.agencygroup.pt/portal",
         "additionalFields": {}
       },
       "id": "j008",

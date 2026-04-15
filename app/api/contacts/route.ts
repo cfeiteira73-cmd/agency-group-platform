@@ -26,11 +26,11 @@ export async function GET(req: NextRequest) {
 
     // Admins see all contacts; agents see only their own
     if (session.user.role !== 'admin') {
-      query = query.eq('agent_id', session.user.id)
+      query = query.eq('assigned_to', session.user.id)
     }
 
     if (status && status !== 'all') query = query.eq('status', status)
-    if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+    if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
 
     const { data, error, count } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -58,31 +58,31 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    // Validate required fields
-    if (!body.name || typeof body.name !== 'string') {
-      return NextResponse.json({ error: 'name is required' }, { status: 400 })
+    // Validate required fields (accept both full_name and legacy name)
+    const contactName = body.full_name || body.name
+    if (!contactName || typeof contactName !== 'string') {
+      return NextResponse.json({ error: 'full_name is required' }, { status: 400 })
     }
 
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('contacts')
       .insert({
-        name:         body.name,
-        email:        body.email || null,
-        phone:        body.phone || null,
-        nationality:  body.nationality || null,
-        language:     body.language || 'PT',
-        budget_min:   body.budget_min || null,
-        budget_max:   body.budget_max || null,
-        zonas:        body.zonas || [],
-        tipos:        body.tipos || [],
-        status:       body.status || 'lead',
-        notes:        body.notes || null,
-        origin:       body.origin || null,
-        last_contact: body.last_contact || null,
-        lead_score:   body.lead_score || 0,
-        tasks:        body.tasks || [],
-        agent_id:     session.user.id,
+        full_name:          body.name || body.full_name,
+        email:              body.email || null,
+        phone:              body.phone || null,
+        nationality:        body.nationality || null,
+        language:           (body.language || 'pt').toLowerCase(),
+        budget_min:         body.budget_min || null,
+        budget_max:         body.budget_max || null,
+        preferred_locations: body.preferred_locations || body.zonas || [],
+        typologies_wanted:  body.typologies_wanted || body.tipos || [],
+        status:             body.status || 'lead',
+        notes:              body.notes || null,
+        source:             body.source || body.origin || null,
+        last_contact_at:    body.last_contact_at || body.last_contact || null,
+        lead_score:         body.lead_score || 0,
+        assigned_to:        session.user.id,
       })
       .select()
       .single()
@@ -114,18 +114,20 @@ export async function PUT(req: NextRequest) {
     // Build update object (only allowed fields)
     // Includes migration 007 buyer intelligence fields
     const allowed = [
-      'name','email','phone','nationality','language',
-      'budget_min','budget_max','zonas','tipos',
-      'status','notes','origin','last_contact','lead_score','tasks',
-      // Migration 007 — buyer intelligence
+      'full_name','email','phone','nationality','language',
+      'budget_min','budget_max','preferred_locations','typologies_wanted',
+      'status','notes','source','last_contact_at','lead_score',
+      'next_followup_at','lead_tier','assigned_to','tags',
+      'use_type','timeline','financing_type','features_required',
+      'bedrooms_min','bedrooms_max','ai_summary','ai_suggested_action',
+      'detected_intent','qualification_notes','qualified_at',
+      'gdpr_consent','gdpr_consent_at','opt_out_marketing','opt_out_whatsapp',
+      // Buyer intelligence
       'buyer_score','buyer_type','liquidity_profile','proof_of_funds_status',
       'ticket_preference','target_strategy','deals_closed_count','avg_close_days',
       'negotiation_style','reliability_score','response_rate','active_status',
-      // Buyer readiness (deal machine)
       'buyer_readiness_score','buyer_ready_for_deal',
-      // Extended buyer profile
-      'preferred_locations','typologies_wanted','preferred_asset_types',
-      'buyer_scored_at','buyer_tier',
+      'preferred_asset_types','buyer_scored_at','buyer_tier',
     ]
     const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
     for (const key of allowed) {
@@ -139,7 +141,7 @@ export async function PUT(req: NextRequest) {
 
     // Agents can only update their own contacts
     if (session.user.role !== 'admin') {
-      query = query.eq('agent_id', session.user.id)
+      query = query.eq('assigned_to', session.user.id)
     }
 
     const { data, error } = await query.select().single()
@@ -176,7 +178,7 @@ export async function DELETE(req: NextRequest) {
       .eq('id', id)
 
     if (session.user.role !== 'admin') {
-      query = query.eq('agent_id', session.user.id)
+      query = query.eq('assigned_to', session.user.id)
     }
 
     const { data, error } = await query.select().single()

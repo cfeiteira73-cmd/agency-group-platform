@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { safeCompare } from '@/lib/safeCompare'
+
+function isBearerAuthorized(req: NextRequest): boolean {
+  const authHeader = req.headers.get('authorization') ?? ''
+  const secrets = [
+    process.env.PORTAL_API_SECRET,
+    process.env.CRON_SECRET,
+    process.env.ADMIN_SECRET,
+  ].filter(Boolean) as string[]
+  return secrets.some(s => safeCompare(authHeader, `Bearer ${s}`))
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -252,8 +263,11 @@ function generateFallbackBrief(date: Date, marketInsight: string): DailyBrief {
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief | { error: string }>> {
-  const session = await auth()
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const bearerOk = isBearerAuthorized(request)
+  if (!bearerOk) {
+    const session = await auth()
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   try {
     const { searchParams } = new URL(request.url)

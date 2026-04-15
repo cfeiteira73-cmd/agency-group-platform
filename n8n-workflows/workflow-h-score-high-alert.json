@@ -13,9 +13,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?min_score=70&status=new&limit=20",
+        "url": "=https://www.agencygroup.pt/api/offmarket-leads?min_score=70&status=new&limit=20",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "x-cron-secret", "value": "{{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "x-cron-secret", "value": "8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "options": {}
       },
       "id": "h002",
@@ -40,11 +40,11 @@
         "method": "POST",
         "sendHeaders": true,
         "headers": { "parameters": [
-          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer re_TtQZcoYi_BdzrRivUdkGvXFkLFsHvQ6fe" },
           { "name": "Content-Type", "value": "application/json" }
         ]},
         "sendBody": true,
-        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify({ from: 'Agency Group <noreply@agencygroup.pt>', to: ['geral@agencygroup.pt'], subject: '🚨 Lead Hot — Contactar Agora: ' + $json.nome + ' (' + $json.score + '/100)', text: 'LEAD HOT — CONTACTAR AGORA\n\n' + $json.nome + '\nScore: ' + $json.score + '/100\nCidade: ' + ($json.cidade||'—') + '\nAtivo: ' + ($json.tipo_ativo||'—') + '\nPreço: ' + ($json.price_ask ? '€' + ($json.price_ask/1000).toFixed(0) + 'K' : '—') + '\nUrgência: ' + $json.urgency + '\nContacto: ' + ($json.contacto||'⚠️ sem contacto') + '\n\nPortal → ' + $env.NEXT_PUBLIC_SITE_URL + '/portal' }) }}" }] },
+        "bodyParameters": { "parameters": [{ "name": "=", "value": "={{ JSON.stringify({ from: 'Agency Group <noreply@agencygroup.pt>', to: ['geral@agencygroup.pt'], subject: '🚨 Lead Hot — Contactar Agora: ' + $json.nome + ' (' + $json.score + '/100)', text: 'LEAD HOT — CONTACTAR AGORA\n\n' + $json.nome + '\nScore: ' + $json.score + '/100\nCidade: ' + ($json.cidade||'—') + '\nAtivo: ' + ($json.tipo_ativo||'—') + '\nPreço: ' + ($json.price_ask ? '€' + ($json.price_ask/1000).toFixed(0) + 'K' : '—') + '\nUrgência: ' + $json.urgency + '\nContacto: ' + ($json.contacto||'⚠️ sem contacto') + '\n\nPortal → https://www.agencygroup.pt/portal' }) }}" }] },
         "options": {}
       },
       "id": "h004",
@@ -56,10 +56,10 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads/{{ $json.id }}",
+        "url": "=https://www.agencygroup.pt/api/offmarket-leads/{{ $json.id }}",
         "method": "PATCH",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "x-cron-secret", "value": "{{ $env.CRON_SECRET }}" }, { "name": "Content-Type", "value": "application/json" }] },
+        "headers": { "parameters": [{ "name": "x-cron-secret", "value": "8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }, { "name": "Content-Type", "value": "application/json" }] },
         "sendBody": true,
         "bodyParameters": { "parameters": [{ "name": "=", "value": "={ \"status\": \"contacted\", \"last_contact_at\": \"{{ new Date().toISOString() }}\", \"contact_attempts\": 1 }" }] },
         "options": {}

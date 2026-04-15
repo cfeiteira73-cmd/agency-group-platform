@@ -21,7 +21,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  c.id,\n  c.full_name,\n  c.email,\n  c.phone,\n  c.language_detected,\n  c.tier,\n  c.lead_score,\n  c.zone_interest,\n  c.budget,\n  c.typology,\n  c.last_activity,\n  EXTRACT(EPOCH FROM (NOW() - c.last_activity)) / 86400 AS days_dormant\nFROM contacts c\nWHERE c.last_activity < NOW() - INTERVAL '14 days'\n  AND c.status = 'active'\n  AND c.tier IN ('A', 'B')\nORDER BY c.lead_score DESC, c.last_activity ASC\nLIMIT 50",
+        "query": "SELECT\n  c.id,\n  c.full_name,\n  c.email,\n  c.phone,\n  'pt' AS language_detected,\n  c.lead_tier,\n  c.lead_score,\n  COALESCE(c.preferred_locations[1], 'Lisboa') AS zone_interest,\n  c.budget_max,\n  COALESCE(c.typologies_wanted[1], '') AS typology,\n  c.last_contact_at,\n  EXTRACT(EPOCH FROM (NOW() - c.last_contact_at)) / 86400 AS days_dormant\nFROM contacts c\nWHERE c.last_contact_at < NOW() - INTERVAL '14 days'\n  AND c.status IN ('lead', 'prospect', 'qualified', 'active')\n  AND c.lead_tier IN ('A', 'B')\n  AND c.email IS NOT NULL\nORDER BY c.lead_score DESC, c.last_contact_at ASC\nLIMIT 50",
         "options": {}
       },
       "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560002",
@@ -189,7 +189,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE contacts SET last_activity = NOW(), updated_at = NOW() WHERE id = '{{ $json.id }}';\nINSERT INTO activities (contact_id, type, description, metadata, created_at)\nVALUES (\n  '{{ $json.id }}',\n  'reengagement_sent',\n  'Mensagem de re-engajamento automática enviada (Workflow C)',\n  '{\"dormancy_level\": \"{{ $json.dormancy_level }}\", \"days_dormant\": {{ $json.days_dormant_rounded }}, \"channel\": \"whatsapp+email\"}',\n  NOW()\n);",
+        "query": "UPDATE contacts SET last_contact_at = NOW(), updated_at = NOW() WHERE id = '{{ $json.id }}';\nINSERT INTO activities (contact_id, type, description, metadata, created_at)\nVALUES (\n  '{{ $json.id }}',\n  'reengagement_sent',\n  'Mensagem de re-engajamento automática enviada (Workflow C)',\n  '{\"dormancy_level\": \"{{ $json.dormancy_level }}\", \"days_dormant\": {{ $json.days_dormant_rounded }}, \"channel\": \"whatsapp+email\"}',\n  NOW()\n);",
         "options": {}
       },
       "id": "c1a2b3d4-e5f6-7890-abcd-ef1234560009",

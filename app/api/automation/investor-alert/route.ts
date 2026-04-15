@@ -32,10 +32,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: investors } = await (supabaseAdmin as any)
       .from('contacts')
-      .select('id, name, email, phone, whatsapp, budget_min, budget_max, zonas, tipos, status')
-      .in('status', ['prospect', 'cliente', 'vip'])
+      .select('id, full_name, email, phone, whatsapp, budget_min, budget_max, preferred_locations, typologies_wanted, status, lead_tier')
+      .in('status', ['prospect', 'qualified', 'active'])
       .lte('budget_min', propertyPrice)
       .gte('budget_max', propertyPriceFloor)
+      .eq('opt_out_whatsapp', false)
       .limit(20)
 
     const matchCount = investors?.length || 0

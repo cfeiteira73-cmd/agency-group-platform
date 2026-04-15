@@ -13,9 +13,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/kpi/offmarket",
+        "url": "=https://www.agencygroup.pt/api/kpi/offmarket",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "options": {}
       },
       "id": "n002",
@@ -26,9 +26,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads?status=new&limit=10",
+        "url": "=https://www.agencygroup.pt/api/offmarket-leads?status=new&limit=10",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "options": {}
       },
       "id": "n003",
@@ -53,7 +53,7 @@
         "method": "POST",
         "sendHeaders": true,
         "headers": { "parameters": [
-          { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" },
+          { "name": "Authorization", "value": "=Bearer re_TtQZcoYi_BdzrRivUdkGvXFkLFsHvQ6fe" },
           { "name": "Content-Type", "value": "application/json" }
         ]},
         "sendBody": true,
@@ -69,9 +69,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.NEXT_PUBLIC_SITE_URL }}/api/offmarket-leads/score?limit=20&only_pending=true",
+        "url": "=https://www.agencygroup.pt/api/offmarket-leads/score?limit=20&only_pending=true",
         "sendHeaders": true,
-        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer {{ $env.CRON_SECRET }}" }] },
+        "headers": { "parameters": [{ "name": "Authorization", "value": "Bearer 8729a306ef23546efe02151b44168d87a4deffaca11ce6e63d56f234caed185b" }] },
         "options": {}
       },
       "id": "n006",

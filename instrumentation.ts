@@ -18,6 +18,8 @@ export async function register() {
       { key: 'UPSTASH_REDIS_REST_TOKEN',     description: 'Rate limiting is in-memory only (single-instance)', severity: 'WARNING' },
       { key: 'NEXT_PUBLIC_GTM_ID',           description: 'GTM analytics disabled — zero event tracking in production', severity: 'WARNING' },
       { key: 'PORTAL_API_SECRET',            description: 'Lead scoring disabled — all leads arrive without tier/score',  severity: 'CRITICAL' },
+      { key: 'N8N_WEBHOOK_URL',              description: 'n8n automation disabled — leads not routed to workflows',      severity: 'WARNING' },
+      { key: 'CRON_SECRET',                  description: 'Cron jobs unauthenticated — automation vulnerable',             severity: 'WARNING' },
     ]
 
     const missing = REQUIRED.filter(v => !process.env[v.key])
