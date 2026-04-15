@@ -1,9 +1,16 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v19 → Production**
+**Last updated: 2026-04-15 | v20 → Production**
 
 ---
 
-## 🔴 CRITICAL — Do Before Next Deploy
+## 🟢 ALL CRITICAL ITEMS RESOLVED — Production Green
+
+### 0. ✅ DONE — P0 /api/leads fix (2026-04-15)
+- Replaced `upsert onConflict:'email'` (→ 42P10, no UNIQUE constraint) with find-then-insert/update
+- Stripped columns not in PostgREST schema cache (detected_intent, agent_email, etc.)
+- Added `name` field (live DB schema.sql has `name TEXT NOT NULL` alongside `full_name`)
+- E2E confirmed: buyer insert → 200 id=35, seller insert → 200 id=36, phone-dedup update → 200
+- Temp debug endpoint `/api/dbcheck` deleted after confirmation
 
 ### 1. ✅ DONE — Migration 036 (Supabase)
 Table `public_saved_searches` created on 2026-04-15.
@@ -16,7 +23,7 @@ Indexes + RLS disabled + GRANTS applied. Trigger trg_pss_updated_at active.
 N8N_WEBHOOK_URL = https://agencygroup.app.n8n.cloud  ✅
 PORTAL_API_SECRET = b60bd2a0bf...                    ✅
 SITE_URL = https://www.agencygroup.pt                ✅
-AGENT_ALERT_EMAIL = (still missing — add geral@agencygroup.pt)
+AGENT_ALERT_EMAIL = geral@agencygroup.pt                ✅
 ```
 
 ### 3. ✅ DONE — n8n Workflows imported + active (2026-04-15)
