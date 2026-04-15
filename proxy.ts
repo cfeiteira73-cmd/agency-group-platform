@@ -161,7 +161,18 @@ export default auth(async (req) => {
     const magicCookie =
       req.cookies.get('ag-auth-token')?.value ||
       req.cookies.get('__Secure-ag-auth-token')?.value
-    if (!magicCookie) {
+
+    // Accept server-to-server Bearer tokens (n8n workflows, Vercel crons, internal services)
+    // Routes like /api/automation/* are called by n8n with PORTAL_API_SECRET — no session cookie
+    const authHeader = req.headers.get('authorization') ?? ''
+    const validTokens = [
+      process.env.PORTAL_API_SECRET,
+      process.env.CRON_SECRET,
+      process.env.ADMIN_SECRET,
+    ].filter(Boolean) as string[]
+    const hasValidToken = validTokens.some(t => authHeader === `Bearer ${t}`)
+
+    if (!magicCookie && !hasValidToken) {
       const loginUrl = new URL('/auth/login', req.url)
       loginUrl.searchParams.set('callbackUrl', pathname)
       return NextResponse.redirect(loginUrl)
