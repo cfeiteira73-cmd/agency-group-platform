@@ -64,38 +64,46 @@ export async function POST(req: NextRequest) {
     if (property_ref) noteParts.push(`Imóvel: ${property_ref}`)
 
     // Build contact payload
-    // NOTE: Only use columns confirmed in live DB (from COMBINED_OFFMARKET_MIGRATIONS + original schema.sql).
-    // Columns like detected_intent, source_detail, use_type, nationality, budget_min/max
-    // are in 001_initial_schema.sql but were NOT added via ALTER TABLE to the live DB.
-    // Fold extra context into notes to avoid PGRST204 schema cache errors.
+    // Live DB uses original schema.sql (not 001_initial_schema.sql migration).
+    // Confirmed live columns: id, agent_email, name, email, phone, nationality,
+    //   budget_min, budget_max, tipos, zonas, status, notes, last_contact,
+    //   next_follow_up, deal_ref, origin, created_at
+    // Plus COMBINED_OFFMARKET_MIGRATIONS additions:
+    //   full_name (nullable TEXT), preferred_locations, last_contact_at,
+    //   next_followup_at, timeline, role, whatsapp, lead_tier, source
+    //
+    // agent_email NOT NULL — use system default for public web leads
+    const SYSTEM_AGENT = process.env.ADMIN_EMAIL || 'geral@agencygroup.pt'
+
     const intentLabel = intent ?? (
       use_type === 'vendedor'   ? 'seller'   :
       use_type === 'investidor' ? 'investor' : 'buyer'
     )
+    if (zona)        noteParts.push(`Zona: ${zona}`)
     if (use_type)    noteParts.push(`Tipo: ${use_type}`)
     if (nationality) noteParts.push(`Nacionalidade: ${nationality}`)
     if (budget_min)  noteParts.push(`Budget min: €${budget_min}`)
     if (budget_max)  noteParts.push(`Budget max: €${budget_max}`)
     if (intentLabel) noteParts.push(`Intent: ${intentLabel}`)
 
-    const contactPayload = {
-      full_name:           name || 'Website Lead',
-      phone:               phone || null,
-      email:               email || null,
-      status:              'lead' as const,
-      source:              source || 'website',
-      notes:               noteParts.length ? noteParts.join(' | ') : null,
-      preferred_locations: zona ? [zona] : null,
-      timeline:            timeline || null,
-      next_followup_at:    (() => {
-        const d = new Date()
-        const isSeller = intent === 'seller' || use_type === 'vendedor'
-        if (isSeller) { d.setHours(d.getHours() + 2) }
-        else          { d.setDate(d.getDate() + 1) }
-        return d.toISOString()
-      })(),
-      last_contact_at:     new Date().toISOString(),
-      updated_at:          new Date().toISOString(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const contactPayload: any = {
+      // Live DB (schema.sql) columns
+      agent_email:    SYSTEM_AGENT,
+      name:           name || 'Website Lead',
+      email:          email || null,
+      phone:          phone || null,
+      nationality:    nationality || null,
+      budget_min:     budget_min || 0,
+      budget_max:     budget_max || 0,
+      zonas:          zona ? [zona] : [],
+      status:         'lead',
+      origin:         source || 'website',
+      notes:          noteParts.length ? noteParts.join(' | ') : '',
+      // COMBINED_OFFMARKET_MIGRATIONS additions (may or may not exist)
+      full_name:      name || 'Website Lead',
+      source:         source || 'website',
+      last_contact_at: new Date().toISOString(),
     }
 
     // Find-then-insert/update — contacts.email has no UNIQUE constraint so
@@ -124,7 +132,7 @@ export async function POST(req: NextRequest) {
         .from('contacts')
         .update(contactPayload)
         .eq('id', existingId)
-        .select('id, status, lead_tier')
+        .select('id, status')
         .single()
       data = result.data
       error = result.error
@@ -133,7 +141,7 @@ export async function POST(req: NextRequest) {
       const result = await supabaseAdmin
         .from('contacts')
         .insert(contactPayload)
-        .select('id, status, lead_tier')
+        .select('id, status')
         .single()
       data = result.data
       error = result.error
@@ -200,7 +208,7 @@ export async function POST(req: NextRequest) {
                   <tr><td style="padding:8px 0;color:#666;font-size:13px;">Zona</td><td style="padding:8px 0;font-size:13px;">${zona || '—'}</td></tr>
                   <tr><td style="padding:8px 0;color:#666;font-size:13px;">Orçamento</td><td style="padding:8px 0;font-size:13px;">${budget_max ? `até €${Number(budget_max).toLocaleString('pt-PT')}` : '—'}</td></tr>
                   <tr><td style="padding:8px 0;color:#666;font-size:13px;">Prazo</td><td style="padding:8px 0;font-size:13px;">${timeline || '—'}</td></tr>
-                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Tier</td><td style="padding:8px 0;font-size:13px;color:#c9a96e;font-weight:700;">${data.lead_tier || 'C'}</td></tr>
+                  <tr><td style="padding:8px 0;color:#666;font-size:13px;">Intent</td><td style="padding:8px 0;font-size:13px;color:#c9a96e;font-weight:700;">${intentLabel}</td></tr>
                 </table>
                 ${message ? `<div style="margin-top:16px;padding:12px;background:#f4f0e6;border-left:3px solid #1c4a35;font-size:13px;">${message}</div>` : ''}
                 <div style="margin-top:20px;">
@@ -221,7 +229,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       id: data?.id,
-      tier: data?.lead_tier || 'C',
     })
   } catch (err) {
     console.error('[leads] error:', err)

@@ -6,36 +6,33 @@ export async function GET() {
   const ts = Date.now()
   const errors: string[] = []
   
-  // Test each column individually
-  const columns: Record<string, unknown> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const columns: any = {
+    agent_email: 'geral@agencygroup.pt',
+    name: `Debug ${ts}`,
     full_name: `Debug ${ts}`,
     email: `debug-col-${ts}@test.com`,
     status: 'lead',
     source: 'debug',
+    origin: 'website',
     notes: 'test',
-    preferred_locations: ['Lisboa'],
-    timeline: '6months',
-    next_followup_at: new Date(Date.now() + 86400000).toISOString(),
     last_contact_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
   }
-  
+
   // Try insert with all columns
   const { data, error } = await supabaseAdmin
     .from('contacts')
-    .insert(columns)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .insert(columns as any)
     .select('id')
     .single()
-  
+
   if (error) {
     errors.push(`full_payload: ${error.code} — ${error.message}`)
-    
-    // Try with just the minimal set
-    const { error: e2 } = await supabaseAdmin
-      .from('contacts')
-      .insert({ full_name: `Min ${ts}`, email: `min-${ts}@test.com`, status: 'lead' })
-      .select('id')
-      .single()
+
+    // Try with just the minimal set — name + agent_email (schema.sql NOT NULL)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: e2 } = await supabaseAdmin.from('contacts').insert({ agent_email: 'geral@agencygroup.pt', name: `Min ${ts}`, email: `min-${ts}@test.com`, status: 'lead' } as any).select('id').single()
     if (e2) errors.push(`minimal: ${e2.code} — ${e2.message}`)
     else errors.push('minimal: OK')
   }
