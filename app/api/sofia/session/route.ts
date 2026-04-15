@@ -93,7 +93,9 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
       body: JSON.stringify({ session_id: sessionId }),
-    }).catch(() => {})
+    }).catch(err =>
+      console.error('[sofia/session] HeyGen stop-session failed:', err?.message ?? err)
+    )
 
     return NextResponse.json({ success: true })
   } catch (err) {

@@ -114,7 +114,9 @@ export async function POST(req: NextRequest) {
     // Fire n8n wf-Q: notify subscribers matching this new property
     // Non-blocking — property creation never fails due to n8n unavailability
     if (data && body.status !== 'off-market' && body.status !== 'sold') {
-      triggerN8nNewProperty(data).catch(() => {})
+      triggerN8nNewProperty(data).catch(err =>
+        console.error('[properties/db] n8n new-property webhook failed:', err?.message ?? err)
+      )
     }
 
     return NextResponse.json({ success: true, property: data }, { status: 201 })

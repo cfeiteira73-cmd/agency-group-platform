@@ -70,7 +70,9 @@ export async function POST(req: NextRequest) {
     // Fire-and-forget: don't block the response
     const pageId = await findDealPage(String(property_id))
     if (pageId) {
-      incrementViews(pageId).catch(() => {})
+      incrementViews(pageId).catch(err =>
+        console.error('[track-view] Notion incrementViews failed:', err?.message ?? err)
+      )
     }
 
     return NextResponse.json({ ok: true })

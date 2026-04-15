@@ -331,14 +331,18 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Fire n8n webhook (async, non-blocking)
-    triggerN8nSavedSearch(subscription).catch(() => {})
+    triggerN8nSavedSearch(subscription).catch(err =>
+      console.error('[alerts] n8n saved-search webhook failed:', err?.message ?? err)
+    )
 
     // 3. Send confirmation email (async, non-blocking)
     sendEmail({
       to: email,
       subject: 'Alerta de Imóveis Ativado — Agency Group',
       html: buildConfirmationEmail(subscription),
-    }).catch(() => {})
+    }).catch(err =>
+      console.error('[alerts] confirmation email failed:', err?.message ?? err)
+    )
 
     return NextResponse.json({
       success: true,

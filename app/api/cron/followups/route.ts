@@ -253,7 +253,9 @@ export async function GET(req: NextRequest) {
         subject,
         html,
       })
-      await markFollowUpSent(contact.id).catch(() => {})
+      await markFollowUpSent(contact.id).catch(err =>
+        console.error('[followups] markFollowUpSent failed for contact', contact.id, ':', err?.message ?? err)
+      )
       results.sent++
     } catch {
       results.errors++
@@ -270,7 +272,9 @@ export async function GET(req: NextRequest) {
         subject,
         html,
       })
-      await markFollowUpSent(contact.id).catch(() => {})
+      await markFollowUpSent(contact.id).catch(err =>
+        console.error('[followups] markFollowUpSent failed for contact', contact.id, ':', err?.message ?? err)
+      )
       results.sent++
     } catch {
       results.errors++

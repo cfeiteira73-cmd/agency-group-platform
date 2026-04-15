@@ -235,9 +235,36 @@ export async function POST(req: NextRequest) {
               </div>
             `,
           }),
-        }).catch(() => {})
+        }).catch(err =>
+          console.error('[leads] Resend agent alert failed:', err?.message ?? err)
+        )
       } else {
         console.warn('[leads] RESEND_API_KEY or AGENT_ALERT_EMAIL not set — email alert skipped')
+      }
+
+      // 3. n8n Workflow A — lead inbound enrichment (fire-and-forget)
+      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
+      if (n8nWebhookUrl) {
+        fetch(`${n8nWebhookUrl}/webhook/lead-inbound`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event:       'lead_created',
+            contact_id:  data?.id,
+            name:        name || 'Website Lead',
+            email:       email       || null,
+            phone:       phone       || null,
+            source:      source      || 'website',
+            zona:        zona        || null,
+            budget_max:  budget_max  || null,
+            nationality: nationality || null,
+            intent:      intentLabel,
+            created_at:  new Date().toISOString(),
+          }),
+          signal: AbortSignal.timeout(5000),
+        }).catch(err =>
+          console.error('[leads] n8n lead-inbound webhook failed:', err?.message ?? err)
+        )
       }
     }
 
