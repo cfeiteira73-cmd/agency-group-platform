@@ -64,10 +64,19 @@ export async function POST(req: NextRequest) {
     if (property_ref) noteParts.push(`Imóvel: ${property_ref}`)
 
     // Build contact payload
-    // nationality is CHAR(2) in DB (ISO 3166-1 alpha-2) — truncate/null if not 2 chars
-    const nationalityVal = nationality && nationality.trim().length === 2
-      ? nationality.trim().toUpperCase()
-      : null
+    // NOTE: Only use columns confirmed in live DB (from COMBINED_OFFMARKET_MIGRATIONS + original schema.sql).
+    // Columns like detected_intent, source_detail, use_type, nationality, budget_min/max
+    // are in 001_initial_schema.sql but were NOT added via ALTER TABLE to the live DB.
+    // Fold extra context into notes to avoid PGRST204 schema cache errors.
+    const intentLabel = intent ?? (
+      use_type === 'vendedor'   ? 'seller'   :
+      use_type === 'investidor' ? 'investor' : 'buyer'
+    )
+    if (use_type)    noteParts.push(`Tipo: ${use_type}`)
+    if (nationality) noteParts.push(`Nacionalidade: ${nationality}`)
+    if (budget_min)  noteParts.push(`Budget min: €${budget_min}`)
+    if (budget_max)  noteParts.push(`Budget max: €${budget_max}`)
+    if (intentLabel) noteParts.push(`Intent: ${intentLabel}`)
 
     const contactPayload = {
       full_name:           name || 'Website Lead',
@@ -75,18 +84,9 @@ export async function POST(req: NextRequest) {
       email:               email || null,
       status:              'lead' as const,
       source:              source || 'website',
-      source_detail:       zona || null,
       notes:               noteParts.length ? noteParts.join(' | ') : null,
       preferred_locations: zona ? [zona] : null,
-      budget_min:          budget_min || null,
-      budget_max:          budget_max || null,
       timeline:            timeline || null,
-      use_type:            use_type || null,
-      nationality:         nationalityVal,
-      detected_intent:     intent ?? (
-        use_type === 'vendedor'   ? 'seller'   :
-        use_type === 'investidor' ? 'investor' : 'buyer'
-      ),
       next_followup_at:    (() => {
         const d = new Date()
         const isSeller = intent === 'seller' || use_type === 'vendedor'
@@ -141,11 +141,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('[leads] db error:', error)
-      // Temporary debug: expose raw error in non-prod for diagnosis — REMOVE AFTER FIX
-      if (process.env.NODE_ENV !== 'production') {
-        return NextResponse.json({ error: 'Erro ao guardar lead', _debug: error }, { status: 500 })
-      }
-      return NextResponse.json({ error: 'Erro ao guardar lead', _debug: { code: (error as {code?:string}).code, message: (error as {message?:string}).message } }, { status: 500 })
+      return NextResponse.json({ error: 'Erro ao guardar lead' }, { status: 500 })
     }
 
     // Fire-and-forget: trigger lead scoring + agent alert
