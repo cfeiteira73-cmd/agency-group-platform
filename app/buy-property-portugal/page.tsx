@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     languages: {
       'x-default': 'https://www.agencygroup.pt/buy-property-portugal',
       'en': 'https://www.agencygroup.pt/buy-property-portugal',
-      'pt-PT': 'https://www.agencygroup.pt/blog/comprar-casa-portugal-2026',
+      'pt-PT': 'https://www.agencygroup.pt/buy-property-portugal',
     },
   },
   openGraph: {
@@ -61,11 +61,21 @@ const FAQ_SCHEMA = {
   ],
 }
 
+const BREADCRUMB_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.agencygroup.pt' },
+    { '@type': 'ListItem', position: 2, name: 'Buy Property in Portugal', item: 'https://www.agencygroup.pt/buy-property-portugal' },
+  ],
+}
+
 export default function BuyPropertyPortugalPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(PAGE_SCHEMA) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(BREADCRUMB_SCHEMA) }} />
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
         body{font-family:var(--font-jost),sans-serif;background:#f4f0e6;color:#0e0e0d;-webkit-font-smoothing:antialiased}
@@ -242,20 +252,28 @@ export default function BuyPropertyPortugalPage() {
         <h2>Best Areas to Buy in <em>Portugal 2026</em></h2>
         <div className="areas">
           {[
-            { name: 'Lisboa', price: '€5,000/m²', note: 'Finest address in Iberia. Príncipe Real, Chiado, Lapa dominate luxury demand.' },
-            { name: 'Cascais', price: '€4,713/m²', note: 'Atlantic coast. Families, HNWI expats. Strong rental yields. 25min from Lisbon.' },
-            { name: 'Comporta', price: '€4,200/m²', note: 'Ultra-exclusive. Cap Ferret of Portugal. Dunes, rice fields, no mass tourism.' },
-            { name: 'Algarve', price: '€3,941/m²', note: 'Golden Triangle: Quinta do Lago, Vale do Lobo, Vilamoura. Golf, sea, sun.' },
-            { name: 'Porto', price: '€3,643/m²', note: 'Emerging luxury. Foz do Douro, Boavista. Strong appreciation momentum.' },
-            { name: 'Madeira', price: '€3,760/m²', note: 'Tax-advantaged. Funchal residences + Calheta. Growing HNWI demand.' },
-            { name: 'Sintra', price: '€3,200/m²', note: 'UNESCO-listed palaces. Quintas & estates. 40min from Lisbon.' },
-            { name: 'Açores', price: '€1,952/m²', note: 'Emerging market. Lowest entry point. Exceptional natural beauty.' },
+            { name: 'Lisboa', slug: 'lisboa', price: '€5,000/m²', note: 'Finest address in Iberia. Príncipe Real, Chiado, Lapa dominate luxury demand.' },
+            { name: 'Cascais', slug: 'cascais', price: '€4,713/m²', note: 'Atlantic coast. Families, HNWI expats. Strong rental yields. 25min from Lisbon.' },
+            { name: 'Comporta', slug: 'comporta', price: '€4,200/m²', note: 'Ultra-exclusive. Cap Ferret of Portugal. Dunes, rice fields, no mass tourism.' },
+            { name: 'Algarve', slug: 'algarve', price: '€3,941/m²', note: 'Golden Triangle: Quinta do Lago, Vale do Lobo, Vilamoura. Golf, sea, sun.' },
+            { name: 'Porto', slug: 'porto', price: '€3,643/m²', note: 'Emerging luxury. Foz do Douro, Boavista. Strong appreciation momentum.' },
+            { name: 'Madeira', slug: 'madeira', price: '€3,760/m²', note: 'Tax-advantaged. Funchal residences + Calheta. Growing HNWI demand.' },
+            { name: 'Sintra', slug: 'sintra', price: '€3,200/m²', note: 'UNESCO-listed palaces. Quintas & estates. 40min from Lisbon.' },
+            { name: 'Açores', slug: null, price: '€1,952/m²', note: 'Emerging market. Lowest entry point. Exceptional natural beauty.' },
           ].map(a => (
-            <div key={a.name} className="area-card">
-              <div className="area-name">{a.name}</div>
-              <div className="area-price">Avg. {a.price}</div>
-              <div className="area-note">{a.note}</div>
-            </div>
+            a.slug ? (
+              <Link key={a.name} href={`/zonas/${a.slug}`} className="area-card" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                <div className="area-name">{a.name} →</div>
+                <div className="area-price">Avg. {a.price}</div>
+                <div className="area-note">{a.note}</div>
+              </Link>
+            ) : (
+              <div key={a.name} className="area-card">
+                <div className="area-name">{a.name}</div>
+                <div className="area-price">Avg. {a.price}</div>
+                <div className="area-note">{a.note}</div>
+              </div>
+            )
           ))}
         </div>
 
