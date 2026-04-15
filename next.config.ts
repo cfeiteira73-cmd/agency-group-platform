@@ -103,6 +103,35 @@ const config: NextConfig = {
           { key: 'Expires', value: '0' },
         ],
       },
+      {
+        // Blog articles: estáticos — CDN pode fazer cache por 24h, revalidar em background
+        // Vercel Edge vai servir de cache após o primeiro request — TTFB ~10ms no repeat
+        source: '/blog/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=43200' },
+        ],
+      },
+      {
+        // Marketing pages: semi-estáticos — cache 1h no CDN
+        source: '/(zonas|relatorio-2026|vendidos|parceiros|equipa|faq|privacy|off-market|vender-imovel-portugal)/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=1800' },
+        ],
+      },
+      {
+        // Static assets (_next/static): imutáveis por versão — 1 ano de cache
+        source: '/_next/static/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        // Public media (hero, og images, fonts): 7 dias
+        source: '/(hero-poster.jpg|og-image.jpg|og-imoveis.jpg|favicon.ico|icons/:path*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
+        ],
+      },
     ]
   },
   async redirects() {
