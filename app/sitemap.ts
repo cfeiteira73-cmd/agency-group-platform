@@ -1,6 +1,26 @@
 import { MetadataRoute } from 'next'
+import { readdirSync } from 'fs'
+import { join } from 'path'
 import { PROPERTIES } from './imoveis/data'
 import { ARTICLES } from './blog/[slug]/articles'
+
+// ── Static blog folder slugs (individual page.tsx files under /app/blog/*/) ──
+// These 51 articles are separate from ARTICLES (dynamic [slug] route).
+// We read the directory at build time — this is a Node.js only context (sitemap.ts).
+function getStaticBlogSlugs(): string[] {
+  try {
+    const blogDir = join(process.cwd(), 'app', 'blog')
+    return readdirSync(blogDir, { withFileTypes: true })
+      .filter(d => d.isDirectory() && d.name !== '[slug]')
+      .map(d => d.name)
+  } catch {
+    return []
+  }
+}
+
+const STATIC_BLOG_SLUGS = getStaticBlogSlugs()
+// Slugs already covered by ARTICLES dynamic route — avoid duplicates
+const DYNAMIC_SLUGS = new Set(ARTICLES.map(a => a.slug))
 
 const BASE = 'https://www.agencygroup.pt'
 
@@ -55,13 +75,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.85,
   }))
 
-  // ── Blog pages ────────────────────────────────────────────────────────────────
+  // ── Blog pages (dynamic [slug] route) ────────────────────────────────────────
   const blogPages: MetadataRoute.Sitemap = ARTICLES.map(a => ({
     url: `${BASE}/blog/${a.slug}`,
     lastModified: new Date(a.date),
     changeFrequency: 'monthly' as const,
     priority: 0.65,
   }))
+
+  // ── Blog pages (static individual folders) ───────────────────────────────────
+  // 51 articles with individual page.tsx files — were missing from sitemap before this fix
+  const staticBlogPages: MetadataRoute.Sitemap = STATIC_BLOG_SLUGS
+    .filter(slug => !DYNAMIC_SLUGS.has(slug)) // avoid duplicates with ARTICLES
+    .map(slug => ({
+      url: `${BASE}/blog/${slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.65,
+    }))
 
   // ── Premium microsites ────────────────────────────────────────────────────────
   const premiumPages: MetadataRoute.Sitemap = PREMIUM_IDS.map(id => ({
@@ -71,5 +102,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.92,
   }))
 
-  return [...staticPages, ...zonePages, ...propertyPages, ...premiumPages, ...blogPages]
+  return [...staticPages, ...zonePages, ...propertyPages, ...premiumPages, ...blogPages, ...staticBlogPages]
 }
