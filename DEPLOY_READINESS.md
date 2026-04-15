@@ -1,5 +1,5 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v22 → Production**
+**Last updated: 2026-04-15 | v23 → Production**
 
 ---
 
@@ -64,6 +64,36 @@ upgraded to Pro for Variables support. Emails will fail until RESEND_API_KEY is 
 - [x] RESEND_API_KEY — already rotated 2026-04-13 (re_TtQZcoYi…)
 - [x] OPENAI_API_KEY — new key created, 2 old keys revoked, Vercel updated
 - [x] SUPABASE_SERVICE_ROLE_KEY — new sb_secret format, Vercel + .env.local updated
+
+---
+
+## 🔴 ACÇÕES PENDENTES — Confirmadas por auditoria 2026-04-15
+
+### P0a. Add NEXT_PUBLIC_GTM_ID to Vercel — 2 min (€500K–€2M/year blocker)
+```
+Vercel Dashboard → agency-group → Settings → Environment Variables
+NEXT_PUBLIC_GTM_ID = GTM-XXXXXXX    ← container ID from tagmanager.google.com
+```
+Status: CONFIRMED MISSING by live Supabase/Vercel audit (2026-04-15)
+Impact: 18 coded GTM events (lead_form_submit, saved_search_success, property_view, etc.) fire to void
+
+### P0b. Add AGENT_ALERT_EMAIL to Vercel — 1 min (silent failure: agent never notified of new leads)
+```
+Vercel Dashboard → agency-group → Settings → Environment Variables
+AGENT_ALERT_EMAIL = geral@agencygroup.pt
+```
+Status: CONFIRMED MISSING by live Supabase/Vercel audit (2026-04-15)
+Impact: /api/leads route sends "new lead" email to this address — never arrives
+
+### P0c. Run Migration 037 (nurture_log) — 30s (wf-R blocked until this runs)
+```sql
+-- Supabase Dashboard → SQL Editor → New query → paste → Run
+-- File: supabase/migrations/037_nurture_log.sql
+```
+Status: CONFIRMED table does not exist by live Supabase audit (2026-04-15)
+
+### P0d. Import + Activate wf-R in n8n — 2 min
+1. agencygroup.app.n8n.cloud → Import → n8n-workflows/workflow-r-lead-nurture.json → Activate
 
 ---
 
@@ -177,15 +207,17 @@ Unsubscribe from email link  →  GET /api/alerts/unsubscribe → Supabase PSS u
 ## Env Vars Checklist
 
 ### Vercel (production)
-- [x] NEXT_PUBLIC_SUPABASE_URL
-- [x] SUPABASE_SERVICE_ROLE_KEY
-- [x] RESEND_API_KEY
-- [x] ANTHROPIC_API_KEY
-- [x] CRON_SECRET
-- [ ] N8N_WEBHOOK_URL ← **ADD THIS**
-- [ ] PORTAL_API_SECRET ← **ADD THIS**
-- [ ] SITE_URL ← **ADD THIS**
-- [ ] AGENT_ALERT_EMAIL ← add for lead notifications (geral@agencygroup.pt)
+- [x] NEXT_PUBLIC_SUPABASE_URL  ✅ confirmed present
+- [x] SUPABASE_SERVICE_ROLE_KEY ✅ confirmed present (sb_secret_WhFpc7Q8DE5n6rz…)
+- [x] RESEND_API_KEY             ✅ confirmed present (re_TtQZcoYi…)
+- [x] ANTHROPIC_API_KEY          ✅ confirmed present (sk-ant-api03-MneI2ow…)
+- [x] CRON_SECRET                ✅ confirmed present (8729a306…)
+- [x] N8N_WEBHOOK_URL            ✅ confirmed present (agencygroup.app.n8n.cloud)
+- [x] PORTAL_API_SECRET          ✅ confirmed present (b60bd2a0…)
+- [x] SITE_URL                   ✅ confirmed present (https://www.agencygroup.pt)
+- [x] OPENAI_API_KEY             ✅ confirmed present (sk-proj-yFEVOe4Muc…)
+- [ ] NEXT_PUBLIC_GTM_ID         ← 🔴 **MISSING — ADD NOW** (GTM-XXXXXXX)
+- [ ] AGENT_ALERT_EMAIL          ← 🔴 **MISSING — ADD NOW** (geral@agencygroup.pt)
 
 ### n8n Cloud (agencygroup.app.n8n.cloud → Settings → Env)
 - [ ] SITE_URL = https://www.agencygroup.pt
