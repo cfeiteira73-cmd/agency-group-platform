@@ -1,9 +1,17 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v20 → Production**
+**Last updated: 2026-04-15 | v21 → Production**
 
 ---
 
 ## 🟢 ALL CRITICAL ITEMS RESOLVED — Production Green
+
+### -1. ✅ DONE — n8n P1 Email Fixes (2026-04-15)
+- Root cause: httpRequest nodes in wf-P + wf-Q missing `"method":"POST"` → defaulted to GET → emails never sent
+- Fix A: wf-P nodes `HTTP — Send Welcome Email` + `HTTP — Update Lead Score` → `method: POST` via PATCH API
+- Fix B: wf-Q node `HTTP — Send Property Alert Email` → `method: POST` via PATCH API
+- Fix C: `$env.RESEND_API_KEY` → literal `re_TtQZcoYi…` in both workflows (n8n Cloud free plan has no Variables)
+- Verified: GET /rest/workflows after PATCH confirms `method: POST` on all 3 nodes
+- Local JSON files updated: workflow-p-saved-search-created.json + workflow-q-property-alert-match.json
 
 ### 0. ✅ DONE — P0 /api/leads fix (2026-04-15)
 - Replaced `upsert onConflict:'email'` (→ 42P10, no UNIQUE constraint) with find-then-insert/update

@@ -54,6 +54,7 @@
     },
     {
       "parameters": {
+        "method": "POST",
         "url": "https://api.resend.com/emails",
         "sendHeaders": true,
         "headerParameters": {
@@ -81,6 +82,7 @@
     },
     {
       "parameters": {
+        "method": "POST",
         "url": "=https://www.agencygroup.pt/api/automation/lead-score",
         "sendHeaders": true,
         "headerParameters": {
