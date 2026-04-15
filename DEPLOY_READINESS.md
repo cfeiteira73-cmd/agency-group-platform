@@ -1,5 +1,5 @@
 # Deploy Readiness — Agency Group
-**Last updated: 2026-04-15 | v26 → Production**
+**Last updated: 2026-04-15 | v27 → Production**
 
 ---
 
@@ -138,6 +138,28 @@ Container created, GA4 G-HSL1EKS80W linked, published v2, redeployed to producti
 
 ### 5e. ✅ Rate limit on /api/alerts POST — ADDED (2026-04-15)
 5 subscriptions / 10 min per IP. Prevents email harvesting and subscription spam.
+
+---
+
+## 🔐 SECURITY FIXES — Post-Audit (2026-04-15 v27)
+
+### SEC-1. ✅ GTM afterInteractive fix — commit 58ba94c (2026-04-15)
+- `gtm-init` strategy: `beforeInteractive` → `afterInteractive`
+- Added `gtm.start` push to dataLayer init (standard GTM spec)
+- Added `<noscript><iframe>` immediately after `<body>` open tag
+- **Impact**: GA4 G-HSL1EKS80W now initializes correctly on all pages
+
+### SEC-2. ✅ /api/off-market/signals auth — commit 2e5ebbe (2026-04-15)
+- Route was completely public (no auth) — exposed insolvency/inheritance intelligence
+- Fix: require NextAuth session OR Bearer (PORTAL_API_SECRET/CRON_SECRET/ADMIN_SECRET)
+- Internal portal tools and n8n workflows unaffected (use Bearer tokens)
+
+### SEC-3. ⚠️ Migration 038 — RUN MANUALLY IN SUPABASE DASHBOARD
+File: `supabase/migrations/038_fix_rls_policies.sql`
+- Removes `OR true` bypass from contacts, deals, properties RLS policies
+- `contacts` + `deals`: service_role only (no anon access)
+- `properties`: public SELECT for non-off-market/archived, service_role write
+- **MUST BE RUN MANUALLY** — Supabase Management API SQL exec required
 
 ## 🟡 IMPORTANT — Do This Week (original items)
 
