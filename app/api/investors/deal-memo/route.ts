@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 // ─── Rate Limiting (in-memory, resets on server restart) ──────────────────────
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -170,6 +171,9 @@ Calculate realistic financials. IRR should account for yield + capital appreciat
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   // Rate limit
   const forwarded = req.headers.get('x-forwarded-for')
   const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown'

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -40,6 +41,9 @@ function calcIRR(cashFlows: number[]): number {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const {
       purchasePrice, zona, tipo, area,
