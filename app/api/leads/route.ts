@@ -86,7 +86,9 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contactPayload: any = {
       // Only COMBINED_OFFMARKET_MIGRATIONS confirmed columns — safe to send
+      // Plus `name` which is NOT NULL in live DB (original schema.sql column)
       full_name:        name || 'Website Lead',
+      name:             name || 'Website Lead',
       email:            email || null,
       phone:            phone || null,
       status:           'lead',
