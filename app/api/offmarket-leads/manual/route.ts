@@ -185,6 +185,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       price_intel: false,
       match_buyers: false,
       deal_eval: false,
+      advisor_assigned: false,
     }
 
     // 1. Score
@@ -232,6 +233,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         .from('offmarket_leads')
         .update({ gate_status: 'accepted_priority' })
         .eq('id', lead.id)
+    }
+
+    // ── Advisor auto-assignment ──────────────────────────────────────
+    if (!payload.assigned_to) {
+      const ADVISOR_MAP: { zones: string[]; advisor: string }[] = [
+        { zones: ['cascais','estoril','sintra','oeiras'],                                            advisor: 'geral@agencygroup.pt' },
+        { zones: ['chiado','príncipe real','lapa','santos','bairro alto','campo de ourique','estrela','belém'], advisor: 'geral@agencygroup.pt' },
+        { zones: ['parque das nações','expo','oriente','beato','marvila'],                           advisor: 'geral@agencygroup.pt' },
+        { zones: ['algarve','vilamoura','quinta do lago','vale do lobo','lagos','faro','albufeira','portimão'], advisor: 'geral@agencygroup.pt' },
+        { zones: ['porto','foz','boavista','matosinhos','leça','gaia'],                             advisor: 'geral@agencygroup.pt' },
+        { zones: ['comporta','troia','alcácer do sal','melides'],                                    advisor: 'geral@agencygroup.pt' },
+        { zones: ['madeira','funchal','câmara de lobos','caniço'],                                   advisor: 'geral@agencygroup.pt' },
+      ]
+      const haystack = `${lead.cidade ?? ''} ${body.localizacao ?? ''}`.toLowerCase()
+      let assignedAdvisor = 'geral@agencygroup.pt'
+      for (const entry of ADVISOR_MAP) {
+        if (entry.zones.some(z => haystack.includes(z))) { assignedAdvisor = entry.advisor; break }
+      }
+      await s.from('offmarket_leads').update({ assigned_to: assignedAdvisor }).eq('id', lead.id)
+      pipeline.advisor_assigned = true
     }
 
     // ── next_action summary ──────────────────────────────────────────
