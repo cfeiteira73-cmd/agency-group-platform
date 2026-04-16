@@ -175,11 +175,29 @@ export default function Relatorio2026() {
       prestacao, cashFlowMensal, valorFinal, totalReturn, irr, cashOnCash, apreciacaoAnual }
   }, [calcBudget, calcZone, calcLtv, calcHorizonte, calcTipoRenda])
 
-  function handleUnlock() {
+  async function handleUnlock() {
     if (!email.includes('@') || email.trim().length < 5) { setEmailError('Introduza um email válido'); return }
     setEmailError('')
     setSubmitting(true)
-    setTimeout(() => { setUnlocked(true); setSubmitting(false); setTimeout(() => window.print(), 500) }, 800)
+    try {
+      // Capture lead in CRM before unlocking
+      await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          source: 'relatorio_2026',
+          intent: 'investor',
+          message: 'Solicitou acesso ao Portugal Luxury Market Report 2026',
+          lang: 'pt',
+        }),
+      })
+    } catch {
+      // Non-blocking — unlock even if API call fails
+    }
+    setUnlocked(true)
+    setSubmitting(false)
+    setTimeout(() => window.print(), 500)
   }
 
   const fmt = (n:number) => n.toLocaleString('pt-PT',{maximumFractionDigits:0})

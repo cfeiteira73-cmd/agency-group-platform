@@ -6,7 +6,23 @@
 // NEVER shows listings. Exclusive access form only.
 // =============================================================================
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+// Read UTM params from URL at mount time
+function useUTMParams() {
+  const [utms, setUtms] = useState<Record<string, string>>({})
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams(window.location.search)
+    const obj: Record<string, string> = {}
+    for (const key of ['utm_source','utm_medium','utm_campaign','utm_term','utm_content']) {
+      const v = p.get(key)
+      if (v) obj[key] = v
+    }
+    setUtms(obj)
+  }, [])
+  return utms
+}
 
 const STATS = [
   { value: '€2.4M', label: 'Valor médio\ntransaccionado' },
@@ -50,6 +66,7 @@ export default function OffMarketClient() {
   const [email, setEmail] = useState('')
   const [zona, setZona] = useState('')
   const [confidential, setConfidential] = useState(false)
+  const utms = useUTMParams()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -68,6 +85,17 @@ export default function OffMarketClient() {
     const source = tipo === 'vendedor' ? 'off_market_owner' : 'off_market_page'
     const intent  = tipo === 'vendedor' ? 'seller' : tipo === 'investidor' ? 'investor' : 'buyer'
 
+    // Fire GA4 conversion event via dataLayer
+    if (typeof window !== 'undefined' && Array.isArray(window.dataLayer)) {
+      window.dataLayer.push({
+        event: 'off_market_lead',
+        lead_type: tipo,
+        lead_source: source,
+        lead_zone: zona || undefined,
+        lead_budget: budget || undefined,
+      })
+    }
+
     try {
       await fetch('/api/leads', {
         method: 'POST',
@@ -81,6 +109,8 @@ export default function OffMarketClient() {
           zona:       zona.trim() || undefined,
           budget_max: budget ? budgetMap[budget] : undefined,
           use_type:   tipo,
+          // UTM attribution — passed through from URL params
+          ...utms,
           message: [
             `Off-market · ${TYPES.find(t => t.id === tipo)?.label}`,
             budget ? `Orçamento: ${budget}` : null,
