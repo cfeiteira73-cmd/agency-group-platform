@@ -132,7 +132,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer re_TtQZcoYi_BdzrRivUdkGvXFkLFsHvQ6fe"
+              "value": "=Bearer RESEND_API_KEY_ROTATE_AT_RESEND_COM"
             },
             {
               "name": "Content-Type",
