@@ -227,7 +227,7 @@ export default function WhiteLabelPage() {
             }}
           >
             <Link
-              href="/parceiros?ref=white-label"
+              href="mailto:geral@agencygroup.pt?subject=Candidatura%20White-Label%20Beta&body=Ol%C3%A1%2C%0A%0AEstou%20interessado(a)%20na%20plataforma%20White-Label%20da%20Agency%20Group.%0A%0ANome%20da%20ag%C3%AAncia%3A%20%0AAMI%3A%20%0ASite%20actual%3A%20%0AN%C3%BA%20de%20agentes%3A%20%0APlano%20de%20interesse%3A%20Starter%20%E2%82%AC500%2Fm%C3%AAs%20%2F%20Pro%20%E2%82%AC1.000%2Fm%C3%AAs%0A%0ACom%20os%20melhores%20cumprimentos%2C"
               style={{
                 display: 'inline-block',
                 backgroundColor: '#c9a96e',
@@ -514,7 +514,7 @@ export default function WhiteLabelPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/parceiros?ref=white-label"
+                  href="mailto:geral@agencygroup.pt?subject=Candidatura%20White-Label%20Beta&body=Ol%C3%A1%2C%0A%0AEstou%20interessado(a)%20na%20plataforma%20White-Label%20da%20Agency%20Group.%0A%0ANome%20da%20ag%C3%AAncia%3A%20%0AAMI%3A%20%0ASite%20actual%3A%20%0AN%C3%BA%20de%20agentes%3A%20%0APlano%20de%20interesse%3A%20Starter%20%E2%82%AC500%2Fm%C3%AAs%20%2F%20Pro%20%E2%82%AC1.000%2Fm%C3%AAs%0A%0ACom%20os%20melhores%20cumprimentos%2C"
                   style={{
                     display: 'block',
                     textAlign: 'center',
@@ -655,7 +655,7 @@ export default function WhiteLabelPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/parceiros?ref=white-label"
+                  href="mailto:geral@agencygroup.pt?subject=Candidatura%20White-Label%20Beta&body=Ol%C3%A1%2C%0A%0AEstou%20interessado(a)%20na%20plataforma%20White-Label%20da%20Agency%20Group.%0A%0ANome%20da%20ag%C3%AAncia%3A%20%0AAMI%3A%20%0ASite%20actual%3A%20%0AN%C3%BA%20de%20agentes%3A%20%0APlano%20de%20interesse%3A%20Starter%20%E2%82%AC500%2Fm%C3%AAs%20%2F%20Pro%20%E2%82%AC1.000%2Fm%C3%AAs%0A%0ACom%20os%20melhores%20cumprimentos%2C"
                   style={{
                     display: 'block',
                     textAlign: 'center',
@@ -781,7 +781,7 @@ export default function WhiteLabelPage() {
             </div>
 
             <Link
-              href="/parceiros?ref=white-label"
+              href="mailto:geral@agencygroup.pt?subject=Candidatura%20White-Label%20Beta&body=Ol%C3%A1%2C%0A%0AEstou%20interessado(a)%20na%20plataforma%20White-Label%20da%20Agency%20Group.%0A%0ANome%20da%20ag%C3%AAncia%3A%20%0AAMI%3A%20%0ASite%20actual%3A%20%0AN%C3%BA%20de%20agentes%3A%20%0APlano%20de%20interesse%3A%20Starter%20%E2%82%AC500%2Fm%C3%AAs%20%2F%20Pro%20%E2%82%AC1.000%2Fm%C3%AAs%0A%0ACom%20os%20melhores%20cumprimentos%2C"
               style={{
                 display: 'inline-block',
                 backgroundColor: '#0c1f15',
@@ -1239,7 +1239,7 @@ export default function WhiteLabelPage() {
                 <span aria-hidden="true">💬</span> WhatsApp
               </a>
               <Link
-                href="/parceiros?ref=white-label"
+                href="mailto:geral@agencygroup.pt?subject=Candidatura%20White-Label%20Beta&body=Ol%C3%A1%2C%0A%0AEstou%20interessado(a)%20na%20plataforma%20White-Label%20da%20Agency%20Group.%0A%0ANome%20da%20ag%C3%AAncia%3A%20%0AAMI%3A%20%0ASite%20actual%3A%20%0AN%C3%BA%20de%20agentes%3A%20%0APlano%20de%20interesse%3A%20Starter%20%E2%82%AC500%2Fm%C3%AAs%20%2F%20Pro%20%E2%82%AC1.000%2Fm%C3%AAs%0A%0ACom%20os%20melhores%20cumprimentos%2C"
                 style={{
                   display: 'inline-block',
                   backgroundColor: 'transparent',

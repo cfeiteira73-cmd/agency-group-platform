@@ -136,7 +136,7 @@ const TIERS = [
       'Estatísticas públicas por zona',
     ],
     cta: 'Subscrever Grátis',
-    ctaHref: '/portal',
+    ctaHref: 'mailto:geral@agencygroup.pt?subject=Investor%20Intelligence%20Free&body=Ol%C3%A1%2C%20quero%20aceder%20ao%20plano%20gratuito%20do%20Investor%20Intelligence.',
     ctaStyle: 'outline',
   },
   {
@@ -154,7 +154,7 @@ const TIERS = [
       'Acesso ao arquivo histórico (12 meses)',
     ],
     cta: 'Começar Intelligence',
-    ctaHref: '/portal',
+    ctaHref: 'mailto:geral@agencygroup.pt?subject=Investor%20Intelligence%20%E2%82%AC49%2Fm%C3%AAs&body=Ol%C3%A1%2C%0A%0AQuero%20subscrever%20o%20plano%20Intelligence%20%E2%82%AC49%2Fm%C3%AAs.%0A%0ANome%3A%20%0APa%C3%ADs%3A%20%0AObjetivo%3A%20%0A%0ACom%20os%20melhores%20cumprimentos%2C',
     ctaStyle: 'gold',
   },
   {
@@ -172,7 +172,7 @@ const TIERS = [
       'Eventos rede de investidores',
     ],
     cta: 'Activar Elite',
-    ctaHref: '/portal',
+    ctaHref: 'mailto:geral@agencygroup.pt?subject=Investor%20Intelligence%20Elite%20%E2%82%AC199%2Fm%C3%AAs&body=Ol%C3%A1%2C%0A%0AQuero%20subscrever%20o%20plano%20Elite%20%E2%82%AC199%2Fm%C3%AAs.%0A%0ANome%3A%20%0APa%C3%ADs%3A%20%0APortef%C3%B3lio%20imobili%C3%A1rio%20atual%3A%20%0AObjetivo%3A%20%0A%0ACom%20os%20melhores%20cumprimentos%2C',
     ctaStyle: 'dark',
   },
 ]
@@ -302,7 +302,7 @@ export default function InvestorIntelligencePage() {
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
             <Link
-              href="/portal"
+              href="mailto:geral@agencygroup.pt?subject=Investor%20Intelligence&body=Ol%C3%A1%2C%20tenho%20interesse%20no%20Investor%20Intelligence%20da%20Agency%20Group."
               style={{
                 display: 'inline-block',
                 backgroundColor: '#c9a96e',
@@ -939,7 +939,7 @@ export default function InvestorIntelligencePage() {
               }}
             >
               <Link
-                href="/portal"
+                href="mailto:geral@agencygroup.pt?subject=Investor%20Intelligence&body=Ol%C3%A1%2C%20tenho%20interesse%20no%20Investor%20Intelligence%20da%20Agency%20Group."
                 style={{
                   display: 'inline-block',
                   backgroundColor: '#c9a96e',
