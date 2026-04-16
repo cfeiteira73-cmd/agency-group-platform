@@ -100,6 +100,12 @@ export async function POST(req: NextRequest) {
           if (m) budgetMax = parseInt(m[1])
         }
 
+        // Build a search URL for the candidate (used by n8n Code — Build Email node)
+        const zonaSlug = zona.toLowerCase().replace(/\s+/g, '-').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        const searchUrl = budgetMax
+          ? `https://www.agencygroup.pt/imoveis?zona=${zonaSlug}&precoMax=${budgetMax}`
+          : `https://www.agencygroup.pt/imoveis?zona=${zonaSlug}`
+
         candidates.push({
           contact_id:   contact['id'],
           name:         (contact['full_name'] as string) || (contact['name'] as string) || 'Prezado/a',
@@ -109,6 +115,9 @@ export async function POST(req: NextRequest) {
           source:       contact['source'],
           sequence_day: win.sequenceDay,
           window_label: win.label,
+          url:          searchUrl,
+          cta_url:      searchUrl,
+          unsubscribe_url: `https://www.agencygroup.pt/unsubscribe?contact=${contact['id']}`,
         })
       }
     }

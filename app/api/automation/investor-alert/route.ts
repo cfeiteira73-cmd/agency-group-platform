@@ -80,7 +80,7 @@ IMÓVEL:
 A mensagem deve: mencionar zona e preço, transmitir que é oportunidade exclusiva, criar urgência real, convidar a contacto imediato.`
 
     const msg = await anthropic.messages.create({
-      model: 'claude-haiku-3-5-20241022',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 200,
       system: 'És um agente imobiliário de luxo em Portugal. Respondes APENAS com a mensagem de WhatsApp, sem aspas, sem JSON, sem explicações.',
       messages: [{ role: 'user', content: prompt }]
