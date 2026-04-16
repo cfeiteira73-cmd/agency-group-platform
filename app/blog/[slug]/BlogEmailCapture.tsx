@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { track } from '@/lib/gtm'
 
+const DISMISSED_KEY = 'blog_cta_dismissed'
+
 interface Props {
   articleSlug: string
   articleZona?: string
@@ -17,9 +19,18 @@ export default function BlogEmailCapture({
   const [email, setEmail] = useState('')
   const [step, setStep] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [visible, setVisible] = useState(false)
 
-  // Track impression — fires once when capture form enters the page
+  // Show only on desktop, only if not previously dismissed
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.innerWidth <= 768) return
+    try {
+      if (localStorage.getItem(DISMISSED_KEY) === 'true') return
+    } catch {
+      // localStorage unavailable — show anyway
+    }
+    setVisible(true)
     track('blog_capture_impression', {
       variant,
       article_slug: articleSlug,
@@ -27,6 +38,11 @@ export default function BlogEmailCapture({
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // intentionally empty — fire once on mount
+
+  function handleDismiss() {
+    try { localStorage.setItem(DISMISSED_KEY, 'true') } catch { /* ignore */ }
+    setVisible(false)
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,6 +75,7 @@ export default function BlogEmailCapture({
       })
       if (!res.ok) throw new Error()
       setStep('success')
+      try { localStorage.setItem(DISMISSED_KEY, 'true') } catch { /* ignore */ }
 
       // Also create a saved search alert for this zone
       if (articleZona) {
@@ -85,6 +102,9 @@ export default function BlogEmailCapture({
     }
   }
 
+  // Do not render on mobile or when dismissed
+  if (!visible) return null
+
   if (variant === 'end-of-article') {
     return (
       <div style={{
@@ -99,6 +119,19 @@ export default function BlogEmailCapture({
           position: 'absolute', inset: 0, pointerEvents: 'none',
           background: 'radial-gradient(ellipse 80% 60% at 80% 100%, rgba(201,169,110,.08), transparent)',
         }} />
+
+        {/* Dismiss button */}
+        <button
+          type="button"
+          onClick={handleDismiss}
+          aria-label="Fechar"
+          style={{
+            position: 'absolute', top: '12px', right: '12px',
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'rgba(244,240,230,.35)', fontSize: '0.85rem',
+            lineHeight: 1, padding: '4px 8px', zIndex: 1,
+          }}
+        >✕</button>
 
         <div style={{ position: 'relative' }}>
           <div style={{
@@ -200,7 +233,20 @@ export default function BlogEmailCapture({
       borderLeft: '3px solid #c9a96e',
       padding: '20px 24px',
       margin: '2rem 0',
+      position: 'relative',
     }}>
+      {/* Dismiss button */}
+      <button
+        type="button"
+        onClick={handleDismiss}
+        aria-label="Fechar"
+        style={{
+          position: 'absolute', top: '8px', right: '8px',
+          background: 'none', border: 'none', cursor: 'pointer',
+          color: 'rgba(14,14,13,.3)', fontSize: '0.75rem',
+          lineHeight: 1, padding: '2px 6px',
+        }}
+      >✕</button>
       <div style={{
         fontFamily: "'DM Mono', monospace", fontSize: '.5rem',
         letterSpacing: '.18em', textTransform: 'uppercase',
