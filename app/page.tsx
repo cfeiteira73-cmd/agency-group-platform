@@ -8,6 +8,23 @@
 // headers() is fully supported on Edge. No Node.js-only APIs used here.
 export const runtime = 'edge'
 
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: 'https://www.agencygroup.pt/',
+    languages: {
+      'x-default': 'https://www.agencygroup.pt/',
+      'pt-PT':     'https://www.agencygroup.pt/',
+      'en':        'https://www.agencygroup.pt/en/',
+      'fr':        'https://www.agencygroup.pt/fr/',
+      'de':        'https://www.agencygroup.pt/de/',
+      'zh-Hans':   'https://www.agencygroup.pt/zh/',
+      'ar':        'https://www.agencygroup.pt/ar/',
+    },
+  },
+}
+
 import { headers } from 'next/headers'
 import HomeSections from './components/HomeSections'
 import HomeLoader from './components/HomeLoader'

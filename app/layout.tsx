@@ -43,18 +43,8 @@ export const metadata: Metadata = {
   description: 'Boutique imobiliária de luxo. Lisboa, Cascais, Comporta, Porto, Algarve, Madeira. €500K–€10M. AVM gratuito. AMI 22506.',
   robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
   manifest: '/manifest.json',
-  alternates: {
-    canonical: 'https://www.agencygroup.pt/',
-    languages: {
-      'x-default': 'https://www.agencygroup.pt/',
-      'pt-PT':     'https://www.agencygroup.pt/',
-      'en':        'https://www.agencygroup.pt/en/',
-      'fr':        'https://www.agencygroup.pt/fr/',
-      'de':        'https://www.agencygroup.pt/de/',
-      'zh-Hans':   'https://www.agencygroup.pt/zh/',
-      'ar':        'https://www.agencygroup.pt/ar/',
-    },
-  },
+  // NOTE: No alternates/canonical here — each page defines its own to prevent
+  // hreflang leak where all pages incorrectly pointed to the homepage.
   openGraph: {
     title: 'Agency Group · Luxury Real Estate Portugal',
     description: 'Boutique luxury real estate agency. Lisbon, Cascais, Comporta, Porto, Algarve, Madeira. Free AVM. AMI 22506.',
