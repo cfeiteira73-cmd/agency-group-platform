@@ -4,7 +4,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'NHR vs IFICI 2024: Guia Completo para Estrangeiros',
   description: 'NHR clássico vs IFICI 2024 — diferenças, elegibilidade, poupança fiscal. Como se candidatar. Comparação com UK, EUA, França. AMI 22506.',
-  robots: 'index, follow',
+  robots: 'noindex, follow', // canonical points to nhr-ifici-2026-guia-completo — noindex to prevent keyword cannibalization
   alternates: {
     canonical: 'https://www.agencygroup.pt/blog/nhr-ifici-2026-guia-completo',
     languages: {

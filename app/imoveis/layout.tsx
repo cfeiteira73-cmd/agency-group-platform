@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
-  title: 'Imóveis de Luxo em Portugal 2026 | Lisboa · Cascais · Algarve · Agency Group',
+  title: 'Imóveis de Luxo em Portugal | Agency Group',
   description: 'Catálogo de imóveis de luxo em Portugal 2026: Lisboa, Cascais, Comporta, Porto, Algarve, Madeira. Filtros avançados, mapa, comparação. Preços €500K–€10M. AMI 22506.',
   keywords: ['imóveis luxo portugal 2026', 'apartamentos luxo lisboa', 'moradias cascais comprar', 'propriedades algarve 2026', 'investimento imobiliário portugal', 'comprar casa portugal', 'imoveis cascais', 'imoveis lisboa luxo'],
   alternates: {

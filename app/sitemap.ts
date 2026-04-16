@@ -93,7 +93,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .filter(slug => !DYNAMIC_SLUGS.has(slug)) // avoid duplicates with ARTICLES
     .map(slug => ({
       url: `${BASE}/blog/${slug}`,
-      lastModified: now,
+      lastModified: new Date('2026-04-08'), // stable date: last major blog wave — avoids crawl budget waste on every deploy
       changeFrequency: 'monthly' as const,
       priority: 0.65,
     }))
