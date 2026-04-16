@@ -1,8 +1,32 @@
 // =============================================================================
 // Idealista API Oficial — OAuth2 REST API
 // Documentação: https://developers.idealista.com
-// Licença gratuita para AMI 22506 (Agency Group)
-// CREDENCIAIS NECESSÁRIAS: IDEALISTA_API_KEY + IDEALISTA_SECRET (pedir em developers.idealista.com)
+// AMI 22506 (Agency Group)
+//
+// ─── HOW TO GET API ACCESS ───────────────────────────────────────────────────
+//
+// The Idealista API requires a commercial contract — it is NOT publicly free.
+//
+// Step-by-step:
+// 1. Go to https://developers.idealista.com  (or email apicommercial@idealista.com)
+// 2. Fill in the contact form: company (Agency Group), NIF (PT...), use-case
+// 3. Wait ~1-2 weeks for commercial proposal
+// 4. After contract: you receive IDEALISTA_API_KEY + IDEALISTA_API_SECRET
+// 5. Add them to .env.local and Vercel:
+//      IDEALISTA_API_KEY=<key>
+//      IDEALISTA_API_SECRET=<secret>        ← NOTE: env var is IDEALISTA_API_SECRET
+//                                              (the existing code uses IDEALISTA_SECRET —
+//                                               both are checked in isConfigured())
+// 6. The OAuth flow uses:
+//    POST https://api.idealista.com/oauth/token
+//    Authorization: Basic base64(key:secret)
+//    Body: grant_type=client_credentials&scope=read
+//    → access_token valid for 7 days
+//
+// While waiting for the contract, `searchProperties()` returns mock data
+// automatically when env vars are not set (safe, no crashes).
+//
+// CREDENCIAIS NECESSÁRIAS: IDEALISTA_API_KEY + IDEALISTA_API_SECRET
 // =============================================================================
 
 const IDEALISTA_BASE_URL = 'https://api.idealista.com/3.5/pt'
@@ -83,6 +107,66 @@ export interface IdealistaSearchResult {
   hiddenResults?: boolean
 }
 
+// ─── Configuration check ─────────────────────────────────────────────────────
+
+/**
+ * Returns true when IDEALISTA_API_KEY and IDEALISTA_API_SECRET (or legacy
+ * IDEALISTA_SECRET) are both present and non-empty.
+ * Safe to call any time — no network calls, no side effects.
+ */
+export function isConfigured(): boolean {
+  const key    = process.env.IDEALISTA_API_KEY
+  const secret = process.env.IDEALISTA_API_SECRET ?? process.env.IDEALISTA_SECRET
+  return (
+    !!key    && key.trim().length > 0 &&
+    !!secret && secret.trim().length > 0
+  )
+}
+
+// ─── Mock data (returned when not configured) ─────────────────────────────────
+
+const MOCK_PROPERTIES: IdealistaProperty[] = [
+  {
+    propertyCode: 'MOCK-001',
+    thumbnail: '',
+    floor: '3',
+    price: 750_000,
+    priceByArea: 5_000,
+    size: 150,
+    rooms: 3,
+    bathrooms: 2,
+    address: 'Rua do Alecrim, Lisboa',
+    province: 'Lisboa',
+    municipality: 'Lisboa',
+    district: 'Santa Maria Maior',
+    neighborhood: 'Chiado',
+    latitude: 38.7098,
+    longitude: -9.1408,
+    description: '[MOCK] Apartamento T3 em Chiado — dados de exemplo',
+    url: 'https://www.idealista.pt/imovel/MOCK-001/',
+    hasVideo: false,
+    status: 'good',
+    newDevelopment: false,
+    hasLift: true,
+    isGround: false,
+    numPhotos: 0,
+    hasPlan: false,
+    has3DTour: false,
+    has360: false,
+    hasStaging: false,
+    topHighlight: false,
+    topNewDevelopment: false,
+    country: 'pt',
+    operation: 'sale',
+    propertyType: 'flat',
+    exterior: true,
+    rooms2: 3,
+    showAddress: false,
+  },
+]
+
+// ─── Token cache ──────────────────────────────────────────────────────────────
+
 let _cachedToken: { token: string; expiresAt: number } | null = null
 
 export async function getIdealistaToken(): Promise<string> {
@@ -91,9 +175,9 @@ export async function getIdealistaToken(): Promise<string> {
   }
 
   const key = process.env.IDEALISTA_API_KEY
-  const secret = process.env.IDEALISTA_SECRET
+  const secret = process.env.IDEALISTA_API_SECRET ?? process.env.IDEALISTA_SECRET
   if (!key || !secret) {
-    throw new Error('IDEALISTA_API_KEY e IDEALISTA_SECRET não configurados. Pedir em developers.idealista.com (grátis para AMI 22506)')
+    throw new Error('IDEALISTA_API_KEY e IDEALISTA_API_SECRET não configurados. Ver lib/idealista-api.ts para instruções.')
   }
 
   const credentials = Buffer.from(`${key}:${secret}`).toString('base64')
@@ -120,6 +204,20 @@ export async function getIdealistaToken(): Promise<string> {
 }
 
 export async function searchProperties(params: IdealistaSearchParams): Promise<IdealistaSearchResult | null> {
+  // Graceful mock fallback when credentials are not configured
+  if (!isConfigured()) {
+    console.info('[Idealista] API not configured — returning mock data. Set IDEALISTA_API_KEY + IDEALISTA_API_SECRET to enable.')
+    return {
+      total: MOCK_PROPERTIES.length,
+      totalPages: 1,
+      actualPage: 1,
+      itemsPerPage: MOCK_PROPERTIES.length,
+      country: 'pt',
+      elementList: MOCK_PROPERTIES,
+      summary: ['[MOCK] Idealista API not configured — example data only'],
+    }
+  }
+
   try {
     const token = await getIdealistaToken()
     const { operation, propertyType, ...rest } = params

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import InvestorLeadForm from '@/app/components/InvestorLeadForm'
 
 export const metadata: Metadata = {
   title: 'Off-Market Properties Portugal — Private Access | Agency Group AMI 22506',
@@ -258,6 +259,21 @@ export default function OffMarketPortugalPage() {
           ))}
         </div>
       </article>
+
+      <section style={{ background: '#0c1f15', padding: '80px 56px' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.44rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.45)', textTransform: 'uppercase', marginBottom: '14px' }}>
+            Qualified Buyers · No Obligation
+          </div>
+          <h2 style={{ fontFamily: 'var(--font-cormorant)', fontSize: 'clamp(1.6rem,4vw,2.4rem)', fontWeight: 300, color: '#f4f0e6', lineHeight: 1.1, marginBottom: '14px' }}>
+            Register for <em style={{ color: '#c9a96e', fontStyle: 'italic' }}>Off-Market Access</em>
+          </h2>
+          <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.84rem', color: 'rgba(244,240,230,.45)', lineHeight: 1.8, marginBottom: '32px' }}>
+            Submit your profile and receive private property briefings before they reach any portal. Confidential. No spam.
+          </p>
+          <InvestorLeadForm tier="Free" ctaLabel="Request Private Access →" ctaStyle="gold" />
+        </div>
+      </section>
 
       <section className="cta-section">
         <div className="cta-label">Private Access · Qualified Buyers Only</div>
