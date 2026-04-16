@@ -55,6 +55,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/contacto`,        lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vendidos`,                lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
     { url: `${BASE}/vender-imovel-portugal`, lastModified: now, changeFrequency: 'monthly', priority: 0.90 },
+    { url: `${BASE}/casos-de-sucesso`,       lastModified: now, changeFrequency: 'monthly', priority: 0.80 },
+    { url: `${BASE}/concierge-estrangeiros`, lastModified: now, changeFrequency: 'monthly', priority: 0.88 },
+    { url: `${BASE}/investor-intelligence`,  lastModified: now, changeFrequency: 'monthly', priority: 0.82 },
     // /off-market is robots: noindex — excluded from sitemap to preserve crawl budget
     // /portal is disallowed in robots.txt — excluded from sitemap
   ]
