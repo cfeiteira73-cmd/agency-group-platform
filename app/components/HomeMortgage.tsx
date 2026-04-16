@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { track } from '@/lib/gtm'
+import { getUTMs } from '@/lib/utm'
 
 // ─── Mortgage Simulator component (homepage — standalone, sem Zustand) ────────
 
@@ -269,6 +270,7 @@ export default function HomeMortgage() {
                         source:'mortgage_simulator',
                         message:`Simulação: €${result.inputs.montante.toLocaleString('pt-PT')} · ${result.inputs.prazo_anos}a · ${uso}`,
                         budget_max:result.inputs.montante,
+                        ...getUTMs(),
                       }),
                     }).catch(()=>{})
                     track('lead_form_submit',{source:'mortgage_simulator'})

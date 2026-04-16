@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { track } from '@/lib/gtm'
+import { getUTMs } from '@/lib/utm'
 
 // ─── Sofia Avatar — usa /sofia.jpg se existir, fallback ao monograma "S" dourado ──
 function SofiaAvatar({ size = 44, open = false }: { size?: number; open?: boolean }) {
@@ -771,6 +772,7 @@ export default function SofiaAgentWidget() {
                                 zona: locationPref || undefined,
                                 use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
                                 message: leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : undefined,
+                                ...getUTMs(),
                               }),
                             }).catch(err => console.error('[Sofia] lead POST failed:', err?.message ?? err))
                             track('lead_form_submit', { source: 'sofia_widget', lead_score: leadScore })
@@ -791,6 +793,7 @@ export default function SofiaAgentWidget() {
                                 zona: locationPref || undefined,
                                 use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
                                 message: leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : undefined,
+                                ...getUTMs(),
                               }),
                             }).catch(err => console.error('[Sofia] lead POST failed:', err?.message ?? err))
                             track('lead_form_submit', { source: 'sofia_widget', lead_score: leadScore })

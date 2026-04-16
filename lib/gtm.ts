@@ -16,9 +16,15 @@ type TrackEvent =
   | 'lead_form_submit'
   | 'whatsapp_click'
   | 'sofia_started'
+  | 'sofia_message_sent'
+  | 'sofia_lead_captured'
   | 'property_viewed'
+  | 'property_visit_request'
   | 'qualification_completed'
   | 'mortgage_simulated'
+  | 'avm_submitted'
+  | 'avm_result_shown'
+  | 'calculator_use'
   | 'compare_initiated'
   | 'seller_cta_click'
   | 'seller_cta_impression'
@@ -36,12 +42,23 @@ type TrackEvent =
   | 'press_article_clicked'
   // Buyer pipeline
   | 'buyer_lead_submitted'
+  | 'consultation_booked'
   // Hero & homepage CTA tracking (desktop + mobile)
   | 'hero_cta_click'
   // Properties section CTA
   | 'properties_cta_click'
   // Blog capture impression (fires on mount, before submit)
   | 'blog_capture_impression'
+  // Portal
+  | 'portal_login_attempt'
+  | 'portal_login_success'
+  // Filters & search
+  | 'property_filter_applied'
+  | 'property_search_nl'
+  // Map interaction
+  | 'map_property_clicked'
+  // UTM source recorded (fired after lead capture)
+  | 'lead_attributed'
 
 export function track(event: TrackEvent, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return

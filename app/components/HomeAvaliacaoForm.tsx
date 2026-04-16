@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { track } from '@/lib/gtm'
+import { getUTMs } from '@/lib/utm'
 
 // ─── Zone market data — source: homeContent.ts + CLAUDE.md ───────────────────
 const ZONA_DATA: Record<string, {
@@ -66,6 +67,7 @@ export default function HomeAvaliacaoForm() {
           intent:  'seller',
           zona:    zona || undefined,
           message: `Avaliação inicial confidencial · ${zona || 'zona não indicada'}${area ? ` · ${area}m²` : ''}`,
+          ...getUTMs(),
         }),
       })
     } catch { /* silent — never block UX */ }

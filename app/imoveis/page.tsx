@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useCallback, lazy, Suspense, useRef, type CSSProperties } from 'react'
+import { useState, useMemo, useCallback, lazy, Suspense, useRef, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { PROPERTIES, ZONAS, TIPOS, formatPriceFull, filterByPriceRange } from './data'
 import FavoriteButton, { FavoritesDrawer } from './FavoriteButton'
@@ -53,6 +53,20 @@ export default function ImoveisPage() {
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
+
+  // ── Dynamic listings: fetch from Supabase via public API, fallback to static ──
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [dynamicProperties, setDynamicProperties] = useState<any[] | null>(null)
+  useEffect(() => {
+    fetch('/api/properties/public?limit=200')
+      .then(r => r.json())
+      .then(json => {
+        if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
+          setDynamicProperties(json.data)
+        }
+      })
+      .catch(() => { /* silent — static fallback stays */ })
+  }, [])
   const [alertOpen, setAlertOpen] = useState(false)
 
   const activeFilterCount = [
@@ -80,8 +94,11 @@ export default function ImoveisPage() {
     '4m+':      [4_000_000, 999_000_000],
   }
 
+  // Use dynamic Supabase data when available, static data as fallback
+  const activeProperties = dynamicProperties ?? PROPERTIES
+
   const filtered = useMemo(() => {
-    let list = filterByPriceRange([...PROPERTIES])
+    let list = filterByPriceRange([...activeProperties])
     if (zona)    list = list.filter(p => p.zona === zona)
     if (tipo)    list = list.filter(p => p.tipo === tipo)
     if (preco) {
@@ -131,8 +148,8 @@ export default function ImoveisPage() {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: 'Imóveis de Luxo Portugal — Agency Group',
-    numberOfItems: PROPERTIES.length,
-    itemListElement: PROPERTIES.map((p, i) => ({
+    numberOfItems: activeProperties.length,
+    itemListElement: activeProperties.map((p, i) => ({
       '@type': 'ListItem',
       position: i + 1,
       url: `https://agencygroup.pt/imoveis/${p.id}`,
@@ -669,7 +686,7 @@ export default function ImoveisPage() {
       {/* ── COMPARE BAR ── */}
       <CompareBar
         selected={compareIds}
-        properties={PROPERTIES}
+        properties={activeProperties}
         onRemove={id => setCompareIds(prev => prev.filter(x => x !== id))}
         onClear={() => setCompareIds([])}
       />

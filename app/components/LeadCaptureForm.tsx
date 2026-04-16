@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { track } from '@/lib/gtm'
+import { getUTMs } from '@/lib/utm'
 
 interface LeadCaptureFormProps {
   source?: string
@@ -46,6 +47,7 @@ export default function LeadCaptureForm({
         zona,
         property_ref: propertyRef,
         name: name || undefined,
+        ...getUTMs(),
       }
 
       if (isEmail) {

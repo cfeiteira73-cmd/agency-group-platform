@@ -8,6 +8,7 @@ import PWAInstallBanner from './components/PWAInstallBanner'
 import BottomNav from './components/BottomNav'
 import SofiaWidgetWrapper from './components/SofiaWidgetWrapper'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
+import UTMCapture from './components/UTMCapture'
 
 const cormorant = Cormorant({
   subsets: ['latin'],
@@ -423,6 +424,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <CurrencyProvider>
         <main id="main-content">{children}</main>
         {/* <PWAInstallBanner /> */}
+        <UTMCapture />
         <SofiaWidgetWrapper />
         <LanguageSwitcher />
         {/* <PushNotificationSetup /> */}
