@@ -421,8 +421,9 @@ export default function HomeSections() {
               <div className="ft-col-h">Serviços</div>
               <ul>
                 <li><a href="/off-market">Off-Market</a></li>
-                <li><a href="/portal">Portal Agentes</a></li>
-                <li><a href="#contacto">NHR / Vistos</a></li>
+                <li><a href="/concierge-estrangeiros">Foreign Buyer Concierge</a></li>
+                <li><a href="/investor-intelligence">Investor Intelligence</a></li>
+                <li><a href="/casos-de-sucesso">Casos de Sucesso</a></li>
                 <li><a href="/#simulador">Simulador IMT</a></li>
               </ul>
             </div>
@@ -432,6 +433,7 @@ export default function HomeSections() {
                 <li><a href="#contacto">Sobre Nós</a></li>
                 <li><a href="#agentes">Agentes</a></li>
                 <li><a href="/relatorio-2026" style={{ color: 'var(--gold)', fontWeight: 500 }}>Market Report 2026 ↗</a></li>
+                <li><a href="/parceiros">Agências Parceiras</a></li>
                 <li><a href="mailto:geral@agencygroup.pt">Email</a></li>
               </ul>
             </div>
