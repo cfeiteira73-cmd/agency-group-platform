@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 // ─── Staging Styles ────────────────────────────────────────────────────────────
 const STYLE_PROMPTS: Record<string, string> = {
@@ -31,12 +32,16 @@ const rateLimitMap = new Map<string, { count: number; reset: number }>()
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
+  // Purge expired entries to prevent unbounded memory growth
+  for (const [key, val] of rateLimitMap) {
+    if (now > val.reset) rateLimitMap.delete(key)
+  }
   const entry = rateLimitMap.get(ip)
   if (!entry || now > entry.reset) {
     rateLimitMap.set(ip, { count: 1, reset: now + 3600000 })
     return true
   }
-  if (entry.count >= 20) return false // 20 generations/hr
+  if (entry.count >= 3) return false // 3 generations/hr — portal-only feature
   entry.count++
   return true
 }
@@ -82,10 +87,15 @@ async function runStabilityStructure(params: {
 
 // ─── POST /api/homestaging ─────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  // Auth guard — portal agents only
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
     if (!checkRateLimit(ip)) {
-      return NextResponse.json({ error: 'Rate limit: 20 gerações/hora' }, { status: 429 })
+      return NextResponse.json({ error: 'Rate limit: 3 gerações/hora' }, { status: 429 })
     }
 
     const body = await req.json() as {

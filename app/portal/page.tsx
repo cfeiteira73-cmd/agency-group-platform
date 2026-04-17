@@ -837,9 +837,6 @@ export default function Portal() {
     </div>
   )
 
-  const pipelineTotal = deals.reduce((s, d) => s + parsePTValue(d.valor), 0)
-  void pipelineTotal
-
   return (
     <>
       <PortalBootstrap />

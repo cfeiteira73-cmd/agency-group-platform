@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { isPortalAuth } from '@/lib/portalAuth'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { safeCompare } from '@/lib/safeCompare'
@@ -263,10 +264,13 @@ function generateFallbackBrief(date: Date, marketInsight: string): DailyBrief {
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief | { error: string }>> {
+  // Accept: CRON/internal bearer token, NextAuth admin session, or portal magic-link cookie
   const bearerOk = isBearerAuthorized(request)
   if (!bearerOk) {
     const session = await auth()
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session?.user && !(await isPortalAuth(request))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
   }
 
   try {

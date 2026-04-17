@@ -67,7 +67,8 @@ export default function PortalHeader({
 }: PortalHeaderProps) {
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000)
+    // HH:MM display — 60 s interval is sufficient; avoids re-render every second
+    const t = setInterval(() => setNow(new Date()), 60000)
     return () => clearInterval(t)
   }, [])
   const pipelineTotal = deals.reduce((s, d) => s + parsePTValue(d.valor), 0)

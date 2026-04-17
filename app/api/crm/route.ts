@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import type { CRMContact } from '@/app/portal/components/types'
@@ -279,8 +280,9 @@ const MOCK_CONTACTS: ContactRow[] = [
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  // Accept NextAuth session (admin) OR portal magic-link cookie (agents)
   const session = await auth()
-  if (!session?.user) {
+  if (!session?.user && !(await isPortalAuth(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
