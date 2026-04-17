@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import InvestorLeadForm from '@/app/components/InvestorLeadForm'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -510,28 +511,12 @@ export default function InvestorIntelligencePage() {
                     ))}
                   </ul>
 
-                  <Link
-                    href={tier.ctaHref}
-                    style={{
-                      display: 'block',
-                      textAlign: 'center',
-                      fontFamily: 'var(--font-dm-mono), monospace',
-                      fontSize: '0.72rem',
-                      fontWeight: 500,
-                      letterSpacing: '0.14em',
-                      textTransform: 'uppercase',
-                      textDecoration: 'none',
-                      padding: '14px 24px',
-                      borderRadius: '3px',
-                      ...(tier.ctaStyle === 'gold'
-                        ? { backgroundColor: '#c9a96e', color: '#0c1f15' }
-                        : tier.ctaStyle === 'dark'
-                          ? { backgroundColor: '#1c4a35', color: '#f4f0e6' }
-                          : { backgroundColor: 'transparent', color: '#0c1f15', border: '1.5px solid #c9a96e' }),
-                    }}
-                  >
-                    {tier.cta}
-                  </Link>
+                  <InvestorLeadForm
+                    tier={tier.name as 'Free' | 'Intelligence' | 'Elite'}
+                    ctaLabel={tier.cta}
+                    ctaStyle={tier.ctaStyle as 'outline' | 'gold' | 'dark'}
+                    highlight={tier.highlight}
+                  />
                 </div>
               ))}
             </div>
@@ -930,51 +915,33 @@ export default function InvestorIntelligencePage() {
               Comece com o plano gratuito. Cancele quando quiser.
               Os dados chegam antes do mercado saber.
             </p>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '16px',
-                justifyContent: 'center',
-              }}
-            >
-              <Link
-                href="mailto:geral@agencygroup.pt?subject=Investor%20Intelligence&body=Ol%C3%A1%2C%20tenho%20interesse%20no%20Investor%20Intelligence%20da%20Agency%20Group."
-                style={{
-                  display: 'inline-block',
-                  backgroundColor: '#c9a96e',
-                  color: '#0c1f15',
-                  fontFamily: 'var(--font-dm-mono), monospace',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                  padding: '16px 32px',
-                  borderRadius: '3px',
-                }}
-              >
-                Subscrever Agora
-              </Link>
-              <Link
-                href="/relatorio-2026"
-                style={{
-                  display: 'inline-block',
-                  backgroundColor: 'transparent',
-                  color: '#f4f0e6',
-                  fontFamily: 'var(--font-dm-mono), monospace',
-                  fontSize: '0.75rem',
-                  fontWeight: 400,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                  padding: '15px 32px',
-                  borderRadius: '3px',
-                  border: '1.5px solid rgba(201,169,110,0.45)',
-                }}
-              >
-                Ver Amostra do Relatório
-              </Link>
+            <div style={{ maxWidth: '380px', margin: '0 auto' }}>
+              <InvestorLeadForm
+                tier="Intelligence"
+                ctaLabel="Subscrever Agora"
+                ctaStyle="gold"
+              />
+              <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <Link
+                  href="/relatorio-2026"
+                  style={{
+                    display: 'inline-block',
+                    backgroundColor: 'transparent',
+                    color: 'rgba(200,191,173,0.7)',
+                    fontFamily: 'var(--font-dm-mono), monospace',
+                    fontSize: '0.68rem',
+                    fontWeight: 400,
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    textDecoration: 'none',
+                    padding: '12px 24px',
+                    borderRadius: '3px',
+                    border: '1px solid rgba(201,169,110,0.3)',
+                  }}
+                >
+                  Ver Amostra do Relatório
+                </Link>
+              </div>
             </div>
           </div>
         </section>

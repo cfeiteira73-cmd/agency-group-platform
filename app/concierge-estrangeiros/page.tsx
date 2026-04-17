@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import ConciergeIntakeForm from '@/app/components/ConciergeIntakeForm'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -760,12 +761,63 @@ export default function ConciergeEstrangeirosPage() {
           </div>
         </section>
 
+        {/* ── Intake Form ──────────────────────────────────────────────────── */}
+        <section
+          id="concierge-form"
+          aria-label="Formulário de contacto Concierge"
+          style={{ backgroundColor: '#0c1f15', padding: '80px 24px' }}
+        >
+          <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+            <p
+              style={{
+                fontFamily: 'var(--font-dm-mono), monospace',
+                fontSize: '0.68rem',
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: '#c9a96e',
+                textAlign: 'center',
+                marginBottom: '16px',
+              }}
+            >
+              Intake — Confidencial
+            </p>
+            <h2
+              style={{
+                fontFamily: 'var(--font-cormorant), serif',
+                fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+                fontWeight: 300,
+                color: '#f4f0e6',
+                textAlign: 'center',
+                marginBottom: '12px',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Briefing Personalizado
+            </h2>
+            <p
+              style={{
+                fontFamily: 'var(--font-jost), sans-serif',
+                fontSize: '0.9rem',
+                fontWeight: 300,
+                color: '#c8bfad',
+                textAlign: 'center',
+                lineHeight: 1.7,
+                marginBottom: '40px',
+              }}
+            >
+              Diga-nos o orçamento, a zona e o serviço pretendido.
+              Respondemos em 24 horas com um plano à medida.
+            </p>
+            <ConciergeIntakeForm />
+          </div>
+        </section>
+
         {/* ── CTA ──────────────────────────────────────────────────────────── */}
         <section
           aria-label="Contacto Concierge Estrangeiros"
           style={{
-            backgroundColor: '#0c1f15',
-            padding: '80px 24px',
+            backgroundColor: '#1c4a35',
+            padding: '56px 24px',
             textAlign: 'center',
           }}
         >

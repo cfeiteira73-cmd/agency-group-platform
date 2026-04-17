@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import HomeAvaliacaoForm from '@/app/components/HomeAvaliacaoForm'
 
 // =============================================================================
 // /vender-imovel-portugal — SEO seller landing page
@@ -289,6 +290,55 @@ export default function VenderImovelPortugal() {
           </div>
         </section>
 
+        {/* ── AVM Inline — avaliação instantânea ── */}
+        <section style={{ background: '#f4f0e6', padding: '64px 24px' }}>
+          <div style={{ maxWidth: 560, margin: '0 auto' }}>
+            <div style={{
+              fontFamily: "'DM Mono', monospace", fontSize: '.5rem', letterSpacing: '.18em',
+              textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: 16,
+            }}>
+              Avaliação Instantânea · Gratuita · Confidencial
+            </div>
+            <h2 style={{
+              fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)",
+              fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 300, color: '#0c1f15',
+              margin: '0 0 8px', lineHeight: 1.2,
+            }}>
+              Quanto vale o<br /><em style={{ color: '#1c4a35' }}>seu imóvel?</em>
+            </h2>
+            <p style={{
+              fontFamily: "'Jost', sans-serif", fontSize: '.82rem',
+              color: 'rgba(14,14,13,.5)', marginBottom: 28, lineHeight: 1.6,
+            }}>
+              Preencha os campos abaixo e obtenha uma estimativa imediata baseada nos dados de mercado 2026. Sem anúncios públicos, sem spam.
+            </p>
+            {/* Input fields inline (HomeAvaliacaoForm reads them by ID) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label htmlFor="avalNome" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', display: 'block', marginBottom: 6 }}>Nome *</label>
+                  <input id="avalNome" type="text" placeholder="O seu nome" style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'Jost', sans-serif", fontSize: '.85rem', color: '#0e0e0d', outline: 'none', background: '#fff', boxSizing: 'border-box' as const }} />
+                </div>
+                <div>
+                  <label htmlFor="avalTel" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', display: 'block', marginBottom: 6 }}>Telefone *</label>
+                  <input id="avalTel" type="tel" placeholder="+351 9XX XXX XXX" style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'Jost', sans-serif", fontSize: '.85rem', color: '#0e0e0d', outline: 'none', background: '#fff', boxSizing: 'border-box' as const }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label htmlFor="avalZona" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', display: 'block', marginBottom: 6 }}>Zona</label>
+                  <input id="avalZona" type="text" placeholder="Ex: Lisboa, Cascais..." style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'Jost', sans-serif", fontSize: '.85rem', color: '#0e0e0d', outline: 'none', background: '#fff', boxSizing: 'border-box' as const }} />
+                </div>
+                <div>
+                  <label htmlFor="avalArea" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.48rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)', display: 'block', marginBottom: 6 }}>Área m² (opcional)</label>
+                  <input id="avalArea" type="number" placeholder="Ex: 180" style={{ width: '100%', padding: '12px 14px', border: '1px solid rgba(14,14,13,.12)', fontFamily: "'Jost', sans-serif", fontSize: '.85rem', color: '#0e0e0d', outline: 'none', background: '#fff', boxSizing: 'border-box' as const }} />
+                </div>
+              </div>
+            </div>
+            <HomeAvaliacaoForm />
+          </div>
+        </section>
+
         {/* ── CTA final ── */}
         <section style={{
           background: '#1c4a35', padding: '72px 24px', textAlign: 'center',
@@ -297,14 +347,14 @@ export default function VenderImovelPortugal() {
             fontFamily: "'DM Mono', monospace", fontSize: '.55rem', letterSpacing: '.18em',
             textTransform: 'uppercase', color: 'rgba(201,169,110,.6)', marginBottom: 20,
           }}>
-            Avaliação confidencial · Sem compromisso
+            Avaliação presencial · Processo completo
           </div>
           <h2 style={{
             fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)",
             fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 300, color: '#f4f0e6',
             margin: '0 auto 16px', maxWidth: 560, lineHeight: 1.2,
           }}>
-            Pronto para avaliar<br />o seu imóvel?
+            Precisa de uma avaliação<br />presencial rigorosa?
           </h2>
           <p style={{
             fontFamily: "'DM Mono', monospace", fontSize: '.65rem',
@@ -319,7 +369,7 @@ export default function VenderImovelPortugal() {
             fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase',
             display: 'inline-block', marginBottom: 16,
           }}>
-            Solicitar Avaliação Confidencial →
+            Falar com Consultor →
           </Link>
           <div style={{ marginTop: 8 }}>
             <a href="https://wa.me/351919948986?text=Olá,%20gostaria%20de%20uma%20avaliação%20confidencial%20do%20meu%20imóvel" target="_blank" rel="noopener noreferrer" style={{
