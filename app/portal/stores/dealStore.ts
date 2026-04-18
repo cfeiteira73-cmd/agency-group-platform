@@ -44,14 +44,11 @@ interface DealState {
   setTipoImovelInv: (t: 'residencial' | 'comercial') => void
 }
 
-const DEFAULT_DEALS: Deal[] = [
-  { id: 1, ref: 'AG-2026-001', imovel: 'Villa Quinta da Marinha · Cascais', valor: '€ 3.800.000', fase: 'CPCV Assinado', comprador: 'James Whitfield', cpcvDate: '2026-04-04', escrituraDate: '2026-05-15', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k => [k, CHECKLISTS[k].map(() => false)])) },
-  { id: 2, ref: 'AG-2026-002', imovel: 'Penthouse Chiado · Lisboa', valor: '€ 2.100.000', fase: 'Due Diligence', comprador: 'Sophie Laurent', cpcvDate: '2026-04-07', escrituraDate: '', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k => [k, CHECKLISTS[k].map(() => false)])) },
-  { id: 3, ref: 'AG-2026-003', imovel: 'Herdade Comporta · Grândola', valor: '€ 6.500.000', fase: 'Proposta Aceite', comprador: 'Khalid Al-Rashid', cpcvDate: '', escrituraDate: '', checklist: Object.fromEntries(Object.keys(CHECKLISTS).map(k => [k, CHECKLISTS[k].map(() => false)])) },
-]
+// No default deals — always start empty so no fake data ever shows.
+// Real deals are loaded from Supabase by useLiveData on portal mount.
 
 export const useDealStore = create<DealState>((set) => ({
-  deals: DEFAULT_DEALS,
+  deals: [],
   activeDeal: null,
   showNewDeal: false,
   newDeal: { imovel: '', valor: '' },

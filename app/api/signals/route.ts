@@ -6,6 +6,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 
 function headers(): HeadersInit {
@@ -13,6 +14,9 @@ function headers(): HeadersInit {
 }
 
 export async function GET(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: headers() })
+  }
   try {
     const { searchParams } = new URL(req.url)
     const status   = searchParams.get('status') ?? 'new'
@@ -48,6 +52,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: headers() })
+  }
   try {
     const body = await req.json()
     if (!body.type || !body.title) {
@@ -85,6 +92,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: headers() })
+  }
   try {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
