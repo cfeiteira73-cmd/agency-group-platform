@@ -16,3 +16,15 @@ export { detectOpportunities, getTopOpportunities, opportunitySummary } from './
 
 export type { CopilotUrgency, CopilotSuggestion, ManagerBrief, AgentCopilotOutput } from './copilot'
 export { generateLeadSuggestion, generateDealSuggestion, generateCopilot } from './copilot'
+
+export type { ForecastContributor, PeriodForecast, ForecastOutput } from './forecast'
+export { generateRevenueForecast } from './forecast'
+
+export type { ScoreTrend, ScoreDelta } from './scoringMemory'
+export { computeScoreDelta, getLeadScoreDelta, getDealScoreDelta, batchLeadDeltas, batchDealDeltas, updateLeadScoreMemory, updateDealScoreMemory } from './scoringMemory'
+
+export type { WorkloadLabel, WorkloadMetrics } from './workload'
+export { computeWorkload } from './workload'
+
+export type { RankedContact, RankedDeal, PortfolioHealthLabel, PortfolioHealth, ExecutiveRankingOutput } from './executiveRanking'
+export { rankContacts, rankDeals, computePortfolioHealth, generateExecutiveRanking } from './executiveRanking'

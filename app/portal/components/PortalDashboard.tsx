@@ -11,14 +11,21 @@ import Tooltip from './Tooltip'
 import { parsePTValue as parsePTValueShared, computeStageAvgDays } from '../utils/format'
 import DashboardPriorityCenter from './DashboardPriorityCenter'
 import IntelligencePanel from './IntelligencePanel'
+import RevenueForecastPanel from './RevenueForecastPanel'
 import { scoreAllContacts } from '../lib/leadScoring'
 import { scoreAllDeals } from '../lib/dealScoring'
 import type { ScoredContact } from '../lib/leadScoring'
 import type { ScoredDeal } from '../lib/dealScoring'
 import { detectOpportunities } from '../lib/intelligence/opportunity'
 import { generateCopilot } from '../lib/intelligence/copilot'
+import { generateRevenueForecast } from '../lib/intelligence/forecast'
+import { computeWorkload } from '../lib/intelligence/workload'
+import { generateExecutiveRanking } from '../lib/intelligence/executiveRanking'
 import type { Opportunity } from '../lib/intelligence/opportunity'
 import type { AgentCopilotOutput } from '../lib/intelligence/copilot'
+import type { ForecastOutput } from '../lib/intelligence/forecast'
+import type { WorkloadMetrics } from '../lib/intelligence/workload'
+import type { ExecutiveRankingOutput } from '../lib/intelligence/executiveRanking'
 
 interface PortalDashboardProps {
   agentName: string
@@ -611,6 +618,19 @@ export default function PortalDashboard({
     () => generateCopilot(scoredContacts, scoredDeals, opportunities),
     [scoredContacts, scoredDeals, opportunities],
   )
+  // ── Wave H+I: Forecast + Workload + Executive Ranking ─────────────────────
+  const forecast: ForecastOutput = useMemo(
+    () => generateRevenueForecast(scoredDeals),
+    [scoredDeals],
+  )
+  const workload: WorkloadMetrics = useMemo(
+    () => computeWorkload(scoredContacts, scoredDeals, copilot),
+    [scoredContacts, scoredDeals, copilot],
+  )
+  const executiveRanking: ExecutiveRankingOutput = useMemo(
+    () => generateExecutiveRanking(scoredContacts, scoredDeals),
+    [scoredContacts, scoredDeals],
+  )
 
   // ── Silent contacts (>18 days no touch, tier A/VIP) ───────────────────────
   const silentVIPs = useMemo(() => crmContacts.filter(c => {
@@ -964,6 +984,24 @@ export default function PortalDashboard({
             <span>
               {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} ·{' '}
               {liveDealCount} deals activos · pipeline €{(livePipeline / 1e6).toFixed(2)}M
+              {workload.isOverloaded && (
+                <span
+                  style={{
+                    background: workload.workloadLabel === 'CRITICO'
+                      ? 'rgba(220,38,38,.12)'
+                      : 'rgba(245,158,11,.12)',
+                    color: workload.workloadLabel === 'CRITICO' ? '#dc2626' : '#d97706',
+                    fontFamily: "'DM Mono',monospace",
+                    fontSize: '.48rem',
+                    padding: '2px 6px',
+                    borderRadius: '3px',
+                    letterSpacing: '.06em',
+                    marginLeft: '6px',
+                  }}
+                >
+                  CARGA {workload.workloadLabel} · {workload.workloadScore}
+                </span>
+              )}
             </span>
             {/* ── Supabase status badge ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -1574,6 +1612,14 @@ export default function PortalDashboard({
         onGoToCRM={() => onSetSection('crm')}
         onGoToPipeline={() => onSetSection('pipeline')}
         onSetSection={onSetSection}
+      />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECÇÃO 3d — REVENUE FORECAST (Wave H+I)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <RevenueForecastPanel
+        darkMode={darkMode}
+        forecast={forecast}
       />
 
       {/* ══════════════════════════════════════════════════════════════════════
