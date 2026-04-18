@@ -671,7 +671,10 @@ export default function Portal() {
     const urlToken = params.get('token')
     if (urlToken) {
       const authAbort = new AbortController()
-      fetch(`/api/auth/verify?token=${encodeURIComponent(urlToken)}`, { signal: authAbort.signal })
+      fetch(`/api/auth/verify?token=${encodeURIComponent(urlToken)}`, {
+        signal: authAbort.signal,
+        headers: { 'Accept': 'application/json' },
+      })
         .then(r => r.json())
         .then(data => {
           if (data.ok && data.email) {

@@ -13,7 +13,9 @@ export default function PortalLogin() {
     const token = params.get('token')
     if (!token) return
 
-    fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`)
+    fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
+      headers: { 'Accept': 'application/json' },
+    })
       .then(r => r.json())
       .then(data => {
         if (data.ok && data.email) {
