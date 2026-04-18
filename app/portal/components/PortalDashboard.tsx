@@ -11,7 +11,9 @@ import Tooltip from './Tooltip'
 import { parsePTValue as parsePTValueShared, computeStageAvgDays } from '../utils/format'
 import DashboardPriorityCenter from './DashboardPriorityCenter'
 import IntelligencePanel from './IntelligencePanel'
+import type { PricingInsightEntry } from './IntelligencePanel'
 import RevenueForecastPanel from './RevenueForecastPanel'
+import ExecutiveRankingPanel from './ExecutiveRankingPanel'
 import { scoreAllContacts } from '../lib/leadScoring'
 import { scoreAllDeals } from '../lib/dealScoring'
 import type { ScoredContact } from '../lib/leadScoring'
@@ -21,11 +23,16 @@ import { generateCopilot } from '../lib/intelligence/copilot'
 import { generateRevenueForecast } from '../lib/intelligence/forecast'
 import { computeWorkload } from '../lib/intelligence/workload'
 import { generateExecutiveRanking } from '../lib/intelligence/executiveRanking'
+import { predictAllDeals } from '../lib/intelligence/prediction'
+import { computeAllPricingInsights } from '../lib/intelligence/pricing'
+import { updateLeadScoreMemory, updateDealScoreMemory, batchDealDeltas } from '../lib/intelligence/scoringMemory'
+import { getDeltaBadge } from '../lib/intelligence/deltaHelpers'
 import type { Opportunity } from '../lib/intelligence/opportunity'
 import type { AgentCopilotOutput } from '../lib/intelligence/copilot'
 import type { ForecastOutput } from '../lib/intelligence/forecast'
 import type { WorkloadMetrics } from '../lib/intelligence/workload'
 import type { ExecutiveRankingOutput } from '../lib/intelligence/executiveRanking'
+import type { ScoreDelta } from '../lib/intelligence/scoringMemory'
 
 interface PortalDashboardProps {
   agentName: string
@@ -632,6 +639,37 @@ export default function PortalDashboard({
     [scoredContacts, scoredDeals],
   )
 
+  // ── Wave J: deal predictions, pricing insights, score deltas ─────────────
+  const dealPredictionsMap = useMemo(() => {
+    const all = predictAllDeals(scoredDeals)
+    return new Map(all.map(p => [p.dealRef, p]))  // keyed by ref (string)
+  }, [scoredDeals])
+
+  const pricingInsights: PricingInsightEntry[] = useMemo(
+    () => computeAllPricingInsights(scoredDeals).map(r => ({
+      dealRef:    r.dealRef,
+      dealImovel: r.dealImovel,
+      dealValor:  r.dealValor,
+      insight:    r.insight,
+    })),
+    [scoredDeals],
+  )
+
+  const dealDeltaMap = useMemo<Map<number, ScoreDelta>>(
+    () => batchDealDeltas(scoredDeals),
+    [scoredDeals],
+  )
+
+  // ── Once-per-session scoring memory snapshot ──────────────────────────────
+  const memoryWritten = useRef(false)
+  useEffect(() => {
+    if (memoryWritten.current) return
+    if (scoredContacts.length === 0 && scoredDeals.length === 0) return
+    memoryWritten.current = true
+    updateLeadScoreMemory(scoredContacts)
+    updateDealScoreMemory(scoredDeals)
+  }, [scoredContacts, scoredDeals])
+
   // ── Silent contacts (>18 days no touch, tier A/VIP) ───────────────────────
   const silentVIPs = useMemo(() => crmContacts.filter(c => {
     if (c.status !== 'vip') return false
@@ -984,13 +1022,18 @@ export default function PortalDashboard({
             <span>
               {currentTime.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} ·{' '}
               {liveDealCount} deals activos · pipeline €{(livePipeline / 1e6).toFixed(2)}M
-              {workload.isOverloaded && (
-                <span
+              <span
                   style={{
                     background: workload.workloadLabel === 'CRITICO'
                       ? 'rgba(220,38,38,.12)'
-                      : 'rgba(245,158,11,.12)',
-                    color: workload.workloadLabel === 'CRITICO' ? '#dc2626' : '#d97706',
+                      : workload.workloadLabel === 'ELEVADO'
+                      ? 'rgba(245,158,11,.12)'
+                      : darkMode ? 'rgba(111,207,151,.08)' : 'rgba(28,74,53,.08)',
+                    color: workload.workloadLabel === 'CRITICO'
+                      ? '#dc2626'
+                      : workload.workloadLabel === 'ELEVADO'
+                      ? '#d97706'
+                      : '#6fcf97',
                     fontFamily: "'DM Mono',monospace",
                     fontSize: '.48rem',
                     padding: '2px 6px',
@@ -1001,7 +1044,6 @@ export default function PortalDashboard({
                 >
                   CARGA {workload.workloadLabel} · {workload.workloadScore}
                 </span>
-              )}
             </span>
             {/* ── Supabase status badge ── */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -1609,6 +1651,7 @@ export default function PortalDashboard({
         darkMode={darkMode}
         copilot={copilot}
         opportunities={opportunities}
+        pricingInsights={pricingInsights}
         onGoToCRM={() => onSetSection('crm')}
         onGoToPipeline={() => onSetSection('pipeline')}
         onSetSection={onSetSection}
@@ -1620,6 +1663,14 @@ export default function PortalDashboard({
       <RevenueForecastPanel
         darkMode={darkMode}
         forecast={forecast}
+      />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECÇÃO 3e — EXECUTIVE RANKING (Wave J)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <ExecutiveRankingPanel
+        darkMode={darkMode}
+        ranking={executiveRanking}
       />
 
       {/* ══════════════════════════════════════════════════════════════════════
@@ -2393,6 +2444,9 @@ export default function PortalDashboard({
               const val = parseValorLocal(d.valor)
               const pct = STAGE_PCT[d.fase] ?? 0
               const color = STAGE_COLOR[d.fase] ?? '#888'
+              const pred  = dealPredictionsMap.get(d.ref ?? '')
+              const delta = dealDeltaMap.get(d.id) ?? null
+              const badge = getDeltaBadge(delta)
               return (
                 <div
                   key={d.id}
@@ -2508,15 +2562,54 @@ export default function PortalDashboard({
                   </div>
                   <div
                     style={{
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.52rem',
-                      color: mutedText,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                       marginTop: '4px',
-                      textAlign: 'right',
-                      letterSpacing: '.04em',
                     }}
                   >
-                    {pct}% concluído
+                    <div
+                      style={{
+                        fontFamily: "'DM Mono',monospace",
+                        fontSize: '.52rem',
+                        color: mutedText,
+                        letterSpacing: '.04em',
+                      }}
+                    >
+                      {pct}% concluído
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {/* Score delta badge */}
+                      {badge.show && (
+                        <span
+                          style={{
+                            fontFamily: "'DM Mono',monospace",
+                            fontSize: '.48rem',
+                            color: badge.color,
+                            letterSpacing: '.04em',
+                          }}
+                        >
+                          {badge.symbol} {badge.label}
+                        </span>
+                      )}
+                      {/* Closure prediction badge */}
+                      {pred && (
+                        <span
+                          style={{
+                            fontFamily: "'DM Mono',monospace",
+                            fontSize: '.48rem',
+                            color: pred.prediction.closureProbability >= 70
+                              ? '#6fcf97'
+                              : pred.prediction.closureProbability >= 40
+                              ? '#f59e0b'
+                              : '#ef4444',
+                            letterSpacing: '.04em',
+                          }}
+                        >
+                          🎯 {pred.prediction.closureProbability}%
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

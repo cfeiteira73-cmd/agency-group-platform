@@ -14,6 +14,15 @@
 
 import type { AgentCopilotOutput, CopilotSuggestion } from '../lib/intelligence/copilot'
 import type { Opportunity } from '../lib/intelligence/opportunity'
+import type { PricingInsight } from '../lib/intelligence/pricing'
+
+// Wrapper type returned by computeAllPricingInsights
+export interface PricingInsightEntry {
+  dealRef: string
+  dealImovel: string
+  dealValor: string
+  insight: PricingInsight
+}
 import type { SectionId } from './types'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -22,6 +31,7 @@ interface IntelligencePanelProps {
   darkMode: boolean
   copilot: AgentCopilotOutput
   opportunities: Opportunity[]
+  pricingInsights?: PricingInsightEntry[]  // Wave J: pricing signals per deal
   onGoToCRM: () => void
   onGoToPipeline: () => void
   onSetSection: (s: SectionId) => void
@@ -228,6 +238,7 @@ export default function IntelligencePanel({
   darkMode,
   copilot,
   opportunities,
+  pricingInsights = [],
   onGoToCRM,
   onGoToPipeline,
 }: IntelligencePanelProps) {
@@ -525,6 +536,87 @@ export default function IntelligencePanel({
           )}
         </div>
       </div>
+
+      {/* ── Wave J: Pricing Alerts ──────────────────────────────────────────── */}
+      {pricingInsights.length > 0 && (
+        <div
+          style={{
+            marginTop: '14px',
+            paddingTop: '14px',
+            borderTop: `1px solid ${borderCol}`,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'DM Mono',monospace",
+              fontSize: '.58rem',
+              letterSpacing: '.12em',
+              textTransform: 'uppercase',
+              color: mutedText,
+              marginBottom: '10px',
+            }}
+          >
+            Sinais de Preço · {pricingInsights.length} deal{pricingInsights.length !== 1 ? 's' : ''}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {pricingInsights.slice(0, 4).map((pi, i) => {
+              const isOver   = pi.insight.signal === 'POSSIBLY_OVERPRICED'
+              const sigCol   = isOver ? '#f59e0b' : '#6fcf97'
+              const sigBg    = isOver ? 'rgba(245,158,11,.08)' : 'rgba(111,207,151,.08)'
+              const sigLabel = isOver ? '⚠ Rever preço' : '✦ Forte procura'
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '6px 10px',
+                    background: sigBg,
+                    borderLeft: `2px solid ${sigCol}`,
+                    borderRadius: '0 4px 4px 0',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "'DM Mono',monospace",
+                      fontSize: '.55rem',
+                      color: sigCol,
+                      letterSpacing: '.06em',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {sigLabel}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'Jost',sans-serif",
+                      fontSize: '.78rem',
+                      color: cardText,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flex: 1,
+                    }}
+                  >
+                    {pi.dealImovel || pi.dealRef}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'DM Mono',monospace",
+                      fontSize: '.55rem',
+                      color: mutedText,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {pi.insight.reasoning[0]?.slice(0, 30) ?? ''}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Mobile responsiveness */}
       <style>{`
