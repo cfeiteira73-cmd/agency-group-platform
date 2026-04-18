@@ -59,24 +59,44 @@ export async function GET(req: NextRequest) {
     const token = req.nextUrl.searchParams.get('token')
     if (!token) return NextResponse.json({ error: 'Token em falta' }, { status: 400 })
 
+    // Detect whether caller wants JSON (fetch from login page / HomeNav) or HTML (browser nav from email)
+    const acceptHeader = req.headers.get('accept') || ''
+    const wantsJson = acceptHeader.includes('application/json') && !acceptHeader.includes('text/html')
+
+    const errorResponse = (msg: string, status: number) =>
+      wantsJson
+        ? NextResponse.json({ error: msg }, { status })
+        : new Response(
+            `<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"/><title>Erro · Agency Group</title>
+            <style>body{margin:0;background:#0c1f15;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#f4f0e6;text-align:center;padding:24px}</style>
+            </head><body>
+            <div>
+              <p style="font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(201,169,110,.6);margin-bottom:12px">Agency Group · AMI 22506</p>
+              <p style="font-size:.9rem;line-height:1.8;color:rgba(244,240,230,.7);margin-bottom:24px">${msg}</p>
+              <a href="/portal/login" style="display:inline-block;background:#c9a96e;color:#0c1f15;padding:12px 28px;text-decoration:none;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase">Pedir novo acesso →</a>
+            </div>
+            </body></html>`,
+            { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
+          )
+
     const dotIdx = token.lastIndexOf('.')
-    if (dotIdx === -1) return NextResponse.json({ error: 'Token inválido' }, { status: 400 })
+    if (dotIdx === -1) return errorResponse('Link inválido.', 400)
 
     const payload = token.slice(0, dotIdx)
     const sig = token.slice(dotIdx + 1)
     const expected = createHmac('sha256', SECRET).update(payload).digest('hex')
 
     if (!safeCompare(sig, expected)) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
+      return errorResponse('Link inválido.', 401)
     }
 
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString())
 
     if (data.type !== 'magic') {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
+      return errorResponse('Link inválido.', 401)
     }
     if (Date.now() > data.exp) {
-      return NextResponse.json({ error: 'Link expirado. Pede um novo acesso.' }, { status: 401 })
+      return errorResponse('Link expirado. Pede um novo acesso em agencygroup.pt/portal/login', 401)
     }
 
     // ── One-time-use check (atomic): INSERT is the check — no prior SELECT ──
@@ -101,13 +121,13 @@ export async function GET(req: NextRequest) {
 
     if (insertError?.code === '23505') {
       // Unique constraint violation — token already consumed
-      return NextResponse.json({ error: 'Link inválido ou já utilizado' }, { status: 401 })
+      return errorResponse('Link já utilizado. Pede um novo acesso em agencygroup.pt/portal/login', 401)
     }
     if (insertError && insertError.code !== '42P01') {
       // 42P01 = table does not exist (migration not yet applied) → degrade gracefully
       // All other unexpected errors → 500
       console.error('[Auth] Failed to mark token as used:', insertError)
-      return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+      return errorResponse('Erro interno. Tenta novamente.', 500)
     }
     // No SELECT check before — the INSERT IS the check
     // ── End one-time-use check ───────────────────────────────────────────────
@@ -119,11 +139,6 @@ export async function GET(req: NextRequest) {
     })).toString('base64url')
     const sessionSig = createHmac('sha256', SECRET).update(sessionPayload).digest('hex')
     const sessionCookieValue = `${sessionPayload}.${sessionSig}`
-
-    // Detect whether the client wants JSON (called via fetch from login page)
-    // or a browser navigation (direct GET from email link)
-    const acceptHeader = req.headers.get('accept') || ''
-    const wantsJson = acceptHeader.includes('application/json') && !acceptHeader.includes('text/html')
 
     // Use a plain cookie name without the __Secure- prefix.
     // Chrome silently drops __Secure- cookies when they arrive via a redirect
@@ -141,8 +156,11 @@ export async function GET(req: NextRequest) {
     }
 
     if (wantsJson) {
-      // Called via fetch() from login page — return JSON with cookie
-      const res = NextResponse.json({ ok: true, email: data.email })
+      // Called via fetch() from login page / HomeNav — return JSON with cookie.
+      // Cache-Control: no-store prevents CDN from caching this response (which carries Set-Cookie).
+      const res = NextResponse.json({ ok: true, email: data.email }, {
+        headers: { 'Cache-Control': 'no-store, no-cache' },
+      })
       res.cookies.set(cookieName, sessionCookieValue, cookieOptions)
       return res
     }

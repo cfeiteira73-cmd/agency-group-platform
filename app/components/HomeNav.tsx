@@ -14,16 +14,21 @@ export default function HomeNav() {
     const token = params.get('token')
 
     if (token) {
-      fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`)
+      // Accept: application/json so verify route returns JSON (not HTML redirect page)
+      fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
+        headers: { 'Accept': 'application/json' },
+      })
         .then(r => r.json())
         .then(d => {
-          if (d.ok) {
-            const email = d.email || sessionStorage.getItem('ag_pending_email') || ''
+          if (d.ok && d.email) {
+            const email = d.email
             sessionStorage.removeItem('ag_pending_email')
             localStorage.setItem('ag_auth', JSON.stringify({ v: '1', exp: Date.now() + 8 * 60 * 60 * 1000, email, token }))
             setIsAgent(true)
-            setPortalHref(`/portal?token=${encodeURIComponent(token)}`)
-            window.location.href = `/portal?token=${encodeURIComponent(token)}`
+            setPortalHref('/portal')
+            // Navigate WITHOUT the token — it is one-time-use and has already been consumed
+            // by the fetch call above. portal/page.tsx would fail to re-verify the same token.
+            window.location.href = '/portal'
           } else {
             window.dispatchEvent(new CustomEvent('ag:toast', { detail: { msg: 'Link inválido ou expirado. Pede um novo.', type: 'error' } }))
           }
