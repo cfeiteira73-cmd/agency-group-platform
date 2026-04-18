@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CurrencySelector } from './CurrencyWidget'
+import { isUnsupportedBrowser } from '../lib/browser'
 
 export default function HomeNav() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -13,12 +14,8 @@ export default function HomeNav() {
     // IE / IE Mode — redirect before touching the portal at all.
     // The server-side middleware already catches direct URL access; this guard
     // prevents CTA clicks and magic-link redirects from ever reaching /portal
-    // in unsupported browsers.  document.documentMode is an IE-only DOM
-    // property (number in IE, undefined everywhere else).
-    const isIE =
-      typeof (document as Document & { documentMode?: number }).documentMode === 'number' ||
-      /Trident\/|MSIE /i.test(navigator.userAgent)
-    if (isIE) {
+    // in unsupported browsers.
+    if (isUnsupportedBrowser()) {
       window.location.replace('/unsupported-browser')
       return
     }

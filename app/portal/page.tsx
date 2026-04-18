@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { isUnsupportedBrowser } from '../lib/browser'
 // next-auth not used — using localStorage magic link auth
 import PortalSidebar from './components/PortalSidebar'
 import PortalHeader from './components/PortalHeader'
@@ -75,6 +76,22 @@ const PortalAgentAI        = dynamic(
 // parsePTValue imported from ./utils/format — single source of truth
 
 export default function Portal() {
+  // ── IE / IE Mode hard block ─────────────────────────────────────────────────
+  // useState lazy initializer runs synchronously on first render — before any
+  // JSX is painted. Combined with the null return below, IE sees a completely
+  // blank page (0 pixels rendered) until the useEffect redirect fires (~16 ms).
+  // This eliminates the "A carregar..." flash that useEffect-only detection caused.
+  const [unsupported] = useState<boolean>(isUnsupportedBrowser)
+
+  // Side-effect: navigate away. Must be in useEffect (no side-effects in render).
+  useEffect(() => {
+    if (unsupported) window.location.replace('/unsupported-browser')
+  }, [unsupported])
+
+  // Synchronous render-time gate — returns null BEFORE any other JSX, stores,
+  // or auth logic is evaluated. Dashboard never renders for IE under any condition.
+  if (unsupported) return null
+
   // localStorage auth — no NextAuth
   const [ready, setReady] = useState(false)
   const [agentEmail, setAgentEmail] = useState('')
@@ -658,21 +675,6 @@ export default function Portal() {
   }
 
   // ── EFFECTS ──────────────────────────────────────────────────────────────────
-
-  // IE / IE Mode — client-side defence-in-depth.
-  // Middleware already blocks IE at the server level; this is a second layer
-  // in case the browser serves a stale cached copy of /portal and skips the
-  // server entirely.  We check both document.documentMode (IE11 DOM property)
-  // and the UA string (covers Edge IE Mode which shares Trident/MSIE tokens).
-  // Runs once on mount before any auth logic; redirect is immediate and total.
-  useEffect(() => {
-    const isIE =
-      typeof (document as Document & { documentMode?: number }).documentMode === 'number' ||
-      /Trident\/|MSIE /i.test(navigator.userAgent)
-    if (isIE) {
-      window.location.replace('/unsupported-browser')
-    }
-  }, [])
 
   // Dark mode
   useEffect(() => {
