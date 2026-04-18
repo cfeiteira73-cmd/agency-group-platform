@@ -105,10 +105,21 @@ export async function middleware(req: NextRequest) {
     return new NextResponse('Forbidden', { status: 403 })
   }
 
-  // 2. Portal protection — token in URL or valid session cookie.
+  // 2. Block Internet Explorer / Edge IE Mode from the portal.
+  //    IE (Trident engine) cannot reliably run the modern Next.js portal stack.
+  //    Both IE11 native and Edge IE Mode send a User-Agent containing "Trident/".
+  //    All portal paths (protected and /portal/login) are covered here so IE
+  //    users see a deterministic, browser-independent error page instead of
+  //    unpredictable auth/rendering behaviour.
+  //    /unsupported-browser is NOT in the matcher so it is always reachable.
+  if (/Trident\/|MSIE /i.test(ua) && path.startsWith('/portal')) {
+    return NextResponse.redirect(new URL('/unsupported-browser', req.url))
+  }
+
+  // 3. Portal protection — token in URL or valid session cookie.
   //    /portal/login is excluded from this guard (see matcher config below)
   //    so that unauthenticated users can always reach the login form.
-  if (path.startsWith('/portal')) {
+  if (path.startsWith('/portal') && !path.startsWith('/portal/login')) {
     const urlToken    = req.nextUrl.searchParams.get('token')
     // Cookie name must match what /api/auth/verify sets: 'ag-auth-token'
     const cookieToken = req.cookies.get('ag-auth-token')?.value
@@ -178,10 +189,13 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // /portal itself is protected; /portal/login is intentionally excluded so
-    // unauthenticated users can always reach the login form.
+    // /portal and all sub-paths INCLUDING /portal/login are now matched so the
+    // IE detection block (step 2 in middleware) fires for every portal URL.
+    // The auth guard (step 3) only applies when path !== /portal/login because
+    // the guard itself redirects to /portal/login — unauthenticated users can
+    // still reach the login form in supported browsers.
     '/portal',
-    '/portal/((?!login).+)',
+    '/portal/:path*',
     '/api/radar/:path*',
     '/api/avm',
     '/api/mortgage',
