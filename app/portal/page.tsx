@@ -219,8 +219,16 @@ export default function Portal() {
     localStorage.setItem(`ag_imoveis_${agentEmail}`, JSON.stringify(updated))
   }
 
-  function logout() {
+  // logout — clears BOTH the httpOnly server cookie AND localStorage.
+  // Previously only localStorage was cleared; the cookie persisted (httpOnly
+  // cookies cannot be touched by client JS), so IE / IE-mode would re-admit
+  // the user on the next visit because the cookie was still valid and
+  // middleware accepted it.
+  async function logout() {
     localStorage.removeItem('ag_auth')
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch { /* cookie will expire naturally at its 8h limit */ }
     window.location.href = '/'
   }
 
