@@ -8,6 +8,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,17 +63,20 @@ interface FullMarketData {
 }
 
 // ---------------------------------------------------------------------------
-// Rate-limit headers
+// Cache headers — static 2026 Q1 data, safe to cache at CDN level
+// No fake rate-limit counters: X-RateLimit-Remaining was always hardcoded to
+// 59 and was removed to avoid misleading consumers.
 // ---------------------------------------------------------------------------
 
-function rateLimitHeaders(): HeadersInit {
+function cacheHeaders(): HeadersInit {
   return {
-    'X-RateLimit-Limit':     '60',
-    'X-RateLimit-Remaining': '59',
-    'X-RateLimit-Reset':     String(Math.floor(Date.now() / 1000) + 60),
-    'Cache-Control':         'public, s-maxage=3600, stale-while-revalidate=86400',
+    'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
   }
 }
+
+// Canonical data-freshness label.  All static market data is sourced from
+// INE / Confidencial Imobiliário / APEMIP Q1 2026 — NOT the current timestamp.
+const MARKET_DATA_UPDATED_AT = '2026-Q1'
 
 // ---------------------------------------------------------------------------
 // In-memory cache (7 days TTL for scraped data)
@@ -354,7 +358,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       zones:      ZONE_DATA_2026,
       national:   NATIONAL_2026,
       luxury:     LUXURY_2026,
-      updated_at: new Date().toISOString(),
+      updated_at: MARKET_DATA_UPDATED_AT,
     }
 
     // Single zone request — enrich with live/cached scrape data
@@ -365,31 +369,31 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       if (!zoneStatic && !zoneScraped) {
         return NextResponse.json(
           { error: `Zone "${zone}" not found. Available: ${ZONE_DATA_2026.map(z => z.zone).join(', ')}` },
-          { status: 404, headers: rateLimitHeaders() }
+          { status: 404, headers: cacheHeaders() }
         )
       }
 
       return NextResponse.json({
-        zone:      zoneStatic ?? null,
-        scraped:   zoneScraped,
-        national:  NATIONAL_2026,
-        updated_at: new Date().toISOString(),
-      }, { headers: rateLimitHeaders() })
+        zone:       zoneStatic ?? null,
+        scraped:    zoneScraped,
+        national:   NATIONAL_2026,
+        updated_at: MARKET_DATA_UPDATED_AT,
+      }, { headers: cacheHeaders() })
     }
 
     // Type-filtered response
     if (type) {
       const filtered = filterByType(fullData, type)
-      return NextResponse.json(filtered, { headers: rateLimitHeaders() })
+      return NextResponse.json(filtered, { headers: cacheHeaders() })
     }
 
     // Full data response
-    return NextResponse.json(fullData, { headers: rateLimitHeaders() })
+    return NextResponse.json(fullData, { headers: cacheHeaders() })
   } catch (err) {
     console.error('[market-data GET]', err)
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500, headers: rateLimitHeaders() }
+      { status: 500, headers: cacheHeaders() }
     )
   }
 }
@@ -399,13 +403,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // Manual cache refresh — requires portal auth to prevent abuse
+  // (each full refresh triggers 20+ outbound fetches to Idealista)
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
     const zona = body.zona ? String(body.zona) : null
 
     if (zona) {
       const data = await refreshZone(zona)
-      return NextResponse.json({ success: true, updated: 1, data }, { headers: rateLimitHeaders() })
+      return NextResponse.json({ success: true, updated: 1, data }, { headers: cacheHeaders() })
     }
 
     // Refresh all zones
@@ -416,13 +426,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({
       success:       true,
       zones_updated: updated,
-      timestamp:     new Date().toISOString(),
-    }, { headers: rateLimitHeaders() })
+      refreshed_at:  new Date().toISOString(), // actual scrape time, not data vintage
+    }, { headers: cacheHeaders() })
   } catch (err) {
     console.error('[market-data POST]', err)
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500, headers: rateLimitHeaders() }
+      { status: 500, headers: cacheHeaders() }
     )
   }
 }

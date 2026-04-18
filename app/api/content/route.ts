@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { rateLimit } from '@/lib/rateLimit'
 
 const ContentSchema = z.object({
   zona:         z.string().min(1, 'Zona é obrigatória'),
@@ -20,15 +21,9 @@ const ContentSchema = z.object({
 })
 
 
-// Rate limiting
-const rateMap = new Map<string, { count: number; reset: number }>()
-function checkRate(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateMap.get(ip)
-  if (!entry || now > entry.reset) { rateMap.set(ip, { count: 1, reset: now + 3_600_000 }); return true }
-  if (entry.count >= 40) return false
-  entry.count++; return true
-}
+// Rate-limit config: 40 content generations / hour per IP.
+// Uses shared lib/rateLimit (Upstash Redis in production, in-memory Map fallback).
+const CONTENT_RATE = { maxAttempts: 40, windowMs: 60 * 60 * 1000 } as const
 
 // ─── Buyer Persona Profiles ────────────────────────────────────────────────────
 const PERSONAS: Record<string, string> = {
@@ -307,8 +302,9 @@ export async function POST(req: NextRequest) {
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-  const ip = req.headers.get('x-forwarded-for') || 'unknown'
-  if (!checkRate(ip)) return NextResponse.json({ success: false, error: 'Limite de pedidos atingido. Tenta em 1 hora.' }, { status: 429 })
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const limited = await rateLimit(ip, CONTENT_RATE)
+  if (!limited.success) return NextResponse.json({ success: false, error: 'Limite de pedidos atingido. Tenta em 1 hora.' }, { status: 429 })
 
   try {
     const raw = await req.json()

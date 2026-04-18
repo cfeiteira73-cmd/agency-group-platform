@@ -45,7 +45,7 @@ interface KPICardData {
   badgeBg: string
   color: string
   spark: number[]
-  delta: number
+  delta?: number  // undefined = no real delta available (never show a fabricated %)
   deltaPositive: boolean
   highlight?: boolean
   action?: () => void
@@ -181,6 +181,9 @@ const STAGE_TARGET_DAYS: Record<string, number> = {
 // STAGE_AVG_DAYS is now computed from real deal data in the component body
 // (see stageAvgDays useMemo below) — no more hardcoded mock values.
 
+// Module-level constant — must NOT be inside the component body (re-definition on every render).
+const DISMISS_TTL_MS = 24 * 60 * 60 * 1000 // 24 h
+
 // ─── Quick actions config ─────────────────────────────────────────────────────
 const QUICK_ACTIONS: {
   label: string
@@ -281,8 +284,7 @@ export default function PortalDashboard({
   const [supabaseConnected, setSupabaseConnected] = useState(false)
 
   // dismissedAlerts persisted to localStorage so they survive page reloads.
-  // Dismissals expire after 24 h so critical alerts always re-surface.
-  const DISMISS_TTL_MS = 24 * 60 * 60 * 1000
+  // Dismissals expire after DISMISS_TTL_MS (module-level constant) so critical alerts always re-surface.
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set()
     try {
@@ -679,17 +681,29 @@ export default function PortalDashboard({
   }
 
   // ── KPI Cards (8 total with enhanced data) ────────────────────────────────────
+  // delta badges: only shown when liveKPIs.source === 'live' (real data present).
+  // Hardcoded percentage deltas are removed — delta is undefined when source is 'demo'.
+  const currentMonthPT = new Date().toLocaleDateString('pt-PT', { month: 'long' })
+
+  // Ciclo Médio: sum of computed stage avg days across all pipeline stages.
+  // Falls back to null (hidden) when no real deal data is available.
+  const cicloMedioDays = useMemo(() => {
+    const total = Object.values(stageAvgDays).reduce((acc, d) => acc + d, 0)
+    return total > 0 ? total : null
+  }, [stageAvgDays])
+
   const kpiCards: KPICardData[] = useMemo(() => [
     {
       title: 'GCI Previsto',
       value: `€${liveGCI}K`,
       sub: `5% do pipeline${liveKPIs.source === 'live' ? ' · LIVE' : ''}`,
-      badge: '+12% vs mês ant.',
+      badge: liveKPIs.source === 'live' ? 'LIVE' : 'estimativa',
       badgeColor: '#4a9c7a',
       badgeBg: 'rgba(74,156,122,.12)',
       color: '#1c4a35',
       spark: generateSparkline(liveGCI > 0 ? liveGCI : 90),
-      delta: 12,
+      // delta only meaningful with real previous-period data
+      delta: undefined,
       deltaPositive: true,
       highlight: liveGCI > 80,
     },
@@ -702,7 +716,7 @@ export default function PortalDashboard({
       badgeBg: 'rgba(201,169,110,.12)',
       color: '#c9a96e',
       spark: generateSparkline(livePipeline > 0 ? livePipeline / 1e6 : 2.6),
-      delta: 8,
+      delta: undefined,
       deltaPositive: true,
     },
     {
@@ -714,7 +728,7 @@ export default function PortalDashboard({
       badgeBg: 'rgba(58,123,213,.1)',
       color: '#3a7bd5',
       spark: generateSparkline(Math.max(leadsAtivos, 1)),
-      delta: 6,
+      delta: undefined,
       deltaPositive: true,
     },
     {
@@ -734,13 +748,13 @@ export default function PortalDashboard({
     {
       title: 'Deals CPCV',
       value: `${cpcvDeals.length}`,
-      sub: `${liveClosingNow} a fechar em Abril`,
+      sub: `${liveClosingNow} a fechar em ${currentMonthPT}`,
       badge: `${closedDeals.length} escrituras`,
       badgeColor: '#c9a96e',
       badgeBg: 'rgba(201,169,110,.12)',
       color: '#c9a96e',
       spark: generateSparkline(Math.max(cpcvDeals.length, 1)),
-      delta: 10,
+      delta: undefined,
       deltaPositive: true,
     },
     {
@@ -752,21 +766,22 @@ export default function PortalDashboard({
       badgeBg: 'rgba(74,156,122,.1)',
       color: '#4a9c7a',
       spark: generateSparkline(parseFloat(convRate) || 5.9),
-      delta: 3,
+      delta: undefined,
       deltaPositive: true,
     },
     {
       title: 'Ciclo Médio',
-      value: '87d',
+      // Show computed value from real deals, or '—' when no data available
+      value: cicloMedioDays !== null ? `${cicloMedioDays}d` : '—',
       sub: 'angariação → escritura',
       badge: 'benchmark 210d',
       badgeColor: '#888',
       badgeBg: 'rgba(136,136,136,.1)',
       color: '#888',
-      spark: generateSparkline(87),
-      delta: -4,
+      spark: generateSparkline(cicloMedioDays ?? 87),
+      delta: undefined,
       deltaPositive: true,
-      highlight: true,
+      highlight: cicloMedioDays !== null && cicloMedioDays < 150,
     },
     {
       title: 'Mercado PT 2026',
@@ -774,13 +789,14 @@ export default function PortalDashboard({
       sub: 'Lisboa top 5 mundial',
       badge: '€3.076/m² mediana',
       badgeColor: '#c9a96e',
-      badgeBg: 'rgba(201,169,110,.08)',
+      badgeBg: 'rgba(201,169,10,.08)',
       color: '#c9a96e',
       spark: generateSparkline(17.6),
-      delta: 17.6,
+      // Market data is static INE/AT Q1 2026 — no delta (would be misleading)
+      delta: undefined,
       deltaPositive: true,
     },
-  ], [liveGCI, livePipeline, liveDealCount, liveKPIs.source, leadsAtivos, vipContacts, liveTotalContacts, followUpsHoje, cpcvDeals, liveClosingNow, closedDeals, convRate, pipelineTotal, stageBreakdown])
+  ], [liveGCI, livePipeline, liveDealCount, liveKPIs.source, leadsAtivos, vipContacts, liveTotalContacts, followUpsHoje, cpcvDeals, liveClosingNow, closedDeals, convRate, pipelineTotal, stageBreakdown, cicloMedioDays, currentMonthPT])
 
   // ── Styles ───────────────────────────────────────────────────────────────────
   const cardBg = darkMode ? '#0f1e16' : '#ffffff'
@@ -1268,6 +1284,30 @@ export default function PortalDashboard({
         </div>
       )}
 
+      {/* ── KPI data-load error banner ───────────────────────────────────────── */}
+      {kpiError && liveKPIs.source === 'demo' && (
+        <div
+          role="alert"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '10px 16px',
+            marginBottom: '16px',
+            background: darkMode ? 'rgba(220,38,38,.12)' : 'rgba(220,38,38,.07)',
+            border: '1px solid rgba(220,38,38,.30)',
+            borderRadius: '8px',
+            color: '#dc2626',
+            fontFamily: "'DM Mono',monospace",
+            fontSize: '.72rem',
+            letterSpacing: '.04em',
+          }}
+        >
+          <span>⚠</span>
+          <span>Não foi possível carregar dados KPI em tempo real. A mostrar estimativas demo. Verifica a ligação ao servidor.</span>
+        </div>
+      )}
+
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 3 — KPI GRID 4×2 COM SPARKLINES + DELTA
       ══════════════════════════════════════════════════════════════════════ */}
@@ -1372,7 +1412,8 @@ export default function PortalDashboard({
                   >
                     {kpi.badge}
                   </span>
-                  {/* WoW delta badge */}
+                  {/* WoW delta badge — only rendered when a real computed delta is available */}
+                  {kpi.delta !== undefined && (
                   <span
                     style={{
                       display: 'inline-flex',
@@ -1389,6 +1430,7 @@ export default function PortalDashboard({
                   >
                     {kpi.deltaPositive ? '▲' : '▼'} {Math.abs(kpi.delta)}%
                   </span>
+                  )}
                 </div>
                 {!!kpi.action && (
                   <button

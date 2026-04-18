@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { rateLimit } from '@/lib/rateLimit'
 
 // ─── Staging Styles ────────────────────────────────────────────────────────────
 const STYLE_PROMPTS: Record<string, string> = {
@@ -27,24 +28,10 @@ const ROOM_BOOST: Record<string, string> = {
 
 const NEGATIVE_PROMPT = 'people, person, face, text, watermark, logo, blurry, low quality, distorted, deformed, ugly, extra rooms, changing room dimensions, changing window positions, changing door positions, changing structural walls'
 
-// ─── Rate limit ────────────────────────────────────────────────────────────────
-const rateLimitMap = new Map<string, { count: number; reset: number }>()
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  // Purge expired entries to prevent unbounded memory growth
-  for (const [key, val] of rateLimitMap) {
-    if (now > val.reset) rateLimitMap.delete(key)
-  }
-  const entry = rateLimitMap.get(ip)
-  if (!entry || now > entry.reset) {
-    rateLimitMap.set(ip, { count: 1, reset: now + 3600000 })
-    return true
-  }
-  if (entry.count >= 3) return false // 3 generations/hr — portal-only feature
-  entry.count++
-  return true
-}
+// Rate-limit config: 3 generations / hour per IP.
+// Uses shared lib/rateLimit (Upstash Redis in production, in-memory Map fallback).
+// Upstash is safe across multiple Vercel instances; the fallback is per-instance.
+const HOMESTAGING_RATE = { maxAttempts: 3, windowMs: 60 * 60 * 1000 } as const
 
 // ─── Call Stability AI Structure Control ──────────────────────────────────────
 async function runStabilityStructure(params: {
@@ -93,8 +80,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
-    if (!checkRateLimit(ip)) {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+    const limited = await rateLimit(ip, HOMESTAGING_RATE)
+    if (!limited.success) {
       return NextResponse.json({ error: 'Rate limit: 3 gerações/hora' }, { status: 429 })
     }
 
