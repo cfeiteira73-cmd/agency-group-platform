@@ -90,6 +90,20 @@ export async function GET(req: NextRequest) {
   })
   if (sendErr) console.error('Resend approve email error:', sendErr)
 
-  // Redireciona diretamente para o site com o token — autentica imediatamente
-  return NextResponse.redirect(magicLink, { status: 302 })
+  // DO NOT redirect the admin to the magic link — that would consume the
+  // one-time token from the admin's browser, leaving the agent with an
+  // already-used link that returns 401 "Link inválido ou já utilizado".
+  // The magic link email was already sent to the agent above; just confirm.
+  return new NextResponse(
+    `<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"/>
+    <title>Acesso Aprovado · Agency Group</title></head>
+    <body style="margin:0;padding:64px 24px;background:#0c1f15;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;text-align:center">
+      <p style="margin:0 0 12px;font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(201,169,110,.6)">Agency Group · AMI 22506</p>
+      <h1 style="margin:0 0 24px;font-size:1.4rem;font-weight:300;color:#f4f0e6;letter-spacing:.05em">Acesso Aprovado</h1>
+      <p style="font-size:.85rem;line-height:1.8;color:rgba(244,240,230,.7);max-width:400px;margin:0 auto">
+        O link de acesso foi enviado para o agente.<br/>Podes fechar esta página.
+      </p>
+    </body></html>`,
+    { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+  )
 }

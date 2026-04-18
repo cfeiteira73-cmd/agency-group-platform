@@ -45,7 +45,12 @@ async function verifyToken(token: string, secret: string): Promise<boolean> {
     if (sigHex !== sig) return false
 
     const data = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
-    return data.type === 'magic' && Date.now() < data.exp
+    // Accept both token types:
+    //   • magic-link tokens  → { type: 'magic', email, exp }  (URL param, first visit)
+    //   • session tokens     → { email, exp }                 (cookie, all subsequent visits)
+    // Previously this only checked type==='magic', which silently rejected every
+    // valid session cookie and bounced authenticated users back to '/'.
+    return Date.now() < data.exp && (data.type === 'magic' || typeof data.email === 'string')
   } catch {
     return false
   }
