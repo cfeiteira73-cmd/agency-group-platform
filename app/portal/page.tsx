@@ -692,23 +692,31 @@ export default function Portal() {
       return () => authAbort.abort()
     }
 
-    // Check localStorage first (fastest path)
+    // localStorage hint: pre-populate email/name for faster display only.
+    // SECURITY: do NOT call setReady(true) here and do NOT return early.
+    // Without a server check, a cached /portal page (browser cache, especially
+    // IE) combined with unexpired localStorage bypasses the middleware auth
+    // check entirely — the portal would render with zero server-side validation.
+    // We always fall through to /api/auth/me which verifies the httpOnly cookie.
     const stored = localStorage.getItem('ag_auth')
     if (stored) {
       try {
         const d = JSON.parse(stored)
-        if (d.v === '1' && Date.now() < d.exp) {
-          setAgentEmail(d.email || '')
-          const n = d.email ? d.email.split('@')[0].split('.')[0] : 'Agente'
+        if (d.v === '1' && Date.now() < d.exp && d.email) {
+          // Pre-fill name/email so the UI can show them instantly once ready —
+          // but readiness is gated on the server confirming the cookie below.
+          setAgentEmail(d.email)
+          const n = d.email.split('@')[0].split('.')[0]
           setAgentName(n.charAt(0).toUpperCase() + n.slice(1))
-          setReady(true)
-          return
+        } else {
+          localStorage.removeItem('ag_auth') // evict expired entry
         }
-      } catch {}
+      } catch { localStorage.removeItem('ag_auth') }
     }
 
-    // Fallback: check server-side cookie via /api/auth/me
-    // (covers cases where localStorage is cleared but cookie is still valid)
+    // Server auth check — this is the security gate. /api/auth/me reads the
+    // httpOnly ag-auth-token cookie (set by /api/auth/verify after approval).
+    // setReady(true) is only called here, never from the localStorage path.
     const meAbort = new AbortController()
     fetch('/api/auth/me', { signal: meAbort.signal })
       .then(r => r.json())
@@ -720,6 +728,7 @@ export default function Portal() {
           setAgentName(n.charAt(0).toUpperCase() + n.slice(1))
           setReady(true)
         } else {
+          localStorage.removeItem('ag_auth')
           window.location.href = '/portal/login'
         }
       })

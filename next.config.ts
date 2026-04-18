@@ -104,6 +104,29 @@ const config: NextConfig = {
         ],
       },
       {
+        // Portal — NEVER cache in browser or CDN.
+        // /portal is an auth-protected page. If the browser (especially IE)
+        // serves a cached copy, Next.js middleware never runs, and the only
+        // remaining auth check is the client-side localStorage path in
+        // portal/page.tsx — which an attacker (or stale session) can bypass.
+        // no-store forces every visit through the server so middleware always
+        // validates the ag-auth-token cookie before the page is delivered.
+        source: '/portal',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      },
+      {
+        source: '/portal/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
+        ],
+      },
+      {
         // Blog articles: estáticos — CDN pode fazer cache por 24h, revalidar em background
         // Vercel Edge vai servir de cache após o primeiro request — TTFB ~10ms no repeat
         source: '/blog/:path*',
