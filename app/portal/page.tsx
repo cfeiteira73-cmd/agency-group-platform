@@ -75,22 +75,20 @@ const PortalAgentAI        = dynamic(
 
 // parsePTValue imported from ./utils/format — single source of truth
 
+// ─── IE redirect micro-component ─────────────────────────────────────────────
+// Returned by Portal when unsupported=true. Own component → own hooks → no
+// Rules of Hooks violation in the parent. Renders null while redirect fires.
+function IERedirect() {
+  useEffect(() => { window.location.replace('/unsupported-browser') }, [])
+  return null
+}
+
 export default function Portal() {
-  // ── IE / IE Mode hard block ─────────────────────────────────────────────────
-  // useState lazy initializer runs synchronously on first render — before any
-  // JSX is painted. Combined with the null return below, IE sees a completely
-  // blank page (0 pixels rendered) until the useEffect redirect fires (~16 ms).
-  // This eliminates the "A carregar..." flash that useEffect-only detection caused.
+  // ── IE / IE Mode — must be first hook, but null-return deferred to after ALL hooks ──
+  // useState lazy initializer runs synchronously before first paint and never changes.
+  // The null return is placed AFTER all hooks (line ~857) to comply with React's
+  // Rules of Hooks — hooks must be called unconditionally on every render.
   const [unsupported] = useState<boolean>(isUnsupportedBrowser)
-
-  // Side-effect: navigate away. Must be in useEffect (no side-effects in render).
-  useEffect(() => {
-    if (unsupported) window.location.replace('/unsupported-browser')
-  }, [unsupported])
-
-  // Synchronous render-time gate — returns null BEFORE any other JSX, stores,
-  // or auth logic is evaluated. Dashboard never renders for IE under any condition.
-  if (unsupported) return null
 
   // localStorage auth — no NextAuth
   const [ready, setReady] = useState(false)
@@ -853,6 +851,17 @@ export default function Portal() {
   }
 
   // ── RENDER ────────────────────────────────────────────────────────────────────
+
+  // IE / IE Mode render-time gate — placed HERE, after ALL hooks above, so every
+  // hook is called unconditionally on every render (Rules of Hooks compliant).
+  // For IE: unsupported=true → null render (blank page) + useEffect redirect below.
+  // For Chrome/Edge/Firefox: unsupported=false → this line is never reached.
+  if (unsupported) {
+    // Side-effect lives inside the JSX return so it fires inside React's lifecycle.
+    // We return a micro-component that handles the redirect via its own useEffect,
+    // keeping portal/page.tsx free of any side-effect calls outside hooks.
+    return <IERedirect />
+  }
 
   if (!ready) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0c1f15', fontFamily: 'Cormorant,serif', fontSize: '1.5rem', color: '#c9a96e', letterSpacing: '.1em' }}>
