@@ -116,17 +116,19 @@ export async function middleware(req: NextRequest) {
     const activeToken = urlToken || cookieToken
 
     if (!secret || !activeToken || !(await verifyToken(activeToken, secret))) {
-      return NextResponse.redirect(new URL('/', req.url))
+      // Send to login, not homepage, so the user knows they need to authenticate
+      return NextResponse.redirect(new URL('/portal/login', req.url))
     }
 
     const res = NextResponse.next()
     if (urlToken) {
       // Persist token as cookie so subsequent page loads don't need the URL param.
-      // Cookie name matches /api/auth/verify and /api/auth/me: 'ag-auth-token'
+      // Cookie name, sameSite, and secure must match /api/auth/verify options exactly
+      // so the browser treats both Set-Cookie directives as the same cookie.
       res.cookies.set('ag-auth-token', urlToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',   // 'strict' blocks the cookie on email/external-link navigation
         maxAge: 8 * 60 * 60,
         path: '/',
       })
