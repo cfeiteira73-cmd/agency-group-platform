@@ -109,18 +109,23 @@ async function consumeToken(
   const sessionSig = createHmac('sha256', secret).update(sessionPayload).digest('hex')
   const sessionCookieValue = `${sessionPayload}.${sessionSig}`
   const cookieName = 'ag-auth-token'
+  // IE11 ignores Max-Age; Expires is required for IE/IE-mode compatibility.
+  // Both are set so all browsers honour the 8-hour lifetime.
+  const expiresDate = new Date(Date.now() + SESSION_MAX_AGE * 1000).toUTCString()
   const cookieOptions = {
     httpOnly: true,
     secure: IS_PRODUCTION,
     sameSite: 'lax' as const,
     path: '/',
     maxAge: SESSION_MAX_AGE,
+    expires: new Date(Date.now() + SESSION_MAX_AGE * 1000),
   }
   const cookieHeaderValue = [
     `${cookieName}=${sessionCookieValue}`,
     'HttpOnly',
     'SameSite=Lax',
     `Max-Age=${SESSION_MAX_AGE}`,
+    `Expires=${expiresDate}`,
     'Path=/',
     ...(IS_PRODUCTION ? ['Secure'] : []),
   ].join('; ')
@@ -212,20 +217,28 @@ export async function GET(req: NextRequest) {
 <head>
   <meta charset="utf-8"/>
   <title>A entrar… · Agency Group</title>
-  <style>body{margin:0;background:#0c1f15;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#c9a96e;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase}</style>
+  <style>
+    body{margin:0;background:#0c1f15;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#c9a96e;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;text-align:center;padding:24px}
+    #btn{display:inline-block;background:#c9a96e;color:#0c1f15;padding:14px 32px;border:none;cursor:pointer;font-size:.65rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin-top:20px;text-decoration:none}
+  </style>
 </head>
 <body>
-  <div style="text-align:center">
-    <p>A entrar no portal…</p>
-    <form id="f" method="post" action="/api/auth/verify?token=${safeToken}" style="display:none">
+  <div>
+    <p id="msg">A entrar no portal…</p>
+    <form id="f" method="post" action="/api/auth/verify?token=${safeToken}">
+      <button id="btn" type="submit">Entrar no Portal →</button>
     </form>
-    <noscript>
-      <a href="/portal/login" style="color:rgba(201,169,110,.7);font-size:.6rem">JavaScript necessário — clica aqui</a>
-    </noscript>
   </div>
   <script>
     // Auto-submit — runs in the user's browser; email scanners cannot run JS.
-    document.getElementById('f').submit();
+    // The button remains visible as fallback if JS delays (IE compatibility).
+    try {
+      document.getElementById('msg').textContent = 'A entrar no portal\u2026';
+      document.getElementById('btn').style.display = 'none';
+      document.getElementById('f').submit();
+    } catch(e) {
+      document.getElementById('btn').style.display = 'inline-block';
+    }
   </script>
 </body>
 </html>`
