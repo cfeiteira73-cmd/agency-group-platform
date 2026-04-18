@@ -9,6 +9,7 @@ import {
 } from './components/constants'
 import type { CRMContact, JurMsg, SectionId } from './components/types'
 import { computeLeadScore } from './components/utils'
+import { parsePTValue } from './utils/format'
 
 // Stores
 import { useUIStore } from './stores/uiStore'
@@ -71,22 +72,7 @@ const PortalAgentAI        = dynamic(
   { ssr: false },
 )
 
-function parsePTValue(val: string | number | null | undefined): number {
-  if (typeof val === 'number') return isNaN(val) ? 0 : val
-  if (!val) return 0
-  const clean = String(val).trim().replace(/[€$£\s\u00A0]/g, '')
-  if (!clean) return 0
-  const hasComma = clean.includes(',')
-  const dotCount = (clean.match(/\./g) || []).length
-  if (hasComma) return parseFloat(clean.replace(/\./g, '').replace(',', '.')) || 0
-  if (dotCount > 1) return parseFloat(clean.replace(/\./g, '')) || 0
-  if (dotCount === 1) {
-    const parts = clean.split('.')
-    if (parts[1] && parts[1].length === 3) return parseFloat(clean.replace('.', '')) || 0
-    return parseFloat(clean) || 0
-  }
-  return parseFloat(clean) || 0
-}
+// parsePTValue imported from ./utils/format — single source of truth
 
 export default function Portal() {
   // localStorage auth — no NextAuth

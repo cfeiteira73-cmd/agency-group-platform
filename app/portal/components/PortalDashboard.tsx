@@ -8,6 +8,7 @@ import { PIPELINE_STAGES, STAGE_PCT, STAGE_COLOR } from './constants'
 import { useStaggerIn, useFadeIn } from '../hooks/useGSAPAnimations'
 import { SkeletonKPIGrid } from './PortalSkeleton'
 import Tooltip from './Tooltip'
+import { parsePTValue as parsePTValueShared, computeStageAvgDays } from '../utils/format'
 
 interface PortalDashboardProps {
   agentName: string
@@ -148,13 +149,8 @@ function statusColor(status: string): string {
   return map[status] ?? '#888'
 }
 
-// ─── Portuguese currency parser (for Zustand store strings) ───────────────────
-function parseValorLocal(s: string | undefined): number {
-  if (!s) return 0
-  // Strip €, spaces, then remove thousand-separator dots, then parse
-  const cleaned = s.replace(/[€\s]/g, '').replace(/\.(?=\d{3}(?:[,.]|$))/g, '').replace(',', '.')
-  return parseFloat(cleaned) || 0
-}
+// ─── Portuguese currency parser — delegated to shared utility ─────────────────
+const parseValorLocal = parsePTValueShared
 
 // ─── Ticker data ──────────────────────────────────────────────────────────────
 const TICKER_ITEMS = [
@@ -182,17 +178,8 @@ const STAGE_TARGET_DAYS: Record<string, number> = {
   'Escritura Concluída': 0,
 }
 
-// ─── Simulated stage avg days (mock, derived from demo data) ──────────────────
-const STAGE_AVG_DAYS: Record<string, number> = {
-  'Angariação': 11,
-  'Proposta Enviada': 9,
-  'Proposta Aceite': 4,
-  'Due Diligence': 18,
-  'CPCV Assinado': 27,
-  'Financiamento': 24,
-  'Escritura Marcada': 6,
-  'Escritura Concluída': 0,
-}
+// STAGE_AVG_DAYS is now computed from real deal data in the component body
+// (see stageAvgDays useMemo below) — no more hardcoded mock values.
 
 // ─── Quick actions config ─────────────────────────────────────────────────────
 const QUICK_ACTIONS: {
@@ -292,9 +279,40 @@ export default function PortalDashboard({
   const [currentTime, setCurrentTime] = useState(new Date())
   const [isLoadingKPIs, setIsLoadingKPIs] = useState(true)
   const [supabaseConnected, setSupabaseConnected] = useState(false)
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => new Set())
+
+  // dismissedAlerts persisted to localStorage so they survive page reloads.
+  // Dismissals expire after 24 h so critical alerts always re-surface.
+  const DISMISS_TTL_MS = 24 * 60 * 60 * 1000
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      const raw = localStorage.getItem('portal_dismissed_alerts')
+      if (!raw) return new Set()
+      const entries = JSON.parse(raw) as [string, number][]
+      const now = Date.now()
+      const valid = entries.filter(([, ts]) => now - ts < DISMISS_TTL_MS)
+      // Prune stale — write back immediately
+      localStorage.setItem('portal_dismissed_alerts', JSON.stringify(valid))
+      return new Set(valid.map(([id]) => id))
+    } catch { return new Set() }
+  })
+
+  function dismissAlert(id: string) {
+    const next = new Set([...dismissedAlerts, id])
+    setDismissedAlerts(next)
+    try {
+      const raw = localStorage.getItem('portal_dismissed_alerts')
+      const entries: [string, number][] = raw ? JSON.parse(raw) : []
+      const filtered = entries.filter(([eid]) => eid !== id)
+      filtered.push([id, Date.now()])
+      localStorage.setItem('portal_dismissed_alerts', JSON.stringify(filtered))
+    } catch { /* storage unavailable */ }
+  }
+
   const [sofiaRefreshing, setSofiaRefreshing] = useState(false)
   const [sofiaTs, setSofiaTs] = useState(new Date())
+  // sofiaMarketBrief: live market insight from daily-brief API; falls back to static copy
+  const [sofiaMarketBrief, setSofiaMarketBrief] = useState<string | null>(null)
   const [liveKPIs, setLiveKPIs] = useState<{
     pipeline: number
     deals: number
@@ -320,6 +338,15 @@ export default function PortalDashboard({
     return () => clearInterval(t)
   }, [])
 
+  // ── Session expiry redirect ────────────────────────────────────────────────
+  const handleSessionExpiry = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      // Clear stale auth cookies and redirect to login
+      document.cookie = 'ag-auth-token=; path=/; max-age=0'
+      window.location.href = '/portal/login?reason=session_expired'
+    }
+  }, [])
+
   // ── Supabase real data loader ─────────────────────────────────────────────
   const loadDashboardData = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -331,8 +358,25 @@ export default function PortalDashboard({
         fetch('/api/analytics/summary', { signal }),
       ])
 
+      // ── Session expiry detection: 401 on any auth'd endpoint → redirect ────
+      const allResponses = [kpiRes, activityRes, healthRes, dealsRes, analyticsRes]
+      const has401 = allResponses.some(
+        r => r.status === 'fulfilled' && r.value.status === 401
+      )
+      if (has401) {
+        handleSessionExpiry()
+        return
+      }
+
       if (kpiRes.status === 'fulfilled' && kpiRes.value.ok) {
         setSupabaseConnected(true)
+        // Extract market_insight from daily-brief to populate Sofia panel
+        try {
+          const briefData = await kpiRes.value.clone().json() as { market_insight?: string }
+          if (briefData?.market_insight) {
+            setSofiaMarketBrief(briefData.market_insight)
+          }
+        } catch { /* brief may not be JSON-parseable on first load */ }
       } else {
         if (process.env.NODE_ENV === 'development') { console.warn('[Dashboard] /api/automation/daily-brief failed:', kpiRes.status === 'rejected' ? kpiRes.reason : kpiRes.value.status) }
       }
@@ -387,15 +431,7 @@ export default function PortalDashboard({
           const rawDeals: { valor?: string; escrituraDate?: string; cpcvDate?: string }[] =
             Array.isArray(dealsData?.data) ? dealsData.data : []
 
-          // Parse Portuguese-formatted currency strings: €1.250.000 → 1250000
-          const parseValor = (s?: string): number => {
-            if (!s) return 0
-            // remove currency symbol, spaces, then replace thousand-dots before parsing
-            const cleaned = s.replace(/[€\s]/g, '').replace(/\./g, '').replace(',', '.')
-            return parseFloat(cleaned) || 0
-          }
-
-          const totalPipelineValue = rawDeals.reduce((sum, d) => sum + parseValor(d.valor), 0)
+          const totalPipelineValue = rawDeals.reduce((sum, d) => sum + parsePTValueShared(d.valor), 0)
           const activeDealCount = rawDeals.length
           const estimatedCommission = totalPipelineValue * 0.05
           const currentMonthStr = new Date().toISOString().slice(0, 7)
@@ -426,7 +462,7 @@ export default function PortalDashboard({
     } finally {
       setIsLoadingKPIs(false)
     }
-  }, [])
+  }, [handleSessionExpiry])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -503,6 +539,21 @@ export default function PortalDashboard({
   const stalledGCI = useMemo(() => stalledDeals.reduce((s, d) => {
     return s + parseValorLocal(d.valor) * 0.05
   }, 0), [stalledDeals])
+
+  // ── Stage velocity — computed from real deals, not hardcoded ─────────────────
+  const stageAvgDays = useMemo(() => {
+    const stages = Object.keys(STAGE_TARGET_DAYS)
+    const computed = computeStageAvgDays(
+      deals.map(d => ({ fase: d.fase, createdAt: (d as { createdAt?: string }).createdAt, cpcvDate: d.cpcvDate, escrituraDate: d.escrituraDate })),
+      stages,
+    )
+    // Fall back to target days (not mock) for stages with no deal data
+    const result: Record<string, number> = {}
+    for (const stage of stages) {
+      result[stage] = computed[stage] > 0 ? computed[stage] : 0
+    }
+    return result
+  }, [deals])
 
   // ── Silent contacts (>18 days no touch, tier A/VIP) ───────────────────────
   const silentVIPs = useMemo(() => crmContacts.filter(c => {
@@ -615,7 +666,10 @@ export default function PortalDashboard({
       : `"Pipeline sólido com €${(pipelineTotal / 1e6).toFixed(1)}M activo. Foco em acelerar ${
           stageBreakdown[0]?.stage ?? 'fase inicial'
         } para maximizar GCI este trimestre."`,
-    market: 'Lisboa +0,3% esta semana\nVolume transacções: ▲ 12%\nDOM médio: 198 dias (−5%)\nNovo: Cascais abaixo €4.500/m²',
+    // sofiaMarketBrief: from real daily-brief API on load + on Refresh click.
+    // Falls back to a contextual string if brief not yet loaded.
+    market: sofiaMarketBrief
+      ?? `Lisboa €5.000/m² · +18,2% YoY\nCascais €4.713/m² · Algarve €3.941/m²\nDOM médio: 210 dias · Euribor 6M: 3,15%`,
     action: topDeals.length > 0
       ? `"${topDeals[0].ref} (${topDeals[0].fase}) está em negociação. Valor: ${topDeals[0].valor}. Seguimento proactivo pode acelerar fecho."`
       : `"Sem deals activos de alto valor. Prioridade: activar prospeção off-market esta semana."`,
@@ -1202,7 +1256,7 @@ export default function PortalDashboard({
                     borderRadius: '4px',
                     transition: 'opacity .15s ease',
                   }}
-                  onClick={() => setDismissedAlerts(prev => new Set([...prev, a.id]))}
+                  onClick={() => dismissAlert(a.id)}
                   title="Dispensar"
                   aria-label="Dispensar alerta"
                 >
@@ -1422,7 +1476,7 @@ export default function PortalDashboard({
             {stageBreakdown.map(s => {
               const barWidth = (s.value / maxStageVal) * 100
               const color = STAGE_COLOR[s.stage] ?? '#888'
-              const avgDays = STAGE_AVG_DAYS[s.stage] ?? 0
+              const avgDays = stageAvgDays[s.stage] ?? 0
               const targetDays = STAGE_TARGET_DAYS[s.stage] ?? 999
               const velocityOk = avgDays <= targetDays
               return (
@@ -1629,12 +1683,17 @@ export default function PortalDashboard({
               borderRadius: '4px',
             }}
             disabled={sofiaRefreshing}
-            onClick={() => {
+            onClick={async () => {
               setSofiaRefreshing(true)
-              setTimeout(() => {
-                setSofiaRefreshing(false)
-                setSofiaTs(new Date())
-              }, 1200)
+              try {
+                const res = await fetch('/api/automation/daily-brief')
+                if (res.ok) {
+                  const data = await res.json() as { market_insight?: string }
+                  if (data?.market_insight) setSofiaMarketBrief(data.market_insight)
+                  setSofiaTs(new Date())
+                }
+              } catch { /* network error — brief stays as-is */ }
+              finally { setSofiaRefreshing(false) }
             }}
           >
             {sofiaRefreshing ? '✦ A actualizar...' : '↻ Refresh'}

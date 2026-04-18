@@ -1,6 +1,22 @@
 import { describe, it, expect, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
+// ─── Module mocks (hoisted — must be at top level) ───────────────────────────
+// lib/supabase.ts throws at init if env vars are absent (by design for
+// production safety).  In the test environment we provide a lightweight stub
+// so that routes that import supabaseAdmin can still be exercised without a
+// live Supabase connection.
+
+vi.mock('@/lib/supabase', () => {
+  const single  = () => Promise.resolve({ data: null, error: null })
+  const select  = () => ({ single })
+  const upsert  = () => ({ select })
+  const from    = () => ({ upsert })
+  const supabaseAdmin = { from }
+  const supabase      = { from }
+  return { supabaseAdmin, supabase }
+})
+
 // ─── Security posture: public vs. protected API routes ───────────────────────
 //
 // The Agency Group portal has two classes of API routes:

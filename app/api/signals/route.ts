@@ -102,10 +102,26 @@ export async function PATCH(req: NextRequest) {
 
     const body = await req.json()
 
+    // Explicit field allowlist — prevents arbitrary column overwriting
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allowed: Record<string, unknown> = {}
+    if (body.status      !== undefined) allowed.status      = body.status
+    if (body.priority    !== undefined) allowed.priority    = body.priority
+    if (body.title       !== undefined) allowed.title       = body.title
+    if (body.description !== undefined) allowed.description = body.description
+    if (body.zone        !== undefined) allowed.zone        = body.zone
+    if (body.type        !== undefined) allowed.type        = body.type
+    allowed.updated_at = new Date().toISOString()
+
+    if (Object.keys(allowed).length === 1) {
+      // only updated_at — nothing to update
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400, headers: headers() })
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from('signals')
-      .update({ status: body.status, ...body })
+      .update(allowed)
       .eq('id', id)
       .select()
       .single()
