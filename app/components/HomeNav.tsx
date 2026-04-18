@@ -2,24 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { CurrencySelector } from './CurrencyWidget'
-import { isUnsupportedBrowser } from '../lib/browser'
 
 export default function HomeNav() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isAgent, setIsAgent] = useState(false)
-  const [portalHref, setPortalHref] = useState('/portal')
 
-  // Auth check on mount
+  // Auth check on mount — sets isAgent label state from localStorage.
+  // Does NOT control access — that is handled by middleware + /api/auth/me inside the portal.
   useEffect(() => {
-    // IE / IE Mode — redirect before touching the portal at all.
-    // The server-side middleware already catches direct URL access; this guard
-    // prevents CTA clicks and magic-link redirects from ever reaching /portal
-    // in unsupported browsers.
-    if (isUnsupportedBrowser()) {
-      window.location.replace('/unsupported-browser')
-      return
-    }
-
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
 
@@ -35,7 +25,6 @@ export default function HomeNav() {
             sessionStorage.removeItem('ag_pending_email')
             localStorage.setItem('ag_auth', JSON.stringify({ v: '1', exp: Date.now() + 8 * 60 * 60 * 1000, email, token }))
             setIsAgent(true)
-            setPortalHref('/portal')
             // Navigate WITHOUT the token — it is one-time-use and has already been consumed
             // by the fetch call above. portal/page.tsx would fail to re-verify the same token.
             window.location.href = '/portal'
@@ -53,11 +42,6 @@ export default function HomeNav() {
         const d = JSON.parse(stored)
         if (d.v === '1' && Date.now() < d.exp) {
           setIsAgent(true)
-          // Never re-append the original magic-link token: it is one-time-use
-          // and has already been consumed.  The ag-auth-token session cookie
-          // set by /api/auth/verify handles authentication for all subsequent
-          // visits — just navigate to /portal.
-          setPortalHref('/portal')
           return
         } else {
           localStorage.removeItem('ag_auth')
@@ -82,6 +66,27 @@ export default function HomeNav() {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
+  // ─── Session gate ──────────────────────────────────────────────────────────
+  // Every portal CTA click validates the session with the server before
+  // navigating.  This prevents stale localStorage or a cached auth state
+  // from sending users (or Edge) to /portal when no valid session exists.
+  // Authenticated users (valid ag-auth-token cookie) → /portal.
+  // Everyone else → /portal/login.
+  function handlePortalClick(e: React.MouseEvent) {
+    e.preventDefault()
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.ok === true) {
+          window.location.href = '/portal'
+        } else {
+          window.location.href = '/portal/login'
+        }
+      })
+      .catch(() => {
+        window.location.href = '/portal/login'
+      })
+  }
 
   return (
     <>
@@ -103,13 +108,13 @@ export default function HomeNav() {
           <div className="nav-currency"><CurrencySelector /></div>
           {isAgent ? (
             <>
-              <a href={portalHref} className="nav-cta nav-cta-full">Portal →</a>
-              <a href={portalHref} className="nav-cta nav-cta-short" aria-label="Portal Agentes">AG</a>
+              <a href="/portal" onClick={handlePortalClick} className="nav-cta nav-cta-full">Portal →</a>
+              <a href="/portal" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Portal Agentes">AG</a>
             </>
           ) : (
             <>
-              <a href="/portal/login" className="nav-cta nav-cta-full">Área Agentes</a>
-              <a href="/portal/login" className="nav-cta nav-cta-short" aria-label="Área Agentes">AG</a>
+              <a href="/portal/login" onClick={handlePortalClick} className="nav-cta nav-cta-full">Área Agentes</a>
+              <a href="/portal/login" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Área Agentes">AG</a>
             </>
           )}
           <button
@@ -139,8 +144,8 @@ export default function HomeNav() {
             <a href="/vendidos" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Vendidos</a>
           </div>
           {isAgent
-            ? <a href="/portal" className="nav-drawer-cta">Portal Agentes →</a>
-            : <a href="/portal/login" className="nav-drawer-cta">Área Agentes</a>
+            ? <a href="/portal" onClick={handlePortalClick} className="nav-drawer-cta">Portal Agentes →</a>
+            : <a href="/portal/login" onClick={handlePortalClick} className="nav-drawer-cta">Área Agentes</a>
           }
         </nav>
       </div>

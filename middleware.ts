@@ -105,20 +105,9 @@ export async function middleware(req: NextRequest) {
     return new NextResponse('Forbidden', { status: 403 })
   }
 
-  // 2. Block Internet Explorer / Edge IE Mode from the portal.
-  //    IE (Trident engine) cannot reliably run the modern Next.js portal stack.
-  //    Both IE11 native and Edge IE Mode send a User-Agent containing "Trident/".
-  //    All portal paths (protected and /portal/login) are covered here so IE
-  //    users see a deterministic, browser-independent error page instead of
-  //    unpredictable auth/rendering behaviour.
-  //    /unsupported-browser is NOT in the matcher so it is always reachable.
-  if (/Trident\/|MSIE /i.test(ua) && path.startsWith('/portal')) {
-    return NextResponse.redirect(new URL('/unsupported-browser', req.url))
-  }
-
-  // 3. Portal protection — token in URL or valid session cookie.
-  //    /portal/login is excluded from this guard (see matcher config below)
-  //    so that unauthenticated users can always reach the login form.
+  // 2. Portal protection — token in URL or valid session cookie.
+  //    /portal/login is excluded from this guard so that unauthenticated
+  //    users can always reach the login form without a redirect loop.
   if (path.startsWith('/portal') && !path.startsWith('/portal/login')) {
     const urlToken    = req.nextUrl.searchParams.get('token')
     // Cookie name must match what /api/auth/verify sets: 'ag-auth-token'
