@@ -10,10 +10,15 @@ import { SkeletonKPIGrid } from './PortalSkeleton'
 import Tooltip from './Tooltip'
 import { parsePTValue as parsePTValueShared, computeStageAvgDays } from '../utils/format'
 import DashboardPriorityCenter from './DashboardPriorityCenter'
+import IntelligencePanel from './IntelligencePanel'
 import { scoreAllContacts } from '../lib/leadScoring'
 import { scoreAllDeals } from '../lib/dealScoring'
 import type { ScoredContact } from '../lib/leadScoring'
 import type { ScoredDeal } from '../lib/dealScoring'
+import { detectOpportunities } from '../lib/intelligence/opportunity'
+import { generateCopilot } from '../lib/intelligence/copilot'
+import type { Opportunity } from '../lib/intelligence/opportunity'
+import type { AgentCopilotOutput } from '../lib/intelligence/copilot'
 
 interface PortalDashboardProps {
   agentName: string
@@ -595,6 +600,16 @@ export default function PortalDashboard({
   const scoredDeals: ScoredDeal[] = useMemo(
     () => scoreAllDeals(deals),
     [deals],
+  )
+
+  // ── Intelligence layer — deterministic, explainable ──────────────────────
+  const opportunities: Opportunity[] = useMemo(
+    () => detectOpportunities(scoredContacts, scoredDeals),
+    [scoredContacts, scoredDeals],
+  )
+  const copilot: AgentCopilotOutput = useMemo(
+    () => generateCopilot(scoredContacts, scoredDeals, opportunities),
+    [scoredContacts, scoredDeals, opportunities],
   )
 
   // ── Silent contacts (>18 days no touch, tier A/VIP) ───────────────────────
@@ -1547,6 +1562,18 @@ export default function PortalDashboard({
         onGoToCRM={() => onSetSection('crm')}
         onGoToPipeline={() => onSetSection('pipeline')}
         today={today}
+      />
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECÇÃO 3c — INTELLIGENCE PANEL (Copilot + Opportunities)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <IntelligencePanel
+        darkMode={darkMode}
+        copilot={copilot}
+        opportunities={opportunities}
+        onGoToCRM={() => onSetSection('crm')}
+        onGoToPipeline={() => onSetSection('pipeline')}
+        onSetSection={onSetSection}
       />
 
       {/* ══════════════════════════════════════════════════════════════════════
