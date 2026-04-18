@@ -100,10 +100,13 @@ export async function middleware(req: NextRequest) {
     return new NextResponse('Forbidden', { status: 403 })
   }
 
-  // 2. Portal protection — token in URL or valid session cookie
+  // 2. Portal protection — token in URL or valid session cookie.
+  //    /portal/login is excluded from this guard (see matcher config below)
+  //    so that unauthenticated users can always reach the login form.
   if (path.startsWith('/portal')) {
     const urlToken    = req.nextUrl.searchParams.get('token')
-    const cookieToken = req.cookies.get('ag_portal')?.value
+    // Cookie name must match what /api/auth/verify sets: 'ag-auth-token'
+    const cookieToken = req.cookies.get('ag-auth-token')?.value
     const secret      = process.env.AUTH_SECRET
     const activeToken = urlToken || cookieToken
 
@@ -113,8 +116,9 @@ export async function middleware(req: NextRequest) {
 
     const res = NextResponse.next()
     if (urlToken) {
-      // Persist token as cookie so next page loads don't need the URL param
-      res.cookies.set('ag_portal', urlToken, {
+      // Persist token as cookie so subsequent page loads don't need the URL param.
+      // Cookie name matches /api/auth/verify and /api/auth/me: 'ag-auth-token'
+      res.cookies.set('ag-auth-token', urlToken, {
         httpOnly: true,
         secure: true,
         sameSite: 'strict',
@@ -167,7 +171,10 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/portal/:path*',
+    // /portal itself is protected; /portal/login is intentionally excluded so
+    // unauthenticated users can always reach the login form.
+    '/portal',
+    '/portal/((?!login).+)',
     '/api/radar/:path*',
     '/api/avm',
     '/api/mortgage',

@@ -38,7 +38,11 @@ export default function HomeNav() {
         const d = JSON.parse(stored)
         if (d.v === '1' && Date.now() < d.exp) {
           setIsAgent(true)
-          setPortalHref(d.token ? `/portal?token=${encodeURIComponent(d.token)}` : '/portal')
+          // Never re-append the original magic-link token: it is one-time-use
+          // and has already been consumed.  The ag-auth-token session cookie
+          // set by /api/auth/verify handles authentication for all subsequent
+          // visits — just navigate to /portal.
+          setPortalHref('/portal')
           return
         } else {
           localStorage.removeItem('ag_auth')
