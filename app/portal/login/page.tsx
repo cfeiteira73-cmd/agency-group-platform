@@ -14,6 +14,8 @@ export default function PortalLogin() {
     if (!token) return
 
     fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
+      cache: 'no-store',
+      credentials: 'include',
       headers: { 'Accept': 'application/json' },
     })
       .then(r => r.json())

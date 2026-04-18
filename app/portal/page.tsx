@@ -681,6 +681,8 @@ export default function Portal() {
       const authAbort = new AbortController()
       fetch(`/api/auth/verify?token=${encodeURIComponent(urlToken)}`, {
         signal: authAbort.signal,
+        cache: 'no-store',
+        credentials: 'include',
         headers: { 'Accept': 'application/json' },
       })
         .then(r => r.json())
@@ -725,8 +727,10 @@ export default function Portal() {
     // Server auth check — this is the security gate. /api/auth/me reads the
     // httpOnly ag-auth-token cookie (set by /api/auth/verify after approval).
     // setReady(true) is only called here, never from the localStorage path.
+    // cache:'no-store' + credentials:'include' ensure Edge (and all browsers)
+    // always hit the server fresh — never serve a cached positive auth response.
     const meAbort = new AbortController()
-    fetch('/api/auth/me', { signal: meAbort.signal })
+    fetch('/api/auth/me', { signal: meAbort.signal, cache: 'no-store', credentials: 'include' })
       .then(r => r.json())
       .then(data => {
         if (data.ok && data.email) {

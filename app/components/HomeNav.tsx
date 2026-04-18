@@ -16,6 +16,8 @@ export default function HomeNav() {
     if (token) {
       // Accept: application/json so verify route returns JSON (not HTML redirect page)
       fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
+        cache: 'no-store',
+        credentials: 'include',
         headers: { 'Accept': 'application/json' },
       })
         .then(r => r.json())
@@ -74,7 +76,7 @@ export default function HomeNav() {
   // Everyone else → /portal/login.
   function handlePortalClick(e: React.MouseEvent) {
     e.preventDefault()
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch('/api/auth/me', { cache: 'no-store', credentials: 'include' })
       .then(r => r.json())
       .then(data => {
         if (data?.ok === true) {
