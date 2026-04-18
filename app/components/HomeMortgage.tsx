@@ -205,7 +205,7 @@ export default function HomeMortgage() {
                   {t==='cenarios'?'Cenários Euribor':'Amortização'}
                 </button>
               ))}
-              <a href="/portal" style={{marginLeft:'auto',padding:'8px 14px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#c9a96e',textDecoration:'none',display:'flex',alignItems:'center',gap:'4px'}}>Ver análise completa →</a>
+              <a href="/portal/login" style={{marginLeft:'auto',padding:'8px 14px',fontFamily:"'DM Mono',monospace",fontSize:'.52rem',color:'#c9a96e',textDecoration:'none',display:'flex',alignItems:'center',gap:'4px'}}>Ver análise completa →</a>
             </div>
             {subTab==='cenarios'&&(
               <div style={{display:'grid',gap:'6px'}}>

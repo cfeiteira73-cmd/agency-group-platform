@@ -323,7 +323,7 @@ export default function HomeSections() {
           <h2 className="ag-h2">Portal do Consultor</h2>
           <p className="ag-sub">Pipeline · CRM · Deal Radar · Relatórios · Off-Market.</p>
           <div className="ag-form">
-            <a href="/portal" className="ag-btn" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>Aceder ao Portal →</a>
+            <a href="/portal/login" className="ag-btn" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>Aceder ao Portal →</a>
           </div>
           <div className="ag-ami">Agency Group · Mediação Imobiliária Lda · AMI 22506</div>
         </div>
