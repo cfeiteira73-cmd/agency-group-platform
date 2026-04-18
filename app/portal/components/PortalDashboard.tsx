@@ -9,6 +9,11 @@ import { useStaggerIn, useFadeIn } from '../hooks/useGSAPAnimations'
 import { SkeletonKPIGrid } from './PortalSkeleton'
 import Tooltip from './Tooltip'
 import { parsePTValue as parsePTValueShared, computeStageAvgDays } from '../utils/format'
+import DashboardPriorityCenter from './DashboardPriorityCenter'
+import { scoreAllContacts } from '../lib/leadScoring'
+import { scoreAllDeals } from '../lib/dealScoring'
+import type { ScoredContact } from '../lib/leadScoring'
+import type { ScoredDeal } from '../lib/dealScoring'
 
 interface PortalDashboardProps {
   agentName: string
@@ -581,6 +586,16 @@ export default function PortalDashboard({
     }
     return result
   }, [deals])
+
+  // ── Scoring engines — deterministic, explainable ─────────────────────────
+  const scoredContacts: ScoredContact[] = useMemo(
+    () => scoreAllContacts(crmContacts),
+    [crmContacts],
+  )
+  const scoredDeals: ScoredDeal[] = useMemo(
+    () => scoreAllDeals(deals),
+    [deals],
+  )
 
   // ── Silent contacts (>18 days no touch, tier A/VIP) ───────────────────────
   const silentVIPs = useMemo(() => crmContacts.filter(c => {
@@ -1521,6 +1536,18 @@ export default function PortalDashboard({
         ))}
       </div>
       )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          SECÇÃO 3b — PRIORITY CENTER (Lead + Deal Intelligence)
+      ══════════════════════════════════════════════════════════════════════ */}
+      <DashboardPriorityCenter
+        darkMode={darkMode}
+        scoredContacts={scoredContacts}
+        scoredDeals={scoredDeals}
+        onGoToCRM={() => onSetSection('crm')}
+        onGoToPipeline={() => onSetSection('pipeline')}
+        today={today}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 4 — PIPELINE VISUAL + VELOCIDADE
