@@ -659,6 +659,21 @@ export default function Portal() {
 
   // ── EFFECTS ──────────────────────────────────────────────────────────────────
 
+  // IE / IE Mode — client-side defence-in-depth.
+  // Middleware already blocks IE at the server level; this is a second layer
+  // in case the browser serves a stale cached copy of /portal and skips the
+  // server entirely.  We check both document.documentMode (IE11 DOM property)
+  // and the UA string (covers Edge IE Mode which shares Trident/MSIE tokens).
+  // Runs once on mount before any auth logic; redirect is immediate and total.
+  useEffect(() => {
+    const isIE =
+      typeof (document as Document & { documentMode?: number }).documentMode === 'number' ||
+      /Trident\/|MSIE /i.test(navigator.userAgent)
+    if (isIE) {
+      window.location.replace('/unsupported-browser')
+    }
+  }, [])
+
   // Dark mode
   useEffect(() => {
     const stored = localStorage.getItem('ag_dark_mode')

@@ -10,6 +10,19 @@ export default function HomeNav() {
 
   // Auth check on mount
   useEffect(() => {
+    // IE / IE Mode — redirect before touching the portal at all.
+    // The server-side middleware already catches direct URL access; this guard
+    // prevents CTA clicks and magic-link redirects from ever reaching /portal
+    // in unsupported browsers.  document.documentMode is an IE-only DOM
+    // property (number in IE, undefined everywhere else).
+    const isIE =
+      typeof (document as Document & { documentMode?: number }).documentMode === 'number' ||
+      /Trident\/|MSIE /i.test(navigator.userAgent)
+    if (isIE) {
+      window.location.replace('/unsupported-browser')
+      return
+    }
+
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
 
