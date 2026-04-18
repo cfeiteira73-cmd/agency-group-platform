@@ -93,8 +93,8 @@ export default function HomeNav() {
             </>
           ) : (
             <>
-              <a href="/portal" className="nav-cta nav-cta-full">Área Agentes</a>
-              <a href="/portal" className="nav-cta nav-cta-short" aria-label="Área Agentes">AG</a>
+              <a href="/portal/login" className="nav-cta nav-cta-full">Área Agentes</a>
+              <a href="/portal/login" className="nav-cta nav-cta-short" aria-label="Área Agentes">AG</a>
             </>
           )}
           <button
@@ -125,7 +125,7 @@ export default function HomeNav() {
           </div>
           {isAgent
             ? <a href="/portal" className="nav-drawer-cta">Portal Agentes →</a>
-            : <a href="/portal" className="nav-drawer-cta">Área Agentes</a>
+            : <a href="/portal/login" className="nav-drawer-cta">Área Agentes</a>
           }
         </nav>
       </div>
