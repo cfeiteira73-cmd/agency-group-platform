@@ -27,6 +27,10 @@ export interface AnalyticsSummary {
   topAgents: { name: string; gciMes: number; gciYTD: number; dealsFechados: number; pipeline: number; conversao: number; diasCiclo: number; score: number; calls: number; emails: number; visitas: number; propostas: number }[]
   conversionsByZona: { zona: string; valor: number; pct: number; color: string }[]
   source: 'supabase' | 'mock'
+  // ── Period-over-period deltas (undefined when previous period has no data) ──
+  gciMensalDelta?: number      // % change vs previous calendar month
+  gciMensalPrev?: number       // previous month absolute GCI (for context)
+  dealsMonthDelta?: number     // % change in deal count vs previous month
 }
 
 // ---------------------------------------------------------------------------
@@ -142,9 +146,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const thisYear = now.getFullYear()
 
     let gciMensal = 0
+    let gciMensalPrev = 0  // previous calendar month
     let gciYTD = 0
+    let dealsThisMonth = 0
+    let dealsPrevMonth = 0
     const gci12m: number[] = new Array(12).fill(0)
     const gci12mLabels: string[] = []
+
+    // Previous month (handles January → December wrap)
+    const prevMonth     = thisMonth === 0 ? 11 : thisMonth - 1
+    const prevMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear
 
     // Build last 12 months labels
     const PT_MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -156,13 +167,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     for (const d of deals) {
       const comissao = typeof d.comissao === 'number' ? d.comissao :
         parseFloat(String(d.comissao ?? '0').replace(/[^0-9.]/g, '')) || 0
-      if (comissao === 0) continue
 
-      const created = new Date(d.created_at)
+      const created   = new Date(d.created_at)
       const dealMonth = created.getMonth()
-      const dealYear = created.getFullYear()
+      const dealYear  = created.getFullYear()
 
-      if (dealMonth === thisMonth && dealYear === thisYear) gciMensal += comissao
+      // Current month
+      if (dealMonth === thisMonth && dealYear === thisYear) {
+        if (comissao > 0) gciMensal += comissao
+        dealsThisMonth += 1
+      }
+      // Previous month
+      if (dealMonth === prevMonth && dealYear === prevMonthYear) {
+        if (comissao > 0) gciMensalPrev += comissao
+        dealsPrevMonth += 1
+      }
+
+      if (comissao === 0) continue  // skip YTD / 12m for zero-commission deals
       if (dealYear === thisYear) gciYTD += comissao
 
       // Slot into 12m array
@@ -173,6 +194,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         }
       }
     }
+
+    // ── Period-over-period deltas ────────────────────────────────────────────
+    // Safe guard: undefined when previous period has no data (avoids division by zero)
+    const gciMensalDelta: number | undefined =
+      gciMensalPrev > 0
+        ? Math.round(((gciMensal - gciMensalPrev) / gciMensalPrev) * 1000) / 10  // 1 dp
+        : undefined
+    const dealsMonthDelta: number | undefined =
+      dealsPrevMonth > 0
+        ? Math.round(((dealsThisMonth - dealsPrevMonth) / dealsPrevMonth) * 1000) / 10
+        : undefined
 
     // ── 4. Build response ────────────────────────────────────────────────────
     // topAgents: query contacts/agents table if available, else return mock
@@ -240,6 +272,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       topAgents,
       conversionsByZona,
       source: 'supabase',
+      // Deltas are only set when real previous-period data exists.
+      // undefined means "no prior data available" — frontend must NOT show a delta.
+      gciMensalDelta,
+      gciMensalPrev:  gciMensalPrev  > 0 ? gciMensalPrev  : undefined,
+      dealsMonthDelta: dealsMonthDelta,
     }
 
     return NextResponse.json(summary, { headers: { 'Cache-Control': 'no-store' } })

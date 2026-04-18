@@ -274,14 +274,22 @@ export default function PortalDashboard({
   onSetSection,
   onSetPriceHistoryId,
 }: PortalDashboardProps) {
-  const { darkMode } = useUIStore()
-  const activeSection = useUIStore(s => s.section)
-  const { deals } = useDealStore()
-  const { crmContacts } = useCRMStore()
+  const { darkMode }      = useUIStore()
+  const activeSection     = useUIStore(s => s.section)
+  // LiveDataStatus is written by useLiveData (via PortalBootstrap) — reactive.
+  const liveDataStatus    = useUIStore(s => s.liveDataStatus)
+  const { deals }         = useDealStore()
+  const { crmContacts }   = useCRMStore()
 
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const [currentTime, setCurrentTime]   = useState(new Date())
   const [isLoadingKPIs, setIsLoadingKPIs] = useState(true)
   const [supabaseConnected, setSupabaseConnected] = useState(false)
+
+  // ── Real period-over-period KPI deltas (only set from live Supabase data) ───
+  const [kpiDeltas, setKpiDeltas] = useState<{
+    gciMensal?: number     // % vs previous month
+    dealsMonth?: number    // % vs previous month
+  }>({})
 
   // dismissedAlerts persisted to localStorage so they survive page reloads.
   // Dismissals expire after DISMISS_TTL_MS (module-level constant) so critical alerts always re-surface.
@@ -406,16 +414,24 @@ export default function PortalDashboard({
             gciMensal?: number
             pipelineAtivo?: number
             source?: string
+            gciMensalDelta?: number   // % vs prev month — undefined when no prior data
+            dealsMonthDelta?: number
           }
           if (analyticsData?.source === 'supabase') {
             setSupabaseConnected(true)
             // Merge analytics pipeline into liveKPIs if deals fetch doesn't override it
             setLiveKPIs(prev => ({
               ...prev,
-              pipeline: analyticsData.pipelineAtivo ?? prev.pipeline,
-              commission: analyticsData.gciMensal ?? prev.commission,
+              pipeline:   analyticsData.pipelineAtivo ?? prev.pipeline,
+              commission: analyticsData.gciMensal     ?? prev.commission,
               source: 'live',
             }))
+            // Store real period-over-period deltas — only when Supabase returns them.
+            // undefined fields are preserved (no fabricated percentages).
+            setKpiDeltas({
+              gciMensal:  analyticsData.gciMensalDelta,
+              dealsMonth: analyticsData.dealsMonthDelta,
+            })
           }
         } catch { /* silently fall back */ }
       } else {
@@ -475,6 +491,15 @@ export default function PortalDashboard({
       clearInterval(interval)
     }
   }, [loadDashboardData])
+
+  // ── Session expiry from bootstrap (useLiveData → uiStore) ───────────────────
+  // If useLiveData detected a 401 on any endpoint, trigger the same redirect
+  // that loadDashboardData uses for its own auth-protected fetches.
+  useEffect(() => {
+    if (liveDataStatus.has401) {
+      handleSessionExpiry()
+    }
+  }, [liveDataStatus.has401, handleSessionExpiry])
 
   // ── Derived metrics ──────────────────────────────────────────────────────────
   const today = (() => {
@@ -702,9 +727,9 @@ export default function PortalDashboard({
       badgeBg: 'rgba(74,156,122,.12)',
       color: '#1c4a35',
       spark: generateSparkline(liveGCI > 0 ? liveGCI : 90),
-      // delta only meaningful with real previous-period data
-      delta: undefined,
-      deltaPositive: true,
+      // Real delta from analytics/summary — undefined when previous period is empty
+      delta: kpiDeltas.gciMensal !== undefined ? Math.abs(kpiDeltas.gciMensal) : undefined,
+      deltaPositive: kpiDeltas.gciMensal === undefined || kpiDeltas.gciMensal >= 0,
       highlight: liveGCI > 80,
     },
     {
@@ -716,7 +741,7 @@ export default function PortalDashboard({
       badgeBg: 'rgba(201,169,110,.12)',
       color: '#c9a96e',
       spark: generateSparkline(livePipeline > 0 ? livePipeline / 1e6 : 2.6),
-      delta: undefined,
+      delta: undefined,  // pipeline snapshot-over-snapshot delta requires history table
       deltaPositive: true,
     },
     {
@@ -754,8 +779,9 @@ export default function PortalDashboard({
       badgeBg: 'rgba(201,169,110,.12)',
       color: '#c9a96e',
       spark: generateSparkline(Math.max(cpcvDeals.length, 1)),
-      delta: undefined,
-      deltaPositive: true,
+      // Real deal count delta from analytics/summary (deals created this vs prev month)
+      delta: kpiDeltas.dealsMonth !== undefined ? Math.abs(kpiDeltas.dealsMonth) : undefined,
+      deltaPositive: kpiDeltas.dealsMonth === undefined || kpiDeltas.dealsMonth >= 0,
     },
     {
       title: 'Taxa Conversão',
@@ -796,7 +822,7 @@ export default function PortalDashboard({
       delta: undefined,
       deltaPositive: true,
     },
-  ], [liveGCI, livePipeline, liveDealCount, liveKPIs.source, leadsAtivos, vipContacts, liveTotalContacts, followUpsHoje, cpcvDeals, liveClosingNow, closedDeals, convRate, pipelineTotal, stageBreakdown, cicloMedioDays, currentMonthPT])
+  ], [liveGCI, livePipeline, liveDealCount, liveKPIs.source, leadsAtivos, vipContacts, liveTotalContacts, followUpsHoje, cpcvDeals, liveClosingNow, closedDeals, convRate, pipelineTotal, stageBreakdown, cicloMedioDays, currentMonthPT, kpiDeltas])
 
   // ── Styles ───────────────────────────────────────────────────────────────────
   const cardBg = darkMode ? '#0f1e16' : '#ffffff'
@@ -1284,7 +1310,9 @@ export default function PortalDashboard({
         </div>
       )}
 
-      {/* ── KPI data-load error banner ───────────────────────────────────────── */}
+      {/* ── Data load status banners ─────────────────────────────────────────── */}
+
+      {/* Full failure: KPI analytics unavailable → demo mode */}
       {kpiError && liveKPIs.source === 'demo' && (
         <div
           role="alert"
@@ -1293,7 +1321,7 @@ export default function PortalDashboard({
             alignItems: 'center',
             gap: '10px',
             padding: '10px 16px',
-            marginBottom: '16px',
+            marginBottom: '10px',
             background: darkMode ? 'rgba(220,38,38,.12)' : 'rgba(220,38,38,.07)',
             border: '1px solid rgba(220,38,38,.30)',
             borderRadius: '8px',
@@ -1305,6 +1333,35 @@ export default function PortalDashboard({
         >
           <span>⚠</span>
           <span>Não foi possível carregar dados KPI em tempo real. A mostrar estimativas demo. Verifica a ligação ao servidor.</span>
+        </div>
+      )}
+
+      {/* Partial failure: some bootstrap endpoints failed (non-critical) */}
+      {!kpiError && liveDataStatus.hasPartialFailure && !liveDataStatus.isInitialLoad && (
+        <div
+          role="status"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '8px 14px',
+            marginBottom: '10px',
+            background: darkMode ? 'rgba(245,158,11,.08)' : 'rgba(245,158,11,.06)',
+            border: '1px solid rgba(245,158,11,.25)',
+            borderRadius: '8px',
+            color: '#d97706',
+            fontFamily: "'DM Mono',monospace",
+            fontSize: '.68rem',
+            letterSpacing: '.04em',
+          }}
+        >
+          <span>◐</span>
+          <span>
+            Carga parcial —{' '}
+            {liveDataStatus.failedEndpoints.join(', ')}{' '}
+            {liveDataStatus.failedEndpoints.length === 1 ? 'indisponível' : 'indisponíveis'}.
+            {' '}Dados restantes carregados.
+          </span>
         </div>
       )}
 
