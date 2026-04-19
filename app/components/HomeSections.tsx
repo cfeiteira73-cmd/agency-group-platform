@@ -41,6 +41,53 @@ export default function HomeSections() {
         </div>
       </div>
 
+      {/* ── PERSONA SPLIT — Comprador / Vendedor / Investidor ────────────────
+           Directional split immediately after marquee. Three paths, zero friction.
+           RSC: static, no client JS, renders on both desktop and mobile.         */}
+      <section aria-label="O que pretende fazer?" style={{ background: '#0c1f15', borderBottom: '1px solid rgba(201,169,110,.1)' }}>
+        <style>{`
+          .persona-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+          .persona-card{padding:48px 40px;border-right:1px solid rgba(201,169,110,.1);transition:background .25s;text-decoration:none;display:flex;flex-direction:column;gap:20px;position:relative;overflow:hidden}
+          .persona-card:last-child{border-right:none}
+          .persona-card:hover{background:rgba(201,169,110,.04)}
+          .persona-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(201,169,110,.4),transparent);opacity:0;transition:opacity .25s}
+          .persona-card:hover::after{opacity:1}
+          .persona-arrow{font-family:'DM Mono',monospace;font-size:.8rem;color:rgba(201,169,110,.4);transition:transform .25s,color .25s;margin-top:auto;padding-top:8px}
+          .persona-card:hover .persona-arrow{transform:translateX(6px);color:#c9a96e}
+          @media(max-width:760px){
+            .persona-grid{grid-template-columns:1fr}
+            .persona-card{border-right:none;border-bottom:1px solid rgba(201,169,110,.1);padding:36px 28px}
+            .persona-card:last-child{border-bottom:none}
+          }
+        `}</style>
+        <div className="persona-grid">
+          <a href="/imoveis" className="persona-card">
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase' }}>Para Compradores</div>
+            <h3 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.6rem,2.5vw,2.2rem)', color: '#f4f0e6', margin: 0, lineHeight: 1.15 }}>Encontre o imóvel<br/><em>que não está à venda.</em></h3>
+            <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: '.8rem', color: 'rgba(244,240,230,.45)', lineHeight: 1.7, margin: 0 }}>
+              Portfólio de luxo em Lisboa, Cascais, Comporta, Algarve e Madeira. Acesso off-market exclusivo a propriedades que nunca chegam ao mercado público.
+            </p>
+            <div className="persona-arrow">Ver Portfólio →</div>
+          </a>
+          <a href="/vender" className="persona-card">
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase' }}>Para Vendedores</div>
+            <h3 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.6rem,2.5vw,2.2rem)', color: '#f4f0e6', margin: 0, lineHeight: 1.15 }}>Venda ao preço certo.<br/><em>Sem exposição.</em></h3>
+            <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: '.8rem', color: 'rgba(244,240,230,.45)', lineHeight: 1.7, margin: 0 }}>
+              Compradores verificados de 40+ países. €285M+ em volume transaccionado. Avaliação gratuita em 24h. 94 dias de tempo médio de venda.
+            </p>
+            <div className="persona-arrow">Avaliar o Meu Imóvel →</div>
+          </a>
+          <a href="/investir" className="persona-card">
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.5rem', letterSpacing: '.22em', color: 'rgba(201,169,110,.5)', textTransform: 'uppercase' }}>Para Investidores</div>
+            <h3 style={{ fontFamily: "'Cormorant',serif", fontWeight: 300, fontSize: 'clamp(1.6rem,2.5vw,2.2rem)', color: '#f4f0e6', margin: 0, lineHeight: 1.15 }}>Portugal: o melhor<br/><em>yield da Europa.</em></h3>
+            <p style={{ fontFamily: "'Jost',sans-serif", fontWeight: 300, fontSize: '.8rem', color: 'rgba(244,240,230,.45)', lineHeight: 1.7, margin: 0 }}>
+              Yield 4–6%. +17.6% valorização em 2025. NHR/IFICI até 10 anos. Top 5 Mundial de Luxo (Savills 2026). Estratégias buy-to-rent, turismo e value-add.
+            </p>
+            <div className="persona-arrow">Ver Oportunidades →</div>
+          </a>
+        </div>
+      </section>
+
       {/* ── AI PROPERTY SEARCH — Sofia NLP ────────────────────────────────── */}
       <div className="sw" style={{ paddingTop: '40px', paddingBottom: '0' }}>
         <AIPropertySearch />

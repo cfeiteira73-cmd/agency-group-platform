@@ -7,6 +7,7 @@
 // =============================================================================
 
 import { useState, useEffect } from 'react'
+import PageNav from '@/app/components/PageNav'
 
 // Read UTM params from URL at mount time
 function useUTMParams() {
@@ -141,34 +142,7 @@ export default function OffMarketClient() {
       display: 'flex',
       flexDirection: 'column',
     }}>
-      {/* Nav strip */}
-      <nav style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '20px 40px',
-        borderBottom: '1px solid rgba(201,169,110,0.1)',
-      }}>
-        <a href="/" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          textDecoration: 'none',
-        }}>
-          <span style={{ color: '#c9a96e', fontSize: '1rem', letterSpacing: '0.08em', fontWeight: 600 }}>Agency</span>
-          <span style={{ color: '#f4f0e6', fontSize: '1rem', letterSpacing: '0.08em', fontWeight: 400 }}>Group</span>
-        </a>
-        <a href="/imoveis" style={{
-          fontFamily: "'DM Mono', monospace",
-          fontSize: '0.6rem',
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'rgba(244,240,230,0.45)',
-          textDecoration: 'none',
-        }}>
-          Ver Imóveis Públicos →
-        </a>
-      </nav>
+      <PageNav activeHref="/off-market" />
 
       {/* Hero */}
       <section style={{
@@ -177,7 +151,7 @@ export default function OffMarketClient() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '60px 24px',
+        padding: '96px 24px 60px',
         maxWidth: 680,
         margin: '0 auto',
         width: '100%',
