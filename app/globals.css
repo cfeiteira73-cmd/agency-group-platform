@@ -1238,3 +1238,43 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
 /* Border tokens */
 :root{--border-subtle:1px solid rgba(201,169,110,.08);--border-medium:1px solid rgba(201,169,110,.18);--border-strong:1px solid rgba(201,169,110,.35)}
 
+/* ── Mobile refinements — new sections added 2026-04 ──────────────────────────
+   Responsive polish for persona split, /vender, /investir, /reports, PageNav.
+   Uses px (not rem/em) to prevent Google WebView system-font-size scaling.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Persona split — ensure tappable at 44px min on all breakpoints */
+@media(max-width:760px){
+  .persona-card{min-height:44px}
+  .persona-grid{border-top:1px solid rgba(201,169,110,.1)}
+}
+@media(max-width:360px){
+  .persona-card{padding:28px 20px!important}
+}
+
+/* PageNav drawer — correct backdrop on Safari iOS */
+.pn-drawer-ov{-webkit-backdrop-filter:blur(4px)}
+
+/* Vendidos stats bar — single column on very small screens */
+@media(max-width:400px){
+  .vendidos-stats-grid{grid-template-columns:1fr 1fr!important}
+}
+
+/* Reports modal — full-screen on mobile */
+@media(max-width:520px){
+  .rep-modal{padding:32px 24px!important;margin:0!important;border-radius:0!important;min-height:60vh;display:flex;flex-direction:column;justify-content:center}
+}
+
+/* /vender + /investir — two-col layouts collapse correctly */
+@media(max-width:760px){
+  [data-layout="vender-grid"],[data-layout="investir-grid"]{
+    grid-template-columns:1fr!important;
+    gap:48px!important
+  }
+}
+
+/* Off-market hero — prevent overflow at 320px */
+@media(max-width:360px){
+  .off-market-hero{padding:80px 16px 48px!important}
+}
+

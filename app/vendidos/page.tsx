@@ -1,6 +1,19 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+// Buyer nationality map — ISO 3166-1 alpha-2 → display label with flag
+const NATIONALITY: Record<string, string> = {
+  US: '🇺🇸 Comprador Norte-Americano',
+  FR: '🇫🇷 Comprador Francês',
+  GB: '🇬🇧 Comprador Britânico',
+  DE: '🇩🇪 Comprador Alemão',
+  BR: '🇧🇷 Comprador Brasileiro',
+  PT: '🇵🇹 Comprador Português',
+  AE: '🇦🇪 Comprador Médio Oriente',
+  CN: '🇨🇳 Comprador Chinês',
+  SA: '🇸🇦 Comprador Saudita',
+}
+
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
   title: 'Vendidos · Transacções Concluídas | Agency Group AMI 22506',
@@ -482,9 +495,9 @@ export default function VendidosPage() {
                       {property.buyer_nationality && (
                         <span style={{
                           fontFamily: 'var(--font-dm-mono), monospace', fontSize: '0.58rem',
-                          letterSpacing: '0.06em', color: 'rgba(14,14,13,.35)',
+                          letterSpacing: '0.06em', color: 'rgba(14,14,13,.45)',
                           padding: '2px 0',
-                        }}>Comprador {property.buyer_nationality}</span>
+                        }}>{NATIONALITY[property.buyer_nationality] ?? `Comprador ${property.buyer_nationality}`}</span>
                       )}
                     </div>
                   )}
@@ -622,7 +635,7 @@ export default function VendidosPage() {
             >
               {/* Button 1 — dark green */}
               <Link
-                href="/avm"
+                href="/vender"
                 style={{
                   display: 'inline-block',
                   backgroundColor: '#0c1f15',
@@ -638,7 +651,7 @@ export default function VendidosPage() {
                   transition: 'background-color 0.2s ease',
                 }}
               >
-                Avaliação Privada
+                Pedir Avaliação Gratuita
               </Link>
 
               {/* Button 2 — gold border */}
