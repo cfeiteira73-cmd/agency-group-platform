@@ -7,15 +7,15 @@
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 export const HOME_HERO = {
-  eyebrow:      'Lisboa · Portugal · AMI 22506',
+  eyebrow:      'Top 5 Mundial de Luxo · Savills 2026 · AMI 22506',
   title1:       'Off-Market.',
   titleEm:      'Discrição',
-  title3:       'e execução.',
-  subtitle:     'Acesso a compradores qualificados. Processos controlados. Resultados sem exposição pública.',
-  ctaPrimary:   { text: 'Aceder ao Portfólio', href: '#imoveis' },
-  ctaSecondary: { text: 'Falar com um Advisor →', href: '#avaliacao' },
+  title3:       'e resultados.',
+  subtitle:     '€285M+ em volume. 47 famílias. Lisboa no Top 5 Mundial. Compradores de 40+ países — todos verificados antes de entrarem em contacto.',
+  ctaPrimary:   { text: 'Ver Portfólio Exclusivo', href: '#imoveis' },
+  ctaSecondary: { text: 'Avaliar o Meu Imóvel →', href: '/vender' },
   stats: [
-    { n: '169', em: 'K',   label: 'Transacções 2025'          },
+    { n: '€285', em: 'M',  label: 'Volume histórico'           },
     { n: '+17', em: '%',   label: 'Valorização · 2025'         },
     { n: '44',  em: '%',   label: 'Compradores Internacionais' },
   ],

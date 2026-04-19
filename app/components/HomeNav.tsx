@@ -98,6 +98,7 @@ export default function HomeNav() {
         </a>
         <ul className="nav-links">
           <li><a href="/imoveis">Imóveis</a></li>
+          <li><a href="/vender">Vender</a></li>
           <li><a href="/#zonas">Zonas</a></li>
           <li><a href="/#simulador">Crédito</a></li>
           <li><a href="/reports">Reports</a></li>
@@ -135,6 +136,7 @@ export default function HomeNav() {
         <nav className="nav-drawer-panel" aria-label="Menu móvel">
           <div className="nav-drawer-links">
             <a href="/imoveis" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Imóveis</a>
+            <a href="/vender" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Vender</a>
             <a href="/#zonas" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Zonas</a>
             <a href="/#simulador" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Crédito</a>
             <a href="/reports" onClick={()=>{setMenuOpen(false);document.body.style.overflow=''}}>Reports</a>
