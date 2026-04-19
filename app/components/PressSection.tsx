@@ -232,7 +232,7 @@ export default function PressSection() {
           </div>
 
           {/* Verified articles row */}
-          <div style={{
+          <div className="press-verified-grid" style={{
             display: 'flex', justifyContent: 'center',
             flexWrap: 'wrap', gap: '12px', marginBottom: '24px',
           }}>
@@ -243,6 +243,7 @@ export default function PressSection() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => track('press_article_clicked', { publication: pub.name, verified: true })}
+                className="press-verified-card"
                 style={{
                   display: 'flex', flexDirection: 'column', gap: '4px',
                   padding: '14px 20px',
