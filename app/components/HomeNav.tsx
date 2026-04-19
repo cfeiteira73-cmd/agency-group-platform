@@ -111,12 +111,12 @@ export default function HomeNav() {
           {isAgent ? (
             <>
               <a href="/portal" onClick={handlePortalClick} className="nav-cta nav-cta-full">Portal →</a>
-              <a href="/portal" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Portal Agentes">AG</a>
+              <a href="/portal" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Portal Agentes">Área Agentes</a>
             </>
           ) : (
             <>
               <a href="/portal/login" onClick={handlePortalClick} className="nav-cta nav-cta-full">Área Agentes</a>
-              <a href="/portal/login" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Área Agentes">AG</a>
+              <a href="/portal/login" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Área Agentes">Área Agentes</a>
             </>
           )}
           <button
