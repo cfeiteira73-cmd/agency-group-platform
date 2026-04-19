@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import PageNav from '@/app/components/PageNav'
 
 export default function InvestirClient() {
   const [form, setForm] = useState({ nome: '', email: '', telefone: '', budget: '', perfil: '', zona: '' })
@@ -82,19 +83,7 @@ export default function InvestirClient() {
   return (
     <div style={{ background: '#0c1f15', minHeight: '100vh', color: '#f4f0e6' }}>
 
-      {/* ── NAV ─────────────────────────────────────────────── */}
-      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 900, background: 'rgba(12,31,21,.96)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(201,169,110,.12)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: '68px' }}>
-        <Link href="/" style={{ fontFamily: "'Cormorant', serif", fontSize: '1.25rem', fontWeight: 300, color: '#f4f0e6', textDecoration: 'none', letterSpacing: '.08em' }}>
-          Agency<span style={{ color: '#c9a96e' }}>Group</span>
-        </Link>
-        <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
-          <Link href="/imoveis" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.55)', textDecoration: 'none', textTransform: 'uppercase' }}>Imóveis</Link>
-          <Link href="/vender" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.55)', textDecoration: 'none', textTransform: 'uppercase' }}>Vender</Link>
-          <Link href="/reports" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.55)', textDecoration: 'none', textTransform: 'uppercase' }}>Reports</Link>
-          <Link href="/contacto" style={{ fontFamily: "'Jost', sans-serif", fontSize: '.65rem', letterSpacing: '.16em', color: 'rgba(244,240,230,.55)', textDecoration: 'none', textTransform: 'uppercase' }}>Contacto</Link>
-          <Link href="/portal/login" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.58rem', letterSpacing: '.14em', color: '#0c1f15', background: '#c9a96e', padding: '10px 18px', textDecoration: 'none', textTransform: 'uppercase' }}>Área Agentes</Link>
-        </div>
-      </nav>
+      <PageNav activeHref="/investir" />
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '120px 40px 96px' }}>
 
