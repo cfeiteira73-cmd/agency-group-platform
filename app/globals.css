@@ -493,7 +493,7 @@ footer{background:var(--ink);padding:80px 0 32px}
   /* Nav mobile: EUR hidden, full CTA text hidden, AG monogram shown */
   .nav-currency{display:none!important}
   nav#mainNav .nav-cta-full{display:none!important}
-  nav#mainNav .nav-cta-short{display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0 13px!important;font-size:.58rem!important;font-weight:600!important;letter-spacing:.32em!important;min-height:36px!important;min-width:42px!important;white-space:nowrap!important}
+  nav#mainNav .nav-cta-short{display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0 13px!important;font-size:9px!important;font-weight:600!important;letter-spacing:3px!important;height:36px!important;min-height:36px!important;min-width:42px!important;line-height:1!important;white-space:nowrap!important}
   /* BottomNav: removed on mobile — top bar + drawer handles all navigation */
   .ag-bottom-nav,.ag-bottom-nav-spacer{display:none!important}
   .mkt-grid,.avm-grid,.radar-grid{grid-template-columns:1fr;gap:48px}
