@@ -496,7 +496,10 @@ footer{background:var(--ink);padding:80px 0 32px}
   /* Nav mobile: EUR hidden, full CTA text hidden, AG monogram shown */
   .nav-currency{display:none!important}
   nav#mainNav .nav-cta-full{display:none!important}
-  nav#mainNav .nav-cta-short{display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:7px 13px!important;font-size:8px!important;font-weight:600!important;letter-spacing:1.2px!important;line-height:1.6!important;min-height:42px!important;height:auto!important;min-width:auto!important;max-width:60px!important;white-space:normal!important;text-align:center!important;border-radius:2px!important}
+  /* Área Agentes — markup-controlled two-line break via {'Área\nAgentes'} JSX.
+     white-space:pre preserves the \n character across all WebView implementations.
+     max-width removed — break is in the content layer, not CSS layout arithmetic. */
+  nav#mainNav .nav-cta-short{display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:7px 11px!important;font-size:8px!important;font-weight:600!important;letter-spacing:1.2px!important;line-height:1.55!important;min-height:42px!important;height:auto!important;min-width:auto!important;white-space:pre!important;text-align:center!important;border-radius:2px!important}
   /* BottomNav: removed on mobile — top bar + drawer handles all navigation */
   .ag-bottom-nav,.ag-bottom-nav-spacer{display:none!important}
   .mkt-grid,.avm-grid,.radar-grid{grid-template-columns:1fr;gap:48px}
@@ -1201,4 +1204,37 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
 @media(max-width:768px){
   .contact-grid{grid-template-columns:1fr;gap:24px}
 }
+
+/* ── AG Design System Primitives v1.0 ────────────────────────────────────────
+   Utility classes for consistent visual language across public site and portal.
+   Apply progressively — these replace duplicated inline style objects.
+   Never override with !important — specificity is intentional.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Card container — dark green tinted surface with gold border */
+.ag-card{background:rgba(201,169,110,.04);border:1px solid rgba(201,169,110,.12);padding:24px;transition:border-color .2s,background .2s}
+.ag-card:hover{background:rgba(201,169,110,.08);border-color:rgba(201,169,110,.28)}
+
+/* Label — DM Mono uppercase annotation (zone tags, section eyebrows, data keys) */
+.ag-label{font-family:var(--font-dm-mono),monospace;font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:rgba(201,169,110,.45);line-height:1.4}
+
+/* Heading — Cormorant 300 italic display (section titles, card headlines) */
+.ag-heading{font-family:var(--font-cormorant),serif;font-weight:300;font-style:italic;color:rgba(244,240,230,.9);line-height:1.15}
+
+/* Body text — Jost 300 (descriptions, paragraphs) */
+.ag-body{font-family:var(--font-jost),sans-serif;font-weight:300;color:rgba(244,240,230,.55);line-height:1.7;font-size:.88rem}
+
+/* Primary button — gold fill, dark text (primary CTAs) */
+.ag-btn{font-family:var(--font-dm-mono),monospace;font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;background:#c9a96e;color:#0c1f15;padding:12px 24px;border:none;cursor:pointer;transition:background .25s;min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.ag-btn:hover{background:#b8935a}
+
+/* Ghost button — transparent with gold border (secondary CTAs) */
+.ag-btn-ghost{font-family:var(--font-dm-mono),monospace;font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;background:transparent;color:rgba(244,240,230,.7);border:1px solid rgba(244,240,230,.15);padding:12px 24px;cursor:pointer;transition:all .2s;min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.ag-btn-ghost:hover{border-color:rgba(201,169,110,.4);color:#c9a96e}
+
+/* Spacing scale tokens (use as CSS custom properties in new components) */
+:root{--sp-xs:8px;--sp-sm:16px;--sp-md:24px;--sp-lg:40px;--sp-xl:64px;--sp-2xl:96px}
+
+/* Border tokens */
+:root{--border-subtle:1px solid rgba(201,169,110,.08);--border-medium:1px solid rgba(201,169,110,.18);--border-strong:1px solid rgba(201,169,110,.35)}
 

@@ -842,8 +842,21 @@ export default function Portal() {
   // ── RENDER ────────────────────────────────────────────────────────────────────
 
   if (!ready) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0c1f15', fontFamily: 'Cormorant,serif', fontSize: '1.5rem', color: '#c9a96e', letterSpacing: '.1em' }}>
-      A carregar...
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0c1f15', flexDirection: 'column', gap: 0 }}>
+      {/* AG monogram */}
+      <div style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '2rem', letterSpacing: '.14em', color: 'rgba(201,169,110,.55)', marginBottom: '20px', userSelect: 'none' }}>
+        AG
+      </div>
+      {/* Animated gold scan line */}
+      <div style={{ width: '100px', height: '1px', background: 'rgba(201,169,110,.1)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent, #c9a96e, transparent)', animation: 'ag-portal-scan 1.6s ease-in-out infinite' }} />
+      </div>
+      <style>{`
+        @keyframes ag-portal-scan {
+          0%   { transform: translateX(-100%) }
+          100% { transform: translateX(100%) }
+        }
+      `}</style>
     </div>
   )
 

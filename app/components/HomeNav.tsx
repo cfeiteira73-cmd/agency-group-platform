@@ -7,14 +7,17 @@ export default function HomeNav() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [isAgent, setIsAgent] = useState(false)
 
-  // Auth check on mount — sets isAgent label state from localStorage.
-  // Does NOT control access — that is handled by middleware + /api/auth/me inside the portal.
+  // Auth check on mount — server cookie is the single source of truth for isAgent UI state.
+  // localStorage is no longer consulted — it created a dual-state desync where the UI could
+  // show "Portal →" while the ag-auth-token cookie had already expired, sending users to
+  // /portal/login unexpectedly. /api/auth/me is always the authoritative check.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const token = params.get('token')
 
     if (token) {
-      // Accept: application/json so verify route returns JSON (not HTML redirect page)
+      // Magic-link verify — httpOnly cookie set server-side by /api/auth/verify on success.
+      // localStorage not written — cookie alone drives access from this point forward.
       fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
         cache: 'no-store',
         credentials: 'include',
@@ -23,12 +26,10 @@ export default function HomeNav() {
         .then(r => r.json())
         .then(d => {
           if (d.ok && d.email) {
-            const email = d.email
             sessionStorage.removeItem('ag_pending_email')
-            localStorage.setItem('ag_auth', JSON.stringify({ v: '1', exp: Date.now() + 8 * 60 * 60 * 1000, email, token }))
             setIsAgent(true)
-            // Navigate WITHOUT the token — it is one-time-use and has already been consumed
-            // by the fetch call above. portal/page.tsx would fail to re-verify the same token.
+            // Navigate WITHOUT the token — one-time-use, already consumed by the fetch above.
+            // portal/page.tsx would fail to re-verify the same token.
             window.location.href = '/portal'
           } else {
             window.dispatchEvent(new CustomEvent('ag:toast', { detail: { msg: 'Link inválido ou expirado. Pede um novo.', type: 'error' } }))
@@ -38,18 +39,15 @@ export default function HomeNav() {
       return
     }
 
-    const stored = localStorage.getItem('ag_auth')
-    if (stored) {
-      try {
-        const d = JSON.parse(stored)
-        if (d.v === '1' && Date.now() < d.exp) {
-          setIsAgent(true)
-          return
-        } else {
-          localStorage.removeItem('ag_auth')
-        }
-      } catch { localStorage.removeItem('ag_auth') }
-    }
+    // Clean up any stale localStorage entry from the previous auth model (silent, no UI effect)
+    try { localStorage.removeItem('ag_auth') } catch { /* ignore */ }
+
+    // Server-confirmed auth state — single source of truth.
+    // Fail silently: non-agent UI ("Área Agentes") is always the safe default.
+    fetch('/api/auth/me', { cache: 'no-store', credentials: 'include' })
+      .then(r => r.json())
+      .then(d => { if (d?.ok === true) setIsAgent(true) })
+      .catch(() => { /* non-agent UI is correct default when server unreachable */ })
 
     if (params.get('acesso') === 'required') {
       window.location.href = '/portal'
@@ -111,12 +109,12 @@ export default function HomeNav() {
           {isAgent ? (
             <>
               <a href="/portal" onClick={handlePortalClick} className="nav-cta nav-cta-full">Portal →</a>
-              <a href="/portal" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Portal Agentes">Área Agentes</a>
+              <a href="/portal" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Portal Agentes">{'Área\nAgentes'}</a>
             </>
           ) : (
             <>
               <a href="/portal/login" onClick={handlePortalClick} className="nav-cta nav-cta-full">Área Agentes</a>
-              <a href="/portal/login" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Área Agentes">Área Agentes</a>
+              <a href="/portal/login" onClick={handlePortalClick} className="nav-cta nav-cta-short" aria-label="Área Agentes">{'Área\nAgentes'}</a>
             </>
           )}
           <button

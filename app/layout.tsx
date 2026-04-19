@@ -446,9 +446,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     }
   } catch(e) {}
 
-  // ── BFCACHE: force reload when restored from Back-Forward Cache ──────────
+  // ── BFCACHE: soft session check on cache restore — NO hard reload ────────
+  // Previous behaviour: location.reload() on every persisted pageshow caused
+  // a full page reload on every back-navigation, breaking premium browsing.
+  // New: only validate session when on /portal path. Non-portal pages render
+  // from bfcache instantly. Portal pages with expired cookies → /portal/login.
   window.addEventListener('pageshow', function(event) {
-    if (event.persisted) { location.reload(); }
+    if (event.persisted) {
+      var isPortal = window.location.pathname.indexOf('/portal') === 0;
+      if (isPortal) {
+        fetch('/api/auth/me', { cache: 'no-store', credentials: 'include' })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { if (!d || !d.ok) { window.location.href = '/portal/login'; } })
+          .catch(function() { window.location.href = '/portal/login'; });
+      }
+    }
   });
 
   if ('serviceWorker' in navigator) {
