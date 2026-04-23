@@ -1278,3 +1278,35 @@ footer{padding-bottom:max(32px,env(safe-area-inset-bottom))}
   .off-market-hero{padding:80px 16px 48px!important}
 }
 
+
+/* ── Video Testimonials Section — mobile ──────────────────────────────────────
+   vt-grid collapses to single column; vt-side goes to 1-col on narrow screens.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media(max-width:900px){
+  .vt-grid{padding:0 20px!important}
+  .vt-featured-body{padding:20px 24px!important}
+}
+@media(max-width:540px){
+  .vt-side{grid-template-columns:1fr!important}
+  .vt-play-btn{width:52px!important;height:52px!important}
+}
+@media(max-width:360px){
+  .vt-grid{padding:0 16px!important}
+  .vt-featured-body{padding:16px!important}
+}
+
+/* ── Google Reviews link — hover state ───────────────────────────────────────
+   Subtle gold border brightens on hover for all trust CTAs.
+   ─────────────────────────────────────────────────────────────────────────── */
+a[aria-label*="Google"]:hover,
+a[aria-label*="avaliações"]:hover{
+  border-color:rgba(201,169,110,.35)!important
+}
+
+/* ── Vendidos featured editorial card — mobile ───────────────────────────────
+   Single-column below 680px; handled inline but backed here.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media(max-width:680px){
+  article[aria-label*="Villa Quinta"] > div:first-child{min-height:180px!important;padding:28px 20px!important}
+  article[aria-label*="Villa Quinta"] > div:last-child{padding:28px 20px!important}
+}

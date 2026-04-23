@@ -13,6 +13,7 @@ import HomePropertiesSection from './HomePropertiesSection'
 import HomeMortgage from './HomeMortgage'
 import HomeAvaliacaoForm from './HomeAvaliacaoForm'
 import HomeZoneCards from './HomeZoneCards'
+import VideoTestimonialsSection from './VideoTestimonialsSection'
 import {
   HOME_MARQUEE,
   HOME_ZONES,
@@ -388,11 +389,31 @@ export default function HomeSections() {
             <h2 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontStyle: 'italic', fontSize: 'clamp(2rem, 4vw, 3.2rem)', color: '#c9a96e', margin: 0 }}>Eles ficaram.</h2>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '16px' }}>
               {[1, 2, 3, 4, 5].map(i => (
-                <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#c9a96e">
+                <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill="#c9a96e" aria-hidden="true">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
               ))}
             </div>
+            {/* ── Google Reviews authority CTA ───────────────────────────── */}
+            <a
+              href="https://www.google.com/search?q=Agency+Group+AMI+22506+avaliações"
+              target="_blank"
+              rel="noreferrer noopener"
+              aria-label="Ver avaliações no Google"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '20px', padding: '8px 20px', border: '1px solid rgba(201,169,110,.18)', textDecoration: 'none', transition: 'border-color .2s' }}
+            >
+              {/* Google "G" wordmark — simplified */}
+              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', letterSpacing: '.12em', color: 'rgba(244,240,230,.4)', textTransform: 'uppercase' }}>
+                4.8 · 47 avaliações · Google
+              </span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(201,169,110,.4)" strokeWidth="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            </a>
           </div>
           <div className="test-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '24px' }}>
             {HOME_TESTIMONIALS.map((t, i) => (
@@ -427,6 +448,9 @@ export default function HomeSections() {
           </div>
         </div>
       </section>
+
+      {/* ── VIDEO TESTIMONIALS ────────────────────────────────────────────── */}
+      <VideoTestimonialsSection />
 
       {/* ── CONTACT BAR ───────────────────────────────────────────────────── */}
       <div className="contact-bar" id="contacto">
