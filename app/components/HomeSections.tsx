@@ -501,11 +501,12 @@ export default function HomeSections() {
             <div className="ft-col">
               <div className="ft-col-h">Empresa</div>
               <ul>
-                <li><a href="#contacto">Sobre Nós</a></li>
-                <li><a href="#agentes">Agentes</a></li>
+                <li><a href="/contacto">Contacto</a></li>
+                <li><a href="/equipa">Equipa</a></li>
+                <li><a href="/vendidos">Vendidos</a></li>
+                <li><a href="/blog">Blog</a></li>
                 <li><a href="/relatorio-2026" style={{ color: 'var(--gold)', fontWeight: 500 }}>Market Report 2026 ↗</a></li>
-                <li><a href="/parceiros">Agências Parceiras</a></li>
-                <li><a href="mailto:geral@agencygroup.pt">Email</a></li>
+                <li><a href="/parceiros">Parceiros</a></li>
               </ul>
             </div>
           </div>
