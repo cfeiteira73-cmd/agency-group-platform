@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import HomeNav from '@/app/components/HomeNav'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -179,6 +180,8 @@ export default function EquipaPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
+      <HomeNav />
+
       <div
         style={{
           minHeight: '100vh',
@@ -186,78 +189,12 @@ export default function EquipaPage() {
           background: '#f4f0e6',
         }}
       >
-        {/* ── Nav strip ─────────────────────────────────────────────────────── */}
-        <nav
-          aria-label="Navegação principal"
-          style={{
-            background: '#0c1f15',
-            borderBottom: '1px solid rgba(201,169,110,.12)',
-            padding: '18px 40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
-          <Link
-            href="/"
-            style={{
-              fontFamily: "var(--font-cormorant, 'Cormorant', serif)",
-              fontSize: '1.25rem',
-              fontWeight: 300,
-              color: '#f4f0e6',
-              textDecoration: 'none',
-              letterSpacing: '.04em',
-            }}
-          >
-            Agency Group
-          </Link>
-          <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
-            <Link
-              href="/imoveis"
-              style={{
-                color: 'rgba(244,240,230,.55)',
-                textDecoration: 'none',
-                fontSize: '.75rem',
-                letterSpacing: '.12em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Imóveis
-            </Link>
-            <Link
-              href="/faq"
-              style={{
-                color: 'rgba(244,240,230,.55)',
-                textDecoration: 'none',
-                fontSize: '.75rem',
-                letterSpacing: '.12em',
-                textTransform: 'uppercase',
-              }}
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/#contacto"
-              style={{
-                color: 'rgba(244,240,230,.55)',
-                textDecoration: 'none',
-                fontSize: '.75rem',
-                letterSpacing: '.12em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Contacto
-            </Link>
-          </div>
-        </nav>
-
         {/* ── Hero section ─────────────────────────────────────────────────── */}
         <header
           style={{
             background: '#0c1f15',
             color: '#f4f0e6',
-            padding: '80px 40px 96px',
+            padding: '120px 40px 96px',
           }}
         >
           {/* Back link */}

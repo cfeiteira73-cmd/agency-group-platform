@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import HomeNav from '@/app/components/HomeNav'
 
 // Buyer nationality map — ISO 3166-1 alpha-2 → display label with flag
 const NATIONALITY: Record<string, string> = {
@@ -209,6 +210,8 @@ export default function VendidosPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      <HomeNav />
+
       <main style={{ fontFamily: 'var(--font-jost), sans-serif', color: '#0e0e0d', backgroundColor: '#f4f0e6' }}>
 
         {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -216,7 +219,7 @@ export default function VendidosPage() {
           aria-label="Track record Agency Group"
           style={{
             backgroundColor: '#060d08',
-            padding: '100px 24px 80px',
+            padding: '140px 24px 80px',
             textAlign: 'center',
             position: 'relative',
             overflow: 'hidden',
