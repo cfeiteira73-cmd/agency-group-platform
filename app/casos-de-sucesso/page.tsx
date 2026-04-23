@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import HomeNav from '@/app/components/HomeNav'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -156,6 +157,8 @@ export default function CasosDeSucessoPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      <HomeNav />
+
       <main style={{ fontFamily: 'var(--font-jost), sans-serif', color: '#0e0e0d', backgroundColor: '#f4f0e6' }}>
 
         {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -163,7 +166,7 @@ export default function CasosDeSucessoPage() {
           aria-label="Casos de sucesso Agency Group"
           style={{
             backgroundColor: '#0c1f15',
-            padding: '100px 24px 80px',
+            padding: '140px 24px 80px',
             textAlign: 'center',
           }}
         >
