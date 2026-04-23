@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import InvestorLeadForm from '@/app/components/InvestorLeadForm'
+import HomeNav from '@/app/components/HomeNav'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -245,6 +246,8 @@ export default function InvestorIntelligencePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
+      <HomeNav />
+
       <main style={{ fontFamily: 'var(--font-jost), sans-serif', color: '#0e0e0d', backgroundColor: '#f4f0e6' }}>
 
         {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -252,7 +255,7 @@ export default function InvestorIntelligencePage() {
           aria-label="Investor Intelligence — introdução"
           style={{
             backgroundColor: '#0c1f15',
-            padding: '100px 24px 80px',
+            padding: '140px 24px 80px',
             textAlign: 'center',
           }}
         >

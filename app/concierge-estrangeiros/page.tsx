@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import ConciergeIntakeForm from '@/app/components/ConciergeIntakeForm'
+import HomeNav from '@/app/components/HomeNav'
 
 // ─── SEO Metadata ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
@@ -209,6 +210,8 @@ export default function ConciergeEstrangeirosPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
+      <HomeNav />
+
       <main style={{ fontFamily: 'var(--font-jost), sans-serif', color: '#0e0e0d', backgroundColor: '#f4f0e6' }}>
 
         {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -216,7 +219,7 @@ export default function ConciergeEstrangeirosPage() {
           aria-label="Foreign Buyer Concierge — introdução"
           style={{
             backgroundColor: '#0c1f15',
-            padding: '100px 24px 80px',
+            padding: '140px 24px 80px',
             textAlign: 'center',
           }}
         >
