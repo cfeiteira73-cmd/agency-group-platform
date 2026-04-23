@@ -9,6 +9,7 @@ import BottomNav from './components/BottomNav'
 import SofiaWidgetWrapper from './components/SofiaWidgetWrapper'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import UTMCapture from './components/UTMCapture'
+import StickyWhatsApp from './components/StickyWhatsApp'
 
 const cormorant = Cormorant({
   subsets: ['latin'],
@@ -419,6 +420,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <LanguageSwitcher />
         {/* <PushNotificationSetup /> */}
         <BottomNav />
+        <StickyWhatsApp />
         <script dangerouslySetInnerHTML={{ __html: `
 (function() {
   // ── SELF-HEAL: detect old cached HTML (loader without display:none) ──────
