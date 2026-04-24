@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import type { CRMContact } from '@/app/portal/components/types'
 import { safeCompare } from '@/lib/safeCompare'
+import track from '@/lib/trackLearningEvent'
 
 // Typed shorthand for contacts table operations
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -630,6 +631,10 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       'opt_out_marketing', 'opt_out_whatsapp', 'linkedin_url', 'company',
       'job_title', 'qualified_at', 'qualification_notes', 'ai_summary',
       'ai_suggested_action',
+      // Seller kanban fields
+      'is_seller', 'seller_property_ref', 'seller_asking_price', 'seller_property_type',
+      'seller_zona', 'seller_urgency', 'seller_stage', 'mandate_type', 'mandate_expiry',
+      'seller_notes', 'agent_email',
     ])
 
     const safeInput: Record<string, unknown> = {}
@@ -652,6 +657,10 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       'last_contact_at', 'next_followup_at', 'opt_out_marketing', 'opt_out_whatsapp',
       'linkedin_url', 'company', 'job_title', 'qualified_at', 'qualification_notes',
       'ai_summary', 'ai_suggested_action', 'tags', 'notes',
+      // Seller-side fields (migration 20260424_003)
+      'is_seller', 'seller_property_ref', 'seller_asking_price', 'seller_property_type',
+      'seller_zona', 'seller_urgency', 'seller_stage', 'mandate_type', 'mandate_expiry',
+      'seller_notes', 'agent_email',
     ]
 
     const updates: ContactUpdate = { updated_at: new Date().toISOString() }
@@ -679,6 +688,25 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       const { data, error } = await query.select().single()
 
       if (!error && data) {
+        // ── Learning events on status / followup transitions ───────────────────
+        const newStatus = (updates as Record<string, unknown>).status as string | undefined
+        const hasFollowup = 'next_followup_at' in updates
+
+        if (newStatus && ['qualified', 'active', 'negotiating'].includes(newStatus)) {
+          track.responseReceived({
+            lead_id:     contactId ?? null,
+            agent_email: null,
+            metadata:    { new_status: newStatus, contact_email: contactEmail ?? null },
+          })
+        }
+        if (hasFollowup) {
+          track.callBooked({
+            lead_id:     contactId ?? null,
+            agent_email: null,
+            metadata:    { next_followup_at: (updates as Record<string, unknown>).next_followup_at, contact_email: contactEmail ?? null },
+          })
+        }
+
         return NextResponse.json({ data, source: 'supabase' }, { headers: rateLimitHeaders() })
       }
 

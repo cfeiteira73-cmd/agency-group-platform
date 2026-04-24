@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
+import track from '@/lib/trackLearningEvent'
 
 export const runtime = 'nodejs'
 
@@ -100,6 +101,15 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // ── Learning event: deal_pack_sent ─────────────────────────────────────────
+  if (updates.status === 'sent') {
+    track.dealPackSent({
+      deal_pack_id: id,
+      agent_email:  gate.email,
+      metadata: { sent_at: updates.sent_at ?? new Date().toISOString() },
+    })
   }
 
   return NextResponse.json({ success: true, deal_pack: data })

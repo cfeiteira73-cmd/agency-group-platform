@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import track from '@/lib/trackLearningEvent'
 
 export const runtime = 'nodejs'
 
@@ -375,7 +376,32 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
         query = query.eq('ref', ref)
       }
       const { data, error } = await query.select().single()
-      if (!error && data) return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
+      if (!error && data) {
+        // ── Learning events on stage transitions ─────────────────────────────
+        if (typeof updates.fase === 'string') {
+          const fase   = updates.fase as string
+          const dealId = (id ?? ref ?? data?.id) as string | undefined
+          const agentEmail = (session?.user?.email ?? null) as string | null
+          const basePayload = {
+            deal_id:     dealId ?? null,
+            agent_email: agentEmail,
+            metadata:    { fase, deal_ref: ref ?? id },
+          }
+
+          if (['Proposta Enviada', 'Proposta'].includes(fase)) {
+            track.proposalSent(basePayload)
+          } else if (['CPCV Assinado', 'CPCV', 'CPCV_assinado'].includes(fase)) {
+            track.cpcvSigned(basePayload)
+          } else if (['Escritura Concluída', 'pos_venda'].includes(fase)) {
+            track.closed(basePayload)
+          } else if (['Perdido', 'Rejeitado', 'lost', 'rejected'].includes(fase)) {
+            track.rejected(basePayload)
+          } else if (['Visita', 'visita_agendada', 'Visita Agendada'].includes(fase)) {
+            track.callBooked(basePayload)
+          }
+        }
+        return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
+      }
       if (error) console.warn('[deals PUT] Supabase error:', error.message)
     } catch {
       // Supabase unavailable

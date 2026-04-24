@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
+import track from '@/lib/trackLearningEvent'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -282,6 +283,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.error('[deal-packs/generate] Supabase insert error:', insertError)
     return NextResponse.json({ error: 'Failed to save deal pack' }, { status: 500 })
   }
+
+  // ── Learning event: deal_pack_generated ───────────────────────────────────
+  track.dealPackGenerated({
+    deal_pack_id: inserted?.id ?? null,
+    lead_id:      body.lead_id ?? null,
+    property_id:  propDbId,
+    agent_email:  agentEmail,
+    metadata: {
+      deal_id:           body.deal_id ?? null,
+      opportunity_score: claudeJson.opportunity_score ?? null,
+      property_title:    propTitle,
+      property_zone:     propZone,
+    },
+  })
 
   return NextResponse.json({
     success:      true,

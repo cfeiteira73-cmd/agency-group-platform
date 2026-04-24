@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { safeCompare } from '@/lib/safeCompare'
+import track from '@/lib/trackLearningEvent'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -458,12 +459,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .slice(0, 5)
 
     // ── Step 4: Persist matches to DB (non-blocking) ──────────────────────────
+    const agentEmail = request.headers.get('x-agent-email') ?? undefined
     if (buyer.lead_id && top5.length > 0) {
-      void persistMatches(
-        buyer.lead_id,
-        top5,
-        request.headers.get('x-agent-email') ?? undefined
-      )
+      void persistMatches(buyer.lead_id, top5, agentEmail)
+
+      // ── Learning event: match_created ──────────────────────────────────────
+      track.matchCreated({
+        lead_id:      buyer.lead_id,
+        property_id:  top5[0]?.property?.id ?? null,
+        agent_email:  agentEmail ?? null,
+        match_score:  top5[0]?.match_score ?? null,
+        metadata: {
+          total_evaluated: properties.length,
+          top5_scores:     top5.map(r => r.match_score),
+          source,
+          locations:       buyer.locations,
+          use_type:        buyer.use_type ?? null,
+        },
+      })
     }
 
     return NextResponse.json({
