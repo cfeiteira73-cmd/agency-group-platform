@@ -18,6 +18,12 @@ export const metadata: Metadata = {
     type: 'article',
     images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630 }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Best Areas in Lisbon for Expats 2026',
+    description: 'Top neighbourhoods in Lisbon for American, British and French expats buying €500K–€2M.',
+    images: ['https://www.agencygroup.pt/blog/best-areas-lisbon-expats-2026'],
+  },
 }
 
 const articleSchema = {

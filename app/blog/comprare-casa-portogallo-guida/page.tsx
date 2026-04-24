@@ -19,6 +19,12 @@ export const metadata: Metadata = {
     locale: 'it_IT',
     images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630 }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Comprare Casa in Portogallo 2026',
+    description: 'Guida completa per acquistare casa in Portogallo. NHR/IFICI, processo, costi, zone migliori.',
+    images: ['https://www.agencygroup.pt/blog/comprare-casa-portogallo-guida'],
+  },
 }
 
 const articleSchema = {

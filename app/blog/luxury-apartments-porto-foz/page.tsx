@@ -18,6 +18,12 @@ export const metadata: Metadata = {
     type: 'article',
     images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630 }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Luxury Apartments Porto Foz 2026',
+    description: 'Foz do Douro premium real estate market 2026. €3,500–5,000/m², buyer profile, top streets.',
+    images: ['https://www.agencygroup.pt/blog/luxury-apartments-porto-foz'],
+  },
 }
 
 const articleSchema = {

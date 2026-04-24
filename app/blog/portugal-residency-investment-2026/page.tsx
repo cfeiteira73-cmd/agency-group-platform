@@ -18,6 +18,12 @@ export const metadata: Metadata = {
     type: 'article',
     images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630 }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Portugal Residency Through Investment 2026',
+    description: 'D2/D8 visa, Golden Visa alternatives, IFICI, minimum stays. Complete Portugal residency guide.',
+    images: ['https://www.agencygroup.pt/blog/portugal-residency-investment-2026'],
+  },
 }
 
 const articleSchema = {

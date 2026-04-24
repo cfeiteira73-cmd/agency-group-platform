@@ -19,6 +19,12 @@ export const metadata: Metadata = {
     locale: 'pt_PT',
     images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630 }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Imóveis nos Açores: Guia Investidor 2026',
+    description: 'São Miguel, Pico, Faial. €1.952/m², crescimento 15% YoY, turismo de natureza.',
+    images: ['https://www.agencygroup.pt/blog/acores-imoveis-investimento'],
+  },
 }
 
 const articleSchema = {

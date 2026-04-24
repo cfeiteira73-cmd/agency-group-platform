@@ -28,6 +28,12 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'American Buyers Guide to Portugal Property 2026',
+    description: 'Complete guide for Americans buying property in Portugal. FATCA, FBAR, IFICI tax regime, NIF, wire t',
+    images: ['https://www.agencygroup.pt/api/og?title=American%20Buyers%20Guide%20to%20Portugal%20Property%202026&subtitle=International%20Buyers'],
+  },
 }
 
 const ARTICLE_SCHEMA = {

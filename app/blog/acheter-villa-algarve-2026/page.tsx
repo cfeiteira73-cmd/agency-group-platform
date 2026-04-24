@@ -19,6 +19,12 @@ export const metadata: Metadata = {
     locale: 'fr_FR',
     images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630 }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Acheter une Villa en Algarve 2026',
+    description: 'Guide complet pour les acheteurs français en Algarve. Vila do Bispo, Aljezur, Lagos, rendements, fiscalité.',
+    images: ['https://www.agencygroup.pt/blog/acheter-villa-algarve-2026'],
+  },
 }
 
 const articleSchema = {

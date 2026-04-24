@@ -63,6 +63,18 @@ export async function generateMetadata({ params }: { params: Promise<{ zona: str
       url: `https://www.agencygroup.pt/zonas/${zona}`,
       siteName: 'Agency Group',
       locale: 'pt_PT',
+      images: [{
+        url: `https://www.agencygroup.pt/api/og?title=Im%C3%B3veis+em+${encodeURIComponent(z.nome)}+2026&subtitle=%E2%82%AC${z.preco.toLocaleString('pt-PT')}%2Fm%C2%B2+%C2%B7+%2B${z.yoy}%25+YoY+%C2%B7+Agency+Group`,
+        width: 1200,
+        height: 630,
+        alt: `Imóveis em ${z.nome} 2026 — Agency Group`,
+      }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Imóveis em ${z.nome} 2026 · Agency Group`,
+      description: `${z.desc} €${z.preco.toLocaleString('pt-PT')}/m² · +${z.yoy}% YoY`,
+      images: [`https://www.agencygroup.pt/api/og?title=Im%C3%B3veis+em+${encodeURIComponent(z.nome)}+2026&subtitle=%E2%82%AC${z.preco.toLocaleString('pt-PT')}%2Fm%C2%B2+%C2%B7+%2B${z.yoy}%25+YoY+%C2%B7+Agency+Group`],
     },
   }
 }

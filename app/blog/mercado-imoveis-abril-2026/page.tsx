@@ -27,6 +27,12 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mercado Imobiliário Portugal: Análise Abril 2026',
+    description: 'Análise do mercado imobiliário português em Abril 2026. Preços, transacções, zonas em valorização e ',
+    images: ['https://www.agencygroup.pt/api/og?title=Mercado%20Imobili%C3%A1rio%20Portugal%3A%20An%C3%A1lise%20Abril%202026&subtitle=Mercado'],
+  },
 }
 
 const ARTICLE_SCHEMA = {

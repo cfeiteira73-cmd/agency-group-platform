@@ -19,6 +19,12 @@ export const metadata: Metadata = {
     locale: 'pt_PT',
     images: [{ url: 'https://www.agencygroup.pt/og-image.jpg', width: 1200, height: 630 }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Investimento Imobiliário Madeira 2026',
+    description: 'Funchal, Calheta, turismo de luxo, IFICI elegível, +28% YoY. Preços €3.760/m².',
+    images: ['https://www.agencygroup.pt/blog/investimento-madeira-2026'],
+  },
 }
 
 const articleSchema = {
