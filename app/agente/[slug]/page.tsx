@@ -62,9 +62,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const agent = AGENTS[slug]
   if (!agent) return {}
+  const ogImgUrl = `https://www.agencygroup.pt/api/og?title=${encodeURIComponent(agent.nome)}&subtitle=${encodeURIComponent(agent.titulo + ' · ' + agent.stats.vendidos + ' vendidos')}`
   return {
     title: `${agent.nome} · Consultor Luxury Real Estate · Agency Group`,
     description: `Consultor sénior de imobiliário de luxo em Portugal. ${agent.stats.vendidos} vendidos. Lisboa, Cascais, Comporta, Algarve. ${agent.ami}.`,
+    alternates: { canonical: `https://www.agencygroup.pt/agente/${slug}` },
+    openGraph: {
+      title: `${agent.nome} · Agency Group`,
+      description: `${agent.titulo} · ${agent.stats.vendidos} vendidos · Lisboa, Cascais, Algarve. ${agent.ami}.`,
+      type: 'profile',
+      url: `https://www.agencygroup.pt/agente/${slug}`,
+      siteName: 'Agency Group',
+      images: [{ url: ogImgUrl, width: 1200, height: 630, alt: agent.nome }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${agent.nome} · Agency Group`,
+      description: `${agent.titulo} · ${agent.stats.vendidos} vendidos · AMI 22506.`,
+      images: [ogImgUrl],
+    },
   }
 }
 
