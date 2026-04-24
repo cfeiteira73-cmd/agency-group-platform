@@ -4,6 +4,8 @@ export const metadata: Metadata = {
   title: 'Privacy Policy — Agency Group',
   description:
     'Privacy Policy for Agency Group (AMI 22506). How we collect, use, and protect your personal data in compliance with GDPR.',
+  robots: { index: false, follow: true },
+  alternates: { canonical: 'https://www.agencygroup.pt/privacy' },
 }
 
 export default function PrivacyPage() {

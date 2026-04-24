@@ -22,6 +22,18 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.agencygroup.pt/ar',
     locale: 'ar_AE',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Luxury+Real+Estate+Portugal+2026&subtitle=Lisbon+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Arabic+Advisory',
+      width: 1200,
+      height: 630,
+      alt: 'عقارات فاخرة في البرتغال 2026 | Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'عقارات فاخرة في البرتغال 2026 | Agency Group',
+    description: 'أفضل العقارات الفاخرة في البرتغال: لشبونة، كاشكايش، الألغارفي.',
+    images: ['https://www.agencygroup.pt/api/og?title=Luxury+Real+Estate+Portugal+2026&subtitle=Lisbon+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Arabic+Advisory'],
   },
 }
 

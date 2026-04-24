@@ -21,6 +21,18 @@ export const metadata: Metadata = {
     title: "Agency Group · L'Immobilier de Luxe au Portugal",
     description: "L'agence de référence pour l'immobilier de prestige au Portugal. Lisbonne, Cascais, Comporta, Porto, Algarve, Madère. AMI 22506.",
     type: "website", url: "https://www.agencygroup.pt/fr",
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Immobilier+de+Luxe+Portugal+2026&subtitle=Lisbonne+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Mad%C3%A8re+%C2%B7+Porto',
+      width: 1200,
+      height: 630,
+      alt: 'Agency Group · L\'Immobilier de Luxe au Portugal',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Agency Group · L\'Immobilier de Luxe au Portugal',
+    description: 'Agence de référence au Portugal. Lisbonne, Cascais, Algarve. AMI 22506.',
+    images: ['https://www.agencygroup.pt/api/og?title=Immobilier+de+Luxe+Portugal+2026&subtitle=Lisbonne+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Mad%C3%A8re+%C2%B7+Porto'],
   },
 }
 

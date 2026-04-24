@@ -21,6 +21,18 @@ export const metadata: Metadata = {
     title: "Agency Group · Luxury Real Estate Portugal",
     description: "Portugal's premier luxury real estate boutique. Lisbon, Cascais, Comporta, Porto, Algarve, Madeira. AMI 22506.",
     type: "website", url: "https://www.agencygroup.pt/en",
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Luxury+Real+Estate+Portugal+2026&subtitle=Lisbon+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Madeira+%C2%B7+Porto',
+      width: 1200,
+      height: 630,
+      alt: 'Agency Group · Luxury Real Estate Portugal',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Agency Group · Luxury Real Estate Portugal',
+    description: 'Portugal\'s premier luxury real estate boutique. Lisbon, Cascais, Algarve. AMI 22506.',
+    images: ['https://www.agencygroup.pt/api/og?title=Luxury+Real+Estate+Portugal+2026&subtitle=Lisbon+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Madeira+%C2%B7+Porto'],
   },
 }
 

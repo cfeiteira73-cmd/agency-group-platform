@@ -22,6 +22,18 @@ export const metadata: Metadata = {
     description: 'Luxusimmobilien: Lissabon, Cascais, Algarve. Steuervorteile NHR. AMI 22506.',
     type: 'website',
     url: 'https://www.agencygroup.pt/de',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Luxusimmobilien+Portugal+2026&subtitle=Lissabon+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Madeira',
+      width: 1200,
+      height: 630,
+      alt: 'Immobilien Portugal 2026 · Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Immobilien Portugal 2026 · Agency Group',
+    description: 'Luxusimmobilien: Lissabon, Cascais, Algarve. Steuervorteile NHR. AMI 22506.',
+    images: ['https://www.agencygroup.pt/api/og?title=Luxusimmobilien+Portugal+2026&subtitle=Lissabon+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Madeira'],
   },
 }
 

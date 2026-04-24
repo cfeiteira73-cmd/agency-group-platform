@@ -22,6 +22,18 @@ export const metadata: Metadata = {
     description: '里斯本、卡斯凯什、阿尔加维顶级房产。华语专业顾问。NHR税务优化。AMI 22506。',
     type: 'website',
     url: 'https://www.agencygroup.pt/zh',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=%E8%91%A1%E8%90%84%E7%89%99%E6%88%BF%E4%BA%A7+2026&subtitle=%E9%87%8C%E6%96%AF%E6%9C%AC+%C2%B7+%E5%8D%A1%E6%96%AF%E5%87%AF%E4%BB%80+%C2%B7+%E9%98%BF%E5%B0%94%E5%8A%A0%E7%BB%B4',
+      width: 1200,
+      height: 630,
+      alt: '葡萄牙顶级房产 2026 · Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '葡萄牙顶级房产 2026 · Agency Group',
+    description: '里斯本、卡斯凯什、阿尔加维顶级房产。华语专业顾问。AMI 22506。',
+    images: ['https://www.agencygroup.pt/api/og?title=%E8%91%A1%E8%90%84%E7%89%99%E6%88%BF%E4%BA%A7+2026&subtitle=%E9%87%8C%E6%96%AF%E6%9C%AC+%C2%B7+%E5%8D%A1%E6%96%AF%E5%87%AF%E4%BB%80+%C2%B7+%E9%98%BF%E5%B0%94%E5%8A%A0%E7%BB%B4'],
   },
 }
 
