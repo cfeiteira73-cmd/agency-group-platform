@@ -19,6 +19,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/investir-immobilier-algarve-2026',
     locale: 'fr_FR',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Investir+en+Algarve+2026&subtitle=%E2%82%AC3.941%2Fm%C2%B2+%C2%B7+Rendement+5.8%25+%C2%B7+Golden+Triangle',
+      width: 1200,
+      height: 630,
+      alt: 'Investir dans l\'Immobilier en Algarve en 2026 — Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Investir en Algarve 2026 — Guide Complet',
+    description: 'Algarve €3.941/m², rendement 5.8%, Golden Triangle. 40% moins cher que la Côte d\'Azur.',
+    images: ['https://www.agencygroup.pt/api/og?title=Investir+en+Algarve+2026&subtitle=%E2%82%AC3.941%2Fm%C2%B2+%C2%B7+Rendement+5.8%25+%C2%B7+Golden+Triangle'],
   },
 }
 

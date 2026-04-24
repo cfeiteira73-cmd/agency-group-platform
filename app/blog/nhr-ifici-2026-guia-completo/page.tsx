@@ -12,6 +12,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/nhr-ifici-2026-guia-completo',
     locale: 'pt_PT',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=NHR%20%E2%86%92%20IFICI%202026%3A%20Guia%20Completo%20do%20Regime%20Fiscal%20para%20Novos&subtitle=IFICI%20Portugal%202026%3A%20taxa%20flat%2020%25%2C%20isen%C3%A7%C3%A3o%20rendimentos',
+      width: 1200,
+      height: 630,
+      alt: 'NHR → IFICI 2026: Guia Completo do Regime Fiscal para Novos Residentes em Portugal',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'NHR → IFICI 2026: Guia Completo do Regime Fiscal para Novos Residentes em Portugal',
+    description: 'IFICI Portugal 2026: taxa flat 20%, isenção rendimentos estrangeiros, 10 anos. Quem elegível, como c',
+    images: ['https://www.agencygroup.pt/api/og?title=NHR%20%E2%86%92%20IFICI%202026%3A%20Guia%20Completo%20do%20Regime%20Fiscal%20para%20Novos&subtitle=IFICI%20Portugal%202026%3A%20taxa%20flat%2020%25%2C%20isen%C3%A7%C3%A3o%20rendimentos'],
   },
 }
 

@@ -16,6 +16,18 @@ export const metadata: Metadata = {
     description: 'Lisboa Top 5 mundial. Cascais €12.000/m². Comporta +28%. Análise completa.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/mercado-luxo-portugal-2026',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Mercado%20de%20Luxo%20em%20Portugal%202026%3A%20Lisboa%20Top%205%20Mundial&subtitle=Lisboa%20Top%205%20mundial.%20Cascais%20%E2%82%AC12.000%2Fm%C2%B2.%20Comporta%20%2B28%25',
+      width: 1200,
+      height: 630,
+      alt: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mercado de Luxo em Portugal 2026: Lisboa Top 5 Mundial',
+    description: 'Lisboa Top 5 mundial. Cascais €12.000/m². Comporta +28%. Análise completa.',
+    images: ['https://www.agencygroup.pt/api/og?title=Mercado%20de%20Luxo%20em%20Portugal%202026%3A%20Lisboa%20Top%205%20Mundial&subtitle=Lisboa%20Top%205%20mundial.%20Cascais%20%E2%82%AC12.000%2Fm%C2%B2.%20Comporta%20%2B28%25'],
   },
 }
 

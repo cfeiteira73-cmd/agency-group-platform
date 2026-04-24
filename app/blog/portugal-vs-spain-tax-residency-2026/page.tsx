@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/portugal-vs-spain-tax-residency-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Portugal%20vs%20Spain%20for%20Tax%20Residency%20in%202026%3A%20The%20Definitive&subtitle=IFICI%2B%20vs%20Beckham%20Law.%20Property%20costs%20%E2%82%AC3K%E2%80%935K%2Fm%C2%B2%20vs%20%E2%82%AC5K%E2%80%93',
+      width: 1200,
+      height: 630,
+      alt: 'Portugal vs Spain for Tax Residency in 2026: The Definitive Comparison',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Portugal vs Spain for Tax Residency in 2026: The Definitive Comparison',
+    description: 'IFICI+ vs Beckham Law. Property costs €3K–5K/m² vs €5K–8K/m². Safety #4 vs #30. Full breakdown by ex',
+    images: ['https://www.agencygroup.pt/api/og?title=Portugal%20vs%20Spain%20for%20Tax%20Residency%20in%202026%3A%20The%20Definitive&subtitle=IFICI%2B%20vs%20Beckham%20Law.%20Property%20costs%20%E2%82%AC3K%E2%80%935K%2Fm%C2%B2%20vs%20%E2%82%AC5K%E2%80%93'],
   },
 }
 

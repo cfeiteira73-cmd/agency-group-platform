@@ -17,6 +17,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/buying-property-portugal-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Buying%20Property%20in%20Portugal%20in%202026%3A%20Complete%20Guide%20for%20Fore&subtitle=NIF%2C%20CPCV%2C%20IMT%2C%20stamp%20duty%2C%20deed%20%E2%80%94%20the%20complete%20process',
+      width: 1200,
+      height: 630,
+      alt: 'Buying Property in Portugal in 2026: Complete Guide for Foreign Buyers',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Buying Property in Portugal in 2026: Complete Guide for Foreign Buyers',
+    description: 'NIF, CPCV, IMT, stamp duty, deed — the complete process end to end. Real costs. Key locations. What ',
+    images: ['https://www.agencygroup.pt/api/og?title=Buying%20Property%20in%20Portugal%20in%202026%3A%20Complete%20Guide%20for%20Fore&subtitle=NIF%2C%20CPCV%2C%20IMT%2C%20stamp%20duty%2C%20deed%20%E2%80%94%20the%20complete%20process'],
   },
 }
 

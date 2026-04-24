@@ -19,6 +19,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/nhr-portugal-2026-guide',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=NHR%20Portugal%202026%3A%20Complete%20IFICI%20Tax%20Guide%20for%20Foreign%20Resi&subtitle=NHR%20replaced%20by%20IFICI%20in%202024.%2020%25%20flat%20tax%20for%2010%20year',
+      width: 1200,
+      height: 630,
+      alt: 'NHR Portugal 2026: Complete IFICI Tax Guide for Foreign Residents',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'NHR Portugal 2026: Complete IFICI Tax Guide for Foreign Residents',
+    description: 'NHR replaced by IFICI in 2024. 20% flat tax for 10 years. Eligible income, who qualifies, step-by-st',
+    images: ['https://www.agencygroup.pt/api/og?title=NHR%20Portugal%202026%3A%20Complete%20IFICI%20Tax%20Guide%20for%20Foreign%20Resi&subtitle=NHR%20replaced%20by%20IFICI%20in%202024.%2020%25%20flat%20tax%20for%2010%20year'],
   },
 }
 

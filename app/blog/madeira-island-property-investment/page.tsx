@@ -17,6 +17,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/madeira-island-property-investment',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Madeira%20Property%20Investment%202026%3A%20Funchal%20Prices%2C%20IFICI%20%26%20Re&subtitle=Madeira%20is%20Portugal',
+      width: 1200,
+      height: 630,
+      alt: 'Madeira Property Investment 2026: Funchal Prices, IFICI & Returns',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Madeira Property Investment 2026: Funchal Prices, IFICI & Returns',
+    description: 'Madeira is Portugal',
+    images: ['https://www.agencygroup.pt/api/og?title=Madeira%20Property%20Investment%202026%3A%20Funchal%20Prices%2C%20IFICI%20%26%20Re&subtitle=Madeira%20is%20Portugal'],
   },
 }
 

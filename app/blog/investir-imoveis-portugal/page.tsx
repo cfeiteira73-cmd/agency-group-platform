@@ -16,6 +16,18 @@ export const metadata: Metadata = {
     description: 'Comporta +28%, Lisboa top 5 mundial. Yields e ROI por zona — análise completa.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/investir-imoveis-portugal',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Investir%20em%20Imobili%C3%A1rio%20em%20Portugal%202026&subtitle=Comporta%20%2B28%25%2C%20Lisboa%20top%205%20mundial.%20Yields%20e%20ROI%20por%20z',
+      width: 1200,
+      height: 630,
+      alt: 'Investir em Imobiliário em Portugal 2026',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Investir em Imobiliário em Portugal 2026',
+    description: 'Comporta +28%, Lisboa top 5 mundial. Yields e ROI por zona — análise completa.',
+    images: ['https://www.agencygroup.pt/api/og?title=Investir%20em%20Imobili%C3%A1rio%20em%20Portugal%202026&subtitle=Comporta%20%2B28%25%2C%20Lisboa%20top%205%20mundial.%20Yields%20e%20ROI%20por%20z'],
   },
 }
 

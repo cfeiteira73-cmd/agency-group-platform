@@ -16,6 +16,18 @@ export const metadata: Metadata = {
     description: 'Mercado vendedor em 2026. Mais-valias, isenções, homestaging, documentos necessários, CPCV. Tudo o que precisa de saber para vender ao melhor preço.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/vender-imovel-portugal-2026',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Vender%20Im%C3%B3vel%20em%20Portugal%20em%202026%3A%20Guia%20Completo%20para%20Propri&subtitle=Mercado%20vendedor%20em%202026.%20Mais-valias%2C%20isen%C3%A7%C3%B5es%2C%20homest',
+      width: 1200,
+      height: 630,
+      alt: 'Vender Imóvel em Portugal em 2026: Guia Completo para Proprietários',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vender Imóvel em Portugal em 2026: Guia Completo para Proprietários',
+    description: 'Mercado vendedor em 2026. Mais-valias, isenções, homestaging, documentos necessários, CPCV. Tudo o q',
+    images: ['https://www.agencygroup.pt/api/og?title=Vender%20Im%C3%B3vel%20em%20Portugal%20em%202026%3A%20Guia%20Completo%20para%20Propri&subtitle=Mercado%20vendedor%20em%202026.%20Mais-valias%2C%20isen%C3%A7%C3%B5es%2C%20homest'],
   },
 }
 

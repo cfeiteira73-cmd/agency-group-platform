@@ -20,6 +20,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/buy-property-cascais',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Buy%20Property%20in%20Cascais%202026%3A%20Prices%2C%20Zones%20%26%20Expat%20Guide&subtitle=Cascais%20%E2%82%AC4%2C713%2Fm%C2%B2%20average.%20Quinta%20da%20Marinha%20to%20Estoril',
+      width: 1200,
+      height: 630,
+      alt: 'Buy Property in Cascais 2026: Prices, Zones & Expat Guide',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Buy Property in Cascais 2026: Prices, Zones & Expat Guide',
+    description: 'Cascais €4,713/m² average. Quinta da Marinha to Estoril. International schools, golf, marina. 20 min',
+    images: ['https://www.agencygroup.pt/api/og?title=Buy%20Property%20in%20Cascais%202026%3A%20Prices%2C%20Zones%20%26%20Expat%20Guide&subtitle=Cascais%20%E2%82%AC4%2C713%2Fm%C2%B2%20average.%20Quinta%20da%20Marinha%20to%20Estoril'],
   },
 }
 

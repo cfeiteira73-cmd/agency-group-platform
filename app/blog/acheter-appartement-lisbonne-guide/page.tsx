@@ -20,6 +20,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/acheter-appartement-lisbonne-guide',
     locale: 'fr_FR',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Acheter%20un%20Appartement%20%C3%A0%20Lisbonne%20en%202026%20%3A%20Guide%20Complet&subtitle=Chiado%20%E2%82%AC7.000%2Fm%C2%B2%2C%20IFICI%2020%25%20flat%20tax%2C%20Paris%E2%80%93Lisbonne%202h',
+      width: 1200,
+      height: 630,
+      alt: 'Acheter un Appartement à Lisbonne en 2026 : Guide Complet',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Acheter un Appartement à Lisbonne en 2026 : Guide Complet',
+    description: 'Chiado €7.000/m², IFICI 20% flat tax, Paris–Lisbonne 2h20. Le guide complet pour les acheteurs franç',
+    images: ['https://www.agencygroup.pt/api/og?title=Acheter%20un%20Appartement%20%C3%A0%20Lisbonne%20en%202026%20%3A%20Guide%20Complet&subtitle=Chiado%20%E2%82%AC7.000%2Fm%C2%B2%2C%20IFICI%2020%25%20flat%20tax%2C%20Paris%E2%80%93Lisbonne%202h'],
   },
 }
 

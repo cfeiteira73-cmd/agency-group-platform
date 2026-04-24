@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/primeira-casa-lisboa-guia-2026',
     locale: 'pt_PT',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Comprar%20a%20Primeira%20Casa%20em%20Lisboa%20em%202026%3A%20Guia%20Completo&subtitle=IMT%20isento%20para%20jovens%2C%20garantia%20p%C3%BAblica%2C%20cr%C3%A9dito%20a%203.2',
+      width: 1200,
+      height: 630,
+      alt: 'Comprar a Primeira Casa em Lisboa em 2026: Guia Completo',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Comprar a Primeira Casa em Lisboa em 2026: Guia Completo',
+    description: 'IMT isento para jovens, garantia pública, crédito a 3.2%, zonas acessíveis a partir de €1.600/m². Tu',
+    images: ['https://www.agencygroup.pt/api/og?title=Comprar%20a%20Primeira%20Casa%20em%20Lisboa%20em%202026%3A%20Guia%20Completo&subtitle=IMT%20isento%20para%20jovens%2C%20garantia%20p%C3%BAblica%2C%20cr%C3%A9dito%20a%203.2'],
   },
 }
 

@@ -17,6 +17,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/comporta-portugal-luxury-market',
     locale: 'en_US',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Comporta+Luxury+Real+Estate+2026&subtitle=Europe%27s+Last+Unspoiled+Paradise+%C2%B7+%E2%82%AC4.200%E2%80%93%E2%82%AC8.000%2Fm%C2%B2',
+      width: 1200,
+      height: 630,
+      alt: 'Comporta Portugal Luxury Real Estate 2026 — Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Comporta Portugal Luxury Real Estate 2026',
+    description: 'Hedge fund managers, family offices and celebrities are buying in Comporta. Prices €4,200–€8,000/m².',
+    images: ['https://www.agencygroup.pt/api/og?title=Comporta+Luxury+Real+Estate+2026&subtitle=Europe%27s+Last+Unspoiled+Paradise+%C2%B7+%E2%82%AC4.200%E2%80%93%E2%82%AC8.000%2Fm%C2%B2'],
   },
 }
 

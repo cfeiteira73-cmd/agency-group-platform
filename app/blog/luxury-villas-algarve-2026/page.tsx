@@ -17,6 +17,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/luxury-villas-algarve-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Luxury%20Villas%20in%20Algarve%202026%3A%20Prices%2C%20Golf%20Resorts%20%26%20Invest&subtitle=Vale%20do%20Lobo%2C%20Quinta%20do%20Lago%2C%20Vilamoura%20%E2%80%94%20real%20prices%2C',
+      width: 1200,
+      height: 630,
+      alt: 'Luxury Villas in Algarve 2026: Prices, Golf Resorts & Investment Guide',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Luxury Villas in Algarve 2026: Prices, Golf Resorts & Investment Guide',
+    description: 'Vale do Lobo, Quinta do Lago, Vilamoura — real prices, rental yields up to 6.5%, and the complete bu',
+    images: ['https://www.agencygroup.pt/api/og?title=Luxury%20Villas%20in%20Algarve%202026%3A%20Prices%2C%20Golf%20Resorts%20%26%20Invest&subtitle=Vale%20do%20Lobo%2C%20Quinta%20do%20Lago%2C%20Vilamoura%20%E2%80%94%20real%20prices%2C'],
   },
 }
 

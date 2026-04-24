@@ -19,6 +19,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/property-investment-portugal-returns',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Property%20Investment%20in%20Portugal%202026%3A%20ROI%2C%20Yields%20%26%20Market%20A&subtitle=Portugal%3A%20%E2%82%AC3%2C076%2Fm%C2%B2%20median%2C%20%2B17.6%25%20YoY%2C%20169%2C812%20transac',
+      width: 1200,
+      height: 630,
+      alt: 'Property Investment in Portugal 2026: ROI, Yields & Market Analysis',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Property Investment in Portugal 2026: ROI, Yields & Market Analysis',
+    description: 'Portugal: €3,076/m² median, +17.6% YoY, 169,812 transactions. Rental yields 4.2–6.5%. Complete inves',
+    images: ['https://www.agencygroup.pt/api/og?title=Property%20Investment%20in%20Portugal%202026%3A%20ROI%2C%20Yields%20%26%20Market%20A&subtitle=Portugal%3A%20%E2%82%AC3%2C076%2Fm%C2%B2%20median%2C%20%2B17.6%25%20YoY%2C%20169%2C812%20transac'],
   },
 }
 

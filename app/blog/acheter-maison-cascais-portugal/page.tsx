@@ -20,6 +20,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/acheter-maison-cascais-portugal',
     locale: 'fr_FR',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Acheter+une+Maison+%C3%A0+Cascais+2026&subtitle=%E2%82%AC4.713%2Fm%C2%B2+%C2%B7+C%C3%B4te+Dor%C3%A9e+%C2%B7+IFICI+20%25+Flat+Tax',
+      width: 1200,
+      height: 630,
+      alt: 'Acheter une Maison à Cascais en 2026 — Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Acheter une Maison à Cascais en 2026',
+    description: 'Cascais €4.713/m², +19% YoY, côte dorée à 30 min de Lisbonne. Villas €1,5M–€4M. IFICI 20% flat tax.',
+    images: ['https://www.agencygroup.pt/api/og?title=Acheter+une+Maison+%C3%A0+Cascais+2026&subtitle=%E2%82%AC4.713%2Fm%C2%B2+%C2%B7+C%C3%B4te+Dor%C3%A9e+%C2%B7+IFICI+20%25+Flat+Tax'],
   },
 }
 

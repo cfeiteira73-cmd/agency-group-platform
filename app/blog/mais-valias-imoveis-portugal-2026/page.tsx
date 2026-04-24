@@ -16,6 +16,18 @@ export const metadata: Metadata = {
     description: 'Fórmula CIRS, coeficientes AT 2026, isenção HPP, reinvestimento e taxa 28% para não residentes. Guia completo com exemplos práticos.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/mais-valias-imoveis-portugal-2026',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Mais-Valias%20Imobili%C3%A1rias%20Portugal%202026%3A%20Calcular%20e%20Poupar&subtitle=F%C3%B3rmula%20CIRS%2C%20coeficientes%20AT%202026%2C%20isen%C3%A7%C3%A3o%20HPP%2C%20reinve',
+      width: 1200,
+      height: 630,
+      alt: 'Mais-Valias Imobiliárias Portugal 2026: Calcular e Poupar',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mais-Valias Imobiliárias Portugal 2026: Calcular e Poupar',
+    description: 'Fórmula CIRS, coeficientes AT 2026, isenção HPP, reinvestimento e taxa 28% para não residentes. Guia',
+    images: ['https://www.agencygroup.pt/api/og?title=Mais-Valias%20Imobili%C3%A1rias%20Portugal%202026%3A%20Calcular%20e%20Poupar&subtitle=F%C3%B3rmula%20CIRS%2C%20coeficientes%20AT%202026%2C%20isen%C3%A7%C3%A3o%20HPP%2C%20reinve'],
   },
 }
 

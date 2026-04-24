@@ -20,6 +20,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/acheter-appartement-porto-france',
     locale: 'fr_FR',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Porto%202026%20%3A%20Pourquoi%20les%20Fran%C3%A7ais%20Investissent%20Massivement&subtitle=Agency%20Group%20%C2%B7%20Portugal%20Property',
+      width: 1200,
+      height: 630,
+      alt: 'Porto 2026 : Pourquoi les Français Investissent Massivement dans la Deuxième Ville du Portugal',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Porto 2026 : Pourquoi les Français Investissent Massivement dans la Deuxième Ville du Portugal',
+    description: 'Agency Group · Portugal Property',
+    images: ['https://www.agencygroup.pt/api/og?title=Porto%202026%20%3A%20Pourquoi%20les%20Fran%C3%A7ais%20Investissent%20Massivement&subtitle=Agency%20Group%20%C2%B7%20Portugal%20Property'],
   },
 }
 

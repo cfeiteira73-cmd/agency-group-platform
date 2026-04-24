@@ -19,6 +19,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/luxury-property-lisbon',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Luxury%20Property%20in%20Lisbon%202026%3A%20Prices%2C%20Zones%20%26%20Investment%20G&subtitle=Chiado%20%E2%82%AC7k%2Fm%C2%B2%2C%20Pr%C3%ADncipe%20Real%20%E2%82%AC7.4k%2Fm%C2%B2%2C%20yields%204.2%E2%80%934.5%25.',
+      width: 1200,
+      height: 630,
+      alt: 'Luxury Property in Lisbon 2026: Prices, Zones & Investment Guide',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Luxury Property in Lisbon 2026: Prices, Zones & Investment Guide',
+    description: 'Chiado €7k/m², Príncipe Real €7.4k/m², yields 4.2–4.5%. Complete guide for foreign buyers. Lisbon to',
+    images: ['https://www.agencygroup.pt/api/og?title=Luxury%20Property%20in%20Lisbon%202026%3A%20Prices%2C%20Zones%20%26%20Investment%20G&subtitle=Chiado%20%E2%82%AC7k%2Fm%C2%B2%2C%20Pr%C3%ADncipe%20Real%20%E2%82%AC7.4k%2Fm%C2%B2%2C%20yields%204.2%E2%80%934.5%25.'],
   },
 }
 

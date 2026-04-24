@@ -19,6 +19,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/portugal-vs-spain-property-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Portugal%20vs%20Spain%3A%20Which%20Country%20for%20Property%20Investment%20in&subtitle=Direct%20comparison%3A%20Lisbon%20vs%20Barcelona%20vs%20Madrid.%20Price',
+      width: 1200,
+      height: 630,
+      alt: 'Portugal vs Spain: Which Country for Property Investment in 2026?',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Portugal vs Spain: Which Country for Property Investment in 2026?',
+    description: 'Direct comparison: Lisbon vs Barcelona vs Madrid. Prices, taxes, NHR vs Beckham Law, yields. Portuga',
+    images: ['https://www.agencygroup.pt/api/og?title=Portugal%20vs%20Spain%3A%20Which%20Country%20for%20Property%20Investment%20in&subtitle=Direct%20comparison%3A%20Lisbon%20vs%20Barcelona%20vs%20Madrid.%20Price'],
   },
 }
 

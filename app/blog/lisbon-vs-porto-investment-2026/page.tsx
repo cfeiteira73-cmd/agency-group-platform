@@ -12,6 +12,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/lisbon-vs-porto-investment-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Lisbon%20vs%20Porto%3A%20Where%20to%20Invest%20in%20Portuguese%20Property%20in%202&subtitle=Porto%20yields%205.1%25%20vs%20Lisbon%204.4%25.%20Lisbon%20leads%20apprecia',
+      width: 1200,
+      height: 630,
+      alt: 'Lisbon vs Porto: Where to Invest in Portuguese Property in 2026?',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Lisbon vs Porto: Where to Invest in Portuguese Property in 2026?',
+    description: 'Porto yields 5.1% vs Lisbon 4.4%. Lisbon leads appreciation. Full comparison of prices, zones, and b',
+    images: ['https://www.agencygroup.pt/api/og?title=Lisbon%20vs%20Porto%3A%20Where%20to%20Invest%20in%20Portuguese%20Property%20in%202&subtitle=Porto%20yields%205.1%25%20vs%20Lisbon%204.4%25.%20Lisbon%20leads%20apprecia'],
   },
 }
 

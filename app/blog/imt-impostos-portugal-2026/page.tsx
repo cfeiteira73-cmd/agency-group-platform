@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     description: 'Tabelas IMT 2026, Imposto de Selo, IMI, AIMI e exemplos reais com €300K, €500K e €1M. Tudo o que precisa de saber antes de comprar.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/imt-impostos-portugal-2026',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=IMT%2C%20IMI%2C%20IS%20em%20Portugal%202026%3A%20Guia%20Completo%20de%20Impostos%20na&subtitle=Tabelas%20IMT%202026%2C%20Imposto%20de%20Selo%2C%20IMI%2C%20AIMI%20e%20exemplos',
+      width: 1200,
+      height: 630,
+      alt: 'IMT, IMI, IS em Portugal 2026: Guia Completo de Impostos na Compra de Imóvel',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IMT, IMI, IS em Portugal 2026: Guia Completo de Impostos na Compra de Imóvel',
+    description: 'Tabelas IMT 2026, Imposto de Selo, IMI, AIMI e exemplos reais com €300K, €500K e €1M. Tudo o que pre',
+    images: ['https://www.agencygroup.pt/api/og?title=IMT%2C%20IMI%2C%20IS%20em%20Portugal%202026%3A%20Guia%20Completo%20de%20Impostos%20na&subtitle=Tabelas%20IMT%202026%2C%20Imposto%20de%20Selo%2C%20IMI%2C%20AIMI%20e%20exemplos'],
   },
 }
 

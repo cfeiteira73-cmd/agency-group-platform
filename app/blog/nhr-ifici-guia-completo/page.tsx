@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     description: '10 anos de tributação reduzida. Processo, elegibilidade, comparação internacional.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=NHR%20vs%20IFICI%202024%3A%20Guia%20Completo&subtitle=10%20anos%20de%20tributa%C3%A7%C3%A3o%20reduzida.%20Processo%2C%20elegibilidade',
+      width: 1200,
+      height: 630,
+      alt: 'NHR vs IFICI 2024: Guia Completo',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'NHR vs IFICI 2024: Guia Completo',
+    description: '10 anos de tributação reduzida. Processo, elegibilidade, comparação internacional.',
+    images: ['https://www.agencygroup.pt/api/og?title=NHR%20vs%20IFICI%202024%3A%20Guia%20Completo&subtitle=10%20anos%20de%20tributa%C3%A7%C3%A3o%20reduzida.%20Processo%2C%20elegibilidade'],
   },
 }
 

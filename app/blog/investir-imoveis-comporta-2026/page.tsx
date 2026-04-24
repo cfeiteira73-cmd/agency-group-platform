@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     description: 'O Saint-Tropez português. Herdades exclusivas, reserva natural, limitações de construção. Acesso off-market exclusivo pela Agency Group.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/investir-imoveis-comporta-2026',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Investir%20em%20Im%C3%B3veis%20na%20Comporta%202026%3A%20Pre%C3%A7os%2C%20Off-Market%20e%20G&subtitle=O%20Saint-Tropez%20portugu%C3%AAs.%20Herdades%20exclusivas%2C%20reserva',
+      width: 1200,
+      height: 630,
+      alt: 'Investir em Imóveis na Comporta 2026: Preços, Off-Market e Guia Completo',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Investir em Imóveis na Comporta 2026: Preços, Off-Market e Guia Completo',
+    description: 'O Saint-Tropez português. Herdades exclusivas, reserva natural, limitações de construção. Acesso off',
+    images: ['https://www.agencygroup.pt/api/og?title=Investir%20em%20Im%C3%B3veis%20na%20Comporta%202026%3A%20Pre%C3%A7os%2C%20Off-Market%20e%20G&subtitle=O%20Saint-Tropez%20portugu%C3%AAs.%20Herdades%20exclusivas%2C%20reserva'],
   },
 }
 

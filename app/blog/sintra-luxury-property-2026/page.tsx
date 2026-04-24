@@ -12,6 +12,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/sintra-luxury-property-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Sintra%20Luxury%20Property%202026%3A%20UNESCO%20World%20Heritage%20Meets%20Eli&subtitle=Buy%20villa%20or%20quinta%20in%20Sintra%20Portugal.%20Prices%20%E2%82%AC3%2C500%E2%80%93%E2%82%AC',
+      width: 1200,
+      height: 630,
+      alt: 'Sintra Luxury Property 2026: UNESCO World Heritage Meets Elite Real Estate',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sintra Luxury Property 2026: UNESCO World Heritage Meets Elite Real Estate',
+    description: 'Buy villa or quinta in Sintra Portugal. Prices €3,500–€6,500/m². Heritage protection limits supply. ',
+    images: ['https://www.agencygroup.pt/api/og?title=Sintra%20Luxury%20Property%202026%3A%20UNESCO%20World%20Heritage%20Meets%20Eli&subtitle=Buy%20villa%20or%20quinta%20in%20Sintra%20Portugal.%20Prices%20%E2%82%AC3%2C500%E2%80%93%E2%82%AC'],
   },
 }
 

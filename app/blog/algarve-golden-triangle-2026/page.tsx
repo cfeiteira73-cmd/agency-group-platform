@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/algarve-golden-triangle-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Algarve%20Golden%20Triangle%202026%3A%20Vale%20do%20Lobo%2C%20Vilamoura%20%26%20Quin&subtitle=Prices%20from%20%E2%82%AC3%2C200%20to%20%E2%82%AC9%2C000%2Fm%C2%B2.%20Rental%20yields%205.8%25.%20%2B1',
+      width: 1200,
+      height: 630,
+      alt: 'Algarve Golden Triangle 2026: Vale do Lobo, Vilamoura & Quinta do Lago',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Algarve Golden Triangle 2026: Vale do Lobo, Vilamoura & Quinta do Lago',
+    description: 'Prices from €3,200 to €9,000/m². Rental yields 5.8%. +15% YoY. Golden Triangle guide.',
+    images: ['https://www.agencygroup.pt/api/og?title=Algarve%20Golden%20Triangle%202026%3A%20Vale%20do%20Lobo%2C%20Vilamoura%20%26%20Quin&subtitle=Prices%20from%20%E2%82%AC3%2C200%20to%20%E2%82%AC9%2C000%2Fm%C2%B2.%20Rental%20yields%205.8%25.%20%2B1'],
   },
 }
 

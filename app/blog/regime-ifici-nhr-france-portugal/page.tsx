@@ -20,6 +20,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/regime-ifici-nhr-france-portugal',
     locale: 'fr_FR',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=IFICI%20(ex-NHR)%202026%20%3A%20Le%20Guide%20Fiscal%20Complet%20pour%20les%20R%C3%A9sid&subtitle=Agency%20Group%20%C2%B7%20Portugal%20Property',
+      width: 1200,
+      height: 630,
+      alt: 'IFICI (ex-NHR) 2026 : Le Guide Fiscal Complet pour les Résidents Français au Portugal',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IFICI (ex-NHR) 2026 : Le Guide Fiscal Complet pour les Résidents Français au Portugal',
+    description: 'Agency Group · Portugal Property',
+    images: ['https://www.agencygroup.pt/api/og?title=IFICI%20(ex-NHR)%202026%20%3A%20Le%20Guide%20Fiscal%20Complet%20pour%20les%20R%C3%A9sid&subtitle=Agency%20Group%20%C2%B7%20Portugal%20Property'],
   },
 }
 

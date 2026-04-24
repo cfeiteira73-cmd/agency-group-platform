@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     description: 'O melhor preço/qualidade de Portugal. Foz do Douro €4.000/m², yields 4,8–5,5%, a cidade mais cool da Europa.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/mercado-imoveis-porto-2026',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Mercado%20Imobili%C3%A1rio%20do%20Porto%202026%3A%20Pre%C3%A7os%2C%20Zonas%20Premium%20e%20I&subtitle=O%20melhor%20pre%C3%A7o%2Fqualidade%20de%20Portugal.%20Foz%20do%20Douro%20%E2%82%AC4.0',
+      width: 1200,
+      height: 630,
+      alt: 'Mercado Imobiliário do Porto 2026: Preços, Zonas Premium e Investimento',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Mercado Imobiliário do Porto 2026: Preços, Zonas Premium e Investimento',
+    description: 'O melhor preço/qualidade de Portugal. Foz do Douro €4.000/m², yields 4,8–5,5%, a cidade mais cool da',
+    images: ['https://www.agencygroup.pt/api/og?title=Mercado%20Imobili%C3%A1rio%20do%20Porto%202026%3A%20Pre%C3%A7os%2C%20Zonas%20Premium%20e%20I&subtitle=O%20melhor%20pre%C3%A7o%2Fqualidade%20de%20Portugal.%20Foz%20do%20Douro%20%E2%82%AC4.0'],
   },
 }
 

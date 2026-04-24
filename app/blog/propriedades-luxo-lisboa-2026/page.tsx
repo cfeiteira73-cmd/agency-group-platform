@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     description: 'Lisboa no Top 5 mundial do luxo. Chiado €7.000/m², Príncipe Real €7.400/m². Guia completo para investidores internacionais.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/propriedades-luxo-lisboa-2026',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Propriedades%20de%20Luxo%20em%20Lisboa%202026%3A%20Pre%C3%A7os%2C%20Zonas%20e%20Guia%20de&subtitle=Lisboa%20no%20Top%205%20mundial%20do%20luxo.%20Chiado%20%E2%82%AC7.000%2Fm%C2%B2%2C%20Pr%C3%ADn',
+      width: 1200,
+      height: 630,
+      alt: 'Propriedades de Luxo em Lisboa 2026: Preços, Zonas e Guia de Investimento',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Propriedades de Luxo em Lisboa 2026: Preços, Zonas e Guia de Investimento',
+    description: 'Lisboa no Top 5 mundial do luxo. Chiado €7.000/m², Príncipe Real €7.400/m². Guia completo para inves',
+    images: ['https://www.agencygroup.pt/api/og?title=Propriedades%20de%20Luxo%20em%20Lisboa%202026%3A%20Pre%C3%A7os%2C%20Zonas%20e%20Guia%20de&subtitle=Lisboa%20no%20Top%205%20mundial%20do%20luxo.%20Chiado%20%E2%82%AC7.000%2Fm%C2%B2%2C%20Pr%C3%ADn'],
   },
 }
 

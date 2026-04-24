@@ -16,6 +16,18 @@ export const metadata: Metadata = {
     description: 'LTV por país, spread, documentos, Islamic Finance e exemplos reais. Guia completo do mortgage para não residentes em Portugal.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/credito-habitacao-estrangeiros-portugal',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Cr%C3%A9dito%20Habita%C3%A7%C3%A3o%20para%20Estrangeiros%20em%20Portugal%202026&subtitle=LTV%20por%20pa%C3%ADs%2C%20spread%2C%20documentos%2C%20Islamic%20Finance%20e%20exe',
+      width: 1200,
+      height: 630,
+      alt: 'Crédito Habitação para Estrangeiros em Portugal 2026',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Crédito Habitação para Estrangeiros em Portugal 2026',
+    description: 'LTV por país, spread, documentos, Islamic Finance e exemplos reais. Guia completo do mortgage para n',
+    images: ['https://www.agencygroup.pt/api/og?title=Cr%C3%A9dito%20Habita%C3%A7%C3%A3o%20para%20Estrangeiros%20em%20Portugal%202026&subtitle=LTV%20por%20pa%C3%ADs%2C%20spread%2C%20documentos%2C%20Islamic%20Finance%20e%20exe'],
   },
 }
 

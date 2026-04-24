@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/investir-madeira-2026',
     locale: 'pt_PT',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Investir%20na%20Madeira%20em%202026%3A%20O%20Mercado%20Que%20N%C3%A3o%20Para%20de%20Cresc&subtitle=%2B28%25%20YoY%2C%20IFICI%2B%2C%20Zona%20Franca%2C%20yield%205.2%25.%20A%20Madeira%20ai',
+      width: 1200,
+      height: 630,
+      alt: 'Investir na Madeira em 2026: O Mercado Que Não Para de Crescer',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Investir na Madeira em 2026: O Mercado Que Não Para de Crescer',
+    description: '+28% YoY, IFICI+, Zona Franca, yield 5.2%. A Madeira ainda 25% abaixo de Cascais — janela de entrada',
+    images: ['https://www.agencygroup.pt/api/og?title=Investir%20na%20Madeira%20em%202026%3A%20O%20Mercado%20Que%20N%C3%A3o%20Para%20de%20Cresc&subtitle=%2B28%25%20YoY%2C%20IFICI%2B%2C%20Zona%20Franca%2C%20yield%205.2%25.%20A%20Madeira%20ai'],
   },
 }
 

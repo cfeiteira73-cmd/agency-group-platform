@@ -17,6 +17,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/golden-visa-portugal-alternatives-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Golden%20Visa%20Portugal%202026%3A%20Best%20Alternatives%20After%20Real%20Esta&subtitle=Golden%20visa%20portugal%20alternatives%3A%20D7%20passive%20income%20vi',
+      width: 1200,
+      height: 630,
+      alt: 'Golden Visa Portugal 2026: Best Alternatives After Real Estate Exclusion',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Golden Visa Portugal 2026: Best Alternatives After Real Estate Exclusion',
+    description: 'Golden visa portugal alternatives: D7 passive income visa, D8 digital nomad, investment funds (€500K',
+    images: ['https://www.agencygroup.pt/api/og?title=Golden%20Visa%20Portugal%202026%3A%20Best%20Alternatives%20After%20Real%20Esta&subtitle=Golden%20visa%20portugal%20alternatives%3A%20D7%20passive%20income%20vi'],
   },
 }
 

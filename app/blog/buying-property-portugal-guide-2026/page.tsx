@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/buying-property-portugal-guide-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=The%20Complete%20Guide%20to%20Buying%20Property%20in%20Portugal%202026&subtitle=NIF%2C%20CPCV%2C%20due%20diligence%2C%20IMT%20taxes%2C%20Escritura%20%E2%80%94%20the%20en',
+      width: 1200,
+      height: 630,
+      alt: 'The Complete Guide to Buying Property in Portugal 2026',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'The Complete Guide to Buying Property in Portugal 2026',
+    description: 'NIF, CPCV, due diligence, IMT taxes, Escritura — the entire process for international buyers. Real c',
+    images: ['https://www.agencygroup.pt/api/og?title=The%20Complete%20Guide%20to%20Buying%20Property%20in%20Portugal%202026&subtitle=NIF%2C%20CPCV%2C%20due%20diligence%2C%20IMT%20taxes%2C%20Escritura%20%E2%80%94%20the%20en'],
   },
 }
 

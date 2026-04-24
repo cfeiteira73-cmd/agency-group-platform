@@ -16,6 +16,18 @@ export const metadata: Metadata = {
     description: 'NIF, CPCV, IMT, IS, escritura — o processo completo de ponta a ponta. Custos reais. O que mudou em 2026.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/comprar-casa-portugal-2026',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Comprar%20Casa%20em%20Portugal%202026%3A%20O%20Guia%20Definitivo&subtitle=NIF%2C%20CPCV%2C%20IMT%2C%20IS%2C%20escritura%20%E2%80%94%20o%20processo%20completo%20de',
+      width: 1200,
+      height: 630,
+      alt: 'Comprar Casa em Portugal 2026: O Guia Definitivo',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Comprar Casa em Portugal 2026: O Guia Definitivo',
+    description: 'NIF, CPCV, IMT, IS, escritura — o processo completo de ponta a ponta. Custos reais. O que mudou em 2',
+    images: ['https://www.agencygroup.pt/api/og?title=Comprar%20Casa%20em%20Portugal%202026%3A%20O%20Guia%20Definitivo&subtitle=NIF%2C%20CPCV%2C%20IMT%2C%20IS%2C%20escritura%20%E2%80%94%20o%20processo%20completo%20de'],
   },
 }
 

@@ -17,6 +17,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/capital-gains-property-portugal-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Capital%20Gains%20Tax%20on%20Property%20in%20Portugal%202026%3A%20Complete%20Gui&subtitle=Residents%20vs.%20non-residents%2C%20reinvestment%20exemption%2C%20in',
+      width: 1200,
+      height: 630,
+      alt: 'Capital Gains Tax on Property in Portugal 2026: Complete Guide',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Capital Gains Tax on Property in Portugal 2026: Complete Guide',
+    description: 'Residents vs. non-residents, reinvestment exemption, inflation coefficients, age exemption, and stra',
+    images: ['https://www.agencygroup.pt/api/og?title=Capital%20Gains%20Tax%20on%20Property%20in%20Portugal%202026%3A%20Complete%20Gui&subtitle=Residents%20vs.%20non-residents%2C%20reinvestment%20exemption%2C%20in'],
   },
 }
 

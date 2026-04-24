@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/vendre-bien-portugal-guide',
     locale: 'fr_FR',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Vendre%20son%20Bien%20au%20Portugal%20en%202026%20%3A%20Guide%20Complet%20pour%20Pro&subtitle=Agency%20Group%20%C2%B7%20Portugal%20Property',
+      width: 1200,
+      height: 630,
+      alt: 'Vendre son Bien au Portugal en 2026 : Guide Complet pour Propriétaires',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vendre son Bien au Portugal en 2026 : Guide Complet pour Propriétaires',
+    description: 'Agency Group · Portugal Property',
+    images: ['https://www.agencygroup.pt/api/og?title=Vendre%20son%20Bien%20au%20Portugal%20en%202026%20%3A%20Guide%20Complet%20pour%20Pro&subtitle=Agency%20Group%20%C2%B7%20Portugal%20Property'],
   },
 }
 

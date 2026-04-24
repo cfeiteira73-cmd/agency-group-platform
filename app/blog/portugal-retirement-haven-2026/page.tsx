@@ -12,6 +12,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/portugal-retirement-haven-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Retire%20in%20Portugal%202026%3A%20The%20Ultimate%20Guide%20for%20Americans%20%26&subtitle=300%20days%20sun%2C%204th%20safest%20globally%2C%20%E2%82%AC2%2C500%2Fmonth%20for%20a%20c',
+      width: 1200,
+      height: 630,
+      alt: 'Retire in Portugal 2026: The Ultimate Guide for Americans & Europeans',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Retire in Portugal 2026: The Ultimate Guide for Americans & Europeans',
+    description: '300 days sun, 4th safest globally, €2,500/month for a couple. D7 Visa guide, IFICI pension tax, best',
+    images: ['https://www.agencygroup.pt/api/og?title=Retire%20in%20Portugal%202026%3A%20The%20Ultimate%20Guide%20for%20Americans%20%26&subtitle=300%20days%20sun%2C%204th%20safest%20globally%2C%20%E2%82%AC2%2C500%2Fmonth%20for%20a%20c'],
   },
 }
 

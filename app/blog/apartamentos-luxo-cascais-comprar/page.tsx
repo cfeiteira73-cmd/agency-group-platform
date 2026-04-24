@@ -19,6 +19,18 @@ export const metadata: Metadata = {
     description: '20 minutos de Lisboa, praias, golfe, escolas internacionais. Quinta da Marinha €4.800/m². O lifestyle perfeito para famílias internacionais.',
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/apartamentos-luxo-cascais-comprar',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Apartamentos%20e%20Moradias%20de%20Luxo%20em%20Cascais%3A%20Guia%20de%20Compra%202&subtitle=20%20minutos%20de%20Lisboa%2C%20praias%2C%20golfe%2C%20escolas%20internacio',
+      width: 1200,
+      height: 630,
+      alt: 'Apartamentos e Moradias de Luxo em Cascais: Guia de Compra 2026',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Apartamentos e Moradias de Luxo em Cascais: Guia de Compra 2026',
+    description: '20 minutos de Lisboa, praias, golfe, escolas internacionais. Quinta da Marinha €4.800/m². O lifestyl',
+    images: ['https://www.agencygroup.pt/api/og?title=Apartamentos%20e%20Moradias%20de%20Luxo%20em%20Cascais%3A%20Guia%20de%20Compra%202&subtitle=20%20minutos%20de%20Lisboa%2C%20praias%2C%20golfe%2C%20escolas%20internacio'],
   },
 }
 

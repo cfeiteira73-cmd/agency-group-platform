@@ -12,6 +12,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/acores-investimento-imobiliario-2026',
     locale: 'pt_PT',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=A%C3%A7ores%202026%3A%20O%20Pr%C3%B3ximo%20Hotspot%20do%20Imobili%C3%A1rio%20Portugu%C3%AAs%3F&subtitle=Pre%C3%A7os%2060%25%20abaixo%20de%20Lisboa%2C%20%2B8-12%25%20YoY%2C%202.1%20milh%C3%B5es%20vi',
+      width: 1200,
+      height: 630,
+      alt: 'Açores 2026: O Próximo Hotspot do Imobiliário Português?',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Açores 2026: O Próximo Hotspot do Imobiliário Português?',
+    description: 'Preços 60% abaixo de Lisboa, +8-12% YoY, 2.1 milhões visitantes 2025. Análise completa do investimen',
+    images: ['https://www.agencygroup.pt/api/og?title=A%C3%A7ores%202026%3A%20O%20Pr%C3%B3ximo%20Hotspot%20do%20Imobili%C3%A1rio%20Portugu%C3%AAs%3F&subtitle=Pre%C3%A7os%2060%25%20abaixo%20de%20Lisboa%2C%20%2B8-12%25%20YoY%2C%202.1%20milh%C3%B5es%20vi'],
   },
 }
 

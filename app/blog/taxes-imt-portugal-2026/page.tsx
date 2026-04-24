@@ -19,6 +19,18 @@ export const metadata: Metadata = {
     type: 'article',
     url: 'https://www.agencygroup.pt/blog/taxes-imt-portugal-2026',
     locale: 'en_US',
+      images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=IMT%20and%20Property%20Taxes%20in%20Portugal%202026%3A%20What%20Foreign%20Buyers&subtitle=IMT%2C%20stamp%20duty%2C%20IMI%2C%20AIMI%20%E2%80%94%20every%20property%20tax%20in%20Port',
+      width: 1200,
+      height: 630,
+      alt: 'IMT and Property Taxes in Portugal 2026: What Foreign Buyers Must Know',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IMT and Property Taxes in Portugal 2026: What Foreign Buyers Must Know',
+    description: 'IMT, stamp duty, IMI, AIMI — every property tax in Portugal explained with real calculation examples',
+    images: ['https://www.agencygroup.pt/api/og?title=IMT%20and%20Property%20Taxes%20in%20Portugal%202026%3A%20What%20Foreign%20Buyers&subtitle=IMT%2C%20stamp%20duty%2C%20IMI%2C%20AIMI%20%E2%80%94%20every%20property%20tax%20in%20Port'],
   },
 }
 
