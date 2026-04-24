@@ -58,6 +58,7 @@ const PortalOutbound          = dynamic(() => import('./components/PortalOutboun
 const PortalOffmarketLeads    = dynamic(() => import('./components/PortalOffmarketLeads'),    { ssr: false })
 const PortalPartners          = dynamic(() => import('./components/PortalPartners'),          { ssr: false })
 const PortalDealDesk          = dynamic(() => import('./components/PortalDealDesk'),          { ssr: false })
+const PortalDealPacks         = dynamic(() => import('./components/PortalDealPacks'),         { ssr: false })
 const PortalCommandPalette = dynamic(() => import('./components/PortalCommandPalette'), { ssr: false })
 const PortalVideoStudio    = dynamic(
   () => import('./components/PortalVideoStudio').then(m => ({ default: m.PortalVideoStudio })),
@@ -1188,6 +1189,10 @@ export default function Portal() {
 
             {section === 'dealdesk' && (
               <PortalDealDesk />
+            )}
+
+            {section === 'dealpack' && (
+              <PortalDealPacks />
             )}
 
             {section === 'videoStudio' && (

@@ -39,6 +39,10 @@
     {
       "path": "/api/contact-enrichment/run",
       "schedule": "0 7 * * 1-5"
+    },
+    {
+      "path": "/api/cron/kpi-snapshot",
+      "schedule": "55 23 * * *"
     }
   ]
 }

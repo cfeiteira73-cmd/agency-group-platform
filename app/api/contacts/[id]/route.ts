@@ -1,12 +1,13 @@
 // =============================================================================
-// CONTACTS [id] PATCH — Agency Group
-// Public PATCH for qualification data only (use_type, budget, timeline)
-// Full CRUD requires auth — this endpoint accepts only qualification fields
+// CONTACTS [id] — Agency Group
+// PATCH: public qualification fields (use_type, budget, timeline)
+// DELETE: portal auth required + ownership RBAC (agents delete own; admin deletes any)
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requirePortalAuth } from '@/lib/requirePortalAuth'
 
 export const runtime = 'nodejs'
 
@@ -57,6 +58,64 @@ export async function PATCH(
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[contacts/id] error:', err)
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DELETE /api/contacts/[id]
+// RBAC: agents may only delete contacts they own (agent_email match)
+//       service tokens (CRON_SECRET / INTERNAL_API_TOKEN) bypass ownership
+// ---------------------------------------------------------------------------
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const authCheck = await requirePortalAuth(req)
+  if (!authCheck.ok) return authCheck.response
+
+  try {
+    const { id } = await params
+    if (!id || id.length < 4) {
+      return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+    }
+
+    // Load contact to check ownership
+    const { data: contact, error: fetchError } = await supabaseAdmin
+      .from('contacts')
+      .select('agent_email')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !contact) {
+      return NextResponse.json({ error: 'Contacto não encontrado' }, { status: 404 })
+    }
+
+    // RBAC — service tokens bypass, agents must own the contact
+    if (authCheck.via !== 'service_token') {
+      const ownerEmail = (contact as { agent_email?: string }).agent_email
+      if (ownerEmail && ownerEmail !== authCheck.email) {
+        return NextResponse.json(
+          { error: 'Sem permissão para eliminar este contacto' },
+          { status: 403 }
+        )
+      }
+    }
+
+    const { error } = await supabaseAdmin
+      .from('contacts')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('[contacts/id] delete error:', error)
+      return NextResponse.json({ error: 'Erro ao eliminar contacto' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, deleted_id: id })
+  } catch (err) {
+    console.error('[contacts/id] delete error:', err)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

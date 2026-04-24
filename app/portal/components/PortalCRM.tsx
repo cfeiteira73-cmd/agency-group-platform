@@ -333,6 +333,7 @@ export default function PortalCRM() {
     emailDraftLoading, setEmailDraftLoading,
     emailDraft, setEmailDraft,
     emailDraftPurpose, setEmailDraftPurpose,
+    dripCampaigns: _dripCampaigns, setDripCampaigns,
   } = useCRMStore()
 
   const deals = useDealStore(s => s.deals)
@@ -364,6 +365,16 @@ export default function PortalCRM() {
   const [campaignName, setCampaignName] = useState('')
   const [campaignTemplate, setCampaignTemplate] = useState('followup')
   const [campaignSent, setCampaignSent] = useState(false)
+  // Matching state (per-contact pgvector results)
+  const [matchLoading, setMatchLoading] = useState(false)
+  const [matchResults, setMatchResults] = useState<Array<{
+    match_score: number
+    match_reasons: string[]
+    explanation: string
+    estimated_yield: number | null
+    property: { id: string; title?: string; nome?: string; price?: number; preco?: number; zone?: string; zona?: string; type?: string; tipo?: string; bedrooms?: number; quartos?: number; area_m2?: number; area?: number }
+  }>>([])
+  const [matchContactId, setMatchContactId] = useState<number | null>(null)
   // Enriquecer
   const [enrichLoading, setEnrichLoading] = useState<number | null>(null)
   const [enrichToast, setEnrichToast] = useState<string | null>(null)
@@ -388,6 +399,33 @@ export default function PortalCRM() {
     loadContacts()
     return () => { cancelled = true; controller.abort() }
   }, [setCrmContacts])
+
+  // Load campaigns from Supabase on mount
+  useEffect(() => {
+    let cancelled = false
+    async function loadCampanhas() {
+      try {
+        const res = await fetch('/api/campanhas?limit=50')
+        if (res.ok) {
+          const { campanhas } = await res.json()
+          if (!cancelled && Array.isArray(campanhas) && campanhas.length > 0) {
+            setDripCampaigns(campanhas.map((c: Record<string, unknown>) => ({
+              id:       String(c.id ?? ''),
+              name:     String(c.name ?? ''),
+              status:   String(c.status ?? 'draft') as 'active' | 'paused' | 'draft',
+              emails:   typeof c.sent_count === 'number' ? c.sent_count : 0,
+              days:     0,
+              openRate: typeof c.opened_count === 'number' && typeof c.delivered_count === 'number' && (c.delivered_count as number) > 0
+                ? `${Math.round(((c.opened_count as number) / (c.delivered_count as number)) * 100)}%`
+                : '—',
+            })))
+          }
+        }
+      } catch { /* silent fallback */ }
+    }
+    loadCampanhas()
+    return () => { cancelled = true }
+  }, [setDripCampaigns])
 
   useEffect(() => {
     try {
@@ -477,10 +515,10 @@ export default function PortalCRM() {
         </div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <div style={{ display: 'flex', border: '1px solid rgba(14,14,13,.12)', overflow: 'hidden' }}>
-            {(['list', 'kanban'] as const).map(v => (
-              <button type="button" key={v} onClick={() => setCrmView(v)}
+            {(['list', 'kanban', 'seller'] as const).map(v => (
+              <button type="button" key={v} onClick={() => setCrmView(v as 'list' | 'kanban')}
                 style={{ padding: '7px 14px', background: crmView === v ? '#1c4a35' : 'transparent', color: crmView === v ? '#f4f0e6' : 'rgba(14,14,13,.5)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
-                {v === 'list' ? '≡ Lista' : '⬛ Kanban'}
+                {v === 'list' ? '≡ Lista' : v === 'kanban' ? '⬛ Kanban' : '🏡 Vendedores'}
               </button>
             ))}
           </div>
@@ -823,9 +861,22 @@ export default function PortalCRM() {
                     onClick={async () => {
                       try {
                         const selectedContacts = crmContacts.filter(c => crmSelectedIds.has(c.id))
-                        await fetch('/api/automation/vendor-report', {
+                        const emails = selectedContacts.map(c => c.email).filter(Boolean)
+                        const templateTexts: Record<string, string> = {
+                          followup: `Olá! Queria saber se já teve oportunidade de pensar nas opções que partilhei. Tenho novos imóveis exclusivos que podem ser exactamente o que procura. — ${agentName}, Agency Group`,
+                          proposta: `Olá! Tenho uma nova propriedade exclusiva que combina perfeitamente com o seu perfil. Posso partilhar mais detalhes? — ${agentName}, Agency Group`,
+                          visita:   `Olá! Gostaria de o/a convidar para uma visita privada a uma propriedade excepcional. Quando estaria disponível? — ${agentName}, Agency Group`,
+                        }
+                        const htmlBody = `<p style="font-family:sans-serif">${templateTexts[campaignTemplate] ?? templateTexts['followup']}</p>`
+                        // 1. Persist campaign to Supabase
+                        await fetch('/api/campanhas', {
                           method: 'POST', headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ campaign: campaignName, template: campaignTemplate, contacts: selectedContacts }),
+                          body: JSON.stringify({ name: campaignName, type: 'email', subject: campaignName, html: htmlBody, recipient_list: emails, status: 'sending' }),
+                        }).catch(() => undefined)
+                        // 2. Send via Resend
+                        await fetch('/api/campanhas/send', {
+                          method: 'POST', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ to: emails, subject: campaignName, html: htmlBody, campaignId: campaignName }),
                         }).catch(() => undefined)
                       } catch { /* ignore */ }
                       setCampaignSent(true)
@@ -914,6 +965,67 @@ export default function PortalCRM() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* ── Seller Pipeline Kanban ───────────────────────────────────────────── */}
+      {(crmView as string) === 'seller' && (
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '16px' }}>
+            Pipeline Vendedores · {crmContacts.filter(c => (c as unknown as Record<string,unknown>).is_seller).length} imóveis em carteira
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '10px' }}>
+            {([
+              { key: 'prospecting',  label: 'Prospecção',    color: '#888' },
+              { key: 'valuation',    label: 'Avaliação',      color: '#3a7bd5' },
+              { key: 'mandate',      label: 'Mandato',        color: '#c9a96e' },
+              { key: 'listing',      label: 'Em Carteira',    color: '#1c4a35' },
+              { key: 'under_offer',  label: 'Promessa/CPCV',  color: '#4a9c7a' },
+            ] as const).map(stage => {
+              const stageSellers = crmContacts.filter(c => {
+                const ext = c as unknown as Record<string, unknown>
+                return ext.is_seller && (ext.seller_stage ?? 'prospecting') === stage.key
+              })
+              return (
+                <div key={stage.key} style={{ background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.08)', minHeight: '300px', borderRadius: '10px', overflow: 'hidden' }}>
+                  <div style={{ padding: '8px 12px', borderBottom: `2px solid ${stage.color}`, background: `${stage.color}12`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: stage.color, fontWeight: 600 }}>{stage.label}</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', background: `${stage.color}20`, color: stage.color, padding: '2px 7px', borderRadius: '10px' }}>{stageSellers.length}</span>
+                  </div>
+                  <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {stageSellers.map(c => {
+                      const ext = c as unknown as Record<string, unknown>
+                      return (
+                        <div key={c.id} style={{ background: '#fff', border: '1px solid rgba(14,14,13,.07)', padding: '10px', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(14,14,13,.05)' }}
+                          onClick={() => { setActiveCrmId(c.id); setCrmProfileTab('overview'); setCrmView('list') }}>
+                          <div style={{ fontSize: '.8rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                          {!!ext.seller_property_type && (
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e' }}>{String(ext.seller_property_type)}</div>
+                          )}
+                          {!!ext.seller_asking_price && (
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#1c4a35', marginTop: '2px' }}>€{(Number(ext.seller_asking_price) / 1e6).toFixed(2)}M</div>
+                          )}
+                          {!!ext.seller_zona && (
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>{String(ext.seller_zona)}</div>
+                          )}
+                          {!!ext.mandate_type && (
+                            <div style={{ marginTop: '4px' }}>
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.45rem', padding: '2px 6px', background: ext.mandate_type === 'exclusive' ? 'rgba(28,74,53,.1)' : 'rgba(201,169,110,.1)', color: ext.mandate_type === 'exclusive' ? '#1c4a35' : '#c9a96e', borderRadius: '6px' }}>
+                                {ext.mandate_type === 'exclusive' ? 'EXCLUSIVO' : 'NÃO-EXCL.'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                    {stageSellers.length === 0 && (
+                      <div style={{ padding: '20px 10px', textAlign: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.2)' }}>—</div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 
@@ -1790,52 +1902,130 @@ export default function PortalCRM() {
                   </div>
                 )}
 
-                {/* MATCHING */}
+                {/* MATCHING — pgvector real-time matching */}
                 {crmProfileTab === 'matching' && (
                   <div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)', marginBottom: '4px' }}>Smart Matching — Pipeline + Carteira</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginBottom: '14px' }}>Budget ±20% · Zonas · Tipologias</div>
-                    {deals.filter(d => {
-                      const budget = parsePTValue(d.valor)
-                      const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0
-                      if (!bMin && !bMax) return true
-                      return budget >= bMin * 0.8 && budget <= bMax * 1.2
-                    }).map(d => {
-                      const budget = parsePTValue(d.valor)
-                      const inBudget = budget >= activeContact.budgetMin && budget <= activeContact.budgetMax
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>AI Smart Matching — pgvector + Score</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '2px' }}>Correspondência semântica em tempo real com a carteira activa</div>
+                      </div>
+                      <button type="button" className="p-btn p-btn-gold" style={{ padding: '7px 16px', fontSize: '.52rem', flexShrink: 0 }}
+                        disabled={matchLoading}
+                        onClick={async () => {
+                          setMatchLoading(true)
+                          setMatchContactId(activeContact.id)
+                          setMatchResults([])
+                          try {
+                            const res = await fetch('/api/portal/match', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                budget_min:        Number(activeContact.budgetMin) || 100000,
+                                budget_max:        Number(activeContact.budgetMax) || 5000000,
+                                locations:         activeContact.zonas?.length ? activeContact.zonas : ['Lisboa'],
+                                typology:          activeContact.tipos?.[0] ?? undefined,
+                                features_required: [],
+                                use_type:          activeContact.tipos?.some(t => /invest/i.test(t)) ? 'investment' : 'primary_residence',
+                                lead_id:           typeof activeContact.id === 'string' ? activeContact.id : undefined,
+                              }),
+                            })
+                            if (res.ok) {
+                              const { matches } = await res.json()
+                              if (Array.isArray(matches)) setMatchResults(matches)
+                            }
+                          } catch { /* silent */ }
+                          finally { setMatchLoading(false) }
+                        }}>
+                        {matchLoading ? '⟳ A processar...' : '🔍 Run Matching AI'}
+                      </button>
+                    </div>
+
+                    {/* Results */}
+                    {matchLoading && (
+                      <div style={{ padding: '24px', textAlign: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em' }}>
+                        ⟳ A pesquisar carteira com IA semântica...
+                      </div>
+                    )}
+
+                    {!matchLoading && matchContactId === activeContact.id && matchResults.length === 0 && (
+                      <div style={{ padding: '24px', textAlign: 'center', border: '1px dashed rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
+                        Nenhum imóvel compatível encontrado. Clique em &ldquo;Run Matching AI&rdquo; para pesquisar.
+                      </div>
+                    )}
+
+                    {!matchLoading && matchResults.map((r, idx) => {
+                      const p = r.property
+                      const propTitle  = p.title || p.nome || `Imóvel ${idx + 1}`
+                      const propPrice  = p.price || p.preco || 0
+                      const propZone   = p.zone  || p.zona  || ''
+                      const propType   = p.type  || p.tipo  || ''
+                      const propBeds   = p.bedrooms || p.quartos || 0
+                      const propArea   = p.area_m2  || p.area    || 0
+                      const scoreColor = r.match_score >= 75 ? '#4a9c7a' : r.match_score >= 50 ? '#c9a96e' : '#888'
                       return (
-                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', marginBottom: '8px', borderLeft: `3px solid ${inBudget ? '#4a9c7a' : '#c9a96e'}` }}>
-                          <div>
-                            <div style={{ fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d' }}>{d.imovel}</div>
-                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', marginTop: '2px' }}>{d.valor} · {d.fase}</div>
-                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: inBudget ? '#4a9c7a' : '#c9a96e', marginTop: '2px' }}>{inBudget ? '✓ Budget ideal' : '~ Budget ajustado'}</div>
+                        <div key={p.id ?? idx} style={{ padding: '14px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', marginBottom: '10px', borderLeft: `4px solid ${scoreColor}`, borderRadius: '2px' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '.85rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '3px' }}>{propTitle}</div>
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e' }}>
+                                {propPrice > 0 ? `€${(propPrice / 1e6).toFixed(2)}M` : '—'}
+                                {propZone ? ` · ${propZone}` : ''}
+                                {propType ? ` · ${propType}` : ''}
+                                {propBeds > 0 ? ` · T${propBeds}` : ''}
+                                {propArea > 0 ? ` · ${propArea}m²` : ''}
+                              </div>
+                              {r.estimated_yield && (
+                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a', marginTop: '2px' }}>Yield: {r.estimated_yield}%</div>
+                              )}
+                              <div style={{ fontSize: '.78rem', color: 'rgba(14,14,13,.55)', lineHeight: 1.5, marginTop: '6px' }}>{r.explanation}</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                                {r.match_reasons.slice(0, 3).map((reason, ri) => (
+                                  <span key={ri} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', background: 'rgba(28,74,53,.06)', color: '#1c4a35', padding: '2px 7px', borderRadius: '10px' }}>{reason}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                              <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: `3px solid ${scoreColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.7rem', fontWeight: 700, color: scoreColor }}>{r.match_score}</div>
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.45rem', color: 'rgba(14,14,13,.3)', textAlign: 'center' }}>score</div>
+                              <button type="button" className="p-btn p-btn-gold" style={{ padding: '4px 10px', fontSize: '.52rem', marginTop: '2px' }}
+                                onClick={async () => {
+                                  try {
+                                    await fetch('/api/deal-packs/generate', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        property_id: p.id ?? undefined,
+                                        lead_id: typeof activeContact.id === 'string' ? activeContact.id : undefined,
+                                        property_data: { title: propTitle, price: propPrice, zone: propZone, type: propType, bedrooms: propBeds, area_m2: propArea },
+                                        buyer_profile: { name: activeContact.name },
+                                      }),
+                                    })
+                                    setEnrichToast('Deal Pack gerado! Acede em Deals → Deal Packs')
+                                    enrichToastRef.current = setTimeout(() => setEnrichToast(null), 4000)
+                                  } catch { /* silent */ }
+                                }}>
+                                📄 Deal Pack
+                              </button>
+                            </div>
                           </div>
-                          <button type="button" className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, dealRef: d.ref } : c))}>Associar</button>
                         </div>
                       )
                     })}
-                    {PORTAL_PROPERTIES.filter(im => {
-                      const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0
-                      const inBudget = (!bMin && !bMax) || (im.preco >= bMin * 0.8 && im.preco <= bMax * 1.2)
-                      const zonaMatch = !(activeContact.zonas || []).length || (activeContact.zonas || []).some(z => im.zona?.toLowerCase().includes(z.toLowerCase()))
-                      const tipoMatch = !(activeContact.tipos || []).length || (activeContact.tipos || []).some(t => im.tipo?.toLowerCase().includes(t.toLowerCase()))
-                      return inBudget && (zonaMatch || tipoMatch)
-                    }).slice(0, 5).map(im => (
-                      <div key={im.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: '#fff', border: '1px solid rgba(28,74,53,.12)', marginBottom: '8px', borderLeft: '3px solid #1c4a35' }}>
+
+                    {/* Fallback: pipeline deals still shown for context */}
+                    {(!matchResults.length || matchContactId !== activeContact.id) && deals.filter(d => {
+                      const b = parsePTValue(d.valor); const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0
+                      return (!bMin && !bMax) || (b >= bMin * 0.8 && b <= bMax * 1.2)
+                    }).slice(0, 3).map(d => (
+                      <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', marginBottom: '6px', borderLeft: '3px solid #c9a96e' }}>
                         <div>
-                          <div style={{ fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d' }}>{im.nome}</div>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', marginTop: '2px' }}>€{(im.preco / 1e6).toFixed(2)}M · {im.zona} · {im.tipo}</div>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.4)', marginTop: '2px' }}>{im.area}m² · T{im.quartos}</div>
+                          <div style={{ fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d' }}>{d.imovel}</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', marginTop: '2px' }}>{d.valor} · {d.fase} · Pipeline</div>
                         </div>
-                        <button type="button" className="p-btn" style={{ padding: '6px 12px', fontSize: '.52rem' }} onClick={() => setSection('imoveis')}>Ver →</button>
+                        <button type="button" className="p-btn" style={{ padding: '5px 10px', fontSize: '.52rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, dealRef: d.ref } : c))}>Associar</button>
                       </div>
                     ))}
-                    {deals.filter(d => { const b = parsePTValue(d.valor); const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0; return (!bMin && !bMax) || (b >= bMin * 0.8 && b <= bMax * 1.2) }).length === 0 &&
-                      PORTAL_PROPERTIES.filter(im => { const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0; return (!bMin && !bMax) || (im.preco >= bMin * 0.8 && im.preco <= bMax * 1.2) }).length === 0 && (
-                        <div style={{ padding: '32px', textAlign: 'center', border: '1px dashed rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
-                          Nenhum imóvel compatível encontrado com o budget definido
-                        </div>
-                      )}
                   </div>
                 )}
 

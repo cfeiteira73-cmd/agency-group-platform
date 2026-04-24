@@ -128,11 +128,7 @@ export const useCRMStore = create<CRMState>((set) => ({
   newContact: { name: '', email: '', phone: '', nationality: '', budgetMin: '', budgetMax: '', tipos: '', zonas: '', origin: 'Website', notes: '' },
   crmNextStep: null,
   crmNextStepLoading: false,
-  dripCampaigns: [
-    { id: 'd1', name: 'Boas-Vindas Novo Lead', status: 'active', emails: 5, days: 14, openRate: '42%' },
-    { id: 'd2', name: 'Follow-Up Imóvel', status: 'paused', emails: 4, days: 10, openRate: '38%' },
-    { id: 'd3', name: 'Reactivação Lead Frio', status: 'draft', emails: 3, days: 21, openRate: '29%' },
-  ],
+  dripCampaigns: [],  // loaded from /api/campanhas on mount
   expandedDrip: null,
   campTab: 'email',
   emailDraftLoading: false,

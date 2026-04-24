@@ -109,6 +109,18 @@ export type NotificationChannel = 'email' | 'whatsapp' | 'push' | 'sms' | 'in_ap
 
 export type LeadTier = 'A' | 'B' | 'C'
 
+export type DealPackStatus = 'draft' | 'ready' | 'sent' | 'viewed' | 'archived'
+
+export type MatchStatus = 'pending' | 'viewed' | 'interested' | 'visit_scheduled' | 'rejected'
+
+export type CampanhaType = 'email' | 'whatsapp' | 'sms' | 'push' | 'mixed'
+
+export type CampanhaStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled' | 'failed'
+
+export type SellerUrgency = 'low' | 'medium' | 'high' | 'urgent'
+
+export type MandateType = 'exclusive' | 'shared' | 'open'
+
 // ---------------------------------------------------------------------------
 // DATABASE GENERIC TYPE
 // ---------------------------------------------------------------------------
@@ -218,6 +230,21 @@ export type Database = {
           detected_intent: string | null
           tags: string[] | null
           notes: string | null
+          // Agent ownership
+          agent_email: string | null
+          // Lead scoring (extended)
+          lead_scored_at: string | null
+          // Seller fields (migration 20260424_003)
+          is_seller: boolean | null
+          seller_property_ref: string | null
+          seller_asking_price: number | null
+          seller_property_type: string | null
+          seller_zona: string | null
+          seller_urgency: SellerUrgency | null
+          seller_stage: string | null
+          mandate_type: MandateType | null
+          mandate_expiry: string | null
+          seller_notes: string | null
           created_at: string
           updated_at: string
         }
@@ -271,6 +298,18 @@ export type Database = {
           detected_intent?: string | null
           tags?: string[] | null
           notes?: string | null
+          agent_email?: string | null
+          lead_scored_at?: string | null
+          is_seller?: boolean | null
+          seller_property_ref?: string | null
+          seller_asking_price?: number | null
+          seller_property_type?: string | null
+          seller_zona?: string | null
+          seller_urgency?: SellerUrgency | null
+          seller_stage?: string | null
+          mandate_type?: MandateType | null
+          mandate_expiry?: string | null
+          seller_notes?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -324,6 +363,18 @@ export type Database = {
           detected_intent?: string | null
           tags?: string[] | null
           notes?: string | null
+          agent_email?: string | null
+          lead_scored_at?: string | null
+          is_seller?: boolean | null
+          seller_property_ref?: string | null
+          seller_asking_price?: number | null
+          seller_property_type?: string | null
+          seller_zona?: string | null
+          seller_urgency?: SellerUrgency | null
+          seller_stage?: string | null
+          mandate_type?: MandateType | null
+          mandate_expiry?: string | null
+          seller_notes?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1059,6 +1110,312 @@ export type Database = {
       }
 
       // -----------------------------------------------------------------------
+      // deal_packs (migration 20260424_001)
+      // -----------------------------------------------------------------------
+      deal_packs: {
+        Row: {
+          id: string
+          deal_id: string | null
+          property_id: string | null
+          lead_id: string | null
+          title: string
+          status: DealPackStatus
+          investment_thesis: string | null
+          market_summary: string | null
+          opportunity_score: number | null
+          financial_projections: {
+            purchase_price?: number
+            estimated_yield?: number
+            estimated_irr?: number
+            renovation_estimate?: number
+            total_investment?: number
+            annual_income?: number
+            exit_value_5y?: number
+          } | null
+          highlights: string[] | null
+          generated_at: string | null
+          sent_at: string | null
+          viewed_at: string | null
+          view_count: number
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          deal_id?: string | null
+          property_id?: string | null
+          lead_id?: string | null
+          title: string
+          status?: DealPackStatus
+          investment_thesis?: string | null
+          market_summary?: string | null
+          opportunity_score?: number | null
+          financial_projections?: Record<string, unknown> | null
+          highlights?: string[] | null
+          generated_at?: string | null
+          sent_at?: string | null
+          viewed_at?: string | null
+          view_count?: number
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          deal_id?: string | null
+          property_id?: string | null
+          lead_id?: string | null
+          title?: string
+          status?: DealPackStatus
+          investment_thesis?: string | null
+          market_summary?: string | null
+          opportunity_score?: number | null
+          financial_projections?: Record<string, unknown> | null
+          highlights?: string[] | null
+          generated_at?: string | null
+          sent_at?: string | null
+          viewed_at?: string | null
+          view_count?: number
+          created_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // matches (migration 20260424_001)
+      // -----------------------------------------------------------------------
+      matches: {
+        Row: {
+          id: string
+          lead_id: string | null
+          property_id: string | null
+          property_ref: string | null
+          property_title: string | null
+          match_score: number
+          breakdown: {
+            budget?: number
+            zone?: number
+            typology?: number
+            features?: number
+            timeline?: number
+            similarity?: number
+          } | null
+          match_reasons: string[] | null
+          explanation: string | null
+          similarity: number | null
+          estimated_yield: number | null
+          status: MatchStatus
+          matched_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          lead_id?: string | null
+          property_id?: string | null
+          property_ref?: string | null
+          property_title?: string | null
+          match_score: number
+          breakdown?: Record<string, number> | null
+          match_reasons?: string[] | null
+          explanation?: string | null
+          similarity?: number | null
+          estimated_yield?: number | null
+          status?: MatchStatus
+          matched_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          lead_id?: string | null
+          property_id?: string | null
+          property_ref?: string | null
+          property_title?: string | null
+          match_score?: number
+          breakdown?: Record<string, number> | null
+          match_reasons?: string[] | null
+          explanation?: string | null
+          similarity?: number | null
+          estimated_yield?: number | null
+          status?: MatchStatus
+          matched_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // kpi_snapshots (migration 20260424_002)
+      // -----------------------------------------------------------------------
+      kpi_snapshots: {
+        Row: {
+          id: string
+          snapshot_date: string
+          leads_total: number | null
+          leads_new: number | null
+          leads_qualified: number | null
+          leads_active: number | null
+          leads_vip: number | null
+          leads_dormant: number | null
+          leads_lost: number | null
+          deals_total: number | null
+          deals_active: number | null
+          deals_cpcv: number | null
+          deals_escritura: number | null
+          deals_won: number | null
+          pipeline_value: number | null
+          avg_deal_value: number | null
+          properties_total: number | null
+          properties_active: number | null
+          properties_exclusive: number | null
+          properties_off_market: number | null
+          matches_total: number | null
+          matches_new: number | null
+          matches_interested: number | null
+          campanhas_total: number | null
+          campanhas_sent: number | null
+          deal_packs_total: number | null
+          deal_packs_sent: number | null
+          deal_packs_viewed: number | null
+          raw_data: Record<string, unknown> | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          snapshot_date: string
+          leads_total?: number | null
+          leads_new?: number | null
+          leads_qualified?: number | null
+          leads_active?: number | null
+          leads_vip?: number | null
+          leads_dormant?: number | null
+          leads_lost?: number | null
+          deals_total?: number | null
+          deals_active?: number | null
+          deals_cpcv?: number | null
+          deals_escritura?: number | null
+          deals_won?: number | null
+          pipeline_value?: number | null
+          avg_deal_value?: number | null
+          properties_total?: number | null
+          properties_active?: number | null
+          properties_exclusive?: number | null
+          properties_off_market?: number | null
+          matches_total?: number | null
+          matches_new?: number | null
+          matches_interested?: number | null
+          campanhas_total?: number | null
+          campanhas_sent?: number | null
+          deal_packs_total?: number | null
+          deal_packs_sent?: number | null
+          deal_packs_viewed?: number | null
+          raw_data?: Record<string, unknown> | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          snapshot_date?: string
+          leads_total?: number | null
+          leads_new?: number | null
+          leads_qualified?: number | null
+          leads_active?: number | null
+          leads_vip?: number | null
+          leads_dormant?: number | null
+          leads_lost?: number | null
+          deals_total?: number | null
+          deals_active?: number | null
+          deals_cpcv?: number | null
+          deals_escritura?: number | null
+          deals_won?: number | null
+          pipeline_value?: number | null
+          avg_deal_value?: number | null
+          properties_total?: number | null
+          properties_active?: number | null
+          properties_exclusive?: number | null
+          properties_off_market?: number | null
+          matches_total?: number | null
+          matches_new?: number | null
+          matches_interested?: number | null
+          campanhas_total?: number | null
+          campanhas_sent?: number | null
+          deal_packs_total?: number | null
+          deal_packs_sent?: number | null
+          deal_packs_viewed?: number | null
+          raw_data?: Record<string, unknown> | null
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // campanhas (migration 20260424_004)
+      // -----------------------------------------------------------------------
+      campanhas: {
+        Row: {
+          id: string
+          name: string
+          type: CampanhaType
+          status: CampanhaStatus
+          subject: string | null
+          html: string | null
+          recipient_list: string[] | null
+          recipient_count: number
+          sent_count: number
+          delivered_count: number
+          opened_count: number
+          clicked_count: number
+          scheduled_at: string | null
+          sent_at: string | null
+          metadata: Record<string, unknown> | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          type?: CampanhaType
+          status?: CampanhaStatus
+          subject?: string | null
+          html?: string | null
+          recipient_list?: string[] | null
+          recipient_count?: number
+          sent_count?: number
+          delivered_count?: number
+          opened_count?: number
+          clicked_count?: number
+          scheduled_at?: string | null
+          sent_at?: string | null
+          metadata?: Record<string, unknown> | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          type?: CampanhaType
+          status?: CampanhaStatus
+          subject?: string | null
+          html?: string | null
+          recipient_list?: string[] | null
+          recipient_count?: number
+          sent_count?: number
+          delivered_count?: number
+          opened_count?: number
+          clicked_count?: number
+          scheduled_at?: string | null
+          sent_at?: string | null
+          metadata?: Record<string, unknown> | null
+          created_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
       // market_snapshots
       // -----------------------------------------------------------------------
       market_snapshots: {
@@ -1172,6 +1529,22 @@ export type Database = {
           total_value: number
           weighted_value: number
           avg_probability: number
+        }>
+      }
+      search_properties_semantic: {
+        Args: {
+          query_embedding: number[]
+          match_count?: number
+        }
+        Returns: Array<{
+          id: string
+          title: string
+          zone: string | null
+          price: number
+          type: PropertyType
+          bedrooms: number | null
+          area_m2: number | null
+          similarity: number
         }>
       }
     }

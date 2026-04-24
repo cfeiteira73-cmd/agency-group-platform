@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { Database } from '@/lib/database.types'
 import type { CRMContact } from '@/app/portal/components/types'
@@ -49,7 +50,8 @@ function rateLimitHeaders(): HeadersInit {
 // Mock contacts — 10 realistic Portuguese real estate buyers
 // ---------------------------------------------------------------------------
 
-const MOCK_CONTACTS: ContactRow[] = [
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const MOCK_CONTACTS: ContactRow[] = ([
   {
     id: '1', full_name: 'James Mitchell', email: 'james@mitchellcapital.com',
     phone: '+44 7700 900123', whatsapp: null, nationality: 'GB', language: 'en',
@@ -273,7 +275,14 @@ const MOCK_CONTACTS: ContactRow[] = [
     detected_intent: 'invest', tags: ['vip', 'multi_property', 'investor'],
     notes: 'Personal WhatsApp. Never email without prior call.', created_at: '2025-09-01T00:00:00Z', updated_at: '2026-04-04T10:00:00Z',
   },
-]
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+] as any[]).map((c: any): ContactRow => ({
+  agent_email: null, lead_scored_at: null,
+  is_seller: null, seller_property_ref: null, seller_asking_price: null,
+  seller_property_type: null, seller_zona: null, seller_urgency: null,
+  seller_stage: null, mandate_type: null, mandate_expiry: null, seller_notes: null,
+  ...c,
+}))
 
 // ---------------------------------------------------------------------------
 // GET /api/crm
@@ -691,6 +700,80 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     )
   } catch (error) {
     console.error('[CRM PATCH]', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500, headers: rateLimitHeaders() }
+    )
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DELETE /api/crm?id=<uuid>
+// RBAC: agents may only delete contacts they own (agent_email match).
+//       service tokens bypass ownership check.
+// ---------------------------------------------------------------------------
+
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  const authCheck = await requirePortalAuth(request)
+  if (!authCheck.ok) return authCheck.response
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Query param "id" is required' },
+        { status: 400, headers: rateLimitHeaders() }
+      )
+    }
+
+    // Load contact to verify ownership
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: contact, error: fetchError } = await (supabaseAdmin as any)
+      .from('contacts')
+      .select('agent_email, full_name')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !contact) {
+      return NextResponse.json(
+        { error: 'Contacto não encontrado' },
+        { status: 404, headers: rateLimitHeaders() }
+      )
+    }
+
+    // RBAC — service tokens bypass ownership; agents must own
+    if (authCheck.via !== 'service_token') {
+      const ownerEmail = (contact as Record<string, string>).agent_email
+      if (ownerEmail && ownerEmail !== authCheck.email) {
+        return NextResponse.json(
+          { error: 'Sem permissão para eliminar este contacto' },
+          { status: 403, headers: rateLimitHeaders() }
+        )
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabaseAdmin as any)
+      .from('contacts')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('[CRM DELETE] Supabase error:', error.message)
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500, headers: rateLimitHeaders() }
+      )
+    }
+
+    return NextResponse.json(
+      { success: true, deleted_id: id },
+      { headers: rateLimitHeaders() }
+    )
+  } catch (error) {
+    console.error('[CRM DELETE]', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: rateLimitHeaders() }

@@ -40,6 +40,26 @@ export interface CRMContact {
   source?: string
   zone?: string
   type?: string
+  // Portal auth & RBAC
+  agent_email?: string
+  // Seller-side fields (migration 20260424_003)
+  is_seller?: boolean
+  seller_stage?: string
+  seller_property_ref?: string
+  seller_asking_price?: number
+  seller_property_type?: string
+  seller_zona?: string
+  seller_urgency?: 'low' | 'medium' | 'high' | 'urgent'
+  mandate_type?: 'exclusive' | 'shared' | 'open'
+  mandate_expiry?: string
+  seller_notes?: string
+  // Lead scoring
+  lead_score?: number
+  lead_score_breakdown?: Record<string, number>
+  lead_scored_at?: string
+  // AI fields
+  ai_summary?: string
+  ai_suggested_action?: string
 }
 
 export interface Deal {
@@ -120,6 +140,7 @@ export type SectionId =
   | 'analytics' | 'investidores' | 'outbound' | 'videoStudio'
   | 'photos' | 'agentai'
   | 'offmarket' | 'partners' | 'dealdesk'
+  | 'dealpack'
 
 export interface DashboardTheme {
   darkMode: boolean

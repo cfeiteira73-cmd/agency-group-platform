@@ -1,21 +1,25 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requirePortalAuth } from '@/lib/requirePortalAuth'
 
 export const runtime = 'nodejs'
 
 // ─── Rate limiting (Upstash Redis, serverless-safe) ───────────────────────────
-// Uses Upstash REST API directly — no SDK required, works on Vercel serverless.
-// Falls back gracefully if env vars are not set (logs warning, allows request).
+// Public tier:  30 req/hour per IP
+// Portal tier: 300 req/hour per email (authenticated portal users)
+// Service tier: unlimited (crons + n8n via CRON_SECRET / INTERNAL_API_TOKEN)
+//
+// Falls back gracefully if Upstash env vars are not set.
 
-async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
-  // Upstash Redis rate limiting (proper serverless-safe sliding window)
+async function checkRateLimit(
+  key: string,
+  limit: number
+): Promise<{ allowed: boolean; remaining: number }> {
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
     try {
-      const key = `rl:sofia:${ip}`
       const now = Date.now()
       const window = 3600 // 1 hour in seconds
-      const limit = 30
 
       // Pipeline: ZADD → ZREMRANGEBYSCORE (expire old) → ZCARD → EXPIRE
       const response = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/pipeline`, {
@@ -95,19 +99,39 @@ interface ChatRequestBody {
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // ── Rate limiting (Upstash Redis, serverless-safe) ───────────────────────
+  // ── Tiered auth + rate limiting ────────────────────────────────────────────
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
            ?? req.headers.get('x-real-ip')
            ?? 'unknown'
 
-  const { allowed, remaining } = await checkRateLimit(ip)
-  if (!allowed) {
-    return new Response(
-      JSON.stringify({ error: 'Demasiados pedidos. Tenta novamente em 1 hora.' }),
-      { status: 429, headers: { 'Content-Type': 'application/json', 'X-RateLimit-Remaining': '0', 'Retry-After': '3600' } }
-    )
+  // Check portal auth — if authenticated, use generous limits; skip for service tokens
+  const portalCheck = await requirePortalAuth(req)
+  let rateLimitKey: string
+  let rateLimitMax: number
+
+  if (portalCheck.ok && portalCheck.via === 'service_token') {
+    // Internal crons / n8n — no rate limiting
+    rateLimitKey = ''
+    rateLimitMax = 99999
+  } else if (portalCheck.ok) {
+    // Authenticated portal user — 300 req/hour by email
+    rateLimitKey = `rl:sofia:portal:${portalCheck.email}`
+    rateLimitMax = 300
+  } else {
+    // Public / unauthenticated — 30 req/hour by IP
+    rateLimitKey = `rl:sofia:public:${ip}`
+    rateLimitMax = 30
   }
-  void remaining // suppress unused-var warning — available for future X-RateLimit-Remaining header
+
+  if (rateLimitKey) {
+    const { allowed, remaining: _remaining } = await checkRateLimit(rateLimitKey, rateLimitMax)
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: 'Demasiados pedidos. Tenta novamente em 1 hora.' }),
+        { status: 429, headers: { 'Content-Type': 'application/json', 'X-RateLimit-Remaining': '0', 'Retry-After': '3600' } }
+      )
+    }
+  }
 
   // ── Parse body ────────────────────────────────────────────────────────────
   let body: ChatRequestBody

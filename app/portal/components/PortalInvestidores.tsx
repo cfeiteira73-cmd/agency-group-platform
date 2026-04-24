@@ -660,18 +660,102 @@ function DrawerPerfil({ investor, editMode, onChange, onToggleEdit, onSave }: {
 function DrawerMatches({ matches, investor, onAddDeal, existingDeals }: {
   matches: Match[]; investor: Investor; onAddDeal: (deal: InvestorDeal) => void; existingDeals: InvestorDeal[]
 }) {
-  if (matches.length === 0) {
-    return <div style={{ textAlign: 'center', color: '#8a8070', fontFamily: 'var(--font-jost),sans-serif', padding: '40px 0' }}>Nenhum match encontrado com o portfólio actual.</div>
-  }
+  const [aiMatches, setAiMatches] = useState<Array<{
+    match_score: number; explanation: string; estimated_yield: number | null
+    property: { id: string; title?: string; nome?: string; price?: number; preco?: number; zone?: string; zona?: string; type?: string; tipo?: string; bedrooms?: number; area_m2?: number }
+  }>>([])
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiRan, setAiRan] = useState(false)
 
   const existingRefs = new Set(existingDeals.map(d => d.propertyRef))
 
+  async function runAIMatch() {
+    setAiLoading(true)
+    try {
+      const res = await fetch('/api/portal/match', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          budget_min:        investor.capitalMin,
+          budget_max:        investor.capitalMax,
+          locations:         investor.zonas,
+          typology:          investor.tipoImovel[0] ?? undefined,
+          features_required: investor.ocupacao === 'AL' ? ['al_license'] : [],
+          use_type:          'investment',
+        }),
+      })
+      if (res.ok) {
+        const { matches: m } = await res.json()
+        if (Array.isArray(m)) setAiMatches(m)
+      }
+    } catch { /* silent */ }
+    finally { setAiLoading(false); setAiRan(true) }
+  }
+
   return (
     <div>
-      <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G, marginBottom: 16 }}>
-        {matches.length} Imóveis em Match
+      {/* AI Match button */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 300, color: G }}>
+          {aiRan && aiMatches.length > 0 ? `${aiMatches.length} Matches AI (pgvector)` : `${matches.length} Matches Locais`}
+        </div>
+        <button type="button" onClick={runAIMatch} disabled={aiLoading}
+          style={{ padding: '6px 14px', background: aiRan ? '#1c4a3522' : G, color: aiRan ? G : '#fff', border: `1px solid ${G}`, borderRadius: 8, fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, fontWeight: 600, cursor: aiLoading ? 'default' : 'pointer', transition: 'all .2s' }}>
+          {aiLoading ? '⟳ A processar...' : aiRan ? '🔄 Re-run AI' : '🔍 AI Match (pgvector)'}
+        </button>
       </div>
-      {matches.map(m => (
+
+      {/* AI results */}
+      {aiRan && aiMatches.length === 0 && !aiLoading && (
+        <div style={{ textAlign: 'center', color: '#8a8070', padding: '20px 0', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11 }}>
+          Nenhum match AI encontrado. A carteira pode precisar de embeddings — corre /api/embeddings/sync.
+        </div>
+      )}
+
+      {aiRan && aiMatches.map((m, idx) => {
+        const p = m.property
+        const propTitle = p.title || p.nome || `Imóvel ${idx + 1}`
+        const propPrice = p.price || p.preco || 0
+        const propZone  = p.zone  || p.zona  || ''
+        const propType  = p.type  || p.tipo  || ''
+        const yieldVal  = m.estimated_yield ?? investor.yieldTarget
+        const irrVal    = yieldVal + 1.5 + (investor.horizonYears > 7 ? 1 : 0)
+        const ref       = `ai-${p.id}`
+        return (
+          <div key={p.id ?? idx} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: '12px', padding: '14px 16px', marginBottom: 10, borderLeft: `4px solid ${G}`, boxShadow: '0 1px 3px rgba(14,14,13,.06)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--font-jost),sans-serif', fontSize: 14, fontWeight: 600, color: TXT, marginBottom: 2 }}>{propTitle}</div>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 10, color: '#8a8070' }}>{propZone}{propType ? ` · ${propType}` : ''}{propPrice ? ` · ${fmt(propPrice)}` : ''}</div>
+              </div>
+              <ScoreBar score={m.match_score} size="lg" />
+            </div>
+            <div style={{ fontSize: 12, color: '#555', lineHeight: 1.5, marginBottom: 8 }}>{m.explanation}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+              <div style={{ background: '#f4f0e6', borderRadius: 8, padding: '8px 10px' }}>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>YIELD EST.</div>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 700, color: '#16a34a' }}>{yieldVal.toFixed(1)}%</div>
+              </div>
+              <div style={{ background: '#f4f0e6', borderRadius: 8, padding: '8px 10px' }}>
+                <div style={{ fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, color: '#8a8070' }}>IRR EST.</div>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 18, fontWeight: 700, color: '#2563eb' }}>{irrVal.toFixed(1)}%</div>
+              </div>
+            </div>
+            <button type="button"
+              disabled={existingRefs.has(ref)}
+              onClick={() => onAddDeal({ id: Date.now(), investorId: investor.id, propertyRef: ref, propertyTitle: propTitle, propertyZona: propZone, propertyPreco: propPrice, matchScore: m.match_score, yieldEstimado: yieldVal, irrEstimado: irrVal, stage: 'novo', sentAt: null, memo: null, notas: '' })}
+              style={{ width: '100%', padding: '8px', borderRadius: 8, background: existingRefs.has(ref) ? '#f4f0e6' : G, color: existingRefs.has(ref) ? '#8a8070' : '#fff', border: 'none', cursor: existingRefs.has(ref) ? 'default' : 'pointer', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, fontWeight: 600 }}>
+              {existingRefs.has(ref) ? 'JÁ NO PIPELINE' : 'ADICIONAR AO PIPELINE'}
+            </button>
+          </div>
+        )
+      })}
+
+      {/* Local results (always shown as fallback) */}
+      {(!aiRan || aiMatches.length === 0) && matches.length === 0 && (
+        <div style={{ textAlign: 'center', color: '#8a8070', fontFamily: 'var(--font-jost),sans-serif', padding: '40px 0' }}>Nenhum match encontrado. Clique em &quot;AI Match&quot; para pesquisa completa.</div>
+      )}
+      {(!aiRan || aiMatches.length === 0) && matches.map(m => (
         <div key={m.property.id} style={{ background: '#fff', border: '1px solid #e8e2d4', borderRadius: '12px', padding: '14px 16px', marginBottom: 10, boxShadow: '0 1px 3px rgba(14,14,13,.06),0 1px 2px rgba(14,14,13,.04)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
             <div>
@@ -692,24 +776,8 @@ function DrawerMatches({ matches, investor, onAddDeal, existingDeals }: {
           </div>
           <button type="button"
             disabled={existingRefs.has(m.property.ref)}
-            onClick={() => {
-              const deal: InvestorDeal = {
-                id: Date.now(), investorId: investor.id,
-                propertyRef: m.property.ref, propertyTitle: m.property.nome,
-                propertyZona: m.property.zona, propertyPreco: m.property.preco,
-                matchScore: m.score, yieldEstimado: m.yieldEstimado,
-                irrEstimado: m.irrEstimado, stage: 'novo', sentAt: null,
-                memo: null, notas: '',
-              }
-              onAddDeal(deal)
-            }}
-            style={{
-              width: '100%', padding: '8px', borderRadius: 8,
-              background: existingRefs.has(m.property.ref) ? '#f4f0e6' : G,
-              color: existingRefs.has(m.property.ref) ? '#8a8070' : '#fff',
-              border: 'none', cursor: existingRefs.has(m.property.ref) ? 'default' : 'pointer',
-              fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, fontWeight: 600,
-            }}>
+            onClick={() => onAddDeal({ id: Date.now(), investorId: investor.id, propertyRef: m.property.ref, propertyTitle: m.property.nome, propertyZona: m.property.zona, propertyPreco: m.property.preco, matchScore: m.score, yieldEstimado: m.yieldEstimado, irrEstimado: m.irrEstimado, stage: 'novo', sentAt: null, memo: null, notas: '' })}
+            style={{ width: '100%', padding: '8px', borderRadius: 8, background: existingRefs.has(m.property.ref) ? '#f4f0e6' : G, color: existingRefs.has(m.property.ref) ? '#8a8070' : '#fff', border: 'none', cursor: existingRefs.has(m.property.ref) ? 'default' : 'pointer', fontFamily: 'var(--font-dm-mono),monospace', fontSize: 11, fontWeight: 600 }}>
             {existingRefs.has(m.property.ref) ? 'JÁ NO PIPELINE' : 'ADICIONAR AO PIPELINE'}
           </button>
         </div>
