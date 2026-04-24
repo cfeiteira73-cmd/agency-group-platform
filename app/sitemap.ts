@@ -59,6 +59,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/concierge-estrangeiros`, lastModified: now, changeFrequency: 'monthly', priority: 0.88 },
     { url: `${BASE}/investor-intelligence`,  lastModified: now, changeFrequency: 'monthly', priority: 0.82 },
     { url: `${BASE}/white-label`,            lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${BASE}/investir`,               lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${BASE}/parceiros`,              lastModified: now, changeFrequency: 'monthly', priority: 0.65 },
     // /off-market is robots: noindex — excluded from sitemap to preserve crawl budget
     // /portal is disallowed in robots.txt — excluded from sitemap
   ]
