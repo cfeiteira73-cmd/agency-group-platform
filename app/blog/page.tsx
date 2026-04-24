@@ -27,6 +27,14 @@ const SORTED_ARTICLES = [...ARTICLES].sort(
   (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
 )
 
+// Unique categories sorted by count descending
+const ALL_CATEGORIES = Array.from(
+  SORTED_ARTICLES.reduce((map, a) => {
+    map.set(a.category, (map.get(a.category) ?? 0) + 1)
+    return map
+  }, new Map<string, number>())
+).sort((a, b) => b[1] - a[1])
+
 const CATEGORY_GRADIENTS: Record<string, string> = {
   'Guias de Compra':     'linear-gradient(135deg,#1c4a35,#0c1f15)',
   'Fiscalidade':         'linear-gradient(135deg,#2e1f08,#0c1f15)',
@@ -44,9 +52,20 @@ function getGradient(category: string): string {
   return CATEGORY_GRADIENTS[category] ?? 'linear-gradient(135deg,#1c4a35,#0c1f15)'
 }
 
-export default function BlogPage() {
-  const featured = SORTED_ARTICLES[0]
-  const rest = SORTED_ARTICLES.slice(1)
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cat?: string }>
+}) {
+  const params = await searchParams
+  const selectedCat = params.cat ?? ''
+
+  const visibleArticles = selectedCat
+    ? SORTED_ARTICLES.filter(a => a.category === selectedCat)
+    : SORTED_ARTICLES
+
+  const featured = visibleArticles[0]
+  const rest = visibleArticles.slice(1)
 
   return (
     <>
@@ -92,6 +111,20 @@ export default function BlogPage() {
         .art-card-body{padding:24px}
         .art-card-title{font-family:var(--font-cormorant),serif;font-size:1.15rem;font-weight:300;color:#0e0e0d;line-height:1.3;margin-bottom:8px}
         .art-card-excerpt{font-size:.78rem;line-height:1.7;color:rgba(14,14,13,.5);margin-bottom:12px}
+        /* ── Category filter bar ── */
+        .cat-bar{background:#0c1f15;border-bottom:1px solid rgba(201,169,110,.1);overflow-x:auto;scrollbar-width:none}
+        .cat-bar::-webkit-scrollbar{display:none}
+        .cat-bar-inner{display:flex;gap:0;padding:0 56px;min-width:max-content}
+        .cat-pill{display:inline-flex;align-items:center;gap:6px;padding:14px 20px;font-family:var(--font-dm-mono),monospace;font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(244,240,230,.45);text-decoration:none;border-bottom:2px solid transparent;transition:color .25s,border-color .25s;white-space:nowrap}
+        .cat-pill:hover{color:rgba(244,240,230,.8)}
+        .cat-pill.active{color:#c9a96e;border-bottom-color:#c9a96e}
+        .cat-pill-count{font-size:.42rem;background:rgba(201,169,110,.12);color:rgba(201,169,110,.6);padding:2px 6px;border-radius:10px}
+        .cat-pill.active .cat-pill-count{background:rgba(201,169,110,.2);color:#c9a96e}
+        /* ── Author badge ── */
+        .art-author{display:inline-flex;align-items:center;gap:6px}
+        .art-author-av{width:18px;height:18px;border-radius:50%;background:#1c4a35;border:1px solid rgba(201,169,110,.3);display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-dm-mono),monospace;font-size:.38rem;letter-spacing:.04em;color:#c9a96e;flex-shrink:0}
+        /* ── Reading time icon ── */
+        .rt-icon{display:inline-flex;align-items:center;gap:4px;opacity:.7}
         .blog-cta{background:#1c4a35;padding:80px 56px;text-align:center}
         .blog-cta-h{font-family:var(--font-cormorant),serif;font-size:2.5rem;font-weight:300;color:#f4f0e6;margin-bottom:16px}
         .blog-cta-h em{color:#c9a96e;font-style:italic}
@@ -108,6 +141,7 @@ export default function BlogPage() {
         @media(max-width:800px){
           nav{padding:16px 24px}
           .blog-hero-inner,.blog-body{padding-left:24px;padding-right:24px}
+          .cat-bar-inner{padding:0 24px}
           .blog-grid-all{grid-template-columns:1fr}
           .blog-cta{padding:60px 24px}
           footer{padding:32px 24px}
@@ -178,9 +212,37 @@ export default function BlogPage() {
             Dados INE/AT, Savills, Knight Frank. 169.812 transacções. +17,6%.
             Lisboa Top 5 Mundial. O mercado por dentro.
           </p>
-          <p className="blog-count">{SORTED_ARTICLES.length} artigos publicados</p>
+          <p className="blog-count">
+            {selectedCat
+              ? `${visibleArticles.length} artigos em "${selectedCat}"`
+              : `${SORTED_ARTICLES.length} artigos publicados`
+            }
+          </p>
         </div>
       </section>
+
+      {/* ── Category filter bar ────────────────────────────────────────────── */}
+      <nav className="cat-bar" aria-label="Filtrar por categoria">
+        <div className="cat-bar-inner">
+          <Link
+            href="/blog"
+            className={`cat-pill${selectedCat === '' ? ' active' : ''}`}
+          >
+            Todos
+            <span className="cat-pill-count">{SORTED_ARTICLES.length}</span>
+          </Link>
+          {ALL_CATEGORIES.map(([cat, count]) => (
+            <Link
+              key={cat}
+              href={`/blog?cat=${encodeURIComponent(cat)}`}
+              className={`cat-pill${selectedCat === cat ? ' active' : ''}`}
+            >
+              {cat}
+              <span className="cat-pill-count">{count}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
 
       <div className="blog-body">
         {/* Featured article */}
@@ -193,7 +255,18 @@ export default function BlogPage() {
               <h2 className="art-title">{featured.title}</h2>
               <p className="art-excerpt">{featured.description}</p>
               <div className="art-meta">
-                <span>{featured.readingTime} min leitura</span>
+                <span className="art-author">
+                  <span className="art-author-av">AG</span>
+                  <span>{featured.author}</span>
+                </span>
+                <span>·</span>
+                <span className="rt-icon">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M8 4.5v4l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                  </svg>
+                  {featured.readingTime} min
+                </span>
                 <span>·</span>
                 <span>{new Date(featured.date).toLocaleDateString('pt-PT', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                 {featured.zona && <><span>·</span><span>{featured.zona}</span></>}
@@ -203,7 +276,9 @@ export default function BlogPage() {
         </div>
 
         {/* All remaining articles */}
-        <h2 className="blog-section-title">Todos os artigos</h2>
+        <h2 className="blog-section-title">
+          {selectedCat ? selectedCat : 'Todos os artigos'}
+        </h2>
         <div className="blog-grid-all">
           {rest.map(art => (
             <Link key={art.slug} href={`/blog/${art.slug}`} className="article-card">
@@ -213,7 +288,18 @@ export default function BlogPage() {
                 <h3 className="art-card-title">{art.title}</h3>
                 <p className="art-card-excerpt">{art.description.substring(0, 110)}…</p>
                 <div className="art-meta">
-                  <span>{art.readingTime} min</span>
+                  <span className="art-author">
+                    <span className="art-author-av">AG</span>
+                    <span>{art.author}</span>
+                  </span>
+                  <span>·</span>
+                  <span className="rt-icon">
+                    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
+                      <path d="M8 4.5v4l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    </svg>
+                    {art.readingTime} min
+                  </span>
                   <span>·</span>
                   <span>{new Date(art.date).toLocaleDateString('pt-PT', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                 </div>
