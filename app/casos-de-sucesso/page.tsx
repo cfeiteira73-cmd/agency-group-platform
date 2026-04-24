@@ -75,6 +75,7 @@ const CASE_STUDIES = [
     index: '01',
     flag: 'US',
     archetype: 'Família Americana · Cascais',
+    typeLabel: 'Relocalização Familiar',
     client: 'R. & S.M.',
     origin: 'San Francisco, Califórnia',
     brief: 'Casal de tecnologia vendeu startup e relocalizou família para Portugal — lifestyle premium, otimização fiscal e educação internacional.',
@@ -82,6 +83,12 @@ const CASE_STUDIES = [
     specs: '4 quartos · 380m² · Piscina · Vista mar',
     price: '€ 2.450.000',
     timeline: '45 dias — primeiro contacto a CPCV',
+    metrics: [
+      { value: '€ 2.45M', label: 'Valor de transacção' },
+      { value: '45 dias', label: 'Contacto → CPCV' },
+      { value: '€ 180K/ano', label: 'Poupança IFICI est.' },
+      { value: '380 m²', label: 'Área de habitação' },
+    ],
     tags: ['Off-Market', 'Internacional', '€2M+'],
     steps: [
       { label: 'Semana 1', text: 'Consulta NHR/IFICI e briefing de mercado — Cascais vs Lisboa vs Algarve.' },
@@ -100,6 +107,7 @@ const CASE_STUDIES = [
     index: '02',
     flag: 'FR',
     archetype: 'Executivo Francês · Chiado',
+    typeLabel: 'Segunda Residência + NHR',
     client: 'P.D.',
     origin: 'Paris, França',
     brief: 'Segunda residência em Lisboa com estratégia fiscal NHR — relocação parcial, manutenção da carreira em Paris.',
@@ -107,6 +115,12 @@ const CASE_STUDIES = [
     specs: '3 quartos · 185m² · Renovado · Terraço sul',
     price: '€ 1.850.000',
     timeline: '3 semanas de pesquisa · 90 dias até escritura',
+    metrics: [
+      { value: '€ 1.85M', label: 'Valor de transacção' },
+      { value: '−4%', label: 'Negociação obtida' },
+      { value: '20%', label: 'Taxa NHR aprovada' },
+      { value: '185 m²', label: 'Área de habitação' },
+    ],
     tags: ['Chiado', 'Estratégia Fiscal', 'Off-Market'],
     steps: [
       { label: 'Semana 1', text: 'Selecção remota. Briefing por videochamada. Portfolio de 8 imóveis off-market.' },
@@ -125,6 +139,7 @@ const CASE_STUDIES = [
     index: '03',
     flag: 'AE',
     archetype: 'Family Office UAE · Comporta',
+    typeLabel: 'Investimento e Desenvolvimento',
     client: 'A.K.',
     origin: 'Dubai, Emirados Árabes',
     brief: 'Aquisição de terreno em Comporta para construção de villa privada — investimento de longo prazo com valor de saída elevado.',
@@ -132,6 +147,12 @@ const CASE_STUDIES = [
     specs: '2.800m² · Licença aprovada · Construção 600m²',
     price: '€ 1.200.000',
     timeline: '2 meses de pesquisa · Escritura com extensão de 90 dias',
+    metrics: [
+      { value: '€ 1.2M', label: 'Custo de aquisição' },
+      { value: '€ 4.2M', label: 'Valor estimado concluído' },
+      { value: '3.5×', label: 'ROI sobre terreno' },
+      { value: '2.800 m²', label: 'Área do terreno' },
+    ],
     tags: ['Comporta', 'Terreno', 'Desenvolvimento', '€1M+'],
     steps: [
       { label: 'Mês 1', text: 'Contacto via website. Portfolio briefing. Visitas a Comporta e Melides.' },
@@ -270,7 +291,7 @@ export default function CasosDeSucessoPage() {
           aria-label="Casos de sucesso detalhados"
           style={{ backgroundColor: '#f4f0e6', padding: '80px 24px' }}
         >
-          <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '64px' }}>
+          <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '72px' }}>
             {CASE_STUDIES.map((cs) => (
               <article
                 key={cs.id}
@@ -278,12 +299,12 @@ export default function CasosDeSucessoPage() {
                 style={{
                   backgroundColor: '#ffffff',
                   border: '1px solid #e4ddd0',
-                  borderRadius: '6px',
+                  borderLeft: '4px solid #c9a96e',
                   overflow: 'hidden',
-                  boxShadow: '0 2px 12px rgba(12,31,21,0.06)',
+                  boxShadow: '0 4px 24px rgba(12,31,21,0.08)',
                 }}
               >
-                {/* Card header */}
+                {/* ── Card header ─────────────────────────────────────────── */}
                 <div
                   style={{
                     backgroundColor: '#0c1f15',
@@ -292,23 +313,37 @@ export default function CasosDeSucessoPage() {
                     alignItems: 'flex-start',
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
-                    gap: '16px',
+                    gap: '20px',
                   }}
                 >
                   <div>
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-dm-mono), monospace',
-                        fontSize: '0.65rem',
-                        letterSpacing: '0.2em',
-                        textTransform: 'uppercase',
-                        color: '#c9a96e',
-                        display: 'block',
-                        marginBottom: '12px',
-                      }}
-                    >
-                      Caso {cs.index}
-                    </span>
+                    {/* Index + type badge row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-dm-mono), monospace',
+                          fontSize: '0.65rem',
+                          letterSpacing: '0.2em',
+                          textTransform: 'uppercase',
+                          color: '#c9a96e',
+                        }}
+                      >
+                        Caso {cs.index}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-dm-mono), monospace',
+                          fontSize: '0.6rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: 'rgba(201,169,110,0.55)',
+                          border: '1px solid rgba(201,169,110,0.2)',
+                          padding: '2px 8px',
+                        }}
+                      >
+                        {cs.typeLabel}
+                      </span>
+                    </div>
                     <h2
                       style={{
                         fontFamily: 'var(--font-cormorant), serif',
@@ -351,11 +386,11 @@ export default function CasosDeSucessoPage() {
                     <p
                       style={{
                         fontFamily: 'var(--font-dm-mono), monospace',
-                        fontSize: '0.65rem',
+                        fontSize: '0.62rem',
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',
-                        color: 'rgba(200,191,173,0.7)',
-                        marginTop: '6px',
+                        color: 'rgba(200,191,173,0.6)',
+                        marginTop: '8px',
                         marginBottom: 0,
                       }}
                     >
@@ -364,8 +399,49 @@ export default function CasosDeSucessoPage() {
                   </div>
                 </div>
 
-                {/* Card body */}
-                <div style={{ padding: '36px 40px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                {/* ── Deal metrics strip ──────────────────────────────────── */}
+                <div
+                  style={{
+                    backgroundColor: '#060d08',
+                    padding: '20px 40px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: '8px',
+                  }}
+                >
+                  {cs.metrics.map((m) => (
+                    <div key={m.label} style={{ textAlign: 'center', padding: '8px 0' }}>
+                      <p
+                        style={{
+                          fontFamily: 'var(--font-cormorant), serif',
+                          fontSize: 'clamp(1.2rem, 2.5vw, 1.55rem)',
+                          fontWeight: 600,
+                          color: '#c9a96e',
+                          margin: 0,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {m.value}
+                      </p>
+                      <p
+                        style={{
+                          fontFamily: 'var(--font-dm-mono), monospace',
+                          fontSize: '0.58rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: 'rgba(200,191,173,0.5)',
+                          marginTop: '5px',
+                          marginBottom: 0,
+                        }}
+                      >
+                        {m.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── Card body ───────────────────────────────────────────── */}
+                <div style={{ padding: '36px 40px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
                   {/* Brief + Property */}
                   <div
@@ -442,7 +518,7 @@ export default function CasosDeSucessoPage() {
 
                   <hr style={{ border: 'none', borderTop: '1px solid #e8e2d9', margin: 0 }} />
 
-                  {/* Timeline */}
+                  {/* ── Visual timeline ─────────────────────────────────── */}
                   <div>
                     <p
                       style={{
@@ -451,45 +527,81 @@ export default function CasosDeSucessoPage() {
                         letterSpacing: '0.14em',
                         textTransform: 'uppercase',
                         color: '#c9a96e',
-                        marginBottom: '16px',
+                        marginBottom: '20px',
                       }}
                     >
                       O Processo
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {cs.steps.map((step, i) => (
                         <div
                           key={i}
                           style={{
-                            display: 'grid',
-                            gridTemplateColumns: '120px 1fr',
-                            gap: '16px',
-                            alignItems: 'start',
+                            display: 'flex',
+                            gap: '20px',
+                            alignItems: 'flex-start',
                           }}
                         >
-                          <span
+                          {/* Dot + connector */}
+                          <div
                             style={{
-                              fontFamily: 'var(--font-dm-mono), monospace',
-                              fontSize: '0.65rem',
-                              letterSpacing: '0.08em',
-                              color: '#1c4a35',
-                              fontWeight: 500,
-                              paddingTop: '2px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              width: '20px',
+                              flexShrink: 0,
+                              paddingTop: '3px',
                             }}
                           >
-                            {step.label}
-                          </span>
-                          <span
-                            style={{
-                              fontFamily: 'var(--font-jost), sans-serif',
-                              fontSize: '0.88rem',
-                              fontWeight: 300,
-                              color: '#4a4030',
-                              lineHeight: 1.6,
-                            }}
-                          >
-                            {step.text}
-                          </span>
+                            <div
+                              style={{
+                                width: '10px',
+                                height: '10px',
+                                borderRadius: '50%',
+                                backgroundColor: '#c9a96e',
+                                flexShrink: 0,
+                                boxShadow: '0 0 0 3px rgba(201,169,110,0.15)',
+                              }}
+                            />
+                            {i < cs.steps.length - 1 && (
+                              <div
+                                style={{
+                                  width: '1px',
+                                  backgroundColor: 'rgba(201,169,110,0.22)',
+                                  flex: 1,
+                                  minHeight: '32px',
+                                  marginTop: '4px',
+                                }}
+                              />
+                            )}
+                          </div>
+                          {/* Content */}
+                          <div style={{ paddingBottom: i < cs.steps.length - 1 ? '20px' : 0 }}>
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-dm-mono), monospace',
+                                fontSize: '0.64rem',
+                                letterSpacing: '0.08em',
+                                color: '#1c4a35',
+                                fontWeight: 500,
+                                display: 'block',
+                                marginBottom: '4px',
+                              }}
+                            >
+                              {step.label}
+                            </span>
+                            <span
+                              style={{
+                                fontFamily: 'var(--font-jost), sans-serif',
+                                fontSize: '0.88rem',
+                                fontWeight: 300,
+                                color: '#4a4030',
+                                lineHeight: 1.6,
+                              }}
+                            >
+                              {step.text}
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -497,58 +609,95 @@ export default function CasosDeSucessoPage() {
 
                   <hr style={{ border: 'none', borderTop: '1px solid #e8e2d9', margin: 0 }} />
 
-                  {/* Outcome */}
+                  {/* ── Outcome ─────────────────────────────────────────── */}
                   <div
                     style={{
                       backgroundColor: 'rgba(28,74,53,0.05)',
                       border: '1px solid rgba(28,74,53,0.12)',
-                      borderRadius: '4px',
+                      borderLeft: '3px solid #1c4a35',
                       padding: '20px 24px',
+                      display: 'flex',
+                      gap: '16px',
+                      alignItems: 'flex-start',
                     }}
                   >
-                    <p
-                      style={{
-                        fontFamily: 'var(--font-dm-mono), monospace',
-                        fontSize: '0.62rem',
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        color: '#1c4a35',
-                        marginBottom: '8px',
-                      }}
+                    {/* Check icon */}
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      aria-hidden="true"
+                      style={{ flexShrink: 0, marginTop: '2px' }}
                     >
-                      Resultado
-                    </p>
-                    <p
-                      style={{
-                        fontFamily: 'var(--font-jost), sans-serif',
-                        fontSize: '0.92rem',
-                        fontWeight: 400,
-                        color: '#1c3a28',
-                        lineHeight: 1.7,
-                        margin: 0,
-                      }}
-                    >
-                      {cs.outcome}
-                    </p>
+                      <circle cx="10" cy="10" r="9" stroke="#1c4a35" strokeWidth="1.5" />
+                      <path d="M6 10l3 3 5-5" stroke="#1c4a35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <div>
+                      <p
+                        style={{
+                          fontFamily: 'var(--font-dm-mono), monospace',
+                          fontSize: '0.62rem',
+                          letterSpacing: '0.14em',
+                          textTransform: 'uppercase',
+                          color: '#1c4a35',
+                          marginBottom: '8px',
+                        }}
+                      >
+                        Resultado
+                      </p>
+                      <p
+                        style={{
+                          fontFamily: 'var(--font-jost), sans-serif',
+                          fontSize: '0.92rem',
+                          fontWeight: 400,
+                          color: '#1c3a28',
+                          lineHeight: 1.7,
+                          margin: 0,
+                        }}
+                      >
+                        {cs.outcome}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Quote */}
+                  {/* ── Pull quote ──────────────────────────────────────── */}
                   <blockquote
                     style={{
-                      borderLeft: `3px solid #c9a96e`,
-                      paddingLeft: '20px',
                       margin: 0,
+                      padding: '28px 32px',
+                      backgroundColor: '#0c1f15',
+                      position: 'relative',
                     }}
                   >
+                    {/* Large decorative quote mark */}
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        fontFamily: 'var(--font-cormorant), serif',
+                        fontSize: '5rem',
+                        lineHeight: 1,
+                        color: 'rgba(201,169,110,0.18)',
+                        position: 'absolute',
+                        top: '10px',
+                        left: '24px',
+                        userSelect: 'none',
+                      }}
+                    >
+                      &ldquo;
+                    </span>
                     <p
                       style={{
                         fontFamily: 'var(--font-cormorant), serif',
-                        fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)',
+                        fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
                         fontWeight: 400,
                         fontStyle: 'italic',
-                        color: '#0c1f15',
+                        color: '#f4f0e6',
                         lineHeight: 1.55,
-                        marginBottom: '8px',
+                        marginBottom: '14px',
+                        paddingLeft: '16px',
+                        position: 'relative',
+                        zIndex: 1,
                       }}
                     >
                       &ldquo;{cs.quote}&rdquo;
@@ -556,11 +705,13 @@ export default function CasosDeSucessoPage() {
                     <cite
                       style={{
                         fontFamily: 'var(--font-dm-mono), monospace',
-                        fontSize: '0.65rem',
+                        fontSize: '0.62rem',
                         letterSpacing: '0.12em',
                         textTransform: 'uppercase',
-                        color: '#7a6f5e',
+                        color: 'rgba(201,169,110,0.65)',
                         fontStyle: 'normal',
+                        paddingLeft: '16px',
+                        display: 'block',
                       }}
                     >
                       — {cs.quoteAttr}
@@ -581,7 +732,6 @@ export default function CasosDeSucessoPage() {
                           border: '1px solid rgba(28,74,53,0.25)',
                           background: 'rgba(28,74,53,0.04)',
                           padding: '3px 10px',
-                          borderRadius: '2px',
                         }}
                       >
                         {tag}
