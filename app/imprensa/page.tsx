@@ -5,6 +5,25 @@ export const metadata: Metadata = {
   title: 'Agency Group na Imprensa — Cobertura Mediática 2026',
   description: 'Agency Group citada nos maiores meios: Bloomberg, CNN, Financial Times, Público, Expresso, Jornal de Negócios. Mercado imobiliário de luxo em Portugal.',
   alternates: { canonical: 'https://www.agencygroup.pt/imprensa' },
+  openGraph: {
+    title: 'Agency Group na Imprensa — Cobertura Mediática 2026',
+    description: 'Bloomberg, CNN, Financial Times, Público, Expresso. Mercado imobiliário de luxo em Portugal.',
+    type: 'website',
+    url: 'https://www.agencygroup.pt/imprensa',
+    siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Agency+Group+na+Imprensa&subtitle=Bloomberg+%C2%B7+CNN+%C2%B7+Financial+Times+%C2%B7+P%C3%BAblico+%C2%B7+Expresso',
+      width: 1200,
+      height: 630,
+      alt: 'Agency Group na Imprensa — Cobertura Mediática 2026',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Agency Group na Imprensa — Cobertura Mediática 2026',
+    description: 'Bloomberg, CNN, Financial Times, Público, Expresso. Referência no mercado de luxo.',
+    images: ['https://www.agencygroup.pt/api/og?title=Agency+Group+na+Imprensa&subtitle=Bloomberg+%C2%B7+CNN+%C2%B7+Financial+Times+%C2%B7+P%C3%BAblico+%C2%B7+Expresso'],
+  },
 }
 
 const PRESS = [

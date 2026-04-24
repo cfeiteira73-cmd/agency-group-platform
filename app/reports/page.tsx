@@ -4,6 +4,7 @@ import ReportsClient from './ReportsClient'
 export const metadata: Metadata = {
   title: 'Relatórios de Mercado Imobiliário Portugal 2026 — Agency Group',
   description: 'Descarregue relatórios exclusivos do mercado imobiliário de luxo em Portugal: Lisboa, Cascais, Comporta, Porto, Algarve, Madeira. Dados 2026.',
+  alternates: { canonical: 'https://www.agencygroup.pt/reports' },
   openGraph: {
     title: 'Relatórios de Mercado Imobiliário Portugal 2026 — Agency Group',
     description: 'Descarregue relatórios exclusivos do mercado imobiliário de luxo em Portugal. Dados 2026.',
@@ -16,6 +17,12 @@ export const metadata: Metadata = {
       height: 630,
       alt: 'Relatórios de Mercado Imobiliário Portugal 2026 — Agency Group',
     }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Relatórios de Mercado Imobiliário Portugal 2026',
+    description: 'Relatórios exclusivos: Lisboa, Cascais, Comporta, Porto, Algarve, Madeira. Dados 2026.',
+    images: ['https://www.agencygroup.pt/api/og?title=Relat%C3%B3rios+de+Mercado+2026&subtitle=Portugal+%C2%B7+Lisboa+%C2%B7+Cascais+%C2%B7+Algarve+%C2%B7+Madeira'],
   },
 }
 

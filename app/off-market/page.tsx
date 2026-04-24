@@ -21,6 +21,17 @@ export const metadata: Metadata = {
     siteName: 'Agency Group',
     locale: 'pt_PT',
     type: 'website',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Im%C3%B3veis+Off-Market&subtitle=Acesso+Privado+%C2%B7+Propriedades+Exclusivas+%C2%B7+Por+Convite',
+      width: 1200, height: 630,
+      alt: 'Imóveis Off-Market — Acesso Privado — Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Imóveis Off-Market — Acesso Privado | Agency Group',
+    description: 'Propriedades que nunca chegam ao mercado público. Acesso por convite.',
+    images: ['https://www.agencygroup.pt/api/og?title=Im%C3%B3veis+Off-Market&subtitle=Acesso+Privado+%C2%B7+Propriedades+Exclusivas+%C2%B7+Por+Convite'],
   },
 }
 

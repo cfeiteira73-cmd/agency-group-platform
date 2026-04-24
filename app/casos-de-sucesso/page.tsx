@@ -72,6 +72,12 @@ const jsonLd = {
       },
     },
   ],
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Casos de Sucesso · Transacções de Referência | Agency Group AMI 22506',
+    description: 'Boutique imobiliária de luxo em Portugal. AMI 22506.',
+    images: ['https://www.agencygroup.pt/api/og?title=Casos+de+Sucesso&subtitle=Transa%C3%A7%C3%B5es+de+Refer%C3%AAncia+%C2%B7+Agency+Group'],
+  },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────

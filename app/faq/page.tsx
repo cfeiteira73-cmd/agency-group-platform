@@ -159,6 +159,12 @@ const breadcrumbSchema = {
     { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.agencygroup.pt/' },
     { '@type': 'ListItem', position: 2, name: 'FAQ', item: 'https://www.agencygroup.pt/faq' },
   ],
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FAQ Imobiliário Portugal 2026 · Agency Group',
+    description: 'Boutique imobiliária de luxo em Portugal. AMI 22506.',
+    images: ['https://www.agencygroup.pt/api/og?title=FAQ+%E2%80%94+Perguntas+Frequentes&subtitle=Portugal+%C2%B7+NHR+%C2%B7+CPCV+%C2%B7+IMT+%C2%B7+AMI+22506'],
+  },
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────

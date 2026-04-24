@@ -19,6 +19,19 @@ export const metadata: Metadata = {
     description: 'Análises de mercado, guias de compra e fiscalidade para investidores em Portugal.',
     type: 'website',
     url: 'https://www.agencygroup.pt/blog',
+    siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Blog+Agency+Group&subtitle=Mercado+Imobili%C3%A1rio+Portugal+2026+%C2%B7+An%C3%A1lises+%C2%B7+Guias+%C2%B7+Fiscalidade',
+      width: 1200,
+      height: 630,
+      alt: 'Blog Mercado Imobiliário Portugal 2026 — Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog · Mercado Imobiliário Portugal 2026',
+    description: 'Análises de mercado, guias de compra e fiscalidade para investidores em Portugal.',
+    images: ['https://www.agencygroup.pt/api/og?title=Blog+Agency+Group&subtitle=Mercado+Imobili%C3%A1rio+Portugal+2026+%C2%B7+An%C3%A1lises+%C2%B7+Guias+%C2%B7+Fiscalidade'],
   },
 }
 

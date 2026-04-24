@@ -60,6 +60,12 @@ const jsonLd = {
   },
   serviceType: 'Real Estate Sales',
   areaServed: { '@type': 'Country', name: 'Portugal' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vender Imóvel em Portugal · Processo Discreto | Agency Group',
+    description: 'Venda sem exposição pública. Compradores qualificados. Processo controlado até escritura.',
+    images: ['https://www.agencygroup.pt/api/og?title=Vender+Im%C3%B3vel+em+Portugal&subtitle=Processo+Discreto+%C2%B7+Off-Market+%C2%B7+AMI+22506'],
+  },
 }
 
 const STEPS = [

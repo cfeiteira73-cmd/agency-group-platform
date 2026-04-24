@@ -127,6 +127,12 @@ const faqJsonLd = {
       },
     },
   ],
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Investor Intelligence — Relatório de Inteligência Imobiliária Portugal 2026 | Agency Group',
+    description: 'Newsletter mensal, blog, AVM básica.',
+    images: ['https://www.agencygroup.pt/api/og?title=Investor+Intelligence&subtitle=Portugal+Real+Estate+%C2%B7+2026+Data+%C2%B7+AMI+22506'],
+  },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────

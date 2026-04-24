@@ -12,6 +12,17 @@ export const metadata: Metadata = {
     siteName: 'Agency Group',
     locale: 'pt_PT',
     type: 'website',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Vender+Im%C3%B3vel+em+Portugal&subtitle=Avalia%C3%A7%C3%A3o+Gratuita+%C2%B7+Compradores+Qualificados+40%2B+Pa%C3%ADses',
+      width: 1200, height: 630,
+      alt: 'Vender Imóvel em Portugal — Agency Group',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vender Imóvel em Portugal | Agency Group',
+    description: 'Compradores qualificados. €285M+ em vendas. Discrição total. Avaliação gratuita em 24h.',
+    images: ['https://www.agencygroup.pt/api/og?title=Vender+Im%C3%B3vel+em+Portugal&subtitle=Avalia%C3%A7%C3%A3o+Gratuita+%C2%B7+Compradores+Qualificados+40%2B+Pa%C3%ADses'],
   },
 }
 

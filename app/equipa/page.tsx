@@ -104,6 +104,12 @@ const breadcrumbSchema = {
     { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.agencygroup.pt/' },
     { '@type': 'ListItem', position: 2, name: 'Equipa', item: 'https://www.agencygroup.pt/equipa' },
   ],
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Equipa Agency Group · Consultores de Imobiliário de Luxo',
+    description: 'Boutique imobiliária de luxo em Portugal. AMI 22506.',
+    images: ['https://www.agencygroup.pt/api/og?title=A+Nossa+Equipa&subtitle=Consultores+de+Luxo+%C2%B7+AMI+22506'],
+  },
 }
 
 // ─── Advisor data ─────────────────────────────────────────────────────────────

@@ -204,6 +204,12 @@ const jsonLd = {
       },
     },
   })),
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Vendidos · Transacções Concluídas | Agency Group AMI 22506',
+    description: 'Boutique imobiliária de luxo em Portugal. AMI 22506.',
+    images: ['https://www.agencygroup.pt/api/og?title=Im%C3%B3veis+Vendidos&subtitle=Transa%C3%A7%C3%B5es+Conclu%C3%ADdas+%C2%B7+Agency+Group'],
+  },
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

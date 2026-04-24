@@ -100,6 +100,12 @@ const faqJsonLd = {
       },
     },
   ],
+  twitter: {
+    card: 'summary_large_image',
+    title: 'White-Label Platform para Agências Imobiliárias | Agency Group Tech',
+    description: 'Sofia AI + AVM + Blog. Até 100 propriedades. Setup €1.500.',
+    images: ['https://www.agencygroup.pt/api/og?title=White-Label+Platform&subtitle=AG+Tech+para+Ag%C3%AAncias+Imobili%C3%A1rias+%C2%B7+AMI+22506'],
+  },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────

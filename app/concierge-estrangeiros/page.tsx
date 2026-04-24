@@ -103,6 +103,12 @@ const faqJsonLd = {
       },
     },
   ],
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Foreign Buyer Concierge — Compra de Imóvel em Portugal para Estrangeiros | Agency Group',
+    description: 'Comissão 5% paga pelo vendedor. Comprador não paga.',
+    images: ['https://www.agencygroup.pt/api/og?title=Foreign+Buyer+Concierge&subtitle=Portugal+%C2%B7+NIF+%C2%B7+IFICI+%C2%B7+AMI+22506'],
+  },
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────

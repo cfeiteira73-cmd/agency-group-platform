@@ -29,6 +29,12 @@ export const metadata: Metadata = {
       alt: 'Contacto — Agency Group AMI 22506',
     }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Contacto · Agency Group — Imobiliário de Luxo Portugal',
+    description: 'Consultores de luxo em Portugal. WhatsApp, email e reunião presencial. AMI 22506.',
+    images: ['https://www.agencygroup.pt/api/og?title=Contacto&subtitle=Fale+com+um+Consultor+%C2%B7+AMI+22506'],
+  },
 }
 
 // ─── JSON-LD ───────────────────────────────────────────────────────────────────
