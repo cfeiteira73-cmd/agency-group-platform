@@ -354,11 +354,22 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
           <div className="art-cat-tag">{article.category}</div>
           <h1 className="art-h1">{article.title}</h1>
           <div className="art-meta-row">
-            <span>{article.readingTime} min leitura</span>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:'6px' }}>
+              <span style={{ width:'18px', height:'18px', borderRadius:'50%', background:'rgba(201,169,110,.18)', border:'1px solid rgba(201,169,110,.3)', display:'inline-flex', alignItems:'center', justifyContent:'center', fontFamily:"'DM Mono',monospace", fontSize:'.38rem', color:'#c9a96e', flexShrink:0, letterSpacing:'.04em' }}>AG</span>
+              {article.author}
+            </span>
+            <span className="dot">·</span>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:'4px' }}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.3" opacity=".7"/>
+                <path d="M8 4.5v4l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity=".7"/>
+              </svg>
+              {article.readingTime} min
+            </span>
             <span className="dot">·</span>
             <span>{formattedDate}</span>
             <span className="dot">·</span>
-            <span>{article.author}</span>
+            <span>Agency Group AMI 22506</span>
             {article.zona && (
               <>
                 <span className="dot">·</span>
