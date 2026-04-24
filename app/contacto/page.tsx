@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.agencygroup.pt/contacto',
     siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Contacto&subtitle=Fale+com+um+Consultor+%C2%B7+AMI+22506',
+      width: 1200,
+      height: 630,
+      alt: 'Contacto — Agency Group AMI 22506',
+    }],
   },
 }
 

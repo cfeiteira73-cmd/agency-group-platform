@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.agencygroup.pt/equipa',
     siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=A+Nossa+Equipa&subtitle=Consultores+de+Luxo+%C2%B7+AMI+22506',
+      width: 1200,
+      height: 630,
+      alt: 'Equipa Agency Group — Consultores Imobiliários',
+    }],
   },
 }
 

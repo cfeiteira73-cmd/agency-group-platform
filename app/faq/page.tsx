@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.agencygroup.pt/faq',
     siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=FAQ+%E2%80%94+Perguntas+Frequentes&subtitle=Portugal+%C2%B7+NHR+%C2%B7+CPCV+%C2%B7+IMT+%C2%B7+AMI+22506',
+      width: 1200,
+      height: 630,
+      alt: 'FAQ Imobiliário Portugal — Agency Group',
+    }],
   },
 }
 
