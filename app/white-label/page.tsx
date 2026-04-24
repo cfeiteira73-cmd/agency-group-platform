@@ -16,6 +16,12 @@ export const metadata: Metadata = {
       'Tecnologia AG Elite para a sua agência: AI Sofia, AVM proprietário, portal de gestão, blog SEO, CRM integrado. Beta para 5 agências seleccionadas. AMI 22506.',
     type: 'website',
     url: 'https://www.agencygroup.pt/white-label',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=White-Label+Platform&subtitle=AG+Tech+para+Ag%C3%AAncias+Imobili%C3%A1rias+%C2%B7+AMI+22506',
+      width: 1200,
+      height: 630,
+      alt: 'White-Label Platform — Agency Group Tech',
+    }],
     siteName: 'Agency Group',
   },
 }

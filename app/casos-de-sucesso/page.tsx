@@ -22,6 +22,12 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.agencygroup.pt/casos-de-sucesso',
     siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Casos+de+Sucesso&subtitle=Transa%C3%A7%C3%B5es+de+Refer%C3%AAncia+%C2%B7+Agency+Group',
+      width: 1200,
+      height: 630,
+      alt: 'Casos de Sucesso — Agency Group AMI 22506',
+    }],
   },
 }
 

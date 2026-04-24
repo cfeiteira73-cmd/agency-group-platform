@@ -24,6 +24,12 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.agencygroup.pt/vender-imovel-portugal',
     siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Vender+Im%C3%B3vel+em+Portugal&subtitle=Processo+Discreto+%C2%B7+Off-Market+%C2%B7+AMI+22506',
+      width: 1200,
+      height: 630,
+      alt: 'Vender Imóvel em Portugal — Agency Group',
+    }],
   },
 }
 

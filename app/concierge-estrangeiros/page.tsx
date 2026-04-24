@@ -24,6 +24,12 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.agencygroup.pt/concierge-estrangeiros',
     siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Foreign+Buyer+Concierge&subtitle=Portugal+%C2%B7+NIF+%C2%B7+IFICI+%C2%B7+AMI+22506',
+      width: 1200,
+      height: 630,
+      alt: 'Foreign Buyer Concierge Portugal — Agency Group',
+    }],
   },
 }
 

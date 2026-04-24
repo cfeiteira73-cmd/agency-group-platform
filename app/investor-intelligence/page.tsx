@@ -24,6 +24,12 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.agencygroup.pt/investor-intelligence',
     siteName: 'Agency Group',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Investor+Intelligence&subtitle=Portugal+Real+Estate+%C2%B7+2026+Data+%C2%B7+AMI+22506',
+      width: 1200,
+      height: 630,
+      alt: 'Investor Intelligence Portugal 2026 — Agency Group',
+    }],
   },
 }
 
