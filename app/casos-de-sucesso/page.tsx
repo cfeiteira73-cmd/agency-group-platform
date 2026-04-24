@@ -402,7 +402,7 @@ export default function CasosDeSucessoPage() {
                 {/* ── Deal metrics strip ──────────────────────────────────── */}
                 <div
                   style={{
-                    backgroundColor: '#060d08',
+                    backgroundColor: '#0c1f15',
                     padding: '20px 40px',
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
