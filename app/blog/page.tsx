@@ -156,9 +156,9 @@ export default async function BlogPage({
         <ul className="nav-links">
           <li><Link href="/imoveis">Imóveis</Link></li>
           <li><Link href="/#avaliacao">AVM</Link></li>
-          <li><Link href="/#simulador">Crédito</Link></li>
           <li><Link href="/#nhr">NHR</Link></li>
-          <li><Link href="/reports">Reports</Link></li>
+          <li><Link href="/relatorio-2026">Relatório</Link></li>
+          <li><Link href="/contacto" style={{ opacity: 1, color: '#1c4a35', fontWeight: 500 }}>Contacto →</Link></li>
         </ul>
         <button
           className="nav-burger"

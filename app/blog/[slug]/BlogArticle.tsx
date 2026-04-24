@@ -335,8 +335,8 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
         <ul className="art-nav-links">
           <li><Link href="/blog">← Blog</Link></li>
           <li><Link href="/imoveis">Imóveis</Link></li>
-          <li><Link href="/#avm">AVM</Link></li>
           <li><Link href="/#nhr">NHR</Link></li>
+          <li><Link href="/contacto" style={{ color: '#c9a96e', opacity: 1 }}>Contacto →</Link></li>
         </ul>
         <a
           href="https://wa.me/351919948986"
