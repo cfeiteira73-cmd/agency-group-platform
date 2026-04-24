@@ -16,7 +16,6 @@
 //   • Max 5 items per section to avoid cognitive overload
 // =============================================================================
 
-import type { CRMContact, Deal } from './types'
 import type { ScoredContact } from '../lib/leadScoring'
 import type { ScoredDeal } from '../lib/dealScoring'
 

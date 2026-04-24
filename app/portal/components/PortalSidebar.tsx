@@ -2,8 +2,7 @@
 
 import { type ReactNode } from 'react'
 import Link from 'next/link'
-import { NAV, SECTION_NAMES } from './constants'
-import type { SectionId } from './types'
+import { NAV } from './constants'
 import Tooltip from './Tooltip'
 
 interface PortalSidebarProps {
