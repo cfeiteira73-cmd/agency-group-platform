@@ -120,3 +120,11 @@ export type SectionId =
   | 'analytics' | 'investidores' | 'outbound' | 'videoStudio'
   | 'photos' | 'agentai'
   | 'offmarket' | 'partners' | 'dealdesk'
+
+export interface DashboardTheme {
+  darkMode: boolean
+  cardBg: string
+  cardText: string
+  mutedText: string
+  borderCol: string
+}

@@ -55,6 +55,17 @@ export const STAGE_COLOR: Record<string, string> = {
   'Escritura Marcada':'#1c4a35', 'Escritura Concluída':'#1c4a35',
 }
 
+export const STAGE_TARGET_DAYS: Record<string, number> = {
+  'Angariação': 14,
+  'Proposta Enviada': 7,
+  'Proposta Aceite': 5,
+  'Due Diligence': 14,
+  'CPCV Assinado': 30,
+  'Financiamento': 21,
+  'Escritura Marcada': 7,
+  'Escritura Concluída': 0,
+}
+
 export const CHECKLISTS: Record<string, string[]> = {
   'Angariação':['Caderneta predial urbana','Certidão de teor do registo predial','Licença de utilização / habitação','Certificado energético (EPC)','Planta do imóvel','Fotos profissionais realizadas','Relatório AVM gerado','Contrato de mediação assinado','Ficha técnica do imóvel'],
   'Proposta Enviada':['Carta de oferta formal enviada','Prova de fundos do comprador','Carta de pré-aprovação bancária','Identificação do comprador (CC/Passaporte)','NIF do comprador confirmado'],

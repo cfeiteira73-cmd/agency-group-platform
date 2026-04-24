@@ -4,16 +4,20 @@ import { useUIStore } from '../stores/uiStore'
 import { useDealStore } from '../stores/dealStore'
 import { useCRMStore } from '../stores/crmStore'
 import type { SectionId } from './types'
-import { PIPELINE_STAGES, STAGE_PCT, STAGE_COLOR } from './constants'
+import { PIPELINE_STAGES, STAGE_TARGET_DAYS } from './constants'
 import { useStaggerIn, useFadeIn } from '../hooks/useGSAPAnimations'
 import { SkeletonKPIGrid } from './PortalSkeleton'
-import Tooltip from './Tooltip'
 import { parsePTValue as parsePTValueShared, computeStageAvgDays } from '../utils/format'
 import DashboardPriorityCenter from './DashboardPriorityCenter'
 import IntelligencePanel from './IntelligencePanel'
 import type { PricingInsightEntry } from './IntelligencePanel'
 import RevenueForecastPanel from './RevenueForecastPanel'
 import ExecutiveRankingPanel from './ExecutiveRankingPanel'
+import DashboardPipelineVisual from './DashboardPipelineVisual'
+import DashboardSofiaInsights from './DashboardSofiaInsights'
+import DashboardSidePanels from './DashboardSidePanels'
+import DashboardQuickActions from './DashboardQuickActions'
+import type { DashboardTheme } from './types'
 import { scoreAllContacts } from '../lib/leadScoring'
 import { scoreAllDeals } from '../lib/dealScoring'
 import type { ScoredContact } from '../lib/leadScoring'
@@ -26,7 +30,6 @@ import { generateExecutiveRanking } from '../lib/intelligence/executiveRanking'
 import { predictAllDeals } from '../lib/intelligence/prediction'
 import { computeAllPricingInsights } from '../lib/intelligence/pricing'
 import { updateLeadScoreMemory, updateDealScoreMemory, batchDealDeltas } from '../lib/intelligence/scoringMemory'
-import { getDeltaBadge } from '../lib/intelligence/deltaHelpers'
 import type { Opportunity } from '../lib/intelligence/opportunity'
 import type { AgentCopilotOutput } from '../lib/intelligence/copilot'
 import type { ForecastOutput } from '../lib/intelligence/forecast'
@@ -148,31 +151,6 @@ function Sparkline({ data, color, id }: { data: number[]; color: string; id: str
   )
 }
 
-// ─── Relative time helper ─────────────────────────────────────────────────────
-function relativeTime(dateStr: string): string {
-  if (!dateStr) return '—'
-  const now = Date.now()
-  const diff = now - new Date(dateStr).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 60) return `há ${mins}m`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `há ${hrs}h`
-  const days = Math.floor(hrs / 24)
-  if (days === 1) return 'ontem'
-  return `há ${days} dias`
-}
-
-// ─── Status badge colour ──────────────────────────────────────────────────────
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    vip: '#c9a96e',
-    cliente: '#1c4a35',
-    prospect: '#3a7bd5',
-    lead: '#888',
-  }
-  return map[status] ?? '#888'
-}
-
 // ─── Portuguese currency parser — delegated to shared utility ─────────────────
 const parseValorLocal = parsePTValueShared
 
@@ -190,100 +168,11 @@ const TICKER_ITEMS = [
   '🇺🇸 Norte-americanos 16% · Franceses 13% compradores PT',
 ]
 
-// ─── Stage velocity targets ───────────────────────────────────────────────────
-const STAGE_TARGET_DAYS: Record<string, number> = {
-  'Angariação': 14,
-  'Proposta Enviada': 7,
-  'Proposta Aceite': 5,
-  'Due Diligence': 14,
-  'CPCV Assinado': 30,
-  'Financiamento': 21,
-  'Escritura Marcada': 7,
-  'Escritura Concluída': 0,
-}
-
 // STAGE_AVG_DAYS is now computed from real deal data in the component body
 // (see stageAvgDays useMemo below) — no more hardcoded mock values.
 
 // Module-level constant — must NOT be inside the component body (re-definition on every render).
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000 // 24 h
-
-// ─── Quick actions config ─────────────────────────────────────────────────────
-const QUICK_ACTIONS: {
-  label: string
-  sub: string
-  sec: SectionId
-  color: string
-  svg: string
-  badge?: string
-  badgeRed?: boolean
-}[] = [
-  {
-    label: 'CRM Clientes',
-    sub: 'Gestão relacional · Leads & VIPs',
-    sec: 'crm',
-    color: '#c9a96e',
-    svg: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
-  },
-  {
-    label: 'AVM Avaliação',
-    sub: '6 metodologias RICS · Relatório PDF',
-    sec: 'avm',
-    color: '#1c4a35',
-    svg: 'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z',
-  },
-  {
-    label: 'Deal Radar',
-    sub: 'IA · Leilões + Banca + Mercado livre',
-    sec: 'radar',
-    color: '#c9a96e',
-    svg: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-    badge: '3 novos',
-    badgeRed: false,
-  },
-  {
-    label: 'Pipeline CPCV',
-    sub: 'Deals activos · Em negociação',
-    sec: 'pipeline',
-    color: '#1c4a35',
-    svg: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-  },
-  {
-    label: 'Marketing AI',
-    sub: 'Multi-formato · 6 idiomas',
-    sec: 'marketing',
-    color: '#c9a96e',
-    svg: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z',
-  },
-  {
-    label: 'Consultor Jurídico',
-    sub: 'CPCV · NHR · Golden Visa · IMT',
-    sec: 'juridico',
-    color: '#1c4a35',
-    svg: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
-  },
-  {
-    label: 'Investor Pitch',
-    sub: 'Deal memos · Investor matching',
-    sec: 'investorpitch',
-    color: '#c9a96e',
-    svg: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
-  },
-  {
-    label: 'Market Pulse',
-    sub: 'Market intelligence · 2026',
-    sec: 'pulse',
-    color: '#1c4a35',
-    svg: 'M13 10V3L4 14h7v7l9-11h-7z',
-  },
-  {
-    label: 'Campanhas',
-    sub: 'Email · WhatsApp · Drip',
-    sec: 'campanhas',
-    color: '#c9a96e',
-    svg: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-  },
-]
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENT
@@ -360,11 +249,9 @@ export default function PortalDashboard({
   // ── GSAP animation refs ──────────────────────────────────────────────────────
   const pageRef = useRef<HTMLDivElement>(null)
   const kpiGridRef = useRef<HTMLDivElement>(null)
-  const actionsGridRef = useRef<HTMLDivElement>(null)
 
   useFadeIn(pageRef, { duration: 0.4 })
   useStaggerIn(kpiGridRef, '[data-stagger]', { delay: 0.1 })
-  useStaggerIn(actionsGridRef, '[data-stagger]', { delay: 0.3 })
 
   useEffect(() => {
     setCurrentTime(new Date())
@@ -913,10 +800,27 @@ export default function PortalDashboard({
   ], [liveGCI, livePipeline, liveDealCount, liveKPIs.source, leadsAtivos, vipContacts, liveTotalContacts, followUpsHoje, cpcvDeals, liveClosingNow, closedDeals, convRate, pipelineTotal, stageBreakdown, cicloMedioDays, currentMonthPT, kpiDeltas])
 
   // ── Styles ───────────────────────────────────────────────────────────────────
-  const cardBg = darkMode ? '#0f1e16' : '#ffffff'
-  const cardText = darkMode ? '#f4f0e6' : '#0e0e0d'
-  const mutedText = darkMode ? 'rgba(240,237,228,.55)' : 'rgba(14,14,13,.50)'
-  const borderCol = darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.07)'
+  const theme: DashboardTheme = useMemo(() => ({
+    darkMode,
+    cardBg: darkMode ? '#0f1e16' : '#ffffff',
+    cardText: darkMode ? '#f4f0e6' : '#0e0e0d',
+    mutedText: darkMode ? 'rgba(240,237,228,.55)' : 'rgba(14,14,13,.50)',
+    borderCol: darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.07)',
+  }), [darkMode])
+  const { cardBg, cardText, mutedText, borderCol } = theme
+
+  const handleSofiaRefresh = useCallback(async () => {
+    setSofiaRefreshing(true)
+    try {
+      const res = await fetch('/api/automation/daily-brief')
+      if (res.ok) {
+        const data = await res.json() as { market_insight?: string }
+        if (data?.market_insight) setSofiaMarketBrief(data.market_insight)
+        setSofiaTs(new Date())
+      }
+    } catch { /* network error */ }
+    finally { setSofiaRefreshing(false) }
+  }, [])
 
   const greeting =
     currentTime.getHours() < 12
@@ -1676,1116 +1580,51 @@ export default function PortalDashboard({
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 4 — PIPELINE VISUAL + VELOCIDADE
       ══════════════════════════════════════════════════════════════════════ */}
-      {stageBreakdown.length > 0 && (
-        <div
-          className="pipeline-section"
-          style={{
-            background: cardBg,
-            border: `1px solid ${borderCol}`,
-            padding: '22px 24px',
-            marginBottom: '24px',
-            borderRadius: '12px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '18px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "'Cormorant',serif",
-                fontSize: '1.1rem',
-                fontWeight: 400,
-                color: cardText,
-              }}
-            >
-              Pipeline por Fase
-            </div>
-            <button
-              type="button"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                fontFamily: "'DM Mono',monospace",
-                fontSize: '.52rem',
-                color: darkMode ? '#6fcf97' : '#1c4a35',
-                cursor: 'pointer',
-                letterSpacing: '.08em',
-                transition: 'opacity .15s ease',
-              }}
-              onClick={() => onSetSection('pipeline')}
-            >
-              Ver tudo →
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {stageBreakdown.map(s => {
-              const barWidth = (s.value / maxStageVal) * 100
-              const color = STAGE_COLOR[s.stage] ?? '#888'
-              const avgDays = stageAvgDays[s.stage] ?? 0
-              const targetDays = STAGE_TARGET_DAYS[s.stage] ?? 999
-              const velocityOk = avgDays <= targetDays
-              return (
-                <div
-                  key={s.stage}
-                  className="pipeline-row"
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'minmax(80px, 160px) 1fr minmax(60px, 120px)',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '6px 8px',
-                    borderRadius: '6px',
-                    transition: 'background .15s',
-                  }}
-                  onClick={() => onSetSection('pipeline')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span
-                          style={{
-                            fontFamily: "'DM Mono',monospace",
-                            fontSize: '.60rem',
-                            color: cardText,
-                            letterSpacing: '.04em',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            maxWidth: '100%',
-                          }}
-                        >
-                          {s.stage}
-                        </span>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '18px',
-                            height: '18px',
-                            background: `${color}1a`,
-                            borderRadius: '50%',
-                            fontFamily: "'DM Mono',monospace",
-                            fontSize: '.52rem',
-                            color,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {s.count}
-                        </span>
-                      </div>
-                      {/* Velocity row */}
-                      {avgDays > 0 && (
-                        <div
-                          style={{
-                            fontFamily: "'DM Mono',monospace",
-                            fontSize: '.52rem',
-                            color: velocityOk ? '#4a9c7a' : '#dc2626',
-                            letterSpacing: '.04em',
-                            marginTop: '2px',
-                          }}
-                        >
-                          {velocityOk ? '✓' : '⚠'} ~{avgDays}d {velocityOk ? '(dentro do alvo)' : `(alvo: ${targetDays}d)`}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      height: '6px',
-                      background: darkMode ? 'rgba(244,240,230,.06)' : 'rgba(14,14,13,.06)',
-                      borderRadius: '3px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${barWidth}%`,
-                        height: '100%',
-                        background: color,
-                        borderRadius: '3px',
-                        transition: 'width .4s ease',
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'Cormorant',serif",
-                      fontSize: '.75rem',
-                      color,
-                      textAlign: 'right',
-                      letterSpacing: '.04em',
-                    }}
-                  >
-                    €{(s.value / 1e6).toFixed(2)}M
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-          {/* Velocity legend */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '16px',
-              marginTop: '14px',
-              paddingTop: '12px',
-              borderTop: `1px solid ${borderCol}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4a9c7a' }} />
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: mutedText, fontWeight: 500 }}>
-                Dentro do alvo de velocidade
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#dc2626' }} />
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: mutedText, fontWeight: 500 }}>
-                Acima do alvo — acção requerida
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+      <DashboardPipelineVisual
+        theme={theme}
+        stageBreakdown={stageBreakdown}
+        maxStageVal={maxStageVal}
+        stageAvgDays={stageAvgDays}
+        onViewPipeline={() => onSetSection('pipeline')}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 5 — SOFIA INSIGHTS 2×2
       ══════════════════════════════════════════════════════════════════════ */}
-      <div
-        style={{
-          background: darkMode ? '#0f1e16' : 'linear-gradient(135deg,#fafaf8,#f4f0e6)',
-          border: `1px solid ${borderCol}`,
-          marginBottom: '24px',
-          overflow: 'hidden',
-          borderRadius: '12px',
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '16px 22px',
-            borderBottom: `1px solid ${borderCol}`,
-            background: darkMode ? 'rgba(28,74,53,.3)' : 'rgba(28,74,53,.04)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '28px',
-                height: '28px',
-                background: '#1c4a35',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '.75rem',
-              }}
-            >
-              🤖
-            </div>
-            <div>
-              <div
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.54rem',
-                  letterSpacing: '.14em',
-                  textTransform: 'uppercase',
-                  color: darkMode ? '#6fcf97' : '#1c4a35',
-                  fontWeight: 600,
-                }}
-              >
-                Sofia Insights
-              </div>
-              <div
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.54rem',
-                  color: mutedText,
-                  marginTop: '1px',
-                }}
-              >
-                Análise inteligente · {sofiaTs.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            style={{
-              padding: '5px 14px',
-              background: 'transparent',
-              border: `1px solid ${darkMode ? 'rgba(111,207,151,.2)' : 'rgba(28,74,53,.2)'}`,
-              color: darkMode ? '#6fcf97' : '#1c4a35',
-              fontFamily: "'DM Mono',monospace",
-              fontSize: '.52rem',
-              cursor: sofiaRefreshing ? 'not-allowed' : 'pointer',
-              letterSpacing: '.06em',
-              opacity: sofiaRefreshing ? 0.5 : 1,
-              transition: 'all .15s',
-              borderRadius: '4px',
-            }}
-            disabled={sofiaRefreshing}
-            onClick={async () => {
-              setSofiaRefreshing(true)
-              try {
-                const res = await fetch('/api/automation/daily-brief')
-                if (res.ok) {
-                  const data = await res.json() as { market_insight?: string }
-                  if (data?.market_insight) setSofiaMarketBrief(data.market_insight)
-                  setSofiaTs(new Date())
-                }
-              } catch { /* network error — brief stays as-is */ }
-              finally { setSofiaRefreshing(false) }
-            }}
-          >
-            {sofiaRefreshing ? '✦ A actualizar...' : '↻ Refresh'}
-          </button>
-        </div>
-
-        {/* 2×2 Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gridTemplateRows: 'auto auto',
-          }}
-        >
-          {/* Cell 1 — Oportunidade do Dia */}
-          <div
-            className="sofia-card"
-            style={{
-              padding: '18px 20px',
-              borderRight: `1px solid ${borderCol}`,
-              borderBottom: `1px solid ${borderCol}`,
-              transition: 'background .15s',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginBottom: '10px',
-              }}
-            >
-              <span style={{ fontSize: '.9rem' }}>💡</span>
-              <span
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.54rem',
-                  letterSpacing: '.1em',
-                  textTransform: 'uppercase',
-                  color: '#c9a96e',
-                }}
-              >
-                Oportunidade do Dia
-              </span>
-            </div>
-            <div
-              style={{
-                fontFamily: "'Jost',sans-serif",
-                fontSize: '.82rem',
-                color: cardText,
-                lineHeight: 1.65,
-                fontStyle: 'italic',
-              }}
-            >
-              {sofiaInsights.opportunity}
-            </div>
-          </div>
-
-          {/* Cell 2 — Mercado Hoje */}
-          <div
-            className="sofia-card"
-            style={{
-              padding: '18px 20px',
-              borderBottom: `1px solid ${borderCol}`,
-              transition: 'background .15s',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginBottom: '10px',
-              }}
-            >
-              <span style={{ fontSize: '.9rem' }}>📊</span>
-              <span
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.54rem',
-                  letterSpacing: '.1em',
-                  textTransform: 'uppercase',
-                  color: '#3a7bd5',
-                }}
-              >
-                Mercado Hoje
-              </span>
-            </div>
-            <div
-              style={{
-                fontFamily: "'DM Mono',monospace",
-                fontSize: '.52rem',
-                color: cardText,
-                lineHeight: 1.9,
-                whiteSpace: 'pre-line',
-              }}
-            >
-              {sofiaInsights.market}
-            </div>
-          </div>
-
-          {/* Cell 3 — Acção Prioritária */}
-          <div
-            className="sofia-card"
-            style={{
-              padding: '18px 20px',
-              borderRight: `1px solid ${borderCol}`,
-              transition: 'background .15s',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginBottom: '10px',
-              }}
-            >
-              <span style={{ fontSize: '.9rem' }}>🎯</span>
-              <span
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.54rem',
-                  letterSpacing: '.1em',
-                  textTransform: 'uppercase',
-                  color: darkMode ? '#6fcf97' : '#1c4a35',
-                }}
-              >
-                Acção Prioritária
-              </span>
-            </div>
-            <div
-              style={{
-                fontFamily: "'Jost',sans-serif",
-                fontSize: '.82rem',
-                color: cardText,
-                lineHeight: 1.65,
-                fontStyle: 'italic',
-              }}
-            >
-              {sofiaInsights.action}
-            </div>
-            {topDeals.length > 0 && (
-              <button
-                type="button"
-                style={{
-                  marginTop: '12px',
-                  padding: '4px 12px',
-                  background: darkMode ? 'rgba(28,74,53,.25)' : 'rgba(28,74,53,.06)',
-                  border: `1px solid ${darkMode ? 'rgba(111,207,151,.25)' : 'rgba(28,74,53,.2)'}`,
-                  color: darkMode ? '#6fcf97' : '#1c4a35',
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.52rem',
-                  cursor: 'pointer',
-                  letterSpacing: '.06em',
-                  borderRadius: '4px',
-                }}
-                onClick={() => onSetSection('pipeline')}
-              >
-                → Ver Pipeline
-              </button>
-            )}
-          </div>
-
-          {/* Cell 4 — Receita em Risco */}
-          <div
-            className="sofia-card"
-            style={{
-              padding: '18px 20px',
-              borderLeft: stalledDeals.length > 0 ? '3px solid rgba(220,38,38,.4)' : 'none',
-              transition: 'background .15s',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginBottom: '10px',
-              }}
-            >
-              <span style={{ fontSize: '.9rem' }}>💰</span>
-              <span
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.54rem',
-                  letterSpacing: '.1em',
-                  textTransform: 'uppercase',
-                  color: stalledDeals.length > 0 ? '#dc2626' : '#4a9c7a',
-                }}
-              >
-                Receita em Risco
-              </span>
-            </div>
-            {stalledDeals.length > 0 ? (
-              <>
-                <div
-                  style={{
-                    fontFamily: "'Cormorant',serif",
-                    fontSize: '1.6rem',
-                    fontWeight: 600,
-                    color: '#dc2626',
-                    lineHeight: 1,
-                    marginBottom: '4px',
-                  }}
-                >
-                  €{Math.round(stalledGCI / 1000)}K
-                </div>
-                <div
-                  style={{
-                    fontFamily: "'DM Mono',monospace",
-                    fontSize: '.52rem',
-                    color: mutedText,
-                    whiteSpace: 'pre-line',
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {sofiaInsights.risk}
-                </div>
-                <button
-                  type="button"
-                  style={{
-                    marginTop: '10px',
-                    padding: '4px 12px',
-                    background: 'rgba(220,38,38,.06)',
-                    border: '1px solid rgba(220,38,38,.25)',
-                    color: '#dc2626',
-                    fontFamily: "'DM Mono',monospace",
-                    fontSize: '.52rem',
-                    cursor: 'pointer',
-                    letterSpacing: '.06em',
-                    borderRadius: '4px',
-                  }}
-                  onClick={() => onSetSection('pipeline')}
-                >
-                  → Seguimento urgente
-                </button>
-              </>
-            ) : (
-              <div
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.52rem',
-                  color: '#4a9c7a',
-                  lineHeight: 1.7,
-                  whiteSpace: 'pre-line',
-                }}
-              >
-                {sofiaInsights.risk}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <DashboardSofiaInsights
+        theme={theme}
+        insights={sofiaInsights}
+        sofiaTs={sofiaTs}
+        sofiaRefreshing={sofiaRefreshing}
+        stalledGCI={stalledGCI}
+        stalledCount={stalledDeals.length}
+        hasActiveDeals={topDeals.length > 0}
+        onRefresh={handleSofiaRefresh}
+        onNavigatePipeline={() => onSetSection('pipeline')}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 6 — DOIS PAINÉIS LADO A LADO
       ══════════════════════════════════════════════════════════════════════ */}
-      <div
-        className="side-panels"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '16px',
-          marginBottom: '28px',
-        }}
-      >
-        {/* Painel Esquerdo — Actividade Recente CRM */}
-        <div
-          style={{
-            background: cardBg,
-            border: `1px solid ${borderCol}`,
-            padding: '22px 24px',
-            borderRadius: '12px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '16px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "'Cormorant',serif",
-                fontSize: '1.1rem',
-                fontWeight: 400,
-                color: cardText,
-              }}
-            >
-              Actividade Recente CRM
-            </div>
-            <button
-              type="button"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                fontFamily: "'DM Mono',monospace",
-                fontSize: '.52rem',
-                color: darkMode ? '#6fcf97' : '#1c4a35',
-                cursor: 'pointer',
-                letterSpacing: '.08em',
-                transition: 'opacity .15s ease',
-              }}
-              onClick={() => onSetSection('crm')}
-            >
-              Ver CRM →
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {recentContacts.length === 0 && (
-              <div
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.52rem',
-                  color: mutedText,
-                  padding: '16px 0',
-                  textAlign: 'center',
-                }}
-              >
-                📋 Sem contactos no CRM
-              </div>
-            )}
-            {recentContacts.map(c => {
-              const initials = c.name
-                .split(' ')
-                .slice(0, 2)
-                .map(n => n[0])
-                .join('')
-                .toUpperCase()
-              const sColor = statusColor(c.status)
-              const timeAgo = relativeTime(c.lastContact || c.createdAt || '')
-              const needsFollowUp = c.nextFollowUp && c.nextFollowUp <= today
-              return (
-                <div
-                  key={c.id}
-                  className="recent-row"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '10px 8px',
-                    transition: 'background .15s',
-                    borderBottom: `1px solid ${borderCol}`,
-                    position: 'relative',
-                  }}
-                  onClick={() => onSetSection('crm')}
-                >
-                  {/* Priority dot */}
-                  {!!needsFollowUp && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '8px',
-                        width: '7px',
-                        height: '7px',
-                        borderRadius: '50%',
-                        background: '#dc2626',
-                      }}
-                    />
-                  )}
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '50%',
-                      background: `${sColor}22`,
-                      border: `1.5px solid ${sColor}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.62rem',
-                      color: sColor,
-                      flexShrink: 0,
-                      letterSpacing: '.04em',
-                    }}
-                  >
-                    {initials}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '2px',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "'Jost',sans-serif",
-                          fontSize: '.84rem',
-                          fontWeight: 500,
-                          color: cardText,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {c.name}
-                      </span>
-                      <span
-                        style={{
-                          padding: '1px 6px',
-                          background: `${sColor}18`,
-                          color: sColor,
-                          fontFamily: "'DM Mono',monospace",
-                          fontSize: '.52rem',
-                          letterSpacing: '.08em',
-                          textTransform: 'uppercase',
-                          flexShrink: 0,
-                          borderRadius: '3px',
-                        }}
-                      >
-                        {c.status}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "'DM Mono',monospace",
-                        fontSize: '.52rem',
-                        color: mutedText,
-                        letterSpacing: '.04em',
-                      }}
-                    >
-                      {c.nationality || '—'} · €{((c.budgetMax ?? 0) / 1000).toFixed(0)}K max · {timeAgo}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Painel Direito — Deals em Destaque */}
-        <div
-          style={{
-            background: cardBg,
-            border: `1px solid ${borderCol}`,
-            padding: '22px 24px',
-            borderRadius: '12px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '16px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: "'Cormorant',serif",
-                fontSize: '1.1rem',
-                fontWeight: 400,
-                color: cardText,
-              }}
-            >
-              Deals em Destaque
-            </div>
-            <button
-              type="button"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                fontFamily: "'DM Mono',monospace",
-                fontSize: '.52rem',
-                color: darkMode ? '#6fcf97' : '#1c4a35',
-                cursor: 'pointer',
-                letterSpacing: '.08em',
-                transition: 'opacity .15s ease',
-              }}
-              onClick={() => onSetSection('pipeline')}
-            >
-              Ver pipeline →
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {topDeals.length === 0 && (
-              <div
-                style={{
-                  fontFamily: "'DM Mono',monospace",
-                  fontSize: '.52rem',
-                  color: mutedText,
-                  padding: '16px 0',
-                  textAlign: 'center',
-                }}
-              >
-                🏠 Sem deals activos
-              </div>
-            )}
-            {topDeals.map(d => {
-              const val = parseValorLocal(d.valor)
-              const pct = STAGE_PCT[d.fase] ?? 0
-              const color = STAGE_COLOR[d.fase] ?? '#888'
-              const pred  = dealPredictionsMap.get(d.ref ?? '')
-              const delta = dealDeltaMap.get(d.id) ?? null
-              const badge = getDeltaBadge(delta)
-              return (
-                <div
-                  key={d.id}
-                  className="top-deal"
-                  style={{
-                    padding: '12px 8px',
-                    borderBottom: `1px solid ${borderCol}`,
-                    transition: 'background .15s',
-                  }}
-                  onClick={() => {
-                    onSetSection('pipeline')
-                    if (onSetPriceHistoryId && d.imovel) onSetPriceHistoryId(d.imovel)
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: '8px',
-                      flexWrap: 'wrap',
-                      gap: '4px',
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          marginBottom: '2px',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontFamily: "'DM Mono',monospace",
-                            fontSize: '.52rem',
-                            color: mutedText,
-                            letterSpacing: '.08em',
-                          }}
-                        >
-                          {d.ref}
-                        </span>
-                        <span
-                          style={{
-                            padding: '1px 7px',
-                            background: `${color}1a`,
-                            color,
-                            fontFamily: "'DM Mono',monospace",
-                            fontSize: '.52rem',
-                            letterSpacing: '.06em',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          {d.fase}
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: "'Jost',sans-serif",
-                          fontSize: '.84rem',
-                          fontWeight: 500,
-                          color: cardText,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {d.imovel}
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: "'DM Mono',monospace",
-                          fontSize: '.52rem',
-                          color: mutedText,
-                          marginTop: '2px',
-                        }}
-                      >
-                        {d.comprador}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "'Cormorant',serif",
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        color: '#c9a96e',
-                        flexShrink: 0,
-                        marginLeft: '12px',
-                      }}
-                    >
-                      €{(val / 1e6).toFixed(2)}M
-                    </div>
-                  </div>
-                  {/* Progress bar */}
-                  <div
-                    style={{
-                      height: '3px',
-                      background: darkMode ? 'rgba(244,240,230,.08)' : 'rgba(14,14,13,.06)',
-                      borderRadius: '2px',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${pct}%`,
-                        height: '100%',
-                        background: color,
-                        borderRadius: '2px',
-                        transition: 'width .4s ease',
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginTop: '4px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontFamily: "'DM Mono',monospace",
-                        fontSize: '.52rem',
-                        color: mutedText,
-                        letterSpacing: '.04em',
-                      }}
-                    >
-                      {pct}% concluído
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {/* Score delta badge */}
-                      {badge.show && (
-                        <span
-                          style={{
-                            fontFamily: "'DM Mono',monospace",
-                            fontSize: '.48rem',
-                            color: badge.color,
-                            letterSpacing: '.04em',
-                          }}
-                        >
-                          {badge.symbol} {badge.label}
-                        </span>
-                      )}
-                      {/* Closure prediction badge */}
-                      {pred && (
-                        <span
-                          style={{
-                            fontFamily: "'DM Mono',monospace",
-                            fontSize: '.48rem',
-                            color: pred.prediction.closureProbability >= 70
-                              ? '#6fcf97'
-                              : pred.prediction.closureProbability >= 40
-                              ? '#f59e0b'
-                              : '#ef4444',
-                            letterSpacing: '.04em',
-                          }}
-                        >
-                          🎯 {pred.prediction.closureProbability}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+      <DashboardSidePanels
+        theme={theme}
+        recentContacts={recentContacts}
+        today={today}
+        topDeals={topDeals}
+        onSetSection={onSetSection}
+        onSetPriceHistoryId={onSetPriceHistoryId}
+        dealPredictionsMap={dealPredictionsMap}
+        dealDeltaMap={dealDeltaMap}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 7 — QUICK ACTIONS 3×3
       ══════════════════════════════════════════════════════════════════════ */}
-      <div style={{ marginBottom: '28px' }}>
-        <div
-          style={{
-            fontFamily: "'DM Mono',monospace",
-            fontSize: '.52rem',
-            letterSpacing: '.18em',
-            textTransform: 'uppercase',
-            color: mutedText,
-            marginBottom: '14px',
-          }}
-        >
-          Ferramentas &amp; Módulos
-        </div>
-        <div
-          ref={actionsGridRef}
-          className="qa-grid"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3,1fr)',
-            gap: '14px',
-          }}
-        >
-          {QUICK_ACTIONS.map(a => {
-            const needsAction = a.sec === 'crm' && followUpsHoje > 0
-            return (
-              <Tooltip key={a.label} content={a.sub} darkMode={darkMode} position="top">
-              <div
-                data-stagger=""
-                className="qa-card"
-                role="button"
-                tabIndex={0}
-                style={{
-                  background: cardBg,
-                  border: `1px solid ${needsAction ? 'rgba(220,38,38,.25)' : borderCol}`,
-                  padding: '16px 18px',
-                  cursor: 'pointer',
-                  transition: 'background .15s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '14px',
-                  position: 'relative',
-                  borderRadius: '12px',
-                }}
-                onClick={() => onSetSection(a.sec)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSetSection(a.sec) } }}
-              >
-                {/* Priority indicator */}
-                {!!needsAction && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      width: '7px',
-                      height: '7px',
-                      borderRadius: '50%',
-                      background: '#dc2626',
-                    }}
-                  />
-                )}
-                <div
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    background: darkMode ? `${a.color}28` : `${a.color}14`,
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={a.color}
-                    strokeWidth="1.5"
-                    width="20"
-                    height="20"
-                  >
-                    <path d={a.svg} />
-                  </svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                    <div
-                      style={{
-                        fontFamily: "'Jost',sans-serif",
-                        fontSize: '.88rem',
-                        fontWeight: 600,
-                        color: cardText,
-                      }}
-                    >
-                      {a.label}
-                    </div>
-                    {/* Badge count */}
-                    {!!a.badge && (
-                      <span
-                        style={{
-                          padding: '1px 6px',
-                          background: a.badgeRed ? 'rgba(220,38,38,.1)' : darkMode ? 'rgba(28,74,53,.35)' : 'rgba(28,74,53,.08)',
-                          color: a.badgeRed ? '#dc2626' : darkMode ? '#6fcf97' : '#1c4a35',
-                          fontFamily: "'DM Mono',monospace",
-                          fontSize: '.54rem',
-                          letterSpacing: '.06em',
-                          borderRadius: '2px',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {a.badge}
-                      </span>
-                    )}
-                    {/* CRM follow-up count */}
-                    {a.sec === 'crm' && followUpsHoje > 0 && (
-                      <span
-                        style={{
-                          padding: '1px 6px',
-                          background: 'rgba(220,38,38,.1)',
-                          color: '#dc2626',
-                          fontFamily: "'DM Mono',monospace",
-                          fontSize: '.54rem',
-                          letterSpacing: '.06em',
-                          borderRadius: '2px',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {followUpsHoje} urgente{followUpsHoje > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'DM Mono',monospace",
-                      fontSize: '.52rem',
-                      color: mutedText,
-                      letterSpacing: '.04em',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {a.sub}
-                  </div>
-                </div>
-                <div
-                  className="qa-arrow"
-                  style={{
-                    fontFamily: "'DM Mono',monospace",
-                    fontSize: '.7rem',
-                    color: a.color,
-                    opacity: 0,
-                    transform: 'translateX(-4px)',
-                    transition: 'opacity .15s ease, transform .15s ease',
-                    flexShrink: 0,
-                  }}
-                >
-                  →
-                </div>
-              </div>
-              </Tooltip>
-            )
-          })}
-        </div>
-      </div>
+      <DashboardQuickActions
+        theme={theme}
+        followUpsHoje={followUpsHoje}
+        onSetSection={onSetSection}
+      />
 
       {/* ══════════════════════════════════════════════════════════════════════
           SECÇÃO 8 — MARKET TICKER
