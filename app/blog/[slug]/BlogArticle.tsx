@@ -351,6 +351,16 @@ export default function BlogArticle({ article, relatedArticles }: BlogArticlePro
       {/* Hero */}
       <section className="art-hero" style={{ backgroundImage: heroGradient }}>
         <div className="art-hero-inner">
+          {/* Breadcrumb */}
+          <nav aria-label="Breadcrumb" style={{ marginBottom: '20px' }}>
+            <ol style={{ display:'flex', alignItems:'center', gap:'8px', listStyle:'none', fontFamily:"'DM Mono',monospace", fontSize:'.46rem', letterSpacing:'.14em', color:'rgba(244,240,230,.35)' }}>
+              <li><Link href="/" style={{ color:'rgba(244,240,230,.35)', textDecoration:'none', transition:'color .2s' }} onMouseOver={e=>(e.currentTarget.style.color='rgba(201,169,110,.8)')} onMouseOut={e=>(e.currentTarget.style.color='rgba(244,240,230,.35)')}>Início</Link></li>
+              <li aria-hidden="true" style={{ color:'rgba(201,169,110,.2)' }}>/</li>
+              <li><Link href="/blog" style={{ color:'rgba(244,240,230,.35)', textDecoration:'none', transition:'color .2s' }} onMouseOver={e=>(e.currentTarget.style.color='rgba(201,169,110,.8)')} onMouseOut={e=>(e.currentTarget.style.color='rgba(244,240,230,.35)')}>Blog</Link></li>
+              <li aria-hidden="true" style={{ color:'rgba(201,169,110,.2)' }}>/</li>
+              <li style={{ color:'rgba(201,169,110,.6)' }}>{article.category}</li>
+            </ol>
+          </nav>
           <div className="art-cat-tag">{article.category}</div>
           <h1 className="art-h1">{article.title}</h1>
           <div className="art-meta-row">
