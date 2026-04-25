@@ -18,9 +18,6 @@ interface PropertyRow {
   quartos: number | null
   area: number | null
   preco: number | null
-  tipologia: string | null
-  estado: string | null
-  condicao: string | null
 }
 
 // Generate embedding via OpenAI text-embedding-3-small (1536 dims, cheap)
@@ -49,7 +46,6 @@ function buildPropertyText(p: PropertyRow): string {
     p.quartos != null ? `${p.quartos} quartos` : null,
     p.area != null ? `${p.area}m²` : null,
     p.preco != null ? `€${p.preco.toLocaleString('pt-PT')}` : null,
-    p.tipologia, p.estado, p.condicao,
   ].filter(Boolean).join('. ')
 }
 
@@ -63,7 +59,7 @@ export async function POST(req: NextRequest) {
   // Get properties without embeddings (up to 50 at a time)
   const { data: properties, error } = await supabase
     .from('properties')
-    .select('id, nome, tipo, zona, descricao, quartos, area, preco, tipologia, estado, condicao')
+    .select('id, nome, tipo, zona, descricao, quartos, area, preco')
     .eq('status', 'active')
     .is('embedding', null)
     .limit(50)
