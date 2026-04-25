@@ -152,7 +152,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (body.property_id) {
     const { data: prop } = await supabase
       .from('properties')
-      .select('id, nome, tipo, preco, area, quartos, zona, features, estimated_rental_yield, energia, created_at, desc')
+      .select('id, nome, tipo, preco, area, quartos, zona, features, energia, descricao, bairro')
       .eq('id', body.property_id)
       .single()
 
@@ -160,14 +160,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       propDbId    = prop.id
       propTitle   = prop.nome ?? propTitle
       propType    = prop.tipo ?? propType
-      propPrice   = prop.preco ?? propPrice
+      propPrice   = Number(prop.preco) || propPrice
       propArea    = prop.area ?? null
       propBeds    = prop.quartos ?? null
-      propZone    = prop.zona ?? propZone
+      propZone    = (prop.bairro ?? prop.zona) ?? propZone
       propFeatures = Array.isArray(prop.features) ? prop.features : []
-      propYield   = prop.estimated_rental_yield ?? null
+      propYield   = null  // not in schema — may be added later
       propEnergy  = prop.energia ?? null
-      propDesc    = prop.desc ?? ''
+      propDesc    = (prop as Record<string, unknown>).descricao as string ?? ''
     }
   } else if (body.property_data) {
     const pd = body.property_data
@@ -196,14 +196,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (body.lead_id) {
     const { data: lead } = await supabase
       .from('contacts')
-      .select('name, nationality, use_type')
+      .select('name, nationality, buyer_purpose, buyer_nationality')
       .eq('id', body.lead_id)
       .single()
 
     if (lead) {
-      buyerName        = lead.name ?? null
-      buyerNationality = lead.nationality ?? null
-      useType          = (lead as Record<string, unknown>).use_type as string ?? null
+      buyerName        = (lead as Record<string, unknown>).name as string ?? null
+      buyerNationality = (lead as Record<string, unknown>).buyer_nationality as string
+        ?? (lead as Record<string, unknown>).nationality as string ?? null
+      useType          = (lead as Record<string, unknown>).buyer_purpose as string ?? null
     }
   } else if (body.buyer_profile) {
     buyerName        = body.buyer_profile.name ?? null

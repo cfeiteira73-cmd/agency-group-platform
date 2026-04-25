@@ -93,7 +93,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .select('fase, valor')
 
     const totalDeals = allDeals?.length ?? 0
-    const pipelineValue = allDeals?.reduce((sum, d) => sum + ((d as { valor: number }).valor ?? 0), 0) ?? 0
+    const pipelineValue = allDeals?.reduce(
+      (sum, d) => sum + (Number((d as { valor: string | number }).valor) || 0), 0
+    ) ?? 0
     const avgDealValue  = totalDeals > 0 ? Math.round(pipelineValue / totalDeals) : 0
 
     const dealsByStage: Record<string, number> = {}

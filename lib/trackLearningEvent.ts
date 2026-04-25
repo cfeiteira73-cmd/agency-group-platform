@@ -73,12 +73,18 @@ async function insertEvent(
     _property_id:  payload.property_id ?? null,
   }
 
+  // Coerce numeric IDs — learning_events.lead_id / deal_id are INTEGER columns
+  function toInt(v: string | number | null | undefined): number | null {
+    if (v == null) return null
+    const n = Number(v)
+    return Number.isFinite(n) && n === Math.floor(n) ? n : null
+  }
+
   try {
     await client.from('learning_events').insert({
       event_type,
-      // FK columns — cast to string to avoid type errors; DB will coerce or ignore
-      lead_id:      payload.lead_id   != null ? String(payload.lead_id)  : null,
-      deal_id:      payload.deal_id   != null ? String(payload.deal_id)  : null,
+      lead_id:      toInt(payload.lead_id),
+      deal_id:      toInt(payload.deal_id),
       property_id:  payload.property_id ?? null,
       match_id:     payload.match_id     ?? null,
       deal_pack_id: payload.deal_pack_id ?? null,
