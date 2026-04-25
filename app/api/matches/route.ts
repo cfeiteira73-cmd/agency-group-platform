@@ -34,9 +34,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let query = supabase
     .from('matches')
     .select(`
-      id, lead_id, property_id, match_score, match_reasons,
-      status, agent_email, created_at, updated_at,
-      metadata
+      id, lead_id, property_id, property_title, match_score, match_reasons,
+      explanation, similarity, estimated_yield, status, matched_by,
+      created_at, updated_at
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
