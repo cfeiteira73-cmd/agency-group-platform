@@ -69,6 +69,13 @@ interface MatchBreakdown {
   availability: number
 }
 
+interface DecisionFields {
+  next_best_action: string
+  priority_level: 'high' | 'medium' | 'low'
+  next_action_deadline: string   // ISO timestamp
+  match_weaknesses: string[]
+}
+
 interface MatchResult {
   property: LiveProperty
   match_score: number
@@ -76,6 +83,7 @@ interface MatchResult {
   match_reasons: string[]
   explanation: string
   estimated_yield: number | null
+  decision: DecisionFields
 }
 
 // ---------------------------------------------------------------------------
@@ -243,6 +251,60 @@ function scoreProperty(
   return { score: totalScore, breakdown, reasons }
 }
 
+// ---------------------------------------------------------------------------
+// Decision engine — next_best_action, priority, deadline, weaknesses
+// ---------------------------------------------------------------------------
+
+function computeDecision(
+  score: number,
+  breakdown: MatchBreakdown,
+  buyer: BuyerProfile
+): DecisionFields {
+  const now = new Date()
+
+  // Priority & deadline
+  let priority_level: 'high' | 'medium' | 'low'
+  let next_best_action: string
+  let hoursToDeadline: number
+
+  if (score >= 80) {
+    priority_level    = 'high'
+    next_best_action  = 'Enviar Deal Pack agora e contactar comprador hoje'
+    hoursToDeadline   = 24
+  } else if (score >= 60) {
+    priority_level    = 'medium'
+    next_best_action  = 'Agendar visita esta semana e enviar ficha do imóvel'
+    hoursToDeadline   = 72
+  } else {
+    priority_level    = 'low'
+    next_best_action  = 'Adicionar a sequência de nurture (D+7 follow-up)'
+    hoursToDeadline   = 168
+  }
+
+  const next_action_deadline = new Date(now.getTime() + hoursToDeadline * 60 * 60 * 1000).toISOString()
+
+  // Weaknesses — what's missing or misaligned
+  const match_weaknesses: string[] = []
+
+  if (breakdown.typology_match === 0 && buyer.typology) {
+    match_weaknesses.push('Tipologia diferente do pretendido')
+  }
+  if (breakdown.location_match === 0) {
+    match_weaknesses.push('Fora da zona pretendida pelo comprador')
+  }
+  if (breakdown.price_in_budget < 30) {
+    match_weaknesses.push('Preço próximo ou acima do limite de orçamento')
+  }
+  if (breakdown.features_match < 8 && (buyer.features_required?.length ?? 0) > 1) {
+    match_weaknesses.push('Algumas características pretendidas em falta')
+  }
+  if (match_weaknesses.length === 0) {
+    match_weaknesses.push('Sem fraquezas significativas identificadas')
+  }
+
+  return { next_best_action, priority_level, next_action_deadline, match_weaknesses }
+}
+
 function generateExplanation(
   property: LiveProperty,
   score: number,
@@ -273,23 +335,29 @@ async function persistMatches(
   leadId: string,
   results: MatchResult[],
   agentEmail?: string
-): Promise<void> {
+): Promise<string[]> {
   const rows = results.map((r) => ({
-    lead_id:        leadId,
-    property_id:    r.property.id ?? null,
-    property_ref:   null as string | null,
-    property_title: r.property.title ?? r.property.nome ?? null,
-    match_score:    r.match_score,
-    breakdown:      r.match_breakdown,
-    match_reasons:  r.match_reasons,
-    explanation:    r.explanation,
-    similarity:     r.property.similarity ?? null,
-    estimated_yield: r.estimated_yield,
-    status:         'pending',
-    matched_by:     agentEmail ?? null,
+    lead_id:              leadId,
+    property_id:          r.property.id ?? null,
+    property_ref:         null as string | null,
+    property_title:       r.property.title ?? r.property.nome ?? null,
+    match_score:          r.match_score,
+    breakdown:            r.match_breakdown,
+    match_reasons:        r.match_reasons,
+    explanation:          r.explanation,
+    similarity:           r.property.similarity ?? null,
+    estimated_yield:      r.estimated_yield,
+    status:               'pending',
+    matched_by:           agentEmail ?? null,
+    // Decision engine fields
+    next_best_action:     r.decision.next_best_action,
+    match_weaknesses:     r.decision.match_weaknesses,
+    priority_level:       r.decision.priority_level,
+    next_action_deadline: r.decision.next_action_deadline,
   }))
 
-  await supabase.from('matches').insert(rows)
+  const { data } = await supabase.from('matches').insert(rows).select('id')
+  return (data ?? []).map((row: { id: string }) => row.id)
   // Errors are non-fatal — matching still returns results to caller
 }
 
@@ -439,6 +507,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const scored: MatchResult[] = properties.map((property) => {
       const { score, breakdown, reasons } = scoreProperty(property, buyer)
       const explanation = generateExplanation(property, score, buyer, reasons)
+      const decision    = computeDecision(score, breakdown, buyer)
 
       return {
         property,
@@ -449,6 +518,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         estimated_yield: buyer.use_type === 'investment'
           ? (property.estimated_rental_yield ?? null)
           : null,
+        decision,
       }
     })
 
@@ -463,6 +533,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (buyer.lead_id && top5.length > 0) {
       void persistMatches(buyer.lead_id, top5, agentEmail)
 
+      // ── Auto deal-pack: fire-and-forget for top match when score ≥ 80 ───────
+      const topMatch = top5[0]
+      if (topMatch.match_score >= 80 && topMatch.property.id) {
+        const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_URL ?? 'http://localhost:3000'
+        const svcToken = process.env.INTERNAL_API_TOKEN
+        if (svcToken) {
+          void fetch(`${baseUrl}/api/deal-packs/generate`, {
+            method:  'POST',
+            headers: {
+              'Content-Type':  'application/json',
+              'Authorization': `Bearer ${svcToken}`,
+            },
+            body: JSON.stringify({
+              property_id: topMatch.property.id,
+              lead_id:     buyer.lead_id,
+            }),
+          }).catch((e) => console.warn('[match-buyer] auto deal-pack trigger failed:', e))
+        }
+      }
+
       // ── Learning event: match_created ──────────────────────────────────────
       track.matchCreated({
         lead_id:      buyer.lead_id,
@@ -475,6 +565,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           source,
           locations:       buyer.locations,
           use_type:        buyer.use_type ?? null,
+          auto_deal_pack:  topMatch.match_score >= 80 ? 'triggered' : 'skipped',
         },
       })
     }
