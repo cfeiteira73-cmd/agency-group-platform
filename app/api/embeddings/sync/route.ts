@@ -21,9 +21,9 @@ interface PropertyRow {
 }
 
 // Generate embedding via OpenAI text-embedding-3-small (1536 dims, cheap)
-async function generateEmbedding(text: string): Promise<number[] | null> {
+async function generateEmbedding(text: string): Promise<{ embedding: number[] | null; error?: string }> {
   const key = process.env.OPENAI_API_KEY
-  if (!key) return null
+  if (!key) return { embedding: null, error: 'OPENAI_API_KEY not set' }
 
   try {
     const res = await fetch('https://api.openai.com/v1/embeddings', {
@@ -31,11 +31,15 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
       headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'text-embedding-3-small', input: text }),
     })
-    if (!res.ok) return null
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({})) as { error?: { message?: string; code?: string } }
+      const msg = errBody?.error?.message ?? `HTTP ${res.status}`
+      return { embedding: null, error: msg }
+    }
     const data = await res.json() as { data: Array<{ embedding: number[] }> }
-    return data.data[0].embedding
-  } catch {
-    return null
+    return { embedding: data.data[0].embedding }
+  } catch (e) {
+    return { embedding: null, error: e instanceof Error ? e.message : 'unknown error' }
   }
 }
 
@@ -72,12 +76,17 @@ export async function POST(req: NextRequest) {
   let synced = 0
   const errors: string[] = []
 
+  // Track first OpenAI error for diagnosis
+  let firstOpenAIError: string | undefined
+
   for (const property of (properties as PropertyRow[])) {
     const text = buildPropertyText(property)
-    const embedding = await generateEmbedding(text)
+    const { embedding, error: embError } = await generateEmbedding(text)
 
     if (!embedding) {
-      errors.push(`${property.id}: embedding failed`)
+      const msg = embError ?? 'embedding failed'
+      if (!firstOpenAIError) firstOpenAIError = msg
+      errors.push(`${property.id}: ${msg}`)
       continue
     }
 
@@ -96,5 +105,9 @@ export async function POST(req: NextRequest) {
     await new Promise(r => setTimeout(r, 5))
   }
 
-  return NextResponse.json({ synced, errors: errors.length > 0 ? errors : undefined })
+  return NextResponse.json({
+    synced,
+    errors: errors.length > 0 ? errors : undefined,
+    openai_error: firstOpenAIError,
+  })
 }
