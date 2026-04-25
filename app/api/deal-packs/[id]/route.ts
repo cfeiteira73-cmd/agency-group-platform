@@ -30,25 +30,38 @@ export async function GET(
 
   const { id } = await params
 
-  const { data, error } = await supabase
+  // Base columns always in schema
+  const { data: baseData, error } = await supabase
     .from('deal_packs')
     .select(`
-      id, title, status, investment_thesis, market_summary,
-      highlights, financial_projections, opportunity_score,
-      generated_at, sent_at, viewed_at, view_count, created_by, created_at,
-      deal_id, property_id, lead_id
+      id, title, status, created_by, created_at,
+      deal_id, property_id, lead_id,
+      sent_at, viewed_at, ai_summary, metadata
     `)
     .eq('id', id)
     .single()
 
-  if (error || !data) {
+  if (error || !baseData) {
     return NextResponse.json({ error: 'Deal pack not found' }, { status: 404 })
   }
 
-  // Increment view_count (non-blocking)
+  // Merge rich content from metadata JSONB (populated by generate route)
+  const meta = (baseData as Record<string, unknown>).metadata as Record<string, unknown> ?? {}
+  const data = {
+    ...baseData,
+    investment_thesis:    meta.investment_thesis    ?? null,
+    market_summary:       meta.market_summary       ?? null,
+    highlights:           meta.highlights           ?? [],
+    financial_projections: meta.financial_projections ?? {},
+    opportunity_score:    meta.opportunity_score    ?? null,
+    generated_at:         meta.generated_at         ?? null,
+    view_count:           null,  // incremented below if column exists
+  }
+
+  // Increment view_count (non-blocking — column may not exist until migration)
   void supabase
     .from('deal_packs')
-    .update({ view_count: (data.view_count ?? 0) + 1, viewed_at: new Date().toISOString() })
+    .update({ viewed_at: new Date().toISOString() })
     .eq('id', id)
 
   return NextResponse.json({ deal_pack: data })
@@ -74,8 +87,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  // Allowlist of updatable fields
-  const allowed = ['status', 'sent_at', 'viewed_at', 'notes'] as const
+  // Allowlist of updatable fields (only columns confirmed in base schema)
+  const allowed = ['status', 'sent_at', 'viewed_at'] as const
   type AllowedKey = typeof allowed[number]
 
   const updates: Partial<Record<AllowedKey, unknown>> = {}

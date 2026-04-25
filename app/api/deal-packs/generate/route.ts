@@ -259,26 +259,75 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // ── Persist to deal_packs ──────────────────────────────────────────────────
-  const { data: inserted, error: insertError } = await supabase
-    .from('deal_packs')
-    .insert({
-      deal_id:              body.deal_id ?? null,
-      property_id:          propDbId,
-      lead_id:              body.lead_id ?? null,
-      title:                (claudeJson.title as string) ?? propTitle,
-      status:               'ready',
-      investment_thesis:    (claudeJson.investment_thesis as string) ?? null,
-      market_summary:       (claudeJson.market_summary as string) ?? null,
-      opportunity_score:    typeof claudeJson.opportunity_score === 'number'
-                              ? Math.min(100, Math.max(0, claudeJson.opportunity_score))
-                              : null,
-      financial_projections: claudeJson.financial_projections ?? {},
+  // Base columns always present in DB (minimal schema)
+  const opportunityScore = typeof claudeJson.opportunity_score === 'number'
+    ? Math.min(100, Math.max(0, claudeJson.opportunity_score))
+    : null
+
+  const baseInsert: Record<string, unknown> = {
+    deal_id:    body.deal_id ?? null,
+    property_id: propDbId,
+    lead_id:    body.lead_id ? Number(body.lead_id) || null : null,
+    title:      (claudeJson.title as string) ?? propTitle,
+    status:     'ready',
+    created_by: agentEmail,
+    // ai_summary stores condensed version (always in schema)
+    ai_summary: JSON.stringify({
+      title:               claudeJson.title,
+      investment_thesis:   claudeJson.investment_thesis,
+      market_summary:      claudeJson.market_summary,
+      highlights:          claudeJson.highlights,
+      opportunity_score:   opportunityScore,
+      call_to_action:      claudeJson.call_to_action,
+    }),
+    // metadata stores full structured output
+    metadata: {
+      investment_thesis:    claudeJson.investment_thesis ?? null,
+      market_summary:       claudeJson.market_summary ?? null,
       highlights:           Array.isArray(claudeJson.highlights) ? claudeJson.highlights : [],
+      financial_projections: claudeJson.financial_projections ?? {},
+      opportunity_score:    opportunityScore,
+      call_to_action:       claudeJson.call_to_action ?? null,
+      property_title:       propTitle,
+      property_zone:        propZone,
       generated_at:         new Date().toISOString(),
-      created_by:           agentEmail,
-    })
+    },
+  }
+
+  // Extended columns — added by migration 20260425_002 (write if available)
+  const extendedInsert: Record<string, unknown> = {
+    ...baseInsert,
+    investment_thesis:    (claudeJson.investment_thesis as string) ?? null,
+    market_summary:       (claudeJson.market_summary as string) ?? null,
+    opportunity_score:    opportunityScore,
+    financial_projections: claudeJson.financial_projections ?? {},
+    highlights:           Array.isArray(claudeJson.highlights) ? claudeJson.highlights : [],
+    generated_at:         new Date().toISOString(),
+  }
+
+  // Try extended schema first; fall back to base schema if columns not yet migrated
+  let inserted: { id: string; title: string; status: string; opportunity_score: number | null; generated_at: string | null } | null = null
+  let insertError: { code?: string; message: string } | null = null
+
+  const extResult = await supabase
+    .from('deal_packs')
+    .insert(extendedInsert)
     .select('id, title, status, opportunity_score, generated_at')
     .single()
+
+  if (extResult.error?.code === 'PGRST204' || extResult.error?.message?.includes('column')) {
+    // Columns not yet migrated — use base schema only
+    const baseResult = await supabase
+      .from('deal_packs')
+      .insert(baseInsert)
+      .select('id, title, status')
+      .single()
+    inserted    = baseResult.data ? { ...baseResult.data, opportunity_score: opportunityScore, generated_at: new Date().toISOString() } : null
+    insertError = baseResult.error
+  } else {
+    inserted    = extResult.data
+    insertError = extResult.error
+  }
 
   if (insertError) {
     console.error('[deal-packs/generate] Supabase insert error:', insertError)
