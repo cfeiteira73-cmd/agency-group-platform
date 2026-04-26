@@ -161,23 +161,24 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .select('id', { count: 'exact', head: true })
       .gte('created_at', since)
 
-    const { count: leadsWithDeals } = await (supabaseAdmin as any)
-      .from('contacts')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', since)
-      .not('id', 'is', null)
-      // We check if they have a deal (proxy for "called")
-      .in('id', allDeals.map((d) => d.contact_id).filter(Boolean))
+    const contactIdsWithDeals = allDeals.map((d) => d.contact_id).filter(Boolean) as string[]
+    const { count: leadsWithDeals } = contactIdsWithDeals.length > 0
+      ? await (supabaseAdmin as any)
+          .from('contacts')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', since)
+          .in('id', contactIdsWithDeals)
+      : { count: 0 }
 
-    // Deal pack stats
-    const { data: dpStats } = await (supabaseAdmin as any)
+    // Deal pack stats (view_count may not exist — use metadata fallback)
+    const { data: dpStats, error: dpErr } = await (supabaseAdmin as any)
       .from('deal_packs')
       .select('status, view_count')
       .gte('created_at', since)
 
-    const dpAll     = dpStats?.length ?? 0
-    const dpSent    = dpStats?.filter((d: { status: string }) => ['sent','viewed'].includes(d.status)).length ?? 0
-    const dpViewed  = dpStats?.filter((d: { status: string; view_count: number }) => d.status === 'viewed' || d.view_count > 0).length ?? 0
+    const dpAll     = dpErr ? 0 : (dpStats?.length ?? 0)
+    const dpSent    = dpErr ? 0 : (dpStats?.filter((d: { status: string }) => ['sent','viewed'].includes(d.status)).length ?? 0)
+    const dpViewed  = dpErr ? 0 : (dpStats?.filter((d: { status: string; view_count: number }) => d.status === 'viewed' || (d.view_count ?? 0) > 0).length ?? 0)
 
     const stageGroups: Record<string, number> = {}
     for (const d of allDeals) {
