@@ -248,8 +248,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     })
 
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'unknown error'
-    console.error('[revenue analytics]', msg)
+    const msg = e instanceof Error
+      ? e.message
+      : (typeof e === 'object' && e !== null)
+        ? JSON.stringify(e)
+        : String(e ?? 'unknown error')
+    console.error('[revenue analytics]', msg, e)
     return NextResponse.json({ error: msg, source: 'error' }, { status: 500 })
   }
 }
