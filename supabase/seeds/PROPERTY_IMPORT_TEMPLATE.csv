@@ -1,0 +1,4 @@
+reference,title,description,price,zone,type,area_m2,bedrooms,bathrooms,status,source,city,country,energy_certificate,features,photos
+AG-LX-0021,Title of Property,Full description of the property,500000,Lisboa,apartment,120,3,2,active,direct,Lisboa,Portugal,A,"["Parking","Pool","Terrace"]","["https://..."]"
+AG-CS-0022,Title of Property,Full description,750000,Cascais,villa,280,4,3,active,direct,Cascais,Portugal,B,"["Garden","Pool","Sea View"]","[]"
+AG-ALG-0023,Title of Property,Full description,420000,Algarve,apartment,95,2,2,active,direct,Faro,Portugal,C,"["Pool","Terrace"]","[]"
