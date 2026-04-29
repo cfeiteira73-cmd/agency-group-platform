@@ -97,26 +97,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   try {
     // ── Fetch deals — progressive column discovery ────────────────────────────
-    // Confirmed production columns (via direct INSERT, no failures):
-    //   id, fase, valor, deal_value, contact_id, agent_id, created_at
-    // Optional migration-002 cols tried first; fall back on 42703.
-    // comissao/zona/stage/gci_net confirmed NOT to exist in this DB.
+    // Minimum confirmed: id, fase, valor, contact_id, created_at
+    // stage/comissao/deal_value/zona/gci_net confirmed NOT in this DB instance.
+    // Try with optional migration-002 cols; retry without on 42703.
     let dealsResult = await (supabaseAdmin as any)
       .from('deals')
-      .select(`
-        id, fase, valor, deal_value,
-        contact_id, partner_id, partner_fee_pct,
-        expected_fee, realized_fee,
-        created_at
-      `)
+      .select('id, fase, valor, contact_id, partner_id, partner_fee_pct, expected_fee, realized_fee, created_at')
       .gte('created_at', since)
       .not('fase', 'ilike', '%cancelad%')
 
-    // 42703 = column does not exist (migration 002 not applied) — use core only
+    // 42703 = a listed column doesn't exist → retry with absolute minimum
     if (dealsResult.error && String(dealsResult.error.code) === '42703') {
       dealsResult = await (supabaseAdmin as any)
         .from('deals')
-        .select('id, fase, valor, deal_value, contact_id, created_at')
+        .select('id, fase, valor, contact_id, created_at')
         .gte('created_at', since)
         .not('fase', 'ilike', '%cancelad%')
     }
@@ -130,15 +124,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const activeDeals = allDeals.filter(d => !isClosedFase(d.fase))
 
     // ── Helper: fee for a deal ────────────────────────────────────────────────
-    // Priority: realized_fee → expected_fee → deal_value × 5% → parsed valor × 5%
+    // Priority: realized_fee → expected_fee → valor (TEXT "€ 1.250.000") × 5%
     const dealFee = (d: Record<string, unknown>): number =>
       parseRev(d.realized_fee)
       || parseRev(d.expected_fee)
-      || parseRev(d.deal_value) * 0.05
-      || parseRev(d.valor)    * 0.05
+      || parseRev(d.valor) * 0.05
 
     const dealValue = (d: Record<string, unknown>): number =>
-      parseRev(d.deal_value) || parseRev(d.valor)
+      parseRev(d.valor)
 
     // ── Core revenue metrics ──────────────────────────────────────────────────
     const revenue_closed   = closedDeals.reduce((s, d) => s + dealFee(d), 0)
