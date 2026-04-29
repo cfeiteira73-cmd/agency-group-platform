@@ -12,13 +12,20 @@ import { supabaseAdmin } from '@/lib/supabase'
 export const runtime = 'nodejs'
 
 // ── SLA definitions (hours before a stage is considered "stuck") ─────────────
+// Covers both EN enum values and PT portal fase values (normalized, no spaces)
 const STAGE_SLA_HOURS: Record<string, number> = {
+  // EN enum
   qualification: 72,
   visit_scheduled: 48,
   visit_done: 48,
   proposal: 96,
   negotiation: 72,
   cpcv: 168,
+  // PT portal fase values (lowercase, spaces stripped)
+  qualificacao: 72, qualificado: 72,
+  visitaagendada: 48, visitarealizada: 48, visita: 48,
+  proposta: 96, propostaaceite: 96,
+  negociacao: 72,
 }
 
 interface PriorityItem {
@@ -168,32 +175,44 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         }
       }
 
-      // D) DEALS STUCK IN STAGE > SLA
+      // D) DEALS STUCK IN FASE > SLA
+      // Uses portal-compat columns: fase (PT stage), imovel (title), valor (TEXT revenue)
+      // expected_fee is available if migration 20260426_002 ran; falls back to valor × 5%
       const { data: activeDeals } = await (supabaseAdmin as any)
         .from('deals')
-        .select('id, title, stage, updated_at, deal_value, commission_rate, expected_fee, assigned_consultant, zone')
-        .not('stage', 'in', '("escritura","post_sale","lost","cancelled")')
+        .select('id, title, imovel, fase, updated_at, valor, expected_fee, created_at')
+        .not('fase', 'ilike', '%escritura%')
+        .not('fase', 'ilike', '%fechado%')
+        .not('fase', 'eq', 'lost')
+        .not('fase', 'eq', 'cancelled')
         .order('updated_at', { ascending: true })
         .limit(20)
 
       if (activeDeals) {
         for (const deal of activeDeals) {
-          const slaHours = STAGE_SLA_HOURS[deal.stage] ?? 120
-          const hrs = hoursSince(deal.updated_at)
+          // Normalize fase for SLA lookup (lowercase, strip spaces/accents)
+          const faseNorm = String(deal.fase ?? '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .replace(/[\s\-_]+/g, '')
+          const slaHours = STAGE_SLA_HOURS[faseNorm] ?? 120
+          const hrs = hoursSince(deal.updated_at ?? deal.created_at)
           if (hrs > slaHours) {
-            const expectedFee = deal.expected_fee
-              ?? (deal.deal_value && deal.commission_rate
-                ? deal.deal_value * deal.commission_rate
-                : null)
+            const expectedFee = deal.expected_fee != null
+              ? Number(deal.expected_fee)
+              : deal.valor
+                ? (parseFloat(String(deal.valor).replace(/[^0-9.]/g, '')) || 0) * 0.05
+                : null
             dynamicItems.push({
               id:               `dyn-deal-${deal.id}`,
               entity_type:      'deal',
               entity_id:        deal.id,
               priority_score:   Math.min(100, 70 + Math.round((hrs - slaHours) / 24)),
-              reason:           `Deal "${deal.title}" stuck in stage "${deal.stage}" for ${Math.round(hrs)}h (SLA: ${slaHours}h)`,
+              reason:           `Deal "${deal.imovel ?? deal.title ?? deal.id}" stuck in fase "${deal.fase ?? 'unknown'}" for ${Math.round(hrs)}h (SLA: ${slaHours}h)`,
               next_best_action: `Advance stage or log blocking reason`,
               deadline:         addHours(8),
-              owner_id:         deal.assigned_consultant ?? null,
+              owner_id:         null,
               revenue_impact:   expectedFee ?? null,
               status:           'open',
               source:           'engine',

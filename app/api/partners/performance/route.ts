@@ -40,10 +40,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const all: Record<string, unknown>[] = partners ?? []
 
     // ── 2. Fetch deals with partner_id populated ──────────────────────────────
-    const { data: partnerDeals } = await (supabaseAdmin as any)
+    // Uses portal-compat columns confirmed in production (migration 003 + 20260426_002)
+    // stage/deal_value/gci_net/zone/source not in minimal schema — omitted to avoid 42703
+    const { data: partnerDeals, error: pDealsErr } = await (supabaseAdmin as any)
       .from('deals')
-      .select('id, partner_id, stage, deal_value, gci_net, realized_fee, zone, source, created_at')
+      .select('id, partner_id, fase, valor, expected_fee, realized_fee, created_at')
       .not('partner_id', 'is', null)
+
+    if (pDealsErr) {
+      console.warn('[partners/perf] deal query failed (non-blocking):', pDealsErr.message, pDealsErr.code)
+    }
 
     const dealsByPartner: Record<string, Record<string, unknown>[]> = {}
     if (partnerDeals) {
@@ -54,7 +60,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
     }
 
-    const CLOSED = ['escritura', 'post_sale']
+    // Helper: parse revenue from NUMERIC or TEXT "€ 1.250.000"
+    const parseValor = (v: unknown): number => {
+      if (typeof v === 'number') return v
+      if (typeof v === 'string') return parseFloat(v.replace(/[^0-9.]/g, '')) || 0
+      return 0
+    }
+
+    // Helper: check if deal fase is closed
+    const isClosed = (d: Record<string, unknown>): boolean => {
+      const f = String(d.fase ?? '').toLowerCase()
+      return f.includes('escritura') || f.includes('fechado')
+        || f.includes('post_sale') || f.includes('posvenda')
+    }
     const now = Date.now()
     const inactiveCutoff = new Date(now - inactiveDays * 24 * 60 * 60 * 1000).toISOString()
 
@@ -62,15 +80,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const enriched = all.map(p => {
       const pid = String(p.id)
       const pDeals = dealsByPartner[pid] ?? []
-      const closedDeals = pDeals.filter(d => CLOSED.includes(String(d.stage ?? '')))
+      const closedDeals = pDeals.filter(d => isClosed(d))
 
       const revenue_generated = closedDeals.reduce((s, d) => {
-        return s + (Number(d.realized_fee) || Number(d.gci_net) || 0)
+        // Priority: realized_fee → expected_fee → valor × 5%
+        const fee = Number(d.realized_fee)
+          || Number(d.expected_fee)
+          || parseValor(d.valor) * 0.05
+        return s + fee
       }, 0)
 
       const pipeline_value = pDeals
-        .filter(d => !CLOSED.includes(String(d.stage ?? '')))
-        .reduce((s, d) => s + (Number(d.deal_value) || 0), 0)
+        .filter(d => !isClosed(d))
+        .reduce((s, d) => s + parseValor(d.valor), 0)
 
       const inactive = p.last_contact_at
         ? String(p.last_contact_at) < inactiveCutoff
