@@ -96,13 +96,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    // ── Fetch deals — try with migration-002 columns; fall back to core only ──
-    // Migration 002 added: expected_fee, realized_fee, partner_id, partner_fee_pct
-    // If that migration was not applied, retry with confirmed-only columns.
+    // ── Fetch deals — progressive column discovery ────────────────────────────
+    // Confirmed production columns (via direct INSERT, no failures):
+    //   id, fase, valor, deal_value, contact_id, agent_id, created_at
+    // Optional migration-002 cols tried first; fall back on 42703.
+    // comissao/zona/stage/gci_net confirmed NOT to exist in this DB.
     let dealsResult = await (supabaseAdmin as any)
       .from('deals')
       .select(`
-        id, fase, valor, comissao, deal_value, zona,
+        id, fase, valor, deal_value,
         contact_id, partner_id, partner_fee_pct,
         expected_fee, realized_fee,
         created_at
@@ -110,11 +112,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .gte('created_at', since)
       .not('fase', 'ilike', '%cancelad%')
 
-    // 42703 = column does not exist — retry without optional columns
+    // 42703 = column does not exist (migration 002 not applied) — use core only
     if (dealsResult.error && String(dealsResult.error.code) === '42703') {
       dealsResult = await (supabaseAdmin as any)
         .from('deals')
-        .select('id, fase, valor, comissao, deal_value, zona, contact_id, created_at')
+        .select('id, fase, valor, deal_value, contact_id, created_at')
         .gte('created_at', since)
         .not('fase', 'ilike', '%cancelad%')
     }
@@ -127,45 +129,44 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const closedDeals = allDeals.filter(d => isClosedFase(d.fase))
     const activeDeals = allDeals.filter(d => !isClosedFase(d.fase))
 
+    // ── Helper: fee for a deal ────────────────────────────────────────────────
+    // Priority: realized_fee → expected_fee → deal_value × 5% → parsed valor × 5%
+    const dealFee = (d: Record<string, unknown>): number =>
+      parseRev(d.realized_fee)
+      || parseRev(d.expected_fee)
+      || parseRev(d.deal_value) * 0.05
+      || parseRev(d.valor)    * 0.05
+
+    const dealValue = (d: Record<string, unknown>): number =>
+      parseRev(d.deal_value) || parseRev(d.valor)
+
     // ── Core revenue metrics ──────────────────────────────────────────────────
-    const revenue_closed = closedDeals.reduce((sum, d) =>
-      sum + (parseRev(d.realized_fee) || parseRev(d.comissao)), 0)
+    const revenue_closed   = closedDeals.reduce((s, d) => s + dealFee(d), 0)
+    const revenue_expected = activeDeals.reduce((s, d) => s + dealFee(d), 0)
+    const pipeline_value   = allDeals.reduce((s, d) => s + dealValue(d) * stagePct(d.fase), 0)
 
-    const revenue_expected = activeDeals.reduce((sum, d) => {
-      const fee = parseRev(d.expected_fee) || parseRev(d.deal_value) * 0.05
-      return sum + fee
-    }, 0)
+    const agency_net = closedDeals.reduce((sum, d) =>
+      sum + dealFee(d) * (1 - (Number(d.partner_fee_pct) || 0)), 0)
 
-    const pipeline_value = allDeals.reduce((sum, d) => {
-      const val  = parseRev(d.deal_value) || parseRev(d.valor)
-      return sum + val * stagePct(d.fase)
-    }, 0)
+    const partner_fee = closedDeals.reduce((sum, d) =>
+      sum + dealFee(d) * (Number(d.partner_fee_pct) || 0), 0)
 
-    const agency_net = closedDeals.reduce((sum, d) => {
-      const fee = parseRev(d.realized_fee) || parseRev(d.comissao)
-      return sum + fee * (1 - (Number(d.partner_fee_pct) || 0))
-    }, 0)
-
-    const partner_fee = closedDeals.reduce((sum, d) => {
-      const fee = parseRev(d.realized_fee) || parseRev(d.comissao)
-      return sum + fee * (Number(d.partner_fee_pct) || 0)
-    }, 0)
-
-    // ── Revenue by zona ───────────────────────────────────────────────────────
+    // ── Revenue by fase/group (no zona column — group by closed vs active) ────
+    // Build a zona map keyed by 'Fechados' vs pipeline — or just a single bucket
     const zonaMap: Record<string, { count: number; value: number; closed: number }> = {}
     for (const d of allDeals) {
-      const z = String(d.zona || 'Desconhecida')
+      // Try zona field (may exist if migration 002 was partially applied)
+      const z = String((d as Record<string,unknown>).zona
+        || (d as Record<string,unknown>).zone || 'Pipeline')
       if (!zonaMap[z]) zonaMap[z] = { count: 0, value: 0, closed: 0 }
       zonaMap[z].count++
-      zonaMap[z].value += parseRev(d.deal_value) || parseRev(d.valor)
-      if (isClosedFase(d.fase))
-        zonaMap[z].closed += parseRev(d.realized_fee) || parseRev(d.comissao)
+      zonaMap[z].value += dealValue(d)
+      if (isClosedFase(d.fase)) zonaMap[z].closed += dealFee(d)
     }
     const revenue_by_zone = Object.entries(zonaMap)
       .map(([zone, v]) => ({ zone, ...v }))
       .sort((a, b) => b.closed - a.closed)
 
-    // revenue_by_source: zona used as source proxy (no confirmed source column)
     const revenue_by_source = revenue_by_zone.map(r => ({
       source: r.zone, count: r.count, value: r.value, closed: r.closed,
     }))
@@ -177,8 +178,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         const pid = String(d.partner_id)
         if (!partnerMap[pid]) partnerMap[pid] = { count: 0, fee: 0 }
         partnerMap[pid].count++
-        const fee = parseRev(d.realized_fee) || parseRev(d.comissao)
-        partnerMap[pid].fee += fee * (Number(d.partner_fee_pct) || 0)
+        partnerMap[pid].fee += dealFee(d) * (Number(d.partner_fee_pct) || 0)
       }
     }
     let revenue_by_partner: unknown[] = []
@@ -266,8 +266,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       })
       gci12m.push({
         month: d.toLocaleString('pt-PT', { month: 'short', year: '2-digit' }),
-        gci:   Math.round(monthDeals.reduce((s, deal) =>
-          s + (parseRev(deal.realized_fee) || parseRev(deal.comissao)), 0)),
+        gci:   Math.round(monthDeals.reduce((s, deal) => s + dealFee(deal), 0)),
         deals: monthDeals.length,
       })
     }
