@@ -96,8 +96,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    // ── Fetch deals — only confirmed production columns ───────────────────────
-    const { data: deals, error: dealsError } = await (supabaseAdmin as any)
+    // ── Fetch deals — try with migration-002 columns; fall back to core only ──
+    // Migration 002 added: expected_fee, realized_fee, partner_id, partner_fee_pct
+    // If that migration was not applied, retry with confirmed-only columns.
+    let dealsResult = await (supabaseAdmin as any)
       .from('deals')
       .select(`
         id, fase, valor, comissao, deal_value, zona,
@@ -108,7 +110,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .gte('created_at', since)
       .not('fase', 'ilike', '%cancelad%')
 
+    // 42703 = column does not exist — retry without optional columns
+    if (dealsResult.error && String(dealsResult.error.code) === '42703') {
+      dealsResult = await (supabaseAdmin as any)
+        .from('deals')
+        .select('id, fase, valor, comissao, deal_value, zona, contact_id, created_at')
+        .gte('created_at', since)
+        .not('fase', 'ilike', '%cancelad%')
+    }
+
+    const dealsError = dealsResult.error
     if (dealsError) throw dealsError
+    const deals = dealsResult.data
 
     const allDeals: Record<string, unknown>[] = deals ?? []
     const closedDeals = allDeals.filter(d => isClosedFase(d.fase))
