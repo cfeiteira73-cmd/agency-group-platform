@@ -267,7 +267,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const baseInsert: Record<string, unknown> = {
     deal_id:    body.deal_id ?? null,
     property_id: propDbId,
-    lead_id:    body.lead_id ? Number(body.lead_id) || null : null,
+    // deal_packs.lead_id is UUID (migration 20260424_001) — pass directly, never coerce to Number
+    lead_id:    body.lead_id ?? null,
     title:      (claudeJson.title as string) ?? propTitle,
     status:     'ready',
     created_by: agentEmail,

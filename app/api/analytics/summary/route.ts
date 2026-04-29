@@ -98,16 +98,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     // ── 1. Try Supabase ─────────────────────────────────────────────────────
+    // Confirmed production columns (migration 003 + 20260426_002):
+    //   fase (TEXT), valor (TEXT "€ 1.250.000"), expected_fee (NUMERIC), realized_fee (NUMERIC)
+    // comissao does NOT exist in this schema — use fee chain instead
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dealsQuery = (supabaseAdmin.from('deals') as any)
-      .select('fase, valor, comissao, agent_id, created_at')
+      .select('fase, valor, expected_fee, realized_fee, agent_id, created_at')
       .order('created_at', { ascending: false })
 
     const { data: dealsData, error: dealsError } = await dealsQuery
 
     if (dealsError || !dealsData) {
       // Supabase unavailable — return mock
+      console.warn('[analytics/summary] deals query failed:', dealsError?.message ?? 'no data')
       return NextResponse.json(MOCK_SUMMARY, { headers: { 'Cache-Control': 'no-store' } })
+    }
+
+    // Helper: extract commission fee from a deal (mirrors revenue route logic)
+    // Priority: realized_fee → expected_fee → valor × 5%
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dealCommission = (d: any): number => {
+      if (typeof d.realized_fee === 'number' && d.realized_fee > 0) return d.realized_fee
+      if (typeof d.expected_fee === 'number' && d.expected_fee > 0) return d.expected_fee
+      const raw = typeof d.valor === 'number'
+        ? d.valor
+        : parseFloat(String(d.valor ?? '0').replace(/[^0-9.]/g, '')) || 0
+      return raw * 0.05
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,8 +181,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     for (const d of deals) {
-      const comissao = typeof d.comissao === 'number' ? d.comissao :
-        parseFloat(String(d.comissao ?? '0').replace(/[^0-9.]/g, '')) || 0
+      const comissao = dealCommission(d)
 
       const created   = new Date(d.created_at)
       const dealMonth = created.getMonth()
@@ -183,7 +198,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         dealsPrevMonth += 1
       }
 
-      if (comissao === 0) continue  // skip YTD / 12m for zero-commission deals
+      if (comissao === 0) continue  // skip YTD / 12m for zero-fee deals
       if (dealYear === thisYear) gciYTD += comissao
 
       // Slot into 12m array
@@ -231,36 +246,44 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // agents table doesn't exist yet — use mock
     }
 
-    // conversionsByZona: try imoveis/properties table
+    // conversionsByZona: group closed deals by zona/imovel prefix
+    // Note: zona column may not exist (migration 003 doesn't add it to deals)
+    // Fallback: aggregate by fase='escritura/fechado' across all deals
     let conversionsByZona = MOCK_SUMMARY.conversionsByZona
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: zonaData } = await (supabaseAdmin.from('deals') as any)
-        .select('zona, comissao')
+        .select('zona, zone, valor, realized_fee, expected_fee')
         .not('zona', 'is', null)
 
       if (zonaData && zonaData.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const zonaMap: Record<string, number> = {}
         for (const row of zonaData as any[]) {
-          const z = row.zona ?? 'Outros'
-          const v = typeof row.comissao === 'number' ? row.comissao :
-            parseFloat(String(row.comissao ?? '0').replace(/[^0-9.]/g, '')) || 0
+          const z = row.zona ?? row.zone ?? 'Outros'
+          const v = dealCommission(row)
           zonaMap[z] = (zonaMap[z] ?? 0) + v
         }
         const total = Object.values(zonaMap).reduce((a, b) => a + b, 0)
-        const ZONA_COLORS = ['#1c4a35','#2d6e52','#c9a96e','#a07840','#6b4e28','#8b6914']
-        conversionsByZona = Object.entries(zonaMap)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 6)
-          .map(([zona, valor], i) => ({
-            zona, valor, pct: total > 0 ? Math.round((valor / total) * 100) : 0,
-            color: ZONA_COLORS[i] ?? '#d4cfc4',
-          }))
+        if (total > 0) {
+          const ZONA_COLORS = ['#1c4a35','#2d6e52','#c9a96e','#a07840','#6b4e28','#8b6914']
+          conversionsByZona = Object.entries(zonaMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([zona, valor], i) => ({
+              zona, valor, pct: Math.round((valor / total) * 100),
+              color: ZONA_COLORS[i] ?? '#d4cfc4',
+            }))
+        }
       }
     } catch {
       // no zona column — use mock
     }
+
+    // Determine if we got real data or fell back to mock values
+    const hasRealGci = gciMensal > 0 || gciYTD > 0 || gci12m.some(v => v > 0)
+    const hasRealPipeline = totalPipeline > 0
+    const hasRealDeals = dealsCountByStage.length > 0
 
     const summary: AnalyticsSummary = {
       gciMensal:          gciMensal  || MOCK_SUMMARY.gciMensal,
@@ -271,7 +294,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       dealsCountByStage:  dealsCountByStage.length > 0 ? dealsCountByStage : MOCK_SUMMARY.dealsCountByStage,
       topAgents,
       conversionsByZona,
-      source: 'supabase',
+      source: (hasRealGci || hasRealPipeline || hasRealDeals) ? 'supabase' : 'mock',
       // Deltas are only set when real previous-period data exists.
       // undefined means "no prior data available" — frontend must NOT show a delta.
       gciMensalDelta,
