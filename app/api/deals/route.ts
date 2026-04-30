@@ -16,24 +16,8 @@ import track from '@/lib/trackLearningEvent'
 export const runtime = 'nodejs'
 
 // ---------------------------------------------------------------------------
-// Types
+// Types (MockDeal removed — Supabase is the only data source)
 // ---------------------------------------------------------------------------
-
-interface MockDeal {
-  id: string
-  stage: string
-  property: string
-  contact: string
-  asking: number
-  offer: number | null
-  commission: number
-  days_in_stage: number
-  health: number
-  status: string
-  agent_id: string | null
-  created_at: string
-  updated_at: string
-}
 
 // ---------------------------------------------------------------------------
 // Rate-limit headers
@@ -47,69 +31,6 @@ function rateLimitHeaders(): HeadersInit {
     'Cache-Control':         'no-store',
   }
 }
-
-// ---------------------------------------------------------------------------
-// Mock deals — 8 realistic AG pipeline deals
-// ---------------------------------------------------------------------------
-
-const MOCK_DEALS: MockDeal[] = [
-  {
-    id: 'AG-2026-0012', stage: 'Negociação',
-    property: 'Apartamento T3 Chiado', contact: 'James Mitchell',
-    asking: 1250000, offer: 1180000, commission: 62500,
-    days_in_stage: 8, health: 72, status: 'active',
-    agent_id: null, created_at: '2026-03-28T10:00:00Z', updated_at: '2026-04-02T10:00:00Z',
-  },
-  {
-    id: 'AG-2026-0011', stage: 'CPCV',
-    property: 'Moradia V4 Cascais', contact: 'Khalid Al-Rashid',
-    asking: 2800000, offer: 2650000, commission: 140000,
-    days_in_stage: 12, health: 88, status: 'active',
-    agent_id: null, created_at: '2026-03-24T09:00:00Z', updated_at: '2026-04-03T16:00:00Z',
-  },
-  {
-    id: 'AG-2026-0010', stage: 'Visita',
-    property: 'Penthouse T4 Parque Nações', contact: 'Pierre Dubois',
-    asking: 890000, offer: null, commission: 44500,
-    days_in_stage: 3, health: 90, status: 'active',
-    agent_id: null, created_at: '2026-04-02T11:00:00Z', updated_at: '2026-04-02T11:00:00Z',
-  },
-  {
-    id: 'AG-2026-0009', stage: 'Proposta',
-    property: 'T2 Príncipe Real', contact: 'Charlotte Blake',
-    asking: 720000, offer: 680000, commission: 36000,
-    days_in_stage: 18, health: 55, status: 'active',
-    agent_id: null, created_at: '2026-03-18T10:00:00Z', updated_at: '2026-03-30T15:00:00Z',
-  },
-  {
-    id: 'AG-2026-0008', stage: 'Qualificado',
-    property: 'Moradia V3 Sintra', contact: 'Sophie Hartmann',
-    asking: 520000, offer: null, commission: 26000,
-    days_in_stage: 5, health: 82, status: 'active',
-    agent_id: null, created_at: '2026-03-31T09:00:00Z', updated_at: '2026-03-31T09:00:00Z',
-  },
-  {
-    id: 'AG-2026-0007', stage: 'Escritura',
-    property: 'T4 Belém', contact: 'Marco Aurelio Santos',
-    asking: 1100000, offer: 1050000, commission: 55000,
-    days_in_stage: 22, health: 95, status: 'closing',
-    agent_id: null, created_at: '2026-03-14T10:00:00Z', updated_at: '2026-04-04T10:00:00Z',
-  },
-  {
-    id: 'AG-2026-0006', stage: 'Contacto',
-    property: 'T2 Alcântara', contact: 'Ana Beatriz Costa',
-    asking: 320000, offer: null, commission: 16000,
-    days_in_stage: 2, health: 78, status: 'active',
-    agent_id: null, created_at: '2026-04-03T14:00:00Z', updated_at: '2026-04-03T14:00:00Z',
-  },
-  {
-    id: 'AG-2026-0005', stage: 'Negociação',
-    property: 'Villa Algarve', contact: 'Roberto Fontana',
-    asking: 380000, offer: 355000, commission: 19000,
-    days_in_stage: 25, health: 42, status: 'at_risk',
-    agent_id: null, created_at: '2026-03-11T09:00:00Z', updated_at: '2026-03-25T13:00:00Z',
-  },
-]
 
 const VALID_FASES = [
   'Angariação', 'Proposta Enviada', 'Proposta Aceite', 'Due Diligence',
@@ -192,59 +113,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // Supabase unavailable — fall through to mock
     }
 
-    // --- Mock fallback ---
-    let filtered = [...MOCK_DEALS]
-
-    if (fase && fase !== 'all')    filtered = filtered.filter(d => d.stage === fase)
-    if (status && status !== 'all') filtered = filtered.filter(d => d.status === status)
-    if (minValue !== null)          filtered = filtered.filter(d => d.asking >= minValue)
-    if (agentId)                    filtered = filtered.filter(d => d.agent_id === agentId)
-    if (search) {
-      const s = search.toLowerCase()
-      filtered = filtered.filter(d =>
-        d.property.toLowerCase().includes(s) ||
-        d.contact.toLowerCase().includes(s)  ||
-        d.id.toLowerCase().includes(s)
-      )
-    }
-
-    const total  = filtered.length
-    const sliced = filtered.slice((page - 1) * limit, page * limit)
-
-    // Normalise v2 stage names → v1 portal stage names so kanban columns always match
-    const STAGE_V2_TO_V1: Record<string, string> = {
-      'Contacto':    'Angariação',
-      'Qualificado': 'Angariação',
-      'Visita':      'Proposta Enviada',
-      'Proposta':    'Proposta Enviada',
-      'Negociação':  'Proposta Aceite',
-      'CPCV':        'CPCV Assinado',
-      'Escritura':   'Escritura Marcada',
-    }
-
-    // Map mock data to the Deal interface expected by the portal
-    const mappedMock = sliced.map((d, i) => ({
-      id: i + 1,  // sequential numeric ID for mock deals
-      ref: d.id,
-      imovel: d.property,
-      valor: `€ ${Number(d.asking).toLocaleString('pt-PT')}`,
-      fase: STAGE_V2_TO_V1[d.stage] ?? d.stage,
-      comprador: d.contact,
-      cpcvDate: '',
-      escrituraDate: '',
-      checklist: {},
-      notas: '',
-      propertyId: null,
-    }))
-
+    // Supabase unavailable — return empty result with explicit note (no mock data)
+    console.error('[deals GET] Supabase unavailable after retry')
     return NextResponse.json({
-      data:   mappedMock,
-      total,
+      data:    [],
+      total:   0,
       page,
       limit,
-      pages:  Math.ceil(total / limit),
-      source: 'mock',
-    }, { headers: rateLimitHeaders() })
+      pages:   0,
+      source:  'unavailable',
+      message: 'Base de dados temporariamente indisponível. Tente novamente.',
+    }, { status: 200, headers: rateLimitHeaders() })
   } catch (error) {
     console.error('[deals GET]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
@@ -310,26 +189,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // Supabase unavailable
     }
 
-    // Mock fallback
-    const mockDeal: MockDeal = {
-      id:            ref,
-      stage:         String(body.fase),
-      property:      String(body.imovel),
-      contact:       typeof body.comprador === 'string' ? body.comprador : 'Unknown',
-      asking:        typeof body.valor === 'number' ? body.valor : parseFloat(String(body.valor)) || 0,
-      offer:         null,
-      commission:    (typeof body.valor === 'number' ? body.valor : parseFloat(String(body.valor)) || 0) * 0.05,
-      days_in_stage: 0,
-      health:        80,
-      status:        'active',
-      agent_id:      typeof body.agent_id === 'string' ? body.agent_id : null,
-      created_at:    new Date().toISOString(),
-      updated_at:    new Date().toISOString(),
-    }
-
+    // Supabase unavailable — cannot persist deal, return 503
+    console.error('[deals POST] Supabase unavailable — deal not created')
     return NextResponse.json(
-      { success: true, deal: mockDeal, source: 'mock', warning: 'Supabase unavailable — deal not persisted' },
-      { status: 201, headers: rateLimitHeaders() }
+      { error: 'Serviço indisponível. Deal não foi guardado. Tente novamente.' },
+      { status: 503, headers: rateLimitHeaders() }
     )
   } catch (error) {
     console.error('[deals POST]', error)
@@ -407,12 +271,11 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
       // Supabase unavailable
     }
 
-    const mock = MOCK_DEALS.find(d => d.id === id)
-    if (!mock) return NextResponse.json({ error: 'Deal not found' }, { status: 404, headers: rateLimitHeaders() })
-
+    // Supabase unavailable — cannot update deal
+    console.error('[deals PUT] Supabase unavailable — deal not updated')
     return NextResponse.json(
-      { success: true, deal: { ...mock, ...updates, id, updated_at: new Date().toISOString() }, source: 'mock', warning: 'Not persisted' },
-      { headers: rateLimitHeaders() }
+      { error: 'Serviço indisponível. Alteração não foi guardada. Tente novamente.' },
+      { status: 503, headers: rateLimitHeaders() }
     )
   } catch (error) {
     console.error('[deals PUT]', error)

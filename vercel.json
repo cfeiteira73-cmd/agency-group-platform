@@ -47,6 +47,18 @@
     {
       "path": "/api/automation/revenue-loop",
       "schedule": "0 7,13,19 * * *"
+    },
+    {
+      "path": "/api/cron/sync-listings",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/investor-alerts?min_score=75&hours=24",
+      "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/cron/dre-ingest",
+      "schedule": "0 9 * * 1-5"
     }
   ]
 }
