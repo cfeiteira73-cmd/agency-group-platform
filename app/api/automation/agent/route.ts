@@ -97,7 +97,7 @@ const CRM_TOOLS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {
         deal_id: { type: 'string' },
-        new_stage: { type: 'string', enum: ['lead', 'qualified', 'visita', 'proposta', 'cpcv', 'escritura', 'lost'] },
+        new_stage: { type: 'string', enum: ['Contacto', 'Qualificação', 'Visita Agendada', 'Visita Realizada', 'Proposta', 'Negociação', 'CPCV Assinado', 'Escritura', 'Pós-Venda', 'Fechado', 'Perdido'] },
         reason: { type: 'string' },
       },
       required: ['deal_id', 'new_stage', 'reason'],
@@ -147,14 +147,16 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabase as any)
         .from('deals')
-        .select('id, title, stage, contact_name, contact_email, contact_phone, property_id, valor, last_activity_at, created_at, agent_id, notes')
+        .select('id, title, imovel, fase, comprador, property_id, valor, last_activity_at, created_at, agent_id, notes, notas')
         .lt('last_activity_at', cutoff)
-        .neq('stage', 'lost')
-        .neq('stage', 'escritura')
+        .not('fase', 'ilike', '%fechado%')
+        .not('fase', 'ilike', '%escritura%')
+        .not('fase', 'ilike', '%posvenda%')
         .order('last_activity_at', { ascending: true })
         .limit(limit)
 
-      if (input.stage) query = query.eq('stage', input.stage as string)
+      // Filter by fase using ILIKE for PT stage names
+      if (input.stage) query = query.ilike('fase', `%${input.stage as string}%`)
 
       const { data, error } = await query
       if (error) return { error: error.message }
@@ -188,7 +190,7 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
     case 'generate_followup': {
       const { data: deal } = await (supabase as any)
         .from('deals')
-        .select('contact_name, contact_email, valor, stage, notes, properties(nome, zona, preco)')
+        .select('comprador, valor, fase, notes, notas, properties(nome, zona, preco)')
         .eq('id', input.deal_id as string)
         .single()
 
@@ -215,7 +217,7 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
 Generate a ${input.channel} follow-up message for:
 - Client: ${dealData.contact_name}
 - Context: ${input.context}
-- Deal stage: ${dealData.stage}
+- Deal stage: ${dealData.fase}
 - Budget: €${typeof dealData.valor === 'number' ? dealData.valor.toLocaleString('pt-PT') : 'unknown'}
 - Property interest: ${propertiesData?.nome ?? 'general interest'}
 - Notes: ${dealData.notes ?? 'none'}
@@ -261,7 +263,7 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
       const { error } = await (supabase as any)
         .from('deals')
         .update({
-          stage: input.new_stage,
+          fase: input.new_stage,  // portal-compat column (TEXT)
           last_activity_at: new Date().toISOString(),
         })
         .eq('id', input.deal_id as string)
@@ -270,7 +272,7 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
         // Log stage change in deal_stage_history if table exists (best-effort)
         await (supabase as any).from('deal_stage_history').insert({
           deal_id: input.deal_id,
-          stage: input.new_stage,
+          fase: input.new_stage,
           reason: input.reason,
           changed_at: new Date().toISOString(),
           changed_by: 'sofia_agent',

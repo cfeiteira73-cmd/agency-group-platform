@@ -27,6 +27,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
 import track from '@/lib/trackLearningEvent'
+import log from '@/lib/logger'
 import { randomUUID } from 'crypto'
 
 export const runtime = 'nodejs'
@@ -383,21 +384,55 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     },
   })
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // STEP 7: SELF-HEALING — n8n workflow health check (non-blocking)
+  // ───────────────────────────────────────────────────────────────────────────
+  let n8nStatus: 'ok' | 'degraded' | 'offline' | 'unconfigured' = 'unconfigured'
+  try {
+    const n8nUrl = process.env.N8N_BASE_URL ?? process.env.N8N_WEBHOOK_URL
+    if (n8nUrl) {
+      const baseUrl = n8nUrl.replace(/\/webhook.*$/, '')
+      const res = await fetch(`${baseUrl}/healthz`, {
+        signal: AbortSignal.timeout(3000),
+      })
+      n8nStatus = res.ok ? 'ok' : 'degraded'
+    }
+  } catch {
+    n8nStatus = 'offline'
+  }
+
+  if (n8nStatus === 'offline') {
+    report.insights.push(`⚠ n8n automation engine is OFFLINE — revenue workflows not executing`)
+    report.errors++
+    log.automation('n8n offline detected by revenue-loop', {
+      correlation_id: correlationId,
+      route: '/api/automation/revenue-loop',
+      workflow: 'n8n-health',
+      success: false,
+    })
+  }
+
   // ── Final report ──────────────────────────────────────────────────────────
   report.duration_ms = Date.now() - cycleStart
   report.revenue_at_risk = Math.round(report.revenue_at_risk)
 
+  const status = report.errors === 0 ? 'healthy' : n8nStatus === 'offline' ? 'automation_degraded' : 'errors'
+
   if (report.errors === 0) {
     report.insights.unshift(
-      `Cycle complete in ${report.duration_ms}ms — ${report.priority_items_created} new items created, €${report.revenue_at_risk.toLocaleString('pt-PT')} pipeline at risk.`
+      `Cycle complete in ${report.duration_ms}ms — ${report.priority_items_created} new items, €${report.revenue_at_risk.toLocaleString('pt-PT')} at risk.`
     )
   } else {
     report.insights.unshift(
-      `Cycle completed with ${report.errors} error(s) — ${report.priority_items_created} items created. Check logs.`
+      `Cycle completed with ${report.errors} issue(s) — ${report.priority_items_created} items created.`
     )
   }
 
-  return NextResponse.json(report, { status: report.errors > 0 ? 207 : 200 })
+  return NextResponse.json({
+    ...report,
+    n8n_status: n8nStatus,
+    cycle_status: status,
+  }, { status: report.errors > 0 ? 207 : 200 })
 }
 
 // ── GET handler — Vercel cron triggers via GET with Authorization header ──────

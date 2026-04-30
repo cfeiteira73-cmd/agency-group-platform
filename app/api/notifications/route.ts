@@ -311,6 +311,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
+    // Guard: empty ids array would crash Supabase .in() with 400
+    if (!markAll && ids.length === 0) {
+      return NextResponse.json(
+        { success: true, marked_read: 0, source: 'noop' },
+        { headers: responseHeaders() }
+      )
+    }
+
     // Try Supabase
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

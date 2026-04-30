@@ -23,9 +23,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+// ── n8n workflow health check ──────────────────────────────────────────────────
+async function checkN8nHealth(): Promise<{
+  status: 'ok' | 'degraded' | 'offline'
+  latency_ms: number
+  error?: string
+}> {
+  const n8nUrl  = process.env.N8N_BASE_URL ?? process.env.N8N_WEBHOOK_URL
+  if (!n8nUrl) return { status: 'degraded', latency_ms: 0, error: 'N8N_BASE_URL not configured' }
+
+  const t0 = Date.now()
+  try {
+    // Ping n8n health endpoint (available in all self-hosted n8n versions)
+    const baseUrl = n8nUrl.replace(/\/webhook.*$/, '')
+    const res = await fetch(`${baseUrl}/healthz`, {
+      signal: AbortSignal.timeout(4000),
+    })
+    const latency_ms = Date.now() - t0
+    if (res.ok) return { status: 'ok', latency_ms }
+    return { status: 'degraded', latency_ms, error: `HTTP ${res.status}` }
+  } catch (e) {
+    return {
+      status: 'offline',
+      latency_ms: Date.now() - t0,
+      error: e instanceof Error ? e.message : 'unreachable',
+    }
+  }
+}
 
 // ── Safe count helper ─────────────────────────────────────────────────────────
 async function safeCount(
@@ -100,6 +129,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const auth = await requirePortalAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 })
 
+  const correlationId = crypto.randomUUID()
   const globalStart = Date.now()
   const now = new Date()
   const h24ago  = new Date(now.getTime() - 24 * 3600_000).toISOString()
@@ -384,8 +414,58 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // LAYER 6: WORKFLOW / INFRASTRUCTURE HEALTH
+  // ═══════════════════════════════════════════════════════════════════════════
+  const [n8nHealth] = await Promise.all([
+    checkN8nHealth(),
+  ])
+
+  const workflowLayer = {
+    health:     n8nHealth.status,
+    n8n: {
+      status:     n8nHealth.status,
+      latency_ms: n8nHealth.latency_ms,
+      error:      n8nHealth.error ?? null,
+    },
+    crons: {
+      revenue_loop:     { schedule: '0 7,13,19 * * *', description: '3× daily autonomy engine' },
+      followups:        { schedule: '0 9 * * *',       description: 'Daily follow-up check' },
+      kpi_snapshot:     { schedule: '55 23 * * *',     description: 'Daily KPI snapshot' },
+      offmarket_score:  { schedule: '0 7 * * 1-5',    description: 'Weekday offmarket scoring' },
+    },
+  }
+
+  if (n8nHealth.status === 'offline') {
+    anomalies.push('n8n automation engine is OFFLINE — revenue workflows not executing')
+    log.automation('n8n offline detected by Control Tower', {
+      correlation_id: correlationId,
+      route: '/api/system/state',
+      workflow: 'n8n-health-check',
+      success: false,
+    })
+  } else if (n8nHealth.status === 'degraded') {
+    anomalies.push(`n8n degraded: ${n8nHealth.error}`)
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // COMPUTE SYSTEM SCORES
   // ═══════════════════════════════════════════════════════════════════════════
+
+  // Critical anomalies → Sentry (non-blocking)
+  if (anomalies.length > 0) {
+    const criticalAnomalies = anomalies.filter(a =>
+      a.toLowerCase().includes('offline') ||
+      a.toLowerCase().includes('pipeline value = €0') ||
+      a.toLowerCase().includes('sla')
+    )
+    if (criticalAnomalies.length > 0) {
+      log.warn('[system/state] Critical anomalies detected', {
+        correlation_id: correlationId,
+        route: '/api/system/state',
+        anomalies: criticalAnomalies,
+      } as Record<string, unknown>)
+    }
+  }
 
   const layerHealthScores = [
     dataLayer.health === 'ok' ? 100 : dataLayer.health === 'degraded' ? 60 : 0,
@@ -393,6 +473,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     (revenueLayer.health as string) === 'ok' ? 100 : 50,
     (automationLayer.health as string) === 'ok' ? 100 : (automationLayer.health as string) === 'degraded' ? 60 : 0,
     (eventLayer.health as string) === 'ok' ? 100 : (eventLayer.health as string) === 'degraded' ? 60 : 0,
+    n8nHealth.status === 'ok' ? 100 : n8nHealth.status === 'degraded' ? 60 : 20,
   ]
   const systemHealthScore = Math.round(
     layerHealthScores.reduce((a, b) => a + b, 0) / layerHealthScores.length
@@ -424,13 +505,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     anomalies,
     anomaly_count: anomalies.length,
 
-    // ── 5 Layers ──
+    // ── 6 Layers ──
     layers: {
       data:         dataLayer,
       intelligence: intelligenceLayer,
       revenue:      revenueLayer,
       automation:   automationLayer,
       events:       eventLayer,
+      workflow:     workflowLayer,
     },
 
     // ── Quick summary ──

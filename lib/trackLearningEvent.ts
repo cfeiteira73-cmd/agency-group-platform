@@ -75,6 +75,42 @@ function getAdminClient() {
 // Core track function — fire and forget
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Idempotency cache — prevents duplicate events within the same process
+// Simple in-memory Set; keys expire after EVENT_DEDUP_WINDOW_MS
+// For distributed dedup, the DB upsert on idempotency_key column is the
+// authoritative guard (migration 20260430_002_event_idempotency.sql)
+// ---------------------------------------------------------------------------
+
+const EVENT_DEDUP_WINDOW_MS = 30_000  // 30 seconds
+const _recentKeys = new Map<string, number>()
+
+function buildIdempotencyKey(
+  event_type: LearningEventType,
+  payload: TrackPayload
+): string {
+  // Key: event_type + lead_id + deal_id + property_id (deduplicated per-entity)
+  const parts = [
+    event_type,
+    String(payload.lead_id     ?? ''),
+    String(payload.deal_id     ?? ''),
+    String(payload.property_id ?? ''),
+    String(payload.deal_pack_id ?? ''),
+  ]
+  return parts.join(':')
+}
+
+function isDuplicate(key: string): boolean {
+  const now = Date.now()
+  // Prune expired keys
+  for (const [k, ts] of _recentKeys.entries()) {
+    if (now - ts > EVENT_DEDUP_WINDOW_MS) _recentKeys.delete(k)
+  }
+  if (_recentKeys.has(key)) return true
+  _recentKeys.set(key, now)
+  return false
+}
+
 async function insertEvent(
   event_type: LearningEventType,
   payload: TrackPayload
@@ -82,26 +118,27 @@ async function insertEvent(
   const client = getAdminClient()
   if (!client) return
 
-  // ── Build enriched metadata (max compatibility across schema versions) ────────
-  // lead_id / deal_id may be UUID or INTEGER depending on migration state.
-  // Store UUID strings in metadata._lead_id as guaranteed-accessible fallback.
-  // Also store event bus correlation fields for future stream replay.
+  // ── Idempotency guard — deduplicate within 30s window ─────────────────────
+  const idempotencyKey = buildIdempotencyKey(event_type, payload)
+  if (isDuplicate(idempotencyKey)) return  // silent — not an error
+
+  // ── Build enriched metadata (max compatibility across schema versions) ─────
   const enrichedMeta = {
     ...(payload.metadata ?? {}),
     // ID backups — always accessible even if FK col is wrong type
-    _lead_id:       payload.lead_id      ?? null,
-    _deal_id:       payload.deal_id      ?? null,
-    _property_id:   payload.property_id  ?? null,
+    _lead_id:        payload.lead_id      ?? null,
+    _deal_id:        payload.deal_id      ?? null,
+    _property_id:    payload.property_id  ?? null,
     // Event bus v2 correlation
     _correlation_id: payload.correlation_id ?? null,
     _session_id:     payload.session_id     ?? null,
     _sequence_num:   payload.sequence_num   ?? null,
     _source_system:  payload.source_system  ?? 'api',
     _fired_at:       new Date().toISOString(),
+    _idempotency_key: idempotencyKey,
   }
 
-  // Coerce IDs: try UUID string first, fall back to integer for legacy schema
-  // After migration 20260429_learning_events_uuid, lead_id/deal_id become TEXT
+  // Coerce IDs: UUID string pass-through, integer fallback for legacy schema
   function toId(v: string | number | null | undefined): string | number | null {
     if (v == null) return null
     if (typeof v === 'string') return v  // UUID string — pass directly

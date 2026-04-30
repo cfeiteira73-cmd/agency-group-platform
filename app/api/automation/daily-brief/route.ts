@@ -85,12 +85,11 @@ interface LeadRow {
 
 interface DealRow {
   id: string
-  stage: string
-  valor?: number
-  contact_name?: string
-  probability?: number
-  expected_close?: string
-  dias_sem_actividade?: number
+  fase?: string   // portal-compat column (PT stage name)
+  imovel?: string
+  comprador?: string
+  valor?: string | number  // TEXT in portal-compat ("€ 1.250.000") or BIGINT
+  updated_at?: string      // used to compute dias_sem_actividade
 }
 
 interface PropertyRow {
@@ -129,9 +128,14 @@ ${leads.length > 0 ? leads.slice(0, 10).map(l =>
   ).join('\n') : '(sem leads hoje)'}
 
 Deals activos no pipeline: ${deals.length}
-${deals.length > 0 ? deals.slice(0, 10).map(d =>
-    `- ${d.contact_name ?? 'Deal'} | Stage: ${d.stage} | Valor: €${(d.valor ?? 0).toLocaleString('pt-PT')} | Prob: ${d.probability ?? 0}% | Dias sem actividade: ${d.dias_sem_actividade ?? 0}`
-  ).join('\n') : '(sem deals activos)'}
+${deals.length > 0 ? deals.slice(0, 10).map(d => {
+    const valorNum = typeof d.valor === 'number' ? d.valor
+      : parseFloat(String(d.valor ?? '0').replace(/[^0-9.]/g, '')) || 0
+    const diasSemActividade = d.updated_at
+      ? Math.floor((Date.now() - new Date(d.updated_at).getTime()) / 86_400_000)
+      : 0
+    return `- ${d.comprador ?? d.imovel ?? 'Deal'} | Fase: ${d.fase ?? '?'} | Valor: €${valorNum.toLocaleString('pt-PT')} | Dias sem actividade: ${diasSemActividade}`
+  }).join('\n') : '(sem deals activos)'}
 
 Propriedades activas: ${properties.length}
 ${properties.slice(0, 5).map(p =>
@@ -321,9 +325,10 @@ export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief
         .gte('created_at', todayStartISO),
       supabase
         .from('deals')
-        .select('id, stage, valor, contact_name, probability, expected_close, dias_sem_actividade')
-        .neq('stage', 'fechado')
-        .neq('stage', 'perdido'),
+        .select('id, fase, imovel, comprador, valor, updated_at')
+        .not('fase', 'ilike', '%fechado%')
+        .not('fase', 'ilike', '%perdido%')
+        .not('fase', 'ilike', '%escritura%'),
       supabase
         .from('properties')
         .select('id, nome, preco, zona, status, dias_mercado')
@@ -358,20 +363,36 @@ export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief
       marketInsight
     )
 
-    // ── Merge AI output with computed metrics, fall back gracefully ──────────
-    const dealsAtRisk = activeDeals.filter(
-      d => (d.dias_sem_actividade ?? 0) > 7 || (d.probability ?? 100) < 30
-    ).length
-
-    const dealsClosing30d = activeDeals.filter(d => {
-      if (!d.expected_close) return false
-      const closeDate = new Date(d.expected_close)
-      const diffDays = (closeDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24)
-      return diffDays >= 0 && diffDays <= 30
+    // ── Merge AI output with computed metrics (portal-compat schema) ─────────
+    // Compute days-stale from updated_at; no probability column in portal schema
+    const FASE_PROBA: Record<string, number> = {
+      contacto: 10, qualificacao: 20, qualificado: 20,
+      visita: 35, propostaaceite: 55, proposta: 50,
+      negociacao: 65, cpcv: 85, cpcvassinado: 85, escritura: 95, posvenda: 100,
+    }
+    const fasePct = (fase?: string): number => {
+      const key = (fase ?? '').toLowerCase().replace(/[^a-z]/g, '')
+      return FASE_PROBA[key] ?? 50
+    }
+    const dealsAtRisk = activeDeals.filter(d => {
+      const diasSemActividade = d.updated_at
+        ? Math.floor((Date.now() - new Date(d.updated_at).getTime()) / 86_400_000)
+        : 0
+      return diasSemActividade > 7 || fasePct(d.fase) < 30
     }).length
 
+    // No expected_close in portal schema — approximate via CPCV deals closing in 30d
+    const dealsClosing30d = activeDeals.filter(d =>
+      (d.fase ?? '').toLowerCase().includes('cpcv') ||
+      (d.fase ?? '').toLowerCase().includes('escritura')
+    ).length
+
+    const parseValorNum = (v: string | number | undefined): number => {
+      if (typeof v === 'number') return v
+      return parseFloat(String(v ?? '0').replace(/[^0-9.]/g, '')) || 0
+    }
     const totalWeightedGCI = activeDeals.reduce(
-      (sum, d) => sum + (d.valor ?? 0) * 0.05 * ((d.probability ?? 50) / 100),
+      (sum, d) => sum + parseValorNum(d.valor) * 0.05 * (fasePct(d.fase) / 100),
       0
     )
 
