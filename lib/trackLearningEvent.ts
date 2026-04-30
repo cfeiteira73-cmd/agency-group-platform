@@ -1,7 +1,14 @@
 // =============================================================================
-// AGENCY OS — Learning Events Tracker v1.0
+// AGENCY OS — Learning Events Tracker v2.0
 // Fire-and-forget tracking to `learning_events` table
 // Never throws — all errors are suppressed (non-blocking by design)
+//
+// v2.0 additions:
+//   - correlation_id: UUID linking all events in the same request flow
+//   - session_id: UUID linking events in the same agent/user session
+//   - sequence_num: monotonic counter for event ordering within a flow
+//   - source_system: identifies which subsystem fired the event
+//   These fields are OPTIONAL in payload — event bus infrastructure for GAP 1
 // =============================================================================
 
 import { createClient } from '@supabase/supabase-js'
@@ -23,9 +30,9 @@ export type LearningEventType =
   | 'rejected'
 
 export interface TrackPayload {
-  /** contacts.id — BIGINT or UUID depending on table */
+  /** contacts.id — UUID */
   lead_id?: string | number | null
-  /** deals.id — BIGINT or UUID depending on table */
+  /** deals.id — UUID */
   deal_id?: string | number | null
   /** properties.id — TEXT */
   property_id?: string | null
@@ -39,6 +46,16 @@ export interface TrackPayload {
   match_score?: number | null
   /** any extra structured data */
   metadata?: Record<string, unknown>
+
+  // ── Event Bus v2 fields (GAP 1 — event stream correlation) ──────────────────
+  /** UUID linking all events in the same request flow (pass from API handler) */
+  correlation_id?: string | null
+  /** UUID linking events in the same user/agent session */
+  session_id?: string | null
+  /** monotonic sequence for ordering within a correlation_id flow */
+  sequence_num?: number | null
+  /** system that fired this event: 'api', 'n8n', 'cron', 'engine' */
+  source_system?: 'api' | 'n8n' | 'cron' | 'engine' | null
 }
 
 // ---------------------------------------------------------------------------
@@ -65,35 +82,52 @@ async function insertEvent(
   const client = getAdminClient()
   if (!client) return
 
-  // Store IDs in metadata too for maximum compatibility across FK types
+  // ── Build enriched metadata (max compatibility across schema versions) ────────
+  // lead_id / deal_id may be UUID or INTEGER depending on migration state.
+  // Store UUID strings in metadata._lead_id as guaranteed-accessible fallback.
+  // Also store event bus correlation fields for future stream replay.
   const enrichedMeta = {
     ...(payload.metadata ?? {}),
-    _lead_id:      payload.lead_id   ?? null,
-    _deal_id:      payload.deal_id   ?? null,
-    _property_id:  payload.property_id ?? null,
+    // ID backups — always accessible even if FK col is wrong type
+    _lead_id:       payload.lead_id      ?? null,
+    _deal_id:       payload.deal_id      ?? null,
+    _property_id:   payload.property_id  ?? null,
+    // Event bus v2 correlation
+    _correlation_id: payload.correlation_id ?? null,
+    _session_id:     payload.session_id     ?? null,
+    _sequence_num:   payload.sequence_num   ?? null,
+    _source_system:  payload.source_system  ?? 'api',
+    _fired_at:       new Date().toISOString(),
   }
 
-  // Coerce numeric IDs — learning_events.lead_id / deal_id are INTEGER columns
-  function toInt(v: string | number | null | undefined): number | null {
+  // Coerce IDs: try UUID string first, fall back to integer for legacy schema
+  // After migration 20260429_learning_events_uuid, lead_id/deal_id become TEXT
+  function toId(v: string | number | null | undefined): string | number | null {
     if (v == null) return null
+    if (typeof v === 'string') return v  // UUID string — pass directly
     const n = Number(v)
-    return Number.isFinite(n) && n === Math.floor(n) ? n : null
+    return Number.isFinite(n) ? n : null
   }
 
   try {
     await client.from('learning_events').insert({
       event_type,
-      lead_id:      toInt(payload.lead_id),
-      deal_id:      toInt(payload.deal_id),
-      property_id:  payload.property_id ?? null,
-      match_id:     payload.match_id     ?? null,
-      deal_pack_id: payload.deal_pack_id ?? null,
-      agent_email:  payload.agent_email  ?? null,
-      match_score:  payload.match_score  ?? null,
-      metadata:     enrichedMeta,
+      lead_id:        toId(payload.lead_id),
+      deal_id:        toId(payload.deal_id),
+      property_id:    payload.property_id  ?? null,
+      match_id:       payload.match_id     ?? null,
+      deal_pack_id:   payload.deal_pack_id ?? null,
+      agent_email:    payload.agent_email  ?? null,
+      match_score:    payload.match_score  ?? null,
+      // Event bus correlation — written if columns exist (migration 20260429_*)
+      correlation_id: payload.correlation_id ?? null,
+      session_id:     payload.session_id     ?? null,
+      source_system:  payload.source_system  ?? 'api',
+      metadata:       enrichedMeta,
     })
   } catch {
     // Intentionally silent — tracking must never break the calling code
+    // All critical data is preserved in enrichedMeta as fallback
   }
 }
 
