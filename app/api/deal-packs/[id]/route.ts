@@ -58,11 +58,32 @@ export async function GET(
     view_count:           null,  // incremented below if column exists
   }
 
-  // Increment view_count (non-blocking — column may not exist until migration)
-  void supabase
-    .from('deal_packs')
-    .update({ viewed_at: new Date().toISOString() })
-    .eq('id', id)
+  // Track view: update viewed_at, increment view_count, advance status to 'viewed'
+  // view_count: read-then-write (non-atomic but acceptable for analytics)
+  // status: advance 'sent' → 'viewed' so revenue funnel counts correctly
+  void (async () => {
+    try {
+      const { data: current } = await supabase
+        .from('deal_packs')
+        .select('view_count, status')
+        .eq('id', id)
+        .single()
+
+      const newCount  = (Number(current?.view_count ?? 0)) + 1
+      const newStatus = current?.status === 'sent' ? 'viewed' : current?.status
+
+      await supabase
+        .from('deal_packs')
+        .update({
+          viewed_at:  new Date().toISOString(),
+          view_count: newCount,
+          ...(newStatus !== current?.status ? { status: newStatus } : {}),
+        })
+        .eq('id', id)
+    } catch {
+      // Non-blocking — view tracking must never crash the GET response
+    }
+  })()
 
   return NextResponse.json({ deal_pack: data })
 }

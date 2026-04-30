@@ -399,3 +399,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json(report, { status: report.errors > 0 ? 207 : 200 })
 }
+
+// ── GET handler — Vercel cron triggers via GET with Authorization header ──────
+// Vercel injects: Authorization: Bearer <CRON_SECRET>
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  return POST(req)
+}

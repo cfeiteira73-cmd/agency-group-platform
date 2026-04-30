@@ -222,7 +222,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         : undefined
 
     // ── 4. Build response ────────────────────────────────────────────────────
-    // topAgents: query contacts/agents table if available, else return mock
+    // topAgents: try `agents` table first; fall back to deriving from deal packs
+    // (agent_email on deal_packs is the most reliable agent activity signal)
     let topAgents = MOCK_SUMMARY.topAgents
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -241,9 +242,50 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           score: a.score ?? 0, calls: a.calls ?? 0, emails: a.emails ?? 0,
           visitas: a.visitas ?? 0, propostas: a.propostas ?? 0,
         }))
+      } else {
+        throw new Error('agents table empty — derive from deal_packs')
       }
     } catch {
-      // agents table doesn't exist yet — use mock
+      // agents table doesn't exist — derive from deal_packs agent activity
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: packData } = await (supabaseAdmin as any)
+          .from('deal_packs')
+          .select('created_by, status, created_at')
+          .not('created_by', 'is', null)
+          .limit(500)
+
+        if (packData && packData.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const agentMap: Record<string, { packs: number; sent: number; viewed: number }> = {}
+          for (const p of packData as any[]) {
+            const email = String(p.created_by ?? 'unknown')
+            if (!agentMap[email]) agentMap[email] = { packs: 0, sent: 0, viewed: 0 }
+            agentMap[email].packs++
+            if (p.status === 'sent')   agentMap[email].sent++
+            if (p.status === 'viewed') agentMap[email].viewed++
+          }
+          topAgents = Object.entries(agentMap)
+            .sort((a, b) => b[1].sent - a[1].sent)
+            .slice(0, 5)
+            .map(([email, stats]) => ({
+              name:          email.split('@')[0] ?? email,
+              gciMes:        0,  // requires closed deals with agent attribution
+              gciYTD:        0,
+              dealsFechados: 0,
+              pipeline:      0,
+              conversao:     stats.packs > 0 ? Math.round((stats.viewed / stats.packs) * 100) / 10 : 0,
+              diasCiclo:     0,
+              score:         Math.min(100, stats.packs * 10 + stats.viewed * 15),
+              calls:         0,
+              emails:        stats.sent,
+              visitas:       0,
+              propostas:     stats.packs,
+            }))
+        }
+      } catch {
+        // keep MOCK_SUMMARY.topAgents
+      }
     }
 
     // conversionsByZona: group closed deals by zona/imovel prefix
