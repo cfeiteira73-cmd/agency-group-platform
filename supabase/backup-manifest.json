@@ -1,0 +1,311 @@
+{
+  "_meta": {
+    "title": "Agency Group — Migration Registry & Backup Manifest",
+    "generated_at": "2026-04-30T18:30:00.000Z",
+    "git_head": "83f18b26ccc9fcf54c486cb70bd667c0fbdba7e7",
+    "git_branch": "main",
+    "environment": "production",
+    "supabase_project": "agency-group",
+    "app_version": "SH-ROS v2.0 + SaaS Hardening",
+    "typescript_errors": 0,
+    "test_results": "89/89 PASS"
+  },
+
+  "migration_registry": [
+    {
+      "file": "20260429_001_learning_events_uuid_fix.sql",
+      "applied": "pending-manual",
+      "phase": "SH-ROS Phase 8 — Event Bus",
+      "reversible": true,
+      "destructive": false,
+      "description": "Changes learning_events.lead_id / deal_id from INTEGER to TEXT (UUID-compatible). Adds correlation_id, session_id, source_system columns. Creates 5 event-bus indexes.",
+      "tables_modified": ["learning_events"],
+      "columns_added": ["correlation_id", "session_id", "source_system"],
+      "columns_type_changed": ["lead_id (INT→TEXT)", "deal_id (INT→TEXT)"],
+      "indexes_added": [
+        "idx_learning_events_correlation",
+        "idx_learning_events_session",
+        "idx_learning_events_lead_text",
+        "idx_learning_events_deal_text",
+        "idx_learning_events_type_time"
+      ],
+      "rollback_risk": "LOW — column type revert to INT is the only risk, only if UUID values were written",
+      "dependencies": []
+    },
+    {
+      "file": "20260429_002_trg_deals_fee_sync_fix.sql",
+      "applied": "pending-manual",
+      "phase": "SH-ROS Phase 1B — Schema Drift Fix",
+      "reversible": true,
+      "destructive": false,
+      "description": "Rewrites sync_deal_expected_fee() to use portal-compat columns (fase/valor) instead of broken stage/gci_net references. Drops and recreates trg_deals_fee_sync trigger.",
+      "tables_modified": ["deals"],
+      "functions_modified": ["sync_deal_expected_fee"],
+      "triggers_modified": ["trg_deals_fee_sync"],
+      "rollback_risk": "NONE — previous trigger was already broken (crashes on any deal save)",
+      "dependencies": []
+    },
+    {
+      "file": "20260429_003_deal_pack_view_rpc.sql",
+      "applied": "pending-manual",
+      "phase": "SH-ROS Phase 6 — Revenue Funnel",
+      "reversible": true,
+      "destructive": false,
+      "description": "Adds increment_deal_pack_view_count(pack_id UUID) RPC for atomic view_count increment. Also ensures metadata + ai_summary columns exist on deal_packs.",
+      "tables_modified": ["deal_packs"],
+      "columns_added": ["metadata (JSONB)", "ai_summary (TEXT)"],
+      "functions_added": ["increment_deal_pack_view_count(UUID)"],
+      "rollback_risk": "LOW — callers gracefully handle RPC absence",
+      "dependencies": []
+    },
+    {
+      "file": "20260430_001_rls_hardening.sql",
+      "applied": "pending-manual",
+      "phase": "SH-ROS Phase 3 — Security",
+      "reversible": true,
+      "destructive": false,
+      "description": "Replaces USING(true) permissive RLS policies with agent-email isolation. Contacts and deals: agents see only their own records. Properties: authenticated read-all (listings are public), anon read active-only. Deal packs: created_by scoped.",
+      "tables_modified": ["contacts", "deals", "properties", "deal_packs", "matches", "priority_items", "learning_events", "offmarket_leads"],
+      "policies_dropped": [
+        "contacts_agent_access", "deals_agent_access", "properties_public_read",
+        "deal_packs_service_role", "deal_packs_agent_read"
+      ],
+      "policies_created": [
+        "contacts_agent_read_own", "contacts_agent_write_own", "contacts_agent_update_own",
+        "deals_agent_read_own", "deals_agent_write_own", "deals_agent_update_own",
+        "properties_authenticated_read", "properties_public_anon_read",
+        "properties_agent_insert", "properties_agent_update_own",
+        "deal_packs_agent_read_own", "deal_packs_agent_insert", "deal_packs_agent_update_own",
+        "matches_agent_read", "priority_items_agent_read", "priority_items_agent_write",
+        "priority_items_agent_update", "learning_events_agent_read", "learning_events_insert",
+        "offmarket_leads_agent_read", "offmarket_leads_agent_write"
+      ],
+      "rollback_risk": "MEDIUM — reverting to USING(true) re-opens cross-agent data visibility",
+      "dependencies": [],
+      "note": "All API routes use service_role key — unaffected by RLS. Only Supabase SDK direct client calls are gated."
+    },
+    {
+      "file": "20260430_002_organizations_tenant_foundation.sql",
+      "applied": "pending-manual",
+      "phase": "SaaS Phase 5 — Tenant Foundation",
+      "reversible": true,
+      "destructive": false,
+      "description": "Creates organizations + org_members tables. Inserts default Agency Group org (UUID: 00000000-0000-0000-0000-000000000001). Adds nullable tenant_id FK to 8 tables. Backfills all existing rows. Creates v_tenant_isolation_readiness view and get_tenant_id_for_email() helper. RLS enforcement NOT activated.",
+      "tables_created": ["organizations", "org_members"],
+      "columns_added": [
+        "contacts.tenant_id (UUID nullable)",
+        "deals.tenant_id (UUID nullable)",
+        "properties.tenant_id (UUID nullable)",
+        "deal_packs.tenant_id (UUID nullable)",
+        "matches.tenant_id (UUID nullable)",
+        "priority_items.tenant_id (UUID nullable)",
+        "learning_events.tenant_id (UUID nullable)",
+        "offmarket_leads.tenant_id (UUID nullable)"
+      ],
+      "indexes_added": [
+        "idx_contacts_tenant_id", "idx_deals_tenant_id", "idx_properties_tenant_id",
+        "idx_deal_packs_tenant_id", "idx_matches_tenant_id", "idx_priority_items_tenant_id",
+        "idx_learning_events_tenant_id", "idx_offmarket_leads_tenant_id",
+        "idx_org_members_org_email", "idx_org_members_email", "idx_org_members_user_id"
+      ],
+      "views_created": ["v_tenant_isolation_readiness"],
+      "functions_created": ["get_tenant_id_for_email(TEXT)", "update_organizations_updated_at()"],
+      "default_data": {
+        "org_id": "00000000-0000-0000-0000-000000000001",
+        "slug": "agency-group",
+        "name": "Agency Group",
+        "ami_number": "22506",
+        "plan": "agency",
+        "max_agents": 50
+      },
+      "rollback_risk": "LOW — nullable columns, no enforcement active, additive only",
+      "dependencies": ["uuid-ossp extension"],
+      "blocking_note": "Tenant RLS enforcement BLOCKED: JWT does not yet include tenant_id claim. Set TENANT_ISOLATION_ENABLED=true only after JWT hook is configured in Supabase Dashboard → Auth → Hooks."
+    },
+    {
+      "file": "20260430_003_performance_indexes.sql",
+      "applied": "pending-manual",
+      "phase": "SaaS Phase 9 — Performance",
+      "reversible": true,
+      "destructive": false,
+      "description": "15+ composite/partial indexes covering pipeline analytics, deal pack queries, contact dormant detection, match scoring, kpi_snapshots time-series, and properties search.",
+      "indexes_added": [
+        "idx_deals_agent_email_fase",
+        "idx_deals_fase_updated_at",
+        "idx_deals_open_pipeline",
+        "idx_deals_agent_realized_fee",
+        "idx_deals_tenant_fase",
+        "idx_contacts_agent_email_status",
+        "idx_contacts_next_followup",
+        "idx_contacts_budget",
+        "idx_contacts_dormant_detection",
+        "idx_deal_packs_created_by_status",
+        "idx_deal_packs_sent_unviewed",
+        "idx_matches_lead_score_status",
+        "idx_learning_events_agent_type_time",
+        "idx_learning_events_type_time_asc",
+        "idx_priority_items_owner_score_deadline",
+        "idx_priority_items_revenue_impact",
+        "idx_properties_zona_status",
+        "idx_properties_preco_range",
+        "idx_kpi_snapshots_agent_date",
+        "idx_kpi_snapshots_date"
+      ],
+      "rollback_risk": "NONE — DROP INDEX only",
+      "dependencies": ["20260430_002 (tenant_id columns for idx_deals_tenant_fase)"]
+    },
+    {
+      "file": "20260430_004_audit_log.sql",
+      "applied": "pending-manual",
+      "phase": "SaaS Phase 4 — Audit + GDPR",
+      "reversible": true,
+      "destructive": false,
+      "description": "Creates audit_log table with JSONB old_data/new_data, changed_columns[], actor context, and tenant isolation. PostgreSQL triggers on deals (INSERT/UPDATE of revenue columns/DELETE) and deal_packs (INSERT/UPDATE status/view_count/sent_at). Helper functions: enrich_audit_actor() and purge_old_audit_logs().",
+      "tables_created": ["audit_log"],
+      "functions_created": [
+        "trg_audit_deals_fn()",
+        "trg_audit_deal_packs_fn()",
+        "enrich_audit_actor(TEXT,TEXT,TEXT,TEXT,UUID,UUID)",
+        "purge_old_audit_logs(INT)"
+      ],
+      "triggers_created": ["trg_audit_deals ON deals", "trg_audit_deal_packs ON deal_packs"],
+      "indexes_added": [
+        "idx_audit_log_actor_email",
+        "idx_audit_log_record",
+        "idx_audit_log_recent",
+        "idx_audit_log_correlation",
+        "idx_audit_log_tenant"
+      ],
+      "rollback_risk": "LOW — DROP TABLE destroys audit history; triggers are removed cleanly",
+      "dependencies": ["20260430_002 (tenant_id FK reference)"]
+    }
+  ],
+
+  "table_inventory": {
+    "core_tables": [
+      {
+        "name": "contacts",
+        "description": "Lead/client registry",
+        "rls_enabled": true,
+        "rls_mode": "agent_email isolation (post-001)",
+        "key_columns": ["id", "full_name", "email", "agent_email", "status", "tenant_id"],
+        "estimated_rows": "live production data"
+      },
+      {
+        "name": "deals",
+        "description": "Pipeline deals in PT real estate lifecycle",
+        "rls_enabled": true,
+        "rls_mode": "agent_email isolation (post-001)",
+        "key_columns": ["id", "imovel", "valor", "fase", "agent_email", "expected_fee", "realized_fee", "tenant_id"],
+        "estimated_rows": "live production data",
+        "critical_note": "Uses TEXT valor (€ 1.250.000 format), TEXT fase (PT stage names) — NOT BIGINT deal_value / stage enum"
+      },
+      {
+        "name": "properties",
+        "description": "Property listings",
+        "rls_enabled": true,
+        "rls_mode": "authenticated read-all, anon active-only, agent write own",
+        "key_columns": ["id", "titulo", "zona", "preco", "agent_email", "status", "tenant_id"]
+      },
+      {
+        "name": "deal_packs",
+        "description": "Revenue documents sent to buyers",
+        "rls_enabled": true,
+        "rls_mode": "created_by isolation (post-001)",
+        "key_columns": ["id", "lead_id", "property_id", "deal_id", "status", "created_by", "tenant_id", "view_count", "metadata", "ai_summary"]
+      }
+    ],
+    "event_tables": [
+      {
+        "name": "learning_events",
+        "description": "Event bus — all system actions tracked here",
+        "rls_enabled": true,
+        "rls_mode": "authenticated read-all (analytics aggregate)",
+        "key_columns": ["id", "event_type", "agent_email", "lead_id", "deal_id", "correlation_id", "session_id", "source_system", "tenant_id"]
+      }
+    ],
+    "intelligence_tables": [
+      { "name": "matches",        "key_columns": ["id", "lead_id", "property_id", "match_score", "status", "tenant_id"] },
+      { "name": "priority_items", "key_columns": ["id", "owner_id", "priority_score", "status", "revenue_impact", "deadline", "tenant_id"] }
+    ],
+    "saas_tables": [
+      { "name": "organizations", "key_columns": ["id", "slug", "name", "ami_number", "plan", "status"], "status": "NEW (20260430_002)" },
+      { "name": "org_members",   "key_columns": ["id", "org_id", "email", "role", "status"],             "status": "NEW (20260430_002)" },
+      { "name": "audit_log",     "key_columns": ["id", "table_name", "operation", "record_id", "actor_email", "old_data", "new_data", "changed_columns", "created_at"], "status": "NEW (20260430_004)" }
+    ]
+  },
+
+  "recovery_procedures": {
+    "full_rollback": {
+      "description": "Undo all 7 migrations completely",
+      "file": "supabase/rollback.sql",
+      "execution": "Supabase Dashboard → SQL Editor → paste rollback.sql → Run",
+      "estimated_time": "2-5 minutes",
+      "data_loss_risk": "audit_log table data lost (new, empty). All other data preserved."
+    },
+    "partial_rollback": {
+      "description": "Undo only the most recent migration",
+      "instructions": [
+        "Identify the failing migration from Supabase logs",
+        "Open rollback.sql",
+        "Run only the corresponding R-section (e.g. R7 for 20260430_004)",
+        "Verify application health",
+        "Re-run fixed migration if applicable"
+      ]
+    },
+    "emergency_rls_rollback": {
+      "description": "If agents cannot see their data after RLS migration",
+      "sql": "-- Restore permissive policies for contacts and deals:\nDROP POLICY IF EXISTS \"contacts_agent_read_own\" ON contacts;\nCREATE POLICY \"contacts_emergency\" ON contacts FOR ALL TO authenticated USING (true) WITH CHECK (true);\nDROP POLICY IF EXISTS \"deals_agent_read_own\" ON deals;\nCREATE POLICY \"deals_emergency\" ON deals FOR ALL TO authenticated USING (true) WITH CHECK (true);",
+      "estimated_time": "30 seconds"
+    },
+    "tenant_lockout_prevention": {
+      "description": "If tenant isolation accidentally locks all queries",
+      "note": "TENANT_ISOLATION_ENABLED is false by default. No tenant RLS is active. No lockout possible from these migrations alone.",
+      "safeguard": "Migration 20260430_002 explicitly states enforcement is BLOCKED pending JWT customization"
+    }
+  },
+
+  "environment_dependencies": {
+    "supabase": {
+      "extensions_required": ["uuid-ossp", "unaccent"],
+      "service_role_required": true,
+      "jwt_tenant_claim": "NOT CONFIGURED (required before activating TENANT_ISOLATION_ENABLED)"
+    },
+    "vercel_env_vars": {
+      "TENANT_ISOLATION_ENABLED": "false (default — do not change until JWT is configured)",
+      "CRON_SECRET": "configured",
+      "INTERNAL_API_TOKEN": "configured",
+      "SUPABASE_SERVICE_ROLE_KEY": "configured",
+      "SENTRY_DSN": "configured (for lib/logger.ts)"
+    }
+  },
+
+  "test_coverage": {
+    "total_tests": 89,
+    "passing": 89,
+    "failing": 0,
+    "test_files": [
+      "__tests__/api/revenue-flow.test.ts (47 tests)",
+      "__tests__/api/security-isolation.test.ts (42 tests)"
+    ],
+    "coverage_areas": [
+      "Revenue calculation chain (PT number format parsing)",
+      "Decision engine thresholds (HIGH/MEDIUM/LOW)",
+      "Match scoring logic",
+      "Stage probability weights",
+      "Event idempotency (30s dedup)",
+      "Empty array guard (.in([]) → noop)",
+      "Schema drift detection (fase not stage)",
+      "Auth token safeCompare (timing-safe XOR)",
+      "Deal pack view tracking",
+      "Magic-link token structure",
+      "Cross-agent RLS isolation",
+      "Tenant isolation foundation",
+      "Field allowlist injection prevention",
+      "Rate limit window logic",
+      "Authorization header parsing",
+      "Deal payload validation",
+      "Audit log changed-column detection"
+    ]
+  }
+}

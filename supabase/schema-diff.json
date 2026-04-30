@@ -1,0 +1,370 @@
+{
+  "_meta": {
+    "title": "Agency Group — Schema Diff: Baseline → SH-ROS + SaaS Hardened",
+    "baseline_commit": "3a609bd (pre-SH-ROS hardening)",
+    "current_commit": "83f18b2 (SaaS hardening complete)",
+    "generated_at": "2026-04-30T18:30:00.000Z",
+    "migrations_covered": [
+      "20260429_001_learning_events_uuid_fix.sql",
+      "20260429_002_trg_deals_fee_sync_fix.sql",
+      "20260429_003_deal_pack_view_rpc.sql",
+      "20260430_001_rls_hardening.sql",
+      "20260430_002_organizations_tenant_foundation.sql",
+      "20260430_003_performance_indexes.sql",
+      "20260430_004_audit_log.sql"
+    ]
+  },
+
+  "new_tables": [
+    {
+      "table": "organizations",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "id",         "type": "UUID",        "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()" },
+        { "name": "slug",       "type": "TEXT",        "constraints": "NOT NULL UNIQUE" },
+        { "name": "name",       "type": "TEXT",        "constraints": "NOT NULL" },
+        { "name": "ami_number", "type": "TEXT",        "constraints": "nullable" },
+        { "name": "plan",       "type": "TEXT",        "constraints": "NOT NULL DEFAULT 'solo' CHECK IN ('solo','team','agency','enterprise')" },
+        { "name": "max_agents", "type": "SMALLINT",    "constraints": "DEFAULT 5" },
+        { "name": "status",     "type": "TEXT",        "constraints": "NOT NULL DEFAULT 'active' CHECK IN ('active','suspended','trial','churned')" },
+        { "name": "email",      "type": "TEXT",        "constraints": "nullable" },
+        { "name": "phone",      "type": "TEXT",        "constraints": "nullable" },
+        { "name": "address",    "type": "TEXT",        "constraints": "nullable" },
+        { "name": "country",    "type": "TEXT",        "constraints": "DEFAULT 'PT'" },
+        { "name": "settings",   "type": "JSONB",       "constraints": "NOT NULL DEFAULT '{}'" },
+        { "name": "created_at", "type": "TIMESTAMPTZ", "constraints": "NOT NULL DEFAULT NOW()" },
+        { "name": "updated_at", "type": "TIMESTAMPTZ", "constraints": "NOT NULL DEFAULT NOW()" }
+      ],
+      "rls": "enabled — service_role full, authenticated read-own-org"
+    },
+    {
+      "table": "org_members",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "id",          "type": "UUID",        "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()" },
+        { "name": "org_id",      "type": "UUID",        "constraints": "NOT NULL REFERENCES organizations(id) ON DELETE CASCADE" },
+        { "name": "user_id",     "type": "UUID",        "constraints": "nullable" },
+        { "name": "email",       "type": "TEXT",        "constraints": "NOT NULL" },
+        { "name": "role",        "type": "TEXT",        "constraints": "NOT NULL DEFAULT 'agent' CHECK IN ('owner','admin','agent','viewer')" },
+        { "name": "status",      "type": "TEXT",        "constraints": "NOT NULL DEFAULT 'active' CHECK IN ('active','suspended','invited','removed')" },
+        { "name": "invited_at",  "type": "TIMESTAMPTZ", "constraints": "nullable" },
+        { "name": "joined_at",   "type": "TIMESTAMPTZ", "constraints": "DEFAULT NOW()" },
+        { "name": "created_at",  "type": "TIMESTAMPTZ", "constraints": "NOT NULL DEFAULT NOW()" }
+      ],
+      "rls": "enabled — service_role full, authenticated read-own-org"
+    },
+    {
+      "table": "audit_log",
+      "migration": "20260430_004",
+      "columns": [
+        { "name": "id",              "type": "UUID",        "constraints": "PRIMARY KEY DEFAULT gen_random_uuid()" },
+        { "name": "table_name",      "type": "TEXT",        "constraints": "NOT NULL" },
+        { "name": "operation",       "type": "TEXT",        "constraints": "NOT NULL CHECK IN ('INSERT','UPDATE','DELETE','SELECT_SENSITIVE')" },
+        { "name": "record_id",       "type": "TEXT",        "constraints": "NOT NULL" },
+        { "name": "actor_email",     "type": "TEXT",        "constraints": "nullable" },
+        { "name": "actor_via",       "type": "TEXT",        "constraints": "nullable" },
+        { "name": "tenant_id",       "type": "UUID",        "constraints": "nullable" },
+        { "name": "correlation_id",  "type": "UUID",        "constraints": "nullable" },
+        { "name": "session_id",      "type": "UUID",        "constraints": "nullable" },
+        { "name": "ip_address",      "type": "TEXT",        "constraints": "nullable (last IPv4 octet redacted)" },
+        { "name": "user_agent",      "type": "TEXT",        "constraints": "nullable (truncated to 200 chars)" },
+        { "name": "old_data",        "type": "JSONB",       "constraints": "nullable" },
+        { "name": "new_data",        "type": "JSONB",       "constraints": "nullable" },
+        { "name": "changed_columns", "type": "TEXT[]",      "constraints": "nullable" },
+        { "name": "created_at",      "type": "TIMESTAMPTZ", "constraints": "NOT NULL DEFAULT NOW()" }
+      ],
+      "rls": "enabled — service_role write+read, authenticated read own actor_email"
+    }
+  ],
+
+  "columns_added": [
+    {
+      "table": "learning_events",
+      "migration": "20260429_001",
+      "columns": [
+        { "name": "correlation_id", "type": "UUID",   "default": null,    "nullable": true },
+        { "name": "session_id",     "type": "UUID",   "default": null,    "nullable": true },
+        { "name": "source_system",  "type": "TEXT",   "default": "'api'", "nullable": true, "check": "IN ('api','n8n','cron','engine')" }
+      ]
+    },
+    {
+      "table": "deal_packs",
+      "migration": "20260429_003",
+      "columns": [
+        { "name": "metadata",   "type": "JSONB", "default": "'{}'", "nullable": false },
+        { "name": "ai_summary", "type": "TEXT",  "default": null,   "nullable": true }
+      ]
+    },
+    {
+      "table": "contacts",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "tenant_id", "type": "UUID", "references": "organizations(id)", "on_delete": "SET NULL", "nullable": true }
+      ]
+    },
+    {
+      "table": "deals",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "tenant_id", "type": "UUID", "references": "organizations(id)", "on_delete": "SET NULL", "nullable": true }
+      ]
+    },
+    {
+      "table": "properties",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "tenant_id", "type": "UUID", "references": "organizations(id)", "on_delete": "SET NULL", "nullable": true }
+      ]
+    },
+    {
+      "table": "deal_packs",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "tenant_id", "type": "UUID", "references": "organizations(id)", "on_delete": "SET NULL", "nullable": true }
+      ]
+    },
+    {
+      "table": "matches",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "tenant_id", "type": "UUID", "references": "organizations(id)", "on_delete": "SET NULL", "nullable": true }
+      ]
+    },
+    {
+      "table": "priority_items",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "tenant_id", "type": "UUID", "references": "organizations(id)", "on_delete": "SET NULL", "nullable": true }
+      ]
+    },
+    {
+      "table": "learning_events",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "tenant_id", "type": "UUID", "references": "organizations(id)", "on_delete": "SET NULL", "nullable": true }
+      ]
+    },
+    {
+      "table": "offmarket_leads",
+      "migration": "20260430_002",
+      "columns": [
+        { "name": "tenant_id", "type": "UUID", "references": "organizations(id)", "on_delete": "SET NULL", "nullable": true }
+      ]
+    }
+  ],
+
+  "columns_type_changed": [
+    {
+      "table": "learning_events",
+      "migration": "20260429_001",
+      "changes": [
+        { "column": "lead_id", "from": "INTEGER", "to": "TEXT", "reason": "UUID contacts.id is not an INTEGER; all UUID lead_ids were silently coerced to NULL before this fix" },
+        { "column": "deal_id", "from": "INTEGER", "to": "TEXT", "reason": "Same as lead_id — UUID deals.id incompatible with INTEGER" }
+      ]
+    }
+  ],
+
+  "rls_policy_changes": {
+    "migration": "20260430_001",
+    "contacts": {
+      "before": [{ "name": "contacts_agent_access", "clause": "USING(true)" }],
+      "after": [
+        { "name": "contacts_agent_read_own",   "clause": "agent_email = auth.email() OR agent_email = auth.uid()::text" },
+        { "name": "contacts_agent_write_own",  "clause": "WITH CHECK: agent_email = auth.email() OR agent_email = auth.uid()::text" },
+        { "name": "contacts_agent_update_own", "clause": "agent_email = auth.email() OR agent_email = auth.uid()::text" }
+      ]
+    },
+    "deals": {
+      "before": [{ "name": "deals_agent_access", "clause": "USING(true)" }],
+      "after": [
+        { "name": "deals_agent_read_own",   "clause": "agent_email = auth.email() OR agent_email = auth.uid()::text" },
+        { "name": "deals_agent_write_own",  "clause": "WITH CHECK: agent_email = auth.email() OR agent_email = auth.uid()::text" },
+        { "name": "deals_agent_update_own", "clause": "agent_email = auth.email() OR agent_email = auth.uid()::text" }
+      ]
+    },
+    "properties": {
+      "before": [{ "name": "properties_public_read", "clause": "USING(true)" }],
+      "after": [
+        { "name": "properties_authenticated_read", "clause": "USING(true) — intentionally public to all authenticated" },
+        { "name": "properties_public_anon_read",   "clause": "status = 'active' OR status = 'Ativo'" },
+        { "name": "properties_agent_insert",        "clause": "WITH CHECK: agent_email = auth.email() OR ..." },
+        { "name": "properties_agent_update_own",    "clause": "agent_email = auth.email() OR agent_email IS NULL" }
+      ]
+    },
+    "deal_packs": {
+      "before": [{ "name": "deal_packs_service_role", "clause": "USING(true)" }],
+      "after": [
+        { "name": "deal_packs_agent_read_own",   "clause": "created_by = auth.email() OR created_by = auth.uid()::text" },
+        { "name": "deal_packs_agent_insert",     "clause": "WITH CHECK: created_by = auth.email() OR ..." },
+        { "name": "deal_packs_agent_update_own", "clause": "created_by = auth.email() OR ..." }
+      ]
+    }
+  },
+
+  "new_functions": [
+    { "name": "sync_deal_expected_fee()",              "migration": "20260429_002", "type": "TRIGGER FUNCTION", "replaces": "broken version referencing stage/gci_net" },
+    { "name": "increment_deal_pack_view_count(UUID)",  "migration": "20260429_003", "type": "RPC SECURITY DEFINER" },
+    { "name": "update_organizations_updated_at()",     "migration": "20260430_002", "type": "TRIGGER FUNCTION" },
+    { "name": "get_tenant_id_for_email(TEXT)",         "migration": "20260430_002", "type": "STABLE SQL FUNCTION" },
+    { "name": "trg_audit_deals_fn()",                  "migration": "20260430_004", "type": "TRIGGER FUNCTION SECURITY DEFINER" },
+    { "name": "trg_audit_deal_packs_fn()",             "migration": "20260430_004", "type": "TRIGGER FUNCTION SECURITY DEFINER" },
+    { "name": "enrich_audit_actor(TEXT,TEXT,TEXT,TEXT,UUID,UUID)", "migration": "20260430_004", "type": "PLPGSQL SECURITY DEFINER" },
+    { "name": "purge_old_audit_logs(INT)",             "migration": "20260430_004", "type": "PLPGSQL SECURITY DEFINER" }
+  ],
+
+  "new_triggers": [
+    { "name": "trg_deals_fee_sync",   "table": "deals",      "migration": "20260429_002", "fires": "BEFORE INSERT OR UPDATE OF valor, fase, expected_fee" },
+    { "name": "trg_audit_deals",      "table": "deals",      "migration": "20260430_004", "fires": "AFTER INSERT OR UPDATE OF fase,valor,imovel,expected_fee,realized_fee OR DELETE" },
+    { "name": "trg_audit_deal_packs", "table": "deal_packs", "migration": "20260430_004", "fires": "AFTER INSERT OR UPDATE OF status,view_count,sent_at" },
+    { "name": "trg_organizations_updated_at", "table": "organizations", "migration": "20260430_002", "fires": "BEFORE UPDATE" }
+  ],
+
+  "new_indexes": {
+    "count": 37,
+    "by_table": {
+      "deals": [
+        "idx_deals_agent_email_fase (composite)",
+        "idx_deals_fase_updated_at (partial — open deals)",
+        "idx_deals_open_pipeline (partial — non-cancelled)",
+        "idx_deals_agent_realized_fee (partial — realized only)",
+        "idx_deals_tenant_fase (composite — SaaS)",
+        "idx_deals_tenant_id (FK index)"
+      ],
+      "contacts": [
+        "idx_contacts_agent_email_status (composite)",
+        "idx_contacts_next_followup (partial — due dates)",
+        "idx_contacts_budget (range queries)",
+        "idx_contacts_dormant_detection (partial — non-lost)",
+        "idx_contacts_tenant_id (FK index)"
+      ],
+      "deal_packs": [
+        "idx_deal_packs_created_by_status (composite)",
+        "idx_deal_packs_sent_unviewed (partial — sent status)",
+        "idx_deal_packs_tenant_id (FK index)"
+      ],
+      "learning_events": [
+        "idx_learning_events_correlation (UUID lookup)",
+        "idx_learning_events_session (UUID lookup)",
+        "idx_learning_events_lead_text (UUID lookup)",
+        "idx_learning_events_deal_text (UUID lookup)",
+        "idx_learning_events_type_time (composite)",
+        "idx_learning_events_agent_type_time (composite)",
+        "idx_learning_events_type_time_asc (composite)",
+        "idx_learning_events_tenant_id (FK index)"
+      ],
+      "matches": [
+        "idx_matches_lead_score_status (covering)",
+        "idx_matches_tenant_id (FK index)"
+      ],
+      "priority_items": [
+        "idx_priority_items_owner_score_deadline (composite partial)",
+        "idx_priority_items_revenue_impact (partial — open)",
+        "idx_priority_items_tenant_id (FK index)"
+      ],
+      "properties": [
+        "idx_properties_zona_status (composite partial)",
+        "idx_properties_preco_range (partial — active)",
+        "idx_properties_tenant_id (FK index)"
+      ],
+      "kpi_snapshots": [
+        "idx_kpi_snapshots_agent_date (composite)",
+        "idx_kpi_snapshots_date (time-series)"
+      ],
+      "audit_log": [
+        "idx_audit_log_actor_email (composite)",
+        "idx_audit_log_record (composite)",
+        "idx_audit_log_recent (partial — last 90d)",
+        "idx_audit_log_correlation (UUID lookup)",
+        "idx_audit_log_tenant (composite)"
+      ],
+      "org_members": [
+        "idx_org_members_org_email (unique composite)",
+        "idx_org_members_email",
+        "idx_org_members_user_id (partial)"
+      ]
+    }
+  },
+
+  "new_views": [
+    {
+      "name": "v_tenant_isolation_readiness",
+      "migration": "20260430_002",
+      "purpose": "Monitor tenant_id backfill progress and readiness for RLS enforcement activation",
+      "query_hint": "SELECT * FROM v_tenant_isolation_readiness;"
+    }
+  ],
+
+  "seed_data": [
+    {
+      "table": "organizations",
+      "migration": "20260430_002",
+      "rows": [{ "id": "00000000-0000-0000-0000-000000000001", "slug": "agency-group", "name": "Agency Group", "ami_number": "22506", "plan": "agency", "max_agents": 50 }]
+    },
+    {
+      "table": "org_members",
+      "migration": "20260430_002",
+      "rows": [{ "org_id": "00000000-0000-0000-0000-000000000001", "email": "admin@agencygroup.pt", "role": "owner" }],
+      "note": "Replace email with actual admin agent email before running"
+    }
+  ],
+
+  "backfill_operations": [
+    {
+      "migration": "20260430_002",
+      "operations": [
+        "UPDATE contacts SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL",
+        "UPDATE deals SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL",
+        "UPDATE properties SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL",
+        "UPDATE deal_packs SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL",
+        "UPDATE matches SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL",
+        "UPDATE priority_items SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL",
+        "UPDATE learning_events SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL",
+        "UPDATE offmarket_leads SET tenant_id = '00000000-0000-0000-0000-000000000001' WHERE tenant_id IS NULL"
+      ]
+    }
+  ],
+
+  "application_code_changes": {
+    "new_lib_files": [
+      { "file": "lib/logger.ts",            "purpose": "Structured Sentry-integrated logging (log.info/warn/error/revenue/automation)" },
+      { "file": "lib/auditLog.ts",          "purpose": "Fire-and-forget audit helper (deal/contact/dealPack/sensitiveAccess)" },
+      { "file": "lib/realtime.ts",          "purpose": "Supabase Realtime hooks (useRealtimePriority/Matches/DealPacks)" },
+      { "file": "lib/tenant.ts",            "purpose": "Tenant context resolution, stampTenantId, assertSameTenant, feature flag" }
+    ],
+    "modified_lib_files": [
+      { "file": "lib/trackLearningEvent.ts", "changes": "30s idempotency dedup window with buildIdempotencyKey() and isDuplicate()" },
+      { "file": "lib/validation.ts",         "changes": "Added DealCreateSchema, DealUpdateSchema, ContactCreateSchema, DealPackGenerateSchema, NotificationMarkReadSchema, ForecastQuerySchema, EventReplayQuerySchema" }
+    ],
+    "new_api_routes": [
+      { "file": "app/api/analytics/forecast/route.ts",      "purpose": "Stage-probability weighted pipeline forecast (3 scenarios × 3 time windows)" },
+      { "file": "app/api/analytics/events/replay/route.ts", "purpose": "Event stream replay with correlation_id/session_id/lead_id filters" },
+      { "file": "app/api/docs/route.ts",                    "purpose": "OpenAPI 3.1 spec — all 20+ paths / 11 domains" }
+    ],
+    "modified_api_routes": [
+      { "file": "app/api/automation/agent/route.ts",         "changes": "6 stage→fase column references fixed (portal-compat)" },
+      { "file": "app/api/automation/daily-brief/route.ts",   "changes": "Removed hard-coded DealRow fields; FASE_PROBA probability map; staleness detection from updated_at" },
+      { "file": "app/api/automation/revenue-loop/route.ts",  "changes": "Step 7: n8n health check self-healing; n8n_status + cycle_status in response" },
+      { "file": "app/api/notifications/route.ts",            "changes": "Empty-array guard before .in('id', ids) Supabase call" },
+      { "file": "app/api/system/state/route.ts",             "changes": "Layer 6 (n8n health); correlationId stamping; log.warn on anomalies" }
+    ],
+    "new_test_files": [
+      { "file": "__tests__/api/revenue-flow.test.ts",       "tests": 47 },
+      { "file": "__tests__/api/security-isolation.test.ts", "tests": 42 }
+    ]
+  },
+
+  "not_changed": {
+    "description": "These systems were audited and found correct — no changes applied",
+    "items": [
+      "Portal authentication (requirePortalAuth — 3-method cascade)",
+      "NextAuth configuration",
+      "Supabase client initialization (supabaseAdmin service role)",
+      "n8n webhook endpoints",
+      "Magic-link send/verify flow",
+      "Deal pack PDF generation",
+      "Match-buyer scoring algorithm",
+      "Analytics summary aggregation",
+      "Revenue route (only column-name fixes in related routes)"
+    ]
+  }
+}
