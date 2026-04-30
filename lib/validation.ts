@@ -1,6 +1,124 @@
 import { z } from 'zod'
 
-// ─── Property schemas ────────────────────────────────────────────────────────
+// ─── Deal schemas ─────────────────────────────────────────────────────────────
+
+const VALID_FASES = [
+  'Angariação', 'Proposta Enviada', 'Proposta Aceite', 'Due Diligence',
+  'CPCV Assinado', 'Financiamento', 'Escritura Marcada', 'Escritura Concluída',
+  'Contacto', 'Qualificado', 'Visita', 'Proposta', 'Negociação',
+  'CPCV', 'Escritura', 'Pós-Venda', 'Fechado', 'Perdido',
+] as const
+
+export const DealCreateSchema = z.object({
+  imovel:      z.string().min(1).max(300),
+  valor:       z.union([z.string().min(1).max(50), z.number().min(0).max(1e9)]),
+  fase:        z.enum(VALID_FASES),
+  comprador:   z.string().max(200).optional(),
+  notas:       z.string().max(5000).optional(),
+  ref:         z.string().max(50).optional(),
+  property_id: z.string().uuid().optional(),
+  agent_id:    z.string().max(200).optional(),
+  agent_email: z.string().email().optional(),
+})
+
+export const DealUpdateSchema = z.object({
+  id:           z.string().uuid().optional(),
+  ref:          z.string().max(50).optional(),
+  imovel:       z.string().min(1).max(300).optional(),
+  valor:        z.union([z.string().max(50), z.number().min(0).max(1e9)]).optional(),
+  fase:         z.enum(VALID_FASES).optional(),
+  comprador:    z.string().max(200).optional(),
+  notas:        z.string().max(5000).optional(),
+  agent_id:     z.string().max(200).optional(),
+  agent_email:  z.string().email().optional(),
+  property_id:  z.string().uuid().optional(),
+  contact_id:   z.string().uuid().optional(),
+}).refine(d => d.id || d.ref, { message: 'id or ref is required' })
+
+export const DealQuerySchema = z.object({
+  fase:      z.string().max(100).optional(),
+  stage:     z.string().max(100).optional(),
+  agent_id:  z.string().max(200).optional(),
+  min_value: z.coerce.number().min(0).optional(),
+  search:    z.string().max(200).optional(),
+  page:      z.coerce.number().int().min(1).default(1),
+  limit:     z.coerce.number().int().min(1).max(100).default(50),
+})
+
+// ─── Contact schemas ──────────────────────────────────────────────────────────
+
+export const ContactCreateSchema = z.object({
+  full_name:            z.string().min(1).max(200),
+  email:                z.string().email().optional().nullable(),
+  phone:                z.string().max(50).optional().nullable(),
+  nationality:          z.string().max(100).optional().nullable(),
+  language:             z.string().max(10).optional().default('pt'),
+  budget_min:           z.coerce.number().min(0).max(1e9).optional().nullable(),
+  budget_max:           z.coerce.number().min(0).max(1e9).optional().nullable(),
+  preferred_locations:  z.array(z.string().max(100)).max(20).optional().default([]),
+  typologies_wanted:    z.array(z.string().max(50)).max(10).optional().default([]),
+  status:               z.enum(['lead','prospect','qualified','active','negotiating','client','vip','dormant','lost','referrer']).optional().default('lead'),
+  notes:                z.string().max(5000).optional().nullable(),
+  source:               z.string().max(100).optional().nullable(),
+  lead_score:           z.coerce.number().int().min(0).max(100).optional().default(0),
+})
+
+export const ContactUpdateSchema = z.object({
+  id:                   z.string().uuid(),
+  full_name:            z.string().min(1).max(200).optional(),
+  email:                z.string().email().optional().nullable(),
+  phone:                z.string().max(50).optional().nullable(),
+  nationality:          z.string().max(100).optional().nullable(),
+  budget_min:           z.coerce.number().min(0).max(1e9).optional().nullable(),
+  budget_max:           z.coerce.number().min(0).max(1e9).optional().nullable(),
+  status:               z.enum(['lead','prospect','qualified','active','negotiating','client','vip','dormant','lost','referrer']).optional(),
+  notes:                z.string().max(5000).optional().nullable(),
+  lead_score:           z.coerce.number().int().min(0).max(100).optional(),
+  next_followup_at:     z.string().datetime().optional().nullable(),
+  gdpr_consent:         z.boolean().optional(),
+  opt_out_marketing:    z.boolean().optional(),
+  opt_out_whatsapp:     z.boolean().optional(),
+})
+
+// ─── Deal Pack schemas ────────────────────────────────────────────────────────
+
+export const DealPackGenerateSchema = z.object({
+  lead_id:      z.string().uuid(),
+  property_id:  z.string().uuid().optional(),
+  deal_id:      z.string().uuid().optional(),
+  language:     z.enum(['pt','en','fr','de','es','it','zh','ar']).optional().default('pt'),
+})
+
+// ─── Notification schemas ─────────────────────────────────────────────────────
+
+export const NotificationMarkReadSchema = z.object({
+  ids:      z.array(z.string().uuid()).max(100).optional().default([]),
+  markAll:  z.boolean().optional().default(false),
+})
+
+// ─── Analytics schemas ────────────────────────────────────────────────────────
+
+export const ForecastQuerySchema = z.object({
+  agent_email: z.string().email().optional(),
+})
+
+export const EventReplayQuerySchema = z.object({
+  correlation_id: z.string().uuid().optional(),
+  session_id:     z.string().uuid().optional(),
+  event_type:     z.string().max(100).optional(),
+  lead_id:        z.string().uuid().optional(),
+  deal_id:        z.string().uuid().optional(),
+  source_system:  z.enum(['api','n8n','cron','engine']).optional(),
+  since:          z.string().datetime().optional(),
+  until:          z.string().datetime().optional(),
+  limit:          z.coerce.number().int().min(1).max(1000).default(100),
+  order:          z.enum(['asc','desc']).default('asc'),
+}).refine(
+  d => d.correlation_id || d.session_id || d.event_type || d.lead_id || d.deal_id || d.since,
+  { message: 'At least one filter is required' }
+)
+
+// ─── Property schemas ─────────────────────────────────────────────────────────
 export const SearchSchema = z.object({
   query: z.string().max(500).optional(),
   zona: z.string().max(100).optional(),
