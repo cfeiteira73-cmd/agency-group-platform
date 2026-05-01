@@ -121,6 +121,7 @@ async function writeScores(
       estimated_cap_rate:     s.estimated_cap_rate,
       investor_suitable:      s.investor_suitable,
       score_reason:           s.score_reason,
+      score_breakdown:        s.score_breakdown,
       zone_key:               s.zone_key,
       scored_at:              new Date().toISOString(),
     }))
@@ -172,8 +173,8 @@ async function processSignals(
         ai_analysis:        sig.description,
       })
 
-      // HIGH priority signals → priority_items queue
-      if (sig.severity === 'HIGH') {
+      // HIGH + MEDIUM signals → priority_items queue (LOW excluded to reduce noise)
+      if (sig.severity === 'HIGH' || sig.severity === 'MEDIUM') {
         const item = signalToPriorityItem(prop.id, agentEmail, sig)
         priorityRows.push(item)
       }
@@ -232,13 +233,36 @@ async function writePriceHistory(
 
   if (reductions.length === 0) return
 
-  const rows = reductions.map(p => ({
-    property_id:  p.id!,
-    price_old:    p.price_previous!,
-    price_new:    p.price,
-    change_type:  p.price < p.price_previous! ? 'reduction' : 'increase',
-    source:       'sync',
-  }))
+  // Dedup: fetch existing price_history records for these properties in last 7 days
+  // to avoid duplicate entries on double-run (cron retry / manual trigger)
+  const sinceDedup = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const ids = reductions.map(p => p.id!).filter(Boolean)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: recentEntries } = await (supabaseAdmin as any)
+    .from('price_history')
+    .select('property_id, price_new')
+    .in('property_id', ids)
+    .gte('recorded_at', sinceDedup)
+
+  // Build a dedup set: "propertyId:priceNew"
+  const recentKeys = new Set<string>(
+    (recentEntries ?? []).map((r: { property_id: string; price_new: number }) =>
+      `${r.property_id}:${r.price_new}`,
+    ),
+  )
+
+  const rows = reductions
+    .filter(p => !recentKeys.has(`${p.id}:${p.price}`))
+    .map(p => ({
+      property_id:  p.id!,
+      price_old:    p.price_previous!,
+      price_new:    p.price,
+      change_type:  p.price < p.price_previous! ? 'reduction' : 'increase',
+      source:       'sync',
+    }))
+
+  if (rows.length === 0) return
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabaseAdmin as any)
@@ -373,6 +397,24 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     const scored = batchScoreProperties(propertiesWithId)
     stats.properties_scored = scored.length
+
+    // ── 2b. Scoring anomaly detection (observability) ────────────────────────
+    if (scored.length > 0) {
+      const zeroCount = scored.filter(s => s.opportunity_score === 0).length
+      const highCount = scored.filter(s => s.opportunity_score >= 90).length
+      const zeroRatio = zeroCount / scored.length
+      const highRatio = highCount / scored.length
+      if (zeroRatio > 0.5) {
+        stats.errors.push(
+          `WARN: ${Math.round(zeroRatio * 100)}% properties scored 0 — verify scoring calibration (${zeroCount}/${scored.length})`,
+        )
+      }
+      if (highRatio > 0.8) {
+        stats.errors.push(
+          `WARN: ${Math.round(highRatio * 100)}% properties scored ≥90 — possible score inflation (${highCount}/${scored.length})`,
+        )
+      }
+    }
 
     // ── 3. Write scores to DB ────────────────────────────────────────────────
     await writeScores(scored, stats)

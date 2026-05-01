@@ -72,6 +72,7 @@ const AVM_DISCOUNT_THRESHOLD    = 0.05      // 5% below AVM triggers signal
 const AVM_DISCOUNT_HIGH         = 0.12      // 12%+ below AVM = HIGH severity
 const HOT_ZONE_DEMAND_MIN       = 8.0       // Zone demanda ≥ 8 = hot zone
 const NEW_LISTING_DAYS          = 3         // "New" = on market ≤ 3 days
+const MIN_SIGNAL_PRICE          = 100_000   // Noise floor: ignore signals below €100K
 
 // ---------------------------------------------------------------------------
 // Revenue impact estimation
@@ -251,7 +252,9 @@ function detectHotZoneNew(
 function detectListingRemoved(
   p: SignalPropertyInput,
 ): DetectedSignal | null {
-  if (p.status !== 'withdrawn' && p.status !== 'listing_removed') return null
+  // Valid property_status enum values that indicate removal: 'withdrawn', 'off_market'
+  // 'listing_removed' is NOT a valid enum value — never use it here
+  if (p.status !== 'withdrawn' && p.status !== 'off_market') return null
 
   return {
     signal_type:    'listing_removed',
@@ -273,6 +276,9 @@ function detectListingRemoved(
 // ---------------------------------------------------------------------------
 
 export function detectSignals(property: SignalPropertyInput): DetectedSignal[] {
+  // Noise floor: sub-€100K properties generate too many false-positive signals
+  if (!property.price || property.price < MIN_SIGNAL_PRICE) return []
+
   const zone_key = resolvePropertyZone(property)
   const zone     = getZone(zone_key)
 

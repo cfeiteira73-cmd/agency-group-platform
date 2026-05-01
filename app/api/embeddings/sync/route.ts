@@ -1,7 +1,21 @@
+// =============================================================================
+// Agency Group — Property Embeddings Sync
+// POST /api/embeddings/sync
+//
+// Generates OpenAI text-embedding-3-small vectors (1536-dim) for active
+// properties that lack embeddings and writes them to the `embedding` column.
+//
+// USAGE:
+//   - Called fire-and-forget from sync-listings cron (passes property_ids)
+//   - Can also be called manually (no body = sync all unembedded properties)
+//
+// AUTH: x-internal-token: INTERNAL_API_TOKEN  OR  Authorization: Bearer CRON_SECRET
+// =============================================================================
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export const runtime = 'nodejs'
+export const runtime    = 'nodejs'
 export const maxDuration = 60
 
 const supabase = createClient(
@@ -9,33 +23,80 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-interface PropertyRow {
-  id: string
-  nome: string | null
-  tipo: string | null
-  zona: string | null
-  descricao: string | null
-  quartos: number | null
-  area: number | null
-  preco: number | null
+// ---------------------------------------------------------------------------
+// Auth: accept both legacy x-internal-token and new Authorization: Bearer CRON_SECRET
+// ---------------------------------------------------------------------------
+
+function isAuthorized(req: NextRequest): boolean {
+  // Legacy internal token path
+  const internalToken = req.headers.get('x-internal-token')
+  if (internalToken && internalToken === process.env.INTERNAL_API_TOKEN) return true
+
+  // Cron secret path (used by sync-listings cron)
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret) {
+    const bearer = req.headers.get('authorization')?.replace('Bearer ', '').trim()
+    if (bearer === cronSecret) return true
+  }
+
+  return false
 }
 
-// Generate embedding via OpenAI text-embedding-3-small (1536 dims, cheap)
+// ---------------------------------------------------------------------------
+// Property row shape — matches current properties table schema
+// ---------------------------------------------------------------------------
+
+interface PropertyRow {
+  id:          string
+  title:       string | null
+  type:        string | null
+  zone:        string | null
+  description: string | null
+  bedrooms:    number | null
+  area_m2:     number | null
+  price:       number | null
+}
+
+// ---------------------------------------------------------------------------
+// Build rich text for embedding from property data
+// ---------------------------------------------------------------------------
+
+function buildPropertyText(p: PropertyRow): string {
+  return [
+    p.title,
+    p.type,
+    p.zone,
+    p.description,
+    p.bedrooms != null ? `${p.bedrooms} quartos` : null,
+    p.area_m2  != null ? `${p.area_m2}m²`        : null,
+    p.price    != null ? `€${p.price.toLocaleString('pt-PT')}` : null,
+  ].filter(Boolean).join('. ')
+}
+
+// ---------------------------------------------------------------------------
+// Generate embedding via OpenAI text-embedding-3-small (1536 dims)
+// ---------------------------------------------------------------------------
+
 async function generateEmbedding(text: string): Promise<{ embedding: number[] | null; error?: string }> {
   const key = process.env.OPENAI_API_KEY
   if (!key) return { embedding: null, error: 'OPENAI_API_KEY not set' }
 
   try {
     const res = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      method:  'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type':  'application/json',
+      },
       body: JSON.stringify({ model: 'text-embedding-3-small', input: text }),
     })
+
     if (!res.ok) {
-      const errBody = await res.json().catch(() => ({})) as { error?: { message?: string; code?: string } }
+      const errBody = await res.json().catch(() => ({})) as { error?: { message?: string } }
       const msg = errBody?.error?.message ?? `HTTP ${res.status}`
       return { embedding: null, error: msg }
     }
+
     const data = await res.json() as { data: Array<{ embedding: number[] }> }
     return { embedding: data.data[0].embedding }
   } catch (e) {
@@ -43,30 +104,37 @@ async function generateEmbedding(text: string): Promise<{ embedding: number[] | 
   }
 }
 
-// Build rich text for embedding from property data
-function buildPropertyText(p: PropertyRow): string {
-  return [
-    p.nome, p.tipo, p.zona, p.descricao,
-    p.quartos != null ? `${p.quartos} quartos` : null,
-    p.area != null ? `${p.area}m²` : null,
-    p.preco != null ? `€${p.preco.toLocaleString('pt-PT')}` : null,
-  ].filter(Boolean).join('. ')
-}
+// ---------------------------------------------------------------------------
+// POST handler
+// ---------------------------------------------------------------------------
 
-export async function POST(req: NextRequest) {
-  // Require internal auth token
-  const token = req.headers.get('x-internal-token')
-  if (token !== process.env.INTERNAL_API_TOKEN) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Get properties without embeddings (up to 50 at a time)
-  const { data: properties, error } = await supabase
+  // Optional: filter to specific property_ids (from sync-listings cron)
+  let propertyIds: string[] | null = null
+  try {
+    const body = await req.json().catch(() => ({})) as { property_ids?: string[] }
+    if (Array.isArray(body.property_ids) && body.property_ids.length > 0) {
+      propertyIds = body.property_ids
+    }
+  } catch { /* no body = sync all */ }
+
+  // Build query
+  let query = supabase
     .from('properties')
-    .select('id, nome, tipo, zona, descricao, quartos, area, preco')
+    .select('id, title, type, zone, description, bedrooms, area_m2, price')
     .eq('status', 'active')
     .is('embedding', null)
     .limit(50)
+
+  if (propertyIds && propertyIds.length > 0) {
+    query = query.in('id', propertyIds)
+  }
+
+  const { data: properties, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!properties || properties.length === 0) {
@@ -75,12 +143,15 @@ export async function POST(req: NextRequest) {
 
   let synced = 0
   const errors: string[] = []
-
-  // Track first OpenAI error for diagnosis
   let firstOpenAIError: string | undefined
 
   for (const property of (properties as PropertyRow[])) {
     const text = buildPropertyText(property)
+    if (!text.trim()) {
+      errors.push(`${property.id}: skipped — empty text`)
+      continue
+    }
+
     const { embedding, error: embError } = await generateEmbedding(text)
 
     if (!embedding) {
@@ -101,13 +172,14 @@ export async function POST(req: NextRequest) {
       synced++
     }
 
-    // Rate limit: 5ms between calls
+    // Respect OpenAI rate limits: 5ms between calls
     await new Promise(r => setTimeout(r, 5))
   }
 
   return NextResponse.json({
     synced,
-    errors: errors.length > 0 ? errors : undefined,
-    openai_error: firstOpenAIError,
+    total_processed: properties.length,
+    errors:          errors.length > 0 ? errors : undefined,
+    openai_error:    firstOpenAIError,
   })
 }

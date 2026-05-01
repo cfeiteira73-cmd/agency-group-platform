@@ -115,14 +115,29 @@ async function findMatchingInvestors(
   const priceFloor = property.price * 0.85  // 15% below asking (negotiation room)
   const priceCeil  = property.price * 1.10  // 10% above (investor flexibility)
 
-  const { data, error } = await supabaseAdmin
+  // Location token: prefer zone_key (normalised), fall back to zone display name
+  const locationToken = (property.zone_key ?? property.zone ?? '').trim()
+
+  // Base query — budget range match
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabaseAdmin as any)
     .from('contacts')
     .select('id, full_name, email, whatsapp, budget_max, lead_tier, agent_email')
     .in('status', ['prospect', 'qualified', 'active', 'vip'])
     .eq('opt_out_whatsapp', false)
     .lte('budget_min', priceCeil)
     .gte('budget_max', priceFloor)
-    .limit(15)
+
+  // Location filter: match investors with NO location preference (interested in anything)
+  // OR whose preferred_locations array contains this zone / zone_key
+  if (locationToken) {
+    // PostgREST: preferred_locations IS NULL  OR  preferred_locations = {}  OR  preferred_locations @> '{<token>}'
+    query = query.or(
+      `preferred_locations.is.null,preferred_locations.eq.{},preferred_locations.cs.{"${locationToken}"}`,
+    )
+  }
+
+  const { data, error } = await query.limit(15)
 
   if (error) {
     console.error(`[investor-alerts] findMatchingInvestors: ${error.message}`)

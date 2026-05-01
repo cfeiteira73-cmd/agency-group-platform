@@ -153,8 +153,8 @@ function scoreD1PriceVsZone(
     ppm2 = price / area_m2
   }
   if (!ppm2 || ppm2 <= 0) {
-    // No m² data — use zone risk as proxy (safer zones = higher base)
-    return Math.round(10 * (1 - zone.risco / 10))
+    // No pricing data at all — explicit data-insufficient penalty (not a real signal)
+    return 5
   }
 
   const discount = (zone.pm2_trans - ppm2) / zone.pm2_trans
@@ -176,35 +176,40 @@ function scoreD1PriceVsZone(
 function scoreD2RentalYield(
   property: PropertyInput,
   zone:     ZoneMarket,
-): { score: number; estimated_yield: number | null } {
+): { score: number; estimated_yield: number | null; yield_from_area: boolean } {
   const { price, area_m2 } = property
 
-  if (price <= 0) return { score: 0, estimated_yield: null }
+  if (price <= 0) return { score: 0, estimated_yield: null, yield_from_area: false }
 
   let grossYield: number
+  let yield_from_area: boolean
 
   if (area_m2 && area_m2 > 0) {
     // Compute from zone rental data: annual_rent / price
     const monthly_rent = zone.renda_m2 * area_m2
     const annual_rent  = monthly_rent * 11.5  // account for vacancy (~3-4 weeks)
-    grossYield = (annual_rent / price) * 100
+    grossYield     = (annual_rent / price) * 100
+    yield_from_area = true
   } else {
-    // Use zone yield_bruto directly as proxy
-    grossYield = zone.yield_bruto
+    // No area data — penalized zone estimate (20% uncertainty discount)
+    // Avoids phantom yield scores driven purely by zone median
+    grossYield     = zone.yield_bruto * 0.80
+    yield_from_area = false
   }
 
   // Score: <3% = 0 | 3-4% = 6 | 4-5% = 10 | 5-6% = 14 | 6-7% = 17 | 7%+ = 20
   let score: number
-  if (grossYield >= 7)   score = 20
+  if (grossYield >= 7)      score = 20
   else if (grossYield >= 6) score = 17
   else if (grossYield >= 5) score = 14
   else if (grossYield >= 4) score = 10
   else if (grossYield >= 3) score = 6
-  else                       score = 0
+  else                      score = 0
 
   return {
     score,
     estimated_yield: parseFloat(grossYield.toFixed(2)),
+    yield_from_area,
   }
 }
 
@@ -247,8 +252,8 @@ function scoreD4DomPosition(
   const median = zone.dias_mercado
 
   if (!days_on_market || days_on_market <= 0) {
-    // New listing — maximum freshness score
-    return 15
+    // Unknown DOM — neutral score (missing data ≠ fresh listing)
+    return 10
   }
 
   const ratio = days_on_market / median  // >1 = stale
@@ -291,7 +296,7 @@ function scoreD6InvestorFit(
   property: PropertyInput,
   zone:     ZoneMarket,
 ): number {
-  const { condition, features, is_exclusive, is_off_market, bedrooms } = property
+  const { condition, features, is_exclusive, is_off_market } = property
 
   // Condition multiplier (0-4 pts base)
   const condMult = CONDITION_MULTIPLIER[condition ?? 'good'] ?? 0.85
@@ -322,7 +327,7 @@ export function computeOpportunityScore(property: PropertyInput): ScoreResult {
   // 2. Compute each dimension
   const d1 = scoreD1PriceVsZone(property, zone)
 
-  const { score: d2, estimated_yield } = scoreD2RentalYield(property, zone)
+  const { score: d2, estimated_yield, yield_from_area } = scoreD2RentalYield(property, zone)
 
   const d3 = scoreD3Momentum(zone)
   const d4 = scoreD4DomPosition(property, zone)
@@ -336,10 +341,13 @@ export function computeOpportunityScore(property: PropertyInput): ScoreResult {
     ? parseFloat((estimated_yield * 0.75).toFixed(2))  // ~75% of gross (expenses ~25%)
     : null
 
-  // 4. Investor suitability: high score + decent yield
-  const investor_suitable =
-    total >= 65 &&
-    (estimated_yield === null || estimated_yield >= 4.0)
+  // 4. Investor suitability: high score + verified yield
+  // When yield is computed from actual area data: score ≥ 65 AND yield ≥ 4.0%
+  // When yield is estimated from zone (no area_m2): require higher score ≥ 75 AND
+  //   penalized zone yield ≥ 3.5% (already discounted 20% from zone.yield_bruto)
+  const investor_suitable = yield_from_area
+    ? total >= 65 && (estimated_yield ?? 0) >= 4.0
+    : total >= 75 && (estimated_yield ?? 0) >= 3.5
 
   // 5. Score reason — top contributing dimension label
   const breakdown: ScoreBreakdown = {
@@ -411,6 +419,7 @@ export interface BatchScoreResult {
   estimated_cap_rate:     number | null
   investor_suitable:      boolean
   score_reason:           string
+  score_breakdown:        ScoreBreakdown
   zone_key:               string
   changed:                boolean          // true if score differs from existing
 }
@@ -434,6 +443,7 @@ export function batchScoreProperties(
       estimated_cap_rate:     result.estimated_cap_rate,
       investor_suitable:      result.investor_suitable,
       score_reason:           result.score_reason,
+      score_breakdown:        result.score_breakdown,
       zone_key:               result.zone_key,
       changed,
     }

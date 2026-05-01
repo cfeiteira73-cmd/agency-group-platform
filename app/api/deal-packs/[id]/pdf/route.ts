@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin }             from '@/lib/supabase'
 import { portalAuthGate }            from '@/lib/requirePortalAuth'
+import { getZone }                   from '@/lib/market/zones'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60
@@ -54,23 +55,27 @@ interface DealPackFull {
   view_count:   number
   // Joined
   property?: {
-    id:           string
-    title:        string
-    price:        number
-    zone:         string | null
-    zone_key:     string | null
-    type:         string | null
-    area_m2:      number | null
-    bedrooms:     number | null
-    bathrooms:    number | null
-    condition:    string | null
-    features:     string[] | null
-    photos:       string[] | null
-    address:      string | null
-    description:  string | null
+    id:                     string
+    title:                  string
+    price:                  number
+    zone:                   string | null
+    zone_key:               string | null
+    type:                   string | null
+    area_m2:                number | null
+    bedrooms:               number | null
+    bathrooms:              number | null
+    condition:              string | null
+    features:               string[] | null
+    photos:                 string[] | null
+    address:                string | null
+    description:            string | null
     opportunity_score:      number | null
     estimated_rental_yield: number | null
+    estimated_cap_rate:     number | null
     score_reason:           string | null
+    score_breakdown:        Record<string, number> | null
+    days_on_market:         number | null
+    price_per_sqm:          number | null
     is_exclusive:           boolean | null
   } | null
   lead?: {
@@ -90,7 +95,8 @@ async function fetchDealPackFull(id: string): Promise<DealPackFull | null> {
       property:properties (
         id, title, price, zone, zone_key, type, area_m2, bedrooms, bathrooms,
         condition, features, photos, address, description,
-        opportunity_score, estimated_rental_yield, score_reason, is_exclusive
+        opportunity_score, estimated_rental_yield, estimated_cap_rate,
+        score_reason, score_breakdown, days_on_market, price_per_sqm, is_exclusive
       ),
       lead:contacts (
         id, full_name, email, phone, language
@@ -120,12 +126,20 @@ function renderDealPackHtml(pack: DealPackFull): string {
   const condition   = p?.condition ?? ''
   const address     = p?.address ?? ''
   const type        = p?.type ?? ''
-  const score       = p?.opportunity_score ?? null
-  const yieldStr    = p?.estimated_rental_yield ? `${p.estimated_rental_yield}%` : null
-  const scoreReason = p?.score_reason ?? null
-  const isExclusive = p?.is_exclusive ?? false
-  const description = p?.description ?? ''
-  const summary     = pack.ai_summary ?? ''
+  const score         = p?.opportunity_score ?? null
+  const yieldStr      = p?.estimated_rental_yield ? `${p.estimated_rental_yield.toFixed(2)}%` : null
+  const capRateStr    = p?.estimated_cap_rate ? `${p.estimated_cap_rate.toFixed(2)}%` : null
+  const scoreReason   = p?.score_reason ?? null
+  const breakdown     = p?.score_breakdown ?? null
+  const dom           = p?.days_on_market ?? null
+  const ppm2          = p?.price_per_sqm ?? (p?.area_m2 && p.area_m2 > 0 ? Math.round(p.price / p.area_m2) : null)
+  const isExclusive   = p?.is_exclusive ?? false
+  const description   = p?.description ?? ''
+  const summary       = pack.ai_summary ?? ''
+
+  // Zone benchmarks
+  const zoneKey     = p?.zone_key ?? null
+  const zoneData    = zoneKey ? getZone(zoneKey) : null
 
   const photos      = (p?.photos ?? []).slice(0, 4)
   const features    = (p?.features ?? []).slice(0, 8)
@@ -318,6 +332,71 @@ function renderDealPackHtml(pack: DealPackFull): string {
       z-index: 100;
     }
     .print-btn:hover { background: #b8944f; }
+
+    /* ── Financial table ── */
+    .fin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 10pt;
+    }
+    .fin-table th {
+      text-align: left;
+      font-size: 8pt;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 4px 8px 4px 0;
+      border-bottom: 1px solid #eee;
+      font-weight: 500;
+    }
+    .fin-table td {
+      padding: 6px 8px 6px 0;
+      border-bottom: 1px solid #f5f5f5;
+      color: #333;
+      vertical-align: top;
+    }
+    .fin-table td.fin-val {
+      font-weight: 600;
+      color: #111;
+      white-space: nowrap;
+    }
+    .fin-table td.fin-bench {
+      font-size: 9pt;
+      color: #888;
+    }
+
+    /* ── Score breakdown bars ── */
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .breakdown-item {
+      background: #f8f6f2;
+      border-radius: 4px;
+      padding: 8px 10px;
+    }
+    .breakdown-dim { font-size: 7.5pt; color: #888; text-transform: uppercase; letter-spacing: 0.4px; }
+    .breakdown-bar-wrap { background: #e8e3db; border-radius: 2px; height: 4px; margin: 4px 0; }
+    .breakdown-bar { background: #c9a96e; border-radius: 2px; height: 4px; }
+    .breakdown-score { font-size: 9pt; font-weight: 600; color: #333; }
+
+    /* ── Risk notice ── */
+    .risk-section {
+      background: #fff8f0;
+      border: 1px solid #ffe4b5;
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-top: 16px;
+      font-size: 9pt;
+      color: #555;
+      line-height: 1.6;
+    }
+    .risk-section strong { color: #333; }
+    .risk-section ul { margin: 6px 0 0 16px; }
+    .risk-section li { margin-bottom: 3px; }
   </style>
 </head>
 <body>
@@ -376,6 +455,89 @@ function renderDealPackHtml(pack: DealPackFull): string {
   <div class="ai-summary">${escapeHtml(summary)}</div>
   ` : ''}
 
+  <!-- Financial Analysis -->
+  ${(yieldStr || capRateStr || ppm2 || zoneData) ? `
+  <div class="section-title">Análise Financeira</div>
+  <table class="fin-table">
+    <thead>
+      <tr>
+        <th>Indicador</th>
+        <th>Este Imóvel</th>
+        <th>Benchmark Zona</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${yieldStr ? `
+      <tr>
+        <td>Yield Bruto Estimado</td>
+        <td class="fin-val">${escapeHtml(yieldStr)}</td>
+        <td class="fin-bench">${zoneData ? `Zona: ${zoneData.yield_bruto.toFixed(1)}%` : '—'}</td>
+      </tr>` : ''}
+      ${capRateStr ? `
+      <tr>
+        <td>Cap Rate (após encargos)</td>
+        <td class="fin-val">${escapeHtml(capRateStr)}</td>
+        <td class="fin-bench">~75% do yield bruto</td>
+      </tr>` : ''}
+      ${ppm2 ? `
+      <tr>
+        <td>Preço por m²</td>
+        <td class="fin-val">€ ${ppm2.toLocaleString('pt-PT')}/m²</td>
+        <td class="fin-bench">${zoneData ? `Mediana transacção: €${zoneData.pm2_trans.toLocaleString('pt-PT')}/m²` : '—'}</td>
+      </tr>` : ''}
+      ${dom != null ? `
+      <tr>
+        <td>Dias no Mercado</td>
+        <td class="fin-val">${dom} dias</td>
+        <td class="fin-bench">${zoneData ? `Mediana zona: ${zoneData.dias_mercado} dias` : '—'}</td>
+      </tr>` : ''}
+      ${zoneData ? `
+      <tr>
+        <td>Absorção de Mercado</td>
+        <td class="fin-val">—</td>
+        <td class="fin-bench">${zoneData.abs_meses} meses · YoY +${zoneData.var_yoy}%</td>
+      </tr>` : ''}
+    </tbody>
+  </table>
+  ` : ''}
+
+  <!-- Score Breakdown -->
+  ${breakdown ? `
+  <div class="section-title" style="margin-top:14px">Decomposição do Score</div>
+  <div class="breakdown-grid">
+    <div class="breakdown-item">
+      <div class="breakdown-dim">Preço vs Zona</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round((breakdown.d1_price_vs_zone/30)*100)}%"></div></div>
+      <div class="breakdown-score">${breakdown.d1_price_vs_zone}<span style="color:#aaa;font-weight:400">/30</span></div>
+    </div>
+    <div class="breakdown-item">
+      <div class="breakdown-dim">Yield</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round((breakdown.d2_rental_yield/20)*100)}%"></div></div>
+      <div class="breakdown-score">${breakdown.d2_rental_yield}<span style="color:#aaa;font-weight:400">/20</span></div>
+    </div>
+    <div class="breakdown-item">
+      <div class="breakdown-dim">Momentum</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round((breakdown.d3_momentum/15)*100)}%"></div></div>
+      <div class="breakdown-score">${breakdown.d3_momentum}<span style="color:#aaa;font-weight:400">/15</span></div>
+    </div>
+    <div class="breakdown-item">
+      <div class="breakdown-dim">Tempo Mercado</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round((breakdown.d4_dom_position/15)*100)}%"></div></div>
+      <div class="breakdown-score">${breakdown.d4_dom_position}<span style="color:#aaa;font-weight:400">/15</span></div>
+    </div>
+    <div class="breakdown-item">
+      <div class="breakdown-dim">Tipo de Activo</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round((breakdown.d5_asset_type/10)*100)}%"></div></div>
+      <div class="breakdown-score">${breakdown.d5_asset_type}<span style="color:#aaa;font-weight:400">/10</span></div>
+    </div>
+    <div class="breakdown-item">
+      <div class="breakdown-dim">Fit Investidor</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round((breakdown.d6_investor_fit/10)*100)}%"></div></div>
+      <div class="breakdown-score">${breakdown.d6_investor_fit}<span style="color:#aaa;font-weight:400">/10</span></div>
+    </div>
+  </div>
+  ` : ''}
+
   <!-- Description -->
   ${description ? `
   <div class="section-title">Descrição do Imóvel</div>
@@ -387,6 +549,19 @@ function renderDealPackHtml(pack: DealPackFull): string {
   <div class="section-title">Características</div>
   <div class="features-list">${featureList}</div>
   ` : ''}
+
+  <!-- Risks & Caveats -->
+  <div class="risk-section">
+    <strong>Riscos e Considerações</strong>
+    <ul>
+      ${zoneData && zoneData.risco >= 7 ? `<li><strong>Zona de risco elevado (${zoneData.risco}/10):</strong> maior volatilidade de preços e liquidez reduzida.</li>` : ''}
+      ${zoneData && zoneData.liquidez < 5 ? `<li><strong>Liquidez abaixo da média (${zoneData.liquidez}/10):</strong> período de saída potencialmente superior a ${zoneData.dias_mercado} dias.</li>` : ''}
+      ${dom != null && zoneData && dom > zoneData.dias_mercado * 1.5 ? `<li><strong>Imóvel estagnado:</strong> ${dom} dias no mercado vs ${zoneData.dias_mercado} dias mediana — investigar motivo.</li>` : ''}
+      <li>Yield calculado com base em rendas de zona — valores reais sujeitos a ocupação, gestão e fiscalidade.</li>
+      <li>Cap rate estimado assume encargos de 25%; análise fiscal individual recomendada.</li>
+      <li>Todos os valores são indicativos e não constituem aconselhamento financeiro ou de investimento.</li>
+    </ul>
+  </div>
 
   <!-- Footer -->
   <div class="footer">
