@@ -28,6 +28,10 @@ import {
   type PropertyInput,
 }                                    from '@/lib/scoring/opportunityScore'
 import {
+  batchScorePropertiesV2,
+  type PropertyInputV2,
+}                                    from '@/lib/scoring/opportunityScoreV2'
+import {
   detectSignals,
   signalToPriorityItem,
   type SignalPropertyInput,
@@ -54,14 +58,51 @@ function authCheck(req: NextRequest): boolean {
 // ---------------------------------------------------------------------------
 
 interface SyncStats {
-  properties_fetched:    number
-  properties_scored:     number
-  properties_updated:    number
-  signals_detected:      number
-  signals_created:       number
-  priority_items_created: number
-  embeddings_queued:     number
-  errors:                string[]
+  properties_fetched:      number
+  properties_scored:       number
+  properties_updated:      number
+  grades_written:          number
+  signals_detected:        number
+  signals_created:         number
+  priority_items_created:  number
+  embeddings_queued:       number
+  errors:                  string[]
+}
+
+// ---------------------------------------------------------------------------
+// Step 2b — Write V2 grades (opportunity_grade + score_v2_confidence_adjusted)
+// Called after writeScores so V1 fields are already persisted.
+// ---------------------------------------------------------------------------
+
+async function writeGrades(
+  properties: (PropertyInput & { id: string })[],
+  stats:      SyncStats,
+): Promise<void> {
+  if (properties.length === 0) return
+
+  const rows = properties.map(p => {
+    const v2 = batchScorePropertiesV2([p as PropertyInputV2 & { id: string }])[0]
+    return {
+      id:                          p.id,
+      opportunity_grade:           v2.opportunity_grade,
+      score_v2_confidence_adjusted: v2.score_confidence_adjusted,
+    }
+  })
+
+  const CHUNK = 50
+  for (let i = 0; i < rows.length; i += CHUNK) {
+    const chunk = rows.slice(i, i + CHUNK)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabaseAdmin as any)
+      .from('properties')
+      .upsert(chunk, { onConflict: 'id' })
+
+    if (error) {
+      stats.errors.push(`writeGrades chunk ${i}: ${error.message}`)
+    } else {
+      stats.grades_written += chunk.length
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -342,6 +383,7 @@ async function logExecution(
         properties_fetched:     stats.properties_fetched,
         properties_scored:      stats.properties_scored,
         properties_updated:     stats.properties_updated,
+        grades_written:         stats.grades_written,
         signals_detected:       stats.signals_detected,
         signals_created:        stats.signals_created,
         priority_items_created: stats.priority_items_created,
@@ -364,14 +406,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const t0        = Date.now()
 
   const stats: SyncStats = {
-    properties_fetched:     0,
-    properties_scored:      0,
-    properties_updated:     0,
-    signals_detected:       0,
-    signals_created:        0,
-    priority_items_created: 0,
-    embeddings_queued:      0,
-    errors:                 [],
+    properties_fetched:      0,
+    properties_scored:       0,
+    properties_updated:      0,
+    grades_written:          0,
+    signals_detected:        0,
+    signals_created:         0,
+    priority_items_created:  0,
+    embeddings_queued:       0,
+    errors:                  [],
   }
 
   try {
@@ -418,6 +461,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // ── 3. Write scores to DB ────────────────────────────────────────────────
     await writeScores(scored, stats)
+
+    // ── 3b. Write V2 grades (opportunity_grade, score_v2_confidence_adjusted) ─
+    await writeGrades(propertiesWithId, stats)
 
     // ── 4. Detect + write signals ────────────────────────────────────────────
     await processSignals(propertiesWithId, stats)
