@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse }   from 'next/server'
 import { supabaseAdmin }               from '@/lib/supabase'
 import { refreshRecipientProfile }     from '@/lib/intelligence/distributionOutcomes'
+import { withCronLock }                from '@/lib/ops/cronLock'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 120
@@ -15,6 +16,14 @@ export async function GET(req: NextRequest) {
   }
 
   const startedAt = Date.now()
+
+  // Prevent overlapping invocations on large recipient networks
+  const lockResult = await withCronLock('refresh-distribution-outcomes', 110, async () => {
+    return 'proceed'
+  })
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'lock_held — another instance running' })
+  }
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse }   from 'next/server'
 import { runWeeklyCalibration }        from '@/lib/intelligence/recalibrationEngine'
 import { buildAlert, createAlert }     from '@/lib/ops/alertEngine'
+import { withCronLock }                from '@/lib/ops/cronLock'
 import { supabaseAdmin }               from '@/lib/supabase'
 
 export const runtime     = 'nodejs'
@@ -18,8 +19,17 @@ export async function GET(req: NextRequest) {
 
   const startedAt = Date.now()
 
+  // Guard: weekly calibration is expensive — prevent double-execution
+  const lockResult = await withCronLock('weekly-calibration', 55, async () => {
+    return await runWeeklyCalibration()
+  })
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'lock_held — another instance running' })
+  }
+
   try {
-    const result = await runWeeklyCalibration()
+    const result = lockResult
     const durationMs = Date.now() - startedAt
 
     // Fire alert if urgency is high

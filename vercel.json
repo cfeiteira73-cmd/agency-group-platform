@@ -87,6 +87,14 @@
     {
       "path": "/api/cron/refresh-distribution-outcomes",
       "schedule": "30 5 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-engagement-decay",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-market-segments",
+      "schedule": "30 4 * * *"
     }
   ]
 }
