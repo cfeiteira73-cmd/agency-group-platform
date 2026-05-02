@@ -39,6 +39,16 @@ export type AuditActionType =
   | 'update_partner_tier'
   | 'flag_data_quality'
   | 'resolve_data_quality'
+  // Phase 6+ additions
+  | 'record_outcome'
+  | 'create_incident'
+  | 'update_incident'
+  | 'resolve_incident'
+  | 'update_feature_flag'
+  | 'create_operator_task'
+  | 'apply_calibration'
+  | 'dismiss_calibration'
+  | 'defer_calibration'
 
 export type AuditResourceType =
   | 'deal_review'
@@ -51,6 +61,11 @@ export type AuditResourceType =
   | 'commission_record'
   | 'partner_tier'
   | 'data_quality_flag'
+  // Phase 6+ additions
+  | 'incident'
+  | 'feature_flag'
+  | 'operator_task'
+  | 'calibration_recommendation'
 
 export interface AuditEntry {
   actor_email:    string

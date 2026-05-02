@@ -79,6 +79,14 @@
     {
       "path": "/api/cron/update-partner-tiers",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-calibration",
+      "schedule": "0 2 * * 0"
+    },
+    {
+      "path": "/api/cron/refresh-distribution-outcomes",
+      "schedule": "30 5 * * *"
     }
   ]
 }
