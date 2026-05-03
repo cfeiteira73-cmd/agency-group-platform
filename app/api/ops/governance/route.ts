@@ -62,9 +62,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const body       = await req.json()
-    const actionMeta = body.action_meta as string
+    const actionMeta = typeof body?.action_meta === 'string' ? body.action_meta : null
+    if (!actionMeta) {
+      return NextResponse.json({ error: 'action_meta required' }, { status: 400 })
+    }
 
     if (actionMeta === 'classify') {
+      if (!body.system_action?.action_type) {
+        return NextResponse.json({ error: 'system_action.action_type required' }, { status: 400 })
+      }
       const sysAction  = body.system_action as SystemAction
       const govClass   = classifyGovernanceAction(sysAction)
       const permission = validateOverridePermission(govClass, (user.role ?? 'viewer') as UserRole)
@@ -72,20 +78,23 @@ export async function POST(req: NextRequest) {
     }
 
     if (actionMeta === 'override') {
+      if (!body.system_action?.action_type) {
+        return NextResponse.json({ error: 'system_action.action_type required' }, { status: 400 })
+      }
       const override: OverrideRequest = {
         override_id:  `ov-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         user_email:   user.user_email,
         user_role:    (user.role ?? 'viewer') as UserRole,
         action:       body.system_action as SystemAction,
-        reason:       (body.reason as string) ?? 'Manual override',
+        reason:       typeof body.reason === 'string' ? body.reason : 'Manual override',
         requested_at: new Date().toISOString(),
       }
       const systemDecision: SystemDecision = {
-        decision_id:   (body.decision_id as string) ?? 'sys-auto',
+        decision_id:   typeof body.decision_id === 'string' ? body.decision_id : 'sys-auto',
         action:        body.system_action as SystemAction,
-        system_reason: (body.system_reason as string) ?? 'automated',
-        is_locked:     (body.is_locked as boolean) ?? false,
-        lock_reason:   body.lock_reason as string | undefined,
+        system_reason: typeof body.system_reason === 'string' ? body.system_reason : 'automated',
+        is_locked:     body.is_locked === true,
+        lock_reason:   typeof body.lock_reason === 'string' ? body.lock_reason : undefined,
       }
       const resolution = resolveConflict(override, systemDecision)
       if (resolution.outcome !== 'system_locked') {
@@ -96,14 +105,14 @@ export async function POST(req: NextRequest) {
 
     if (actionMeta === 'trace') {
       const trace = buildDecisionTrace(
-        (body.trace_id as string) ?? `tr-${Date.now()}`,
+        typeof body.trace_id === 'string' ? body.trace_id : `tr-${Date.now()}`,
         (body.raw_inputs as Record<string, unknown>) ?? {},
-        (body.model_version as string) ?? 'unknown',
-        (body.score as number) ?? 0,
-        (body.routing_tier as string) ?? 'skip',
-        (body.routing_reason as string) ?? '',
+        typeof body.model_version === 'string' ? body.model_version : 'unknown',
+        typeof body.score === 'number' ? body.score : 0,
+        typeof body.routing_tier === 'string' ? body.routing_tier : 'skip',
+        typeof body.routing_reason === 'string' ? body.routing_reason : '',
         body.override as { applied: boolean; by?: string; reason?: string } | undefined,
-        body.final_action as string | undefined,
+        typeof body.final_action === 'string' ? body.final_action : undefined,
       )
       return NextResponse.json({ trace })
     }
@@ -112,9 +121,14 @@ export async function POST(req: NextRequest) {
       if (!hasPermission(user.role, 'commercial:write')) {
         return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
       }
+      if (!body.system_action?.action_type) {
+        return NextResponse.json({ error: 'system_action.action_type required' }, { status: 400 })
+      }
       const sysAction  = body.system_action as SystemAction
       const govClass   = classifyGovernanceAction(sysAction)
-      const record     = buildGovernanceRecord(sysAction, govClass, (body.decision as 'approved' | 'blocked' | 'pending') ?? 'approved', user.user_email, body.audit_reason as string | undefined)
+      const validDecisions = ['approved', 'blocked', 'pending'] as const
+      const decision   = validDecisions.includes(body.decision) ? body.decision : 'approved'
+      const record     = buildGovernanceRecord(sysAction, govClass, decision, user.user_email, typeof body.audit_reason === 'string' ? body.audit_reason : undefined)
       await persistGovernanceDecision(record)
       return NextResponse.json({ ok: true, record })
     }

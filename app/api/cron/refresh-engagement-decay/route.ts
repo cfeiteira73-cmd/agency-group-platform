@@ -10,8 +10,9 @@ export const runtime   = 'nodejs'
 export const maxDuration = 60
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get('authorization')?.replace('Bearer ', '')
-  if (secret !== process.env.CRON_SECRET) {
+  const secret       = req.headers.get('authorization')?.replace('Bearer ', '')
+  const cronExpected = process.env.CRON_SECRET
+  if (!cronExpected || !secret || secret !== cronExpected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -40,6 +40,7 @@ export type GovernanceClass =
 
 export type SystemActionType =
   | 'auto_route_deal'
+  | 'score_opportunity'
   | 'promote_model'
   | 'rollback_model'
   | 'modify_threshold'
@@ -122,6 +123,7 @@ export interface GovernanceRecord {
 
 const GOVERNANCE_MATRIX: Record<SystemActionType, GovernanceClass> = {
   auto_route_deal:       'routine',
+  score_opportunity:     'routine',
   trigger_distribution:  'routine',
   apply_calibration:     'requires_approval',
   dismiss_calibration:   'requires_approval',

@@ -8,7 +8,7 @@
 // Prevents cascading failures via circuit breakers and kill-switch escalation.
 //
 // FAILURE TAXONOMY:
-//   data_failure      — bad/missing input data (retry safe)
+//   data_failure      — bad/missing input data (NOT retriable — bad data never fixes itself)
 //   infra_failure     — DB/API/network unreachable (retry with backoff)
 //   model_degradation — accuracy/drift issue (requires human review)
 //   market_anomaly    — unexpected market event (alert + degrade gracefully)
@@ -145,8 +145,7 @@ export function computeRetryStrategy(
       return { max_attempts: 5, base_delay_ms: 2_000, backoff_factor: 2.0, jitter: true, timeout_ms: 120_000 }
     case 'infra_failure':
       return { max_attempts: 3, base_delay_ms: 1_000, backoff_factor: 2.5, jitter: true, timeout_ms: 30_000 }
-    case 'data_failure':
-      return { max_attempts: 1, base_delay_ms: 0, backoff_factor: 1, jitter: false, timeout_ms: 10_000 }
+    // data_failure: is_retriable=false → already returned max_attempts:0 above
     default:
       return { max_attempts: 2, base_delay_ms: 500, backoff_factor: 1.5, jitter: true, timeout_ms: 15_000 }
   }

@@ -249,12 +249,14 @@ export function normalizeEconomicScore(
 
 // ---------------------------------------------------------------------------
 // PURE: Compute alignment divergence (predicted vs realized)
+// propertyId is optional — pass it when persisting; omit in pure-test contexts.
 // ---------------------------------------------------------------------------
 
 export function computeAlignmentDivergence(
   predictedScore: number,
   realizedScore:  number,
-): AlignmentDivergence & { property_id: string } {
+  propertyId = '',
+): AlignmentDivergence {
   const divergence    = realizedScore - predictedScore
   const divergencePct = predictedScore > 0
     ? (divergence / predictedScore) * 100
@@ -265,7 +267,7 @@ export function computeAlignmentDivergence(
     : 'under_estimated'
 
   return {
-    property_id:    '',         // caller sets
+    property_id:     propertyId,
     predicted_score: predictedScore,
     realized_score:  realizedScore,
     divergence:      Math.round(divergence * 100) / 100,
@@ -333,6 +335,7 @@ export async function getZoneMeanTruthScore(
 
 // ---------------------------------------------------------------------------
 // DB: Batch normalize truth scores for recent events
+// Batches zone-mean queries (one per zone+class group) to avoid N+1 pattern.
 // ---------------------------------------------------------------------------
 
 export async function batchNormalizeTruth(limit = 100): Promise<{ normalized: number }> {
@@ -347,9 +350,26 @@ export async function batchNormalizeTruth(limit = 100): Promise<{ normalized: nu
   if (error) throw new Error(`batchNormalizeTruth: ${error.message}`)
   if (!events || events.length === 0) return { normalized: 0 }
 
+  // ── Batch zone-mean fetches: one query per unique (zone_key, asset_class) ──
+  const zoneGroups = new Map<string, string[]>()
+  for (const event of events) {
+    const key = `${event.zone_key}::${event.asset_class}`
+    if (!zoneGroups.has(key)) zoneGroups.set(key, [event.zone_key, event.asset_class])
+  }
+
+  const zoneMeanCache = new Map<string, number>()
+  await Promise.all(
+    Array.from(zoneGroups.values()).map(async ([zoneKey, assetClass]) => {
+      const mean = await getZoneMeanTruthScore(zoneKey, assetClass)
+      zoneMeanCache.set(`${zoneKey}::${assetClass}`, mean)
+    }),
+  )
+
+  // ── Apply normalization and persist in one pass ──
   let normalized = 0
   for (const event of events) {
-    const zoneMean = await getZoneMeanTruthScore(event.zone_key, event.asset_class)
+    const cacheKey = `${event.zone_key}::${event.asset_class}`
+    const zoneMean = zoneMeanCache.get(cacheKey) ?? 70
     const score    = normalizeEconomicScore(event.raw_truth_score, zoneMean)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabaseAdmin as any)

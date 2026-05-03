@@ -441,8 +441,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const [rawBody, liveRates] = await Promise.all([req.json(), fetchLiveRates()])
-
+    // ── Parse & validate FIRST — no expensive I/O on invalid input ──
+    const rawBody   = await req.json()
     const parsedAVM = AVMSchema.safeParse(rawBody)
     if (!parsedAVM.success) {
       return NextResponse.json({ error: 'Dados inválidos', details: parsedAVM.error.flatten() }, { status: 400 })
@@ -473,12 +473,13 @@ export async function POST(req: NextRequest) {
     const cachedAVM = avmCache.get(cacheKey)
     if (cachedAVM) return NextResponse.json(cachedAVM)
 
+    // ── Fetch live rates after validation & cache check — avoids wasted I/O ──
+    const liveRates = await fetchLiveRates()
+
     const andar   = andarRaw ?? 2
     const terraco = terracRaw ?? 0
     const ano     = anoRaw ?? 2000
     const casasBanho = cbRaw ?? 1
-
-    if (area > 50000) return NextResponse.json({ error: 'Área inválida' }, { status: 400 })
 
     // ── Zone lookup ──
     const zoneData: ZoneData = ZONES[zona] ?? {
