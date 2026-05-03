@@ -142,6 +142,7 @@ export type SectionId =
   | 'offmarket' | 'partners' | 'dealdesk'
   | 'dealpack'
   | 'systemHealth' | 'economicTruth' | 'modelControl' | 'governance'
+  | 'funnelCRO' | 'marketingHub'
 
 export interface DashboardTheme {
   darkMode: boolean
