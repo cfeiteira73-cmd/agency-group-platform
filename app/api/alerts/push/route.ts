@@ -24,6 +24,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendWhatsApp } from '@/lib/whatsapp/client'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -221,6 +222,7 @@ async function handler(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const corrId = getRequestCorrelationId(req)
   const alertEmail = process.env.ALERT_EMAIL ?? process.env.DIGEST_EMAIL ?? 'carlos@agencygroup.pt'
   const alertPhone = process.env.ALERT_WHATSAPP_PHONE ?? process.env.FOUNDER_WHATSAPP_PHONE ?? ''
 
@@ -464,7 +466,7 @@ async function handler(req: NextRequest): Promise<NextResponse> {
     // ── Summary log ───────────────────────────────────────────────────
     console.log(`[alerts/push] ${results.length} alerts processed · ${emailsSent} emails · ${wasSent} WA · ${new Date().toISOString()}`)
 
-    return NextResponse.json({
+    const alertRes = NextResponse.json({
       success: true,
       total_leads_evaluated: leads.length,
       alerts_fired: results.length,
@@ -478,8 +480,11 @@ async function handler(req: NextRequest): Promise<NextResponse> {
         human_failure: humanFailureLeads.length,
       },
       results,
+      correlation_id: corrId,
       generated_at: now.toISOString(),
     })
+    alertRes.headers.set('x-correlation-id', corrId)
+    return alertRes
   } catch (err) {
     console.error('[alerts/push] Error:', err)
     return NextResponse.json({ error: 'Internal error', details: String(err) }, { status: 500 })

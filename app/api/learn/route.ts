@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -274,7 +275,8 @@ const DEMO_RESPONSE = {
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const token = process.env.NOTION_TOKEN
 
@@ -331,7 +333,7 @@ export async function GET(_req: NextRequest) {
     // Strip the raw desvios array from the public response
     const calibracaoPublic = calibracao.map(({ desvios: _d, ...rest }) => rest)
 
-    return NextResponse.json({
+    const learnRes = NextResponse.json({
       success:    true,
       fonte:      `Notion — ${deals.length} deals processados`,
       calibracao: calibracaoPublic,
@@ -357,7 +359,10 @@ export async function GET(_req: NextRequest) {
         nota:      'Factores de calibração automáticos. Mínimo 3 deals por zona para status "calibrado".',
         contacto:  'geral@agencygroup.pt — AMI 22506',
       },
+      correlation_id: corrId,
     })
+    learnRes.headers.set('x-correlation-id', corrId)
+    return learnRes
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : 'Erro interno no servidor' },
