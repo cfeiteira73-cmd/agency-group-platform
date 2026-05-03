@@ -141,6 +141,7 @@ export type SectionId =
   | 'photos' | 'agentai'
   | 'offmarket' | 'partners' | 'dealdesk'
   | 'dealpack'
+  | 'systemHealth' | 'economicTruth' | 'modelControl' | 'governance'
 
 export interface DashboardTheme {
   darkMode: boolean

@@ -72,6 +72,10 @@ const PortalAgentAI        = dynamic(
   () => import('./components/PortalAgentAI').then(m => ({ default: m.PortalAgentAI })),
   { ssr: false },
 )
+const PortalSystemHealth   = dynamic(() => import('./components/PortalSystemHealth'),   { ssr: false })
+const PortalEconomicTruth  = dynamic(() => import('./components/PortalEconomicTruth'),  { ssr: false })
+const PortalModelControl   = dynamic(() => import('./components/PortalModelControl'),   { ssr: false })
+const PortalGovernance     = dynamic(() => import('./components/PortalGovernance'),     { ssr: false })
 
 // parsePTValue imported from ./utils/format — single source of truth
 
@@ -1214,7 +1218,21 @@ export default function Portal() {
               />
             )}
 
-            {/* Sections not yet extracted — show placeholder */}
+            {section === 'systemHealth' && (
+              <PortalSystemHealth />
+            )}
+
+            {section === 'economicTruth' && (
+              <PortalEconomicTruth />
+            )}
+
+            {section === 'modelControl' && (
+              <PortalModelControl />
+            )}
+
+            {section === 'governance' && (
+              <PortalGovernance />
+            )}
 
           </main>
         </div>

@@ -108,5 +108,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.92,
   }))
 
-  return [...staticPages, ...zonePages, ...propertyPages, ...premiumPages, ...blogPages, ...staticBlogPages]
+  // ── EN Zone pages — /en/zones/[zona] ──────────────────────────────────────────
+  // These are the English alternates referenced in /zonas/[zona] hreflang.
+  // Previously 404 — now fixed and included in sitemap.
+  const enZonePages: MetadataRoute.Sitemap = ZONAS.map(z => ({
+    url: `${BASE}/en/zones/${z}`,
+    lastModified: now,
+    changeFrequency: 'monthly' as const,
+    priority: 0.78,
+  }))
+
+  return [...staticPages, ...zonePages, ...enZonePages, ...propertyPages, ...premiumPages, ...blogPages, ...staticBlogPages]
 }

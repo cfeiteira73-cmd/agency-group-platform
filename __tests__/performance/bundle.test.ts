@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'fs'
 import path from 'path'
+import { fileURLToPath } from 'url'
 
 // ─── Performance budget — source file sizes ───────────────────────────────────
 //
@@ -12,9 +13,21 @@ import path from 'path'
 //   Hard fail  → test fails CI  (file dangerously large / missing)
 //   Soft warn  → console.log    (tracked, not blocking)
 
+// ─── Resolve project root robustly ───────────────────────────────────────────
+// Use import.meta.url to compute the project root regardless of the shell's
+// current working directory when running tests (process.cwd() is fragile in
+// monorepos and when vitest is invoked from a parent directory).
+const __filename = fileURLToPath(import.meta.url)
+const __dirname  = path.dirname(__filename)
+const PROJECT_ROOT = path.resolve(__dirname, '../../')
+
+function proj(...segments: string[]) {
+  return path.join(PROJECT_ROOT, ...segments)
+}
+
 describe('Bundle Size Budget — source files', () => {
   it('portal page.tsx is under 5MB hard limit', () => {
-    const filePath = path.join(process.cwd(), 'app/portal/page.tsx')
+    const filePath = proj('app/portal/page.tsx')
     const stats = fs.statSync(filePath)
     const sizeKB = stats.size / 1024
     const sizeMB = stats.size / (1024 * 1024)
@@ -29,12 +42,12 @@ describe('Bundle Size Budget — source files', () => {
   })
 
   it('lib/db.ts exists', () => {
-    const dbPath = path.join(process.cwd(), 'lib/db.ts')
+    const dbPath = proj('lib/db.ts')
     expect(fs.existsSync(dbPath)).toBe(true)
   })
 
   it('lib/db.ts is under 500 KB', () => {
-    const dbPath = path.join(process.cwd(), 'lib/db.ts')
+    const dbPath = proj('lib/db.ts')
     const stats = fs.statSync(dbPath)
     const sizeKB = stats.size / 1024
 
@@ -43,7 +56,7 @@ describe('Bundle Size Budget — source files', () => {
   })
 
   it('lib/rateLimit.ts is lean (under 20 KB)', () => {
-    const filePath = path.join(process.cwd(), 'lib/rateLimit.ts')
+    const filePath = proj('lib/rateLimit.ts')
     const stats = fs.statSync(filePath)
     const sizeKB = stats.size / 1024
 
@@ -53,7 +66,7 @@ describe('Bundle Size Budget — source files', () => {
   })
 
   it('app/api/avm/route.ts is under 200 KB', () => {
-    const filePath = path.join(process.cwd(), 'app/api/avm/route.ts')
+    const filePath = proj('app/api/avm/route.ts')
     const stats = fs.statSync(filePath)
     const sizeKB = stats.size / 1024
 
@@ -62,7 +75,7 @@ describe('Bundle Size Budget — source files', () => {
   })
 
   it('app/api/radar/route.ts is under 200 KB', () => {
-    const filePath = path.join(process.cwd(), 'app/api/radar/route.ts')
+    const filePath = proj('app/api/radar/route.ts')
     const stats = fs.statSync(filePath)
     const sizeKB = stats.size / 1024
 
@@ -71,7 +84,7 @@ describe('Bundle Size Budget — source files', () => {
   })
 
   it('app/api/mortgage/route.ts is under 100 KB', () => {
-    const filePath = path.join(process.cwd(), 'app/api/mortgage/route.ts')
+    const filePath = proj('app/api/mortgage/route.ts')
     const stats = fs.statSync(filePath)
     const sizeKB = stats.size / 1024
 
@@ -84,25 +97,25 @@ describe('Bundle Size Budget — source files', () => {
 
 describe('Bundle Size Budget — structure checks', () => {
   it('lib/ directory exists', () => {
-    const libPath = path.join(process.cwd(), 'lib')
+    const libPath = proj('lib')
     expect(fs.existsSync(libPath)).toBe(true)
     expect(fs.statSync(libPath).isDirectory()).toBe(true)
   })
 
   it('app/api/ directory exists', () => {
-    const apiPath = path.join(process.cwd(), 'app/api')
+    const apiPath = proj('app/api')
     expect(fs.existsSync(apiPath)).toBe(true)
   })
 
   it('app/portal/ directory exists', () => {
-    const portalPath = path.join(process.cwd(), 'app/portal')
+    const portalPath = proj('app/portal')
     expect(fs.existsSync(portalPath)).toBe(true)
   })
 
   it('no accidental .env files committed to repo root', () => {
     const envFiles = ['.env', '.env.local', '.env.production']
     for (const file of envFiles) {
-      const filePath = path.join(process.cwd(), file)
+      const filePath = proj(file)
       if (fs.existsSync(filePath)) {
         // File exists — warn but don't fail (it may be intentional for local dev)
         console.warn(`[security] ${file} found in project root — ensure it is in .gitignore`)
@@ -117,22 +130,22 @@ describe('Bundle Size Budget — structure checks', () => {
 
 describe('Bundle Size Budget — dependency integrity', () => {
   it('next-auth is installed', () => {
-    const pkgPath = path.join(process.cwd(), 'node_modules/next-auth/package.json')
+    const pkgPath = proj('node_modules/next-auth/package.json')
     expect(fs.existsSync(pkgPath)).toBe(true)
   })
 
   it('@supabase/supabase-js is installed', () => {
-    const pkgPath = path.join(process.cwd(), 'node_modules/@supabase/supabase-js/package.json')
+    const pkgPath = proj('node_modules/@supabase/supabase-js/package.json')
     expect(fs.existsSync(pkgPath)).toBe(true)
   })
 
   it('@anthropic-ai/sdk is installed', () => {
-    const pkgPath = path.join(process.cwd(), 'node_modules/@anthropic-ai/sdk/package.json')
+    const pkgPath = proj('node_modules/@anthropic-ai/sdk/package.json')
     expect(fs.existsSync(pkgPath)).toBe(true)
   })
 
   it('vitest is installed as dev dependency', () => {
-    const pkgPath = path.join(process.cwd(), 'node_modules/vitest/package.json')
+    const pkgPath = proj('node_modules/vitest/package.json')
     expect(fs.existsSync(pkgPath)).toBe(true)
   })
 })
