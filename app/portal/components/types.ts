@@ -143,6 +143,7 @@ export type SectionId =
   | 'dealpack'
   | 'systemHealth' | 'economicTruth' | 'modelControl' | 'governance'
   | 'funnelCRO' | 'marketingHub'
+  | 'platformConfig'
 
 export interface DashboardTheme {
   darkMode: boolean

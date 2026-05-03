@@ -76,8 +76,9 @@ const PortalSystemHealth   = dynamic(() => import('./components/PortalSystemHeal
 const PortalEconomicTruth  = dynamic(() => import('./components/PortalEconomicTruth'),  { ssr: false })
 const PortalModelControl   = dynamic(() => import('./components/PortalModelControl'),   { ssr: false })
 const PortalGovernance     = dynamic(() => import('./components/PortalGovernance'),     { ssr: false })
-const PortalFunnelCRO      = dynamic(() => import('./components/PortalFunnelCRO'),      { ssr: false })
-const PortalMarketingHub   = dynamic(() => import('./components/PortalMarketingHub'),   { ssr: false })
+const PortalFunnelCRO        = dynamic(() => import('./components/PortalFunnelCRO'),        { ssr: false })
+const PortalMarketingHub     = dynamic(() => import('./components/PortalMarketingHub'),     { ssr: false })
+const PortalPlatformConfig   = dynamic(() => import('./components/PortalPlatformConfig'),   { ssr: false })
 
 // parsePTValue imported from ./utils/format — single source of truth
 
@@ -1242,6 +1243,10 @@ export default function Portal() {
 
             {section === 'marketingHub' && (
               <PortalMarketingHub />
+            )}
+
+            {section === 'platformConfig' && (
+              <PortalPlatformConfig />
             )}
 
           </main>

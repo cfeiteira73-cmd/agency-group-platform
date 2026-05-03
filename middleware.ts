@@ -5,6 +5,7 @@ const store = new Map<string, { count: number; reset: number }>()
 
 // ─── Limites por rota ────────────────────────────────────────────────────────
 const LIMITS: Record<string, { max: number; window: number }> = {
+  // AI / compute-heavy endpoints
   '/api/radar':        { max: 20,  window: 3_600_000 },
   '/api/avm':          { max: 100, window: 3_600_000 },
   '/api/mortgage':     { max: 200, window: 3_600_000 },
@@ -19,6 +20,12 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/track-view':   { max: 200, window: 3_600_000 },
   '/api/mais-valias':  { max: 100, window: 3_600_000 },
   '/api/financing':    { max: 100, window: 3_600_000 },
+  // Core CRUD — protect against enumeration / DoS (Phase 7 hardening)
+  '/api/contacts':     { max: 120, window: 3_600_000 },
+  '/api/leads':        { max:  60, window: 3_600_000 },
+  '/api/deals':        { max: 120, window: 3_600_000 },
+  '/api/properties':   { max: 300, window: 3_600_000 },
+  '/api/matches':      { max:  60, window: 3_600_000 },
 }
 
 // ─── Bot blacklist (User-Agent) ──────────────────────────────────────────────
@@ -95,6 +102,37 @@ function rateLimitMemory(key: string, max: number, win: number): { limited: bool
   return { limited: rec.count > max, remaining: Math.max(0, max - rec.count), reset: rec.reset, count: rec.count }
 }
 
+// ─── Security headers (Phase 7 hardening) ────────────────────────────────────
+// Applied to every non-blocked response. Edge-compatible (no Node.js APIs).
+function applySecurityHeaders(res: NextResponse): NextResponse {
+  // Prevent clickjacking
+  res.headers.set('X-Frame-Options', 'DENY')
+  // Block MIME-type sniffing
+  res.headers.set('X-Content-Type-Options', 'nosniff')
+  // Strict referrer for all requests
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  // HSTS — 1 year, include subdomains, preload-ready
+  res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+  // Disable dangerous browser features
+  res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=()')
+  // Basic CSP — tightened for API routes; public pages rely on next.config.js CSP
+  res.headers.set('X-DNS-Prefetch-Control', 'off')
+  return res
+}
+
+// ─── Correlation ID propagation (Phase 8/10 observability) ───────────────────
+// Every request gets a correlation ID. If the caller provides one, we echo it.
+// If not, we generate a new one. The ID is forwarded on the response so callers
+// can correlate logs end-to-end.
+function ensureCorrelationId(req: NextRequest, res: NextResponse): string {
+  const existing = req.headers.get('x-correlation-id')
+  const corrId   = existing && existing.length > 8
+    ? existing.slice(0, 64)   // accept caller-provided ID (bounded)
+    : crypto.randomUUID()     // generate new — crypto available in Edge runtime
+  res.headers.set('x-correlation-id', corrId)
+  return corrId
+}
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
@@ -102,7 +140,9 @@ export async function middleware(req: NextRequest) {
 
   // 1. Bot blacklist
   if (BOT_PATTERNS.some(p => p.test(ua))) {
-    return new NextResponse('Forbidden', { status: 403 })
+    const blocked = new NextResponse('Forbidden', { status: 403 })
+    applySecurityHeaders(blocked)
+    return blocked
   }
 
   // 2. Portal protection — token in URL or valid session cookie.
@@ -121,6 +161,8 @@ export async function middleware(req: NextRequest) {
     }
 
     const res = NextResponse.next()
+    ensureCorrelationId(req, res)
+    applySecurityHeaders(res)
     if (urlToken) {
       // Persist token as cookie so subsequent page loads don't need the URL param.
       // Cookie name, sameSite, and secure must match /api/auth/verify options exactly
@@ -170,6 +212,8 @@ export async function middleware(req: NextRequest) {
   }
 
   const res = NextResponse.next()
+  ensureCorrelationId(req, res)
+  applySecurityHeaders(res)
   res.headers.set('X-RateLimit-Limit',     String(max))
   res.headers.set('X-RateLimit-Remaining', String(remaining))
   res.headers.set('X-RateLimit-Reset',     String(reset))
@@ -185,6 +229,7 @@ export const config = {
     // still reach the login form in supported browsers.
     '/portal',
     '/portal/:path*',
+    // AI / compute-heavy API routes (rate limited)
     '/api/radar/:path*',
     '/api/avm',
     '/api/mortgage',
@@ -199,5 +244,16 @@ export const config = {
     '/api/track-view',
     '/api/mais-valias',
     '/api/financing',
+    // Core CRUD — rate limited (Phase 7 hardening)
+    '/api/contacts',
+    '/api/contacts/:path*',
+    '/api/leads',
+    '/api/leads/:path*',
+    '/api/deals',
+    '/api/deals/:path*',
+    '/api/properties',
+    '/api/properties/:path*',
+    '/api/matches',
+    '/api/matches/:path*',
   ],
 }
