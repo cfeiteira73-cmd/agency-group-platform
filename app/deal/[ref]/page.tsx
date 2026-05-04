@@ -22,7 +22,7 @@ const DEALS: Record<string, {
     fase: 'CPCV Assinado',
     pct: 70,
     property: { tipo: 'Moradia/Villa', area: 620, quartos: 5, casasBanho: 5, andar: 'Moradia', energia: 'A+', ano: 2019, pm2: 6129, zonaPm2: 5200 },
-    agent: { name: 'Carlos Feiteira', phone: '+351919948986', email: 'carlos@agencygroup.pt', photo: 'CF' },
+    agent: { name: 'Carlos Feiteira', phone: '+351919948986', email: 'geral@agencygroup.pt', photo: 'CF' },
     docs: [
       { name: 'Caderneta Predial', status: 'received', required: true },
       { name: 'Certidão Permanente', status: 'received', required: true },
@@ -65,7 +65,7 @@ const DEALS: Record<string, {
     fase: 'Due Diligence',
     pct: 50,
     property: { tipo: 'Apartamento / Penthouse', area: 280, quartos: 4, casasBanho: 3, andar: '8º Andar', energia: 'A', ano: 2022, pm2: 7500, zonaPm2: 6200 },
-    agent: { name: 'Carlos Feiteira', phone: '+351919948986', email: 'carlos@agencygroup.pt', photo: 'CF' },
+    agent: { name: 'Carlos Feiteira', phone: '+351919948986', email: 'geral@agencygroup.pt', photo: 'CF' },
     docs: [
       { name: 'Caderneta Predial', status: 'received', required: true },
       { name: 'Certidão Permanente', status: 'pending', required: true },
@@ -105,7 +105,7 @@ const DEALS: Record<string, {
     fase: 'Proposta Aceite',
     pct: 30,
     property: { tipo: 'Herdade / Quinta', area: 850, quartos: 6, casasBanho: 6, andar: 'Moradia', energia: 'B', ano: 2018, pm2: 7647, zonaPm2: 5800 },
-    agent: { name: 'Carlos Feiteira', phone: '+351919948986', email: 'carlos@agencygroup.pt', photo: 'CF' },
+    agent: { name: 'Carlos Feiteira', phone: '+351919948986', email: 'geral@agencygroup.pt', photo: 'CF' },
     docs: [
       { name: 'Caderneta Predial', status: 'received', required: true },
       { name: 'Certidão Permanente', status: 'received', required: true },

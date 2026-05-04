@@ -3,6 +3,7 @@
 // Called by agents/CRM when a deal is closed, lost, or goes stale.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare }               from '@/lib/safeCompare'
 import { getToken }                  from 'next-auth/jwt'
 import { supabaseAdmin }             from '@/lib/supabase'
 
@@ -27,7 +28,7 @@ interface FeedbackBody {
 export async function POST(req: NextRequest) {
   // Auth: session token or internal service token
   const internalToken = req.headers.get('x-internal-token')
-  const isInternal    = internalToken && internalToken === process.env.CRON_SECRET
+  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })

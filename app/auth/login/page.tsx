@@ -274,7 +274,7 @@ function LoginForm() {
                   onChange={e => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  placeholder="carlos@agencygroup.pt"
+                  placeholder="geral@agencygroup.pt"
                   style={inputStyle}
                   onFocus={e => { e.target.style.borderColor = 'rgba(201,169,110,0.6)' }}
                   onBlur={e => { e.target.style.borderColor = 'rgba(201,169,110,0.25)' }}

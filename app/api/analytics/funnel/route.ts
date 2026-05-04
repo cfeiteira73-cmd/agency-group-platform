@@ -2,6 +2,7 @@
 // Returns full conversion funnel metrics: ingested → scored → distributed → closed
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare }               from '@/lib/safeCompare'
 import { getToken }                  from 'next-auth/jwt'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { fetchFunnelCounts, computeFunnelConversions, computeGradeConversions } from '@/lib/analytics/funnelMetrics'
@@ -11,7 +12,7 @@ export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
   const internalToken = req.headers.get('authorization')?.replace('Bearer ', '')
-  const isInternal    = internalToken === process.env.CRON_SECRET
+  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })

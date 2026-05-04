@@ -101,6 +101,42 @@ export function invalidateConfigCache(key?: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// Leakage threshold snapshot (used by lib/commercial/revenueLeakage.ts)
+// ---------------------------------------------------------------------------
+
+export interface LeakageThresholds {
+  highScoreMin:       number  // scoring.qualification_threshold
+  cpCvReadinessMin:   number  // scoring.cpcv_readiness_threshold
+  cpcvProbMin:        number  // scoring.cpcv_probability_min
+  dormantDays:        number  // distribution.score_decay_days
+  humanFailureHours:  number  // leakage.human_failure_hours
+  cpvNoActionDays:    number  // leakage.cpcv_no_action_days
+}
+
+/**
+ * Load revenue leakage thresholds from platform_config (cached 5 min).
+ * Falls back to safe defaults if DB is unavailable — never throws.
+ */
+export async function getLeakageThresholds(): Promise<LeakageThresholds> {
+  const [
+    highScoreMin,
+    cpCvReadinessMin,
+    cpcvProbMin,
+    dormantDays,
+    humanFailureHours,
+    cpvNoActionDays,
+  ] = await Promise.all([
+    getConfigValue('scoring.qualification_threshold',  70),
+    getConfigValue('scoring.cpcv_readiness_threshold', 80),
+    getConfigValue('scoring.cpcv_probability_min',     65),
+    getConfigValue('distribution.score_decay_days',    14),
+    getConfigValue('leakage.human_failure_hours',      48),
+    getConfigValue('leakage.cpcv_no_action_days',       7),
+  ])
+  return { highScoreMin, cpCvReadinessMin, cpcvProbMin, dormantDays, humanFailureHours, cpvNoActionDays }
+}
+
+// ---------------------------------------------------------------------------
 // Defaults — safe fallbacks if DB is unavailable
 // ---------------------------------------------------------------------------
 
@@ -121,6 +157,9 @@ const DEFAULTS: Record<string, number | string | boolean> = {
   'revenue.commission_pct':           5.0,
   'revenue.cpcv_split_pct':           50.0,
   'revenue.escritura_split_pct':      50.0,
+  // Leakage-specific
+  'leakage.human_failure_hours':      48,
+  'leakage.cpcv_no_action_days':       7,
 }
 
 // ---------------------------------------------------------------------------

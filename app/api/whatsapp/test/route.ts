@@ -1,13 +1,29 @@
 // =============================================================================
 // AGENCY GROUP — WhatsApp Test Message API
 // POST /api/whatsapp/test — send a test WhatsApp message
+// AUTH: requires ADMIN_SECRET (Bearer or x-admin-secret header)
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare } from '@/lib/safeCompare'
 
 export const runtime = 'nodejs'
 
+function isAuthorized(req: NextRequest): boolean {
+  const secret = process.env.ADMIN_SECRET ?? process.env.CRON_SECRET
+  if (!secret) return false
+  const incoming =
+    req.headers.get('x-admin-secret') ??
+    req.headers.get('authorization')?.replace('Bearer ', '') ??
+    ''
+  return safeCompare(incoming, secret)
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await request.json()
     const { to, message } = body as { to: string; message?: string }
@@ -69,7 +85,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
   const token = process.env.WHATSAPP_ACCESS_TOKEN
   const active = process.env.WHATSAPP_ACTIVE

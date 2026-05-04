@@ -4,6 +4,7 @@
 // Optionally persists the distribution event for audit trail.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare }               from '@/lib/safeCompare'
 import { getToken }                  from 'next-auth/jwt'
 import { routeDeal, persistDistributionEvent } from '@/lib/intelligence/distributionRouter'
 import type {
@@ -25,8 +26,8 @@ export async function POST(req: NextRequest) {
   // Auth: session or internal token
   const internalToken = req.headers.get('x-internal-token')
   const bearer        = req.headers.get('authorization')?.replace('Bearer ', '')
-  const isInternal    = (internalToken && internalToken === process.env.CRON_SECRET)
-                     || (bearer        && bearer        === process.env.CRON_SECRET)
+  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
+                     || safeCompare(bearer ?? '', process.env.CRON_SECRET ?? '')
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })

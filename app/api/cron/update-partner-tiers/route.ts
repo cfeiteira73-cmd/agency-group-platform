@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse }         from 'next/server'
 import { batchUpdateAllPartnerTiers }        from '@/lib/commercial/partnerTiering'
 import { supabaseAdmin }                     from '@/lib/supabase'
+import { cronCorrelationId }                 from '@/lib/observability/correlation'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 120
@@ -14,6 +15,8 @@ export async function GET(req: NextRequest) {
   if (!cronExpected || !cronSecret || cronSecret !== cronExpected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const corrId = cronCorrelationId('update-partner-tiers')
 
   const startedAt = Date.now()
 
@@ -38,14 +41,17 @@ export async function GET(req: NextRequest) {
         ran_at: new Date().toISOString(),
       })
 
-    return NextResponse.json({
-      success:     true,
-      agents:      result.agents,
-      investors:   result.investors,
-      errors:      result.errors.length,
-      duration_ms: durationMs,
+    const res = NextResponse.json({
+      success:        true,
+      agents:         result.agents,
+      investors:      result.investors,
+      errors:         result.errors.length,
+      duration_ms:    durationMs,
+      correlation_id: corrId,
       ...(result.errors.length > 0 && { error_sample: result.errors.slice(0, 5) }),
     })
+    res.headers.set('x-correlation-id', corrId)
+    return res
   } catch (err) {
     console.error('[update-partner-tiers] fatal:', err)
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal error' }, { status: 500 })

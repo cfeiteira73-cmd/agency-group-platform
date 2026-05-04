@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withCronLock }              from '@/lib/ops/cronLock'
 import { batchComputeDecay }         from '@/lib/intelligence/engagementDecay'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { cronCorrelationId }         from '@/lib/observability/correlation'
 
 export const runtime   = 'nodejs'
 export const maxDuration = 60
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const corrId = cronCorrelationId('refresh-engagement-decay')
   const start = Date.now()
 
   const result = await withCronLock('refresh-engagement-decay', 30, async () => {
@@ -41,8 +43,9 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    ok:          true,
+    ok:             true,
     ...result,
-    duration_ms: Date.now() - start,
-  })
+    duration_ms:    Date.now() - start,
+    correlation_id: corrId,
+  }, { headers: { 'x-correlation-id': corrId } })
 }

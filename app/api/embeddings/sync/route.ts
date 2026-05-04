@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare }               from '@/lib/safeCompare'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime    = 'nodejs'
@@ -30,14 +31,11 @@ const supabase = createClient(
 function isAuthorized(req: NextRequest): boolean {
   // Legacy internal token path
   const internalToken = req.headers.get('x-internal-token')
-  if (internalToken && internalToken === process.env.INTERNAL_API_TOKEN) return true
+  if (safeCompare(internalToken ?? '', process.env.INTERNAL_API_TOKEN ?? '')) return true
 
   // Cron secret path (used by sync-listings cron)
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const bearer = req.headers.get('authorization')?.replace('Bearer ', '').trim()
-    if (bearer === cronSecret) return true
-  }
+  const bearer = req.headers.get('authorization')?.replace('Bearer ', '').trim()
+  if (safeCompare(bearer ?? '', process.env.CRON_SECRET ?? '')) return true
 
   return false
 }

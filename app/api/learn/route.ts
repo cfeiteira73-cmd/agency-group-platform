@@ -45,7 +45,7 @@ interface ZoneCalibration {
 
 // ─── Notion fetch helpers ─────────────────────────────────────────────────────
 
-const NOTION_DB_ID  = 'b5693a14ca8c43fa8645606363594662'
+const NOTION_DB_ID  = process.env.NOTION_LEARN_DB_ID ?? 'b5693a14ca8c43fa8645606363594662'
 const NOTION_API    = 'https://api.notion.com/v1'
 const NOTION_VER    = '2022-06-28'
 

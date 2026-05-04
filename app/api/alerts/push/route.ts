@@ -223,7 +223,7 @@ async function handler(req: NextRequest): Promise<NextResponse> {
   }
 
   const corrId = getRequestCorrelationId(req)
-  const alertEmail = process.env.ALERT_EMAIL ?? process.env.DIGEST_EMAIL ?? 'carlos@agencygroup.pt'
+  const alertEmail = process.env.ALERT_EMAIL ?? process.env.DIGEST_EMAIL ?? process.env.FOUNDER_EMAIL ?? 'geral@agencygroup.pt'
   const alertPhone = process.env.ALERT_WHATSAPP_PHONE ?? process.env.FOUNDER_WHATSAPP_PHONE ?? ''
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

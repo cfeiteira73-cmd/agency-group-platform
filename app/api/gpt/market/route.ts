@@ -58,23 +58,27 @@ const ZONES: Record<string, Record<string, unknown>> = {
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const zona = searchParams.get('zona') || 'Lisboa'
+  try {
+    const { searchParams } = new URL(req.url)
+    const zona = searchParams.get('zona') || 'Lisboa'
 
-  const zoneKey =
-    Object.keys(ZONES).find(k => zona.toLowerCase().includes(k.toLowerCase())) || 'Lisboa'
-  const data = ZONES[zoneKey]
+    const zoneKey =
+      Object.keys(ZONES).find(k => zona.toLowerCase().includes(k.toLowerCase())) || 'Lisboa'
+    const data = ZONES[zoneKey]
 
-  return NextResponse.json(
-    {
-      zone: zoneKey,
-      ...data,
-      source: 'INE + AT + Confidencial Imobiliário Q1 2026',
-      updatedAt: '2026-04-01',
-      agency: 'Agency Group · AMI 22506 · www.agencygroup.pt · +351 919 948 986',
-    },
-    {
-      headers: { 'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt' },
-    }
-  )
+    return NextResponse.json(
+      {
+        zone: zoneKey,
+        ...data,
+        source: 'INE + AT + Confidencial Imobiliário Q1 2026',
+        updatedAt: '2026-04-01',
+        agency: 'Agency Group · AMI 22506 · www.agencygroup.pt · +351 919 948 986',
+      },
+      {
+        headers: { 'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt' },
+      }
+    )
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

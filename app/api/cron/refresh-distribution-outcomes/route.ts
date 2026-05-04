@@ -5,6 +5,7 @@ import { NextRequest, NextResponse }   from 'next/server'
 import { supabaseAdmin }               from '@/lib/supabase'
 import { refreshRecipientProfile }     from '@/lib/intelligence/distributionOutcomes'
 import { withCronLock }                from '@/lib/ops/cronLock'
+import { cronCorrelationId }           from '@/lib/observability/correlation'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 120
@@ -15,6 +16,8 @@ export async function GET(req: NextRequest) {
   if (!cronExpected || !cronSecret || cronSecret !== cronExpected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const corrId = cronCorrelationId('refresh-distribution-outcomes')
 
   const startedAt = Date.now()
 
@@ -68,13 +71,16 @@ export async function GET(req: NextRequest) {
         ran_at: new Date().toISOString(),
       })
 
-    return NextResponse.json({
-      success: true,
+    const res = NextResponse.json({
+      success:        true,
       refreshed,
-      errors:  errors.length,
-      duration_ms: durationMs,
+      errors:         errors.length,
+      duration_ms:    durationMs,
+      correlation_id: corrId,
       ...(errors.length > 0 && { error_sample: errors.slice(0, 5) }),
     })
+    res.headers.set('x-correlation-id', corrId)
+    return res
   } catch (err) {
     console.error('[refresh-distribution-outcomes] fatal:', err)
     return NextResponse.json(

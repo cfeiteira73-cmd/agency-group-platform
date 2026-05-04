@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { safeCompare } from '@/lib/safeCompare'
+import { cronCorrelationId } from '@/lib/observability/correlation'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN ?? ''
 const NOTION_CRM   = process.env.NOTION_CRM_DB || '385a010f42244ef79b0a2ead4f258698'
@@ -228,6 +229,8 @@ export async function GET(req: NextRequest) {
   if (!cronSecret) return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 })
   if (!safeCompare(authHeader ?? '', `Bearer ${cronSecret}`)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const corrId = cronCorrelationId('followups')
+
   if (!NOTION_TOKEN || !RESEND_KEY) {
     return NextResponse.json({ error: 'Missing credentials', sent: 0 })
   }
@@ -281,5 +284,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, ...results })
+  return NextResponse.json({ ok: true, ...results, correlation_id: corrId }, { headers: { 'x-correlation-id': corrId } })
 }

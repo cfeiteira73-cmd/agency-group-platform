@@ -24,6 +24,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runIngestionPipeline }      from '@/lib/ingestion/pipeline'
 import type { ProviderFetchParams }  from '@/lib/ingestion/types'
+import { cronCorrelationId }         from '@/lib/observability/correlation'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 300
@@ -50,6 +51,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const corrId = cronCorrelationId('ingest-listings')
+
   const { searchParams } = req.nextUrl
 
   // Optional query params for targeted runs
@@ -64,10 +67,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const hasErrors = result.total_errors > 0
 
-  return NextResponse.json(
+  const res = NextResponse.json(
     {
-      ok:          !hasErrors,
-      run_id:      result.run_id,
+      ok:             !hasErrors,
+      run_id:         result.run_id,
       summary: {
         total_fetched:  result.total_fetched,
         total_new:      result.total_new,
@@ -75,7 +78,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         total_errors:   result.total_errors,
         duration_ms:    result.duration_ms,
       },
-      providers:   result.providers.map(p => ({
+      providers:      result.providers.map(p => ({
         name:     p.provider,
         fetched:  p.fetched,
         new:      p.new_listings,
@@ -83,8 +86,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         skipped:  p.duplicates_skipped,
         errors:   p.errors.length,
       })),
+      correlation_id: corrId,
       ...(hasErrors ? { warnings: result.warnings } : {}),
     },
     { status: hasErrors ? 207 : 200 },
   )
+  res.headers.set('x-correlation-id', corrId)
+  return res
 }

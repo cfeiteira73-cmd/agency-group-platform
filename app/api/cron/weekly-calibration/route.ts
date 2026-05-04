@@ -7,6 +7,7 @@ import { runWeeklyCalibration }        from '@/lib/intelligence/recalibrationEng
 import { buildAlert, createAlert }     from '@/lib/ops/alertEngine'
 import { withCronLock }                from '@/lib/ops/cronLock'
 import { supabaseAdmin }               from '@/lib/supabase'
+import { cronCorrelationId }           from '@/lib/observability/correlation'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 60
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const corrId = cronCorrelationId('weekly-calibration')
   const startedAt = Date.now()
 
   // Guard: weekly calibration is expensive — prevent double-execution
@@ -69,13 +71,14 @@ export async function GET(req: NextRequest) {
       })
 
     return NextResponse.json({
-      success:       true,
-      triggered:     result.trigger.triggered,
-      urgency:       result.trigger.urgency,
-      urgency_score: result.urgency_score,
-      persisted:     result.persisted,
-      duration_ms:   durationMs,
-    })
+      success:        true,
+      triggered:      result.trigger.triggered,
+      urgency:        result.trigger.urgency,
+      urgency_score:  result.urgency_score,
+      persisted:      result.persisted,
+      duration_ms:    durationMs,
+      correlation_id: corrId,
+    }, { headers: { 'x-correlation-id': corrId } })
   } catch (err) {
     console.error('[weekly-calibration] fatal:', err)
     return NextResponse.json(

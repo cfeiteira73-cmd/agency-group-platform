@@ -36,6 +36,8 @@ import {
   signalToPriorityItem,
   type SignalPropertyInput,
 }                                    from '@/lib/scoring/signalDetector'
+import { cronCorrelationId }         from '@/lib/observability/correlation'
+import { safeCompare }               from '@/lib/safeCompare'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 300
@@ -50,7 +52,7 @@ function authCheck(req: NextRequest): boolean {
   const token =
     req.headers.get('x-cron-secret') ??
     req.headers.get('authorization')?.replace('Bearer ', '').trim()
-  return token === secret
+  return !!token && safeCompare(token, secret)
 }
 
 // ---------------------------------------------------------------------------
@@ -402,6 +404,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const corrId = cronCorrelationId('sync-listings')
+
   const startedAt = new Date().toISOString()
   const t0        = Date.now()
 
@@ -425,12 +429,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     stats.properties_fetched = properties.length
 
     if (properties.length === 0) {
-      return NextResponse.json({
+      const earlyRes = NextResponse.json({
         ok:      true,
         message: 'No unscored properties found — all up to date',
         stats,
-        duration_ms: Date.now() - t0,
+        duration_ms:    Date.now() - t0,
+        correlation_id: corrId,
       })
+      earlyRes.headers.set('x-correlation-id', corrId)
+      return earlyRes
     }
 
     // ── 2. Score all fetched properties ──────────────────────────────────────
@@ -488,13 +495,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const hasErrors = stats.errors.length > 0
 
-  return NextResponse.json(
+  const res = NextResponse.json(
     {
-      ok:          !hasErrors,
+      ok:             !hasErrors,
       stats,
-      duration_ms: durationMs,
+      duration_ms:    durationMs,
+      correlation_id: corrId,
       ...(hasErrors ? { errors: stats.errors } : {}),
     },
     { status: hasErrors ? 207 : 200 },
   )
+  res.headers.set('x-correlation-id', corrId)
+  return res
 }

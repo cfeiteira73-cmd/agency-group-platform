@@ -20,6 +20,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { cronCorrelationId }         from '@/lib/observability/correlation'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 120
@@ -285,6 +286,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const corrId    = cronCorrelationId('investor-alerts')
   const startedAt = new Date().toISOString()
   const t0        = Date.now()
   const errors:   string[] = []
@@ -355,13 +357,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       ok:          errors.length === 0,
       results,
       summary: {
-        properties_processed:   results.length,
-        deal_packs_created:     results.filter(r => r.deal_pack_id).length,
+        properties_processed:    results.length,
+        deal_packs_created:      results.filter(r => r.deal_pack_id).length,
         total_investors_matched: results.reduce((s, r) => s + r.investors_matched, 0),
       },
-      duration_ms: durationMs,
+      duration_ms:    durationMs,
+      correlation_id: corrId,
       ...(errors.length > 0 ? { errors } : {}),
     },
-    { status: errors.length > 0 && results.length === 0 ? 500 : 200 },
+    { status: errors.length > 0 && results.length === 0 ? 500 : 200, headers: { 'x-correlation-id': corrId } },
   )
 }

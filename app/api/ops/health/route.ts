@@ -2,6 +2,7 @@
 // System health dashboard — ingestion, scoring, distribution, alerts, jobs.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare }               from '@/lib/safeCompare'
 import { getToken }                  from 'next-auth/jwt'
 import { supabaseAdmin }             from '@/lib/supabase'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
@@ -11,7 +12,7 @@ export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
   const internalToken = req.headers.get('x-internal-token')
-  const isInternal    = internalToken === process.env.CRON_SECRET
+  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })

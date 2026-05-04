@@ -3,6 +3,7 @@
 // Optionally triggers a fresh computation via ?recompute=true.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare }               from '@/lib/safeCompare'
 import { getToken }                  from 'next-auth/jwt'
 import { computeAndPersistDriftReport } from '@/lib/intelligence/driftDetector'
 import { supabaseAdmin }             from '@/lib/supabase'
@@ -14,8 +15,8 @@ export async function GET(req: NextRequest) {
   // Auth: session or cron token
   const internalToken = req.headers.get('x-internal-token')
   const bearer        = req.headers.get('authorization')?.replace('Bearer ', '')
-  const isInternal    = (internalToken && internalToken === process.env.CRON_SECRET)
-                     || (bearer        && bearer        === process.env.CRON_SECRET)
+  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
+                     || safeCompare(bearer ?? '', process.env.CRON_SECRET ?? '')
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })

@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { cronCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -52,6 +53,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (!authCheck(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const corrId = cronCorrelationId('kpi-snapshot')
 
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
@@ -226,9 +229,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: upsertError.message }, { status: 500 })
     }
 
-    return NextResponse.json({
-      success:       true,
-      snapshot_date: snapshotDate,
+    const res = NextResponse.json({
+      success:        true,
+      snapshot_date:  snapshotDate,
       summary: {
         total_leads:          totalLeads,
         total_deals:          totalDeals,
@@ -238,7 +241,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         campaigns_sent:       campaignsSent,
         deal_packs_generated: dealPacksGenerated,
       },
+      correlation_id: corrId,
     })
+    res.headers.set('x-correlation-id', corrId)
+    return res
 
   } catch (err) {
     console.error('[kpi-snapshot] Unexpected error:', err)

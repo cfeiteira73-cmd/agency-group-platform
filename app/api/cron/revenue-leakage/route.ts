@@ -48,7 +48,7 @@ async function sendLeakageAlert(
   topItems: ReturnType<typeof summariseLeakage>['top_items'],
 ): Promise<void> {
   const key = process.env.RESEND_API_KEY
-  const to  = process.env.ALERT_EMAIL ?? process.env.DIGEST_EMAIL ?? 'carlos@agencygroup.pt'
+  const to  = process.env.ALERT_EMAIL ?? process.env.DIGEST_EMAIL ?? process.env.FOUNDER_EMAIL ?? 'geral@agencygroup.pt'
   if (!key || criticalCount === 0) return
 
   const rows = topItems.slice(0, 5).map(item => `

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import { cronCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const corrId = cronCorrelationId('purge-conversations')
   const cutoffDate = new Date()
   cutoffDate.setDate(cutoffDate.getDate() - 90)
 
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
     if (error) throw error
 
     console.log(`[GDPR Purge] Deleted ${count ?? 'unknown'} conversations older than 90 days`)
-    return NextResponse.json({ success: true, purged: count, cutoff: cutoffDate.toISOString() })
+    return NextResponse.json({ success: true, purged: count, cutoff: cutoffDate.toISOString(), correlation_id: corrId }, { headers: { 'x-correlation-id': corrId } })
   } catch (err) {
     console.error('[GDPR Purge] Error:', err)
     return NextResponse.json({ error: 'Purge failed' }, { status: 500 })

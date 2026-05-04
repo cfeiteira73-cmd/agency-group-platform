@@ -62,7 +62,7 @@ const personSchemas = [
     name: 'Carlos Gomes',
     jobTitle: 'Consultor Sénior · Imobiliário Residencial',
     worksFor: { '@type': 'Organization', name: 'Agency Group' },
-    email: 'carlos@agencygroup.pt',
+    email: 'geral@agencygroup.pt',
     telephone: '+351919948986',
     areaServed: ['Lisboa', 'Cascais', 'Sintra'],
     description:
@@ -126,7 +126,7 @@ const ADVISORS = [
     zones: ['Lisboa', 'Cascais', 'Sintra'],
     bio: 'Especializado em imobiliário residencial premium com foco em compradores internacionais e investimento estrangeiro. Mais de 8 anos de experiência no segmento de luxo em Portugal.',
     whatsapp: 'https://wa.me/351919948986',
-    email: 'carlos@agencygroup.pt',
+    email: 'geral@agencygroup.pt',
     // Extended fields — populate with real data:
     photo_url: null as string | null,   // e.g. '/equipa/carlos-gomes.avif'
     direct_phone: null as string | null, // e.g. '+351 9XX XXX XXX'

@@ -2,6 +2,7 @@
 // GET   /api/outcomes/rejections  — rejection taxonomy analytics
 
 import { NextRequest, NextResponse }    from 'next/server'
+import { safeCompare }                  from '@/lib/safeCompare'
 import { getAdminRole, hasPermission }  from '@/lib/auth/adminAuth'
 import {
   buildRejectionRecord,
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const isService  = authHeader === process.env.CRON_SECRET
+  const isService  = safeCompare(authHeader ?? '', process.env.CRON_SECRET ?? '')
   let actorEmail   = 'service'
 
   if (!isService) {

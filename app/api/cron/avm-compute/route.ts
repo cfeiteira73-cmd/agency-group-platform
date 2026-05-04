@@ -22,6 +22,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { batchComputeAVM }           from '@/lib/valuation/avm'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { cronCorrelationId }         from '@/lib/observability/correlation'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 300
@@ -47,6 +48,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (!authCheck(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const corrId = cronCorrelationId('avm-compute')
 
   const startedAt = new Date().toISOString()
   const t0        = Date.now()
@@ -75,16 +78,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         })
     } catch { /* non-critical */ }
 
-    return NextResponse.json(
+    const res = NextResponse.json(
       {
-        ok:          errors.length === 0,
+        ok:             errors.length === 0,
         computed,
-        errors_count: errors.length,
-        duration_ms: durationMs,
+        errors_count:   errors.length,
+        duration_ms:    durationMs,
+        correlation_id: corrId,
         ...(errors.length > 0 ? { errors: errors.slice(0, 10) } : {}),
       },
       { status: errors.length === 0 ? 200 : 207 },
     )
+    res.headers.set('x-correlation-id', corrId)
+    return res
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     return NextResponse.json({ error: message }, { status: 500 })

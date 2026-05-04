@@ -17,7 +17,9 @@
 //   const summary = summariseLeakage(leaks)
 // =============================================================================
 
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin }        from '@/lib/supabase'
+import { getLeakageThresholds } from '@/lib/platform/config'
+import type { LeakageThresholds } from '@/lib/platform/config'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -57,39 +59,32 @@ export interface LeakageSummary {
 }
 
 // ---------------------------------------------------------------------------
-// Thresholds (will eventually come from platform_config)
+// Thresholds — loaded from platform_config (DB-backed, 5-min cached)
 // ---------------------------------------------------------------------------
 
-const THRESHOLDS = {
-  highScoreMin:          70,
-  cpCvReadinessMin:      80,
-  cpcvProbMin:           65,
-  dormantDays:           14,
-  humanFailureHours:     48,
-  cpvNoActionDays:        7,
-  dealStuckDays: {
-    'Angariação':         21,
-    'Proposta Enviada':   10,
-    'Proposta Aceite':     7,
-    'Due Diligence':      21,
-    'CPCV Assinado':      45,
-    'Financiamento':      30,
-    'Escritura Marcada':  14,
-  } as Record<string, number>,
+// Stage-specific deal-stuck thresholds remain local (complex object, not in config)
+const DEAL_STUCK_DAYS: Record<string, number> = {
+  'Angariação':         21,
+  'Proposta Enviada':   10,
+  'Proposta Aceite':     7,
+  'Due Diligence':      21,
+  'CPCV Assinado':      45,
+  'Financiamento':      30,
+  'Escritura Marcada':  14,
 }
 
 // ---------------------------------------------------------------------------
 // Detection functions
 // ---------------------------------------------------------------------------
 
-async function detectHighScoreNoContact(): Promise<LeakItem[]> {
+async function detectHighScoreNoContact(t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const s = supabaseAdmin as any
 
   const { data, error } = await s
     .from('offmarket_leads')
     .select('id, nome, score, revenue_per_lead_estimate, created_at, contacto')
-    .gte('score', THRESHOLDS.highScoreMin)
+    .gte('score', t.highScoreMin)
     .is('contacto', null)
     .not('score', 'is', null)
     .not('status', 'in', '("closed_won","closed_lost","not_interested")')
@@ -105,7 +100,7 @@ async function detectHighScoreNoContact(): Promise<LeakItem[]> {
     return {
       id:          r.id,
       category:    'HIGH_SCORE_NO_CONTACT' as LeakageCategory,
-      severity:    r.score >= 80 ? 'critical' : 'high' as LeakageSeverity,
+      severity:    r.score >= (t.highScoreMin + 10) ? 'critical' : 'high' as LeakageSeverity,
       lead_name:   r.nome,
       score:       r.score,
       revenue_est: r.revenue_per_lead_estimate,
@@ -117,20 +112,20 @@ async function detectHighScoreNoContact(): Promise<LeakItem[]> {
   })
 }
 
-async function detectCPCVReadyNoAction(): Promise<LeakItem[]> {
+async function detectCPCVReadyNoAction(t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const s = supabaseAdmin as any
 
-  const sevenDaysAgo = new Date(Date.now() - THRESHOLDS.cpvNoActionDays * 86_400_000).toISOString()
+  const nDaysAgo = new Date(Date.now() - t.cpvNoActionDays * 86_400_000).toISOString()
 
   const { data, error } = await s
     .from('offmarket_leads')
     .select('id, nome, score, deal_readiness_score, cpcv_probability, revenue_per_lead_estimate, last_alerted_at, buyer_matched_at')
-    .gte('deal_readiness_score', THRESHOLDS.cpCvReadinessMin)
-    .gte('cpcv_probability', THRESHOLDS.cpcvProbMin)
+    .gte('deal_readiness_score', t.cpCvReadinessMin)
+    .gte('cpcv_probability', t.cpcvProbMin)
     .not('buyer_matched_at', 'is', null)
     .not('status', 'in', '("closed_won","closed_lost","not_interested")')
-    .or(`last_alerted_at.is.null,last_alerted_at.lt.${sevenDaysAgo}`)
+    .or(`last_alerted_at.is.null,last_alerted_at.lt.${nDaysAgo}`)
     .order('deal_readiness_score', { ascending: false })
     .limit(30)
 
@@ -159,7 +154,7 @@ async function detectCPCVReadyNoAction(): Promise<LeakItem[]> {
   })
 }
 
-async function detectDealStuck(): Promise<LeakItem[]> {
+async function detectDealStuck(_t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const s = supabaseAdmin as any
 
@@ -177,7 +172,7 @@ async function detectDealStuck(): Promise<LeakItem[]> {
     id: string | number; ref: string; imovel: string; valor: string | number | null
     fase: string; comprador: string | null; updated_at: string
   }>) {
-    const threshold = THRESHOLDS.dealStuckDays[deal.fase] ?? 30
+    const threshold = DEAL_STUCK_DAYS[deal.fase] ?? 30
     const days = Math.floor((Date.now() - new Date(deal.updated_at).getTime()) / 86_400_000)
     if (days < threshold) continue
 
@@ -203,11 +198,11 @@ async function detectDealStuck(): Promise<LeakItem[]> {
   return leaks
 }
 
-async function detectHumanFailureOpen(): Promise<LeakItem[]> {
+async function detectHumanFailureOpen(t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const s = supabaseAdmin as any
 
-  const cutoff = new Date(Date.now() - THRESHOLDS.humanFailureHours * 3_600_000).toISOString()
+  const cutoff = new Date(Date.now() - t.humanFailureHours * 3_600_000).toISOString()
 
   const { data, error } = await s
     .from('offmarket_leads')
@@ -241,16 +236,16 @@ async function detectHumanFailureOpen(): Promise<LeakItem[]> {
   })
 }
 
-async function detectDormantHighValue(): Promise<LeakItem[]> {
+async function detectDormantHighValue(t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const s = supabaseAdmin as any
 
-  const cutoff = new Date(Date.now() - THRESHOLDS.dormantDays * 86_400_000).toISOString()
+  const cutoff = new Date(Date.now() - t.dormantDays * 86_400_000).toISOString()
 
   const { data, error } = await s
     .from('offmarket_leads')
     .select('id, nome, score, revenue_per_lead_estimate, last_alerted_at, contacto')
-    .gte('score', THRESHOLDS.highScoreMin)
+    .gte('score', t.highScoreMin)
     .not('contacto', 'is', null)           // has been contacted at least once
     .lt('last_alerted_at', cutoff)
     .not('status', 'in', '("closed_won","closed_lost","not_interested")')
@@ -265,11 +260,11 @@ async function detectDormantHighValue(): Promise<LeakItem[]> {
   }>).map(r => {
     const days = r.last_alerted_at
       ? Math.floor((Date.now() - new Date(r.last_alerted_at).getTime()) / 86_400_000)
-      : THRESHOLDS.dormantDays + 1
+      : t.dormantDays + 1
     return {
       id:          r.id,
       category:    'DORMANT_HIGH_VALUE' as LeakageCategory,
-      severity:    r.score >= 85 ? 'high' : 'medium' as LeakageSeverity,
+      severity:    r.score >= (t.highScoreMin + 15) ? 'high' : 'medium' as LeakageSeverity,
       lead_name:   r.nome,
       score:       r.score,
       revenue_est: r.revenue_per_lead_estimate,
@@ -286,12 +281,15 @@ async function detectDormantHighValue(): Promise<LeakItem[]> {
 // ---------------------------------------------------------------------------
 
 export async function detectRevenueLeakage(): Promise<LeakItem[]> {
+  // Load thresholds from platform_config (cached 5 min, falls back to defaults)
+  const t = await getLeakageThresholds()
+
   const [noContact, cpcvReady, stuck, humanFail, dormant] = await Promise.allSettled([
-    detectHighScoreNoContact(),
-    detectCPCVReadyNoAction(),
-    detectDealStuck(),
-    detectHumanFailureOpen(),
-    detectDormantHighValue(),
+    detectHighScoreNoContact(t),
+    detectCPCVReadyNoAction(t),
+    detectDealStuck(t),
+    detectHumanFailureOpen(t),
+    detectDormantHighValue(t),
   ])
 
   const all: LeakItem[] = [

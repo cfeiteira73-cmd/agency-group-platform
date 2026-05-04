@@ -2,6 +2,7 @@
 // Records a transaction outcome (won/lost/withdrawn) with full economic truth.
 
 import { NextRequest, NextResponse }    from 'next/server'
+import { safeCompare }                  from '@/lib/safeCompare'
 import { getAdminRole }                 from '@/lib/auth/adminAuth'
 import { hasPermission }                from '@/lib/auth/adminAuth'
 import { logAction, buildAuditEntry }   from '@/lib/auth/auditLog'
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
 
   // Accept service key (cron/automation) or admin user token
-  const isService = authHeader === process.env.CRON_SECRET
+  const isService = safeCompare(authHeader ?? '', process.env.CRON_SECRET ?? '')
   let actorEmail  = 'service'
 
   if (!isService) {

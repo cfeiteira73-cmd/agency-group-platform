@@ -19,6 +19,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { cronCorrelationId }         from '@/lib/observability/correlation'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 120
@@ -262,6 +263,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const corrId    = cronCorrelationId('dre-ingest')
   const startedAt = new Date().toISOString()
   const t0        = Date.now()
   const errors:   string[] = []
@@ -349,9 +351,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         errors:            errors.length,
       },
       results,
-      duration_ms: durationMs,
+      duration_ms:    durationMs,
+      correlation_id: corrId,
       ...(errors.length > 0 ? { errors } : {}),
     },
-    { status: errors.length > 0 && created === 0 ? 500 : 200 },
+    { status: errors.length > 0 && created === 0 ? 500 : 200, headers: { 'x-correlation-id': corrId } },
   )
 }

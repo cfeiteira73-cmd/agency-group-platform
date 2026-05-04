@@ -2,6 +2,7 @@
 // POST /api/ops/review-queue   — queue a deal for manual review
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare }               from '@/lib/safeCompare'
 import { getToken }                  from 'next-auth/jwt'
 import { supabaseAdmin }             from '@/lib/supabase'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
   const internalToken = req.headers.get('x-internal-token')
-  const isInternal    = internalToken === process.env.CRON_SECRET
+  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
 
   let actorEmail = 'system'
   if (!isInternal) {

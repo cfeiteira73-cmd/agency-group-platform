@@ -26,38 +26,42 @@ const MARKET_NOTE: Record<string, string> = {
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const zona = searchParams.get('zona') || ''
-  const tipo = searchParams.get('tipo') || ''
-  const precoMin = parseInt(searchParams.get('precoMin') || '0')
-  const precoMax = parseInt(searchParams.get('precoMax') || '99999999')
-  const quartos = parseInt(searchParams.get('quartos') || '0')
+  try {
+    const { searchParams } = new URL(req.url)
+    const zona = searchParams.get('zona') || ''
+    const tipo = searchParams.get('tipo') || ''
+    const precoMin = parseInt(searchParams.get('precoMin') || '0')
+    const precoMax = parseInt(searchParams.get('precoMax') || '99999999')
+    const quartos = parseInt(searchParams.get('quartos') || '0')
 
-  const filtered = PROPERTIES.filter(p => {
-    if (zona && !p.zone.toLowerCase().includes(zona.toLowerCase())) return false
-    if (tipo && !p.type.toLowerCase().includes(tipo.toLowerCase())) return false
-    if (p.price < precoMin || p.price > precoMax) return false
-    if (quartos && p.bedrooms < quartos) return false
-    return true
-  })
+    const filtered = PROPERTIES.filter(p => {
+      if (zona && !p.zone.toLowerCase().includes(zona.toLowerCase())) return false
+      if (tipo && !p.type.toLowerCase().includes(tipo.toLowerCase())) return false
+      if (p.price < precoMin || p.price > precoMax) return false
+      if (quartos && p.bedrooms < quartos) return false
+      return true
+    })
 
-  const zoneKey = zona
-    ? Object.keys(MARKET_NOTE).find(k => zona.toLowerCase().includes(k.toLowerCase())) || 'default'
-    : 'default'
+    const zoneKey = zona
+      ? Object.keys(MARKET_NOTE).find(k => zona.toLowerCase().includes(k.toLowerCase())) || 'default'
+      : 'default'
 
-  return NextResponse.json(
-    {
-      properties: filtered.map(p => ({
-        ...p,
-        pricePerSqm: Math.round(p.price / p.area),
-        url: `https://www.agencygroup.pt/imoveis/${p.id}`,
-      })),
-      total: filtered.length,
-      marketNote: MARKET_NOTE[zoneKey],
-      agency: 'Agency Group · AMI 22506 · www.agencygroup.pt',
-    },
-    {
-      headers: { 'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt' },
-    }
-  )
+    return NextResponse.json(
+      {
+        properties: filtered.map(p => ({
+          ...p,
+          pricePerSqm: Math.round(p.price / p.area),
+          url: `https://www.agencygroup.pt/imoveis/${p.id}`,
+        })),
+        total: filtered.length,
+        marketNote: MARKET_NOTE[zoneKey],
+        agency: 'Agency Group · AMI 22506 · www.agencygroup.pt',
+      },
+      {
+        headers: { 'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt' },
+      }
+    )
+  } catch {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
