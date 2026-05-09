@@ -1,6 +1,6 @@
 // =============================================================================
-// AGENCY GROUP — Base Agent Class v1.0
-// Extend this to build any SH-ROS operational agent
+// AGENCY GROUP — Base Agent Class v2.0
+// SH-ROS Runtime Core — tenant-isolated, observable, deterministic
 // AMI: 22506
 // =============================================================================
 
@@ -8,7 +8,7 @@ import { randomUUID } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import type {
   AgentId, AgentConfig, AgentContext, AgentResult,
-  AgentInsight, AgentAction, AgentStatus,
+  AgentInsight, AgentAction, AgentStatus, AgentOutputContract,
 } from './types'
 
 // In-process rate limiter (per-agent)
@@ -45,18 +45,18 @@ export abstract class BaseAgent {
     let metadata: Record<string, unknown> = {}
 
     try {
-      const result = await Promise.race([
+      const executionResult = await Promise.race([
         this.execute(ctx),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Agent timeout')), this.config.timeout_ms)
         ),
       ])
 
-      insights = result.insights
-      metadata = result.metadata ?? {}
+      insights = executionResult.insights
+      metadata = executionResult.metadata ?? {}
 
       // Classify actions
-      for (const action of result.actions) {
+      for (const action of executionResult.actions) {
         if (action.requires_approval || (action.risk === 'high' && this.config.require_human_approval)) {
           pendingApproval.push(action)
         } else if (!ctx.dry_run) {
@@ -74,6 +74,7 @@ export abstract class BaseAgent {
 
     const result: AgentResult = {
       agent_id:        this.id,
+      org_id:          ctx.org_id,
       status,
       correlation_id:  ctx.correlation_id,
       started_at,
@@ -85,6 +86,7 @@ export abstract class BaseAgent {
       pending_approval: pendingApproval,
       error,
       metadata,
+      output:          this._buildOutputContract(ctx, insights, actions, error),
     }
 
     // Non-blocking logging
@@ -111,7 +113,7 @@ export abstract class BaseAgent {
         priority:    action.risk === 'high' ? 'high' : action.risk === 'medium' ? 'medium' : 'low',
         entity_type: action.entity_type,
         entity_id:   action.entity_id,
-        metadata:    { ...action.payload, agent_id: this.id, correlation_id: ctx.correlation_id },
+        metadata:    { ...action.payload, agent_id: this.id, correlation_id: ctx.correlation_id, org_id: ctx.org_id },
       }).then(({ error }) => { if (error) console.warn(`[Agent:${this.id}] task insert error`, error.message) })
     }
     // Other action types are no-ops here — handled by downstream consumers
@@ -131,18 +133,60 @@ export abstract class BaseAgent {
           actions_count:  result.actions.length,
           pending_count:  result.pending_approval.length,
           dry_run:        result.dry_run,
+          org_id:         result.org_id,
         },
         error_message: result.error,
         automation_type: 'agent',
       })
     } catch {
-      // Best-effort
+      // Best-effort — never throw
+    }
+  }
+
+  /** Build the standardised output contract from execution results */
+  private _buildOutputContract(
+    ctx: AgentContext,
+    insights: AgentInsight[],
+    actions: AgentAction[],
+    error: string | null,
+  ): AgentOutputContract {
+    const criticalInsights = insights.filter(i => i.severity === 'critical')
+    const warningInsights  = insights.filter(i => i.severity === 'warning')
+    const totalRevenue     = insights.reduce((s, i) => s + (i.revenue_impact_eur ?? 0), 0)
+    const avgConfidence    = insights.length > 0
+      ? insights.reduce((s, i) => s + i.confidence, 0) / insights.length
+      : 0
+
+    const priority: AgentOutputContract['priority'] =
+      error                        ? 'critical' :
+      criticalInsights.length > 0  ? 'critical' :
+      warningInsights.length  > 0  ? 'high'     :
+      insights.length         > 0  ? 'medium'   :
+      'low'
+
+    const topInsight = insights[0]?.summary ?? (error ? `Agent failed: ${error}` : 'No significant findings')
+
+    const riskScore = error ? 1.0 :
+      criticalInsights.length > 0 ? 0.85 :
+      warningInsights.length  > 0 ? 0.55 :
+      0.2
+
+    return {
+      agent:            this.name,
+      org_id:           ctx.org_id,
+      priority,
+      financial_impact: Math.round(totalRevenue),
+      insight:          topInsight,
+      actions:          actions.map(a => a.description),
+      confidence:       parseFloat(avgConfidence.toFixed(2)),
+      risk_score:       riskScore,
     }
   }
 
   private _errorResult(ctx: AgentContext, started_at: string, error: string): AgentResult {
     return {
       agent_id:        this.id,
+      org_id:          ctx.org_id,
       status:          'failed',
       correlation_id:  ctx.correlation_id,
       started_at,
@@ -154,19 +198,32 @@ export abstract class BaseAgent {
       pending_approval: [],
       error,
       metadata:        {},
+      output: {
+        agent:            this.name,
+        org_id:           ctx.org_id,
+        priority:         'critical',
+        financial_impact: 0,
+        insight:          `Agent failed: ${error}`,
+        actions:          [],
+        confidence:       0,
+        risk_score:       1.0,
+      },
     }
   }
 
   /** Helper to create a typed context */
   static createContext(opts: Partial<AgentContext> = {}): AgentContext {
     return {
+      org_id:         opts.org_id         ?? 'default',
       correlation_id: opts.correlation_id ?? randomUUID(),
-      triggered_by:   opts.triggered_by ?? 'api',
-      triggered_at:   opts.triggered_at ?? new Date().toISOString(),
-      dry_run:        opts.dry_run ?? false,
+      triggered_by:   opts.triggered_by   ?? 'api',
+      triggered_at:   opts.triggered_at   ?? new Date().toISOString(),
+      dry_run:        opts.dry_run        ?? false,
       entity_type:    opts.entity_type,
       entity_id:      opts.entity_id,
       agent_email:    opts.agent_email,
+      event_id:       opts.event_id,
+      trigger_event:  opts.trigger_event,
     }
   }
 }

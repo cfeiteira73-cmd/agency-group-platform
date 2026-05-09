@@ -32,7 +32,7 @@ export class PipelineStallAgent extends BaseAgent {
   readonly config: AgentConfig = {
     rate_limit_per_hour:    4,
     max_retries:            2,
-    timeout_ms:             20_000,
+    timeout_ms:             2000,
     require_human_approval: false,
     can_send_comms:         false,
   }

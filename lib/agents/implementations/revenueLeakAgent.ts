@@ -16,7 +16,7 @@ export class RevenueLeakAgent extends BaseAgent {
   readonly config: AgentConfig = {
     rate_limit_per_hour:    4,
     max_retries:            2,
-    timeout_ms:             30_000,
+    timeout_ms:             2000,
     require_human_approval: false,
     can_send_comms:         false,
   }
