@@ -180,6 +180,7 @@ export abstract class BaseAgent {
       actions:          actions.map(a => a.description),
       confidence:       parseFloat(avgConfidence.toFixed(2)),
       risk_score:       riskScore,
+      next_events:      [], // agents emit follow-up events explicitly in execute()
     }
   }
 
@@ -207,6 +208,7 @@ export abstract class BaseAgent {
         actions:          [],
         confidence:       0,
         risk_score:       1.0,
+        next_events:      [],
       },
     }
   }

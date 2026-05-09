@@ -1,16 +1,24 @@
 // =============================================================================
-// AGENCY GROUP — SH-ROS Runtime Core barrel export
-// AMI: 22506 | SH-ROS Runtime Core
+// AGENCY GROUP — SH-ROS Runtime Public API vFINAL
+// AMI: 22506 | SH-ROS Production Runtime
 // =============================================================================
 
-export { orchestrator } from './orchestrator'
-export { shortTermMemory, longTermMemory } from './memory'
+export { orchestrator, RuntimeValidationError }    from './orchestrator'
+export { hotMemory, warmMemory, shortTermMemory, longTermMemory } from './memory'
+export { decisionEngine, computeEV, rankOutputs }  from './decisionEngine'
 export type {
   RuntimeEvent,
   RuntimeEventType,
   RuntimeExecutionTrace,
   ShortTermMemoryEntry,
   LongTermKPI,
+  SystemAlertPayload,
+  LeadCreatedPayload,
+  LeadScoredPayload,
+  PipelineStalledPayload,
+  DealWonPayload,
+  DealLostPayload,
+  GenericPayload,
 } from './types'
-export { EVENT_AGENT_ROUTING } from './types'
+export { EVENT_AGENT_ROUTING, BACKOFF_MS, MAX_RETRIES } from './types'
 export type { AgentOutputContract } from '@/lib/agents/types'

@@ -4371,6 +4371,70 @@ export type Database = {
         }
         Relationships: []
       }
+      // ─── runtime_events ─────────────────────────────────────────────────────────
+      runtime_events: {
+        Row: {
+          event_id:         string
+          org_id:           string
+          type:             string
+          status:           'pending' | 'processing' | 'completed' | 'failed' | 'dlq'
+          priority:         'low' | 'medium' | 'high' | 'critical'
+          retry_count:      number
+          correlation_id:   string
+          trace_id:         string
+          source_system:    'api' | 'n8n' | 'cron' | 'agent' | 'engine' | 'portal'
+          schema_version:   string
+          payload:          Record<string, unknown>
+          result:           Record<string, unknown> | null
+          agents_triggered: string[]
+          agents_completed: string[]
+          agents_failed:    string[]
+          latency_ms:       number | null
+          economic_score:   number | null
+          created_at:       string
+          updated_at:       string
+          processed_at:     string | null
+          completed_at:     string | null
+        }
+        Insert: {
+          event_id?:        string
+          org_id:           string
+          type:             string
+          status?:          'pending' | 'processing' | 'completed' | 'failed' | 'dlq'
+          priority?:        'low' | 'medium' | 'high' | 'critical'
+          retry_count?:     number
+          correlation_id:   string
+          trace_id:         string
+          source_system:    'api' | 'n8n' | 'cron' | 'agent' | 'engine' | 'portal'
+          schema_version?:  string
+          payload?:         Record<string, unknown>
+          result?:          Record<string, unknown> | null
+          agents_triggered?: string[]
+          agents_completed?: string[]
+          agents_failed?:    string[]
+          latency_ms?:      number | null
+          economic_score?:  number | null
+          created_at?:      string
+          updated_at?:      string
+          processed_at?:    string | null
+          completed_at?:    string | null
+        }
+        Update: {
+          status?:          'pending' | 'processing' | 'completed' | 'failed' | 'dlq'
+          priority?:        'low' | 'medium' | 'high' | 'critical'
+          retry_count?:     number
+          result?:          Record<string, unknown> | null
+          agents_triggered?: string[]
+          agents_completed?: string[]
+          agents_failed?:    string[]
+          latency_ms?:      number | null
+          economic_score?:  number | null
+          updated_at?:      string
+          processed_at?:    string | null
+          completed_at?:    string | null
+        }
+        Relationships: []
+      }
     }
 
     // -----------------------------------------------------------------------

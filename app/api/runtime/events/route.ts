@@ -1,29 +1,31 @@
 // =============================================================================
-// AGENCY GROUP — SH-ROS Runtime Event Ingestion API v1.0
-// POST /api/runtime/events — Ingest and dispatch a RuntimeEvent
-// GET  /api/runtime/events — Retrieve recent events for an org (short-term memory)
-// AMI: 22506 | SH-ROS Runtime Core
+// AGENCY GROUP — SH-ROS Runtime Event Ingestion API vFINAL
+// POST /api/runtime/events — persist + dispatch RuntimeEvent
+// GET  /api/runtime/events — HOT memory query (DB-backed, 1000 events/org)
+// AMI: 22506 | SH-ROS Production Runtime
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { isPortalAuth } from '@/lib/portalAuth'
-import { orchestrator } from '@/lib/runtime'
-import { shortTermMemory } from '@/lib/runtime'
+import { orchestrator, hotMemory, warmMemory } from '@/lib/runtime'
 import type { RuntimeEvent, RuntimeEventType } from '@/lib/runtime'
 
 export const runtime = 'nodejs'
 
-// ─── Valid source systems ─────────────────────────────────────────────────────
+// ─── Valid values ─────────────────────────────────────────────────────────────
 
-const VALID_SOURCES = new Set<RuntimeEvent['source_system']>([
-  'api', 'n8n', 'cron', 'agent', 'engine', 'portal',
-])
+const VALID_SOURCES  = new Set(['api','n8n','cron','agent','engine','portal'] as const)
+const VALID_PRIORITY = new Set(['low','medium','high','critical'] as const)
 
 // ─── POST /api/runtime/events ─────────────────────────────────────────────────
+//
+// Performance budget: ingestion < 50ms, routing < 25ms, total < 2000ms
 
 export async function POST(req: NextRequest) {
-  // 1. Auth
+  const ingestion_start = Date.now()
+
+  // AUTH
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -35,8 +37,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  // 2. Validate required fields
-  const { org_id, type, source_system, payload, correlation_id: incomingCorrelation } = body
+  // VALIDATE required fields
+  const {
+    org_id,
+    type,
+    source_system,
+    payload,
+    correlation_id: incomingCorrelation,
+    priority: incomingPriority,
+  } = body
 
   if (!org_id || typeof org_id !== 'string') {
     return NextResponse.json({ error: 'org_id is required' }, { status: 400 })
@@ -44,17 +53,23 @@ export async function POST(req: NextRequest) {
   if (!type || typeof type !== 'string') {
     return NextResponse.json({ error: 'type is required' }, { status: 400 })
   }
-  if (!source_system || typeof source_system !== 'string' || !VALID_SOURCES.has(source_system as RuntimeEvent['source_system'])) {
+  if (!source_system || !VALID_SOURCES.has(source_system as typeof VALID_SOURCES extends Set<infer T> ? T : never)) {
     return NextResponse.json(
-      { error: `source_system is required and must be one of: ${[...VALID_SOURCES].join(', ')}` },
+      { error: `source_system must be one of: ${[...VALID_SOURCES].join(', ')}` },
       { status: 400 },
     )
   }
-  if (payload === undefined || payload === null || typeof payload !== 'object') {
-    return NextResponse.json({ error: 'payload is required and must be an object' }, { status: 400 })
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return NextResponse.json({ error: 'payload must be a non-null object' }, { status: 400 })
   }
 
-  // 3. Generate server-side fields
+  const priority = (VALID_PRIORITY.has(incomingPriority as typeof VALID_PRIORITY extends Set<infer T> ? T : never)
+    ? incomingPriority
+    : 'medium') as 'low' | 'medium' | 'high' | 'critical'
+
+  const ingestion_ms = Date.now() - ingestion_start
+
+  // BUILD unified event contract (§3 spec)
   const event: RuntimeEvent = {
     event_id:       randomUUID(),
     org_id:         org_id as string,
@@ -63,49 +78,82 @@ export async function POST(req: NextRequest) {
     correlation_id: typeof incomingCorrelation === 'string' && incomingCorrelation
       ? incomingCorrelation
       : randomUUID(),
-    source_system:  source_system as RuntimeEvent['source_system'],
+    priority,
+    retry_count:    0,
     payload:        payload as RuntimeEvent['payload'],
+    metadata: {
+      schema_version: 'vFINAL',
+      trace_id:       randomUUID(),
+      source_system:  source_system as RuntimeEvent['metadata']['source_system'],
+    },
   }
 
-  // 4. Dispatch through orchestrator
+  // DISPATCH — persist → execute → trace
   try {
     const trace = await orchestrator.dispatch(event)
-    return NextResponse.json(trace, { status: 200 })
+
+    return NextResponse.json(
+      {
+        ...trace,
+        ingestion_ms,
+        performance: {
+          ingestion_ms,
+          total_ms: trace.total_duration_ms,
+          within_budget: trace.total_duration_ms < 2_000,
+        },
+      },
+      { status: 200 },
+    )
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    const isValidationError = err instanceof Error && err.name === 'RuntimeValidationError'
-    console.error('[POST /api/runtime/events] dispatch error', { message, event_id: event.event_id })
-    return NextResponse.json(
-      { error: message },
-      { status: isValidationError ? 400 : 500 },
-    )
+    const isValidation = err instanceof Error && err.name === 'RuntimeValidationError'
+    console.error('[POST /api/runtime/events]', { message, event_id: event.event_id })
+    return NextResponse.json({ error: message }, { status: isValidation ? 400 : 500 })
   }
 }
 
 // ─── GET /api/runtime/events ──────────────────────────────────────────────────
+//
+// Returns HOT memory (in-process cache + DB fallback)
+// ?org_id=  required
+// ?limit=   max 500, default 50
+// ?source=  'cache' (default) | 'db' (queries Supabase directly)
 
 export async function GET(req: NextRequest) {
-  // Auth
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { searchParams } = new URL(req.url)
-  const org_id = searchParams.get('org_id')
-  const limitParam = searchParams.get('limit')
+  const org_id  = searchParams.get('org_id')
+  const limitRaw = parseInt(searchParams.get('limit') ?? '50', 10)
+  const source  = searchParams.get('source') ?? 'cache'
+  const limit   = Math.min(Math.max(1, isNaN(limitRaw) ? 50 : limitRaw), 500)
 
   if (!org_id) {
     return NextResponse.json({ error: 'org_id query parameter is required' }, { status: 400 })
   }
 
-  const limit = limitParam ? Math.min(Math.max(1, parseInt(limitParam, 10) || 50), 200) : 50
-
   try {
-    const events = shortTermMemory.getRecent(org_id, limit)
-    return NextResponse.json({ org_id, limit, count: events.length, events }, { status: 200 })
+    let events: unknown[]
+
+    if (source === 'db') {
+      // WARM memory: DB query (90-day window)
+      events = await warmMemory.getRecentFromDB(org_id, limit)
+    } else {
+      // HOT memory: in-process cache
+      events = hotMemory.getRecent(org_id, limit)
+
+      // Fallback to DB if cache is empty (e.g. after process restart)
+      if (events.length === 0) {
+        events = await warmMemory.getRecentFromDB(org_id, limit)
+      }
+    }
+
+    return NextResponse.json({ org_id, limit, source, count: events.length, events }, { status: 200 })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    console.error('[GET /api/runtime/events] error', { message, org_id })
+    console.error('[GET /api/runtime/events]', { message, org_id })
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

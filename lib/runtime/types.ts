@@ -1,12 +1,12 @@
 // =============================================================================
-// AGENCY GROUP — SH-ROS Runtime Types v1.0
-// Event-driven runtime — all system activity is event-first
-// AMI: 22506 | SH-ROS Runtime Core
+// AGENCY GROUP — SH-ROS Runtime Types vFINAL
+// Single source of truth for all runtime type contracts
+// AMI: 22506 | SH-ROS Production Runtime
 // =============================================================================
 
 import type { AgentId } from '@/lib/agents/types'
 
-// ─── Core event types (per spec §2.A) ────────────────────────────────────────
+// ─── Core event types ─────────────────────────────────────────────────────────
 
 export type RuntimeEventType =
   | 'LEAD_CREATED'
@@ -24,23 +24,33 @@ export type RuntimeEventType =
   | 'KPI_ANOMALY'
   | 'CONVERSION_DROP'
 
-// ─── Runtime event contract (immutable, tenant-isolated) ─────────────────────
+// ─── Unified Event Contract (§3 — vFINAL) ───────────────────────────────────
+// IMMUTABLE. Persisted to runtime_events BEFORE execution. Never mutated.
 
 export interface RuntimeEvent {
-  /** UUID — idempotency key */
+  /** UUID — global idempotency key */
   event_id: string
   /** Tenant isolation — MANDATORY */
   org_id: string
   /** Event type */
   type: RuntimeEventType
-  /** ISO8601 */
+  /** ISO8601 — server-generated at ingestion */
   timestamp: string
   /** Cross-service correlation chain */
   correlation_id: string
-  /** Originating system */
-  source_system: 'api' | 'n8n' | 'cron' | 'agent' | 'engine' | 'portal'
+  /** Execution priority */
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  /** Current retry attempt (0 = first attempt) */
+  retry_count: number
   /** Typed payload */
   payload: RuntimeEventPayload
+  /** Metadata block */
+  metadata: {
+    schema_version: 'vFINAL'
+    trace_id: string
+    /** Originating system */
+    source_system: 'api' | 'n8n' | 'cron' | 'agent' | 'engine' | 'portal'
+  }
 }
 
 // ─── Typed payloads ───────────────────────────────────────────────────────────
@@ -142,11 +152,11 @@ export interface GenericPayload {
   [key: string]: unknown
 }
 
-// ─── Event → Agent routing matrix (per spec §6) ──────────────────────────────
+// ─── Event → Agent routing matrix ────────────────────────────────────────────
 
 export const EVENT_AGENT_ROUTING: Record<RuntimeEventType, AgentId[]> = {
   LEAD_CREATED:          ['follow-up', 'revenue-leak'],
-  LEAD_SCORED:           ['follow-up', 'conversion-optimization'],
+  LEAD_SCORED:           ['follow-up', 'conversion-optimization', 'lead-qualification'],
   PIPELINE_STALLED:      ['pipeline-stall', 'deal-closing'],
   FOLLOW_UP_OVERDUE:     ['follow-up'],
   REVENUE_RISK_DETECTED: ['revenue-leak', 'pricing-strategy'],
@@ -155,21 +165,28 @@ export const EVENT_AGENT_ROUTING: Record<RuntimeEventType, AgentId[]> = {
   SYSTEM_ALERT:          ['system-health'],
   USER_ACTION:           ['workflow-automation'],
   DATA_INTEGRITY_FAIL:   ['data-integrity'],
-  AGENT_COMPLETED:       ['kpi-intelligence'],
+  AGENT_COMPLETED:       ['kpi-intelligence', 'agent-supervisor'],
   WORKFLOW_TRIGGERED:    ['workflow-automation'],
-  KPI_ANOMALY:           ['kpi-intelligence', 'growth-strategy'],
-  CONVERSION_DROP:       ['conversion-optimization', 'revenue-leak'],
+  KPI_ANOMALY:           ['kpi-intelligence', 'growth-strategy', 'risk-governance'],
+  CONVERSION_DROP:       ['conversion-optimization', 'revenue-leak', 'forecasting'],
 }
 
-// ─── Memory snapshot ──────────────────────────────────────────────────────────
+// ─── Memory contracts ─────────────────────────────────────────────────────────
 
+/** Entry shape in HOT memory (DB-backed, 1000 events per org) */
 export interface ShortTermMemoryEntry {
   event_id: string
+  org_id: string
   type: RuntimeEventType
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'dlq'
+  priority: 'low' | 'medium' | 'high' | 'critical'
   timestamp: string
   payload_summary: string
+  latency_ms: number | null
+  economic_score: number | null
 }
 
+/** 90-day KPI aggregate (WARM memory) */
 export interface LongTermKPI {
   org_id: string
   period: string
@@ -182,18 +199,40 @@ export interface LongTermKPI {
   computed_at: string
 }
 
-// ─── Runtime execution trace ─────────────────────────────────────────────────
+// ─── Execution trace (persisted to runtime_events.result) ────────────────────
 
 export interface RuntimeExecutionTrace {
+  /** DB event_id */
   event_id: string
+  /** Event type */
   event_type: RuntimeEventType
+  /** Tenant */
   org_id: string
+  /** Chain ID */
   correlation_id: string
+  /** OpenTelemetry-compatible trace */
+  trace_id: string
+  /** All agents routed to this event */
   agents_triggered: AgentId[]
+  /** Agents that completed successfully */
   agents_completed: AgentId[]
+  /** Agents that failed */
   agents_failed: AgentId[]
+  /** Total wall-clock from ingestion to completion */
   total_duration_ms: number
+  /** ISO8601 — when orchestrator started */
   started_at: string
+  /** ISO8601 — when all agents completed */
   completed_at: string
+  /** Ordered list of event_ids this execution spawned */
+  event_chain: string[]
+  /** Composite economic score from Decision Engine */
+  economic_score: number
+  /** Error if top-level failure */
   error?: string
 }
+
+// ─── Queue retry constants ────────────────────────────────────────────────────
+
+export const BACKOFF_MS = [1_000, 2_000, 5_000] as const
+export const MAX_RETRIES = 3

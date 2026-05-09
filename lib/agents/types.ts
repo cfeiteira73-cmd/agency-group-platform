@@ -11,10 +11,12 @@ export type AgentId =
   | 'revenue-leak'
   | 'conversion-optimization'
   | 'pricing-strategy'
+  | 'forecasting'
   // Sales Execution Layer
   | 'follow-up'
   | 'pipeline-stall'
   | 'deal-closing'
+  | 'lead-qualification'
   // System Automation Layer
   | 'workflow-automation'
   | 'system-health'
@@ -22,14 +24,10 @@ export type AgentId =
   // Strategy & Analytics Layer
   | 'kpi-intelligence'
   | 'growth-strategy'
-  // Legacy / Domain-specific
-  | 'buyer-qualification'
-  | 'seller-retention'
-  | 'listing-intelligence'
-  | 'risk-detection'
-  | 'compliance'
-  | 'referral-expansion'
-  | 'negotiation-insight'
+  // Governance Layer
+  | 'agent-supervisor'
+  | 'risk-governance'
+  | 'decision-arbitration'
 
 export type AgentStatus = 'idle' | 'running' | 'success' | 'failed' | 'dry_run_complete'
 
@@ -162,6 +160,8 @@ export interface AgentOutputContract {
   confidence: number
   /** Risk score 0–1 */
   risk_score: number
+  /** Follow-up events this agent wants to emit (event type + payload) */
+  next_events: Array<{ type: string; payload: Record<string, unknown> }>
 }
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
