@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { createClient } from '@/lib/supabase/server'
+import track from '@/lib/trackLearningEvent'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -88,6 +90,16 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // Non-blocking learning event
+    track.contactCreated({
+      lead_id:       data?.id ?? null,
+      agent_email:   session.user.email ?? null,
+      correlation_id: getRequestCorrelationId(req),
+      source_system: 'api',
+      metadata: { source: body.source ?? null, lead_score: body.lead_score ?? 0 },
+    })
+
     return NextResponse.json({ success: true, contact: data }, { status: 201 })
   } catch (error) {
     console.error('POST /api/contacts error:', error)

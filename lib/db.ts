@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Database } from './database.types'
+import log from '@/lib/logger'
 
 type ContactInsert = Database['public']['Tables']['contacts']['Insert']
 type DealInsert = Database['public']['Tables']['deals']['Insert']
@@ -15,7 +16,7 @@ export async function getContacts(agentId?: string) {
     .order('created_at', { ascending: false })
   if (agentId) query = query.eq('assigned_to', agentId)
   const { data, error } = await query
-  if (error) { console.error('getContacts error:', error); return null }
+  if (error) { log.error('[db] getContacts error', error instanceof Error ? error : new Error(String(error)), { route: 'lib/db' }); return null }
   return data
 }
 
@@ -25,7 +26,7 @@ export async function upsertContact(contact: ContactInsert) {
     .from('contacts')
     .upsert(contact)
     .select()
-  if (error) { console.error('upsertContact error:', error); return null }
+  if (error) { log.error('[db] upsertContact error', error instanceof Error ? error : new Error(String(error)), { route: 'lib/db' }); return null }
   return data?.[0]
 }
 
@@ -39,7 +40,7 @@ export async function getDeals(agentId?: string) {
     .order('created_at', { ascending: false })
   if (agentId) query = query.eq('assigned_consultant', agentId)
   const { data, error } = await query
-  if (error) { console.error('getDeals error:', error); return null }
+  if (error) { log.error('[db] getDeals error', error instanceof Error ? error : new Error(String(error)), { route: 'lib/db' }); return null }
   return data
 }
 
@@ -49,7 +50,7 @@ export async function upsertDeal(deal: DealInsert) {
     .from('deals')
     .upsert(deal)
     .select()
-  if (error) { console.error('upsertDeal error:', error); return null }
+  if (error) { log.error('[db] upsertDeal error', error instanceof Error ? error : new Error(String(error)), { route: 'lib/db' }); return null }
   return data?.[0]
 }
 
@@ -69,7 +70,7 @@ export async function getProperties(filters?: {
   if (filters?.type) query = query.eq('type', filters.type as import('./database.types').PropertyType)
   if (filters?.maxPrice) query = query.lte('price', filters.maxPrice)
   const { data, error } = await query.order('created_at', { ascending: false })
-  if (error) { console.error('getProperties error:', error); return null }
+  if (error) { log.error('[db] getProperties error', error instanceof Error ? error : new Error(String(error)), { route: 'lib/db' }); return null }
   return data
 }
 
@@ -79,7 +80,7 @@ export async function upsertProperty(property: PropertyInsert) {
     .from('properties')
     .upsert(property)
     .select()
-  if (error) { console.error('upsertProperty error:', error); return null }
+  if (error) { log.error('[db] upsertProperty error', error instanceof Error ? error : new Error(String(error)), { route: 'lib/db' }); return null }
   return data?.[0]
 }
 

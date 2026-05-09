@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { safeCompare } from '@/lib/safeCompare'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import track from '@/lib/trackLearningEvent'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -351,6 +352,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<PipelineA
     const advancement = evaluateAdvancement(body)
     const { risk_score, risk_level } = calculateRisk(body)
 
+    // Non-blocking learning event
+    track.pipelineStageAdvanced({
+      deal_id:        body.deal_id ?? null,
+      correlation_id: corrId,
+      source_system:  'api',
+      metadata: {
+        current_stage:  body.current_stage,
+        should_advance: advancement.should_advance,
+        next_stage:     advancement.next_stage ?? null,
+        reason:         advancement.reason,
+      },
+    })
+
     // Get probability: if advancing, use next stage probability; else current
     const targetStage = advancement.next_stage ?? body.current_stage
     const probability = STAGE_PROBABILITIES[targetStage]
@@ -391,7 +405,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<PipelineA
       headers: { 'x-correlation-id': corrId },
     })
   } catch (error) {
-    console.error('[pipeline-advance] Error:', error)
+    void import('@/lib/logger').then(({ default: log }) =>
+      log.error('[pipeline-advance] Error', error instanceof Error ? error : new Error(String(error)), { route: 'api/automation/pipeline-advance' })
+    )
     return NextResponse.json(
       { error: 'Erro interno ao processar avanço de pipeline', correlation_id: corrId },
       { status: 500, headers: { 'x-correlation-id': corrId } }

@@ -146,8 +146,14 @@ export async function logAction(entry: AuditEntry): Promise<void> {
     })
 
   if (error) {
-    // Audit log failures must NEVER block operations — log to console only
-    console.error('[audit_log] failed to write:', error.message, JSON.stringify(entry))
+    // Audit log failures must NEVER block operations — forward to Sentry via structured logger
+    try {
+      const { default: log } = await import('@/lib/logger')
+      log.error('[audit_log] failed to write', new Error(error.message), {
+        route: 'lib/auth/auditLog',
+        action: entry.action_type,
+      })
+    } catch { /* logger unavailable — last resort silent */ }
   }
 }
 

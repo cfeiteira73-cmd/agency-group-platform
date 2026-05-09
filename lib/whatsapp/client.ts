@@ -2,6 +2,8 @@
 // Uses Meta Cloud API (free tier: 1000 conversations/month)
 // Docs: https://developers.facebook.com/docs/whatsapp/cloud-api
 
+import log from '@/lib/logger'
+
 const WA_API_URL = 'https://graph.facebook.com/v21.0'
 // Lidos dinamicamente para suportar testes e hot-reload de env vars
 const getPhoneNumberId = () => process.env.WHATSAPP_PHONE_NUMBER_ID
@@ -44,7 +46,7 @@ export async function sendWhatsApp(message: WAMessage): Promise<WASendResult> {
   // ── Feature flag: Sofia WhatsApp OFF ─────────────────────────────────────
   // Set WHATSAPP_ACTIVE=true no .env.local para activar Sofia no WhatsApp
   if (process.env.WHATSAPP_ACTIVE !== 'true') {
-    console.log('[WhatsApp] Sofia inactiva (WHATSAPP_ACTIVE=false) — mensagem bloqueada para:', message.to)
+    log.info('[WhatsApp] Sofia inactiva (WHATSAPP_ACTIVE=false) — mensagem bloqueada', { route: 'lib/whatsapp/client' })
     return { success: false, error: 'WhatsApp inactivo — alterar WHATSAPP_ACTIVE=true para activar' }
   }
 
@@ -52,7 +54,7 @@ export async function sendWhatsApp(message: WAMessage): Promise<WASendResult> {
   const ACCESS_TOKEN    = getAccessToken()
 
   if (!PHONE_NUMBER_ID || !ACCESS_TOKEN) {
-    console.warn('[WhatsApp] Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN')
+    log.warn('[WhatsApp] Missing WHATSAPP_PHONE_NUMBER_ID or WHATSAPP_ACCESS_TOKEN', { route: 'lib/whatsapp/client' })
     return { success: false, error: 'WhatsApp API not configured' }
   }
 
@@ -100,7 +102,9 @@ export async function sendWhatsApp(message: WAMessage): Promise<WASendResult> {
     }
 
     if (!response.ok) {
-      console.error('[WhatsApp] API error:', data.error)
+      log.error('[WhatsApp] API error', new Error(data.error?.message ?? `HTTP ${response.status}`), {
+        route: 'lib/whatsapp/client',
+      })
       return {
         success: false,
         error: data.error?.message || `WhatsApp API error (${response.status})`,
@@ -112,7 +116,9 @@ export async function sendWhatsApp(message: WAMessage): Promise<WASendResult> {
       messageId: data.messages?.[0]?.id,
     }
   } catch (error) {
-    console.error('[WhatsApp] Send error:', error)
+    log.error('[WhatsApp] Send error', error instanceof Error ? error : new Error(String(error)), {
+      route: 'lib/whatsapp/client',
+    })
     return { success: false, error: 'Erro ao enviar WhatsApp' }
   }
 }
