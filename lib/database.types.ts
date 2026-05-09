@@ -1483,6 +1483,446 @@ export type Database = {
         }
         Relationships: []
       }
+
+      // -----------------------------------------------------------------------
+      // learning_events — event bus (migrations 001 + 20260429_001)
+      // -----------------------------------------------------------------------
+      learning_events: {
+        Row: {
+          id: string
+          event_type: string
+          lead_id: string | null
+          deal_id: string | null
+          property_id: string | null
+          match_id: string | null
+          deal_pack_id: string | null
+          agent_email: string | null
+          match_score: number | null
+          correlation_id: string | null
+          session_id: string | null
+          source_system: 'api' | 'n8n' | 'cron' | 'engine' | null
+          metadata: Record<string, unknown> | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_type: string
+          lead_id?: string | null
+          deal_id?: string | null
+          property_id?: string | null
+          match_id?: string | null
+          deal_pack_id?: string | null
+          agent_email?: string | null
+          match_score?: number | null
+          correlation_id?: string | null
+          session_id?: string | null
+          source_system?: 'api' | 'n8n' | 'cron' | 'engine' | null
+          metadata?: Record<string, unknown> | null
+          created_at?: string
+        }
+        Update: {
+          event_type?: string
+          metadata?: Record<string, unknown> | null
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // audit_log — immutable append-only audit trail (migration 20260502_004)
+      // -----------------------------------------------------------------------
+      audit_log: {
+        Row: {
+          id: string
+          actor_email: string | null
+          actor_role: string | null
+          action_type: string
+          resource_type: string | null
+          resource_id: string | null
+          old_value: Record<string, unknown> | null
+          new_value: Record<string, unknown> | null
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          actor_email?: string | null
+          actor_role?: string | null
+          action_type: string
+          resource_type?: string | null
+          resource_id?: string | null
+          old_value?: Record<string, unknown> | null
+          new_value?: Record<string, unknown> | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // automations_log — n8n / cron execution log (migration 001)
+      // -----------------------------------------------------------------------
+      automations_log: {
+        Row: {
+          id: string
+          workflow_name: string
+          execution_id: string | null
+          trigger_type: string | null
+          trigger_payload: Record<string, unknown> | null
+          contact_id: string | null
+          deal_id: string | null
+          property_id: string | null
+          status: 'running' | 'success' | 'error' | 'partial'
+          started_at: string
+          completed_at: string | null
+          duration_ms: number | null
+          outcome: Record<string, unknown> | null
+          error_message: string | null
+          retry_count: number | null
+          tokens_used: number | null
+          estimated_cost_eur: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workflow_name: string
+          execution_id?: string | null
+          trigger_type?: string | null
+          trigger_payload?: Record<string, unknown> | null
+          contact_id?: string | null
+          deal_id?: string | null
+          property_id?: string | null
+          status?: 'running' | 'success' | 'error' | 'partial'
+          started_at?: string
+          completed_at?: string | null
+          duration_ms?: number | null
+          outcome?: Record<string, unknown> | null
+          error_message?: string | null
+          retry_count?: number | null
+          tokens_used?: number | null
+          estimated_cost_eur?: number | null
+          created_at?: string
+        }
+        Update: {
+          status?: 'running' | 'success' | 'error' | 'partial'
+          completed_at?: string | null
+          duration_ms?: number | null
+          outcome?: Record<string, unknown> | null
+          error_message?: string | null
+          retry_count?: number | null
+          tokens_used?: number | null
+          estimated_cost_eur?: number | null
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // platform_config — DB-backed config (migration 20260503_008)
+      // -----------------------------------------------------------------------
+      platform_config: {
+        Row: {
+          config_key: string
+          value_numeric: number | null
+          value_text: string | null
+          value_boolean: boolean | null
+          value_json: Record<string, unknown> | null
+          config_type: 'numeric' | 'text' | 'boolean' | 'json'
+          description: string | null
+          category: string
+          is_sensitive: boolean
+          updated_by: string | null
+          updated_at: string
+          created_at: string
+        }
+        Insert: {
+          config_key: string
+          value_numeric?: number | null
+          value_text?: string | null
+          value_boolean?: boolean | null
+          value_json?: Record<string, unknown> | null
+          config_type?: 'numeric' | 'text' | 'boolean' | 'json'
+          description?: string | null
+          category?: string
+          is_sensitive?: boolean
+          updated_by?: string | null
+          updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          value_numeric?: number | null
+          value_text?: string | null
+          value_boolean?: boolean | null
+          value_json?: Record<string, unknown> | null
+          config_type?: 'numeric' | 'text' | 'boolean' | 'json'
+          description?: string | null
+          category?: string
+          is_sensitive?: boolean
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // investidores — investor CRM (migration 20260407_001)
+      // -----------------------------------------------------------------------
+      investidores: {
+        Row: {
+          id: string
+          nome: string
+          email: string | null
+          telefone: string | null
+          whatsapp: string | null
+          nacionalidade: string | null
+          flag: string | null
+          tipo: 'family_office' | 'hnwi' | 'institucional' | 'privado' | 'fundo' | null
+          capital_min: number | null
+          capital_max: number | null
+          yield_target: number | null
+          horizon_years: number | null
+          risk_profile: string | null
+          zonas: string[] | null
+          tipo_imovel: string[] | null
+          ocupacao: string | null
+          status: string | null
+          last_contact: string | null
+          total_invested: number | null
+          deals_history: number | null
+          notes: string | null
+          phone: string | null
+          tags: string[] | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          email?: string | null
+          telefone?: string | null
+          whatsapp?: string | null
+          nacionalidade?: string | null
+          flag?: string | null
+          tipo?: 'family_office' | 'hnwi' | 'institucional' | 'privado' | 'fundo' | null
+          capital_min?: number | null
+          capital_max?: number | null
+          yield_target?: number | null
+          horizon_years?: number | null
+          risk_profile?: string | null
+          zonas?: string[] | null
+          tipo_imovel?: string[] | null
+          ocupacao?: string | null
+          status?: string | null
+          last_contact?: string | null
+          total_invested?: number | null
+          deals_history?: number | null
+          notes?: string | null
+          phone?: string | null
+          tags?: string[] | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          nome?: string
+          email?: string | null
+          telefone?: string | null
+          status?: string | null
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // premarket_properties — pre-market exclusives (migration 20260406)
+      // -----------------------------------------------------------------------
+      premarket_properties: {
+        Row: {
+          id: string
+          title: string
+          zone: string
+          type: string
+          price_min: number | null
+          price_max: number | null
+          area: number | null
+          bedrooms: number | null
+          description: string | null
+          features: string[] | null
+          available_from: string | null
+          exclusive_until: string | null
+          access_level: 'registered' | 'premium' | 'vip'
+          images: string[] | null
+          agent_name: string | null
+          agent_phone: string | null
+          is_active: boolean
+          views_count: number
+          alerts_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          zone: string
+          type: string
+          price_min?: number | null
+          price_max?: number | null
+          area?: number | null
+          bedrooms?: number | null
+          description?: string | null
+          features?: string[] | null
+          available_from?: string | null
+          exclusive_until?: string | null
+          access_level?: 'registered' | 'premium' | 'vip'
+          images?: string[] | null
+          agent_name?: string | null
+          agent_phone?: string | null
+          is_active?: boolean
+          views_count?: number
+          alerts_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          title?: string
+          description?: string | null
+          is_active?: boolean
+          views_count?: number
+          alerts_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // premarket_interest — user interest registrations (migration 20260406)
+      // -----------------------------------------------------------------------
+      premarket_interest: {
+        Row: {
+          id: string
+          user_id: string
+          property_id: string
+          message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          property_id: string
+          message?: string | null
+          created_at?: string
+        }
+        Update: {
+          message?: string | null
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // sofia_conversations — AI agent conversation history (migration 20260407_003)
+      // -----------------------------------------------------------------------
+      sofia_conversations: {
+        Row: {
+          id: string
+          session_id: string | null
+          user_id: string | null
+          contact_id: string | null
+          role: 'user' | 'assistant' | 'system'
+          content: string
+          metadata: Record<string, unknown> | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          session_id?: string | null
+          user_id?: string | null
+          contact_id?: string | null
+          role: 'user' | 'assistant' | 'system'
+          content: string
+          metadata?: Record<string, unknown> | null
+          created_at?: string
+        }
+        Update: {
+          metadata?: Record<string, unknown> | null
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // used_magic_tokens — one-time auth tokens (migration 20260408_001)
+      // -----------------------------------------------------------------------
+      used_magic_tokens: {
+        Row: {
+          id: string
+          token_hash: string
+          email: string
+          used_at: string
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          token_hash: string
+          email: string
+          used_at?: string
+          expires_at: string
+          created_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // system_alerts — platform alert registry (migration 20260502_004)
+      // -----------------------------------------------------------------------
+      system_alerts: {
+        Row: {
+          id: string
+          alert_type: string
+          severity: 'P0' | 'P1' | 'P2' | 'P3'
+          title: string
+          description: string | null
+          resource_type: string | null
+          resource_id: string | null
+          status: 'open' | 'acknowledged' | 'resolved'
+          acknowledged_by: string | null
+          acknowledged_at: string | null
+          resolved_by: string | null
+          resolved_at: string | null
+          metadata: Record<string, unknown> | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          alert_type: string
+          severity: 'P0' | 'P1' | 'P2' | 'P3'
+          title: string
+          description?: string | null
+          resource_type?: string | null
+          resource_id?: string | null
+          status?: 'open' | 'acknowledged' | 'resolved'
+          acknowledged_by?: string | null
+          acknowledged_at?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          metadata?: Record<string, unknown> | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          status?: 'open' | 'acknowledged' | 'resolved'
+          acknowledged_by?: string | null
+          acknowledged_at?: string | null
+          resolved_by?: string | null
+          resolved_at?: string | null
+          metadata?: Record<string, unknown> | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
 
     // -----------------------------------------------------------------------

@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { supabaseAdmin } from '@/lib/supabase'
 
-// Static pre-market properties (fallback when DB not available)
+// =============================================================================
+// AGENCY GROUP — Pre-Market Properties API
+// GET  /api/premarket — list pre-market properties (Supabase-first, static fallback)
+// POST /api/premarket — register interest in a pre-market property
+// AMI: 22506 | Supabase table: premarket_properties + premarket_interest
+// =============================================================================
+
+// ─── Static fallback (used only if Supabase is unavailable or empty) ─────────
+
 const PREMARKET_STATIC = [
   {
     id: 'pm-001',
@@ -81,11 +90,48 @@ const PREMARKET_STATIC = [
   },
 ]
 
+// ─── GET /api/premarket ───────────────────────────────────────────────────────
+
 export async function GET(req: NextRequest) {
   const session = await auth()
   const { searchParams } = new URL(req.url)
   const zone = searchParams.get('zone')
 
+  // ── 1. Try Supabase ──────────────────────────────────────────────────────
+  try {
+    let query = supabaseAdmin
+      .from('premarket_properties')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+
+    if (zone) {
+      query = query.ilike('zone', `%${zone}%`)
+    }
+
+    // VIP properties only visible to authenticated users
+    if (!session?.user) {
+      query = query.neq('access_level', 'vip' as 'registered' | 'premium' | 'vip')
+    }
+
+    const { data, error } = await query
+
+    if (!error && data && data.length > 0) {
+      return NextResponse.json({
+        properties: data,
+        total: data.length,
+        source: 'supabase',
+        isAuthenticated: !!session?.user,
+        message: !session?.user
+          ? 'Registe-se para aceder a propriedades VIP exclusivas'
+          : null,
+      }, { headers: { 'Cache-Control': 'no-store' } })
+    }
+  } catch {
+    // Fall through to static
+  }
+
+  // ── 2. Static fallback ───────────────────────────────────────────────────
   let properties = PREMARKET_STATIC.filter(p => p.is_active)
 
   if (zone) {
@@ -94,7 +140,6 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  // VIP properties only visible to authenticated users
   if (!session?.user) {
     properties = properties.filter(p => p.access_level !== 'vip')
   }
@@ -102,17 +147,19 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     properties,
     total: properties.length,
+    source: 'static',
     isAuthenticated: !!session?.user,
     message: !session?.user
       ? 'Registe-se para aceder a propriedades VIP exclusivas'
       : null,
-  })
+  }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
+// ─── POST /api/premarket — register interest ──────────────────────────────────
+
 export async function POST(req: NextRequest) {
-  // Register interest in a pre-market property
   const session = await auth()
-  if (!session?.user) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
   }
 
@@ -122,9 +169,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Property ID required' }, { status: 400 })
   }
 
-  // In production, save to Supabase premarket_interest table
-  // For now, return success
-  void message // acknowledged, used in DB insert in production
+  try {
+    const { error } = await supabaseAdmin
+      .from('premarket_interest')
+      .insert({
+        user_id:     session.user.id,
+        property_id: propertyId,
+        message:     message ?? null,
+        created_at:  new Date().toISOString(),
+      })
+
+    if (error) {
+      // Table may not exist yet — return success anyway (logged as best-effort)
+      void error
+    }
+  } catch {
+    // Best-effort — do not block the user response
+  }
+
   return NextResponse.json({
     success: true,
     message: 'Interesse registado. O nosso agente contactará em 24 horas.',

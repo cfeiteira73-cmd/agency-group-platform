@@ -105,26 +105,36 @@ const MOCK_INVESTORS: InvestorRow[] = [
 // Map Supabase row → InvestorRow
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRow(row: any, idx: number): InvestorRow {
+type InvestidoresRow = {
+  id: string; nome: string; email: string | null; telefone: string | null;
+  whatsapp: string | null; nacionalidade: string | null; flag: string | null;
+  tipo: string | null; capital_min: number | null; capital_max: number | null;
+  yield_target: number | null; horizon_years: number | null; risk_profile: string | null;
+  zonas: string[] | null; tipo_imovel: string[] | null; ocupacao: string | null;
+  status: string | null; last_contact: string | null; total_invested: number | null;
+  deals_history: number | null; notes: string | null; phone: string | null;
+  tags: string[] | null; created_at: string; updated_at: string;
+}
+
+function mapRow(row: InvestidoresRow, idx: number): InvestorRow {
   return {
-    id: typeof row.id === 'number' ? row.id : idx + 1,
-    name: row.name ?? row.full_name ?? '',
-    nationality: row.nationality ?? '',
+    id: idx + 1,
+    name: row.nome ?? '',
+    nationality: row.nacionalidade ?? '',
     flag: row.flag ?? '',
-    type: row.type ?? row.investor_type ?? 'hnwi',
-    capitalMin: row.capital_min ?? row.capitalMin ?? 0,
-    capitalMax: row.capital_max ?? row.capitalMax ?? 0,
-    yieldTarget: row.yield_target ?? row.yieldTarget ?? 0,
-    horizonYears: row.horizon_years ?? row.horizonYears ?? 5,
-    riskProfile: row.risk_profile ?? row.riskProfile ?? 'moderado',
+    type: row.tipo ?? 'hnwi',
+    capitalMin: row.capital_min ?? 0,
+    capitalMax: row.capital_max ?? 0,
+    yieldTarget: row.yield_target ?? 0,
+    horizonYears: row.horizon_years ?? 5,
+    riskProfile: row.risk_profile ?? 'moderado',
     zonas: Array.isArray(row.zonas) ? row.zonas : (row.zonas ? [row.zonas] : []),
     tipoImovel: Array.isArray(row.tipo_imovel) ? row.tipo_imovel : (row.tipo_imovel ? [row.tipo_imovel] : []),
     ocupacao: row.ocupacao ?? 'qualquer',
     status: row.status ?? 'activo',
-    lastContact: row.last_contact ?? row.lastContact ?? row.last_contact_at?.slice(0, 10) ?? '',
-    totalInvested: row.total_invested ?? row.totalInvested ?? 0,
-    dealsHistory: row.deals_history ?? row.dealsHistory ?? 0,
+    lastContact: row.last_contact ?? '',
+    totalInvested: row.total_invested ?? 0,
+    dealsHistory: row.deals_history ?? 0,
     notes: row.notes ?? '',
     email: row.email ?? '',
     phone: row.phone ?? '',
@@ -145,14 +155,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   void req // parameter required by Next.js route handler signature
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any).from('investidores')
+    const { data, error } = await supabaseAdmin.from('investidores')
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (!error && data && (data as unknown[]).length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const investors = (data as any[]).map(mapRow)
+    if (!error && data && data.length > 0) {
+      const investors = data.map(mapRow)
       return NextResponse.json({ data: investors, source: 'supabase' }, { headers: { 'Cache-Control': 'no-store' } })
     }
 
@@ -201,29 +209,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
     const body = safeInput
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any).from('investidores')
+    const { data, error } = await supabaseAdmin.from('investidores')
       .insert([{
-        name: body.name,
-        nationality: body.nationality,
-        flag: body.flag,
-        type: body.type,
-        capital_min: body.capitalMin,
-        capital_max: body.capitalMax,
-        yield_target: body.yieldTarget,
-        horizon_years: body.horizonYears,
-        risk_profile: body.riskProfile,
-        zonas: body.zonas,
-        tipo_imovel: body.tipoImovel,
-        ocupacao: body.ocupacao,
-        status: (body.status as string) ?? 'activo',
-        last_contact: body.lastContact,
+        nome:          (body.name ?? body.nome) as string,
+        nacionalidade: (body.nationality ?? body.nacionalidade) as string | undefined,
+        flag:          body.flag as string | undefined,
+        tipo:          (body.type ?? body.tipo) as 'family_office' | 'hnwi' | 'institucional' | 'privado' | 'fundo' | undefined,
+        capital_min:   body.capitalMin as number | undefined,
+        capital_max:   body.capitalMax as number | undefined,
+        yield_target:  body.yieldTarget as number | undefined,
+        horizon_years: body.horizonYears as number | undefined,
+        risk_profile:  body.riskProfile as string | undefined,
+        zonas:         body.zonas as string[] | undefined,
+        tipo_imovel:   body.tipoImovel as string[] | undefined,
+        ocupacao:      body.ocupacao as string | undefined,
+        status:        (body.status as string) ?? 'activo',
+        last_contact:  body.lastContact as string | undefined,
         total_invested: (body.totalInvested as number) ?? 0,
-        deals_history: (body.dealsHistory as number) ?? 0,
-        notes: (body.notes as string) ?? '',
-        email: (body.email as string) ?? '',
-        phone: (body.phone as string) ?? '',
-        tags: (body.tags as string[]) ?? [],
+        deals_history:  (body.dealsHistory as number) ?? 0,
+        notes:         (body.notes as string) ?? '',
+        email:         (body.email as string) ?? '',
+        phone:         (body.phone as string) ?? '',
+        tags:          (body.tags as string[]) ?? [],
       }])
       .select()
       .single()

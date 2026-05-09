@@ -130,8 +130,7 @@ export function formatAuditSummary(entry: AuditEntry): string {
 // ---------------------------------------------------------------------------
 
 export async function logAction(entry: AuditEntry): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('audit_log')
     .insert({
       actor_email:   entry.actor_email,
@@ -166,8 +165,7 @@ export async function getAuditTrail(
   resourceId:   string,
   limit         = 50,
 ): Promise<AuditRecord[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('audit_log')
     .select('*')
     .eq('resource_type', resourceType)
@@ -187,8 +185,7 @@ export async function getActorHistory(
   actorEmail: string,
   limit       = 100,
 ): Promise<AuditRecord[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('audit_log')
     .select('*')
     .eq('actor_email', actorEmail)

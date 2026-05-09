@@ -174,8 +174,7 @@ export async function getConfigValue<T extends number | string | boolean>(
   if (cached !== undefined) return cached
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('platform_config')
       .select('value_numeric, value_text, value_boolean, config_type')
       .eq('config_key', key)
@@ -212,8 +211,7 @@ export async function getAllConfig(): Promise<PlatformConfigRow[]> {
   if (cached) return cached
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('platform_config')
       .select('*')
       .order('category', { ascending: true })
@@ -308,8 +306,7 @@ export async function updateConfigValue(
     updated_at: new Date().toISOString(),
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('platform_config')
     .update(update)
     .eq('config_key', key)
