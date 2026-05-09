@@ -16,6 +16,7 @@ export type PropertyStatus =
   | 'withdrawn'
   | 'rented'
   | 'off_market'
+  | 'pending_review'
 
 export type PropertyType =
   | 'apartment'
@@ -137,7 +138,7 @@ export type Database = {
           full_name: string
           email: string
           phone: string | null
-          role: 'admin' | 'manager' | 'consultant' | 'assistant'
+          role: 'admin' | 'manager' | 'consultant' | 'assistant' | 'agent'
           ami_number: string | null
           avatar_url: string | null
           whatsapp_number: string | null
@@ -151,7 +152,7 @@ export type Database = {
           full_name: string
           email: string
           phone?: string | null
-          role?: 'admin' | 'manager' | 'consultant' | 'assistant'
+          role?: 'admin' | 'manager' | 'consultant' | 'assistant' | 'agent'
           ami_number?: string | null
           avatar_url?: string | null
           whatsapp_number?: string | null
@@ -165,7 +166,7 @@ export type Database = {
           full_name?: string
           email?: string
           phone?: string | null
-          role?: 'admin' | 'manager' | 'consultant' | 'assistant'
+          role?: 'admin' | 'manager' | 'consultant' | 'assistant' | 'agent'
           ami_number?: string | null
           avatar_url?: string | null
           whatsapp_number?: string | null
@@ -256,6 +257,14 @@ export type Database = {
           active_status: string | null
           avg_close_days: number | null
           reliability_score: number | null
+          // buyer intelligence extensions
+          contact_type: string | null
+          preferred_zone: string | null
+          buyer_type: string | null
+          buyer_readiness_score: number | null
+          buyer_ready_for_deal: boolean | null
+          buyer_scored_at: string | null
+          origin: string | null
         }
         Insert: {
           id?: string
@@ -326,6 +335,16 @@ export type Database = {
           liquidity_profile?: string | null
           name?: string | null
           response_rate?: number | null
+          active_status?: string | null
+          avg_close_days?: number | null
+          reliability_score?: number | null
+          contact_type?: string | null
+          preferred_zone?: string | null
+          buyer_type?: string | null
+          buyer_readiness_score?: number | null
+          buyer_ready_for_deal?: boolean | null
+          buyer_scored_at?: string | null
+          origin?: string | null
         }
         Update: {
           id?: string
@@ -395,6 +414,16 @@ export type Database = {
           liquidity_profile?: string | null
           name?: string | null
           response_rate?: number | null
+          active_status?: string | null
+          avg_close_days?: number | null
+          reliability_score?: number | null
+          contact_type?: string | null
+          preferred_zone?: string | null
+          buyer_type?: string | null
+          buyer_readiness_score?: number | null
+          buyer_ready_for_deal?: boolean | null
+          buyer_scored_at?: string | null
+          origin?: string | null
         }
         Relationships: []
       }
@@ -471,6 +500,16 @@ export type Database = {
           created_at: string
           updated_at: string
           zone_key: string | null
+          // scoring & provider extensions
+          opportunity_grade: string | null
+          score_v2_confidence_adjusted: number | null
+          score_reason: string | null
+          score_breakdown: Record<string, unknown> | null
+          scored_at: string | null
+          days_on_market: number | null
+          notes: string | null
+          source_provider: string | null
+          provider_listing_id: string | null
         }
         Insert: {
           id?: string
@@ -540,6 +579,15 @@ export type Database = {
           created_at?: string
           updated_at?: string
           zone_key?: string | null
+          opportunity_grade?: string | null
+          score_v2_confidence_adjusted?: number | null
+          score_reason?: string | null
+          score_breakdown?: Record<string, unknown> | null
+          scored_at?: string | null
+          days_on_market?: number | null
+          notes?: string | null
+          source_provider?: string | null
+          provider_listing_id?: string | null
         }
         Update: {
           id?: string
@@ -608,6 +656,15 @@ export type Database = {
           visits_total?: number | null
           updated_at?: string
           zone_key?: string | null
+          opportunity_grade?: string | null
+          score_v2_confidence_adjusted?: number | null
+          score_reason?: string | null
+          score_breakdown?: Record<string, unknown> | null
+          scored_at?: string | null
+          days_on_market?: number | null
+          notes?: string | null
+          source_provider?: string | null
+          provider_listing_id?: string | null
         }
         Relationships: []
       }
@@ -668,6 +725,12 @@ export type Database = {
           expected_fee: number | null
           partner_fee_pct: number | null
           realized_fee: number | null
+          // portal-compat & routing fields
+          agent_id: string | null
+          zona: string | null
+          cpcv_date_text: string | null
+          escritura_date_text: string | null
+          notas: string | null
         }
         Insert: {
           id?: string
@@ -713,6 +776,18 @@ export type Database = {
           partner_id?: string | null
           ref?: string | null
           sale_price?: number | null
+          agent_email?: string | null
+          asking_price?: number | null
+          comprador?: string | null
+          valor?: number | null
+          expected_fee?: number | null
+          partner_fee_pct?: number | null
+          realized_fee?: number | null
+          agent_id?: string | null
+          zona?: string | null
+          cpcv_date_text?: string | null
+          escritura_date_text?: string | null
+          notas?: string | null
         }
         Update: {
           id?: string
@@ -757,6 +832,18 @@ export type Database = {
           partner_id?: string | null
           ref?: string | null
           sale_price?: number | null
+          agent_email?: string | null
+          asking_price?: number | null
+          comprador?: string | null
+          valor?: number | null
+          expected_fee?: number | null
+          partner_fee_pct?: number | null
+          realized_fee?: number | null
+          agent_id?: string | null
+          zona?: string | null
+          cpcv_date_text?: string | null
+          escritura_date_text?: string | null
+          notas?: string | null
         }
         Relationships: []
       }
@@ -2100,15 +2187,18 @@ export type Database = {
           completed: boolean; completed_at: string | null
           notified_client: boolean; notified_at: string | null
           scheduled_for: string | null; created_at: string
+          milestone_date: string | null
         }
         Insert: {
           deal_id?: string | null; contact_id?: string | null
           milestone_type: string; title: string; description?: string | null
           scheduled_for?: string | null
+          milestone_date?: string | null
         }
         Update: {
           completed?: boolean; completed_at?: string | null
           notified_client?: boolean; notified_at?: string | null
+          milestone_date?: string | null
         }
         Relationships: []
       }
@@ -2231,6 +2321,19 @@ export type Database = {
           realistic_cpcv_forecast_flag: boolean | null
           time_waste_flag: boolean | null
           deal_kill_flag: boolean | null
+          // deal intelligence extensions
+          city_normalized: string | null
+          source_network_type: string | null
+          risk_adjusted_upside_score: number | null
+          master_attack_reason: string | null
+          data_completeness_score: number | null
+          buyer_competition_flag: boolean | null
+          seller_intent_score: number | null
+          revenue_potential_class: string | null
+          stale_deal_flag: boolean | null
+          days_without_action_flag: boolean | null
+          deal_momentum_score: number | null
+          execution_discipline_score: number | null
         }
         Insert: {
           id?: string; nome: string; tipo_ativo?: string | null; localizacao?: string | null
@@ -2287,6 +2390,18 @@ export type Database = {
           score_status?: string | null; best_buyer_execution_score?: number | null
           realistic_cpcv_forecast_flag?: boolean | null; time_waste_flag?: boolean | null
           deal_kill_flag?: boolean | null
+          city_normalized?: string | null
+          source_network_type?: string | null
+          risk_adjusted_upside_score?: number | null
+          master_attack_reason?: string | null
+          data_completeness_score?: number | null
+          buyer_competition_flag?: boolean | null
+          seller_intent_score?: number | null
+          revenue_potential_class?: string | null
+          stale_deal_flag?: boolean | null
+          days_without_action_flag?: boolean | null
+          deal_momentum_score?: number | null
+          execution_discipline_score?: number | null
         }
         Update: {
           nome?: string; tipo_ativo?: string | null; localizacao?: string | null
@@ -2342,6 +2457,18 @@ export type Database = {
           score_status?: string | null; best_buyer_execution_score?: number | null
           realistic_cpcv_forecast_flag?: boolean | null; time_waste_flag?: boolean | null
           deal_kill_flag?: boolean | null
+          city_normalized?: string | null
+          source_network_type?: string | null
+          risk_adjusted_upside_score?: number | null
+          master_attack_reason?: string | null
+          data_completeness_score?: number | null
+          buyer_competition_flag?: boolean | null
+          seller_intent_score?: number | null
+          revenue_potential_class?: string | null
+          stale_deal_flag?: boolean | null
+          days_without_action_flag?: boolean | null
+          deal_momentum_score?: number | null
+          execution_discipline_score?: number | null
         }
         Relationships: []
       }
@@ -2659,6 +2786,12 @@ export type Database = {
           notes: string | null; created_at: string
           generated_at: string | null
           drift_signals: Record<string, unknown> | null
+          period_analyzed_start: string | null
+          period_analyzed_end: string | null
+          total_events_analyzed: number | null
+          recommendations: Record<string, unknown>[] | null
+          grade_performance: Record<string, unknown> | null
+          data_quality: Record<string, unknown> | null
         }
         Insert: {
           id?: string; report_date?: string; priority: string
@@ -2666,12 +2799,24 @@ export type Database = {
           evidence?: string | null; status?: string
           reviewed_by?: string | null; reviewed_at?: string | null
           notes?: string | null; created_at?: string; generated_at?: string | null
+          period_analyzed_start?: string | null
+          period_analyzed_end?: string | null
+          total_events_analyzed?: number | null
+          recommendations?: Record<string, unknown>[] | null
+          grade_performance?: Record<string, unknown> | null
+          data_quality?: Record<string, unknown> | null
         }
         Update: {
           priority?: string; observation?: string; suggestion?: string
           evidence?: string | null; status?: string
           reviewed_by?: string | null; reviewed_at?: string | null; notes?: string | null
           generated_at?: string | null
+          period_analyzed_start?: string | null
+          period_analyzed_end?: string | null
+          total_events_analyzed?: number | null
+          recommendations?: Record<string, unknown>[] | null
+          grade_performance?: Record<string, unknown> | null
+          data_quality?: Record<string, unknown> | null
         }
         Relationships: []
       }
@@ -3028,6 +3173,8 @@ export type Database = {
           realized_dom: number | null
           deal_won: boolean | null
           surfaced_at: string | null
+          predicted_yield: number | null
+          realized_yield: number | null
         }
         Insert: {
           id?: string; entity_type: string; entity_id: string; model_version?: string | null
@@ -3040,6 +3187,8 @@ export type Database = {
           asking_price?: number | null; realized_sale_price?: number | null
           avm_value_at_time?: number | null; realized_dom?: number | null
           deal_won?: boolean | null; surfaced_at?: string | null
+          predicted_yield?: number | null
+          realized_yield?: number | null
         }
         Update: {
           entity_type?: string; entity_id?: string; model_version?: string | null
@@ -3053,6 +3202,8 @@ export type Database = {
           avm_value_at_time?: number | null; realized_dom?: number | null
           deal_won?: boolean | null; surfaced_at?: string | null
           close_status?: string | null
+          predicted_yield?: number | null
+          realized_yield?: number | null
         }
         Relationships: []
       }
@@ -3065,6 +3216,10 @@ export type Database = {
           training_date: string | null; sample_size: number | null; accuracy_score: number | null
           mae: number | null; notes: string | null; created_at: string
           status: string | null; backtest_score: number | null
+          archived_at: string | null
+          archived_by: string | null
+          promoted_at: string | null
+          promoted_by: string | null
         }
         Insert: {
           id?: string; model_name: string; version: string; is_active?: boolean
@@ -3072,6 +3227,10 @@ export type Database = {
           training_date?: string | null; sample_size?: number | null; accuracy_score?: number | null
           mae?: number | null; notes?: string | null; created_at?: string
           status?: string | null; backtest_score?: number | null
+          archived_at?: string | null
+          archived_by?: string | null
+          promoted_at?: string | null
+          promoted_by?: string | null
         }
         Update: {
           model_name?: string; version?: string; is_active?: boolean
@@ -3079,6 +3238,10 @@ export type Database = {
           training_date?: string | null; sample_size?: number | null; accuracy_score?: number | null
           mae?: number | null; notes?: string | null
           status?: string | null; backtest_score?: number | null
+          archived_at?: string | null
+          archived_by?: string | null
+          promoted_at?: string | null
+          promoted_by?: string | null
         }
         Relationships: []
       }
@@ -3092,6 +3255,18 @@ export type Database = {
           discount_pct: number | null; sample_date: string; data: Record<string, unknown> | null
           asset_class: string | null
           created_at: string
+          deal_id: string | null
+          distribution_event_id: string | null
+          price_band: string | null
+          avm_accuracy_score: number | null
+          negotiation_score: number | null
+          time_to_close_score: number | null
+          routing_efficiency_score: number | null
+          spread_vs_predicted_score: number | null
+          avm_error_pct: number | null
+          negotiation_delta_pct: number | null
+          routing_precision_pct: number | null
+          spread_error_pct: number | null
         }
         Insert: {
           id?: string; zone_key: string; property_type?: string | null
@@ -3100,12 +3275,36 @@ export type Database = {
           discount_pct?: number | null; sample_date: string; data?: Record<string, unknown> | null
           asset_class?: string | null
           created_at?: string
+          deal_id?: string | null
+          distribution_event_id?: string | null
+          price_band?: string | null
+          avm_accuracy_score?: number | null
+          negotiation_score?: number | null
+          time_to_close_score?: number | null
+          routing_efficiency_score?: number | null
+          spread_vs_predicted_score?: number | null
+          avm_error_pct?: number | null
+          negotiation_delta_pct?: number | null
+          routing_precision_pct?: number | null
+          spread_error_pct?: number | null
         }
         Update: {
           zone_key?: string; property_type?: string | null; actual_price_per_sqm?: number
           ask_price_per_sqm?: number | null; normalized_truth_score?: number | null
           raw_truth_score?: number | null; discount_pct?: number | null; sample_date?: string
           data?: Record<string, unknown> | null; asset_class?: string | null
+          deal_id?: string | null
+          distribution_event_id?: string | null
+          price_band?: string | null
+          avm_accuracy_score?: number | null
+          negotiation_score?: number | null
+          time_to_close_score?: number | null
+          routing_efficiency_score?: number | null
+          spread_vs_predicted_score?: number | null
+          avm_error_pct?: number | null
+          negotiation_delta_pct?: number | null
+          routing_precision_pct?: number | null
+          spread_error_pct?: number | null
         }
         Relationships: []
       }
@@ -3119,6 +3318,8 @@ export type Database = {
           asset_type: string | null; tier: string | null; status: string | null
           reason: string | null; controlled_by: string | null
           config: Record<string, unknown> | null; created_at: string; updated_at: string
+          activated_at: string | null
+          deactivated_at: string | null
         }
         Insert: {
           id?: string; control_key: string; control_type?: string | null; is_enabled?: boolean
@@ -3127,6 +3328,8 @@ export type Database = {
           asset_type?: string | null; tier?: string | null; status?: string | null
           reason?: string | null; controlled_by?: string | null
           config?: Record<string, unknown> | null; created_at?: string; updated_at?: string
+          activated_at?: string | null
+          deactivated_at?: string | null
         }
         Update: {
           control_key?: string; control_type?: string | null; is_enabled?: boolean; target_segment?: string | null
@@ -3134,6 +3337,8 @@ export type Database = {
           min_score_threshold?: number | null; asset_type?: string | null; tier?: string | null
           status?: string | null; reason?: string | null; controlled_by?: string | null
           config?: Record<string, unknown> | null; updated_at?: string
+          activated_at?: string | null
+          deactivated_at?: string | null
         }
         Relationships: []
       }
@@ -3144,13 +3349,26 @@ export type Database = {
           id: string; signal_type: string; weight: number; acceptance_weight: number | null; conversion_weight: number | null
           speed_weight: number | null
           description: string | null; updated_at: string; created_at: string
+          recipient_email: string | null
+          composite_weight: number | null
+          outcome_class: string | null
+          recommended_action: string | null
         }
         Insert: {
           id?: string; signal_type: string; weight: number; acceptance_weight?: number | null
           speed_weight?: number | null
           description?: string | null; updated_at?: string; created_at?: string
+          recipient_email?: string | null
+          composite_weight?: number | null
+          outcome_class?: string | null
+          recommended_action?: string | null
         }
-        Update: { signal_type?: string; weight?: number; acceptance_weight?: number | null; speed_weight?: number | null; description?: string | null; updated_at?: string }
+        Update: { signal_type?: string; weight?: number; acceptance_weight?: number | null; speed_weight?: number | null; description?: string | null; updated_at?: string
+          recipient_email?: string | null
+          composite_weight?: number | null
+          outcome_class?: string | null
+          recommended_action?: string | null
+        }
         Relationships: []
       }
 
@@ -3163,6 +3381,10 @@ export type Database = {
           reasoning: string | null; model_version: string | null; features: Record<string, unknown> | null
           status: string | null
           created_at: string
+          recipient_count: number | null
+          inputs_snapshot: Record<string, unknown> | null
+          completed_at: string | null
+          result_summary: Record<string, unknown> | null
         }
         Insert: {
           id?: string; decision_id: string; entity_type: string; entity_id: string
@@ -3170,11 +3392,19 @@ export type Database = {
           reasoning?: string | null; model_version?: string | null; features?: Record<string, unknown> | null
           status?: string | null
           created_at?: string
+          recipient_count?: number | null
+          inputs_snapshot?: Record<string, unknown> | null
+          completed_at?: string | null
+          result_summary?: Record<string, unknown> | null
         }
         Update: {
           decision_type?: string; decision_value?: string | null; confidence?: number | null
           reasoning?: string | null; model_version?: string | null; features?: Record<string, unknown> | null
           status?: string | null
+          recipient_count?: number | null
+          inputs_snapshot?: Record<string, unknown> | null
+          completed_at?: string | null
+          result_summary?: Record<string, unknown> | null
         }
         Relationships: []
       }
@@ -3210,17 +3440,41 @@ export type Database = {
           simulated_mae: number | null; sample_size: number | null
           status: 'pending' | 'running' | 'done' | 'failed'; notes: string | null
           created_at: string; completed_at: string | null
+          description: string | null
+          property_count: number | null
+          property_ids: string[] | null
+          run_by: string | null
+          started_at: string | null
+          score_results: Record<string, unknown> | null
+          metrics: Record<string, unknown> | null
+          comparison: Record<string, unknown> | null
         }
         Insert: {
           id?: string; simulation_name: string; model_name: string
           parameter_set: Record<string, unknown>; simulated_accuracy?: number | null
           simulated_mae?: number | null; sample_size?: number | null; status?: string
           notes?: string | null; created_at?: string; completed_at?: string | null
+          description?: string | null
+          property_count?: number | null
+          property_ids?: string[] | null
+          run_by?: string | null
+          started_at?: string | null
+          score_results?: Record<string, unknown> | null
+          metrics?: Record<string, unknown> | null
+          comparison?: Record<string, unknown> | null
         }
         Update: {
           simulation_name?: string; model_name?: string; parameter_set?: Record<string, unknown>
           simulated_accuracy?: number | null; simulated_mae?: number | null; sample_size?: number | null
           status?: string; notes?: string | null; completed_at?: string | null
+          description?: string | null
+          property_count?: number | null
+          property_ids?: string[] | null
+          run_by?: string | null
+          started_at?: string | null
+          score_results?: Record<string, unknown> | null
+          metrics?: Record<string, unknown> | null
+          comparison?: Record<string, unknown> | null
         }
         Relationships: []
       }
@@ -3290,17 +3544,47 @@ export type Database = {
           recipient_type: string | null; channel: string | null
           status: 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced' | null
           sent_at: string | null; metadata: Record<string, unknown> | null; created_at: string
+          property_id: string | null
+          opportunity_score: number | null
+          opportunity_grade: string | null
+          distribution_tier: string | null
+          max_recipients: number | null
+          recommended_agents: string[] | null
+          recommended_investors: string[] | null
+          routing_rationale: string | null
+          event_status: string | null
+          distributed_by: string | null
         }
         Insert: {
           id?: string; distribution_type: string; entity_id?: string | null
           entity_type?: string | null; recipient_id?: string | null
           recipient_type?: string | null; channel?: string | null; status?: string | null
           sent_at?: string | null; metadata?: Record<string, unknown> | null; created_at?: string
+          property_id?: string | null
+          opportunity_score?: number | null
+          opportunity_grade?: string | null
+          distribution_tier?: string | null
+          max_recipients?: number | null
+          recommended_agents?: string[] | null
+          recommended_investors?: string[] | null
+          routing_rationale?: string | null
+          event_status?: string | null
+          distributed_by?: string | null
         }
         Update: {
           distribution_type?: string; entity_id?: string | null; entity_type?: string | null
           recipient_id?: string | null; status?: string | null; sent_at?: string | null
           metadata?: Record<string, unknown> | null
+          property_id?: string | null
+          opportunity_score?: number | null
+          opportunity_grade?: string | null
+          distribution_tier?: string | null
+          max_recipients?: number | null
+          recommended_agents?: string[] | null
+          recommended_investors?: string[] | null
+          routing_rationale?: string | null
+          event_status?: string | null
+          distributed_by?: string | null
         }
         Relationships: []
       }
@@ -3311,15 +3595,21 @@ export type Database = {
           id: string; contact_id: string | null; nurture_type: string
           channel: string | null; sent_at: string; status: string | null
           metadata: Record<string, unknown> | null; created_at: string
+          sequence_day: number | null
+          email: string | null
         }
         Insert: {
           id?: string; contact_id?: string | null; nurture_type: string
           channel?: string | null; sent_at?: string; status?: string | null
           metadata?: Record<string, unknown> | null; created_at?: string
+          sequence_day?: number | null
+          email?: string | null
         }
         Update: {
           contact_id?: string | null; nurture_type?: string; channel?: string | null
           sent_at?: string; status?: string | null; metadata?: Record<string, unknown> | null
+          sequence_day?: number | null
+          email?: string | null
         }
         Relationships: []
       }
@@ -3845,6 +4135,72 @@ export type Database = {
           accuracy_drop_pct?: number | null | undefined
           severity?: string | null | undefined
           triggered_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── agents ───────────────────────────────────────────────────────────
+      agents: {
+        Row: {
+          id: string
+          email: string
+          full_name: string | null
+          phone: string | null
+          avatar_url: string | null
+          is_active: boolean
+          gci_mes: number | null
+          gci_ytd: number | null
+          deals_fechados: number | null
+          pipeline: number | null
+          conversao: number | null
+          dias_ciclo: number | null
+          score: number | null
+          calls: number | null
+          emails: number | null
+          visitas: number | null
+          propostas: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          full_name?: string | null
+          phone?: string | null
+          avatar_url?: string | null
+          is_active?: boolean
+          gci_mes?: number | null
+          gci_ytd?: number | null
+          deals_fechados?: number | null
+          pipeline?: number | null
+          conversao?: number | null
+          dias_ciclo?: number | null
+          score?: number | null
+          calls?: number | null
+          emails?: number | null
+          visitas?: number | null
+          propostas?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          full_name?: string | null
+          phone?: string | null
+          avatar_url?: string | null
+          is_active?: boolean
+          gci_mes?: number | null
+          gci_ytd?: number | null
+          deals_fechados?: number | null
+          pipeline?: number | null
+          conversao?: number | null
+          dias_ciclo?: number | null
+          score?: number | null
+          calls?: number | null
+          emails?: number | null
+          visitas?: number | null
+          propostas?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
