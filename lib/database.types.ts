@@ -2056,6 +2056,607 @@ export type Database = {
         }
         Relationships: []
       }
+
+      // ─── offmarket_leads ──────────────────────────────────────────────────
+      offmarket_leads: {
+        Row: {
+          id: string; nome: string; tipo_ativo: string | null; localizacao: string | null
+          cidade: string | null; area_m2: number | null; ano_construcao: number | null
+          price_ask: number | null; price_estimate: number | null; price_per_m2: number | null
+          score: number | null; score_breakdown: Record<string,unknown> | null; score_updated_at: string | null
+          contacto: string | null; owner_type: string | null
+          urgency: 'high' | 'medium' | 'low' | 'unknown' | null
+          source: string | null; source_url: string | null; source_listing_id: string | null
+          status: 'new' | 'contacted' | 'interested' | 'meeting_scheduled' | 'valuation_done' | 'captation_active' | 'not_interested' | 'closed_won' | 'closed_lost'
+          assigned_to: string | null; next_followup_at: string | null; last_contact_at: string | null
+          contact_attempts: number | null; notes: string | null; tags: string[] | null
+          raw_data: Record<string,unknown> | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; nome: string; tipo_ativo?: string | null; localizacao?: string | null
+          cidade?: string | null; area_m2?: number | null; ano_construcao?: number | null
+          price_ask?: number | null; price_estimate?: number | null; score?: number | null
+          score_breakdown?: Record<string,unknown> | null; contacto?: string | null
+          owner_type?: string | null; urgency?: string | null; source?: string | null
+          source_url?: string | null; source_listing_id?: string | null; status?: string
+          assigned_to?: string | null; next_followup_at?: string | null
+          last_contact_at?: string | null; contact_attempts?: number | null
+          notes?: string | null; tags?: string[] | null; raw_data?: Record<string,unknown> | null
+          created_at?: string; updated_at?: string
+        }
+        Update: {
+          nome?: string; tipo_ativo?: string | null; localizacao?: string | null
+          cidade?: string | null; area_m2?: number | null; price_ask?: number | null
+          price_estimate?: number | null; score?: number | null
+          score_breakdown?: Record<string,unknown> | null; contacto?: string | null
+          owner_type?: string | null; urgency?: string | null; source?: string | null
+          source_listing_id?: string | null; status?: string; assigned_to?: string | null
+          next_followup_at?: string | null; last_contact_at?: string | null
+          contact_attempts?: number | null; notes?: string | null; tags?: string[] | null
+          raw_data?: Record<string,unknown> | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── institutional_partners ───────────────────────────────────────────
+      institutional_partners: {
+        Row: {
+          id: string; nome: string; empresa: string | null
+          tipo: 'advogado' | 'notario' | 'contabilista' | 'gestor_patrimonio' | 'family_office' | 'banco' | 'fundo_investimento' | 'mediador_parceiro' | 'promotor' | 'outro'
+          email: string | null; phone: string | null; linkedin_url: string | null; website: string | null
+          cidade: string | null; paises_actuacao: string[] | null; segmento: string | null
+          ticket_medio: number | null; origem: string | null
+          estado: 'prospect' | 'contactado' | 'reuniao_feita' | 'parceiro_activo' | 'dormente' | 'inactivo'
+          nivel_prioridade: 'A' | 'B' | 'C'; last_contact_at: string | null
+          next_followup_at: string | null; contact_attempts: number | null
+          deals_referidos: number | null; volume_referido: number | null
+          owner: string | null; notes: string | null; tags: string[] | null
+          created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; nome: string; empresa?: string | null; tipo: string
+          email?: string | null; phone?: string | null; linkedin_url?: string | null
+          website?: string | null; cidade?: string | null; paises_actuacao?: string[] | null
+          segmento?: string | null; ticket_medio?: number | null; origem?: string | null
+          estado?: string; nivel_prioridade?: string; last_contact_at?: string | null
+          next_followup_at?: string | null; contact_attempts?: number | null
+          deals_referidos?: number | null; volume_referido?: number | null
+          owner?: string | null; notes?: string | null; tags?: string[] | null
+          created_at?: string; updated_at?: string
+        }
+        Update: {
+          nome?: string; empresa?: string | null; tipo?: string; email?: string | null
+          phone?: string | null; cidade?: string | null; estado?: string
+          nivel_prioridade?: string; last_contact_at?: string | null
+          next_followup_at?: string | null; contact_attempts?: number | null
+          deals_referidos?: number | null; volume_referido?: number | null
+          owner?: string | null; notes?: string | null; tags?: string[] | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── visitas ──────────────────────────────────────────────────────────
+      visitas: {
+        Row: {
+          id: string; property_id: number | null; property_name: string | null
+          contact_id: number | null; contact_name: string | null
+          date: string; time: string | null
+          status: 'agendada' | 'realizada' | 'cancelada' | 'reagendada'
+          notes: string | null; interest_score: number | null; feedback: string | null
+          ai_suggestion: string | null
+          visit_type: 'presencial' | 'virtual' | 'videochamada'
+          agent_id: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; property_id?: number | null; property_name?: string | null
+          contact_id?: number | null; contact_name?: string | null
+          date: string; time?: string | null; status?: string
+          notes?: string | null; interest_score?: number | null; feedback?: string | null
+          ai_suggestion?: string | null; visit_type?: string; agent_id?: string | null
+          created_at?: string; updated_at?: string
+        }
+        Update: {
+          date?: string; time?: string | null; status?: string; notes?: string | null
+          interest_score?: number | null; feedback?: string | null
+          ai_suggestion?: string | null; visit_type?: string; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── property_collections ─────────────────────────────────────────────
+      property_collections: {
+        Row: {
+          id: string; created_at: string | null; updated_at: string | null
+          expires_at: string | null; agent_id: string | null
+          client_name: string | null; client_email: string | null
+          name: string; share_token: string
+          items: unknown[] | null; comments: unknown[] | null
+          ai_profile: string | null; views: number | null; last_viewed_at: string | null
+        }
+        Insert: {
+          id: string; created_at?: string | null; updated_at?: string | null
+          expires_at?: string | null; agent_id?: string | null
+          client_name?: string | null; client_email?: string | null
+          name?: string; share_token: string
+          items?: unknown[] | null; comments?: unknown[] | null
+          ai_profile?: string | null; views?: number | null; last_viewed_at?: string | null
+        }
+        Update: {
+          expires_at?: string | null; agent_id?: string | null
+          client_name?: string | null; client_email?: string | null
+          name?: string; share_token?: string; items?: unknown[] | null
+          comments?: unknown[] | null; ai_profile?: string | null
+          views?: number | null; last_viewed_at?: string | null; updated_at?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── users ────────────────────────────────────────────────────────────
+      users: {
+        Row: {
+          id: string; email: string; phone: string | null
+          totp_secret: string | null; two_factor_enabled: boolean
+          reset_token: string | null; reset_token_expires: string | null
+          onboarding_complete: boolean; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; email: string; phone?: string | null
+          totp_secret?: string | null; two_factor_enabled?: boolean
+          reset_token?: string | null; reset_token_expires?: string | null
+          onboarding_complete?: boolean; created_at?: string; updated_at?: string
+        }
+        Update: {
+          email?: string; phone?: string | null; totp_secret?: string | null
+          two_factor_enabled?: boolean; reset_token?: string | null
+          reset_token_expires?: string | null; onboarding_complete?: boolean; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── push_tokens ──────────────────────────────────────────────────────
+      push_tokens: {
+        Row: {
+          id: string; user_id: string | null; endpoint: string
+          p256dh: string; auth: string; user_agent: string | null
+          created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; user_id?: string | null; endpoint: string
+          p256dh: string; auth: string; user_agent?: string | null
+          created_at?: string; updated_at?: string
+        }
+        Update: {
+          user_id?: string | null; endpoint?: string; p256dh?: string
+          auth?: string; user_agent?: string | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── deal_review_queue ────────────────────────────────────────────────
+      deal_review_queue: {
+        Row: {
+          id: string; property_id: string; opportunity_score: number | null
+          opportunity_grade: string | null; distribution_tier: string | null
+          routing_decision: Record<string,unknown> | null
+          status: string; queued_reason: string | null; auto_queued: boolean
+          reviewer_email: string | null; reviewed_at: string | null
+          override_score: number | null; override_routing: Record<string,unknown> | null
+          review_notes: string | null; queued_at: string; created_at: string
+        }
+        Insert: {
+          id?: string; property_id: string; opportunity_score?: number | null
+          opportunity_grade?: string | null; distribution_tier?: string | null
+          routing_decision?: Record<string,unknown> | null; status?: string
+          queued_reason?: string | null; auto_queued?: boolean
+          reviewer_email?: string | null; reviewed_at?: string | null
+          override_score?: number | null; override_routing?: Record<string,unknown> | null
+          review_notes?: string | null; queued_at?: string; created_at?: string
+        }
+        Update: {
+          status?: string; reviewer_email?: string | null; reviewed_at?: string | null
+          override_score?: number | null; override_routing?: Record<string,unknown> | null
+          review_notes?: string | null; routing_decision?: Record<string,unknown> | null
+        }
+        Relationships: []
+      }
+
+      // ─── transaction_outcomes ─────────────────────────────────────────────
+      transaction_outcomes: {
+        Row: {
+          id: string; property_id: string; distribution_event_id: string | null
+          agent_email: string | null; investor_id: string | null
+          asking_price: number | null; final_sale_price: number | null
+          avm_value_at_time: number | null; negotiation_delta_pct: number | null
+          avm_error_pct: number | null; negotiation_duration_days: number | null
+          outcome_type: 'won' | 'lost' | 'withdrawn'; closing_friction: string | null
+          score_at_time: number | null; grade_at_time: string | null
+          distribution_rank_at_time: number | null; distribution_tier_at_time: string | null
+          closed_at: string | null; recorded_at: string; recorded_by: string | null; notes: string | null
+        }
+        Insert: {
+          id?: string; property_id: string; distribution_event_id?: string | null
+          agent_email?: string | null; investor_id?: string | null
+          asking_price?: number | null; final_sale_price?: number | null
+          avm_value_at_time?: number | null; negotiation_delta_pct?: number | null
+          avm_error_pct?: number | null; negotiation_duration_days?: number | null
+          outcome_type: string; closing_friction?: string | null
+          score_at_time?: number | null; grade_at_time?: string | null
+          distribution_rank_at_time?: number | null; distribution_tier_at_time?: string | null
+          closed_at?: string | null; recorded_at?: string; recorded_by?: string | null; notes?: string | null
+        }
+        Update: {
+          final_sale_price?: number | null; avm_value_at_time?: number | null
+          negotiation_delta_pct?: number | null; avm_error_pct?: number | null
+          negotiation_duration_days?: number | null; outcome_type?: string
+          closing_friction?: string | null; closed_at?: string | null
+          recorded_by?: string | null; notes?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── distribution_outcomes ────────────────────────────────────────────
+      distribution_outcomes: {
+        Row: {
+          id: string; distribution_event_id: string; property_id: string
+          recipient_email: string; recipient_type: 'agent' | 'investor'
+          recipient_tier: string | null; distribution_rank: number | null
+          opened_at: string | null; replied_at: string | null
+          meeting_booked_at: string | null; offer_submitted_at: string | null; closed_at: string | null
+          outcome: 'no_response' | 'opened' | 'replied' | 'meeting' | 'offer' | 'won' | 'lost' | null
+          rejection_reason: string | null
+          time_to_reply_hours: number | null; time_to_close_days: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string; distribution_event_id: string; property_id: string
+          recipient_email: string; recipient_type: string
+          recipient_tier?: string | null; distribution_rank?: number | null
+          opened_at?: string | null; replied_at?: string | null
+          meeting_booked_at?: string | null; offer_submitted_at?: string | null
+          closed_at?: string | null; outcome?: string | null
+          rejection_reason?: string | null
+          time_to_reply_hours?: number | null; time_to_close_days?: number | null
+          created_at?: string
+        }
+        Update: {
+          opened_at?: string | null; replied_at?: string | null
+          meeting_booked_at?: string | null; offer_submitted_at?: string | null
+          closed_at?: string | null; outcome?: string | null
+          rejection_reason?: string | null
+          time_to_reply_hours?: number | null; time_to_close_days?: number | null
+        }
+        Relationships: []
+      }
+
+      // ─── recipient_performance_profiles ──────────────────────────────────
+      recipient_performance_profiles: {
+        Row: {
+          recipient_email: string; recipient_type: 'agent' | 'investor'
+          current_tier: string | null
+          total_distributions: number; total_opens: number; total_replies: number
+          total_meetings: number; total_offers: number; total_won: number
+          open_rate: number | null; reply_rate: number | null; meeting_rate: number | null
+          offer_rate: number | null; close_rate: number | null
+          avg_commission: number | null; total_commission: number | null; roi_score: number | null
+          distributions_last_7d: number; distributions_last_30d: number
+          last_distributed_at: string | null; fatigue_score: number
+          is_fatigued: boolean; cooldown_until: string | null
+          last_computed_at: string; created_at: string
+        }
+        Insert: {
+          recipient_email: string; recipient_type: string; current_tier?: string | null
+          total_distributions?: number; total_opens?: number; total_replies?: number
+          total_meetings?: number; total_offers?: number; total_won?: number
+          open_rate?: number | null; reply_rate?: number | null; meeting_rate?: number | null
+          offer_rate?: number | null; close_rate?: number | null
+          avg_commission?: number | null; total_commission?: number | null
+          roi_score?: number | null; distributions_last_7d?: number
+          distributions_last_30d?: number; last_distributed_at?: string | null
+          fatigue_score?: number; is_fatigued?: boolean; cooldown_until?: string | null
+          last_computed_at?: string; created_at?: string
+        }
+        Update: {
+          current_tier?: string | null; total_distributions?: number; total_opens?: number
+          total_replies?: number; total_meetings?: number; total_offers?: number
+          total_won?: number; open_rate?: number | null; reply_rate?: number | null
+          meeting_rate?: number | null; offer_rate?: number | null; close_rate?: number | null
+          avg_commission?: number | null; total_commission?: number | null
+          roi_score?: number | null; distributions_last_7d?: number
+          distributions_last_30d?: number; last_distributed_at?: string | null
+          fatigue_score?: number; is_fatigued?: boolean; cooldown_until?: string | null
+          last_computed_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── partner_tiers ────────────────────────────────────────────────────
+      partner_tiers: {
+        Row: {
+          partner_email: string; partner_type: string
+          tier: 'ELITE' | 'PRIORITY' | 'STANDARD' | 'WATCHLIST'
+          tier_score: number | null; tier_computed_at: string
+          criteria: Record<string,unknown>; previous_tier: string | null
+          tier_changed_at: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          partner_email: string; partner_type: string; tier?: string
+          tier_score?: number | null; tier_computed_at?: string
+          criteria?: Record<string,unknown>; previous_tier?: string | null
+          tier_changed_at?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: {
+          partner_type?: string; tier?: string; tier_score?: number | null
+          tier_computed_at?: string; criteria?: Record<string,unknown>
+          previous_tier?: string | null; tier_changed_at?: string | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── calibration_recommendations ──────────────────────────────────────
+      calibration_recommendations: {
+        Row: {
+          id: string; report_date: string
+          priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
+          dimension: string; observation: string; suggestion: string
+          evidence: string | null
+          status: 'pending' | 'applied' | 'dismissed' | 'deferred'
+          reviewed_by: string | null; reviewed_at: string | null
+          notes: string | null; created_at: string
+        }
+        Insert: {
+          id?: string; report_date?: string; priority: string
+          dimension: string; observation: string; suggestion: string
+          evidence?: string | null; status?: string
+          reviewed_by?: string | null; reviewed_at?: string | null
+          notes?: string | null; created_at?: string
+        }
+        Update: {
+          priority?: string; observation?: string; suggestion?: string
+          evidence?: string | null; status?: string
+          reviewed_by?: string | null; reviewed_at?: string | null; notes?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── revenue_attribution ──────────────────────────────────────────────
+      revenue_attribution: {
+        Row: {
+          id: string; property_id: string; distribution_event_id: string | null
+          agent_email: string | null; investor_id: string | null
+          close_status: string | null; sale_price: number | null
+          commission_total: number | null; commission_rate: number | null
+          attributed_source: string | null; attributed_score_grade: string | null
+          attributed_tier: string | null; distribution_rank: number | null
+          closed_at: string | null; created_at: string
+        }
+        Insert: {
+          id?: string; property_id: string; distribution_event_id?: string | null
+          agent_email?: string | null; investor_id?: string | null
+          close_status?: string | null; sale_price?: number | null
+          commission_total?: number | null; commission_rate?: number | null
+          attributed_source?: string | null; attributed_score_grade?: string | null
+          attributed_tier?: string | null; distribution_rank?: number | null
+          closed_at?: string | null; created_at?: string
+        }
+        Update: {
+          close_status?: string | null; sale_price?: number | null
+          commission_total?: number | null; closed_at?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── job_queue ────────────────────────────────────────────────────────
+      job_queue: {
+        Row: {
+          id: string; job_type: string; payload: Record<string,unknown>
+          status: 'pending' | 'running' | 'completed' | 'failed' | 'dead'
+          attempts: number; max_attempts: number; next_retry_at: string | null
+          last_error: string | null; completed_at: string | null
+          result: Record<string,unknown> | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; job_type: string; payload?: Record<string,unknown>
+          status?: string; attempts?: number; max_attempts?: number
+          next_retry_at?: string | null; last_error?: string | null
+          completed_at?: string | null; result?: Record<string,unknown> | null
+          created_at?: string; updated_at?: string
+        }
+        Update: {
+          status?: string; attempts?: number; next_retry_at?: string | null
+          last_error?: string | null; completed_at?: string | null
+          result?: Record<string,unknown> | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── data_quality_flags ───────────────────────────────────────────────
+      data_quality_flags: {
+        Row: {
+          id: string; property_id: string | null; provider_listing_id: string | null
+          source_provider: string | null
+          flag_type: 'price_anomaly' | 'malformed' | 'impossible_avm' | 'score_outlier' | 'duplicate_risk' | 'stale_data'
+          severity: 'info' | 'warning' | 'critical'
+          details: Record<string,unknown>
+          status: 'open' | 'reviewed' | 'resolved' | 'false_positive'
+          reviewed_by: string | null; reviewed_at: string | null
+          resolution_notes: string | null; created_at: string
+        }
+        Insert: {
+          id?: string; property_id?: string | null; provider_listing_id?: string | null
+          source_provider?: string | null; flag_type: string; severity?: string
+          details?: Record<string,unknown>; status?: string
+          reviewed_by?: string | null; reviewed_at?: string | null
+          resolution_notes?: string | null; created_at?: string
+        }
+        Update: {
+          status?: string; reviewed_by?: string | null; reviewed_at?: string | null
+          resolution_notes?: string | null; severity?: string
+        }
+        Relationships: []
+      }
+
+      // ─── price_history ────────────────────────────────────────────────────
+      price_history: {
+        Row: {
+          id: string; property_id: string; price_old: number; price_new: number
+          price_delta: number | null; pct_change: number | null
+          change_type: 'reduction' | 'increase' | 'correction'
+          source: string; agent_email: string | null; notes: string | null; created_at: string
+        }
+        Insert: {
+          id?: string; property_id: string; price_old: number; price_new: number
+          change_type: string; source?: string
+          agent_email?: string | null; notes?: string | null; created_at?: string
+        }
+        Update: { notes?: string | null }
+        Relationships: []
+      }
+
+      // ─── market_segment_trends ────────────────────────────────────────────
+      market_segment_trends: {
+        Row: {
+          id: string; zone_key: string; property_type: string
+          price_band: 'under_200k' | '200k_500k' | '500k_1m' | '1m_3m' | 'over_3m' | 'all'
+          period_label: '7d' | '30d' | '90d'; snapshot_date: string
+          avg_price_per_sqm: number | null; median_price_per_sqm: number | null
+          price_confidence_low: number | null; price_confidence_high: number | null
+          price_trend: 'rising' | 'stable' | 'falling' | 'unknown' | null
+          avg_negotiation_delta: number | null; median_negotiation_delta: number | null
+          pct_sold_above_ask: number | null; avg_sale_to_ask_ratio: number | null
+          avg_days_to_close: number | null; median_days_to_close: number | null
+          deal_count: number; avg_avm_error_pct: number | null; avm_mae: number | null
+          investor_deal_pct: number | null; agent_deal_pct: number | null
+          confidence_score: number | null; sample_size: number | null
+          regime_shift_detected: boolean; regime_shift_metric: string | null
+          regime_shift_magnitude: number | null; computed_at: string
+        }
+        Insert: {
+          id?: string; zone_key: string; property_type: string; price_band?: string
+          period_label: string; snapshot_date?: string
+          avg_price_per_sqm?: number | null; median_price_per_sqm?: number | null
+          price_trend?: string | null; avg_negotiation_delta?: number | null
+          avg_days_to_close?: number | null; deal_count?: number
+          confidence_score?: number | null; sample_size?: number | null
+          regime_shift_detected?: boolean; regime_shift_metric?: string | null
+          regime_shift_magnitude?: number | null; computed_at?: string
+        }
+        Update: {
+          avg_price_per_sqm?: number | null; median_price_per_sqm?: number | null
+          price_trend?: string | null; avg_negotiation_delta?: number | null
+          avg_days_to_close?: number | null; deal_count?: number
+          confidence_score?: number | null; regime_shift_detected?: boolean
+          regime_shift_metric?: string | null; regime_shift_magnitude?: number | null
+          computed_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── market_feedback_signals ──────────────────────────────────────────
+      market_feedback_signals: {
+        Row: {
+          id: string; zone_key: string; asset_class: string; period_label: string
+          absorption_rate: number | null; listing_velocity_chg: number | null
+          price_delta_pct: number | null; demand_supply_ratio: number | null
+          market_pressure: string | null; market_regime: string | null
+          market_health_score: number | null; pricing_pressure_idx: number | null
+          computed_at: string; created_at: string
+        }
+        Insert: {
+          id?: string; zone_key: string; asset_class: string; period_label: string
+          absorption_rate?: number | null; listing_velocity_chg?: number | null
+          price_delta_pct?: number | null; demand_supply_ratio?: number | null
+          market_pressure?: string | null; market_regime?: string | null
+          market_health_score?: number | null; pricing_pressure_idx?: number | null
+          computed_at?: string; created_at?: string
+        }
+        Update: {
+          absorption_rate?: number | null; listing_velocity_chg?: number | null
+          price_delta_pct?: number | null; demand_supply_ratio?: number | null
+          market_pressure?: string | null; market_regime?: string | null
+          market_health_score?: number | null; pricing_pressure_idx?: number | null
+          computed_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── referrals ────────────────────────────────────────────────────────
+      referrals: {
+        Row: {
+          id: string; referrer_contact_id: string | null; referred_contact_id: string | null
+          referrer_email: string | null; referred_email: string | null
+          source: string; deal_id: string | null
+          reward_triggered: boolean; reward_amount: number | null
+          notes: string | null; created_at: string
+        }
+        Insert: {
+          id?: string; referrer_contact_id?: string | null; referred_contact_id?: string | null
+          referrer_email?: string | null; referred_email?: string | null
+          source?: string; deal_id?: string | null
+          reward_triggered?: boolean; reward_amount?: number | null
+          notes?: string | null; created_at?: string
+        }
+        Update: {
+          reward_triggered?: boolean; reward_amount?: number | null; notes?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── growth_metrics ───────────────────────────────────────────────────
+      growth_metrics: {
+        Row: {
+          id: string; week_start: string
+          new_leads: number; new_qualified: number; new_clients: number
+          referral_count: number; organic_leads: number; paid_leads: number
+          viral_coefficient: number | null; cac_eur: number | null; ltv_eur: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string; week_start: string
+          new_leads?: number; new_qualified?: number; new_clients?: number
+          referral_count?: number; organic_leads?: number; paid_leads?: number
+          viral_coefficient?: number | null; cac_eur?: number | null; ltv_eur?: number | null
+          created_at?: string
+        }
+        Update: {
+          new_leads?: number; new_qualified?: number; new_clients?: number
+          referral_count?: number; organic_leads?: number; paid_leads?: number
+          viral_coefficient?: number | null; cac_eur?: number | null; ltv_eur?: number | null
+        }
+        Relationships: []
+      }
+
+      // ─── commission_records ───────────────────────────────────────────────
+      commission_records: {
+        Row: {
+          id: string; property_id: string; agent_email: string
+          sale_price: number | null; expected_commission: number | null
+          realized_commission: number | null; split_pct: number | null
+          split_counterpart_email: string | null
+          cpcv_date: string | null; cpcv_amount: number | null
+          escritura_date: string | null; escritura_amount: number | null
+          payout_status: 'pending' | 'partial' | 'paid' | 'cancelled'
+          paid_at: string | null; notes: string | null
+          created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; property_id: string; agent_email: string
+          sale_price?: number | null; expected_commission?: number | null
+          realized_commission?: number | null; split_pct?: number | null
+          split_counterpart_email?: string | null
+          cpcv_date?: string | null; cpcv_amount?: number | null
+          escritura_date?: string | null; escritura_amount?: number | null
+          payout_status?: string; paid_at?: string | null; notes?: string | null
+          created_at?: string; updated_at?: string
+        }
+        Update: {
+          sale_price?: number | null; expected_commission?: number | null
+          realized_commission?: number | null; payout_status?: string
+          cpcv_date?: string | null; cpcv_amount?: number | null
+          escritura_date?: string | null; escritura_amount?: number | null
+          paid_at?: string | null; notes?: string | null; updated_at?: string
+        }
+        Relationships: []
+      }
     }
 
     // -----------------------------------------------------------------------
