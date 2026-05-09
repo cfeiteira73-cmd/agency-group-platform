@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth as getSession }        from '@/auth'
 import { getAdminRole, isRoleAtLeast } from '@/lib/auth/adminAuth'
 import { getAllConfig, updateConfigValue, invalidateConfigCache } from '@/lib/platform/config'
 
@@ -14,8 +15,9 @@ export const runtime = 'nodejs'
 // Auth helper
 // ---------------------------------------------------------------------------
 
-async function auth(req: NextRequest) {
-  const email = req.headers.get('authorization')?.replace('Bearer ', '').trim()
+async function auth(_req: NextRequest) {
+  const session = await getSession()
+  const email   = session?.user?.email
   if (!email) return null
   const admin = await getAdminRole(email)
   if (!admin) return null

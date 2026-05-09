@@ -1644,7 +1644,7 @@ export type Database = {
           match_score: number | null
           correlation_id: string | null
           session_id: string | null
-          source_system: 'api' | 'n8n' | 'cron' | 'engine' | null
+          source_system: 'api' | 'n8n' | 'cron' | 'engine' | 'agent' | null
           metadata: Record<string, unknown> | null
           created_at: string
         }
@@ -1660,7 +1660,7 @@ export type Database = {
           match_score?: number | null
           correlation_id?: string | null
           session_id?: string | null
-          source_system?: 'api' | 'n8n' | 'cron' | 'engine' | null
+          source_system?: 'api' | 'n8n' | 'cron' | 'engine' | 'agent' | null
           metadata?: Record<string, unknown> | null
           created_at?: string
         }
@@ -2188,17 +2188,20 @@ export type Database = {
           notified_client: boolean; notified_at: string | null
           scheduled_for: string | null; created_at: string
           milestone_date: string | null
+          organization_id: string | null
         }
         Insert: {
           deal_id?: string | null; contact_id?: string | null
           milestone_type: string; title: string; description?: string | null
           scheduled_for?: string | null
           milestone_date?: string | null
+          organization_id?: string | null
         }
         Update: {
           completed?: boolean; completed_at?: string | null
           notified_client?: boolean; notified_at?: string | null
           milestone_date?: string | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -2963,6 +2966,7 @@ export type Database = {
           market_pressure: string | null; market_regime: string | null
           market_health_score: number | null; pricing_pressure_idx: number | null
           computed_at: string; created_at: string
+          organization_id: string | null
         }
         Insert: {
           id?: string; zone_key: string; asset_class: string; period_label: string
@@ -2971,6 +2975,7 @@ export type Database = {
           market_pressure?: string | null; market_regime?: string | null
           market_health_score?: number | null; pricing_pressure_idx?: number | null
           computed_at?: string; created_at?: string
+          organization_id?: string | null
         }
         Update: {
           absorption_rate?: number | null; listing_velocity_chg?: number | null
@@ -2978,6 +2983,7 @@ export type Database = {
           market_pressure?: string | null; market_regime?: string | null
           market_health_score?: number | null; pricing_pressure_idx?: number | null
           computed_at?: string
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -2990,6 +2996,7 @@ export type Database = {
           source: string; deal_id: string | null
           reward_triggered: boolean; reward_amount: number | null
           notes: string | null; created_at: string
+          organization_id: string | null
         }
         Insert: {
           id?: string; referrer_contact_id?: string | null; referred_contact_id?: string | null
@@ -2997,9 +3004,11 @@ export type Database = {
           source?: string; deal_id?: string | null
           reward_triggered?: boolean; reward_amount?: number | null
           notes?: string | null; created_at?: string
+          organization_id?: string | null
         }
         Update: {
           reward_triggered?: boolean; reward_amount?: number | null; notes?: string | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3012,6 +3021,7 @@ export type Database = {
           referral_count: number; organic_leads: number; paid_leads: number
           viral_coefficient: number | null; cac_eur: number | null; ltv_eur: number | null
           created_at: string
+          organization_id: string | null
         }
         Insert: {
           id?: string; week_start: string
@@ -3019,11 +3029,13 @@ export type Database = {
           referral_count?: number; organic_leads?: number; paid_leads?: number
           viral_coefficient?: number | null; cac_eur?: number | null; ltv_eur?: number | null
           created_at?: string
+          organization_id?: string | null
         }
         Update: {
           new_leads?: number; new_qualified?: number; new_clients?: number
           referral_count?: number; organic_leads?: number; paid_leads?: number
           viral_coefficient?: number | null; cac_eur?: number | null; ltv_eur?: number | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3175,6 +3187,7 @@ export type Database = {
           surfaced_at: string | null
           predicted_yield: number | null
           realized_yield: number | null
+          organization_id: string | null
         }
         Insert: {
           id?: string; entity_type: string; entity_id: string; model_version?: string | null
@@ -3189,6 +3202,7 @@ export type Database = {
           deal_won?: boolean | null; surfaced_at?: string | null
           predicted_yield?: number | null
           realized_yield?: number | null
+          organization_id?: string | null
         }
         Update: {
           entity_type?: string; entity_id?: string; model_version?: string | null
@@ -3204,6 +3218,7 @@ export type Database = {
           close_status?: string | null
           predicted_yield?: number | null
           realized_yield?: number | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3267,6 +3282,7 @@ export type Database = {
           negotiation_delta_pct: number | null
           routing_precision_pct: number | null
           spread_error_pct: number | null
+          organization_id: string | null
         }
         Insert: {
           id?: string; zone_key: string; property_type?: string | null
@@ -3287,6 +3303,7 @@ export type Database = {
           negotiation_delta_pct?: number | null
           routing_precision_pct?: number | null
           spread_error_pct?: number | null
+          organization_id?: string | null
         }
         Update: {
           zone_key?: string; property_type?: string | null; actual_price_per_sqm?: number
@@ -3305,6 +3322,7 @@ export type Database = {
           negotiation_delta_pct?: number | null
           routing_precision_pct?: number | null
           spread_error_pct?: number | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3353,6 +3371,7 @@ export type Database = {
           composite_weight: number | null
           outcome_class: string | null
           recommended_action: string | null
+          organization_id: string | null
         }
         Insert: {
           id?: string; signal_type: string; weight: number; acceptance_weight?: number | null
@@ -3362,12 +3381,14 @@ export type Database = {
           composite_weight?: number | null
           outcome_class?: string | null
           recommended_action?: string | null
+          organization_id?: string | null
         }
         Update: { signal_type?: string; weight?: number; acceptance_weight?: number | null; speed_weight?: number | null; description?: string | null; updated_at?: string
           recipient_email?: string | null
           composite_weight?: number | null
           outcome_class?: string | null
           recommended_action?: string | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3385,6 +3406,7 @@ export type Database = {
           inputs_snapshot: Record<string, unknown> | null
           completed_at: string | null
           result_summary: Record<string, unknown> | null
+          organization_id: string | null
         }
         Insert: {
           id?: string; decision_id: string; entity_type: string; entity_id: string
@@ -3396,6 +3418,7 @@ export type Database = {
           inputs_snapshot?: Record<string, unknown> | null
           completed_at?: string | null
           result_summary?: Record<string, unknown> | null
+          organization_id?: string | null
         }
         Update: {
           decision_type?: string; decision_value?: string | null; confidence?: number | null
@@ -3405,6 +3428,7 @@ export type Database = {
           inputs_snapshot?: Record<string, unknown> | null
           completed_at?: string | null
           result_summary?: Record<string, unknown> | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3416,17 +3440,20 @@ export type Database = {
           trigger_reason: string | null; sample_size: number | null; accuracy_before: number | null
           accuracy_after: number | null; applied_at: string; created_at: string
           status: string | null
+          organization_id: string | null
         }
         Insert: {
           id?: string; model_name: string; old_version?: string | null; new_version: string
           trigger_reason?: string | null; sample_size?: number | null; accuracy_before?: number | null
           accuracy_after?: number | null; applied_at?: string; created_at?: string
           status?: string | null
+          organization_id?: string | null
         }
         Update: {
           model_name?: string; new_version?: string; trigger_reason?: string | null
           sample_size?: number | null; accuracy_before?: number | null; accuracy_after?: number | null
           applied_at?: string; status?: string | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3597,6 +3624,7 @@ export type Database = {
           metadata: Record<string, unknown> | null; created_at: string
           sequence_day: number | null
           email: string | null
+          organization_id: string | null
         }
         Insert: {
           id?: string; contact_id?: string | null; nurture_type: string
@@ -3604,12 +3632,14 @@ export type Database = {
           metadata?: Record<string, unknown> | null; created_at?: string
           sequence_day?: number | null
           email?: string | null
+          organization_id?: string | null
         }
         Update: {
           contact_id?: string | null; nurture_type?: string; channel?: string | null
           sent_at?: string; status?: string | null; metadata?: Record<string, unknown> | null
           sequence_day?: number | null
           email?: string | null
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3726,6 +3756,7 @@ export type Database = {
           decision: string
           audit_reason: string
           created_at: string
+          organization_id: string | null
         }
         Insert: {
           id?: string
@@ -3737,6 +3768,7 @@ export type Database = {
           decision: string
           audit_reason: string
           created_at?: string
+          organization_id?: string | null
         }
         Update: {
           id?: string | undefined
@@ -3748,6 +3780,7 @@ export type Database = {
           decision?: string | undefined
           audit_reason?: string | undefined
           created_at?: string | undefined
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -3765,6 +3798,7 @@ export type Database = {
           outcome: string
           winner: string
           created_at: string
+          organization_id: string | null
         }
         Insert: {
           id?: string
@@ -3777,6 +3811,7 @@ export type Database = {
           outcome: string
           winner: string
           created_at?: string
+          organization_id?: string | null
         }
         Update: {
           id?: string | undefined
@@ -3789,6 +3824,7 @@ export type Database = {
           outcome?: string | undefined
           winner?: string | undefined
           created_at?: string | undefined
+          organization_id?: string | null
         }
         Relationships: []
       }
@@ -4115,6 +4151,7 @@ export type Database = {
           accuracy_drop_pct: number | null
           severity: string | null
           triggered_at: string
+          organization_id: string | null
         }
         Insert: {
           id?: string
@@ -4125,6 +4162,7 @@ export type Database = {
           accuracy_drop_pct?: number | null
           severity?: string | null
           triggered_at?: string
+          organization_id?: string | null
         }
         Update: {
           id?: string | undefined
@@ -4135,6 +4173,7 @@ export type Database = {
           accuracy_drop_pct?: number | null | undefined
           severity?: string | null | undefined
           triggered_at?: string | undefined
+          organization_id?: string | null
         }
         Relationships: []
       }

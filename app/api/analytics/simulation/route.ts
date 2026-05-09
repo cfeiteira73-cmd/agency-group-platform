@@ -2,6 +2,7 @@
 // GET  /api/analytics/simulation  — list simulations for a model version
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import {
   createSimulation,
@@ -17,8 +18,11 @@ export const runtime = 'nodejs'
 export const maxDuration = 60   // simulations can take time
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'analytics:read')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -54,8 +58,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'commercial:write')) {
     return NextResponse.json({ error: 'Forbidden — requires ops_manager or higher' }, { status: 403 })
   }

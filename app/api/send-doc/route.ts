@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import Anthropic from '@anthropic-ai/sdk'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 export const runtime = 'nodejs'
 
@@ -137,6 +138,10 @@ ${rows ? `
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const resendKey = process.env.RESEND_API_KEY
   if (!resendKey) return NextResponse.json({ error: 'RESEND_API_KEY não configurada' }, { status: 500 })
 

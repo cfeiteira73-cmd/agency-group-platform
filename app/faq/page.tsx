@@ -10,8 +10,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.agencygroup.pt/faq',
     languages: {
-      'pt': 'https://www.agencygroup.pt/faq',
-      'en': 'https://www.agencygroup.pt/en/faq',
+      'pt-PT':     'https://www.agencygroup.pt/faq',
+      'en':        'https://www.agencygroup.pt/en/faq',
+      'fr':        'https://www.agencygroup.pt/fr/faq',
+      'de':        'https://www.agencygroup.pt/de/faq',
       'x-default': 'https://www.agencygroup.pt/faq',
     },
   },

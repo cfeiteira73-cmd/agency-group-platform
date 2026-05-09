@@ -2,6 +2,7 @@
 // GET   /api/ops/feature-flags/[key]  — get flag state
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { logAction, buildAuditEntry }  from '@/lib/auth/auditLog'
 import { getFlag, enableFlag, disableFlag } from '@/lib/ops/featureFlags'
@@ -13,8 +14,11 @@ type Params = { params: Promise<{ key: string }> }
 export async function GET(_req: NextRequest, { params }: Params) {
   const { key } = await params
 
-  const authHeader = _req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'system:read_alerts')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -27,8 +31,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { key } = await params
 
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   // Kill switches require ops_manager+; regular flags require ops_manager+
   if (!user || !hasPermission(user.role, 'system:resolve_alerts')) {
     return NextResponse.json({ error: 'Forbidden — requires ops_manager or higher' }, { status: 403 })

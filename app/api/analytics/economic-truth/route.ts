@@ -2,6 +2,7 @@
 // GET  /api/analytics/economic-truth — query truth events + summary
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { supabaseAdmin }               from '@/lib/supabase'
 import {
@@ -16,7 +17,11 @@ import type { EconomicTruthInputs } from '@/lib/intelligence/economicTruth'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  const user = await getAdminRole(req.headers.get('authorization')?.replace('Bearer ', '') ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'analytics:read')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -66,7 +71,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await getAdminRole(req.headers.get('authorization')?.replace('Bearer ', '') ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'commercial:write')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendWhatsApp, templates, type TemplateName } from '@/lib/whatsapp/client'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
-  // Portal token check — same auth as used by other portal APIs
-  const authHeader = req.headers.get('x-portal-token') || req.cookies.get('ag_portal')?.value
-  if (!authHeader) {
+  if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

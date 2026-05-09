@@ -2,6 +2,7 @@
 // POST /api/ops/tasks  — create | claim | complete | cancel | escalate
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { safeCompare }                 from '@/lib/safeCompare'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { logAction, buildAuditEntry }  from '@/lib/auth/auditLog'
@@ -21,8 +22,11 @@ import type { TaskType, TaskPriority } from '@/lib/ops/operatorTasks'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'system:read_jobs')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -61,7 +65,11 @@ export async function POST(req: NextRequest) {
   let actorEmail   = 'service'
 
   if (!isService) {
-    const user = await getAdminRole(authHeader ?? '')
+    const session = await auth()
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const user = await getAdminRole(session.user.email)
     if (!user || !hasPermission(user.role, 'system:read_jobs')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }

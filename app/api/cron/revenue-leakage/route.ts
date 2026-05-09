@@ -10,6 +10,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { auth }                      from '@/auth'
 import { detectRevenueLeakage, summariseLeakage } from '@/lib/commercial/revenueLeakage'
 import { getAdminRole, isRoleAtLeast } from '@/lib/auth/adminAuth'
 import { cronCorrelationId } from '@/lib/observability/correlation'
@@ -30,8 +31,9 @@ function isCronAuthorized(req: NextRequest): boolean {
   return incoming === secret
 }
 
-async function isPortalAuthorized(req: NextRequest): Promise<boolean> {
-  const email = req.headers.get('authorization')?.replace('Bearer ', '').trim()
+async function isPortalAuthorized(_req: NextRequest): Promise<boolean> {
+  const session = await auth()
+  const email   = session?.user?.email
   if (!email) return false
   const admin = await getAdminRole(email)
   if (!admin) return false

@@ -2,6 +2,7 @@
 // Multi-period (7d/30d/90d) market segment intelligence with regime shift alerts
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import {
   getSegmentTrends,
@@ -12,8 +13,11 @@ import type { PriceBand, PeriodLabel } from '@/lib/intelligence/marketSegments'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'analytics:read')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

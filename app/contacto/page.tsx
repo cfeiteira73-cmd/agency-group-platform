@@ -10,8 +10,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.agencygroup.pt/contacto',
     languages: {
-      pt: 'https://www.agencygroup.pt/contacto',
-      en: 'https://www.agencygroup.pt/en/contacto',
+      'pt-PT':     'https://www.agencygroup.pt/contacto',
+      'en':        'https://www.agencygroup.pt/en/contacto',
+      'fr':        'https://www.agencygroup.pt/fr/contacto',
+      'de':        'https://www.agencygroup.pt/de/contacto',
       'x-default': 'https://www.agencygroup.pt/contacto',
     },
   },

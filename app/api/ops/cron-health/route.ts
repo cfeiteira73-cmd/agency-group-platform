@@ -2,6 +2,7 @@
 // POST /api/ops/cron-health  — force-release a stuck lock (super_admin only)
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { getActiveLocks, forceReleaseLock, getLockStatus } from '@/lib/ops/cronLock'
 import { supabaseAdmin }               from '@/lib/supabase'
@@ -9,8 +10,11 @@ import { supabaseAdmin }               from '@/lib/supabase'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'system:read_alerts')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -83,8 +87,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   // Force-releasing a lock is a super_admin operation
   if (!user || !hasPermission(user.role, 'roles:grant')) {
     return NextResponse.json({ error: 'Forbidden — requires super_admin' }, { status: 403 })

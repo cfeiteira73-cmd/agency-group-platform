@@ -1,9 +1,9 @@
 // GET /api/analytics/portal-funnel
-// Portal-auth-compatible funnel + attribution endpoint.
-// Uses email Bearer token (same pattern as all other portal API routes).
+// Portal funnel + attribution endpoint.
 // Extends /api/analytics/funnel with source attribution from contacts table.
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole }                from '@/lib/auth/adminAuth'
 import {
   fetchFunnelCounts,
@@ -15,11 +15,11 @@ import { supabaseAdmin }               from '@/lib/supabase'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  // Portal magic-link auth: Authorization: Bearer <email>
-  const email = req.headers.get('authorization')?.replace('Bearer ', '').trim()
-  if (!email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  void req
+  const session = await auth()
+  if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const admin = await getAdminRole(email)
+  const admin = await getAdminRole(session.user.email)
   if (!admin)  return NextResponse.json({ error: 'Forbidden'    }, { status: 403 })
 
   const { searchParams } = new URL(req.url)

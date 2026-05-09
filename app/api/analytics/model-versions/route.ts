@@ -2,6 +2,7 @@
 // POST /api/analytics/model-versions  — create new draft version | promote | archive
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { logAction, buildAuditEntry }  from '@/lib/auth/auditLog'
 import {
@@ -17,8 +18,11 @@ import type { ModelStatus } from '@/lib/intelligence/modelVersioning'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'analytics:read')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -52,8 +56,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   // Creating versions: commercial:write (ops_manager+)
   // Promoting/archiving: roles:grant (super_admin only)
   if (!user || !hasPermission(user.role, 'commercial:write')) {

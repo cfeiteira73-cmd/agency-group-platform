@@ -2,6 +2,7 @@
 // SLA breach dashboard: overdue deals, breach severity, owning agents
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { supabaseAdmin }               from '@/lib/supabase'
 
@@ -19,8 +20,11 @@ const SLA_DAYS: Record<string, number> = {
 }
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'system:read_alerts')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

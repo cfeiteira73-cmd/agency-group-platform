@@ -2,6 +2,7 @@
 // Rank all eligible recipients for a property by conversion propensity
 
 import { NextRequest, NextResponse }   from 'next/server'
+import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import {
   getRecipientSignalsForProperty,
@@ -12,8 +13,11 @@ import {
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const user       = await getAdminRole(authHeader ?? '')
+  const session = await auth()
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const user = await getAdminRole(session.user.email)
   if (!user || !hasPermission(user.role, 'analytics:read')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
