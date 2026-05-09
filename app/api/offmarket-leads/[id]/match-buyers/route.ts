@@ -10,6 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import track from '@/lib/trackLearningEvent'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const TABLE = 'offmarket_leads'
 const CONTACTS_TABLE = 'contacts'
@@ -510,6 +512,19 @@ export async function POST(
     }
 
     console.log(`[match-buyers v2.0] "${lead.nome}" — ${matches.length} matches, best=${bestScore}, DPS=${dealPriorityScore}`)
+
+    // Non-blocking learning event
+    track.matchCreated({
+      lead_id:        id,
+      match_score:    bestScore,
+      correlation_id: getRequestCorrelationId(req),
+      source_system:  'api',
+      metadata: {
+        matched_buyers_count: matches.length,
+        deal_priority_score:  dealPriorityScore,
+        attack_recommendation: attackRec,
+      },
+    })
 
     return NextResponse.json({
       lead_id:             id,

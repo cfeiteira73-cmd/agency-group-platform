@@ -183,6 +183,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         .single()
 
       if (!error && data) {
+        // Non-blocking learning event
+        track.dealCreated({
+          deal_id:     data.id ?? null,
+          agent_email: (session?.user as { email?: string })?.email ?? null,
+          correlation_id: getRequestCorrelationId(req),
+          source_system: 'api',
+          metadata: { fase: body.fase, ref, imovel: body.imovel },
+        })
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { status: 201, headers: rateLimitHeaders() })
       }
       if (error) console.warn('[deals POST] Supabase error:', error.message)

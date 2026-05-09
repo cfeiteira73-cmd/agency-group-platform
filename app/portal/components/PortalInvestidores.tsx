@@ -142,131 +142,6 @@ const STAGE_COLORS: Record<DealStage, string> = {
 const DEAL_TYPES = ['Buy & Hold', 'Value-Add', 'Flip', 'Development']
 const MEMO_LANGS = ['PT', 'EN', 'FR', 'DE', 'AR']
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const INITIAL_INVESTORS: Investor[] = [
-  {
-    id: 1, name: 'James Mitchell', nationality: 'UK', flag: '🇬🇧',
-    type: 'family_office', capitalMin: 5000000, capitalMax: 20000000,
-    yieldTarget: 3.5, horizonYears: 10, riskProfile: 'moderado',
-    zonas: ['Lisboa'], tipoImovel: ['Apartamento', 'Moradia'],
-    ocupacao: 'arrendamento_longa', status: 'activo',
-    lastContact: '2026-04-01', totalInvested: 12500000, dealsHistory: 3,
-    notes: 'Prefere imóveis prime Lisboa. Fundo familiar multi-geracional. Horizon 10+ anos.',
-    email: 'james.mitchell@mitchellfamily.co.uk', phone: '+44 7700 900123',
-    tags: ['Lisboa Prime', 'Long-term', 'Off-market'],
-  },
-  {
-    id: 2, name: 'Marie-Claire Dubois', nationality: 'FR', flag: '🇫🇷',
-    type: 'hnwi', capitalMin: 1000000, capitalMax: 3000000,
-    yieldTarget: 4.5, horizonYears: 7, riskProfile: 'moderado',
-    zonas: ['Comporta', 'Alentejo'], tipoImovel: ['Herdade', 'Moradia'],
-    ocupacao: 'uso_proprio', status: 'activo',
-    lastContact: '2026-03-28', totalInvested: 2200000, dealsHistory: 1,
-    notes: 'Procura second home + AL. Francesa executiva. Quer lifestyle Comporta.',
-    email: 'mc.dubois@gmail.com', phone: '+33 6 12 34 56 78',
-    tags: ['Comporta', 'Lifestyle', 'NHR'],
-  },
-  {
-    id: 3, name: 'Khalid Al-Rashidi', nationality: 'AE', flag: '🇦🇪',
-    type: 'hnwi', capitalMin: 3000000, capitalMax: 10000000,
-    yieldTarget: 4.0, horizonYears: 5, riskProfile: 'agressivo',
-    zonas: ['Lisboa', 'Cascais'], tipoImovel: ['Apartamento', 'Moradia'],
-    ocupacao: 'qualquer', status: 'activo',
-    lastContact: '2026-04-02', totalInvested: 6800000, dealsHistory: 2,
-    notes: 'Investidor Dubai. Golden Visa concluído. Quer portfolio diversificado PT.',
-    email: 'khalid@alrashidi-inv.ae', phone: '+971 50 123 4567',
-    tags: ['Golden Visa', 'Portfolio', 'UAE'],
-  },
-  {
-    id: 4, name: 'Chen Wei', nationality: 'CN', flag: '🇨🇳',
-    type: 'buy_hold', capitalMin: 2000000, capitalMax: 5000000,
-    yieldTarget: 5.0, horizonYears: 8, riskProfile: 'moderado',
-    zonas: ['Porto', 'Lisboa'], tipoImovel: ['Apartamento', 'Comercial'],
-    ocupacao: 'arrendamento_longa', status: 'activo',
-    lastContact: '2026-03-15', totalInvested: 3400000, dealsHistory: 2,
-    notes: 'Investidor Shanghai. Foco yield + capital appreciation. Porto emergente.',
-    email: 'chenwei@greatwall-cap.com', phone: '+86 135 0000 1234',
-    tags: ['Porto', 'Yield', 'Buy & Hold'],
-  },
-  {
-    id: 5, name: 'Francisco Santos', nationality: 'PT', flag: '🇵🇹',
-    type: 'yield_hunter', capitalMin: 500000, capitalMax: 2000000,
-    yieldTarget: 6.0, horizonYears: 5, riskProfile: 'moderado',
-    zonas: ['Porto'], tipoImovel: ['Apartamento'],
-    ocupacao: 'AL', status: 'activo',
-    lastContact: '2026-04-03', totalInvested: 1200000, dealsHistory: 4,
-    notes: 'Investidor português experiente. AL Porto Foz. Conhece bem o mercado.',
-    email: 'francisco.santos@gmail.com', phone: '+351 912 345 678',
-    tags: ['AL', 'Porto Foz', 'Experiente'],
-  },
-  {
-    id: 6, name: 'Ahmed Al-Mansouri', nationality: 'SA', flag: '🇸🇦',
-    type: 'family_office', capitalMin: 5000000, capitalMax: 15000000,
-    yieldTarget: 3.8, horizonYears: 15, riskProfile: 'conservador',
-    zonas: ['Algarve', 'Lisboa'], tipoImovel: ['Moradia', 'Herdade'],
-    ocupacao: 'uso_proprio', status: 'activo',
-    lastContact: '2026-03-20', totalInvested: 9500000, dealsHistory: 2,
-    notes: 'Saudi family office. Segunda residência + estate. Prazo ultra longo.',
-    email: 'ahmed@almansouri-family.sa', phone: '+966 50 123 4567',
-    tags: ['Algarve Premium', 'Family Estate', 'Saudi'],
-  },
-  {
-    id: 7, name: 'Klaus Weber', nationality: 'DE', flag: '🇩🇪',
-    type: 'buy_hold', capitalMin: 1000000, capitalMax: 3000000,
-    yieldTarget: 4.8, horizonYears: 6, riskProfile: 'conservador',
-    zonas: ['Algarve'], tipoImovel: ['Moradia'],
-    ocupacao: 'qualquer', status: 'activo',
-    lastContact: '2026-03-10', totalInvested: 1800000, dealsHistory: 1,
-    notes: 'Empresário Frankfurt. Resort Algarve. Quer gestão delegada turnkey.',
-    email: 'k.weber@weber-ventures.de', phone: '+49 151 1234 5678',
-    tags: ['Algarve Resort', 'Turnkey', 'Alemão'],
-  },
-  {
-    id: 8, name: 'Robert Johnson', nationality: 'US', flag: '🇺🇸',
-    type: 'fund', capitalMin: 10000000, capitalMax: 50000000,
-    yieldTarget: 5.5, horizonYears: 7, riskProfile: 'agressivo',
-    zonas: ['Lisboa', 'Porto', 'Algarve', 'Cascais'], tipoImovel: ['Apartamento', 'Moradia', 'Comercial'],
-    ocupacao: 'qualquer', status: 'activo',
-    lastContact: '2026-04-01', totalInvested: 28000000, dealsHistory: 6,
-    notes: 'NYC family office. Portfolio PT diversificado. Quer 5-10 ativos por ano.',
-    email: 'rjohnson@johnsoninvestments.com', phone: '+1 212 555 0100',
-    tags: ['Fund', 'Portfolio PT', 'USA', 'IRR 12%+'],
-  },
-  {
-    id: 9, name: 'Isabella Rodrigues', nationality: 'BR', flag: '🇧🇷',
-    type: 'hnwi', capitalMin: 800000, capitalMax: 2500000,
-    yieldTarget: 5.2, horizonYears: 5, riskProfile: 'moderado',
-    zonas: ['Lisboa', 'Cascais'], tipoImovel: ['Apartamento'],
-    ocupacao: 'AL', status: 'activo',
-    lastContact: '2026-03-25', totalInvested: 1600000, dealsHistory: 2,
-    notes: 'Empresária SP. NHR candidata. Lisboa Chiado ou Cascais. AL premium.',
-    email: 'isabella.r@rodriguesgroup.com.br', phone: '+55 11 99999-1234',
-    tags: ['NHR', 'Brasil', 'AL Premium', 'Cascais'],
-  },
-  {
-    id: 10, name: 'Hamad bin Jassim', nationality: 'QA', flag: '🇶🇦',
-    type: 'fund', capitalMin: 20000000, capitalMax: 999999999,
-    yieldTarget: 4.0, horizonYears: 20, riskProfile: 'conservador',
-    zonas: ['Lisboa', 'Cascais', 'Algarve', 'Comporta'],
-    tipoImovel: ['Moradia', 'Herdade', 'Comercial'],
-    ocupacao: 'qualquer', status: 'activo',
-    lastContact: '2026-04-04', totalInvested: 75000000, dealsHistory: 4,
-    notes: 'Qatar sovereign-linked fund. Institutional. Capital preservation + trophy assets.',
-    email: 'hbj@qatarportfolio.qa', phone: '+974 5555 1234',
-    tags: ['Institutional', 'Qatar', 'Trophy', 'Multi-100M'],
-  },
-]
-
-const INITIAL_DEALS: InvestorDeal[] = [
-  { id: 1, investorId: 1, propertyRef: 'AG-2026-012', propertyTitle: 'Moradia Belém com Jardim', propertyZona: 'Lisboa', propertyPreco: 3200000, matchScore: 87, yieldEstimado: 3.8, irrEstimado: 10.2, stage: 'proposta', sentAt: '2026-03-20', memo: null, notas: 'Cliente muito interessado. A aguardar proposta final.' },
-  { id: 2, investorId: 3, propertyRef: 'AG-2026-020', propertyTitle: 'Villa Quinta da Marinha', propertyZona: 'Cascais', propertyPreco: 3800000, matchScore: 92, yieldEstimado: 4.1, irrEstimado: 11.5, stage: 'visita', sentAt: '2026-03-28', memo: null, notas: 'Visita agendada para dia 10 Abril.' },
-  { id: 3, investorId: 5, propertyRef: 'AG-2026-040', propertyTitle: 'Apartamento Foz do Douro', propertyZona: 'Porto', propertyPreco: 980000, matchScore: 95, yieldEstimado: 6.2, irrEstimado: 14.1, stage: 'interesse', sentAt: '2026-04-01', memo: null, notas: 'Alto interesse. A calcular capex remodelação.' },
-  { id: 4, investorId: 8, propertyRef: 'AG-2026-010', propertyTitle: 'Penthouse Príncipe Real', propertyZona: 'Lisboa', propertyPreco: 2850000, matchScore: 78, yieldEstimado: 4.8, irrEstimado: 12.3, stage: 'enviado', sentAt: '2026-04-03', memo: null, notas: 'Deal memo enviado. A aguardar feedback.' },
-  { id: 5, investorId: 2, propertyRef: 'AG-2026-030', propertyTitle: 'Herdade Comporta Exclusiva', propertyZona: 'Comporta', propertyPreco: 6500000, matchScore: 88, yieldEstimado: 4.3, irrEstimado: 9.8, stage: 'novo', sentAt: null, memo: null, notas: 'Match excelente. Preparar deal memo.' },
-  { id: 6, investorId: 7, propertyRef: 'AG-2026-050', propertyTitle: 'Villa Vale do Lobo Golf', propertyZona: 'Algarve', propertyPreco: 4200000, matchScore: 91, yieldEstimado: 4.6, irrEstimado: 11.0, stage: 'fechado', sentAt: '2026-02-15', memo: null, notas: 'Deal fechado. Escritura realizada.' },
-]
-
 // ─── Utility Functions ────────────────────────────────────────────────────────
 
 function fmt(n: number): string {
@@ -1363,19 +1238,19 @@ function NewInvestorModal({ onClose, onSave }: { onClose: () => void; onSave: (i
 
 export default function PortalInvestidores() {
   const [investors, setInvestors] = useState<Investor[]>(() => {
-    if (typeof window === 'undefined') return INITIAL_INVESTORS
+    if (typeof window === 'undefined') return []
     try {
       const stored = localStorage.getItem('ag_investors')
-      return stored ? JSON.parse(stored) : INITIAL_INVESTORS
-    } catch { return INITIAL_INVESTORS }
+      return stored ? JSON.parse(stored) : []
+    } catch { return [] }
   })
 
   const [deals, setDeals] = useState<InvestorDeal[]>(() => {
-    if (typeof window === 'undefined') return INITIAL_DEALS
+    if (typeof window === 'undefined') return []
     try {
       const stored = localStorage.getItem('ag_investor_deals')
-      return stored ? JSON.parse(stored) : INITIAL_DEALS
-    } catch { return INITIAL_DEALS }
+      return stored ? JSON.parse(stored) : []
+    } catch { return [] }
   })
 
   const [mainTab, setMainTab] = useState<MainTab>('investidores')
