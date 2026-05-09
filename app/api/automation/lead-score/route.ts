@@ -8,6 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import track from '@/lib/trackLearningEvent'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -272,6 +274,7 @@ function scoreLeadRequest(data: LeadScoreRequest): LeadScoreResponse {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -381,6 +384,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Fallback: log the full payload so ops can manually recover
       console.error('[lead-score] FALLBACK — upsert payload:', JSON.stringify(upsertPayload))
     }
+
+    // Non-blocking learning event — lead_scored (fire-and-forget)
+    track.leadScored({
+      lead_id:        typeof raw.id === 'string' ? raw.id : null,
+      agent_email:    null,
+      correlation_id: corrId,
+      source_system:  'api',
+      metadata: {
+        score:          result.score,
+        previous_score: typeof raw.lead_score === 'number' ? raw.lead_score : null,
+        tier:           result.tier,
+        breakdown:      result.breakdown,
+        source:         leadData.source ?? null,
+        detected_intent: deriveIntent(leadData.source, leadData.message),
+      },
+    })
 
     return NextResponse.json(result, { status: 200 })
   } catch (error) {

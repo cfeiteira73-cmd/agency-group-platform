@@ -320,6 +320,33 @@ export async function updateConfigValue(
 }
 
 // ---------------------------------------------------------------------------
+// Feature flags — stored as platform_config rows with config_type='boolean'
+// Key format: 'feature.<flag_name>'  e.g. 'feature.ai_deal_packs_enabled'
+// ---------------------------------------------------------------------------
+
+/**
+ * Check if a named feature flag is enabled.
+ * Falls back to false if the flag doesn't exist or DB is unavailable.
+ *
+ * @example
+ *   if (await getFeatureFlag('ai_deal_packs_enabled')) { ... }
+ */
+export async function getFeatureFlag(flag: string): Promise<boolean> {
+  return getConfigValue(`feature.${flag}`, false)
+}
+
+/**
+ * Set (upsert) a feature flag value.
+ */
+export async function setFeatureFlag(
+  flag:      string,
+  enabled:   boolean,
+  updatedBy: string,
+): Promise<void> {
+  return updateConfigValue(`feature.${flag}`, enabled, updatedBy)
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

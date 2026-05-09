@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { safeCompare } from '@/lib/safeCompare'
+import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -308,6 +310,9 @@ function calculateRisk(req: PipelineAdvanceRequest): { risk_score: number; risk_
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<NextResponse<PipelineAdvanceResponse | { error: string }>> {
+  const corrId = getRequestCorrelationId(request)
+  const startedAt = new Date().toISOString()
+
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -360,12 +365,36 @@ export async function POST(request: NextRequest): Promise<NextResponse<PipelineA
       probability,
     }
 
-    return NextResponse.json(response, { status: 200 })
+    // Best-effort audit log — non-blocking
+    try {
+      await (supabaseAdmin as any).from('automations_log').insert({
+        workflow_name: 'pipeline-advance',
+        trigger_type: 'api',
+        status: 'success',
+        started_at: startedAt,
+        completed_at: new Date().toISOString(),
+        outcome: {
+          deal_id: body.deal_id,
+          current_stage: body.current_stage,
+          should_advance: advancement.should_advance,
+          next_stage: advancement.next_stage ?? null,
+          risk_level,
+          risk_score,
+          probability,
+          correlation_id: corrId,
+        },
+      })
+    } catch { /* silent */ }
+
+    return NextResponse.json({ ...response, correlation_id: corrId }, {
+      status: 200,
+      headers: { 'x-correlation-id': corrId },
+    })
   } catch (error) {
     console.error('[pipeline-advance] Error:', error)
     return NextResponse.json(
-      { error: 'Erro interno ao processar avanço de pipeline' },
-      { status: 500 }
+      { error: 'Erro interno ao processar avanço de pipeline', correlation_id: corrId },
+      { status: 500, headers: { 'x-correlation-id': corrId } }
     )
   }
 }

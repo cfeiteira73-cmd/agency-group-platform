@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -29,6 +30,9 @@ function isAuthorized(req: NextRequest): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
+  const startedAt = new Date().toISOString()
+
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -122,9 +126,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ candidates, count: candidates.length })
+    // Best-effort audit log — non-blocking
+    try {
+      await (supabaseAdmin as any).from('automations_log').insert({
+        workflow_name: 'nurture-candidates',
+        trigger_type: 'api',
+        status: 'success',
+        started_at: startedAt,
+        completed_at: new Date().toISOString(),
+        outcome: {
+          candidates_found: candidates.length,
+          windows_processed: windows.length,
+          correlation_id: corrId,
+        },
+      })
+    } catch { /* silent */ }
+
+    return NextResponse.json({ candidates, count: candidates.length, correlation_id: corrId }, {
+      headers: { 'x-correlation-id': corrId },
+    })
   } catch (err) {
     console.error('[nurture-candidates] error:', err)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal Server Error', correlation_id: corrId }, {
+      status: 500,
+      headers: { 'x-correlation-id': corrId },
+    })
   }
 }

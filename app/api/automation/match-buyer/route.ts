@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { safeCompare } from '@/lib/safeCompare'
 import track from '@/lib/trackLearningEvent'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -366,6 +367,9 @@ async function persistMatches(
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
+  const startedAt = new Date().toISOString()
+
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -555,10 +559,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       // ── Learning event: match_created ──────────────────────────────────────
       track.matchCreated({
-        lead_id:      buyer.lead_id,
-        property_id:  top5[0]?.property?.id ?? null,
-        agent_email:  agentEmail ?? null,
-        match_score:  top5[0]?.match_score ?? null,
+        lead_id:        buyer.lead_id,
+        property_id:    top5[0]?.property?.id ?? null,
+        agent_email:    agentEmail ?? null,
+        match_score:    top5[0]?.match_score ?? null,
+        correlation_id: corrId,
+        source_system:  'api',
         metadata: {
           total_evaluated: properties.length,
           top5_scores:     top5.map(r => r.match_score),
@@ -566,9 +572,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           locations:       buyer.locations,
           use_type:        buyer.use_type ?? null,
           auto_deal_pack:  topMatch.match_score >= 80 ? 'triggered' : 'skipped',
+          buyer_id:        buyer.lead_id,
         },
       })
     }
+
+    // Best-effort audit log — non-blocking
+    try {
+      await (supabase as any).from('automations_log').insert({
+        workflow_name: 'match-buyer',
+        trigger_type: 'api',
+        status: 'success',
+        started_at: startedAt,
+        completed_at: new Date().toISOString(),
+        outcome: {
+          total_evaluated: properties.length,
+          matches_returned: top5.length,
+          source,
+          lead_id: buyer.lead_id ?? null,
+          top_score: top5[0]?.match_score ?? null,
+          correlation_id: corrId,
+        },
+      })
+    } catch { /* silent */ }
 
     return NextResponse.json({
       matches:                     top5,
@@ -583,12 +609,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         features_required: buyer.features_required ?? [],
       },
       generated_at: new Date().toISOString(),
+      correlation_id: corrId,
       ...(buyer.lead_id && { matches_persisted: true }),
+    }, {
+      headers: { 'x-correlation-id': corrId },
     })
 
   } catch (error) {
     console.error('[match-buyer] Error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', correlation_id: corrId }, {
+      status: 500,
+      headers: { 'x-correlation-id': corrId },
+    })
   }
 }
 

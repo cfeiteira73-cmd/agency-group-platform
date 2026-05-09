@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { auth } from '@/auth'
+import { rateLimit } from '@/lib/rateLimit'
 
 const RESEND_KEY  = process.env.RESEND_API_KEY ?? ''
 const FROM_EMAIL  = 'Agency Group <geral@agencygroup.pt>'
@@ -100,6 +101,13 @@ function buildAdminEmail(b: BookingPayload): string {
 }
 
 export async function POST(req: NextRequest) {
+  // ── Rate limit: 3 bookings per IP per minute ───────────────────────────────
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await rateLimit(`booking:${ip}`, { maxAttempts: 3, windowMs: 60_000 })
+  if (!rl.success) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+  }
+
   // ── CSRF protection — only allow requests from our own origin ──────────────
   const origin = req.headers.get('origin')
   if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
@@ -116,8 +124,18 @@ export async function POST(req: NextRequest) {
     const body: BookingPayload = await req.json()
     const { nome, telefone, propertyRef, date, time } = body
 
+    // ── Input validation ─────────────────────────────────────────────────────
     if (!nome || !telefone || !propertyRef || !date || !time) {
       return NextResponse.json({ error: 'Campos obrigatórios em falta.' }, { status: 400 })
+    }
+    if (nome.trim().length > 100) {
+      return NextResponse.json({ error: 'Nome demasiado longo.' }, { status: 400 })
+    }
+    if (telefone.trim().length > 30) {
+      return NextResponse.json({ error: 'Telefone inválido.' }, { status: 400 })
+    }
+    if (body.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+      return NextResponse.json({ error: 'Email inválido.' }, { status: 400 })
     }
 
     if (!RESEND_KEY) {

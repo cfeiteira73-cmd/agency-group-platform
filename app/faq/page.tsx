@@ -29,6 +29,13 @@ export const metadata: Metadata = {
       alt: 'FAQ Imobiliário Portugal — Agency Group',
     }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FAQ Imobiliário Portugal 2026 · Agency Group',
+    description: 'Todas as respostas: Golden Visa, NHR, IMT, crédito habitação para estrangeiros, Visto D7, mais-valias, processo de compra em Portugal.',
+    site: '@agencygroup_pt',
+    images: ['https://www.agencygroup.pt/api/og?title=FAQ+%E2%80%94+Perguntas+Frequentes&subtitle=Portugal+%C2%B7+NHR+%C2%B7+CPCV+%C2%B7+IMT+%C2%B7+AMI+22506'],
+  },
 }
 
 // ─── Acronym expansion — WCAG / accessibility ─────────────────────────────────

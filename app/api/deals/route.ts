@@ -12,6 +12,7 @@ import { auth } from '@/auth'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import track from '@/lib/trackLearningEvent'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 

@@ -98,15 +98,15 @@ Activate premium mode: off-market exclusives, direct partner introductions, disc
 - Always end multi-step conversations with a concrete next step`
 
 export async function POST(req: NextRequest) {
-  // Rate limit: 30 Sofia messages per IP per hour
+  // Rate limit: 5 Sofia messages per IP per minute (AI route — expensive)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-  const rl = await rateLimit(`sofia:${ip}`, { maxAttempts: 30, windowMs: 3_600_000 })
+  const rl = await rateLimit(`sofia:${ip}`, { maxAttempts: 5, windowMs: 60_000 })
   if (!rl.success) {
     const retryMins = getRetryAfterMinutes(rl.reset)
     const encoder = new TextEncoder()
     const limitStream = new ReadableStream({
       start(controller) {
-        const msg = `Olá! Atingiu o limite de mensagens por hora. Pode continuar a conversa em ${retryMins} minuto${retryMins === 1 ? '' : 's'}.\n\nPara apoio imediato: 📱 **+351 919 948 986** (WhatsApp)`
+        const msg = `Olá! Atingiu o limite de mensagens por minuto. Pode continuar a conversa em ${retryMins} minuto${retryMins === 1 ? '' : 's'}.\n\nPara apoio imediato: 📱 **+351 919 948 986** (WhatsApp)`
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: msg })}\n\n`))
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
         controller.close()

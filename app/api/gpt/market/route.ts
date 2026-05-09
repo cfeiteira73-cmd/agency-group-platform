@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
+
+export const runtime = 'edge'
 
 const ZONES: Record<string, Record<string, unknown>> = {
   'Lisboa': {
@@ -58,6 +61,13 @@ const ZONES: Record<string, Record<string, unknown>> = {
 }
 
 export async function GET(req: NextRequest) {
+  // Rate limit: 5 req/min per IP (AI/GPT route)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await rateLimit(`gpt-market:${ip}`, { maxAttempts: 5, windowMs: 60_000 })
+  if (!rl.success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   try {
     const { searchParams } = new URL(req.url)
     const zona = searchParams.get('zona') || 'Lisboa'

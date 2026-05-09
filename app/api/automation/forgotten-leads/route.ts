@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -23,6 +24,9 @@ function isBearerAuthorized(req: NextRequest): boolean {
 }
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
+  const startedAt = new Date().toISOString()
+
   const bearerOk = isBearerAuthorized(req)
   if (!bearerOk) {
     const session = await auth()
@@ -135,6 +139,24 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Best-effort audit log — non-blocking
+    try {
+      await (supabaseAdmin as any).from('automations_log').insert({
+        workflow_name: 'forgotten-leads',
+        trigger_type: 'api',
+        status: 'success',
+        started_at: startedAt,
+        completed_at: new Date().toISOString(),
+        outcome: {
+          total_forgotten: classified.length,
+          critical: classified.filter(l => l.urgency === 'critical').length,
+          high: classified.filter(l => l.urgency === 'high').length,
+          days_threshold: days,
+          correlation_id: corrId,
+        },
+      })
+    } catch { /* silent */ }
+
     return NextResponse.json({
       success: true,
       total: classified.length,
@@ -142,9 +164,15 @@ export async function GET(req: NextRequest) {
       high: classified.filter(l => l.urgency === 'high').length,
       leads: classified,
       days_threshold: days,
+      correlation_id: corrId,
+    }, {
+      headers: { 'x-correlation-id': corrId },
     })
   } catch (err) {
     console.error('[forgotten-leads] error:', err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return NextResponse.json({ error: 'Erro interno', correlation_id: corrId }, {
+      status: 500,
+      headers: { 'x-correlation-id': corrId },
+    })
   }
 }

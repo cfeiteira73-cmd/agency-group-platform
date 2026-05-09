@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, createHash } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import log from '@/lib/logger'
 
 async function checkVerifyRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
   if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
@@ -35,7 +36,9 @@ async function checkVerifyRateLimit(ip: string): Promise<{ allowed: boolean; rem
 
 const SECRET = process.env.AUTH_SECRET
 if (!SECRET) {
-  console.error('[auth/verify] AUTH_SECRET não configurado')
+  log.error('[auth/verify] AUTH_SECRET não configurado', new Error('AUTH_SECRET missing'), {
+    route: '/api/auth/verify',
+  })
   // Não faz throw — deixa a rota tratar como 500 normalmente
 }
 

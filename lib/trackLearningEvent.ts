@@ -28,6 +28,11 @@ export type LearningEventType =
   | 'cpcv_signed'
   | 'closed'
   | 'rejected'
+  // Phase 7 — signal/data hardening additions
+  | 'lead_scored'
+  | 'deal_created'
+  | 'pipeline_stage_advanced'
+  | 'contact_created'
 
 export interface TrackPayload {
   /** contacts.id — UUID */
@@ -202,6 +207,20 @@ const track = {
 
   /** Deal lost or lead rejected */
   rejected: (p: TrackPayload) => void insertEvent('rejected', p),
+
+  // ── Phase 7 additions ──────────────────────────────────────────────────────
+
+  /** Lead scored by the lead-score engine (score, previous_score, lead_id in metadata) */
+  leadScored: (p: TrackPayload) => void insertEvent('lead_scored', p),
+
+  /** New deal row created in the deals table */
+  dealCreated: (p: TrackPayload) => void insertEvent('deal_created', p),
+
+  /** Pipeline stage evaluated / advanced by pipeline-advance engine */
+  pipelineStageAdvanced: (p: TrackPayload) => void insertEvent('pipeline_stage_advanced', p),
+
+  /** New contact row inserted via contacts POST */
+  contactCreated: (p: TrackPayload) => void insertEvent('contact_created', p),
 }
 
 export default track

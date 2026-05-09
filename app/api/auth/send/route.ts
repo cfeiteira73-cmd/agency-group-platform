@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
+import log from '@/lib/logger'
 
 const VERIFY_URL = (process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt') + '/api/auth/verify'
 
@@ -100,13 +101,17 @@ export async function POST(req: NextRequest) {
     })
 
     if (error) {
-      console.error('Resend error:', error)
+      log.error('[auth/send] Resend error', error instanceof Error ? error : new Error(String(error)), {
+        route: '/api/auth/send',
+      })
       return NextResponse.json({ error: 'Falha no envio. Tenta novamente.' }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true })
   } catch (err) {
-    console.error(err)
+    log.error('[auth/send] unhandled error', err instanceof Error ? err : new Error(String(err)), {
+      route: '/api/auth/send',
+    })
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 }

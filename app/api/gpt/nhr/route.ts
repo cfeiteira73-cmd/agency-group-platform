@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
-export async function GET(_req: NextRequest) {
+export const runtime = 'edge'
+
+export async function GET(req: NextRequest) {
+  // Rate limit: 5 req/min per IP (GPT route)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await rateLimit(`gpt-nhr:${ip}`, { maxAttempts: 5, windowMs: 60_000 })
+  if (!rl.success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
   try {
     return NextResponse.json(
       {
@@ -32,7 +41,10 @@ export async function GET(_req: NextRequest) {
         link: 'https://www.agencygroup.pt/blog/nhr-ifici-guia-completo',
       },
       {
-        headers: { 'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt' },
+        headers: {
+          'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL ?? 'https://agencygroup.pt',
+          'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+        },
       }
     )
   } catch {

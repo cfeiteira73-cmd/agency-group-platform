@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ─── Mock fallback ────────────────────────────────────────────────────────────
 
@@ -13,6 +14,9 @@ function mockAlertMessage(property: Record<string, unknown>): string {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
+  const startedAt = new Date().toISOString()
+
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })

@@ -11,6 +11,8 @@ export const runtime = 'edge'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  title: 'Agency Group · Imobiliário de Luxo Portugal · AMI 22506',
+  description: 'Boutique imobiliária de luxo em Portugal. Lisboa, Cascais, Comporta, Porto, Algarve, Madeira. €500K–€10M. Consultores especializados, AVM gratuito, off-market exclusivo. AMI 22506.',
   alternates: {
     canonical: 'https://www.agencygroup.pt/',
     languages: {
@@ -22,6 +24,27 @@ export const metadata: Metadata = {
       'zh-Hans':   'https://www.agencygroup.pt/zh/',
       'ar':        'https://www.agencygroup.pt/ar/',
     },
+  },
+  openGraph: {
+    title: 'Agency Group · Luxury Real Estate Portugal',
+    description: 'Boutique luxury real estate agency. Lisbon, Cascais, Comporta, Porto, Algarve, Madeira. Free AVM. AMI 22506.',
+    type: 'website',
+    url: 'https://www.agencygroup.pt/',
+    siteName: 'Agency Group',
+    locale: 'pt_PT',
+    images: [{
+      url: 'https://www.agencygroup.pt/api/og?title=Luxury+Real+Estate+Portugal&subtitle=Lisboa+%C2%B7+Cascais+%C2%B7+Porto+%C2%B7+Algarve+%C2%B7+Madeira',
+      width: 1200,
+      height: 630,
+      alt: 'Agency Group — Luxury Real Estate Portugal',
+    }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Agency Group · Imobiliário de Luxo Portugal',
+    description: 'Boutique imobiliária de luxo. Lisboa, Cascais, Porto, Algarve, Madeira. AMI 22506.',
+    site: '@agencygroup_pt',
+    images: ['https://www.agencygroup.pt/api/og?title=Luxury+Real+Estate+Portugal&subtitle=Lisboa+%C2%B7+Cascais+%C2%B7+Porto+%C2%B7+Algarve+%C2%B7+Madeira'],
   },
 }
 
@@ -52,11 +75,47 @@ export default async function Home() {
   const mobile = detectMobile(headersList)
 
   // ── MOBILE PATH — pure SSR, zero GSAP, zero loader ───────────────────────
-  if (mobile) return <MobileHome />
+  if (mobile) return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'RealEstateAgent',
+          name: 'Agency Group',
+          url: 'https://agencygroup.pt',
+          telephone: '+351919948986',
+          email: 'geral@agencygroup.pt',
+          address: { '@type': 'PostalAddress', addressCountry: 'PT' },
+          areaServed: ['Lisboa', 'Cascais', 'Porto', 'Algarve', 'Madeira'],
+          license: 'AMI 22506',
+        }) }}
+      />
+      <MobileHome />
+    </>
+  )
 
   // ── DESKTOP PATH — full experience ───────────────────────────────────────
+  const realEstateAgentSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateAgent',
+    name: 'Agency Group',
+    url: 'https://agencygroup.pt',
+    telephone: '+351919948986',
+    email: 'geral@agencygroup.pt',
+    address: { '@type': 'PostalAddress', addressCountry: 'PT' },
+    areaServed: ['Lisboa', 'Cascais', 'Porto', 'Algarve', 'Madeira'],
+    license: 'AMI 22506',
+  }
+
   return (
     <>
+      {/* ── JSON-LD — RealEstateAgent structured data ─────────────────────── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(realEstateAgentSchema) }}
+      />
+
       {/* ── CLIENT ISLANDS (non-visual / overlay) ─────────────────────────── */}
       <HomeLoader />
       <HomeCursor />

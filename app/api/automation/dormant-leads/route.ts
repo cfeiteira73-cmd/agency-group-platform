@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 function isBearerAuthorized(req: NextRequest): boolean {
   const authHeader = req.headers.get('authorization') ?? ''
@@ -14,6 +15,9 @@ function isBearerAuthorized(req: NextRequest): boolean {
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
+  const startedAt = new Date().toISOString()
+
   const bearerOk = isBearerAuthorized(req)
   if (!bearerOk) {
     const session = await auth()
@@ -37,11 +41,30 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     if (error) throw error
 
+    // Best-effort audit log — non-blocking
+    try {
+      await (supabaseAdmin as any).from('automations_log').insert({
+        workflow_name: 'dormant-leads',
+        trigger_type: 'api',
+        status: 'success',
+        started_at: startedAt,
+        completed_at: new Date().toISOString(),
+        outcome: {
+          dormant_count: data?.length || 0,
+          cutoff_date: cutoffStr,
+          correlation_id: corrId,
+        },
+      })
+    } catch { /* silent */ }
+
     return NextResponse.json({
       dormant: data || [],
       count: data?.length || 0,
       cutoff_date: cutoffStr,
       generated_at: new Date().toISOString(),
+      correlation_id: corrId,
+    }, {
+      headers: { 'x-correlation-id': corrId },
     })
   } catch (error) {
     // Mock fallback
@@ -50,6 +73,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       count: 0,
       source: 'error',
       error: String(error),
+      correlation_id: corrId,
+    }, {
+      headers: { 'x-correlation-id': corrId },
     })
   }
 }

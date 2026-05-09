@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const runtime = 'edge'
+
 interface NeighborhoodData {
   zone: string
   area: string
@@ -179,9 +181,11 @@ export async function GET(req: NextRequest) {
 
   const data = NEIGHBORHOODS[key]
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     ...data,
     source: 'Agency Group Intelligence Q1 2026',
     agency: 'Agency Group · AMI 22506 · www.agencygroup.pt · +351 919 948 986',
   })
+  response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400')
+  return response
 }

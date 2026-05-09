@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
 const ZONES: Record<string, { pm2: number; yield: number; dom: number; trend: number }> = {
   'Lisboa': { pm2: 5000, yield: 0.044, dom: 45, trend: 0.22 },
@@ -13,6 +14,13 @@ const ZONES: Record<string, { pm2: number; yield: number; dom: number; trend: nu
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 req/min per IP (AI route)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await rateLimit(`gpt-avm:${ip}`, { maxAttempts: 5, windowMs: 60_000 })
+  if (!rl.success) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   try {
     const { zona = 'Lisboa', tipo = 'T2', area = 100, estado = 'Bom' } = await req.json()
 

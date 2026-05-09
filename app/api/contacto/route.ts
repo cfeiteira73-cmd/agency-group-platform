@@ -3,6 +3,7 @@
 // Sends notification email via Resend, then redirects.
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { rateLimit } from '@/lib/rateLimit'
 
 const RESEND_KEY  = process.env.RESEND_API_KEY ?? ''
 const FROM_EMAIL  = 'Agency Group <geral@agencygroup.pt>'
@@ -40,6 +41,13 @@ function buildAdminEmail(data: Record<string, string>): string {
 }
 
 export async function POST(req: NextRequest) {
+  // ── Rate limit: 3 submissions per IP per minute ────────────────────────────
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await rateLimit(`contacto:${ip}`, { maxAttempts: 3, windowMs: 60_000 })
+  if (!rl.success) {
+    return NextResponse.redirect(new URL('/contacto?erro=limite', req.url))
+  }
+
   // CSRF check
   const origin = req.headers.get('origin')
   if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
@@ -54,12 +62,22 @@ export async function POST(req: NextRequest) {
       if (key in data) {
         data[key] = `${data[key]}, ${value}`
       } else {
-        data[key] = String(value)
+        data[key] = String(value).trim()
       }
     }
 
-    // Basic validation
+    // ── Input validation ───────────────────────────────────────────────────
     if (!data.nome && !data.tel) {
+      return NextResponse.redirect(new URL('/contacto?erro=campos', req.url))
+    }
+    if (data.nome && data.nome.length > 100) {
+      return NextResponse.redirect(new URL('/contacto?erro=campos', req.url))
+    }
+    if (data.tel && data.tel.length > 30) {
+      return NextResponse.redirect(new URL('/contacto?erro=campos', req.url))
+    }
+    // Validate email format if provided
+    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
       return NextResponse.redirect(new URL('/contacto?erro=campos', req.url))
     }
 
