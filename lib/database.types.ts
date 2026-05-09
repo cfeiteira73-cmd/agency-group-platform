@@ -1923,6 +1923,139 @@ export type Database = {
         }
         Relationships: []
       }
+      win_loss_events: {
+        Row: {
+          id: string; deal_id: string | null; contact_id: string | null
+          agent_id: string; outcome: 'won' | 'lost' | 'stalled' | 'withdrawn'
+          reason_category: string; reason_detail: string | null
+          objection_type: string | null; deal_value: number | null
+          commission_lost: number | null; days_in_pipeline: number | null
+          stage_lost: string | null; competitor_name: string | null; notes: string | null
+          recorded_at: string; created_at: string
+        }
+        Insert: {
+          deal_id?: string | null; contact_id?: string | null; agent_id: string
+          outcome: 'won' | 'lost' | 'stalled' | 'withdrawn'; reason_category: string
+          reason_detail?: string | null; objection_type?: string | null
+          deal_value?: number | null; commission_lost?: number | null
+          days_in_pipeline?: number | null; stage_lost?: string | null
+          competitor_name?: string | null; notes?: string | null
+        }
+        Update: { notes?: string | null }
+        Relationships: []
+      }
+      adoption_events: {
+        Row: {
+          id: string; user_email: string; user_role: string | null
+          feature_name: string; action: string; session_id: string | null
+          metadata: Record<string, unknown> | null; occurred_at: string; created_at: string
+        }
+        Insert: {
+          user_email: string; user_role?: string | null; feature_name: string
+          action: string; session_id?: string | null
+          metadata?: Record<string, unknown> | null; occurred_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+      data_quality_events: {
+        Row: {
+          id: string; resource_type: string; resource_id: string
+          field_name: string; issue_type: string
+          severity: 'low' | 'medium' | 'high' | 'critical'
+          current_value: string | null; suggested_value: string | null
+          auto_fixed: boolean; fixed_at: string | null; fixed_by: string | null
+          detected_at: string; created_at: string
+        }
+        Insert: {
+          resource_type: string; resource_id: string; field_name: string
+          issue_type: string; severity?: 'low' | 'medium' | 'high' | 'critical'
+          current_value?: string | null; suggested_value?: string | null
+          auto_fixed?: boolean
+        }
+        Update: { auto_fixed?: boolean; fixed_at?: string | null; fixed_by?: string | null }
+        Relationships: []
+      }
+      nps_responses: {
+        Row: {
+          id: string; contact_id: string | null; deal_id: string | null
+          agent_email: string | null; score: number; category: string
+          feedback: string | null; trigger_event: string | null
+          channel: string; responded_at: string; created_at: string
+        }
+        Insert: {
+          contact_id?: string | null; deal_id?: string | null
+          agent_email?: string | null; score: number
+          feedback?: string | null; trigger_event?: string | null; channel?: string
+        }
+        Update: { feedback?: string | null }
+        Relationships: []
+      }
+      performance_scorecards: {
+        Row: {
+          id: string; agent_email: string
+          period_type: 'weekly' | 'monthly' | 'quarterly'
+          period_start: string; period_end: string
+          leads_worked: number; contacts_created: number; visits_conducted: number
+          proposals_sent: number; deals_won: number; deals_lost: number
+          conversion_rate: number | null; gci_generated: number; pipeline_value: number
+          data_quality_score: number | null; platform_adoption_score: number | null
+          avg_response_time_hours: number | null; nps_score: number | null
+          sla_violations: number; followup_compliance_pct: number | null
+          rank_this_period: number | null; percentile: number | null
+          composite_score: number | null; computed_at: string; created_at: string
+        }
+        Insert: {
+          agent_email: string; period_type: 'weekly' | 'monthly' | 'quarterly'
+          period_start: string; period_end: string
+          leads_worked?: number; contacts_created?: number; visits_conducted?: number
+          proposals_sent?: number; deals_won?: number; deals_lost?: number
+          conversion_rate?: number | null; gci_generated?: number; pipeline_value?: number
+          data_quality_score?: number | null; platform_adoption_score?: number | null
+          composite_score?: number | null
+        }
+        Update: {
+          rank_this_period?: number | null; percentile?: number | null
+          composite_score?: number | null; computed_at?: string
+        }
+        Relationships: []
+      }
+      client_milestones: {
+        Row: {
+          id: string; deal_id: string | null; contact_id: string | null
+          milestone_type: string; title: string; description: string | null
+          completed: boolean; completed_at: string | null
+          notified_client: boolean; notified_at: string | null
+          scheduled_for: string | null; created_at: string
+        }
+        Insert: {
+          deal_id?: string | null; contact_id?: string | null
+          milestone_type: string; title: string; description?: string | null
+          scheduled_for?: string | null
+        }
+        Update: {
+          completed?: boolean; completed_at?: string | null
+          notified_client?: boolean; notified_at?: string | null
+        }
+        Relationships: []
+      }
+      objection_taxonomy: {
+        Row: {
+          id: string; category: string; objection: string; frequency: number
+          best_response: string | null; script_en: string | null; script_pt: string | null
+          win_rate_when_encountered: number | null; last_updated: string; created_at: string
+        }
+        Insert: {
+          category: string; objection: string; frequency?: number
+          best_response?: string | null; script_pt?: string | null
+          win_rate_when_encountered?: number | null
+        }
+        Update: {
+          frequency?: number; best_response?: string | null
+          script_pt?: string | null; win_rate_when_encountered?: number | null; last_updated?: string
+        }
+        Relationships: []
+      }
     }
 
     // -----------------------------------------------------------------------
