@@ -95,7 +95,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   try {
     // ── 1. Fetch all learning events in window ─────────────────────────────────
-    const { data: events, error: evErr } = await (supabaseAdmin as any)
+    const { data: events, error: evErr } = await supabaseAdmin
       .from('learning_events')
       .select('event_type, lead_id, deal_id, match_id, deal_pack_id, agent_email, match_score, metadata, created_at')
       .gte('created_at', since)

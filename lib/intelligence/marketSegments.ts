@@ -267,7 +267,7 @@ export function buildSegmentSnapshot(
 
 export async function persistSegmentSnapshot(snapshot: SegmentSnapshot): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('market_segment_trends')
     .upsert({
       ...snapshot,
@@ -297,7 +297,7 @@ export async function refreshSegmentTrends(
     const since = new Date(Date.now() - days * 86400_000).toISOString()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: outcomes } = await (supabaseAdmin as any)
+    const { data: outcomes } = await supabaseAdmin
       .from('transaction_outcomes')
       .select(`
         final_sale_price, asking_price,
@@ -307,7 +307,7 @@ export async function refreshSegmentTrends(
       .eq('outcome_type', 'won')
       .gte('closed_at', since)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- scoring_feedback_events has columns (price_per_sqm, days_on_market, buyer_type) not yet in typed schema
     const { data: feedback } = await (supabaseAdmin as any)
       .from('scoring_feedback_events')
       .select('price_per_sqm, days_on_market, zone_key, property_type, buyer_type')
@@ -317,24 +317,26 @@ export async function refreshSegmentTrends(
 
     if (!feedback?.length && !outcomes?.length) return
 
-    const rows         = feedback ?? []
-    const pricesPerSqm = rows.map((r: { price_per_sqm: number }) => r.price_per_sqm).filter(Boolean)
-    const daysToClose  = rows.map((r: { days_on_market: number }) => r.days_on_market).filter(Boolean)
+    type FeedbackRow = { price_per_sqm: number | null; days_on_market: number | null; buyer_type: string | null }
+    const rows         = (feedback ?? []) as FeedbackRow[]
+    const pricesPerSqm = rows.map(r => r.price_per_sqm).filter((v): v is number => v != null)
+    const daysToClose  = rows.map(r => r.days_on_market).filter((v): v is number => v != null)
 
-    const outcomeRows        = outcomes ?? []
-    const negotiationDeltas  = outcomeRows.map((r: { negotiation_delta_pct: number | null }) => r.negotiation_delta_pct).filter((v: number | null) => v != null) as number[]
+    type OutcomeRow = { negotiation_delta_pct: number | null; asking_price: number | null; final_sale_price: number | null; avm_error_pct: number | null }
+    const outcomeRows        = (outcomes ?? []) as unknown as OutcomeRow[]
+    const negotiationDeltas  = outcomeRows.map(r => r.negotiation_delta_pct).filter((v): v is number => v != null)
     const saleToAskRatios    = outcomeRows
-      .filter((r: { asking_price: number | null; final_sale_price: number | null }) => r.asking_price && r.asking_price > 0)
-      .map((r: { final_sale_price: number; asking_price: number }) => r.final_sale_price / r.asking_price)
-    const avmErrors          = outcomeRows.map((r: { avm_error_pct: number | null }) => r.avm_error_pct).filter((v: number | null) => v != null) as number[]
+      .filter(r => r.asking_price && r.asking_price > 0 && r.final_sale_price != null)
+      .map(r => (r.final_sale_price ?? 0) / (r.asking_price ?? 1))
+    const avmErrors          = outcomeRows.map(r => r.avm_error_pct).filter((v): v is number => v != null)
 
     // Investor vs agent from buyer_type field
-    const investorCount = rows.filter((r: { buyer_type: string }) => r.buyer_type === 'investor').length
-    const agentCount    = rows.filter((r: { buyer_type: string }) => r.buyer_type !== 'investor').length
+    const investorCount = rows.filter(r => r.buyer_type === 'investor').length
+    const agentCount    = rows.filter(r => r.buyer_type !== 'investor').length
 
     // Get prior period avg for regime shift comparison
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: prior } = await (supabaseAdmin as any)
+    const { data: prior } = await supabaseAdmin
       .from('market_segment_trends')
       .select('avg_price_per_sqm')
       .eq('zone_key', zone_key)
@@ -366,7 +368,7 @@ export async function batchRefreshAllSegments(): Promise<{
   errors:    number
 }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: segments } = await (supabaseAdmin as any)
+  const { data: segments } = await supabaseAdmin
     .from('scoring_feedback_events')
     .select('zone_key, property_type')
     .not('zone_key', 'is', null)
@@ -375,7 +377,7 @@ export async function batchRefreshAllSegments(): Promise<{
   if (!segments?.length) return { refreshed: 0, errors: 0 }
 
   const unique = Array.from(
-    new Set(segments.map((r: { zone_key: string; property_type: string }) => `${r.zone_key}|${r.property_type}`))
+    new Set((segments as Array<{ zone_key: string | null; property_type: string | null }>).map(r => `${r.zone_key ?? ''}|${r.property_type ?? ''}`))
   ).map((key: unknown) => {
     const [zone_key, property_type] = (key as string).split('|')
     return { zone_key, property_type }
@@ -406,7 +408,7 @@ export async function getSegmentTrends(opts: {
   limit?:        number
 } = {}): Promise<SegmentTrendRow[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('market_segment_trends')
     .select('*')
     .order('snapshot_date', { ascending: false })
@@ -429,7 +431,7 @@ export async function getSegmentTrends(opts: {
 
 export async function getRegimeShiftAlerts(): Promise<SegmentTrendRow[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('market_segment_trends')
     .select('*')
     .eq('regime_shift_detected', true)

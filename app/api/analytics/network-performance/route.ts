@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const admin = supabaseAdmin as any
+    const admin = supabaseAdmin
 
     const [agentRows, investorRows, watchlistRows] = await Promise.all([
       // Top agents — join performance + tier
@@ -59,50 +59,33 @@ export async function GET(req: NextRequest) {
       for (const t of (tiers ?? [])) agentTierMap[t.partner_email] = t.tier
     }
 
-    const topAgents = (agentRows.data ?? []).map((a: {
-      agent_email: string
-      agent_execution_score: number
-      close_rate: number | null
-      avg_deal_size: number | null
-      top_zones: string[]
-    }) => ({
-      agent_email:     a.agent_email,
-      zone:            (a.top_zones ?? [])[0] ?? 'n/a',
-      close_rate_pct:  a.close_rate != null ? parseFloat((a.close_rate * 100).toFixed(1)) : null,
+    const topAgents = (agentRows.data ?? []).map(a => ({
+      agent_email:     (a.agent_email ?? '') as string,
+      zone:            ((a.top_zones ?? []) as string[])[0] ?? 'n/a',
+      close_rate_pct:  a.close_rate != null ? parseFloat(((a.close_rate as number) * 100).toFixed(1)) : 0,
       deals_won:       0,   // could enrich from attribution
-      avg_deal_size:   a.avg_deal_size,
-      execution_score: a.agent_execution_score,
-      tier:            agentTierMap[a.agent_email] ?? 'STANDARD',
+      avg_deal_size:   a.avg_deal_size as number | null,
+      execution_score: (a.agent_execution_score ?? 0) as number,
+      tier:            agentTierMap[a.agent_email ?? ''] ?? 'STANDARD',
     }))
 
-    const topInvestors = (investorRows.data ?? []).map((i: {
-      investor_id:      string
-      engagement_score: number
-      conversion_rate:  number | null
-      total_deals:      number
-    }) => ({
+    const topInvestors = (investorRows.data ?? []).map(i => ({
       investor_id:      i.investor_id,
-      engagement_score: i.engagement_score,
-      conversion_pct:   i.conversion_rate != null ? parseFloat((i.conversion_rate * 100).toFixed(1)) : null,
-      deals_total:      i.total_deals,
+      engagement_score: (i.engagement_score ?? 0) as number,
+      conversion_pct:   i.conversion_rate != null ? parseFloat(((i.conversion_rate as number) * 100).toFixed(1)) : 0,
+      deals_total:      (i.total_deals ?? 0) as number,
       tier:             'STANDARD',  // will be updated once partner_tiers is populated
     }))
 
-    const underperformers = (watchlistRows.data ?? []).map((w: {
-      partner_email: string
-      partner_type:  string
-      tier:          string
-      tier_score:    number
-      criteria:      Record<string, unknown>
-    }) => ({
+    const underperformers = (watchlistRows.data ?? []).map(w => ({
       partner_email: w.partner_email,
       partner_type:  w.partner_type,
-      tier:          w.tier,
-      tier_score:    w.tier_score,
+      tier:          w.tier as string,
+      tier_score:    (w.tier_score ?? 0) as number,
       reason:        'Below STANDARD threshold (score < 45)',
     }))
 
-    const networkStats = { top_agents: topAgents, top_investors: topInvestors, underperformers }
+    const networkStats = { top_agents: topAgents, top_investors: topInvestors, underperformers } as import('@/lib/analytics/funnelMetrics').NetworkStats
     const summary = summarizeNetworkHealth(networkStats)
 
     return NextResponse.json({

@@ -34,14 +34,14 @@ export async function GET(req: NextRequest) {
     const [slaView, stageSummary] = await Promise.all([
       // 1. Direct SLA breach view (if table exists)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any)
+      supabaseAdmin
         .from('v_sla_breach_summary')
         .select('*')
         .limit(limit),
 
       // 2. Live deal stage computation against SLA thresholds
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any)
+      supabaseAdmin
         .from('deals')
         .select('id, contact_name, stage, agent_email, updated_at, created_at')
         .not('stage', 'in', '("won","lost","withdrawn")')

@@ -181,7 +181,7 @@ export async function recordDealOutcome(outcome: DealOutcome): Promise<void> {
     : null
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('scoring_feedback_events')
     .update({
       close_status:           'won',
@@ -211,7 +211,7 @@ export async function computePeriodMicrostructure(
   const since = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000)
   const periodLabel = `rolling-${periodDays}d`
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- scoring_feedback_events has columns (avm_value_at_time, buyer_type) not yet in typed schema
   let query = (supabaseAdmin as any)
     .from('scoring_feedback_events')
     .select([
@@ -228,12 +228,12 @@ export async function computePeriodMicrostructure(
   const { data, error } = await query
   if (error) throw new Error(`computePeriodMicrostructure: ${error.message}`)
 
-  const rows: FeedbackOutcomeRow[] = data ?? []
+  const rows: FeedbackOutcomeRow[] = (data ?? []) as unknown as FeedbackOutcomeRow[]
   const snapshot = buildMicrostructureSnapshot(rows, zoneKey, propertyType, periodLabel)
 
   // Persist
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: upsertError } = await (supabaseAdmin as any)
+  const { error: upsertError } = await supabaseAdmin
     .from('market_microstructure')
     .upsert({
       zone_key:                   snapshot.zone_key,
@@ -270,7 +270,7 @@ export async function refreshAllMicrostructure(
 ): Promise<{ computed: number; errors: string[] }> {
   // Get all distinct zone_key × property_type combos from closed deals
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('scoring_feedback_events')
     .select('zone_key, property_type')
     .eq('close_status', 'won')
@@ -280,13 +280,13 @@ export async function refreshAllMicrostructure(
 
   // Collect unique combos
   const combos = new Map<string, { zone: string; type: string | null }>()
-  for (const row of (data ?? [])) {
-    const zoneOnly = `${row.zone_key}:null`
-    const withType = `${row.zone_key}:${row.property_type}`
+  for (const row of (data ?? []) as Array<{ zone_key: string | null; property_type: string | null }>) {
+    const zoneOnly = `${row.zone_key ?? ''}:null`
+    const withType = `${row.zone_key ?? ''}:${row.property_type}`
 
-    if (!combos.has(zoneOnly))  combos.set(zoneOnly,  { zone: row.zone_key, type: null })
+    if (!combos.has(zoneOnly))  combos.set(zoneOnly,  { zone: row.zone_key ?? '', type: null })
     if (row.property_type && !combos.has(withType)) {
-      combos.set(withType, { zone: row.zone_key, type: row.property_type })
+      combos.set(withType, { zone: row.zone_key ?? '', type: row.property_type })
     }
   }
 

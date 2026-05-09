@@ -162,7 +162,7 @@ export async function persistCalibrationRecommendations(
   }))
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('calibration_recommendations')
     .upsert(rows, { onConflict: 'report_date, dimension, priority', ignoreDuplicates: true })
 
@@ -176,7 +176,7 @@ export async function persistCalibrationRecommendations(
 
 export async function getActiveRecommendations(): Promise<CalibrationRecommendationRecord[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('calibration_recommendations')
     .select('*')
     .eq('status', 'pending')
@@ -198,7 +198,7 @@ export async function applyRecommendation(
   notes?:    string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('calibration_recommendations')
     .update({
       status:      'applied',
@@ -222,7 +222,7 @@ export async function dismissRecommendation(
   reason?:     string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('calibration_recommendations')
     .update({
       status:      'dismissed',
@@ -246,7 +246,7 @@ export async function deferRecommendation(
   notes?:     string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('calibration_recommendations')
     .update({
       status:      'deferred',

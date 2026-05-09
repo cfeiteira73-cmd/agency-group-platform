@@ -165,7 +165,7 @@ export function buildFlagPayload(
 
 export async function getFlag(key: string): Promise<FeatureFlag | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('feature_flags')
     .select('*')
     .eq('flag_key', key)
@@ -185,7 +185,7 @@ export async function getAllFlags(opts: {
   enabledOnly?: boolean
 } = {}): Promise<FeatureFlag[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('feature_flags')
     .select('*')
     .order('is_kill_switch', { ascending: false })
@@ -215,7 +215,7 @@ export async function enableFlag(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('feature_flags')
     .update({
       is_enabled:  true,
@@ -243,7 +243,7 @@ export async function disableFlag(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('feature_flags')
     .update({
       is_enabled:  false,
@@ -280,7 +280,7 @@ export async function upsertFlag(
 ): Promise<string> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('feature_flags')
     .upsert({
       flag_key:       payload.flag_key,

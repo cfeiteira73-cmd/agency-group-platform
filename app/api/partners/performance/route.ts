@@ -22,7 +22,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   try {
     // ── 1. Fetch all partners ─────────────────────────────────────────────────
-    const { data: partners, error: pErr } = await (supabaseAdmin as any)
+    const { data: partners, error: pErr } = await supabaseAdmin
       .from('institutional_partners')
       .select(`
         id, nome, tipo, email, phone, cidade, estado, nivel_prioridade,
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // ── 2. Fetch deals with partner_id populated ──────────────────────────────
     // Uses portal-compat columns confirmed in production (migration 003 + 20260426_002)
     // stage/deal_value/gci_net/zone/source not in minimal schema — omitted to avoid 42703
-    const { data: partnerDeals, error: pDealsErr } = await (supabaseAdmin as any)
+    const { data: partnerDeals, error: pDealsErr } = await supabaseAdmin
       .from('deals')
       .select('id, partner_id, fase, valor, expected_fee, realized_fee, created_at')
       .not('partner_id', 'is', null)

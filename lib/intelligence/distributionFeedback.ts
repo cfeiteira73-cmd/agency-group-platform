@@ -290,7 +290,7 @@ export function computeNetworkFeedbackScore(
 export async function persistFeedbackWeights(
   reinforcement: FeedbackReinforcement,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- distribution_feedback_weights schema uses signal_type/weight; recipient_email/composite_weight are pending type update
   const { error } = await (supabaseAdmin as any)
     .from('distribution_feedback_weights')
     .upsert({
@@ -313,7 +313,7 @@ export async function persistFeedbackWeights(
 export async function getFeedbackWeightsForRecipient(email: string): Promise<{
   acceptance: number; conversion: number; speed: number
 } | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recipient_email column pending type update
   const { data, error } = await (supabaseAdmin as any)
     .from('distribution_feedback_weights')
     .select('acceptance_weight, conversion_weight, speed_weight')

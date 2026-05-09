@@ -63,6 +63,7 @@ async function safeCount(
 ): Promise<{ count: number; error: string | null; latency_ms: number }> {
   const t0 = Date.now()
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic table name requires any cast
     let q = (supabaseAdmin as any)
       .from(table)
       .select('id', { count: 'exact', head: true })
@@ -195,7 +196,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let intelligenceLayer: Record<string, unknown> = { health: 'unavailable' }
 
   try {
-    const { data: recentMatches } = await (supabaseAdmin as any)
+    const { data: recentMatches } = await supabaseAdmin
       .from('matches')
       .select('match_score, priority_level, status, created_at')
       .gte('created_at', d30ago)
@@ -237,7 +238,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let revenueLayer: Record<string, unknown> = { health: 'unavailable' }
 
   try {
-    const { data: activeDeals } = await (supabaseAdmin as any)
+    const { data: activeDeals } = await supabaseAdmin
       .from('deals')
       .select('id, fase, valor, expected_fee, realized_fee, created_at')
       .not('fase', 'ilike', '%cancelad%')
@@ -297,7 +298,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let automationLayer: Record<string, unknown> = { health: 'unavailable' }
 
   try {
-    const { data: openItems } = await (supabaseAdmin as any)
+    const { data: openItems } = await supabaseAdmin
       .from('priority_items')
       .select('entity_type, priority_score, deadline, source, created_at')
       .eq('status', 'open')
@@ -360,7 +361,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let eventLayer: Record<string, unknown> = { health: 'unavailable' }
 
   try {
-    const { data: recentEvents } = await (supabaseAdmin as any)
+    const { data: recentEvents } = await supabaseAdmin
       .from('learning_events')
       .select('event_type, created_at, correlation_id, source_system')
       .gte('created_at', d7ago)

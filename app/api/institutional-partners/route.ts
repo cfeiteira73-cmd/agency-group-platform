@@ -34,14 +34,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const offset   = (page - 1) * limit
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any).from(TABLE)
+    let query = supabaseAdmin.from(TABLE)
       .select('*', { count: 'exact' })
       .order('nivel_prioridade', { ascending: true })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    if (tipo)   query = query.eq('tipo', tipo)
-    if (estado) query = query.eq('estado', estado)
+    if (tipo)   query = query.eq('tipo', tipo as 'family_office' | 'advogado' | 'notario' | 'contabilista' | 'gestor_patrimonio' | 'banco' | 'fundo_investimento' | 'mediador_parceiro' | 'promotor' | 'outro')
+    if (estado) query = query.eq('estado', estado as 'prospect' | 'contactado' | 'reuniao_feita' | 'parceiro_activo' | 'dormente' | 'inactivo')
     if (cidade) query = query.ilike('cidade', `%${cidade}%`)
     if (owner)  query = query.eq('owner', owner)
 
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: inserted, error } = await (supabaseAdmin as any).from(TABLE)
+    const { data: inserted, error } = await supabaseAdmin.from(TABLE)
       .insert(payload)
       .select()
       .single()

@@ -178,7 +178,7 @@ export async function fetchFunnelCounts(since?: Date): Promise<FunnelCounts> {
   const sinceDate = (since ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const admin = supabaseAdmin as any
+  const admin = supabaseAdmin
 
   const [ingestRes, scoredRes, distRes, feedbackRes] = await Promise.all([
     admin.from('properties')

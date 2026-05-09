@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error, count } = await (supabaseAdmin as any)
+    const { error, count } = await supabaseAdmin
       .from('sofia_conversations')
       .delete()
       .lt('created_at', cutoffDate.toISOString())

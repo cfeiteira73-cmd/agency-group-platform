@@ -51,7 +51,7 @@ export interface AuditEntry {
 
 async function writeAuditEntry(entry: AuditEntry): Promise<void> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- audit_log DB schema uses table_name/operation/record_id/old_data/new_data columns; type file uses different names (pending type update)
     await (supabaseAdmin as any)
       .from('audit_log')
       .insert({

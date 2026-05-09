@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
 
     // Best-effort audit log — non-blocking
     try {
-      await (supabaseAdmin as any).from('automations_log').insert({
+      await supabaseAdmin.from('automations_log').insert({
         workflow_name: 'forgotten-leads',
         trigger_type: 'api',
         status: 'success',

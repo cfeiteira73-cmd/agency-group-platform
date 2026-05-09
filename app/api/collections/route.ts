@@ -71,7 +71,7 @@ function rowToCollection(row: any): Collection {
 async function dbGetByToken(token: string): Promise<Collection | null> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabaseAdmin as any
+    const db = supabaseAdmin
     const { data, error } = await db
       .from('property_collections')
       .select('*')
@@ -93,7 +93,7 @@ async function dbGetByToken(token: string): Promise<Collection | null> {
 async function dbGetByAgent(agentId: string): Promise<Collection[]> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('property_collections')
       .select('*')
       .eq('agent_id', agentId)
@@ -108,7 +108,7 @@ async function dbGetByAgent(agentId: string): Promise<Collection[]> {
 async function dbUpsert(col: Collection): Promise<boolean> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any)
+    const { error } = await supabaseAdmin
       .from('property_collections')
       .upsert({
         id: col.id,
@@ -130,7 +130,7 @@ async function dbUpsert(col: Collection): Promise<boolean> {
 async function dbDelete(id: string): Promise<boolean> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any)
+    const { error } = await supabaseAdmin
       .from('property_collections')
       .delete()
       .eq('id', id)
@@ -143,7 +143,7 @@ async function dbDelete(id: string): Promise<boolean> {
 async function dbGetById(id: string): Promise<Collection | null> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('property_collections')
       .select('*')
       .eq('id', id)

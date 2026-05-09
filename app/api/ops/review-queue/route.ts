@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('v_review_queue_pending')
       .select('*')
       .limit(limit)
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     // If a different status was requested, query directly
     if (status !== 'pending') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: filtered, error: fe } = await (supabaseAdmin as any)
+      const { data: filtered, error: fe } = await supabaseAdmin
         .from('deal_review_queue')
         .select('*')
         .eq('status', status)
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('deal_review_queue')
       .insert({
         property_id:       body.property_id,

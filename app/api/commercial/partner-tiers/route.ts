@@ -23,13 +23,13 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('partner_tiers')
       .select('*')
       .order('tier_score', { ascending: false })
 
-    if (partnerType) query = query.eq('partner_type', partnerType)
-    if (tier)        query = query.eq('tier', tier)
+    if (partnerType) query = query.eq('partner_type', partnerType as string)
+    if (tier)        query = query.eq('tier', tier as 'ELITE' | 'PRIORITY' | 'STANDARD' | 'WATCHLIST')
 
     const { data, error } = await query
     if (error) throw new Error(error.message)

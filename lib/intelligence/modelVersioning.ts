@@ -222,7 +222,7 @@ export function computeBacktestMetrics(
 // ---------------------------------------------------------------------------
 
 export async function createModelVersion(payload: ModelVersionPayload): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- model_versions has many columns (archived_at, promoted_at, promoted_by, etc.) not yet in typed schema
   const { data, error } = await (supabaseAdmin as any)
     .from('model_versions')
     .insert({
@@ -238,7 +238,7 @@ export async function createModelVersion(payload: ModelVersionPayload): Promise<
     .single()
 
   if (error) throw new Error(`createModelVersion: ${error.message}`)
-  return data.id as string
+  return (data as { id: string }).id
 }
 
 // ---------------------------------------------------------------------------
@@ -249,7 +249,7 @@ export async function getModelVersions(opts: {
   status?: ModelStatus
   limit?:  number
 } = {}): Promise<ModelVersion[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- model_versions has many columns not yet in typed schema
   let query = (supabaseAdmin as any)
     .from('model_versions')
     .select('*')
@@ -260,7 +260,7 @@ export async function getModelVersions(opts: {
 
   const { data, error } = await query
   if (error) throw new Error(`getModelVersions: ${error.message}`)
-  return (data ?? []) as ModelVersion[]
+  return (data ?? []) as unknown as ModelVersion[]
 }
 
 // ---------------------------------------------------------------------------
@@ -268,7 +268,7 @@ export async function getModelVersions(opts: {
 // ---------------------------------------------------------------------------
 
 export async function getProductionVersion(): Promise<ModelVersion | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- model_versions promoted_at not yet in typed schema
   const { data } = await (supabaseAdmin as any)
     .from('model_versions')
     .select('*')
@@ -277,7 +277,7 @@ export async function getProductionVersion(): Promise<ModelVersion | null> {
     .limit(1)
     .single()
 
-  return data as ModelVersion | null
+  return data as unknown as ModelVersion | null
 }
 
 // ---------------------------------------------------------------------------
@@ -292,7 +292,7 @@ export async function createSimulation(opts: {
   runBy:          string
 }): Promise<string> {
   const now = new Date().toISOString()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- calibration_simulations has many columns (run_by, started_at, property_ids, etc.) not yet in typed schema
   const { data, error } = await (supabaseAdmin as any)
     .from('calibration_simulations')
     .insert({
@@ -310,7 +310,7 @@ export async function createSimulation(opts: {
     .single()
 
   if (error) throw new Error(`createSimulation: ${error.message}`)
-  return data.id as string
+  return (data as { id: string }).id
 }
 
 // ---------------------------------------------------------------------------
@@ -323,7 +323,7 @@ export async function completeSimulation(opts: {
   metrics:      BacktestMetrics
   comparison:   Record<string, unknown>
 }): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- calibration_simulations columns (score_results, completed_at, etc.) not yet in typed schema
   const { error } = await (supabaseAdmin as any)
     .from('calibration_simulations')
     .update({
@@ -347,12 +347,12 @@ export async function completeSimulation(opts: {
       .eq('id', opts.simulationId)
       .single()
 
-    if (simRow?.model_version_id) {
+    if ((simRow as { model_version_id: string | null } | null)?.model_version_id) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabaseAdmin as any)
         .from('model_versions')
         .update({ backtest_score: opts.metrics.grade_accuracy_pct })
-        .eq('id', simRow.model_version_id)
+        .eq('id', (simRow as { model_version_id: string }).model_version_id)
     }
   }
 }
@@ -368,7 +368,7 @@ export async function promoteModelVersion(
   const now = new Date().toISOString()
 
   // Archive all current production versions
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- model_versions archived_at/archived_by/promoted_at/promoted_by not yet in typed schema
   await (supabaseAdmin as any)
     .from('model_versions')
     .update({ status: 'archived', archived_at: now, archived_by: promotedBy })
@@ -393,7 +393,7 @@ export async function archiveModelVersion(
   versionId:  string,
   archivedBy: string,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- model_versions archived_at/archived_by not yet in typed schema
   const { error } = await (supabaseAdmin as any)
     .from('model_versions')
     .update({

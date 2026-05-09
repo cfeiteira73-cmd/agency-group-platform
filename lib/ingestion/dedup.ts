@@ -130,7 +130,7 @@ async function findByProviderKey(
   provider: string,
   listingId: string,
 ): Promise<string | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- source_provider/provider_listing_id pending types update
   const { data } = await (supabaseAdmin as any)
     .from('properties')
     .select('id')
@@ -163,7 +163,7 @@ async function findCandidatesByMetrics(
   const priceMax = Math.round(price * 1.25)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('properties')
     .select('id, price, area_m2, bedrooms, city, address')
     .eq('status', 'active')

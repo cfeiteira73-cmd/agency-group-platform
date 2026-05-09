@@ -313,7 +313,7 @@ export async function getRecipientSignalsForProperty(opts: {
   limit?:         number
 }): Promise<RecipientSignals[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('recipient_performance_profiles')
     .select(`
       recipient_email,
@@ -336,7 +336,7 @@ export async function getRecipientSignalsForProperty(opts: {
 
   // Fetch investor intelligence for preferred zones/types/budget
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: intelligence } = await (supabaseAdmin as any)
+  const { data: intelligence } = await supabaseAdmin
     .from('investor_intelligence')
     .select('investor_email, preferred_zones, preferred_asset_types, budget_min, budget_max')
 
@@ -348,21 +348,21 @@ export async function getRecipientSignalsForProperty(opts: {
     budget_max: number | null;
   }
   const intelMap = new Map<string, IntelRow>(
-    (intelligence ?? []).map((r: IntelRow) => [r.investor_email, r] as [string, IntelRow]),
+    (intelligence ?? []).map(r => [(r.investor_email ?? ''), r as unknown as IntelRow] as [string, IntelRow]),
   )
 
   // Fetch partner tiers
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: tiers } = await (supabaseAdmin as any)
+  const { data: tiers } = await supabaseAdmin
     .from('partner_tiers')
     .select('contact_email, tier')
 
-  const tierMap = new Map((tiers ?? []).map((r: { contact_email: string; tier: string }) => [r.contact_email, r.tier]))
+  const tierMap = new Map((tiers ?? []).map(r => [r.contact_email, r.tier] as [string | null, string]).filter(([k]) => k != null) as [string, string][])
 
   return (profiles ?? []).map((p: {
     recipient_email: string;
     recipient_type: 'agent' | 'investor';
-    roi_score: number;
+    roi_score: number | null;
     distributions_last_7d: number;
     distributions_last_30d: number;
     is_fatigued: boolean;

@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any).rpc('record_scoring_feedback', {
+    const { data, error } = await supabaseAdmin.rpc('record_scoring_feedback', {
       p_property_id:    body.property_id,
       p_score:          body.opportunity_score,
       p_grade:          body.opportunity_grade,

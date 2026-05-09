@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('economic_truth_events')
       .select('*')
       .order('created_at', { ascending: false })
@@ -42,19 +42,19 @@ export async function GET(req: NextRequest) {
     if (error) throw new Error(error.message)
 
     if (view === 'summary') {
-      const events = data ?? []
+      const events = (data ?? []) as Array<{ raw_truth_score: number | null; normalized_truth_score: number | null; zone_key: string | null }>
       const avgScore = events.length > 0
-        ? events.reduce((a: number, e: { raw_truth_score: number }) => a + (e.raw_truth_score ?? 0), 0) / events.length
+        ? events.reduce((a, e) => a + (e.raw_truth_score ?? 0), 0) / events.length
         : 0
-      const normEvents = events.filter((e: { normalized_truth_score: number | null }) => e.normalized_truth_score != null)
+      const normEvents = events.filter(e => e.normalized_truth_score != null)
       const avgNorm    = normEvents.length > 0
-        ? normEvents.reduce((a: number, e: { normalized_truth_score: number }) => a + e.normalized_truth_score, 0) / normEvents.length
+        ? normEvents.reduce((a, e) => a + (e.normalized_truth_score ?? 0), 0) / normEvents.length
         : 0
       return NextResponse.json({
         count:                 events.length,
         avg_raw_truth_score:   Math.round(avgScore * 10) / 10,
         avg_normalized_score:  Math.round(avgNorm  * 10) / 10,
-        zones_covered:         [...new Set(events.map((e: { zone_key: string }) => e.zone_key))].length,
+        zones_covered:         [...new Set(events.map(e => e.zone_key))].length,
       })
     }
 

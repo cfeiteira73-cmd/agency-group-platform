@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     // Log to automations_log
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseAdmin as any)
+    await supabaseAdmin
       .from('automations_log')
       .insert({
         automation_type: 'cron_agent_performance',

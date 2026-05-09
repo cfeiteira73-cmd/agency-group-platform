@@ -103,7 +103,7 @@ async function isAlreadyIngested(signalRef: string | null): Promise<boolean> {
   if (!signalRef) return false
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('offmarket_leads')
     .select('id')
     .eq('source', 'dre_parser')
@@ -187,7 +187,7 @@ async function createOffmarketLead(signal: DRESignal): Promise<string | null> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('offmarket_leads')
     .insert(row)
     .select('id')
@@ -236,7 +236,7 @@ async function logExecution(
   const skipped = results.filter(r => r.action === 'skipped').length
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabaseAdmin as any)
+  await supabaseAdmin
     .from('automations_log')
     .insert({
       workflow_name: 'dre_ingest_cron',

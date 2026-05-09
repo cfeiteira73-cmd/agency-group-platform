@@ -85,7 +85,7 @@ async function consumeToken(
   | { ok: false; error: string; status: number }
 > {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabaseAdmin as any
+  const db = supabaseAdmin
   const tokenHash = createHash('sha256').update(token).digest('hex')
 
   const { error: insertError } = await db

@@ -381,7 +381,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<PipelineA
 
     // Best-effort audit log — non-blocking
     try {
-      await (supabaseAdmin as any).from('automations_log').insert({
+      await supabaseAdmin.from('automations_log').insert({
         workflow_name: 'pipeline-advance',
         trigger_type: 'api',
         status: 'success',

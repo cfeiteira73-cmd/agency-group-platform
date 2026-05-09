@@ -83,13 +83,14 @@ interface ViewRow {
 async function fetchGradePerformance(): Promise<{ data: GradePerformance[]; error: string | null }> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v_scoring_performance view not yet in types
     const { data, error } = await (supabaseAdmin as any)
       .from('v_scoring_performance')
       .select('*')
 
     if (error) return { data: [], error: error.message }
 
-    const rows = (data ?? []) as ViewRow[]
+    const rows = (data ?? []) as unknown as ViewRow[]
     const performance: GradePerformance[] = rows.map(r => ({
       grade:               r.opportunity_grade ?? 'unknown',
       total_surfaced:      Number(r.total_surfaced),

@@ -114,7 +114,7 @@ export function isDistributionPaused(
 
 export async function getActiveControls(): Promise<DistributionControl[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('distribution_controls')
     .select('id, control_type, zone_key, asset_type, tier, status, reason, controlled_by')
 
@@ -127,7 +127,7 @@ export async function getActiveControls(): Promise<DistributionControl[]> {
 // ---------------------------------------------------------------------------
 
 export async function pauseDistribution(req: PauseRequest): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- distribution_controls has many columns (zone_key, asset_type, tier, status, reason, etc.) not yet in typed schema
   const { data, error } = await (supabaseAdmin as any)
     .from('distribution_controls')
     .upsert({
@@ -144,7 +144,7 @@ export async function pauseDistribution(req: PauseRequest): Promise<string> {
     .single()
 
   if (error) throw new Error(`pauseDistribution: ${error.message}`)
-  return data.id as string
+  return (data as { id: string }).id
 }
 
 // ---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ export async function resumeDistribution(
   resumedBy?:   string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('distribution_controls')
     .update({
       status:          'active',

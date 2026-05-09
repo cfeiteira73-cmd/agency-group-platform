@@ -226,7 +226,7 @@ async function handler(req: NextRequest): Promise<NextResponse> {
   const alertEmail = process.env.ALERT_EMAIL ?? process.env.DIGEST_EMAIL ?? process.env.FOUNDER_EMAIL ?? 'geral@agencygroup.pt'
   const alertPhone = process.env.ALERT_WHATSAPP_PHONE ?? process.env.FOUNDER_WHATSAPP_PHONE ?? ''
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- offmarket_leads has many columns not yet in typed schema
   const s = supabaseAdmin as any
   const now = new Date()
   const results: AlertResult[] = []
@@ -268,7 +268,7 @@ async function handler(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'DB query failed', details: error }, { status: 500 })
     }
 
-    const leads: AlertLead[] = evaluatedLeads ?? []
+    const leads: AlertLead[] = (evaluatedLeads ?? []) as unknown as AlertLead[]
 
     // ── SEGMENT leads by alert type ───────────────────────────────────
     const p0Leads: AlertLead[] = []

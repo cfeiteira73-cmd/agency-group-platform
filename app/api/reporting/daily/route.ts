@@ -18,7 +18,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- daily report selects many computed/derived columns not yet in typed schema
     const s = supabaseAdmin as any
 
     const now = new Date()

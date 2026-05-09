@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: perfRows, error: perfError } = await (supabaseAdmin as any)
+    const { data: perfRows, error: perfError } = await supabaseAdmin
       .from('v_scoring_performance')
       .select('*')
 
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     // Overall stats from feedback events
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: stats, error: statsError } = await (supabaseAdmin as any)
+    const { data: stats, error: statsError } = await supabaseAdmin
       .from('scoring_feedback_events')
       .select('close_status, opportunity_grade, negotiation_delta_pct, realized_dom')
       .not('close_status', 'is', null)

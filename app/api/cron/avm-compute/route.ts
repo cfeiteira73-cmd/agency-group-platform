@@ -64,7 +64,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Log to automations_log
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabaseAdmin as any)
+      await supabaseAdmin
         .from('automations_log')
         .insert({
           workflow_name: 'avm_compute_cron',

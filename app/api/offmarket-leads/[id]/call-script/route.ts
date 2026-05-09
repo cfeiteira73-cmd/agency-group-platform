@@ -33,7 +33,7 @@ export async function GET(
   const { id } = await params
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
 
   try {
     const { data: lead, error } = await s
@@ -46,7 +46,7 @@ export async function GET(
       return NextResponse.json({ error: 'Lead not found', detail: error?.message }, { status: 404 })
     }
 
-    const output = generateCallEngineOutput(lead as CallLeadInput)
+    const output = generateCallEngineOutput(lead as unknown as CallLeadInput)
 
     return NextResponse.json({
       success: true,

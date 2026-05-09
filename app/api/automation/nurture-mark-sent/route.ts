@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // Ensure nurture_log table exists (idempotent via ON CONFLICT DO NOTHING)
     // Table schema: id uuid PK, contact_id text, sequence_day int, email text, sent_at timestamptz
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- nurture_log table not yet in typed schema
     const { error } = await (supabaseAdmin as any)
       .from('nurture_log')
       .insert({

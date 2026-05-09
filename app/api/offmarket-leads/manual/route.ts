@@ -80,7 +80,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- offmarket_leads has many columns not yet in typed schema
   const s = supabaseAdmin as any
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.agencygroup.pt').replace(/\/$/, '')
 

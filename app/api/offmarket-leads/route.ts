@@ -40,13 +40,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const offset   = (page - 1) * limit
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any).from(TABLE)
+    let query = supabaseAdmin.from(TABLE)
       .select('*', { count: 'exact' })
       .order('score', { ascending: false })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    if (status)   query = query.eq('status', status)
+    if (status)   query = query.eq('status', status as 'new' | 'contacted' | 'interested' | 'meeting_scheduled' | 'valuation_done' | 'captation_active' | 'not_interested' | 'closed_won' | 'closed_lost')
     if (cidade)   query = query.ilike('cidade', `%${cidade}%`)
     if (minScore) query = query.gte('score', parseInt(minScore, 10))
     if (assigned) query = query.eq('assigned_to', assigned)
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // --- Anti-duplication: check source_listing_id uniqueness before insert ---
     if (sourceListing) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: existing } = await (supabaseAdmin as any).from(TABLE)
+      const { data: existing } = await supabaseAdmin.from(TABLE)
         .select('id, nome')
         .eq('source', source)
         .eq('source_listing_id', sourceListing)
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       gate_status:       typeof data.gate_status === 'string' ? data.gate_status : 'accepted_raw',
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- score_breakdown is Record<string, unknown> which TypeScript can't verify from unknown type
     const { data: inserted, error } = await (supabaseAdmin as any).from(TABLE)
       .insert(payload)
       .select()

@@ -172,7 +172,7 @@ export async function batchComputeDecay(opts: {
   const staleCutoff = new Date(Date.now() - 24 * 3600_000).toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('recipient_performance_profiles')
     .select('recipient_email, roi_score, last_distributed_at, last_computed_at')
     .limit(500)
@@ -194,7 +194,7 @@ export async function batchComputeDecay(opts: {
     const adjusted = applyDecayToScore(raw, days)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: upErr } = await (supabaseAdmin as any)
+    const { error: upErr } = await supabaseAdmin
       .from('recipient_performance_profiles')
       .update({
         roi_score:          adjusted,
@@ -237,7 +237,7 @@ export async function getRecipientsByDecayStatus(
     : null
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('recipient_performance_profiles')
     .select('recipient_email, roi_score, last_distributed_at')
     .lt('last_distributed_at', maxCutoff)
@@ -250,7 +250,7 @@ export async function getRecipientsByDecayStatus(
 
   const { data, error } = await query
   if (error) throw new Error(`getRecipientsByDecayStatus: ${error.message}`)
-  return data ?? []
+  return (data ?? []).map(r => ({ ...r, roi_score: r.roi_score ?? 0 }))
 }
 
 // ---------------------------------------------------------------------------
@@ -263,7 +263,7 @@ export async function getReengagementTargets(limit = 20): Promise<DecayAdjustedP
   const oneEightyAgo   = new Date(Date.now() - 180 * 86400_000).toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('recipient_performance_profiles')
     .select('recipient_email, roi_score, last_distributed_at')
     .lt('last_distributed_at', thirtyDaysAgo)

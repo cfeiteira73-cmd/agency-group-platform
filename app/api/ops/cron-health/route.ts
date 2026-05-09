@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       const [lockStatus, recentRuns] = await Promise.all([
         getLockStatus(cronName),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabaseAdmin as any)
+        supabaseAdmin
           .from('automations_log')
           .select('id, status, result, created_at')
           .eq('workflow_name', cronName)
@@ -42,14 +42,14 @@ export async function GET(req: NextRequest) {
 
     // All crons health view
     const [cronHealthView, activeLocks, recentErrors] = await Promise.all([
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v_cron_health is a view not yet in typed schema
       (supabaseAdmin as any)
         .from('v_cron_health')
         .select('*')
         .limit(50),
       getActiveLocks(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any)
+      supabaseAdmin
         .from('automations_log')
         .select('workflow_name, status, result, created_at')
         .eq('status', 'error')
@@ -69,8 +69,8 @@ export async function GET(req: NextRequest) {
         total_crons:    health.length,
         currently_locked: activeLocks.length,
         errors_24h:     errors.length,
-        healthy_crons:  health.filter((c: { success_rate_pct: number }) => (c.success_rate_pct ?? 100) >= 90).length,
-        degraded_crons: health.filter((c: { success_rate_pct: number }) => (c.success_rate_pct ?? 100) < 90).length,
+        healthy_crons:  health.filter((c: Record<string, unknown>) => ((c.success_rate_pct as number) ?? 100) >= 90).length,
+        degraded_crons: health.filter((c: Record<string, unknown>) => ((c.success_rate_pct as number) ?? 100) < 90).length,
       },
     })
   } catch (err) {

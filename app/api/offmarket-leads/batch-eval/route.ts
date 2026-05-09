@@ -42,7 +42,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
 
     // Get leads to process — exclude test leads (cleaned by migration 011)
     let query = s
@@ -96,7 +96,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const batch = leads.slice(i, i + CONCURRENCY)
       const batchResults = await Promise.allSettled(
         batch.map(async (lead: {
-          id: string; nome: string; score: number
+          id: string; nome: string; score: number | null
+          cidade: string | null; tipo_ativo: string | null
           price_ask: number | null; area_m2: number | null; gross_discount_pct: number | null
         }) => {
           const stagesRun: string[] = []
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           return {
             id: lead.id,
             nome: lead.nome,
-            score: lead.score,
+            score: lead.score ?? 0,
             eval_score: evalData.deal_evaluation_score as number,
             rank: evalData.master_attack_rank as number,
             classification: evalData.classification as string,
@@ -162,7 +163,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           results.push({
             id: batch[j].id,
             nome: batch[j].nome,
-            score: batch[j].score,
+            score: batch[j].score ?? 0,
             stages_run: [],
             error: String((result as PromiseRejectedResult).reason?.message ?? result.reason),
           })
@@ -213,7 +214,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
     let query = s
       .from('offmarket_leads')
       .select('id, nome, score, cidade, deal_evaluation_score, master_attack_rank', { count: 'exact' })

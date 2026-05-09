@@ -41,11 +41,11 @@ export async function PATCH(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
 
     // Fetch current buyer data
     const { data: contact, error: fetchErr } = await s.from('contacts')
-      .select('id, full_name, response_rate, last_contact_at, notes as existing_notes')
+      .select('id, full_name, response_rate, last_contact_at, notes')
       .eq('id', id)
       .single()
 
@@ -79,7 +79,7 @@ export async function PATCH(
 
     // Append note if provided
     if (notes) {
-      const existingNotes = contact.existing_notes ?? ''
+      const existingNotes = (contact.notes as string | null) ?? ''
       const timestamp = new Date(contactedTime).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
       updatePayload.notes = existingNotes
         ? `${existingNotes}\n[${timestamp} — ${interaction_type}] ${notes}`

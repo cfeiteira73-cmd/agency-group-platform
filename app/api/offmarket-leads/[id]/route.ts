@@ -68,7 +68,7 @@ export async function GET(
 
     const { id } = await params
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any).from(TABLE)
+    const { data, error } = await supabaseAdmin.from(TABLE)
       .select('*')
       .eq('id', id)
       .single()
@@ -107,7 +107,7 @@ export async function PATCH(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any).from(TABLE)
+    const { data, error } = await supabaseAdmin.from(TABLE)
       .update(patch)
       .eq('id', id)
       .select()
@@ -131,7 +131,7 @@ export async function DELETE(
 
     const { id } = await params
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any).from(TABLE)
+    const { error } = await supabaseAdmin.from(TABLE)
       .delete()
       .eq('id', id)
 

@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       fetchFunnelCounts(since),
       // Grade-level distribution vs close
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any)
+      supabaseAdmin
         .from('revenue_attribution')
         .select('attributed_score_grade, close_status, commission_total')
         .gte('created_at', since.toISOString()),

@@ -31,13 +31,13 @@ export async function GET(req: NextRequest) {
     const page       = Math.max(parseInt(searchParams.get('page') ?? '1'), 1)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('activities')
       .select('*', { count: 'exact' })
       .order('date', { ascending: false })
       .range((page - 1) * limit, page * limit - 1)
 
-    if (type)       query = query.eq('type', type)
+    if (type)       query = query.eq('type', type as import('@/lib/database.types').ActivityType)
     if (contact_id) query = query.eq('contact_id', contact_id)
     if (deal_id)    query = query.eq('deal_id', deal_id)
 
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('activities')
       .insert({
         type:       body.type,

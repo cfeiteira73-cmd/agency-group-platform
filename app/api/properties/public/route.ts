@@ -20,16 +20,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   // ── Try Supabase (portal-compat columns from migration 003) ─────────────────
   if (supabaseAdmin) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query: any = (supabaseAdmin as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- properties table uses English columns; alias mapping done in JS below
+      let query = (supabaseAdmin as any)
         .from('properties')
-        .select('id, ref, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, badge, gradient, lifestyle_tags, lat, lng, ambientes, imagens')
+        .select('id, title, zone, type, price, area_m2, bedrooms, bathrooms, energy_certificate, status, description, features, latitude, longitude')
         .eq('status', 'active')
-        .not('nome', 'is', null)
+        .not('title', 'is', null)
         .limit(limit)
 
-      if (zona) query = query.eq('zona', zona)
-      if (tipo) query = query.eq('tipo', tipo)
+      if (zona) query = query.eq('zone', zona)
+      if (tipo) query = query.eq('type', tipo)
 
       const { data, error } = await query
 

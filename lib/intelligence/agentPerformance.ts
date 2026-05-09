@@ -213,18 +213,15 @@ export async function computeAgentMetricsFromFeedback(
   since: Date,
 ): Promise<AgentMetrics> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('scoring_feedback_events')
-    .select([
-      'agent_email', 'deal_won', 'close_status',
-      'realized_sale_price', 'realized_dom', 'negotiation_delta_pct', 'asking_price',
-    ].join(','))
+    .select('agent_email,deal_won,close_status,realized_sale_price,realized_dom,negotiation_delta_pct,asking_price,opportunity_grade')
     .eq('agent_email', agentEmail)
     .gte('surfaced_at', since.toISOString())
 
   if (error) throw new Error(`computeAgentMetrics: ${error.message}`)
 
-  const rows: FeedbackRow[] = data ?? []
+  const rows: FeedbackRow[] = (data ?? []) as unknown as FeedbackRow[]
   const closed  = rows.filter(r => r.close_status === 'won')
   const lost    = rows.filter(r => r.close_status === 'lost')
 
@@ -263,7 +260,7 @@ export async function computeAndPersistAllAgentMetrics(
 
   // Get distinct agent emails from feedback events
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: agentRows, error: agentError } = await (supabaseAdmin as any)
+  const { data: agentRows, error: agentError } = await supabaseAdmin
     .from('scoring_feedback_events')
     .select('agent_email')
     .gte('surfaced_at', sinceDate.toISOString())
@@ -271,7 +268,7 @@ export async function computeAndPersistAllAgentMetrics(
 
   if (agentError) return { computed: 0, errors: [agentError.message] }
 
-  const uniqueEmails: string[] = [...new Set<string>((agentRows ?? []).map((r: {agent_email: string}) => r.agent_email as string))]
+  const uniqueEmails: string[] = [...new Set<string>((agentRows ?? []).map(r => (r.agent_email ?? '') as string).filter(Boolean))]
 
   let computed = 0
   const errors: string[] = []
@@ -282,7 +279,7 @@ export async function computeAndPersistAllAgentMetrics(
       const scoreData = computeAgentExecutionScore(metrics)
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabaseAdmin as any)
+      const { error } = await supabaseAdmin
         .from('agent_performance_metrics')
         .upsert({
           agent_email:               email,

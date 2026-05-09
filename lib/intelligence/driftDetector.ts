@@ -344,21 +344,17 @@ export function buildDriftReport(
 // ---------------------------------------------------------------------------
 
 export async function fetchFeedbackSamples(since: Date): Promise<FeedbackSample[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- predicted_yield/realized_yield column names pending alignment with DB schema
   const { data, error } = await (supabaseAdmin as any)
     .from('scoring_feedback_events')
-    .select([
-      'opportunity_score', 'opportunity_grade', 'predicted_yield', 'realized_yield',
-      'avm_value_at_time', 'realized_sale_price', 'realized_dom',
-      'close_status', 'deal_won',
-    ].join(','))
+    .select('opportunity_score,opportunity_grade,predicted_yield,realized_yield,avm_value_at_time,realized_sale_price,realized_dom,close_status,deal_won')
     .gte('surfaced_at', since.toISOString())
     .order('surfaced_at', { ascending: false })
     .limit(500)
 
   if (error) throw new Error(`fetchFeedbackSamples: ${error.message}`)
 
-  return (data ?? []).map((r: Record<string, unknown>) => ({
+  return ((data ?? []) as Record<string, unknown>[]).map(r => ({
     opportunity_score:   Number(r.opportunity_score ?? 0),
     opportunity_grade:   (r.opportunity_grade as string | null) ?? null,
     predicted_yield:     r.predicted_yield != null ? Number(r.predicted_yield) : null,
@@ -386,7 +382,7 @@ export async function computeAndPersistDriftReport(
   if (persist && report.has_enough_data) {
     try {
       const stats = analyzeFeedbackSamples(samples)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- calibration_recommendations table pending type registration
       await (supabaseAdmin as any)
         .from('calibration_recommendations')
         .insert({

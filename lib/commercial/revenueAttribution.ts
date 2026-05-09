@@ -135,7 +135,7 @@ export function buildAttributionRecord(
 
 export async function recordAttribution(record: AttributionRecord): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('revenue_attribution')
     .upsert({
       property_id:             record.property_id,
@@ -179,7 +179,7 @@ export async function recordCommission(
   const breakdown = computeCommission(salePrice, opts.commissionRate ?? 0.05, splitPct)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('commission_records')
     .upsert({
       property_id:             propertyId,
@@ -209,7 +209,7 @@ export async function recordCommission(
 
 export async function getAttributionSummary(): Promise<unknown[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('v_revenue_by_grade')
     .select('*')
 

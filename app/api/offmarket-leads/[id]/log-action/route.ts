@@ -40,7 +40,7 @@ export async function POST(
 
   const { id } = await params
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
 
   try {
     const body = await req.json() as Record<string, unknown>

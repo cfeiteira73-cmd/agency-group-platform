@@ -166,7 +166,7 @@ export function sortTasksByPriority(tasks: OperatorTask[]): OperatorTask[] {
 export async function createTask(payload: TaskPayload): Promise<string> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('operator_tasks')
     .insert({
       task_type:       payload.task_type,
@@ -203,7 +203,7 @@ export async function claimTask(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('operator_tasks')
     .update({
       status:      'in_progress',
@@ -228,7 +228,7 @@ export async function completeTask(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('operator_tasks')
     .update({
       status:       'completed',
@@ -253,7 +253,7 @@ export async function cancelTask(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('operator_tasks')
     .update({
       status:     'cancelled',
@@ -277,7 +277,7 @@ export async function escalateTask(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('operator_tasks')
     .update({
       status:     'escalated',
@@ -301,7 +301,7 @@ export async function getPendingTasks(opts: {
   limit?:       number
 } = {}): Promise<OperatorTask[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('operator_tasks')
     .select('*')
     .in('status', ['pending', 'in_progress'])
@@ -310,11 +310,11 @@ export async function getPendingTasks(opts: {
 
   if (opts.assignedTo) query = query.eq('assigned_to', opts.assignedTo)
   if (opts.taskType)   query = query.eq('task_type', opts.taskType)
-  if (opts.priority)   query = query.eq('priority', opts.priority)
+  if (opts.priority)   query = query.eq('priority', opts.priority.toLowerCase() as 'low' | 'medium' | 'high' | 'critical')
 
   const { data, error } = await query
   if (error) throw new Error(`getPendingTasks: ${error.message}`)
-  return (data ?? []) as OperatorTask[]
+  return (data ?? []) as unknown as OperatorTask[]
 }
 
 // ---------------------------------------------------------------------------
@@ -323,7 +323,7 @@ export async function getPendingTasks(opts: {
 
 export async function getOverdueTasks(): Promise<OperatorTask[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('operator_tasks')
     .select('*')
     .in('status', ['pending', 'in_progress'])
@@ -332,5 +332,5 @@ export async function getOverdueTasks(): Promise<OperatorTask[]> {
     .limit(100)
 
   if (error) throw new Error(`getOverdueTasks: ${error.message}`)
-  return (data ?? []) as OperatorTask[]
+  return (data ?? []) as unknown as OperatorTask[]
 }

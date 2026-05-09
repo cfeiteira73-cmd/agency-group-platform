@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const admin = supabaseAdmin as any
+    const admin = supabaseAdmin
 
     // 1. Top performers (ROI-ranked)
     let topQuery = admin

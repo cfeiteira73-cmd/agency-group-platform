@@ -126,18 +126,18 @@ export async function createAlert(payload: AlertPayload): Promise<string | null>
 
   // If dedup_key set — check for existing active alert with same key
   if (payload.dedup_key) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dedup_key/status mismatch pending type update
     const { data: existing } = await (supabaseAdmin as any)
       .from('system_alerts')
       .select('id')
       .eq('dedup_key', payload.dedup_key)
-      .eq('status', 'active')
+      .eq('status', 'open')
       .single()
 
     if (existing) return null  // already active — skip
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- severity/message/context/dedup_key pending type update
   const { data, error } = await (supabaseAdmin as any)
     .from('system_alerts')
     .insert({
@@ -147,7 +147,7 @@ export async function createAlert(payload: AlertPayload): Promise<string | null>
       message:    payload.message,
       context:    payload.context ?? {},
       dedup_key:  payload.dedup_key ?? null,
-      status:     'active',
+      status:     'open',
     })
     .select('id')
     .single()
@@ -165,7 +165,7 @@ export async function acknowledgeAlert(
   byEmail:  string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('system_alerts')
     .update({
       status:           'acknowledged',
@@ -183,7 +183,7 @@ export async function acknowledgeAlert(
 
 export async function resolveAlert(alertId: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('system_alerts')
     .update({ status: 'resolved', resolved_at: new Date().toISOString() })
     .eq('id', alertId)
@@ -199,10 +199,11 @@ export async function getActiveAlerts(
   severity?: AlertSeverity,
 ): Promise<SystemAlert[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- severity mismatch pending type update
+  let query: any = supabaseAdmin
     .from('system_alerts')
     .select('*')
-    .eq('status', 'active')
+    .eq('status', 'open')
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -210,5 +211,5 @@ export async function getActiveAlerts(
 
   const { data, error } = await query
   if (error) throw new Error(`getActiveAlerts: ${error.message}`)
-  return (data ?? []) as SystemAlert[]
+  return (data ?? []) as unknown as SystemAlert[]
 }

@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabaseAdmin as any
+  const db = supabaseAdmin
 
   try {
     const [counts, gradeRes, sourceRes, campaignRes] = await Promise.allSettled([

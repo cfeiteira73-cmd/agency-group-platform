@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
     if (view === 'weights') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabaseAdmin as any)
+      const { data, error } = await supabaseAdmin
         .from('distribution_feedback_weights')
         .select('*')
         .order('updated_at', { ascending: false })
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
     // Network-level summary
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: outcomes, error } = await (supabaseAdmin as any)
+    const { data: outcomes, error } = await supabaseAdmin
       .from('distribution_outcomes')
       .select('recipient_email, response_received, converted, response_time_hours')
       .limit(500)

@@ -68,7 +68,7 @@ export async function getGrowthAnalytics(days = 90): Promise<GrowthAnalytics> {
   try {
     // ── 1. Contacts metrics ────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: contacts, error: cErr } = await (supabaseAdmin as any)
+    const { data: contacts, error: cErr } = await supabaseAdmin
       .from('contacts')
       .select('status, created_at, source_channel')
       .gte('created_at', since) as { data: ContactRow[] | null; error: { message: string } | null }
@@ -100,7 +100,7 @@ export async function getGrowthAnalytics(days = 90): Promise<GrowthAnalytics> {
 
     // ── 2. Referrals metrics ───────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: referrals, error: rErr } = await (supabaseAdmin as any)
+    const { data: referrals, error: rErr } = await supabaseAdmin
       .from('referrals')
       .select('referrer_email, referred_email, source, deal_id, created_at')
       .gte('created_at', since) as { data: ReferralRow[] | null; error: { message: string } | null }
@@ -150,7 +150,7 @@ export async function getGrowthAnalytics(days = 90): Promise<GrowthAnalytics> {
 
     // ── 3. Weekly trend from growth_metrics ───────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: weeklyData, error: wErr } = await (supabaseAdmin as any)
+    const { data: weeklyData, error: wErr } = await supabaseAdmin
       .from('growth_metrics')
       .select('week_start, new_leads, referral_count, new_clients, cac_eur, ltv_eur')
       .gte('week_start', new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10))
@@ -196,7 +196,7 @@ export async function recordReferral(
 ): Promise<void> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any).from('referrals').insert({
+    const { error } = await supabaseAdmin.from('referrals').insert({
       referrer_email: referrerEmail,
       referred_email: referredEmail,
       source,

@@ -117,7 +117,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // ── Fetch all open deals ────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: rawDeals, error } = await (supabaseAdmin as any)
+    const { data: rawDeals, error } = await supabaseAdmin
       .from('deals')
       .select('id, imovel, comprador, fase, valor, expected_fee, realized_fee, updated_at, created_at, agent_email')
       .not('fase', 'ilike', '%cancelad%')

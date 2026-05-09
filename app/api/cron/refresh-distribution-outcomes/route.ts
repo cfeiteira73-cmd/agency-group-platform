@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: emails, error } = await (supabaseAdmin as any)
+    const { data: emails, error } = await supabaseAdmin
       .from('distribution_outcomes')
       .select('recipient_email')
       .order('created_at', { ascending: false })
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
     const durationMs = Date.now() - startedAt
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseAdmin as any)
+    await supabaseAdmin
       .from('automations_log')
       .insert({
         automation_type:     'cron_refresh_distribution_outcomes',

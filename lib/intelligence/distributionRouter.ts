@@ -243,7 +243,7 @@ export async function persistDistributionEvent(
   decision:  DistributionDecision,
   triggeredBy = 'system',
 ): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- distribution_events has different schema; property_id/opportunity_score/etc. pending type alignment
   const { data, error } = await (supabaseAdmin as any)
     .from('distribution_events')
     .insert({
@@ -262,7 +262,7 @@ export async function persistDistributionEvent(
     .single()
 
   if (error) throw new Error(`persistDistributionEvent: ${error.message}`)
-  return data.id as string
+  return (data as { id: string }).id
 }
 
 // ---------------------------------------------------------------------------
@@ -270,7 +270,7 @@ export async function persistDistributionEvent(
 // ---------------------------------------------------------------------------
 
 export async function getDistributionHistory(propertyId: string): Promise<unknown[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- property_id column pending type update
   const { data, error } = await (supabaseAdmin as any)
     .from('distribution_events')
     .select('*')

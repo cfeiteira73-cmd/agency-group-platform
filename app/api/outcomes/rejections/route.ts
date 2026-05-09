@@ -22,14 +22,14 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: taxonomy, error: taxError } = await (supabaseAdmin as any)
+    const { data: taxonomy, error: taxError } = await supabaseAdmin
       .from('v_rejection_taxonomy')
       .select('*')
 
     if (taxError) throw taxError
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: recent, error: recError } = await (supabaseAdmin as any)
+    const { data: recent, error: recError } = await supabaseAdmin
       .from('opportunity_rejections')
       .select('*')
       .order('recorded_at', { ascending: false })

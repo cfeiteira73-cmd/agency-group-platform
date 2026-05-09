@@ -26,14 +26,14 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('commission_records')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit)
 
     if (agentEmail)   query = query.eq('agent_email', agentEmail)
-    if (payoutStatus) query = query.eq('payout_status', payoutStatus)
+    if (payoutStatus) query = query.eq('payout_status', payoutStatus as 'pending' | 'cancelled' | 'partial' | 'paid')
 
     const { data, error } = await query
     if (error) throw new Error(error.message)

@@ -51,7 +51,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let q = (supabaseAdmin as any)
+    let q = supabaseAdmin
       .from('learning_events')
       .select(`
         id, event_type, created_at, agent_email, match_score,
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     if (eventType)      q = q.eq('event_type', eventType)
     if (leadId)         q = q.eq('lead_id', leadId)
     if (dealId)         q = q.eq('deal_id', dealId)
-    if (sourceSystem)   q = q.eq('source_system', sourceSystem)
+    if (sourceSystem)   q = q.eq('source_system', sourceSystem as 'api' | 'n8n' | 'cron' | 'engine')
     if (since)          q = q.gte('created_at', since)
     if (until)          q = q.lte('created_at', until)
 

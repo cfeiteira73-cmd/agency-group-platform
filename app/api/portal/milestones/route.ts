@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('client_milestones')
       .select('*')
       .order('milestone_date', { ascending: true })
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       agent_email:    body.agent_email,
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- client_milestones table not yet in typed schema
     const { data, error } = await (supabaseAdmin as any)
       .from('client_milestones')
       .insert(payload)
@@ -151,7 +151,7 @@ export async function PATCH(req: NextRequest) {
       )
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- client_milestones table not yet in typed schema
     const { data, error } = await (supabaseAdmin as any)
       .from('client_milestones')
       .update(updates)

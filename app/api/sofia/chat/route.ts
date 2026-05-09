@@ -282,7 +282,7 @@ export async function POST(req: NextRequest) {
           // Persist conversation to Supabase (non-blocking — fires after stream completes)
           const assistantMessage = assistantChunks.join('').slice(0, 4000)
           if (assistantMessage) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- sofia_conversations has extra columns (mode, user_ip, property_ref, context) not yet in typed schema
             ;(supabaseAdmin as any)
               .from('sofia_conversations')
               .insert({

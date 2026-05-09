@@ -194,7 +194,7 @@ export async function recordDistributionOutcome(
   outcome: DistributionOutcome,
 ): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('distribution_outcomes')
     .upsert({
       distribution_event_id: outcome.distribution_event_id,
@@ -228,7 +228,7 @@ export async function refreshRecipientProfile(
   recipientEmail: string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const admin = supabaseAdmin as any
+  const admin = supabaseAdmin
 
   const { data: outcomes, error: fetchErr } = await admin
     .from('distribution_outcomes')
@@ -306,7 +306,7 @@ export async function getRecipientFatigueStatus(
   if (emails.length === 0) return []
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('recipient_performance_profiles')
     .select('recipient_email, is_fatigued, fatigue_score, cooldown_until, distributions_last_7d')
     .in('recipient_email', emails)

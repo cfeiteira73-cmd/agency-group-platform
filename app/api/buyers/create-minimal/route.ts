@@ -101,7 +101,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- contacts has many columns (buyer_tier, buyer_score, etc.) not yet in typed schema
   const s = supabaseAdmin as any
 
   try {

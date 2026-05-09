@@ -67,8 +67,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const persistedItems: PriorityItem[] = []
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let q = (supabaseAdmin as any)
-      .from('priority_items')
+    const piTable = (supabaseAdmin as any).from('priority_items')
+    let q = piTable
       .select('*')
       .order('priority_score', { ascending: false })
       .order('deadline', { ascending: true, nullsFirst: false })
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     try {
       // A) HIGH LEAD SCORE — no recent contact (>72h)
-      const { data: hotLeads } = await (supabaseAdmin as any)
+      const { data: hotLeads } = await supabaseAdmin
         .from('contacts')
         .select('id, name, email, lead_score, updated_at, role')
         .gte('lead_score', 70)
@@ -103,8 +103,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
               id:               `dyn-lead-${lead.id}`,
               entity_type:      'contact',
               entity_id:        lead.id,
-              priority_score:   Math.min(100, Math.round(lead.lead_score * 0.9 + (hrs > 168 ? 10 : 0))),
-              reason:           `Lead score ${lead.lead_score}/100 — no contact in ${Math.round(hrs)}h`,
+              priority_score:   Math.min(100, Math.round((lead.lead_score ?? 0) * 0.9 + (hrs > 168 ? 10 : 0))),
+              reason:           `Lead score ${lead.lead_score ?? 0}/100 — no contact in ${Math.round(hrs)}h`,
               next_best_action: 'Call or WhatsApp within 4h',
               deadline:         addHours(4),
               owner_id:         null,
@@ -118,7 +118,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       // B) MATCH SCORE ≥80 — no deal pack sent
-      const { data: topMatches } = await (supabaseAdmin as any)
+      const { data: topMatches } = await supabaseAdmin
         .from('matches')
         .select('id, lead_id, property_id, property_title, match_score, created_at, status')
         .gte('match_score', 80)
@@ -147,7 +147,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       // C) DEAL PACK SENT — no response after 48h
       const cutoff48h = new Date(now - 48 * 60 * 60 * 1000).toISOString()
-      const { data: stalePacks } = await (supabaseAdmin as any)
+      const { data: stalePacks } = await supabaseAdmin
         .from('deal_packs')
         .select('id, lead_id, property_id, status, sent_at, view_count')
         .eq('status', 'sent')
@@ -178,7 +178,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // D) DEALS STUCK IN FASE > SLA
       // Uses portal-compat columns: fase (PT stage), imovel (title), valor (TEXT revenue)
       // expected_fee is available if migration 20260426_002 ran; falls back to valor × 5%
-      const { data: activeDeals } = await (supabaseAdmin as any)
+      const { data: activeDeals } = await supabaseAdmin
         .from('deals')
         .select('id, title, imovel, fase, updated_at, valor, expected_fee, created_at')
         .not('fase', 'ilike', '%escritura%')
@@ -223,7 +223,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       // E) HOT SELLER LEADS — no consultation booked
-      const { data: sellers } = await (supabaseAdmin as any)
+      const { data: sellers } = await supabaseAdmin
         .from('contacts')
         .select('id, name, email, seller_stage, seller_asking_price, seller_urgency, created_at')
         .eq('is_seller', true)
@@ -309,6 +309,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from('priority_items')
       .insert({
@@ -354,6 +355,7 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   if (status === 'resolved' && !resolved_at) updates.resolved_at = new Date().toISOString()
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from('priority_items')
       .update(updates)

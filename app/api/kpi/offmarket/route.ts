@@ -11,7 +11,7 @@ import { auth } from '@/auth'
 
 // Safe query wrapper — returns default on any Supabase error
 async function safeQuery<T>(
-  fn: () => Promise<{ data: T | null; error: unknown; count?: number | null }>,
+  fn: () => PromiseLike<{ data: T | null; error: unknown; count?: number | null }>,
   defaultData: T
 ): Promise<{ data: T; count: number; ok: boolean }> {
   try {
@@ -23,7 +23,7 @@ async function safeQuery<T>(
   }
 }
 
-async function safeCount(fn: () => Promise<{ count: number | null; error: unknown }>): Promise<number> {
+async function safeCount(fn: () => PromiseLike<{ count: number | null; error: unknown }>): Promise<number> {
   try {
     const r = await fn()
     if (r.error) return 0
@@ -38,7 +38,7 @@ export async function GET(): Promise<NextResponse> {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- offmarket_leads/contacts have many columns not yet in typed schema
     const s = supabaseAdmin as any
 
     const now = new Date()
@@ -149,7 +149,7 @@ export async function GET(): Promise<NextResponse> {
       let avgBuyerScore = 0
       try {
         const { data: bScores } = await s.from('contacts').select('buyer_score').in('status', ACTIVE).not('buyer_score', 'is', null)
-        const scores = (bScores ?? []).map((r: { buyer_score: number }) => r.buyer_score)
+        const scores = (bScores ?? []).map((r: Record<string, unknown>) => (r.buyer_score ?? 0) as number)
         if (scores.length > 0) avgBuyerScore = Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length)
       } catch { /* buyer_score col missing — ignored */ }
 

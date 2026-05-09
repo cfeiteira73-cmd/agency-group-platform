@@ -57,44 +57,45 @@ export async function GET(req: NextRequest) {
 
         for (const issue of issues) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabaseAdmin as any)
-            .from('data_quality_events')
-            .upsert({
-              resource_type: 'contact',
-              resource_id:   contact.id,
-              field_name:    issue.field,
-              issue_type:    issue.type,
-              severity:      issue.sev,
-              detected_at:   new Date().toISOString(),
-            }, { onConflict: 'resource_type,resource_id,field_name,issue_type' })
-            .catch(() => {
-              // Non-fatal: upsert failures are tolerated to keep cron running
-            })
+          try {
+            await supabaseAdmin
+              .from('data_quality_events')
+              .upsert({
+                resource_type: 'contact',
+                resource_id:   contact.id,
+                field_name:    issue.field,
+                issue_type:    issue.type,
+                severity:      issue.sev,
+                detected_at:   new Date().toISOString(),
+              }, { onConflict: 'resource_type,resource_id,field_name,issue_type' })
+          } catch {
+            // Non-fatal: upsert failures are tolerated to keep cron running
+          }
           events_logged++
         }
       }
     }
 
     // Log run to automations_log
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseAdmin as any)
-      .from('automations_log')
-      .insert({
-        workflow_name: 'data-quality-score',
-        trigger_type:  'cron',
-        status:        'success',
-        started_at:    startedAt,
-        completed_at:  new Date().toISOString(),
-        outcome: {
-          avg_score:       report.avg_contact_score,
-          critical_issues: report.critical_issues,
-          events_logged,
-          correlation_id:  corrId,
-        },
-      })
-      .catch(() => {
-        // Non-fatal: automation log write failure should not fail the cron
-      })
+    try {
+      await supabaseAdmin
+        .from('automations_log')
+        .insert({
+          workflow_name: 'data-quality-score',
+          trigger_type:  'cron',
+          status:        'success',
+          started_at:    startedAt,
+          completed_at:  new Date().toISOString(),
+          outcome: {
+            avg_score:       report.avg_contact_score,
+            critical_issues: report.critical_issues,
+            events_logged,
+            correlation_id:  corrId,
+          },
+        })
+    } catch {
+      // Non-fatal: automation log write failure should not fail the cron
+    }
 
     log.info('[cron:data-quality-score] Complete', {
       route:          'api/cron/data-quality-score',

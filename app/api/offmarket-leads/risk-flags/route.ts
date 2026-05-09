@@ -18,7 +18,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const limit = Math.min(100, parseInt(sp.get('limit') ?? '50', 10))
 
     // Query the risk flags view
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- offmarket_risk_flags is a view not yet in typed schema
     let query = (supabaseAdmin as any)
       .from('offmarket_risk_flags')
       .select('*')
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Filter by severity if requested
     const HIGH_FLAGS = ['sla_breach', 'high_score_no_action', 'matched_not_contacted', 'cpcv_deadline_soon', 'escritura_deadline_soon']
     const filtered = severity === 'high'
-      ? flagged.filter((r: { risk_flags: string[] }) => r.risk_flags.some((f: string) => HIGH_FLAGS.includes(f)))
+      ? flagged.filter((r: { risk_flags: string[] | null }) => Array.isArray(r.risk_flags) && r.risk_flags.some((f: string) => HIGH_FLAGS.includes(f)))
       : flagged
 
     return NextResponse.json({ data: filtered, total: filtered.length })
@@ -67,7 +67,7 @@ async function computeRiskFlagsInline(req: NextRequest): Promise<NextResponse> {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('offmarket_leads')
       .select(FULL_COLS)
       .not('status', 'in', '("closed_won","closed_lost")')
@@ -82,7 +82,7 @@ async function computeRiskFlagsInline(req: NextRequest): Promise<NextResponse> {
     hasDealCols = false
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabaseAdmin as any)
+      const { data, error } = await supabaseAdmin
         .from('offmarket_leads')
         .select(BASE_COLS)
         .not('status', 'in', '("closed_won","closed_lost")')

@@ -394,7 +394,7 @@ export async function POST(
 
     // ── Fetch lead ──────────────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: lead, error: leadError } = await (supabaseAdmin as any).from(TABLE)
+    const { data: lead, error: leadError } = await supabaseAdmin.from(TABLE)
       .select('id, nome, tipo_ativo, cidade, localizacao, price_estimate, price_ask, area_m2, score, urgency, status')
       .eq('id', id)
       .single()
@@ -405,7 +405,7 @@ export async function POST(
 
     // ── Fetch buyer contacts with intelligence fields ────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: contacts, error: contactsError } = await (supabaseAdmin as any)
+    const { data: contacts, error: contactsError } = await supabaseAdmin
       .from(CONTACTS_TABLE)
       .select([
         'id', 'full_name', 'email', 'phone', 'whatsapp',
@@ -427,7 +427,7 @@ export async function POST(
     // ── Run Matching 2.0 ────────────────────────────────────────────────────
     const matches: BuyerMatchV2[] = []
     for (const contact of (contacts ?? [])) {
-      const match = matchBuyerToLead(contact as Contact, lead as OffmarketLead)
+      const match = matchBuyerToLead(contact as unknown as Contact, lead as unknown as OffmarketLead)
       if (match) matches.push(match)
     }
 
@@ -488,7 +488,7 @@ export async function POST(
     if (tertiary)  updatePayload.tertiary_buyer_id  = tertiary.contact_id
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: updatedLead, error: updateError } = await (supabaseAdmin as any).from(TABLE)
+    const { data: updatedLead, error: updateError } = await supabaseAdmin.from(TABLE)
       .update(updatePayload)
       .eq('id', id)
       .select('id, nome, score, matched_buyers_count, best_buyer_match_score, matched_to_buyers, preclose_candidate, outreach_ready, deal_priority_score')
@@ -497,7 +497,7 @@ export async function POST(
     if (updateError) {
       // Non-fatal: migration 007 columns may not exist yet — retry with base fields
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabaseAdmin as any).from(TABLE)
+      await supabaseAdmin.from(TABLE)
         .update({
           matched_buyers_count:   matches.length,
           best_buyer_match_score: bestScore,
@@ -555,7 +555,7 @@ export async function GET(
     const { id } = await params
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any).from(TABLE)
+    const { data, error } = await supabaseAdmin.from(TABLE)
       .select([
         'id', 'nome',
         'matched_buyers_count', 'best_buyer_match_score', 'matched_to_buyers',

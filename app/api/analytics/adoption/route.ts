@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     const since = new Date(Date.now() - days * 86_400_000).toISOString()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('adoption_events')
       .select('user_email,user_role,feature_name,action,occurred_at')
       .gte('occurred_at', since)
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any).from('adoption_events').insert({
+    const { error } = await supabaseAdmin.from('adoption_events').insert({
       user_email:   body.user_email,
       user_role:    body.user_role ?? null,
       feature_name: body.feature_name,

@@ -1238,7 +1238,7 @@ export async function POST(
     const { id } = await params
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: lead, error: fetchError } = await (supabaseAdmin as any)
+    const { data: lead, error: fetchError } = await supabaseAdmin
       .from(TABLE)
       .select(`id, nome, tipo_ativo, cidade, localizacao, area_m2, price_ask,
                owner_type, urgency, contacto, source, score,
@@ -1263,7 +1263,7 @@ export async function POST(
     let primaryBuyerPressure: BuyerPressureData | null = null
     if (lead.primary_buyer_id) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: buyer } = await (supabaseAdmin as any)
+      const { data: buyer } = await supabaseAdmin
         .from('contacts')
         .select('name, buyer_score, active_status, liquidity_profile, deals_closed_count, avg_close_days, reliability_score, response_rate')
         .eq('id', lead.primary_buyer_id)
@@ -1303,7 +1303,7 @@ export async function POST(
       lead.tipo_ativo, lead.cidade, lead.localizacao, lead.area_m2,
       lead.gross_discount_pct, lead.deal_risk_level, lead.contacto,
       lead.comp_confidence_score, lead.matched_buyers_count,
-      lead.docs_pending, lead.negotiation_status
+      lead.docs_pending as unknown as string[] | null, lead.negotiation_status
     )
 
     const assetQualityScore = calcAssetQualityScore(
@@ -1454,7 +1454,7 @@ export async function POST(
     // ── Persist ──────────────────────────────────────────────────────────────
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: updateError } = await (supabaseAdmin as any)
+    const { error: updateError } = await supabaseAdmin
       .from(TABLE)
       .update({
         adjusted_discount_score:    adjustedDiscountScore,
@@ -1592,7 +1592,7 @@ export async function GET(
 
     const { id } = await params
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from(TABLE)
       .select(`id, nome, adjusted_discount_score, liquidity_score, liquidity_reason,
                execution_probability, execution_reason, best_buyer_execution_score,

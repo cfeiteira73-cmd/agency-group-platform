@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     // Return latest persisted report
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('calibration_recommendations')
       .select('*')
       .order('generated_at', { ascending: false })

@@ -79,7 +79,7 @@ const DEAL_STUCK_DAYS: Record<string, number> = {
 
 async function detectHighScoreNoContact(t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
 
   const { data, error } = await s
     .from('offmarket_leads')
@@ -114,7 +114,7 @@ async function detectHighScoreNoContact(t: LeakageThresholds): Promise<LeakItem[
 
 async function detectCPCVReadyNoAction(t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
 
   const nDaysAgo = new Date(Date.now() - t.cpvNoActionDays * 86_400_000).toISOString()
 
@@ -156,7 +156,7 @@ async function detectCPCVReadyNoAction(t: LeakageThresholds): Promise<LeakItem[]
 
 async function detectDealStuck(_t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
 
   const { data, error } = await s
     .from('deals')
@@ -200,7 +200,7 @@ async function detectDealStuck(_t: LeakageThresholds): Promise<LeakItem[]> {
 
 async function detectHumanFailureOpen(t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
 
   const cutoff = new Date(Date.now() - t.humanFailureHours * 3_600_000).toISOString()
 
@@ -238,7 +238,7 @@ async function detectHumanFailureOpen(t: LeakageThresholds): Promise<LeakItem[]>
 
 async function detectDormantHighValue(t: LeakageThresholds): Promise<LeakItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
 
   const cutoff = new Date(Date.now() - t.dormantDays * 86_400_000).toISOString()
 

@@ -758,7 +758,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
 
     // Load contact to verify ownership
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: contact, error: fetchError } = await (supabaseAdmin as any)
+    const { data: contact, error: fetchError } = await supabaseAdmin
       .from('contacts')
       .select('agent_email, full_name')
       .eq('id', id)
@@ -783,7 +783,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any)
+    const { error } = await supabaseAdmin
       .from('contacts')
       .delete()
       .eq('id', id)

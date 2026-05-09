@@ -34,7 +34,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Find matching investors from Supabase
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: investors } = await (supabaseAdmin as any)
+    const { data: investors } = await supabaseAdmin
       .from('contacts')
       .select('id, full_name, email, phone, whatsapp, budget_min, budget_max, preferred_locations, typologies_wanted, status, lead_tier')
       .in('status', ['prospect', 'qualified', 'active'])

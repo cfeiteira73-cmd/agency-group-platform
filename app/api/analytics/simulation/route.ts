@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const { supabaseAdmin } = await import('@/lib/supabase')
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('calibration_simulations')
       .select('id, simulation_name, status, metrics, run_by, started_at, completed_at, created_at, model_version_id')
       .order('created_at', { ascending: false })
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const { supabaseAdmin } = await import('@/lib/supabase')
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let propQuery = (supabaseAdmin as any)
+    let propQuery = supabaseAdmin
       .from('scoring_feedback_events')
       .select('property_id, opportunity_score, grade')
       .not('opportunity_score', 'is', null)
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     // Fetch outcomes
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: outcomeRows } = await (supabaseAdmin as any)
+    const { data: outcomeRows } = await supabaseAdmin
       .from('transaction_outcomes')
       .select('property_id, outcome_type')
       .in('outcome_type', ['won', 'lost'])
@@ -117,17 +117,13 @@ export async function POST(req: NextRequest) {
     const modelThresholds = (thresholds as Parameters<typeof scoreToGrade>[1]) ?? {}
 
     // Simulate: apply grade thresholds from new model version
-    const results: SimulationResult[] = (feedbackRows ?? []).map((r: {
-      property_id: string
-      opportunity_score: number
-      grade: string
-    }) => {
-      const currentScore    = r.opportunity_score
+    const results: SimulationResult[] = (feedbackRows ?? []).map(r => {
+      const currentScore    = (r.opportunity_score ?? 0) as number
       const simulatedScore  = currentScore    // score formula unchanged — only thresholds vary
-      const currentGrade    = r.grade
+      const currentGrade    = (r.grade ?? 'D') as string
       const simulatedGrade  = scoreToGrade(simulatedScore, modelThresholds)
       return {
-        property_id:     r.property_id,
+        property_id:     (r.property_id ?? '') as string,
         current_score:   currentScore,
         simulated_score: simulatedScore,
         delta:           simulatedScore - currentScore,

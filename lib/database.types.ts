@@ -247,6 +247,15 @@ export type Database = {
           seller_notes: string | null
           created_at: string
           updated_at: string
+          // extended buyer intelligence fields
+          buyer_score: number | null
+          deals_closed_count: number | null
+          liquidity_profile: string | null
+          name: string | null
+          response_rate: number | null
+          active_status: string | null
+          avg_close_days: number | null
+          reliability_score: number | null
         }
         Insert: {
           id?: string
@@ -312,6 +321,11 @@ export type Database = {
           seller_notes?: string | null
           created_at?: string
           updated_at?: string
+          buyer_score?: number | null
+          deals_closed_count?: number | null
+          liquidity_profile?: string | null
+          name?: string | null
+          response_rate?: number | null
         }
         Update: {
           id?: string
@@ -376,6 +390,11 @@ export type Database = {
           mandate_expiry?: string | null
           seller_notes?: string | null
           updated_at?: string
+          buyer_score?: number | null
+          deals_closed_count?: number | null
+          liquidity_profile?: string | null
+          name?: string | null
+          response_rate?: number | null
         }
         Relationships: []
       }
@@ -451,6 +470,7 @@ export type Database = {
           visits_total: number | null
           created_at: string
           updated_at: string
+          zone_key: string | null
         }
         Insert: {
           id?: string
@@ -519,6 +539,7 @@ export type Database = {
           visits_total?: number | null
           created_at?: string
           updated_at?: string
+          zone_key?: string | null
         }
         Update: {
           id?: string
@@ -586,6 +607,7 @@ export type Database = {
           inquiries_total?: number | null
           visits_total?: number | null
           updated_at?: string
+          zone_key?: string | null
         }
         Relationships: []
       }
@@ -632,6 +654,20 @@ export type Database = {
           notes: string | null
           created_at: string
           updated_at: string
+          // extended deal fields
+          contact_name: string | null
+          fase: string | null
+          imovel: string | null
+          partner_id: string | null
+          ref: string | null
+          sale_price: number | null
+          agent_email: string | null
+          asking_price: number | null
+          comprador: string | null
+          valor: number | null
+          expected_fee: number | null
+          partner_fee_pct: number | null
+          realized_fee: number | null
         }
         Insert: {
           id?: string
@@ -671,6 +707,12 @@ export type Database = {
           notes?: string | null
           created_at?: string
           updated_at?: string
+          contact_name?: string | null
+          fase?: string | null
+          imovel?: string | null
+          partner_id?: string | null
+          ref?: string | null
+          sale_price?: number | null
         }
         Update: {
           id?: string
@@ -709,6 +751,12 @@ export type Database = {
           tags?: string[] | null
           notes?: string | null
           updated_at?: string
+          contact_name?: string | null
+          fase?: string | null
+          imovel?: string | null
+          partner_id?: string | null
+          ref?: string | null
+          sale_price?: number | null
         }
         Relationships: []
       }
@@ -1210,6 +1258,8 @@ export type Database = {
           matched_by: string | null
           created_at: string
           updated_at: string
+          next_best_action: string | null
+          priority_level: 'HIGH' | 'MEDIUM' | 'LOW' | null
         }
         Insert: {
           id?: string
@@ -1227,6 +1277,8 @@ export type Database = {
           matched_by?: string | null
           created_at?: string
           updated_at?: string
+          next_best_action?: string | null
+          priority_level?: string | null
         }
         Update: {
           id?: string
@@ -1243,6 +1295,8 @@ export type Database = {
           status?: MatchStatus
           matched_by?: string | null
           updated_at?: string
+          next_best_action?: string | null
+          priority_level?: string | null
         }
         Relationships: []
       }
@@ -1372,6 +1426,7 @@ export type Database = {
           created_by: string | null
           created_at: string
           updated_at: string
+          metrics: Record<string, unknown> | null
         }
         Insert: {
           id?: string
@@ -1392,6 +1447,7 @@ export type Database = {
           created_by?: string | null
           created_at?: string
           updated_at?: string
+          metrics?: Record<string, unknown> | null
         }
         Update: {
           id?: string
@@ -1411,6 +1467,7 @@ export type Database = {
           metadata?: Record<string, unknown> | null
           created_by?: string | null
           updated_at?: string
+          metrics?: Record<string, unknown> | null
         }
         Relationships: []
       }
@@ -1584,10 +1641,13 @@ export type Database = {
           tokens_used: number | null
           estimated_cost_eur: number | null
           created_at: string
+          automation_type: string | null
+          ran_at: string | null
+          properties_affected: number | null
         }
         Insert: {
           id?: string
-          workflow_name: string
+          workflow_name?: string
           execution_id?: string | null
           trigger_type?: string | null
           trigger_payload?: Record<string, unknown> | null
@@ -1604,6 +1664,9 @@ export type Database = {
           tokens_used?: number | null
           estimated_cost_eur?: number | null
           created_at?: string
+          automation_type?: string | null
+          ran_at?: string | null
+          properties_affected?: number | null
         }
         Update: {
           status?: 'running' | 'success' | 'error' | 'partial'
@@ -1614,6 +1677,7 @@ export type Database = {
           retry_count?: number | null
           tokens_used?: number | null
           estimated_cost_eur?: number | null
+          automation_type?: string | null
         }
         Relationships: []
       }
@@ -1884,6 +1948,7 @@ export type Database = {
           severity: 'P0' | 'P1' | 'P2' | 'P3'
           title: string
           description: string | null
+          message: string | null
           resource_type: string | null
           resource_id: string | null
           status: 'open' | 'acknowledged' | 'resolved'
@@ -1892,6 +1957,8 @@ export type Database = {
           resolved_by: string | null
           resolved_at: string | null
           metadata: Record<string, unknown> | null
+          context: Record<string, unknown> | null
+          dedup_key: string | null
           created_at: string
           updated_at: string
         }
@@ -1901,6 +1968,7 @@ export type Database = {
           severity: 'P0' | 'P1' | 'P2' | 'P3'
           title: string
           description?: string | null
+          message?: string | null
           resource_type?: string | null
           resource_id?: string | null
           status?: 'open' | 'acknowledged' | 'resolved'
@@ -1909,6 +1977,8 @@ export type Database = {
           resolved_by?: string | null
           resolved_at?: string | null
           metadata?: Record<string, unknown> | null
+          context?: Record<string, unknown> | null
+          dedup_key?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -1919,6 +1989,8 @@ export type Database = {
           resolved_by?: string | null
           resolved_at?: string | null
           metadata?: Record<string, unknown> | null
+          context?: Record<string, unknown> | null
+          dedup_key?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1966,14 +2038,15 @@ export type Database = {
           current_value: string | null; suggested_value: string | null
           auto_fixed: boolean; fixed_at: string | null; fixed_by: string | null
           detected_at: string; created_at: string
+          score: number | null
         }
         Insert: {
           resource_type: string; resource_id: string; field_name: string
           issue_type: string; severity?: 'low' | 'medium' | 'high' | 'critical'
           current_value?: string | null; suggested_value?: string | null
-          auto_fixed?: boolean
+          auto_fixed?: boolean; score?: number | null
         }
-        Update: { auto_fixed?: boolean; fixed_at?: string | null; fixed_by?: string | null }
+        Update: { auto_fixed?: boolean; fixed_at?: string | null; fixed_by?: string | null; score?: number | null }
         Relationships: []
       }
       nps_responses: {
@@ -2071,6 +2144,93 @@ export type Database = {
           assigned_to: string | null; next_followup_at: string | null; last_contact_at: string | null
           contact_attempts: number | null; notes: string | null; tags: string[] | null
           raw_data: Record<string,unknown> | null; created_at: string; updated_at: string
+          // extended scoring & deal fields
+          sla_breach: boolean | null
+          sla_contacted_at: string | null
+          last_alerted_at: string | null
+          alert_count: number | null
+          contact_attempts_count: number | null
+          contact_phone_owner: string | null
+          cpcv_probability: number | null
+          cpcv_target_date: string | null
+          deal_evaluation_reason: string | null
+          deal_evaluation_score: number | null
+          deal_readiness_score: number | null
+          deal_risk_level: 'low' | 'medium' | 'high' | null
+          gross_discount_pct: number | null
+          last_action_type: string | null
+          last_score_at: string | null
+          matched_buyers_count: number | null
+          price_opportunity_score: number | null
+          revenue_per_lead_estimate: number | null
+          score_attempts: number | null
+          primary_buyer_id: string | null
+          best_buyer_match_score: number | null
+          negotiation_status: string | null
+          docs_pending: boolean | null
+          preclose_candidate: boolean | null
+          comp_confidence_score: number | null
+          // additional columns from deal-eval and other routes
+          first_contact_at: string | null
+          first_meeting_at: string | null
+          offer_date: string | null
+          cpcv_signed_at: string | null
+          last_attempt_channel: string | null
+          deal_priority_score: number | null
+          buyer_match_notes: string | null
+          buyer_matched_at: string | null
+          buyer_pressure_class: string | null
+          contact_email_owner: string | null
+          deal_risk_reason: string | null
+          execution_blocker_reason: string | null
+          last_call_at: string | null
+          master_attack_rank: number | null
+          matched_to_buyers: boolean | null
+          money_priority_score: number | null
+          adjusted_discount_score: number | null
+          liquidity_score: number | null
+          liquidity_reason: string | null
+          preclose_notes: string | null
+          next_followup_reason: string | null
+          attack_recommendation: string | null
+          close_window_score: number | null
+          deal_evaluation_updated_at: string | null
+          deal_next_step: string | null
+          escritura_target_date: string | null
+          estimated_fair_value: number | null
+          human_failure_flag: boolean | null
+          last_whatsapp_at: string | null
+          outreach_ready: boolean | null
+          owner_name: string | null
+          // migration 005+ columns
+          contact_research_status: string | null
+          deal_next_step_date: string | null
+          escritura_done_at: string | null
+          gate_status: string | null
+          last_alert_type: string | null
+          legal_status: string | null
+          proposal_sent_at: string | null
+          // additional columns
+          score_reason: string | null
+          buyer_triad_notes: string | null
+          call_done_today: boolean | null
+          deposit_received: boolean | null
+          seller_intent_label: string | null
+          data_quality_score: number | null
+          price_ask_per_m2: number | null
+          incomplete_data_flag: boolean | null
+          price_reason: string | null
+          offer_amount: number | null
+          counter_offer_amount: number | null
+          deal_owner: string | null
+          secondary_buyer_id: string | null
+          tertiary_buyer_id: string | null
+          execution_probability: number | null
+          score_status: string | null
+          best_buyer_execution_score: number | null
+          realistic_cpcv_forecast_flag: boolean | null
+          time_waste_flag: boolean | null
+          deal_kill_flag: boolean | null
         }
         Insert: {
           id?: string; nome: string; tipo_ativo?: string | null; localizacao?: string | null
@@ -2083,6 +2243,50 @@ export type Database = {
           last_contact_at?: string | null; contact_attempts?: number | null
           notes?: string | null; tags?: string[] | null; raw_data?: Record<string,unknown> | null
           created_at?: string; updated_at?: string
+          sla_breach?: boolean | null; sla_contacted_at?: string | null
+          last_alerted_at?: string | null; alert_count?: number | null
+          contact_attempts_count?: number | null; contact_phone_owner?: string | null
+          cpcv_probability?: number | null; cpcv_target_date?: string | null
+          deal_evaluation_reason?: string | null; deal_evaluation_score?: number | null
+          deal_readiness_score?: number | null; deal_risk_level?: string | null
+          gross_discount_pct?: number | null; last_action_type?: string | null
+          last_score_at?: string | null; matched_buyers_count?: number | null
+          price_opportunity_score?: number | null; revenue_per_lead_estimate?: number | null
+          score_attempts?: number | null; primary_buyer_id?: string | null
+          best_buyer_match_score?: number | null; negotiation_status?: string | null
+          docs_pending?: boolean | null; preclose_candidate?: boolean | null
+          comp_confidence_score?: number | null
+          first_contact_at?: string | null; first_meeting_at?: string | null
+          offer_date?: string | null; cpcv_signed_at?: string | null
+          last_attempt_channel?: string | null; deal_priority_score?: number | null
+          buyer_match_notes?: string | null; buyer_matched_at?: string | null
+          buyer_pressure_class?: string | null; contact_email_owner?: string | null
+          deal_risk_reason?: string | null; execution_blocker_reason?: string | null
+          last_call_at?: string | null; master_attack_rank?: number | null
+          matched_to_buyers?: boolean | null; money_priority_score?: number | null
+          adjusted_discount_score?: number | null; liquidity_score?: number | null
+          liquidity_reason?: string | null; preclose_notes?: string | null
+          next_followup_reason?: string | null
+          attack_recommendation?: string | null; close_window_score?: number | null
+          deal_evaluation_updated_at?: string | null; deal_next_step?: string | null
+          escritura_target_date?: string | null; estimated_fair_value?: number | null
+          human_failure_flag?: boolean | null; last_whatsapp_at?: string | null
+          outreach_ready?: boolean | null; owner_name?: string | null
+          contact_research_status?: string | null; deal_next_step_date?: string | null
+          escritura_done_at?: string | null; gate_status?: string | null
+          last_alert_type?: string | null; legal_status?: string | null
+          proposal_sent_at?: string | null
+          score_reason?: string | null; buyer_triad_notes?: string | null
+          call_done_today?: boolean | null; deposit_received?: boolean | null
+          seller_intent_label?: string | null
+          data_quality_score?: number | null; price_ask_per_m2?: number | null
+          incomplete_data_flag?: boolean | null; price_reason?: string | null
+          offer_amount?: number | null; counter_offer_amount?: number | null
+          deal_owner?: string | null; secondary_buyer_id?: string | null
+          tertiary_buyer_id?: string | null; execution_probability?: number | null
+          score_status?: string | null; best_buyer_execution_score?: number | null
+          realistic_cpcv_forecast_flag?: boolean | null; time_waste_flag?: boolean | null
+          deal_kill_flag?: boolean | null
         }
         Update: {
           nome?: string; tipo_ativo?: string | null; localizacao?: string | null
@@ -2094,6 +2298,50 @@ export type Database = {
           next_followup_at?: string | null; last_contact_at?: string | null
           contact_attempts?: number | null; notes?: string | null; tags?: string[] | null
           raw_data?: Record<string,unknown> | null; updated_at?: string
+          sla_breach?: boolean | null; sla_contacted_at?: string | null
+          last_alerted_at?: string | null; alert_count?: number | null
+          contact_attempts_count?: number | null; contact_phone_owner?: string | null
+          cpcv_probability?: number | null; cpcv_target_date?: string | null
+          deal_evaluation_reason?: string | null; deal_evaluation_score?: number | null
+          deal_readiness_score?: number | null; deal_risk_level?: string | null
+          gross_discount_pct?: number | null; last_action_type?: string | null
+          last_score_at?: string | null; matched_buyers_count?: number | null
+          price_opportunity_score?: number | null; revenue_per_lead_estimate?: number | null
+          score_attempts?: number | null; primary_buyer_id?: string | null
+          best_buyer_match_score?: number | null; negotiation_status?: string | null
+          docs_pending?: boolean | null; preclose_candidate?: boolean | null
+          comp_confidence_score?: number | null
+          first_contact_at?: string | null; first_meeting_at?: string | null
+          offer_date?: string | null; cpcv_signed_at?: string | null
+          last_attempt_channel?: string | null; deal_priority_score?: number | null
+          buyer_match_notes?: string | null; buyer_matched_at?: string | null
+          buyer_pressure_class?: string | null; contact_email_owner?: string | null
+          deal_risk_reason?: string | null; execution_blocker_reason?: string | null
+          last_call_at?: string | null; master_attack_rank?: number | null
+          matched_to_buyers?: boolean | null; money_priority_score?: number | null
+          adjusted_discount_score?: number | null; liquidity_score?: number | null
+          liquidity_reason?: string | null; preclose_notes?: string | null
+          next_followup_reason?: string | null
+          attack_recommendation?: string | null; close_window_score?: number | null
+          deal_evaluation_updated_at?: string | null; deal_next_step?: string | null
+          escritura_target_date?: string | null; estimated_fair_value?: number | null
+          human_failure_flag?: boolean | null; last_whatsapp_at?: string | null
+          outreach_ready?: boolean | null; owner_name?: string | null
+          contact_research_status?: string | null; deal_next_step_date?: string | null
+          escritura_done_at?: string | null; gate_status?: string | null
+          last_alert_type?: string | null; legal_status?: string | null
+          proposal_sent_at?: string | null
+          score_reason?: string | null; buyer_triad_notes?: string | null
+          call_done_today?: boolean | null; deposit_received?: boolean | null
+          seller_intent_label?: string | null
+          data_quality_score?: number | null; price_ask_per_m2?: number | null
+          incomplete_data_flag?: boolean | null; price_reason?: string | null
+          offer_amount?: number | null; counter_offer_amount?: number | null
+          deal_owner?: string | null; secondary_buyer_id?: string | null
+          tertiary_buyer_id?: string | null; execution_probability?: number | null
+          score_status?: string | null; best_buyer_execution_score?: number | null
+          realistic_cpcv_forecast_flag?: boolean | null; time_waste_flag?: boolean | null
+          deal_kill_flag?: boolean | null
         }
         Relationships: []
       }
@@ -2306,6 +2554,9 @@ export type Database = {
           rejection_reason: string | null
           time_to_reply_hours: number | null; time_to_close_days: number | null
           created_at: string
+          converted: boolean | null
+          response_received: boolean | null
+          response_time_hours: number | null
         }
         Insert: {
           id?: string; distribution_event_id: string; property_id: string
@@ -2316,7 +2567,7 @@ export type Database = {
           closed_at?: string | null; outcome?: string | null
           rejection_reason?: string | null
           time_to_reply_hours?: number | null; time_to_close_days?: number | null
-          created_at?: string
+          created_at?: string; converted?: boolean | null; response_received?: boolean | null
         }
         Update: {
           opened_at?: string | null; replied_at?: string | null
@@ -2324,6 +2575,7 @@ export type Database = {
           closed_at?: string | null; outcome?: string | null
           rejection_reason?: string | null
           time_to_reply_hours?: number | null; time_to_close_days?: number | null
+          converted?: boolean | null; response_received?: boolean | null
         }
         Relationships: []
       }
@@ -2377,17 +2629,20 @@ export type Database = {
           tier_score: number | null; tier_computed_at: string
           criteria: Record<string,unknown>; previous_tier: string | null
           tier_changed_at: string | null; created_at: string; updated_at: string
+          contact_email: string | null
         }
         Insert: {
           partner_email: string; partner_type: string; tier?: string
           tier_score?: number | null; tier_computed_at?: string
           criteria?: Record<string,unknown>; previous_tier?: string | null
           tier_changed_at?: string | null; created_at?: string; updated_at?: string
+          contact_email?: string | null
         }
         Update: {
           partner_type?: string; tier?: string; tier_score?: number | null
           tier_computed_at?: string; criteria?: Record<string,unknown>
           previous_tier?: string | null; tier_changed_at?: string | null; updated_at?: string
+          contact_email?: string | null
         }
         Relationships: []
       }
@@ -2402,18 +2657,21 @@ export type Database = {
           status: 'pending' | 'applied' | 'dismissed' | 'deferred'
           reviewed_by: string | null; reviewed_at: string | null
           notes: string | null; created_at: string
+          generated_at: string | null
+          drift_signals: Record<string, unknown> | null
         }
         Insert: {
           id?: string; report_date?: string; priority: string
           dimension: string; observation: string; suggestion: string
           evidence?: string | null; status?: string
           reviewed_by?: string | null; reviewed_at?: string | null
-          notes?: string | null; created_at?: string
+          notes?: string | null; created_at?: string; generated_at?: string | null
         }
         Update: {
           priority?: string; observation?: string; suggestion?: string
           evidence?: string | null; status?: string
           reviewed_by?: string | null; reviewed_at?: string | null; notes?: string | null
+          generated_at?: string | null
         }
         Relationships: []
       }
@@ -2657,13 +2915,1067 @@ export type Database = {
         }
         Relationships: []
       }
+
+      // ─── cron_lock ─────────────────────────────────────────────────────────────
+      cron_lock: {
+        Row: {
+          cron_name: string; locked_at: string; expires_at: string
+          instance_id: string; last_released_at: string | null
+        }
+        Insert: {
+          cron_name: string; locked_at?: string; expires_at: string
+          instance_id: string; last_released_at?: string | null
+        }
+        Update: {
+          locked_at?: string; expires_at?: string
+          instance_id?: string; last_released_at?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── feature_flags ──────────────────────────────────────────────────────────
+      feature_flags: {
+        Row: {
+          id: string; flag_key: string; flag_name: string; description: string | null
+          flag_scope: 'global' | 'subsystem' | 'zone' | 'tier'; subsystem: string | null
+          is_enabled: boolean; rollout_pct: number; config: Record<string, unknown>
+          is_kill_switch: boolean; is_canary: boolean; enabled_by: string | null
+          enabled_at: string | null; disabled_by: string | null; disabled_at: string | null
+          expires_at: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; flag_key: string; flag_name: string; description?: string | null
+          flag_scope?: string; subsystem?: string | null; is_enabled?: boolean
+          rollout_pct?: number; config?: Record<string, unknown>; is_kill_switch?: boolean
+          is_canary?: boolean; expires_at?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: {
+          flag_key?: string; flag_name?: string; description?: string | null
+          is_enabled?: boolean; rollout_pct?: number; config?: Record<string, unknown>
+          enabled_by?: string | null; enabled_at?: string | null; disabled_by?: string | null
+          disabled_at?: string | null; expires_at?: string | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── operator_tasks ─────────────────────────────────────────────────────────
+      operator_tasks: {
+        Row: {
+          id: string; task_type: string; title: string; description: string | null
+          priority: 'critical' | 'high' | 'medium' | 'low'; status: 'pending' | 'in_progress' | 'done' | 'dismissed'
+          assigned_to: string | null; due_at: string | null; entity_type: string | null
+          entity_id: string | null; metadata: Record<string, unknown> | null
+          created_at: string; updated_at: string; resolved_at: string | null
+        }
+        Insert: {
+          id?: string; task_type: string; title: string; description?: string | null
+          priority?: string; status?: string; assigned_to?: string | null; due_at?: string | null
+          entity_type?: string | null; entity_id?: string | null; metadata?: Record<string, unknown> | null
+          created_at?: string; updated_at?: string; resolved_at?: string | null
+        }
+        Update: {
+          task_type?: string; title?: string; description?: string | null; priority?: string
+          status?: string; assigned_to?: string | null; due_at?: string | null
+          entity_type?: string | null; entity_id?: string | null; metadata?: Record<string, unknown> | null
+          updated_at?: string; resolved_at?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── incident_log ───────────────────────────────────────────────────────────
+      incident_log: {
+        Row: {
+          id: string; incident_type: string; severity: 'critical' | 'high' | 'medium' | 'low'
+          title: string; description: string | null; affected_system: string | null
+          status: 'open' | 'investigating' | 'mitigated' | 'resolved' | 'closed'
+          root_cause: string | null; resolution: string | null; resolved_at: string | null
+          metadata: Record<string, unknown> | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; incident_type: string; severity: string; title: string
+          description?: string | null; affected_system?: string | null; status?: string
+          root_cause?: string | null; resolution?: string | null; resolved_at?: string | null
+          metadata?: Record<string, unknown> | null; created_at?: string; updated_at?: string
+        }
+        Update: {
+          incident_type?: string; severity?: string; title?: string; description?: string | null
+          affected_system?: string | null; status?: string; root_cause?: string | null
+          resolution?: string | null; resolved_at?: string | null
+          metadata?: Record<string, unknown> | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── scoring_feedback_events ────────────────────────────────────────────────
+      scoring_feedback_events: {
+        Row: {
+          id: string; entity_type: string; entity_id: string; model_version: string | null
+          predicted_score: number | null; actual_outcome: string | null; outcome_value: number | null
+          feedback_type: string; features_snapshot: Record<string, unknown> | null
+          error_delta: number | null; created_at: string
+          agent_email: string | null; close_status: string | null
+          price_per_sqm: number | null; property_id: string | null; zone_key: string | null
+          days_on_market: number | null
+          opportunity_grade: string | null
+          opportunity_score: number | null
+          property_type: string | null
+          buyer_type: string | null
+          grade: string | null
+          negotiation_delta_pct: number | null
+          asking_price: number | null
+          realized_sale_price: number | null
+          avm_value_at_time: number | null
+          realized_dom: number | null
+          deal_won: boolean | null
+          surfaced_at: string | null
+        }
+        Insert: {
+          id?: string; entity_type: string; entity_id: string; model_version?: string | null
+          predicted_score?: number | null; actual_outcome?: string | null; outcome_value?: number | null
+          feedback_type: string; features_snapshot?: Record<string, unknown> | null
+          error_delta?: number | null; created_at?: string
+          days_on_market?: number | null; opportunity_grade?: string | null
+          opportunity_score?: number | null; property_type?: string | null
+          buyer_type?: string | null; grade?: string | null; negotiation_delta_pct?: number | null
+          asking_price?: number | null; realized_sale_price?: number | null
+          avm_value_at_time?: number | null; realized_dom?: number | null
+          deal_won?: boolean | null; surfaced_at?: string | null
+        }
+        Update: {
+          entity_type?: string; entity_id?: string; model_version?: string | null
+          predicted_score?: number | null; actual_outcome?: string | null; outcome_value?: number | null
+          feedback_type?: string; features_snapshot?: Record<string, unknown> | null
+          error_delta?: number | null
+          days_on_market?: number | null; opportunity_grade?: string | null
+          opportunity_score?: number | null; property_type?: string | null
+          buyer_type?: string | null; grade?: string | null; negotiation_delta_pct?: number | null
+          asking_price?: number | null; realized_sale_price?: number | null
+          avm_value_at_time?: number | null; realized_dom?: number | null
+          deal_won?: boolean | null; surfaced_at?: string | null
+          close_status?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── model_versions ─────────────────────────────────────────────────────────
+      model_versions: {
+        Row: {
+          id: string; model_name: string; version: string; is_active: boolean
+          feature_weights: Record<string, number> | null; thresholds: Record<string, unknown> | null
+          training_date: string | null; sample_size: number | null; accuracy_score: number | null
+          mae: number | null; notes: string | null; created_at: string
+          status: string | null; backtest_score: number | null
+        }
+        Insert: {
+          id?: string; model_name: string; version: string; is_active?: boolean
+          feature_weights?: Record<string, number> | null; thresholds?: Record<string, unknown> | null
+          training_date?: string | null; sample_size?: number | null; accuracy_score?: number | null
+          mae?: number | null; notes?: string | null; created_at?: string
+          status?: string | null; backtest_score?: number | null
+        }
+        Update: {
+          model_name?: string; version?: string; is_active?: boolean
+          feature_weights?: Record<string, number> | null; thresholds?: Record<string, unknown> | null
+          training_date?: string | null; sample_size?: number | null; accuracy_score?: number | null
+          mae?: number | null; notes?: string | null
+          status?: string | null; backtest_score?: number | null
+        }
+        Relationships: []
+      }
+
+      // ─── economic_truth_events ──────────────────────────────────────────────────
+      economic_truth_events: {
+        Row: {
+          id: string; zone_key: string; property_type: string | null; property_id: string | null
+          actual_price_per_sqm: number; ask_price_per_sqm: number | null
+          normalized_truth_score: number | null; raw_truth_score: number | null
+          discount_pct: number | null; sample_date: string; data: Record<string, unknown> | null
+          asset_class: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string; zone_key: string; property_type?: string | null
+          actual_price_per_sqm: number; ask_price_per_sqm?: number | null
+          normalized_truth_score?: number | null; raw_truth_score?: number | null
+          discount_pct?: number | null; sample_date: string; data?: Record<string, unknown> | null
+          asset_class?: string | null
+          created_at?: string
+        }
+        Update: {
+          zone_key?: string; property_type?: string | null; actual_price_per_sqm?: number
+          ask_price_per_sqm?: number | null; normalized_truth_score?: number | null
+          raw_truth_score?: number | null; discount_pct?: number | null; sample_date?: string
+          data?: Record<string, unknown> | null; asset_class?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── distribution_controls ──────────────────────────────────────────────────
+      distribution_controls: {
+        Row: {
+          id: string; control_key: string; control_type: string | null; is_enabled: boolean; zone_key: string | null
+          target_segment: string | null; daily_limit: number | null
+          hourly_limit: number | null; min_score_threshold: number | null
+          asset_type: string | null; tier: string | null; status: string | null
+          reason: string | null; controlled_by: string | null
+          config: Record<string, unknown> | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; control_key: string; control_type?: string | null; is_enabled?: boolean
+          target_segment?: string | null; daily_limit?: number | null
+          hourly_limit?: number | null; min_score_threshold?: number | null
+          asset_type?: string | null; tier?: string | null; status?: string | null
+          reason?: string | null; controlled_by?: string | null
+          config?: Record<string, unknown> | null; created_at?: string; updated_at?: string
+        }
+        Update: {
+          control_key?: string; control_type?: string | null; is_enabled?: boolean; target_segment?: string | null
+          daily_limit?: number | null; hourly_limit?: number | null
+          min_score_threshold?: number | null; asset_type?: string | null; tier?: string | null
+          status?: string | null; reason?: string | null; controlled_by?: string | null
+          config?: Record<string, unknown> | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── distribution_feedback_weights ──────────────────────────────────────────
+      distribution_feedback_weights: {
+        Row: {
+          id: string; signal_type: string; weight: number; acceptance_weight: number | null; conversion_weight: number | null
+          speed_weight: number | null
+          description: string | null; updated_at: string; created_at: string
+        }
+        Insert: {
+          id?: string; signal_type: string; weight: number; acceptance_weight?: number | null
+          speed_weight?: number | null
+          description?: string | null; updated_at?: string; created_at?: string
+        }
+        Update: { signal_type?: string; weight?: number; acceptance_weight?: number | null; speed_weight?: number | null; description?: string | null; updated_at?: string }
+        Relationships: []
+      }
+
+      // ─── transactional_decisions ────────────────────────────────────────────────
+      transactional_decisions: {
+        Row: {
+          id: string; decision_id: string; entity_type: string; entity_id: string
+          property_id: string | null
+          decision_type: string; decision_value: string | null; confidence: number | null
+          reasoning: string | null; model_version: string | null; features: Record<string, unknown> | null
+          status: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string; decision_id: string; entity_type: string; entity_id: string
+          decision_type: string; decision_value?: string | null; confidence?: number | null
+          reasoning?: string | null; model_version?: string | null; features?: Record<string, unknown> | null
+          status?: string | null
+          created_at?: string
+        }
+        Update: {
+          decision_type?: string; decision_value?: string | null; confidence?: number | null
+          reasoning?: string | null; model_version?: string | null; features?: Record<string, unknown> | null
+          status?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── auto_model_updates ─────────────────────────────────────────────────────
+      auto_model_updates: {
+        Row: {
+          id: string; model_name: string; old_version: string | null; new_version: string
+          trigger_reason: string | null; sample_size: number | null; accuracy_before: number | null
+          accuracy_after: number | null; applied_at: string; created_at: string
+          status: string | null
+        }
+        Insert: {
+          id?: string; model_name: string; old_version?: string | null; new_version: string
+          trigger_reason?: string | null; sample_size?: number | null; accuracy_before?: number | null
+          accuracy_after?: number | null; applied_at?: string; created_at?: string
+          status?: string | null
+        }
+        Update: {
+          model_name?: string; new_version?: string; trigger_reason?: string | null
+          sample_size?: number | null; accuracy_before?: number | null; accuracy_after?: number | null
+          applied_at?: string; status?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── calibration_simulations ────────────────────────────────────────────────
+      calibration_simulations: {
+        Row: {
+          id: string; simulation_name: string; model_name: string
+          parameter_set: Record<string, unknown>; model_version_id: string | null
+    simulated_accuracy: number | null
+          simulated_mae: number | null; sample_size: number | null
+          status: 'pending' | 'running' | 'done' | 'failed'; notes: string | null
+          created_at: string; completed_at: string | null
+        }
+        Insert: {
+          id?: string; simulation_name: string; model_name: string
+          parameter_set: Record<string, unknown>; simulated_accuracy?: number | null
+          simulated_mae?: number | null; sample_size?: number | null; status?: string
+          notes?: string | null; created_at?: string; completed_at?: string | null
+        }
+        Update: {
+          simulation_name?: string; model_name?: string; parameter_set?: Record<string, unknown>
+          simulated_accuracy?: number | null; simulated_mae?: number | null; sample_size?: number | null
+          status?: string; notes?: string | null; completed_at?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── investor_intelligence ──────────────────────────────────────────────────
+      investor_intelligence: {
+        Row: {
+          id: string; investor_id: string; investor_email: string | null
+          engagement_score: number | null; property_type_preference: string[] | null
+          zone_preference: string[] | null; preferred_zones: string[] | null
+          budget_min: number | null; budget_max: number | null
+          yield_target: number | null; risk_appetite: string | null
+          last_engagement_at: string | null; portfolio_size: number | null
+          conversion_rate: number | null
+          budget_adherence: number | null
+          preferred_asset_types: string[] | null
+          total_deals: number | null
+          data: Record<string, unknown> | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; investor_id: string; investor_email?: string | null
+          engagement_score?: number | null; property_type_preference?: string[] | null
+          zone_preference?: string[] | null; budget_min?: number | null; budget_max?: number | null
+          yield_target?: number | null; risk_appetite?: string | null
+          last_engagement_at?: string | null; portfolio_size?: number | null
+          budget_adherence?: number | null; preferred_asset_types?: string[] | null
+          total_deals?: number | null
+          data?: Record<string, unknown> | null; created_at?: string; updated_at?: string
+        }
+        Update: {
+          investor_email?: string | null; engagement_score?: number | null
+          property_type_preference?: string[] | null; zone_preference?: string[] | null
+          budget_min?: number | null; budget_max?: number | null; yield_target?: number | null
+          risk_appetite?: string | null; last_engagement_at?: string | null
+          portfolio_size?: number | null; budget_adherence?: number | null
+          preferred_asset_types?: string[] | null; total_deals?: number | null
+          data?: Record<string, unknown> | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── admin_roles ────────────────────────────────────────────────────────────
+      admin_roles: {
+        Row: {
+          id: string; user_id: string; user_email: string | null; role: string; granted_by: string | null
+          granted_at: string; expires_at: string | null
+          is_active: boolean | null; revoked_at: string | null; revoked_by: string | null
+        }
+        Insert: {
+          id?: string; user_id: string; user_email?: string | null; role: string; granted_by?: string | null
+          granted_at?: string; expires_at?: string | null
+          is_active?: boolean | null; revoked_at?: string | null; revoked_by?: string | null
+        }
+        Update: {
+          role?: string; granted_by?: string | null; expires_at?: string | null
+          user_email?: string | null; is_active?: boolean | null
+          revoked_at?: string | null; revoked_by?: string | null
+        }
+        Relationships: []
+      }
+
+      // ─── distribution_events ────────────────────────────────────────────────────
+      distribution_events: {
+        Row: {
+          id: string; distribution_type: string; entity_id: string | null
+          entity_type: string | null; recipient_id: string | null
+          recipient_type: string | null; channel: string | null
+          status: 'pending' | 'sent' | 'delivered' | 'failed' | 'bounced' | null
+          sent_at: string | null; metadata: Record<string, unknown> | null; created_at: string
+        }
+        Insert: {
+          id?: string; distribution_type: string; entity_id?: string | null
+          entity_type?: string | null; recipient_id?: string | null
+          recipient_type?: string | null; channel?: string | null; status?: string | null
+          sent_at?: string | null; metadata?: Record<string, unknown> | null; created_at?: string
+        }
+        Update: {
+          distribution_type?: string; entity_id?: string | null; entity_type?: string | null
+          recipient_id?: string | null; status?: string | null; sent_at?: string | null
+          metadata?: Record<string, unknown> | null
+        }
+        Relationships: []
+      }
+
+      // ─── nurture_log ────────────────────────────────────────────────────────────
+      nurture_log: {
+        Row: {
+          id: string; contact_id: string | null; nurture_type: string
+          channel: string | null; sent_at: string; status: string | null
+          metadata: Record<string, unknown> | null; created_at: string
+        }
+        Insert: {
+          id?: string; contact_id?: string | null; nurture_type: string
+          channel?: string | null; sent_at?: string; status?: string | null
+          metadata?: Record<string, unknown> | null; created_at?: string
+        }
+        Update: {
+          contact_id?: string | null; nurture_type?: string; channel?: string | null
+          sent_at?: string; status?: string | null; metadata?: Record<string, unknown> | null
+        }
+        Relationships: []
+      }
+
+      // ─── investor_engagement_events ─────────────────────────────────────────────
+      investor_engagement_events: {
+        Row: {
+          id: string; investor_id: string; event_type: string; channel: string | null
+          entity_type: string | null; entity_id: string | null; property_type: string | null; zone_key: string | null
+          engagement_score_delta: number | null; metadata: Record<string, unknown> | null
+          yield_pct: number | null
+          offer_price: number | null
+          budget: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string; investor_id: string; event_type: string; channel?: string | null
+          entity_type?: string | null; entity_id?: string | null
+          engagement_score_delta?: number | null; metadata?: Record<string, unknown> | null
+          yield_pct?: number | null; offer_price?: number | null; budget?: number | null
+          created_at?: string
+        }
+        Update: {
+          event_type?: string; channel?: string | null; entity_type?: string | null
+          entity_id?: string | null; engagement_score_delta?: number | null
+          metadata?: Record<string, unknown> | null; yield_pct?: number | null
+          offer_price?: number | null; budget?: number | null
+        }
+        Relationships: []
+      }
+
+      // ─── public_saved_searches ──────────────────────────────────────────────────
+      public_saved_searches: {
+        Row: {
+          id: string; user_id: string | null; session_id: string | null
+          search_name: string | null; filters: Record<string, unknown> | null
+          alert_enabled: boolean; alert_frequency: string | null
+          last_alert_at: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; user_id?: string | null; session_id?: string | null
+          search_name?: string | null; filters?: Record<string, unknown> | null
+          alert_enabled?: boolean; alert_frequency?: string | null
+          last_alert_at?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: {
+          user_id?: string | null; session_id?: string | null; search_name?: string | null
+          filters?: Record<string, unknown> | null; alert_enabled?: boolean
+          alert_frequency?: string | null; last_alert_at?: string | null; updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // ─── priority_items ───────────────────────────────────────────────────
+      priority_items: {
+        Row: {
+          id: string; entity_type: string; entity_id: string
+          priority_score: number; reason: string; next_best_action: string | null
+          deadline: string | null; owner_id: string | null; revenue_impact: number | null
+          status: 'open' | 'resolved'; source: 'engine' | 'manual' | 'system'
+          metadata: Record<string, unknown> | null; created_at: string; updated_at: string
+          resolved_at: string | null
+        }
+        Insert: {
+          id?: string; entity_type: string; entity_id: string
+          priority_score?: number; reason: string; next_best_action?: string | null
+          deadline?: string | null; owner_id?: string | null; revenue_impact?: number | null
+          status?: string; source?: string; metadata?: Record<string, unknown> | null
+          created_at?: string; updated_at?: string; resolved_at?: string | null
+        }
+        Update: {
+          entity_type?: string; entity_id?: string; priority_score?: number
+          reason?: string; next_best_action?: string | null; deadline?: string | null
+          owner_id?: string | null; revenue_impact?: number | null; status?: string
+          metadata?: Record<string, unknown> | null; updated_at?: string; resolved_at?: string | null
+        }
+        Relationships: []
+      }
+      // ─── property_alert_sent ────────────────────────────────────────────────
+      property_alert_sent: {
+        Row: {
+          id: string
+          email: string
+          property_id: string
+          zona: string | null
+          sent_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          property_id: string
+          zona?: string | null
+          sent_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          email?: string | undefined
+          property_id?: string | undefined
+          zona?: string | null | undefined
+          sent_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── governance_decisions ────────────────────────────────────────────────
+      governance_decisions: {
+        Row: {
+          id: string
+          action_type: string
+          triggered_by: string
+          governance_class: string
+          approved_by: string | null
+          approved_at: string | null
+          decision: string
+          audit_reason: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          action_type: string
+          triggered_by: string
+          governance_class: string
+          approved_by?: string | null
+          approved_at?: string | null
+          decision: string
+          audit_reason: string
+          created_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          action_type?: string | undefined
+          triggered_by?: string | undefined
+          governance_class?: string | undefined
+          approved_by?: string | null | undefined
+          approved_at?: string | null | undefined
+          decision?: string | undefined
+          audit_reason?: string | undefined
+          created_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── override_events ─────────────────────────────────────────────────────
+      override_events: {
+        Row: {
+          id: string
+          override_id: string
+          user_email: string
+          user_role: string
+          action_type: string
+          resource_id: string | null
+          reason: string
+          outcome: string
+          winner: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          override_id: string
+          user_email: string
+          user_role: string
+          action_type: string
+          resource_id?: string | null
+          reason: string
+          outcome: string
+          winner: string
+          created_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          override_id?: string | undefined
+          user_email?: string | undefined
+          user_role?: string | undefined
+          action_type?: string | undefined
+          resource_id?: string | null | undefined
+          reason?: string | undefined
+          outcome?: string | undefined
+          winner?: string | undefined
+          created_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── market_microstructure ───────────────────────────────────────────────
+      market_microstructure: {
+        Row: {
+          id: string
+          zone_key: string
+          property_type: string | null
+          period_label: string
+          deal_count: number
+          avg_sale_price: number | null
+          median_sale_price: number | null
+          avg_ask_price: number | null
+          sale_to_ask_ratio: number | null
+          avg_negotiation_delta_pct: number | null
+          negotiation_delta_std_dev: number | null
+          pct_sold_above_ask: number | null
+          median_days_to_close: number | null
+          avg_days_to_close: number | null
+          avm_mean_error_pct: number | null
+          avm_mae_pct: number | null
+          avg_opportunity_score: number | null
+          buyer_type_breakdown: Record<string, unknown> | null
+          computed_at: string
+        }
+        Insert: {
+          id?: string
+          zone_key: string
+          property_type?: string | null
+          period_label: string
+          deal_count?: number
+          avg_sale_price?: number | null
+          median_sale_price?: number | null
+          avg_ask_price?: number | null
+          sale_to_ask_ratio?: number | null
+          avg_negotiation_delta_pct?: number | null
+          negotiation_delta_std_dev?: number | null
+          pct_sold_above_ask?: number | null
+          median_days_to_close?: number | null
+          avg_days_to_close?: number | null
+          avm_mean_error_pct?: number | null
+          avm_mae_pct?: number | null
+          avg_opportunity_score?: number | null
+          buyer_type_breakdown?: Record<string, unknown> | null
+          computed_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          zone_key?: string | undefined
+          property_type?: string | null | undefined
+          period_label?: string | undefined
+          deal_count?: number | undefined
+          avg_sale_price?: number | null | undefined
+          median_sale_price?: number | null | undefined
+          avg_ask_price?: number | null | undefined
+          sale_to_ask_ratio?: number | null | undefined
+          avg_negotiation_delta_pct?: number | null | undefined
+          negotiation_delta_std_dev?: number | null | undefined
+          pct_sold_above_ask?: number | null | undefined
+          median_days_to_close?: number | null | undefined
+          avg_days_to_close?: number | null | undefined
+          avm_mean_error_pct?: number | null | undefined
+          avm_mae_pct?: number | null | undefined
+          avg_opportunity_score?: number | null | undefined
+          buyer_type_breakdown?: Record<string, unknown> | null | undefined
+          computed_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── market_price_refs ───────────────────────────────────────────────────
+      market_price_refs: {
+        Row: {
+          id: string
+          cidade: string
+          tipo_ativo: string
+          median_price_per_m2: number
+          min_price_per_m2: number | null
+          max_price_per_m2: number | null
+          confidence_level: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          cidade: string
+          tipo_ativo: string
+          median_price_per_m2: number
+          min_price_per_m2?: number | null
+          max_price_per_m2?: number | null
+          confidence_level?: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          cidade?: string | undefined
+          tipo_ativo?: string | undefined
+          median_price_per_m2?: number | undefined
+          min_price_per_m2?: number | null | undefined
+          max_price_per_m2?: number | null | undefined
+          confidence_level?: string | undefined
+          source?: string | undefined
+          updated_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── offmarket_risk_flags ────────────────────────────────────────────────
+      offmarket_risk_flags: {
+        Row: {
+          id: string | null
+          nome: string | null
+          score: number | null
+          status: string | null
+          assigned_to: string | null
+          risk_flags: string[] | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string | null
+          nome?: string | null
+          score?: number | null
+          status?: string | null
+          assigned_to?: string | null
+          risk_flags?: string[] | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string | null | undefined
+          nome?: string | null | undefined
+          score?: number | null | undefined
+          status?: string | null | undefined
+          assigned_to?: string | null | undefined
+          risk_flags?: string[] | null | undefined
+          created_at?: string | null | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── opportunity_rejections ──────────────────────────────────────────────
+      opportunity_rejections: {
+        Row: {
+          id: string
+          property_id: string
+          distribution_event_id: string | null
+          recipient_email: string | null
+          recipient_type: string | null
+          rejection_category: string
+          rejection_reason: string | null
+          lost_to_competitor: boolean
+          competitor_price: number | null
+          score_at_time: number | null
+          grade_at_time: string | null
+          responded_at: string | null
+          recorded_at: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          distribution_event_id?: string | null
+          recipient_email?: string | null
+          recipient_type?: string | null
+          rejection_category: string
+          rejection_reason?: string | null
+          lost_to_competitor?: boolean
+          competitor_price?: number | null
+          score_at_time?: number | null
+          grade_at_time?: string | null
+          responded_at?: string | null
+          recorded_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          property_id?: string | undefined
+          distribution_event_id?: string | null | undefined
+          recipient_email?: string | null | undefined
+          recipient_type?: string | null | undefined
+          rejection_category?: string | undefined
+          rejection_reason?: string | null | undefined
+          lost_to_competitor?: boolean | undefined
+          competitor_price?: number | null | undefined
+          score_at_time?: number | null | undefined
+          grade_at_time?: string | null | undefined
+          responded_at?: string | null | undefined
+          recorded_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── agent_performance_metrics ───────────────────────────────────────────
+      agent_performance_metrics: {
+        Row: {
+          id: string
+          agent_email: string
+          period_start: string
+          period_end: string
+          period_label: string | null
+          total_deals_assigned: number
+          total_deals_closed: number
+          total_deals_lost: number
+          total_deals_stale: number
+          close_rate: number | null
+          avg_days_to_close: number | null
+          avg_negotiation_delta_pct: number | null
+          avg_deal_size: number | null
+          total_revenue: number | null
+          close_rate_score: number | null
+          speed_score: number | null
+          negotiation_score: number | null
+          deal_size_score: number | null
+          specialization_score: number | null
+          agent_execution_score: number | null
+          top_property_types: string[] | null
+          top_zones: string[] | null
+          computed_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          agent_email: string
+          period_start: string
+          period_end: string
+          period_label?: string | null
+          total_deals_assigned?: number
+          total_deals_closed?: number
+          total_deals_lost?: number
+          total_deals_stale?: number
+          close_rate?: number | null
+          avg_days_to_close?: number | null
+          avg_negotiation_delta_pct?: number | null
+          avg_deal_size?: number | null
+          total_revenue?: number | null
+          close_rate_score?: number | null
+          speed_score?: number | null
+          negotiation_score?: number | null
+          deal_size_score?: number | null
+          specialization_score?: number | null
+          agent_execution_score?: number | null
+          top_property_types?: string[] | null
+          top_zones?: string[] | null
+          computed_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          agent_email?: string | undefined
+          period_start?: string | undefined
+          period_end?: string | undefined
+          period_label?: string | null | undefined
+          total_deals_assigned?: number | undefined
+          total_deals_closed?: number | undefined
+          total_deals_lost?: number | undefined
+          total_deals_stale?: number | undefined
+          close_rate?: number | null | undefined
+          avg_days_to_close?: number | null | undefined
+          avg_negotiation_delta_pct?: number | null | undefined
+          avg_deal_size?: number | null | undefined
+          total_revenue?: number | null | undefined
+          close_rate_score?: number | null | undefined
+          speed_score?: number | null | undefined
+          negotiation_score?: number | null | undefined
+          deal_size_score?: number | null | undefined
+          specialization_score?: number | null | undefined
+          agent_execution_score?: number | null | undefined
+          top_property_types?: string[] | null | undefined
+          top_zones?: string[] | null | undefined
+          computed_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── negotiation_events ──────────────────────────────────────────────────
+      negotiation_events: {
+        Row: {
+          id: string
+          property_id: string
+          outcome_id: string | null
+          event_type: string
+          event_date: string | null
+          offer_price: number | null
+          counter_price: number | null
+          notes: string | null
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          property_id: string
+          outcome_id?: string | null
+          event_type: string
+          event_date?: string | null
+          offer_price?: number | null
+          counter_price?: number | null
+          notes?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          property_id?: string | undefined
+          outcome_id?: string | null | undefined
+          event_type?: string | undefined
+          event_date?: string | null | undefined
+          offer_price?: number | null | undefined
+          counter_price?: number | null | undefined
+          notes?: string | null | undefined
+          recorded_by?: string | null | undefined
+          created_at?: string | undefined
+        }
+        Relationships: []
+      }
+
+      // ─── rollback_events ─────────────────────────────────────────────────────
+      rollback_events: {
+        Row: {
+          id: string
+          model_name: string
+          from_version: string
+          to_version: string
+          reason: string
+          accuracy_drop_pct: number | null
+          severity: string | null
+          triggered_at: string
+        }
+        Insert: {
+          id?: string
+          model_name: string
+          from_version: string
+          to_version: string
+          reason: string
+          accuracy_drop_pct?: number | null
+          severity?: string | null
+          triggered_at?: string
+        }
+        Update: {
+          id?: string | undefined
+          model_name?: string | undefined
+          from_version?: string | undefined
+          to_version?: string | undefined
+          reason?: string | undefined
+          accuracy_drop_pct?: number | null | undefined
+          severity?: string | null | undefined
+          triggered_at?: string | undefined
+        }
+        Relationships: []
+      }
     }
 
     // -----------------------------------------------------------------------
-    // VIEWS (none defined — required by Supabase GenericSchema)
+    // VIEWS
     // -----------------------------------------------------------------------
     Views: {
-      [_ in never]: never
+      v_agent_performance_latest: {
+        Row: {
+          agent_email: string; total_deals_assigned: number; total_deals_closed: number
+          total_deals_lost: number; avg_days_to_close: number | null
+          avg_negotiation_delta_pct: number | null; win_rate: number | null
+          total_gci_eur: number | null; avg_nps_score: number | null; computed_at: string
+          agent_execution_score: number | null; period_label: string | null
+          avg_deal_size: number | null; top_property_types: string[] | null
+          top_zones: string[] | null
+          close_rate: number | null
+        }
+        Relationships: []
+      }
+      v_system_health: {
+        Row: {
+          id: string; metric_name: string; metric_value: number | null
+          status: 'healthy' | 'warning' | 'critical' | null
+          details: Record<string, unknown> | null; computed_at: string
+        }
+        Relationships: []
+      }
+      v_learning_system_health: {
+        Row: {
+          total_updates: number | null
+          recent_rollbacks: number | null
+          last_update_at: string | null
+          last_rollback_at: string | null
+          avg_accuracy_before: number | null
+          avg_accuracy_after: number | null
+          system_status: string | null
+        }
+        Relationships: []
+      }
+      v_cron_health: {
+        Row: {
+          workflow_name: string | null
+          total_runs: number | null
+          success_count: number | null
+          error_count: number | null
+          success_rate_pct: number | null
+          last_run_at: string | null
+          last_status: string | null
+          avg_duration_ms: number | null
+        }
+        Relationships: []
+      }
+      v_distribution_roi: {
+        Row: {
+          recipient_id: string | null
+          recipient_email: string | null
+          recipient_type: string | null
+          roi_score: number | null
+          total_sent: number | null
+          total_accepted: number | null
+          total_converted: number | null
+          acceptance_rate: number | null
+          conversion_rate: number | null
+          avg_deal_value: number | null
+        }
+        Relationships: []
+      }
+      v_rejection_taxonomy: {
+        Row: {
+          rejection_category: string | null
+          total_rejections: number | null
+          pct_of_total: number | null
+          avg_score_at_time: number | null
+          lost_to_competitor_count: number | null
+        }
+        Relationships: []
+      }
+      v_review_queue_pending: {
+        Row: {
+          id: string | null
+          property_id: string | null
+          opportunity_score: number | null
+          opportunity_grade: string | null
+          distribution_tier: string | null
+          routing_decision: Record<string, unknown> | null
+          queued_reason: string | null
+          auto_queued: boolean | null
+          status: string | null
+          queued_at: string | null
+        }
+        Relationships: []
+      }
+      v_scoring_performance: {
+        Row: {
+          opportunity_grade: string | null
+          total_feedback: number | null
+          won_count: number | null
+          lost_count: number | null
+          win_rate_pct: number | null
+          avg_negotiation_delta: number | null
+          avg_days_to_close: number | null
+        }
+        Relationships: []
+      }
+      v_sla_breach_summary: {
+        Row: {
+          deal_id: string | null
+          contact_name: string | null
+          stage: string | null
+          agent_email: string | null
+          age_hours: number | null
+          sla_hours: number | null
+          hours_over: number | null
+          urgency: string | null
+        }
+        Relationships: []
+      }
+      v_revenue_by_grade: {
+        Row: {
+          opportunity_grade: string | null
+          total_deals: number | null
+          won: number | null
+          total_commission: number | null
+          avg_deal_size: number | null
+          win_rate: number | null
+        }
+        Relationships: []
+      }
     }
 
     // -----------------------------------------------------------------------
@@ -2677,6 +3989,36 @@ export type Database = {
     // RPC FUNCTIONS
     // -----------------------------------------------------------------------
     Functions: {
+      increment_alert_count: {
+        Args: { lead_ids: string[] }
+        Returns: undefined
+      }
+      record_scoring_feedback: {
+        Args: {
+          p_property_id: string
+          p_score: number
+          p_grade: string
+          p_breakdown: Record<string, unknown>
+          p_contact_id: string | null
+          p_deal_pack_id: string | null
+          p_agent_email: string | null
+          p_avm_value: number | null
+          p_asking_price: number | null
+          p_close_status: string | null
+          p_buyer_type: string | null
+          p_realized_price: number | null
+          p_realized_dom: number | null
+        }
+        Returns: string
+      }
+      get_unscored_properties: {
+        Args: { limit_n: number }
+        Returns: Array<Record<string, unknown>>
+      }
+      increment_deal_pack_view_count: {
+        Args: { pack_id: string }
+        Returns: undefined
+      }
       match_properties: {
         Args: {
           query_embedding: number[]

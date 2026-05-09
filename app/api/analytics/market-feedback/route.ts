@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('market_feedback_signals')
       .select('*')
       .order('computed_at', { ascending: false })
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     )
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any)
+    const { error } = await supabaseAdmin
       .from('market_feedback_signals')
       .insert(signal)
     if (error) throw new Error(error.message)

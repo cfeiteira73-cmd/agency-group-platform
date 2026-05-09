@@ -26,16 +26,16 @@ export async function GET(req: NextRequest) {
     const limit    = Math.min(parseInt(searchParams.get('limit') ?? '20'), 100)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: any = (supabaseAdmin as any)
+    let query = supabaseAdmin
       .from('signals')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    if (status && status !== 'all') query = query.eq('status', status)
-    if (type)     query = query.eq('type', type)
-    if (zone)     query = query.eq('zone', zone)
-    if (priority) query = query.eq('priority', priority)
+    if (status && status !== 'all') query = query.eq('status', status as import('@/lib/database.types').SignalStatus)
+    if (type)     query = query.eq('type', type as import('@/lib/database.types').SignalType)
+    if (zone)     query = query.eq('property_zone', zone)
+    if (priority) query = query.eq('priority', Number(priority))
 
     const { data, error } = await query
 
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('signals')
       .insert({
         type:        body.type,
@@ -119,7 +119,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any)
+    const { data, error } = await supabaseAdmin
       .from('signals')
       .update(allowed)
       .eq('id', id)

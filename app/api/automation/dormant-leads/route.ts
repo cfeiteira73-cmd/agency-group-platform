@@ -43,7 +43,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // Best-effort audit log — non-blocking
     try {
-      await (supabaseAdmin as any).from('automations_log').insert({
+      await supabaseAdmin.from('automations_log').insert({
         workflow_name: 'dormant-leads',
         trigger_type: 'api',
         status: 'success',

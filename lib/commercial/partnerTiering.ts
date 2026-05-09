@@ -174,7 +174,7 @@ export async function persistPartnerTier(
   const tierChanged = previousTier != null && previousTier !== result.tier
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('partner_tiers')
     .upsert({
       partner_email:    result.partner_email,
@@ -205,7 +205,7 @@ export async function batchUpdateAllPartnerTiers(): Promise<{
 
   // Pull latest agent metrics
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: agentRows, error: agentError } = await (supabaseAdmin as any)
+  const { data: agentRows, error: agentError } = await supabaseAdmin
     .from('v_agent_performance_latest')
     .select('agent_email, agent_execution_score, close_rate, total_deals_closed')
 
@@ -232,7 +232,7 @@ export async function batchUpdateAllPartnerTiers(): Promise<{
 
   // Pull investor intelligence
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: invRows, error: invError } = await (supabaseAdmin as any)
+  const { data: invRows, error: invError } = await supabaseAdmin
     .from('investor_intelligence')
     .select('investor_id, engagement_score, conversion_rate, budget_adherence, total_deals')
 

@@ -290,7 +290,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Fetch lead
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: lead, error: fetchError } = await (supabaseAdmin as any).from(TABLE)
+    const { data: lead, error: fetchError } = await supabaseAdmin.from(TABLE)
       .select('id, nome, tipo_ativo, localizacao, cidade, area_m2, price_ask, price_estimate, owner_type, urgency, contacto, source, score_attempts, price_opportunity_score')
       .eq('id', id)
       .single()
@@ -304,7 +304,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // Update in Supabase
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: updated, error: updateError } = await (supabaseAdmin as any).from(TABLE)
+    const { data: updated, error: updateError } = await supabaseAdmin.from(TABLE)
       .update({
         score,
         score_reason,
@@ -351,7 +351,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const onlyPending = sp.get('only_pending') !== 'false'
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query = (supabaseAdmin as any).from(TABLE)
+    let query = supabaseAdmin.from(TABLE)
       .select('id, nome, tipo_ativo, localizacao, cidade, area_m2, price_ask, price_estimate, owner_type, urgency, contacto, source, score_attempts, price_opportunity_score')
       .lt('score_attempts', 3)  // max 3 attempts
       .order('created_at', { ascending: false })
@@ -369,7 +369,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       const { score, score_reason, score_breakdown } = scoreOffmarketLead(lead as OffmarketLead)
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: updateError } = await (supabaseAdmin as any).from(TABLE)
+      const { error: updateError } = await supabaseAdmin.from(TABLE)
         .update({
           score,
           score_reason,

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (supabaseAdmin) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabaseAdmin as any)
+        await supabaseAdmin
           .from('contacts')
           .upsert({
             email:      d.agencyEmail,
@@ -77,20 +77,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       // 2. Save property as pending_review in properties table
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- partner submission uses Portuguese field names mapped to DB English columns
         await (supabaseAdmin as any)
           .from('properties')
           .insert({
-            nome:         d.nome,
-            zona:         d.zona,
-            bairro:       d.bairro,
-            tipo:         d.tipo,
-            preco:        d.preco,
-            area:         d.area,
-            quartos:      d.quartos,
-            casas_banho:  d.casasBanho,
+            title:        d.nome,
+            zone:         d.zona,
+            type:         d.tipo,
+            price:        d.preco,
+            area_m2:      d.area,
+            bedrooms:     d.quartos,
+            bathrooms:    d.casasBanho,
             status:       'pending_review',
-            descricao:    d.desc,
+            description:  d.desc,
             features:     d.features,
             notes:        `Parceiro: ${d.agencyName} (AMI ${d.agencyAMI}) — ${d.agencyEmail} — ${d.agencyPhone}${d.tourUrl ? ` | Tour: ${d.tourUrl}` : ''}`,
             created_at:   new Date().toISOString(),
@@ -172,17 +171,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Try with portal-compat columns (migration 003)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query: any = (supabaseAdmin as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- properties legacy select uses Portuguese aliases mapped in JS below
+      let query = (supabaseAdmin as any)
         .from('properties')
-        .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, gradient')
-        .not('nome', 'is', null)  // Only portal-populated rows
+        .select('id, title, zone, type, price, area_m2, bedrooms, bathrooms, energy_certificate, status, description, features')
+        .not('title', 'is', null)  // Only portal-populated rows
         .limit(limit)
 
-      if (status && status !== 'all') query = query.eq('status', status)
-      if (zona)     query = query.eq('zona', zona)
-      if (tipo)     query = query.eq('tipo', tipo)
-      if (maxPreco) query = query.lte('preco', maxPreco)
+      if (status && status !== 'all') query = query.eq('status', status as string)
+      if (zona)     query = query.eq('zone', zona)
+      if (tipo)     query = query.eq('type', tipo)
+      if (maxPreco) query = query.lte('price', maxPreco)
 
       const { data, error } = await query
 
@@ -215,14 +214,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Try with complex Supabase schema (migration 001)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query: any = (supabaseAdmin as any)
+      let query = supabaseAdmin
         .from('properties')
         .select('id, title, zone, city, type, price, area_m2, bedrooms, bathrooms, energy_certificate, status, description, features')
         .limit(limit)
 
-      if (status && status !== 'all') query = query.eq('status', status)
+      if (status && status !== 'all') query = query.eq('status', status as import('@/lib/database.types').PropertyStatus)
       if (zona)     query = query.eq('zone', zona)
-      if (tipo)     query = query.eq('type', tipo)
+      if (tipo)     query = query.eq('type', tipo as import('@/lib/database.types').PropertyType)
       if (maxPreco) query = query.lte('price', maxPreco)
 
       const { data, error } = await query

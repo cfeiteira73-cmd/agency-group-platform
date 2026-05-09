@@ -28,14 +28,14 @@ export async function GET(req: NextRequest) {
 
     // Get recent unfixed quality events from DB
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let eventsQuery = (supabaseAdmin as any)
+    let eventsQuery = supabaseAdmin
       .from('data_quality_events')
       .select('*')
       .eq('auto_fixed', false)
       .order('detected_at', { ascending: false })
       .limit(100)
 
-    if (severity) eventsQuery = eventsQuery.eq('severity', severity)
+    if (severity) eventsQuery = eventsQuery.eq('severity', severity as 'low' | 'medium' | 'high' | 'critical')
 
     const { data: events = [] } = await eventsQuery as { data: unknown[] }
 

@@ -38,7 +38,7 @@ export interface WinLossAnalytics {
 
 export async function recordWinLoss(event: Omit<WinLossEvent, 'id' | 'recorded_at'>): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any).from('win_loss_events').insert(event)
+  const { error } = await supabaseAdmin.from('win_loss_events').insert(event)
   if (error) {
     const { default: log } = await import('@/lib/logger')
     log.error('[winLoss] Failed to record event', new Error(error.message), { route: 'lib/commercial/winLoss' })
@@ -52,7 +52,7 @@ export async function getWinLossAnalytics(
   const since = new Date(Date.now() - days * 86_400_000).toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('win_loss_events')
     .select('*')
     .gte('recorded_at', since)
@@ -166,7 +166,7 @@ export async function getTopObjections(limit = 10): Promise<Array<{
   win_rate: number | null
 }>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('objection_taxonomy')
     .select('objection,category,frequency,best_response,win_rate_when_encountered')
     .order('frequency', { ascending: false })

@@ -189,7 +189,7 @@ export async function recordDecisionAttempt(
   decisionId: string,
   inputs:     DecisionInputs,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- transactional_decisions table not yet in typed schema
   const { error } = await (supabaseAdmin as any)
     .from('transactional_decisions')
     .upsert({
@@ -211,14 +211,14 @@ export async function recordDecisionAttempt(
 export async function getDecisionById(
   decisionId: string,
 ): Promise<StoredDecision | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- transactional_decisions table not yet in typed schema
   const { data, error } = await (supabaseAdmin as any)
     .from('transactional_decisions')
     .select('decision_id, property_id, status, created_at')
     .eq('decision_id', decisionId)
     .maybeSingle()
   if (error) throw new Error(`getDecisionById: ${error.message}`)
-  return data ?? null
+  return (data ?? null) as StoredDecision | null
 }
 
 // ---------------------------------------------------------------------------
@@ -230,7 +230,7 @@ export async function markDecisionComplete(
   status:     'complete' | 'failed' | 'skipped',
   summary?:   Record<string, unknown>,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- transactional_decisions table not yet in typed schema
   const { error } = await (supabaseAdmin as any)
     .from('transactional_decisions')
     .update({

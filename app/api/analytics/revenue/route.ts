@@ -100,19 +100,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Minimum confirmed: id, fase, valor, contact_id, created_at
     // stage/comissao/deal_value/zona/gci_net confirmed NOT in this DB instance.
     // Try with optional migration-002 cols; retry without on 42703.
-    let dealsResult = await (supabaseAdmin as any)
+    type DealsResult = { data: Record<string, unknown>[] | null; error: { code?: string; message?: string } | null }
+    let dealsResult: DealsResult = await supabaseAdmin
       .from('deals')
       .select('id, fase, valor, contact_id, partner_id, partner_fee_pct, expected_fee, realized_fee, created_at')
       .gte('created_at', since)
-      .not('fase', 'ilike', '%cancelad%')
+      .not('fase', 'ilike', '%cancelad%') as unknown as DealsResult
 
     // 42703 = a listed column doesn't exist → retry with absolute minimum
     if (dealsResult.error && String(dealsResult.error.code) === '42703') {
-      dealsResult = await (supabaseAdmin as any)
+      dealsResult = await supabaseAdmin
         .from('deals')
         .select('id, fase, valor, contact_id, created_at')
         .gte('created_at', since)
-        .not('fase', 'ilike', '%cancelad%')
+        .not('fase', 'ilike', '%cancelad%') as unknown as DealsResult
     }
 
     const dealsError = dealsResult.error
@@ -176,7 +177,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
     let revenue_by_partner: unknown[] = []
     if (Object.keys(partnerMap).length > 0) {
-      const { data: partners } = await (supabaseAdmin as any)
+      const { data: partners } = await supabaseAdmin
         .from('institutional_partners')
         .select('id, nome')
         .in('id', Object.keys(partnerMap))
@@ -193,7 +194,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     // ── Conversion funnel ─────────────────────────────────────────────────────
-    const { count: totalLeads } = await (supabaseAdmin as any)
+    const { count: totalLeads } = await supabaseAdmin
       .from('contacts')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', since)
@@ -203,14 +204,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .filter(Boolean) as string[]
 
     const { count: leadsWithDeals } = contactIdsWithDeals.length > 0
-      ? await (supabaseAdmin as any)
+      ? await supabaseAdmin
           .from('contacts')
           .select('id', { count: 'exact', head: true })
           .gte('created_at', since)
           .in('id', contactIdsWithDeals)
       : { count: 0 }
 
-    const { data: dpStats, error: dpErr } = await (supabaseAdmin as any)
+    const { data: dpStats, error: dpErr } = await supabaseAdmin
       .from('deal_packs')
       .select('status, view_count')
       .gte('created_at', since)

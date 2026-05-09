@@ -150,7 +150,7 @@ async function upsertListing(
   const row = listingToPropertyRow(listing, existingId)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const client = supabaseAdmin as any
+  const client = supabaseAdmin
 
   if (existingId) {
     // Update existing — only update price-sensitive and presentation fields
@@ -167,7 +167,8 @@ async function upsertListing(
       updated_at:          row.updated_at,
     }
 
-    const { error } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- updateFields includes pending type columns (source_confidence, provider_listing_id)
+    const { error } = await (client as any)
       .from('properties')
       .update(updateFields)
       .eq('id', existingId)
@@ -177,7 +178,8 @@ async function upsertListing(
 
   } else {
     // Insert new property
-    const { data, error } = await client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- row includes pending type columns (source_provider, provider_listing_id, source_confidence)
+    const { data, error } = await (client as any)
       .from('properties')
       .insert(row)
       .select('id')
@@ -202,7 +204,7 @@ async function upsertListing(
 async function logPipelineRun(result: PipelineRunResult): Promise<void> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseAdmin as any)
+    await supabaseAdmin
       .from('automations_log')
       .insert({
         workflow_name: 'national_ingestion_pipeline',

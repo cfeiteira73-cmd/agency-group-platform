@@ -33,7 +33,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
     const now = new Date()
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const sevenDaysAgoISO = sevenDaysAgo.toISOString()
@@ -317,14 +317,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         return t >= dayStart && t <= dayEnd
       })
 
-      const dayScored = scored.filter((l: { last_score_at: string }) => {
+      const dayScored = scored.filter(l => {
+        if (!l.last_score_at) return false
         const t = new Date(l.last_score_at)
         return t >= dayStart && t <= dayEnd
       })
 
       const avgScore = dayLeads.length > 0
-        ? Math.round(dayLeads.filter((l: { score: number | null }) => l.score !== null)
-            .reduce((sum: number, l: { score: number }) => sum + l.score, 0) / Math.max(dayLeads.length, 1))
+        ? Math.round(dayLeads.filter(l => l.score != null)
+            .reduce((sum, l) => sum + (l.score ?? 0), 0) / Math.max(dayLeads.length, 1))
         : null
 
       dailyBreakdown.push({
@@ -383,14 +384,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       : null
 
     // ── Average scores ────────────────────────────────────────────────────────
-    const evalScores = evaluated.map((l: { deal_evaluation_score: number }) => l.deal_evaluation_score).filter(Boolean)
+    const evalScores = evaluated.map(l => (l.deal_evaluation_score ?? null) as number | null).filter((v): v is number => v != null)
     const avgEvalScore = evalScores.length > 0
-      ? Math.round(evalScores.reduce((a: number, b: number) => a + b, 0) / evalScores.length)
+      ? Math.round(evalScores.reduce((a, b) => a + b, 0) / evalScores.length)
       : null
 
-    const rankScores = evaluated.map((l: { master_attack_rank: number }) => l.master_attack_rank).filter(Boolean)
+    const rankScores = evaluated.map(l => (l.master_attack_rank ?? null) as number | null).filter((v): v is number => v != null)
     const avgRank = rankScores.length > 0
-      ? Math.round(rankScores.reduce((a: number, b: number) => a + b, 0) / rankScores.length)
+      ? Math.round(rankScores.reduce((a, b) => a + b, 0) / rankScores.length)
       : null
 
     // ── Bottleneck analysis ───────────────────────────────────────────────────

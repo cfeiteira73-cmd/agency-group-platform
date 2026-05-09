@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const admin   = supabaseAdmin as any
+    const viewDb = supabaseAdmin as any // for view-only queries not yet in schema types
     const since   = new Date(Date.now() - days * 86400_000).toISOString()
 
     const [
@@ -34,26 +34,26 @@ export async function GET(req: NextRequest) {
       calibrationRes,
       alertRes,
     ] = await Promise.all([
-      admin.from('v_system_health').select('*').single(),
-      admin.from('v_revenue_by_grade').select('*'),
-      admin.from('partner_tiers')
+      viewDb.from('v_system_health').select('*').single(),
+      viewDb.from('v_revenue_by_grade').select('*'),
+      supabaseAdmin.from('partner_tiers')
            .select('tier, tier_score')
            .order('tier_score', { ascending: false }),
-      admin.from('feature_flags')
+      supabaseAdmin.from('feature_flags')
            .select('flag_key, is_enabled, is_kill_switch')
            .eq('is_kill_switch', true),
-      admin.from('incident_log')
+      supabaseAdmin.from('incident_log')
            .select('severity, status')
            .in('status', ['open', 'investigating']),
-      admin.from('transaction_outcomes')
+      supabaseAdmin.from('transaction_outcomes')
            .select('outcome_type, final_sale_price, avm_error_pct, negotiation_delta_pct')
            .gte('recorded_at', since),
-      admin.from('calibration_recommendations')
+      supabaseAdmin.from('calibration_recommendations')
            .select('priority, status')
            .eq('status', 'pending'),
-      admin.from('system_alerts')
+      supabaseAdmin.from('system_alerts')
            .select('severity, status')
-           .eq('status', 'active'),
+           .eq('status', 'open'),
     ])
 
     // Revenue aggregation

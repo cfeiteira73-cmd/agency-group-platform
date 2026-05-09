@@ -52,12 +52,12 @@ export async function GET(req: NextRequest) {
   try {
     // Attempt to load pre-computed scorecards
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: scorecards = [], error: scErr } = await (supabaseAdmin as any)
+    const { data: scorecards = [], error: scErr } = await supabaseAdmin
       .from('performance_scorecards')
       .select('*')
-      .eq('period_type', period)
+      .eq('period_type', period as 'weekly' | 'monthly' | 'quarterly')
       .gte('period_start', `${month}-01`)
-      .order('composite_score', { ascending: false }) as { data: RankingEntry[]; error: { message: string } | null }
+      .order('composite_score', { ascending: false }) as unknown as { data: RankingEntry[]; error: { message: string } | null }
 
     if (scErr) {
       log.warn('[leaderboard] scorecards query error', { route: 'api/portal/leaderboard', error: scErr.message })
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
 
     // Enrich with win/loss data for the period
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: wlData = [] } = await (supabaseAdmin as any)
+    const { data: wlData = [] } = await supabaseAdmin
       .from('win_loss_events')
       .select('agent_id,outcome,deal_value,commission_lost')
       .gte('recorded_at', `${month}-01`) as { data: WinLossRow[] }

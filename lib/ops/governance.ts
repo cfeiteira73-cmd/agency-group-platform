@@ -312,6 +312,7 @@ export function computeApprovalMatrix(): Record<UserRole, SystemActionType[]> {
 
 export async function persistGovernanceDecision(record: GovernanceRecord): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- governance_decisions table pending types
   const { error } = await (supabaseAdmin as any)
     .from('governance_decisions')
     .insert({
@@ -336,6 +337,7 @@ export async function recordOverride(
   resolution:  ConflictResolution,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- override_events table pending types
   const { error } = await (supabaseAdmin as any)
     .from('override_events')
     .insert({
@@ -360,8 +362,8 @@ export async function getGovernanceHistory(
   actionType?: SystemActionType,
   limit = 50,
 ): Promise<GovernanceRecord[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- governance_decisions table pending types
+  let query: any = (supabaseAdmin as any)
     .from('governance_decisions')
     .select('*')
     .order('created_at', { ascending: false })
@@ -373,5 +375,5 @@ export async function getGovernanceHistory(
 
   const { data, error } = await query
   if (error) throw new Error(`getGovernanceHistory: ${error.message}`)
-  return data ?? []
+  return (data ?? []) as unknown as GovernanceRecord[]
 }

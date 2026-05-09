@@ -71,7 +71,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const t0 = Date.now()
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const admin = supabaseAdmin as any
+      const admin = supabaseAdmin
       const [c, p, d] = await Promise.all([
         admin.from('contacts').select('id', { count: 'exact', head: true }),
         admin.from('properties').select('id', { count: 'exact', head: true }),

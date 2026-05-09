@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   try {
     if (view === 'updates') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabaseAdmin as any)
+      const { data, error } = await supabaseAdmin
         .from('auto_model_updates')
         .select('*')
         .order('initiated_at', { ascending: false })
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     if (view === 'rollbacks') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabaseAdmin as any)
+      const { data, error } = await supabaseAdmin
         .from('rollback_events')
         .select('*')
         .order('triggered_at', { ascending: false })
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
 
     if (view === 'health') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabaseAdmin as any)
+      const { data, error } = await supabaseAdmin
         .from('v_learning_system_health')
         .select('*')
         .maybeSingle()

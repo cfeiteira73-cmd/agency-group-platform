@@ -300,7 +300,7 @@ async function fetchComparables(
   exclude_id?: string,
 ): Promise<CompRow[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('properties')
     .select('id, price, area_m2, bedrooms, condition, created_at')
     .eq('zone_key', zone_key)
@@ -388,7 +388,7 @@ export async function computePropertyAVM(
   if (propertyId) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabaseAdmin as any)
+      await supabaseAdmin
         .from('properties')
         .update({
           avm_value_low:      result.value_low,
@@ -419,7 +419,7 @@ export async function batchComputeAVM(
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: properties, error } = await (supabaseAdmin as any)
+  const { data: properties, error } = await supabaseAdmin
     .from('properties')
     .select('id, price, area_m2, bedrooms, type, condition, zone, zone_key, city, address')
     .eq('status', 'active')

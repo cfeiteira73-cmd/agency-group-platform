@@ -94,7 +94,7 @@ async function writeGrades(
   const CHUNK = 50
   for (let i = 0; i < rows.length; i += CHUNK) {
     const chunk = rows.slice(i, i + CHUNK)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- upsert with computed score columns not in typed schema
     const { error } = await (supabaseAdmin as any)
       .from('properties')
       .upsert(chunk, { onConflict: 'id' })
@@ -114,7 +114,7 @@ async function writeGrades(
 async function fetchUnscoredProperties(limit = 100) {
   // Try the helper RPC first (added in migration 20260501_001)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rpcData, error: rpcError } = await (supabaseAdmin as any)
+  const { data: rpcData, error: rpcError } = await supabaseAdmin
     .rpc('get_unscored_properties', { limit_n: limit })
 
   if (!rpcError && rpcData && (rpcData as unknown[]).length > 0) {
@@ -169,7 +169,7 @@ async function writeScores(
       scored_at:              new Date().toISOString(),
     }))
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- upsert with score columns (zone_key, score_breakdown, etc.) not in typed schema
     const { error } = await (supabaseAdmin as any)
       .from('properties')
       .upsert(rows, { onConflict: 'id' })
@@ -226,7 +226,7 @@ async function processSignals(
 
   // Insert signals (ON CONFLICT DO NOTHING — unique index idx_signals_property_type_active)
   if (signalRows.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- signals table columns (probability_score, etc.) use generic Record type
     const { error, data } = await (supabaseAdmin as any)
       .from('signals')
       .insert(signalRows)
@@ -244,7 +244,7 @@ async function processSignals(
 
   // Insert priority items
   if (priorityRows.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- priority_items insert with generic Record type
     const { error } = await (supabaseAdmin as any)
       .from('priority_items')
       .insert(priorityRows)
@@ -282,7 +282,7 @@ async function writePriceHistory(
   const ids = reductions.map(p => p.id!).filter(Boolean)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: recentEntries } = await (supabaseAdmin as any)
+  const { data: recentEntries } = await supabaseAdmin
     .from('price_history')
     .select('property_id, price_new')
     .in('property_id', ids)
@@ -308,7 +308,7 @@ async function writePriceHistory(
   if (rows.length === 0) return
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('price_history')
     .insert(rows)
 
@@ -372,7 +372,7 @@ async function logExecution(
   durationMs: number,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabaseAdmin as any)
+  await supabaseAdmin
     .from('automations_log')
     .insert({
       workflow_name: 'sync_listings_cron',

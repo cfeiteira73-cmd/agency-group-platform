@@ -292,7 +292,7 @@ export function buildAutoUpdateRecord(
 // ---------------------------------------------------------------------------
 
 export async function recordAutoUpdate(record: AutoUpdateRecord): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- AutoUpdateRecord uses from_version/to_version/metrics_snapshot; DB schema uses old_version/new_version (pending alignment)
   const { data, error } = await (supabaseAdmin as any)
     .from('auto_model_updates')
     .insert({
@@ -307,7 +307,7 @@ export async function recordAutoUpdate(record: AutoUpdateRecord): Promise<string
     .select('id')
     .single()
   if (error) throw new Error(`recordAutoUpdate: ${error.message}`)
-  return data.id
+  return (data as { id: string }).id
 }
 
 // ---------------------------------------------------------------------------
@@ -321,7 +321,7 @@ export async function triggerRollback(
   decision:     RollbackDecision,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('rollback_events')
     .insert({
       model_name:       modelName,
@@ -340,12 +340,12 @@ export async function triggerRollback(
 // ---------------------------------------------------------------------------
 
 export async function getActiveAutoUpdates(): Promise<AutoUpdateRecord[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- auto_model_updates schema uses different column names than AutoUpdateRecord (pending alignment)
   const { data, error } = await (supabaseAdmin as any)
     .from('auto_model_updates')
     .select('*')
     .eq('status', 'initiated')
     .order('initiated_at', { ascending: false })
   if (error) throw new Error(`getActiveAutoUpdates: ${error.message}`)
-  return data ?? []
+  return (data ?? []) as unknown as AutoUpdateRecord[]
 }

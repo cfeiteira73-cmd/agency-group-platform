@@ -73,7 +73,7 @@ async function lookupMarketRef(
   tipoAtivo: string | null
 ): Promise<{ ref: MarketPriceRef | null; lookupType: 'exact' | 'city_generic' | 'type_national' | 'none' }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabaseAdmin as any
+  const sb = supabaseAdmin
   const normalizedCidade = cidade ? norm(cidade) : null
   const normalizedTipo = tipoAtivo ? norm(tipoAtivo) : null
 
@@ -332,7 +332,7 @@ export async function POST(
 
     const { id } = await params
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = supabaseAdmin as any
+    const sb = supabaseAdmin
 
     // ── Fetch lead ──────────────────────────────────────────────────────────
     const { data: lead, error: fetchErr } = await sb.from(TABLE)
@@ -434,7 +434,7 @@ export async function GET(
 
     const { id } = await params
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabaseAdmin as any).from(TABLE)
+    const { data, error } = await supabaseAdmin.from(TABLE)
       .select([
         'id', 'nome', 'price_ask', 'area_m2', 'cidade', 'tipo_ativo',
         'price_ask_per_m2',       // GENERATED column

@@ -259,7 +259,7 @@ export async function recordTransactionOutcome(
   record: TransactionOutcomeRecord,
 ): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('transaction_outcomes')
     .upsert({
       property_id:               record.property_id,
@@ -297,7 +297,7 @@ export async function recordTransactionOutcome(
 
 export async function recordRejection(record: RejectionRecord): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('opportunity_rejections')
     .insert({
       property_id:           record.property_id,
@@ -327,7 +327,7 @@ export async function recordNegotiationEvent(
   event: NegotiationEventRecord,
 ): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('negotiation_events')
     .insert({
       property_id:  event.property_id,
@@ -354,7 +354,7 @@ export async function getOutcomesByProperty(
   propertyId: string,
 ): Promise<TransactionOutcomeRecord[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('transaction_outcomes')
     .select('*')
     .eq('property_id', propertyId)

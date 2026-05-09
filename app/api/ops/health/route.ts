@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const admin = supabaseAdmin as any
+    const admin = supabaseAdmin
     const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
     const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 

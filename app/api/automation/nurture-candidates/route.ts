@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
       // Fetch contacts in window — status=lead, has email, no opt-out
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: contacts, error } = await (supabaseAdmin as any)
+      const { data: contacts, error } = await supabaseAdmin
         .from('contacts')
         .select('id, name, full_name, email, source, preferred_locations, notes')
         .gte('created_at', createdAfter)
@@ -77,14 +77,14 @@ export async function POST(req: NextRequest) {
       // If table doesn't exist yet, proceed without dedup (safe — will be created below)
       let alreadySentIds = new Set<string>()
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- nurture_log table not yet in typed schema
         const { data: sent } = await (supabaseAdmin as any)
           .from('nurture_log')
           .select('contact_id')
           .in('contact_id', contacts.map((c: Record<string, unknown>) => c.id))
           .eq('sequence_day', win.sequenceDay)
         if (sent) {
-          alreadySentIds = new Set(sent.map((r: Record<string, string>) => r['contact_id']))
+          alreadySentIds = new Set((sent as Array<{ contact_id: string }>).map(r => r.contact_id))
         }
       } catch {
         // nurture_log table may not exist yet — skip dedup, create on first mark-sent
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
 
     // Best-effort audit log — non-blocking
     try {
-      await (supabaseAdmin as any).from('automations_log').insert({
+      await supabaseAdmin.from('automations_log').insert({
         workflow_name: 'nurture-candidates',
         trigger_type: 'api',
         status: 'success',

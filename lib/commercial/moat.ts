@@ -63,7 +63,7 @@ const DIMENSION_LABELS: Record<keyof MoatScore['dimensions'], string> = {
 // ---------------------------------------------------------------------------
 
 export async function computeMoatScore(): Promise<MoatScore> {
-  const sb = supabaseAdmin as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  const sb = supabaseAdmin
   const now = new Date().toISOString()
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString()
 
@@ -125,7 +125,7 @@ export async function computeMoatScore(): Promise<MoatScore> {
         .select('score')
         .limit(200)
       if (dqData && dqData.length > 0) {
-        const avg = dqData.reduce((sum: number, r: { score: number }) => sum + (r.score ?? 50), 0) / dqData.length
+        const avg = dqData.reduce((sum: number, r) => sum + ((r.score ?? 50) as number), 0) / dqData.length
         data_quality = Math.min(100, Math.round(avg))
       } else {
         // Fallback: contacts with email populated as quality proxy

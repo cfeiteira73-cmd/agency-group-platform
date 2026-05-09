@@ -112,7 +112,7 @@ export async function enqueueJob(
   maxAttempts = 3,
 ): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('job_queue')
     .insert({
       job_type:     jobType,
@@ -138,7 +138,7 @@ export async function claimNextPendingJob(jobType?: JobType): Promise<Job | null
   const now = new Date().toISOString()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('job_queue')
     .select('*')
     .in('status', ['pending', 'failed'])
@@ -156,7 +156,7 @@ export async function claimNextPendingJob(jobType?: JobType): Promise<Job | null
 
   // Mark as running
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: updateError } = await (supabaseAdmin as any)
+  const { error: updateError } = await supabaseAdmin
     .from('job_queue')
     .update({ status: 'running', updated_at: now })
     .eq('id', job.id)
@@ -176,7 +176,7 @@ export async function markJobCompleted(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('job_queue')
     .update({ status: 'completed', completed_at: now, result: result ?? null, updated_at: now })
     .eq('id', jobId)
@@ -198,7 +198,7 @@ export async function markJobFailed(
   const now         = new Date()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('job_queue')
     .update({
       status:        retry ? 'failed' : 'dead',
@@ -219,7 +219,7 @@ export async function markJobFailed(
 
 export async function getDeadJobs(limit = 50): Promise<Job[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('job_queue')
     .select('*')
     .eq('status', 'dead')
@@ -236,7 +236,7 @@ export async function getDeadJobs(limit = 50): Promise<Job[]> {
 
 export async function replayDeadJob(jobId: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('job_queue')
     .update({
       status:        'pending',

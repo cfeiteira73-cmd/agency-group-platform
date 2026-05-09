@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const since = new Date(Date.now() - days * 86_400_000).toISOString()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: responses = [], error } = await (supabaseAdmin as any)
+    const { data: responses = [], error } = await supabaseAdmin
       .from('nps_responses')
       .select('*')
       .gte('responded_at', since)
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any).from('nps_responses').insert({
+    const { error } = await supabaseAdmin.from('nps_responses').insert({
       contact_id:    body.contact_id    ?? null,
       deal_id:       body.deal_id       ?? null,
       agent_email:   body.agent_email   ?? null,

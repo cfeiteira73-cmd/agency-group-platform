@@ -111,6 +111,7 @@ function isClosedFase(fase: unknown): boolean {
 // ── Check if a priority item already exists (dedup) ───────────────────────────
 
 async function hasOpenItem(entityType: string, entityId: string): Promise<boolean> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { count } = await (supabaseAdmin as any)
     .from('priority_items')
     .select('id', { count: 'exact', head: true })
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // ───────────────────────────────────────────────────────────────────────────
   try {
     const cutoff = new Date(Date.now() - RULES.STALE_MATCH_HOURS * 3600_000).toISOString()
-    const { data: staleMatches } = await (supabaseAdmin as any)
+    const { data: staleMatches } = await supabaseAdmin
       .from('matches')
       .select('id, lead_id, property_title, match_score, created_at, next_best_action')
       .gte('match_score', RULES.HIGH_SCORE_THRESHOLD)
@@ -193,7 +194,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // ───────────────────────────────────────────────────────────────────────────
   try {
     const cutoff = new Date(Date.now() - RULES.STALE_PACK_HOURS * 3600_000).toISOString()
-    const { data: stalePacks } = await (supabaseAdmin as any)
+    const { data: stalePacks } = await supabaseAdmin
       .from('deal_packs')
       .select('id, lead_id, title, sent_at, view_count')
       .eq('status', 'sent')
@@ -236,7 +237,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // STEP 3: OBSERVE — Active deals stuck > SLA (using fase — portal schema)
   // ───────────────────────────────────────────────────────────────────────────
   try {
-    const { data: deals } = await (supabaseAdmin as any)
+    const { data: deals } = await supabaseAdmin
       .from('deals')
       .select('id, imovel, title, fase, updated_at, valor, expected_fee, created_at')
       .not('fase', 'ilike', '%escritura%')
@@ -286,7 +287,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // STEP 4: OBSERVE — Hot leads with no recent match (score ≥70, no match in 7d)
   // ───────────────────────────────────────────────────────────────────────────
   try {
-    const { data: hotLeads } = await (supabaseAdmin as any)
+    const { data: hotLeads } = await supabaseAdmin
       .from('contacts')
       .select('id, name, lead_score, updated_at')
       .gte('lead_score', 70)
@@ -298,7 +299,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const leadIds = hotLeads.map((l: Record<string,unknown>) => String(l.id))
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600_000).toISOString()
 
-      const { data: recentMatches } = await (supabaseAdmin as any)
+      const { data: recentMatches } = await supabaseAdmin
         .from('matches')
         .select('lead_id')
         .in('lead_id', leadIds)
@@ -321,8 +322,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         newItems.push({
           entity_type:     'contact',
           entity_id:       String(lead.id),
-          priority_score:  Math.min(100, Math.round(lead.lead_score * 0.9)),
-          reason:          `Lead score ${lead.lead_score}/100 — sem match há mais de 7 dias. Enviar para motor de matching.`,
+          priority_score:  Math.min(100, Math.round((lead.lead_score ?? 0) * 0.9)),
+          reason:          `Lead score ${lead.lead_score ?? 0}/100 — sem match há mais de 7 dias. Enviar para motor de matching.`,
           next_best_action: 'Run /api/automation/match-buyer for this lead profile',
           deadline:        addHours(24),
           owner_id:        null,
@@ -332,8 +333,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         })
         report.actions.push({
           type: 'priority_created', entity_type: 'contact', entity_id: String(lead.id),
-          reason: `Score ${lead.lead_score}/100, no match in 7d`,
-          score: Math.min(100, Math.round(lead.lead_score * 0.9)),
+          reason: `Score ${lead.lead_score ?? 0}/100, no match in 7d`,
+          score: Math.min(100, Math.round((lead.lead_score ?? 0) * 0.9)),
           action: 'Run match engine',
         })
       }
@@ -350,6 +351,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   if (toInsert.length > 0) {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: insertErr } = await (supabaseAdmin as any)
         .from('priority_items')
         .insert(toInsert)

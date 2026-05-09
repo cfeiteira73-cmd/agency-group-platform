@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     // Attempt to INSERT — if UNIQUE constraint blocks it, alert already sent
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabaseAdmin as any)
+    const { error } = await supabaseAdmin
       .from('property_alert_sent')
       .insert({
         id:          crypto.randomUUID(),

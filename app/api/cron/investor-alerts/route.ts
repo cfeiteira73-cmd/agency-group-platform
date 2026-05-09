@@ -121,7 +121,7 @@ async function findMatchingInvestors(
 
   // Base query — budget range match
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabaseAdmin as any)
+  let query = supabaseAdmin
     .from('contacts')
     .select('id, full_name, email, whatsapp, budget_max, lead_tier, agent_email')
     .in('status', ['prospect', 'qualified', 'active', 'vip'])
@@ -220,7 +220,7 @@ async function createDealPack(
   const lead = investors[0]
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('deal_packs')
     .insert({
       property_id:  property.id,
@@ -259,7 +259,7 @@ async function logExecution(
   errors:     string[],
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabaseAdmin as any)
+  await supabaseAdmin
     .from('automations_log')
     .insert({
       workflow_name: 'investor_alerts_cron',

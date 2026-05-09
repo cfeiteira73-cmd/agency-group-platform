@@ -146,7 +146,7 @@ export function buildIncident(
 
 export async function createIncident(payload: IncidentPayload): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('incident_log')
     .insert({
       incident_type:    payload.incident_type,
@@ -185,7 +185,7 @@ export async function updateIncidentStatus(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('incident_log')
     .update({
       status,
@@ -210,7 +210,7 @@ export async function mitigateIncident(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('incident_log')
     .update({
       status:          'mitigated',
@@ -239,7 +239,7 @@ export async function resolveIncident(
 ): Promise<void> {
   const now = new Date().toISOString()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('incident_log')
     .update({
       status:               'resolved',
@@ -262,7 +262,7 @@ export async function resolveIncident(
 export async function getOpenIncidents(
   severity?: IncidentSeverity,
 ): Promise<Incident[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- incident_log has enum columns (severity, status) that need any cast
   let query = (supabaseAdmin as any)
     .from('incident_log')
     .select('*')
@@ -274,7 +274,7 @@ export async function getOpenIncidents(
 
   const { data, error } = await query
   if (error) throw new Error(`getOpenIncidents: ${error.message}`)
-  return (data ?? []) as Incident[]
+  return (data ?? []) as unknown as Incident[]
 }
 
 // ---------------------------------------------------------------------------
@@ -286,7 +286,7 @@ export async function linkAlertToIncident(
   alertId:    string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('incident_log')
     .update({ alert_id: alertId, updated_at: new Date().toISOString() })
     .eq('id', incidentId)

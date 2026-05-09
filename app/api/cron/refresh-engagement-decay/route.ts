@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const { processed, updated } = await batchComputeDecay({ onlyStale: true })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseAdmin as any)
+    await supabaseAdmin
       .from('automations_log')
       .insert({
         workflow_name: 'refresh-engagement-decay',

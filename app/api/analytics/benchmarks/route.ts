@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = supabaseAdmin as any
+    const sb = supabaseAdmin
 
     const { data: outcomes, error: outErr } = await sb
       .from('transaction_outcomes')
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     type OutcomeRow = {
       score_at_time:              number | null
-      final_sale_price:           number
+      final_sale_price:           number | null
       asking_price:               number | null
       negotiation_duration_days:  number | null
       distribution_event_id:      string | null
@@ -53,9 +53,9 @@ export async function GET(req: NextRequest) {
     }
 
     // AVM accuracy benchmark
-    const scoredRows   = rows.filter(r => r.score_at_time != null)
+    const scoredRows   = rows.filter(r => r.score_at_time != null && r.final_sale_price != null)
     const systemScores = scoredRows.map(r => r.score_at_time!)
-    const finalPrices  = scoredRows.map(r => r.final_sale_price)
+    const finalPrices  = scoredRows.map(r => r.final_sale_price!)
     const baselineAcc  = computeBaselineAccuracy(finalPrices)
     const systemAcc    = computeSystemAccuracy(systemScores, finalPrices)
     const avmUplift    = computeUplift(baselineAcc.mae, systemAcc.mae, true)
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
       .limit(limit)
     const distRows         = distData ?? []
     const systemPrecision  = distRows.length > 0
-      ? distRows.filter((r: { converted: boolean }) => r.converted).length / distRows.length
+      ? distRows.filter(r => r.converted === true).length / distRows.length
       : 0
     const baselinePrecision = 0.02
     const routingUplift    = computeRoutingUplift(baselinePrecision, systemPrecision)

@@ -271,7 +271,7 @@ export async function computeAndPersistInvestorIntelligence(
   investorId: string,
 ): Promise<InvestorProfile> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('investor_engagement_events')
     .select('investor_id, event_type, property_type, zone_key, yield_pct, offer_price, budget')
     .eq('investor_id', investorId)
@@ -350,7 +350,7 @@ export async function computeAndPersistInvestorIntelligence(
 
   // Persist to investor_intelligence
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: upsertError } = await (supabaseAdmin as any)
+  const { error: upsertError } = await supabaseAdmin
     .from('investor_intelligence')
     .upsert({
       investor_id:               investorId,
@@ -391,7 +391,7 @@ export async function batchUpdateAllInvestorIntelligence(
 
   // Get distinct investors with recent engagement activity
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: investorRows, error } = await (supabaseAdmin as any)
+  const { data: investorRows, error } = await supabaseAdmin
     .from('investor_engagement_events')
     .select('investor_id')
     .gte('created_at', sinceDate.toISOString())

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const admin = supabaseAdmin as any
+    const admin = supabaseAdmin
     const alerts: string[] = []
     const checks: Record<string, unknown> = {}
 
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
       .in('automation_type', ['cron_avm_compute', 'cron_ingest_listings', 'cron_sync_listings'])
       .gte('ran_at', new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString())
 
-    const cronTypes = new Set((cronLogs ?? []).map((r: { automation_type: string }) => r.automation_type))
+    const cronTypes = new Set((cronLogs ?? []).map(r => (r.automation_type ?? '') as string))
     const missingCrons = ['cron_avm_compute', 'cron_sync_listings'].filter(t => !cronTypes.has(t))
 
     checks.missing_crons = missingCrons

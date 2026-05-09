@@ -39,11 +39,11 @@ export async function PATCH(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
 
     // Fetch current buyer stats
     const { data: contact, error: fetchErr } = await s.from('contacts')
-      .select('id, full_name, deals_closed_count, avg_close_days, reliability_score, notes as existing_notes')
+      .select('id, full_name, deals_closed_count, avg_close_days, reliability_score, notes')
       .eq('id', id)
       .single()
 
@@ -85,7 +85,7 @@ export async function PATCH(
     const closeNote = `[CLOSE ${new Date(close_date).toLocaleDateString('pt-PT')}${closedValueStr}${closedDaysStr}]${notes ? ' ' + notes : ''}`
 
     if (notes || property_value || close_days_from_first_contact) {
-      const existingNotes = contact.existing_notes ?? ''
+      const existingNotes = (contact.notes as string | null) ?? ''
       updatePayload.notes = existingNotes ? `${existingNotes}\n${closeNote}` : closeNote
     }
 
@@ -99,7 +99,7 @@ export async function PATCH(
       // Fallback: update base fields only
       await s.from('contacts').update({
         last_contact_at: close_date,
-        notes: ((contact.existing_notes ?? '') + '\n' + closeNote).trim(),
+        notes: (((contact.notes as string | null) ?? '') + '\n' + closeNote).trim(),
       }).eq('id', id)
       return NextResponse.json({
         contact_id: id,

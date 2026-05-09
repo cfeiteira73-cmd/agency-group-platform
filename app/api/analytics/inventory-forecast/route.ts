@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const [activeProps, closedDeals, segmentTrends, buyerPool] = await Promise.all([
       // Active inventory
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any)
+      supabaseAdmin
         .from('properties')
         .select('id, zone, typology, price, created_at')
         .eq('status', 'active')
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
       // Closed deals in window (velocity)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any)
+      supabaseAdmin
         .from('transaction_outcomes')
         .select('property_id, final_sale_price, closed_at, score_at_time, grade_at_time')
         .eq('outcome_type', 'won')
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
       // Market segment trends (supply/demand proxy via DOM)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (supabaseAdmin as any)
+      supabaseAdmin
         .from('market_segment_trends')
         .select('zone_key, property_type, period_label, avg_days_to_close, deal_count, confidence_score, price_trend')
         .eq('period_label', '30d')
@@ -49,11 +49,11 @@ export async function GET(req: NextRequest) {
         .then((r: { data: unknown[] | null }) => r.data ?? []),
 
       // Active qualified buyers
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- contact_type/status enum casts need any
       (supabaseAdmin as any)
         .from('contacts')
         .select('id, preferred_zone, budget_max')
-        .eq('type', 'buyer')
+        .eq('contact_type', 'buyer')
         .eq('status', 'active')
         .then((r: { data: unknown[] | null }) => r.data ?? []),
     ])

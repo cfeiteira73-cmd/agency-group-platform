@@ -663,11 +663,10 @@ export async function GET(
 
   // Fire-and-forget view count increment helper
   const bumpViewCount = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    void (supabaseAdmin as any)
-      .rpc('increment_deal_pack_view_count', { pack_id: id })
-      .then(() => {})
-      .catch(() => {})
+    void Promise.resolve(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabaseAdmin as any).rpc('increment_deal_pack_view_count', { pack_id: id })
+    ).catch(() => {})
   }
 
   // Try PDF generation first (if configured and format != 'html')

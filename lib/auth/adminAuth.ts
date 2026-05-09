@@ -190,7 +190,7 @@ export function isRoleAtLeast(role: AdminRole, minimum: AdminRole): boolean {
 
 export async function getAdminRole(email: string): Promise<AdminUser | null> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('admin_roles')
     .select('user_email, role, is_active, granted_at, granted_by')
     .eq('user_email', email)
@@ -210,7 +210,7 @@ export async function grantRole(
   role:       AdminRole,
   grantedBy:  string,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- admin_roles upsert with onConflict needs any cast
   const { error } = await (supabaseAdmin as any)
     .from('admin_roles')
     .upsert({
@@ -234,7 +234,7 @@ export async function revokeRole(
   userEmail: string,
   revokedBy: string,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- admin_roles revoked_at/revoked_by columns in typed schema
   const { error } = await (supabaseAdmin as any)
     .from('admin_roles')
     .update({

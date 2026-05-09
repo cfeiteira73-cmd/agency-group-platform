@@ -69,7 +69,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const period = (searchParams.get('period') ?? 'month') as 'month' | 'quarter' | 'year'
   const { since, until } = getPeriodWindow(period)
 
-  const sb = supabaseAdmin as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  const sb = supabaseAdmin
 
   try {
     // ── 1. Closed deals: revenue + count + avg deal value ────────────────────

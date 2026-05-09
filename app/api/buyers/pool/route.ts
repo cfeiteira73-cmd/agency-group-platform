@@ -8,10 +8,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import type { ContactStatus } from '@/lib/database.types'
 
 // Safe query wrapper
 async function safeQuery<T>(
-  fn: () => Promise<{ data: T | null; error: unknown; count?: number | null }>,
+  fn: () => PromiseLike<{ data: T | null; error: unknown; count?: number | null }>,
   defaultData: T
 ): Promise<{ data: T; ok: boolean }> {
   try {
@@ -23,7 +24,7 @@ async function safeQuery<T>(
   }
 }
 
-async function safeCount(fn: () => Promise<{ count: number | null; error: unknown }>): Promise<number> {
+async function safeCount(fn: () => PromiseLike<{ count: number | null; error: unknown }>): Promise<number> {
   try {
     const r = await fn()
     if (r.error) return 0
@@ -42,13 +43,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const limit = Math.min(200, parseInt(searchParams.get('limit') ?? '100'))
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
 
     const now = new Date()
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString()
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 86400000).toISOString()
 
-    const ACTIVE_STATUSES = ['active', 'prospect', 'lead', 'qualified', 'negotiating', 'client', 'vip']
+    const ACTIVE_STATUSES: ContactStatus[] = ['active', 'prospect', 'lead', 'qualified', 'negotiating', 'client', 'vip']
 
     // ── Section A: Pool counts ────────────────────────────────────────────────
     const [totalBuyers, tierACnt, tierBCnt, tierCCnt, activeLast30, withBudget] = await Promise.all([
@@ -90,33 +91,28 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     // ── Section C: Top buyers ─────────────────────────────────────────────────
-    const topBuyersResult = await safeQuery(
-      () => s.from('contacts')
-        .select([
-          'id', 'full_name', 'email', 'phone', 'whatsapp',
-          'budget_min', 'budget_max', 'preferred_locations', 'typologies_wanted',
-          'status', 'lead_tier', 'lead_score', 'last_contact_at', 'next_followup_at',
-          'buyer_type', 'liquidity_profile', 'deals_closed_count', 'avg_close_days',
-          'reliability_score', 'buyer_score', 'active_status',
-        ].join(', '))
+    type BuyerRow = Record<string, unknown>
+    const topBuyersResult = await safeQuery<BuyerRow[]>(
+      () => (s.from('contacts')
+        .select('id, full_name, email, phone, whatsapp, budget_min, budget_max, preferred_locations, typologies_wanted, status, lead_tier, lead_score, last_contact_at, next_followup_at, buyer_type, deals_closed_count, avg_close_days, reliability_score')
         .in('status', ACTIVE_STATUSES)
         .order('lead_score', { ascending: false })
-        .limit(limit),
-      [] as Record<string, unknown>[]
+        .limit(limit)) as unknown as PromiseLike<{ data: BuyerRow[] | null; error: unknown; count?: number | null }>,
+      []
     )
 
     // Fallback if migration 007 columns missing
-    let topBuyers: Record<string, unknown>[] = topBuyersResult.data as Record<string, unknown>[]
+    let topBuyers: BuyerRow[] = topBuyersResult.data
     if (!topBuyersResult.ok) {
-      const fallback = await safeQuery(
-        () => s.from('contacts')
+      const fallback = await safeQuery<BuyerRow[]>(
+        () => (s.from('contacts')
           .select('id, full_name, email, phone, budget_min, budget_max, preferred_locations, typologies_wanted, status, lead_tier, lead_score, last_contact_at')
           .in('status', ACTIVE_STATUSES)
           .order('lead_score', { ascending: false })
-          .limit(limit),
-        [] as Record<string, unknown>[]
+          .limit(limit)) as unknown as PromiseLike<{ data: BuyerRow[] | null; error: unknown; count?: number | null }>,
+        []
       )
-      topBuyers = fallback.data as Record<string, unknown>[]
+      topBuyers = fallback.data
     }
 
     // ── Section D: Audit — incomplete buyer profiles ──────────────────────────

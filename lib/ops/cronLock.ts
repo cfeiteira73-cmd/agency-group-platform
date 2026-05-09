@@ -110,7 +110,7 @@ export async function acquireCronLock(
 
   // Step 1: Try to read existing lock
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: existing } = await (supabaseAdmin as any)
+  const { data: existing } = await supabaseAdmin
     .from('cron_lock')
     .select('cron_name, expires_at, instance_id')
     .eq('cron_name', cronName)
@@ -123,7 +123,7 @@ export async function acquireCronLock(
 
   // Step 2: Lock is either absent or expired — try to claim it
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('cron_lock')
     .upsert({
       cron_name:   cronName,
@@ -140,7 +140,7 @@ export async function acquireCronLock(
 
   // Step 3: Verify we actually got the lock (race condition guard)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: verify } = await (supabaseAdmin as any)
+  const { data: verify } = await supabaseAdmin
     .from('cron_lock')
     .select('instance_id')
     .eq('cron_name', cronName)
@@ -159,7 +159,7 @@ export async function releaseCronLock(
   instanceId: string,
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabaseAdmin as any)
+  await supabaseAdmin
     .from('cron_lock')
     .update({
       last_released_at: new Date().toISOString(),
@@ -210,7 +210,7 @@ export async function withCronLock<T>(
 
 export async function getLockStatus(cronName: string): Promise<LockStatus> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (supabaseAdmin as any)
+  const { data } = await supabaseAdmin
     .from('cron_lock')
     .select('*')
     .eq('cron_name', cronName)
@@ -244,7 +244,7 @@ export async function getLockStatus(cronName: string): Promise<LockStatus> {
 
 export async function forceReleaseLock(cronName: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabaseAdmin as any)
+  const { error } = await supabaseAdmin
     .from('cron_lock')
     .update({
       expires_at:       new Date().toISOString(),
@@ -261,7 +261,7 @@ export async function forceReleaseLock(cronName: string): Promise<void> {
 
 export async function getActiveLocks(): Promise<CronLockRow[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('cron_lock')
     .select('*')
     .gt('expires_at', new Date().toISOString())

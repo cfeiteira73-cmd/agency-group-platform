@@ -226,7 +226,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // (agent_email on deal_packs is the most reliable agent activity signal)
     let topAgents = MOCK_SUMMARY.topAgents
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- agents table columns not in typed schema
       const { data: agentsData } = await (supabaseAdmin as any).from('agents')
         .select('full_name, gci_mes, gci_ytd, deals_fechados, pipeline, conversao, dias_ciclo, score, calls, emails, visitas, propostas')
         .order('gci_mes', { ascending: false })
@@ -249,7 +249,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // agents table doesn't exist — derive from deal_packs agent activity
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: packData } = await (supabaseAdmin as any)
+        const { data: packData } = await supabaseAdmin
           .from('deal_packs')
           .select('created_by, status, created_at')
           .not('created_by', 'is', null)

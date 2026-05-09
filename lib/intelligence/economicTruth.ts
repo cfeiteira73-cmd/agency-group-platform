@@ -285,7 +285,7 @@ export async function persistEconomicTruth(
   dealId?: string,
   distributionEventId?: string,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- economic_truth_events has many columns (deal_id, distribution_event_id, price_band, avm_accuracy_score, etc.) not yet in typed schema
   const { error } = await (supabaseAdmin as any)
     .from('economic_truth_events')
     .insert({
@@ -319,7 +319,7 @@ export async function getZoneMeanTruthScore(
   assetClass: string,
 ): Promise<number> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabaseAdmin as any)
+  const { data, error } = await supabaseAdmin
     .from('economic_truth_events')
     .select('raw_truth_score')
     .eq('zone_key', zoneKey)
@@ -329,7 +329,7 @@ export async function getZoneMeanTruthScore(
   if (error) return 70       // default fallback
   if (!data || data.length === 0) return 70
 
-  const sum = data.reduce((acc: number, row: { raw_truth_score: number }) => acc + (row.raw_truth_score ?? 70), 0)
+  const sum = data.reduce((acc, row) => acc + ((row.raw_truth_score ?? 70) as number), 0)
   return Math.round(sum / data.length)
 }
 
@@ -340,7 +340,7 @@ export async function getZoneMeanTruthScore(
 
 export async function batchNormalizeTruth(limit = 100): Promise<{ normalized: number }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: events, error } = await (supabaseAdmin as any)
+  const { data: events, error } = await supabaseAdmin
     .from('economic_truth_events')
     .select('id, property_id, zone_key, asset_class, raw_truth_score')
     .is('normalized_truth_score', null)
@@ -353,8 +353,8 @@ export async function batchNormalizeTruth(limit = 100): Promise<{ normalized: nu
   // ── Batch zone-mean fetches: one query per unique (zone_key, asset_class) ──
   const zoneGroups = new Map<string, string[]>()
   for (const event of events) {
-    const key = `${event.zone_key}::${event.asset_class}`
-    if (!zoneGroups.has(key)) zoneGroups.set(key, [event.zone_key, event.asset_class])
+    const key = `${event.zone_key ?? ''}::${event.asset_class ?? ''}`
+    if (!zoneGroups.has(key)) zoneGroups.set(key, [event.zone_key ?? '', event.asset_class ?? ''])
   }
 
   const zoneMeanCache = new Map<string, number>()
@@ -368,11 +368,11 @@ export async function batchNormalizeTruth(limit = 100): Promise<{ normalized: nu
   // ── Apply normalization and persist in one pass ──
   let normalized = 0
   for (const event of events) {
-    const cacheKey = `${event.zone_key}::${event.asset_class}`
+    const cacheKey = `${event.zone_key ?? ''}::${event.asset_class ?? ''}`
     const zoneMean = zoneMeanCache.get(cacheKey) ?? 70
-    const score    = normalizeEconomicScore(event.raw_truth_score, zoneMean)
+    const score    = normalizeEconomicScore((event.raw_truth_score ?? 0) as number, zoneMean)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabaseAdmin as any)
+    await supabaseAdmin
       .from('economic_truth_events')
       .update({ normalized_truth_score: score })
       .eq('id', event.id)

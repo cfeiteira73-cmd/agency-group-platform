@@ -93,7 +93,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!contact_id) return NextResponse.json({ error: 'contact_id required' }, { status: 400 })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
 
     const { data: contact, error: fetchErr } = await s.from(TABLE)
       .select('id, full_name, liquidity_profile, deals_closed_count, avg_close_days, reliability_score, last_contact_at')
@@ -143,7 +143,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const force = searchParams.get('force') === 'true'
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
 
     // Build query — score unscored buyers, or all if force=true
     // We try the buyer_score column; if missing (pre-migration) fall back gracefully

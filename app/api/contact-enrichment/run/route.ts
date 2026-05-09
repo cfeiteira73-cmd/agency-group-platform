@@ -201,7 +201,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
   const { data: leads, error } = await s
     .from('offmarket_leads')
     .select('id')
@@ -236,7 +236,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const s = supabaseAdmin as any
+  const s = supabaseAdmin
 
   try {
     const body = await req.json() as { lead_id?: string; batch?: boolean; limit?: number }

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const view = searchParams.get('view') ?? 'full'
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- profiles.role enum and various view columns not in typed schema
     const sb = supabaseAdmin as any
 
     const [
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       sb.from('transaction_outcomes').select('*', { count: 'exact', head: true })
         .not('final_sale_price', 'is', null),
       sb.from('distribution_outcomes').select('*', { count: 'exact', head: true }),
-      sb.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'agent'),
+      sb.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'agent' as string),
       sb.from('investidores').select('*', { count: 'exact', head: true }),
       sb.from('deals').select('*', { count: 'exact', head: true }),
     ])

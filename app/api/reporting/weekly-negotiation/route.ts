@@ -19,7 +19,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = supabaseAdmin as any
+    const s = supabaseAdmin
 
     const now = new Date()
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -79,14 +79,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       s.from('offmarket_leads')
         .select('id,nome,cidade,score,deal_risk_level,deal_risk_reason,deal_next_step,deal_next_step_date,negotiation_status,cpcv_target_date,escritura_target_date,assigned_to,deal_priority_score,attack_recommendation,buyer_triad_notes')
-        .eq('deal_risk_level', 'vermelho')
+        .eq('deal_risk_level', 'high' as 'low' | 'medium' | 'high')
         .is('escritura_done_at', null)
         .order('score', { ascending: false })
         .limit(10),
 
       s.from('offmarket_leads')
         .select('id,nome,cidade,score,deal_risk_level,deal_risk_reason,deal_next_step,deal_next_step_date,negotiation_status,assigned_to,deal_priority_score,attack_recommendation,buyer_triad_notes')
-        .eq('deal_risk_level', 'amarelo')
+        .eq('deal_risk_level', 'medium' as 'low' | 'medium' | 'high')
         .is('escritura_done_at', null)
         .order('score', { ascending: false })
         .limit(15),

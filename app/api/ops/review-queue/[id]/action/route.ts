@@ -55,7 +55,7 @@ export async function POST(
   try {
     // Fetch current record
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: current, error: fetchErr } = await (supabaseAdmin as any)
+    const { data: current, error: fetchErr } = await supabaseAdmin
       .from('deal_review_queue')
       .select('id, status, opportunity_score, opportunity_grade')
       .eq('id', reviewId)
@@ -84,7 +84,7 @@ export async function POST(
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: updateErr } = await (supabaseAdmin as any)
+    const { error: updateErr } = await supabaseAdmin
       .from('deal_review_queue')
       .update(updatePayload)
       .eq('id', reviewId)
