@@ -18,6 +18,12 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.55.0",
+    "@opentelemetry/sdk-trace-node": "^1.29.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.55.0",
+    "ioredis": "^5.4.1",
+    "kafkajs": "^2.2.4",
     "@auth/supabase-adapter": "^1.7.4",
     "@sentry/nextjs": "^8.0.0",
     "@stripe/stripe-js": "^9.2.0",
@@ -43,6 +49,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/ioredis": "^5.0.0",
+    "@temporalio/client": "^1.11.0",
+    "@temporalio/workflow": "^1.11.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^16.0.0",

@@ -4,7 +4,12 @@ const config = {
   transform: {
     '^.+\\.(t|j)sx?$': ['@swc/jest'],
   },
-  testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
+  testMatch: [
+    '**/__tests__/**/*.test.ts',
+    '**/__tests__/**/*.test.tsx',
+    '**/tests/chaos/**/*.spec.ts',
+    '**/tests/load/**/*.spec.ts',
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
