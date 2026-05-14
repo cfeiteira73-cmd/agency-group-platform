@@ -31,7 +31,7 @@ export class SystemHealthAgent extends BaseAgent {
       const last24h      = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
       const last1h       = new Date(now.getTime() -      60 * 60 * 1000).toISOString()
 
-      // 1. Open/critical system alerts — may not have org_id
+      // 1. Open/critical system alerts — org isolation: pending migration 015 (system_alerts may have no org_id column)
       const { data: alerts, count: alertCount } = await supabaseAdmin
         .from('system_alerts')
         .select('id, alert_type, severity, message, created_at', { count: 'exact' })
@@ -40,18 +40,20 @@ export class SystemHealthAgent extends BaseAgent {
 
       const criticalAlerts = (alerts ?? []).filter(a => a.severity === 'P0' || a.severity === 'P1')
 
-      // 2. Automation error rate last 24h — no org_id on automations_log
+      // 2. Automation error rate last 24h — org isolation: pending migration 015 (automations_log has no org_id column)
       const { data: recentLogs } = await supabaseAdmin
         .from('automations_log')
         .select('id, status')
         .gte('created_at', last24h)
-        .limit(500)
+        .limit(50)
 
       const total24h  = recentLogs?.length ?? 0
       const errors24h = (recentLogs ?? []).filter(l => l.status === 'error').length
       const errorRate = total24h > 0 ? errors24h / total24h : 0
 
       // 3. Learning events last 1h — health signal
+      // NOTE: learning_events has no org_id column (pending migration 015 + 018).
+      // Query is global; count used only as a health signal, not tenant-isolated data.
       const { count: learningCount } = await supabaseAdmin
         .from('learning_events')
         .select('id', { count: 'exact', head: true })

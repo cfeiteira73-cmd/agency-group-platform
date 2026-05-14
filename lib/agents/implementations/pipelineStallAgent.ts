@@ -37,10 +37,11 @@ export class PipelineStallAgent extends BaseAgent {
     can_send_comms:         false,
   }
 
-  protected async execute(_ctx: AgentContext): Promise<{ insights: AgentInsight[]; actions: AgentAction[]; metadata: Record<string, unknown> }> {
+  protected async execute(ctx: AgentContext): Promise<{ insights: AgentInsight[]; actions: AgentAction[]; metadata: Record<string, unknown> }> {
     const insights: AgentInsight[] = []
     const actions:  AgentAction[]  = []
 
+    // org isolation: pending migration 015 (deals has no org_id column)
     const { data: deals } = await supabaseAdmin
       .from('deals')
       .select('id, ref, imovel, fase, valor, updated_at, agent_email, comprador')
@@ -81,7 +82,7 @@ export class PipelineStallAgent extends BaseAgent {
     return {
       insights,
       actions,
-      metadata: { stalled_deals_found: insights.length },
+      metadata: { org_id: ctx.org_id, stalled_deals_found: insights.length },
     }
   }
 }

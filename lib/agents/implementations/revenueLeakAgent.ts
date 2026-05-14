@@ -26,6 +26,7 @@ export class RevenueLeakAgent extends BaseAgent {
     const actions: AgentAction[] = []
 
     // 1. Stalled high-priority offmarket leads (score ≥ 70, no action 7+ days)
+    // org isolation: pending migration 015 (offmarket_leads has no org_id column)
     const stalledThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     const { data: stalledLeads } = await supabaseAdmin
       .from('offmarket_leads')
@@ -58,7 +59,7 @@ export class RevenueLeakAgent extends BaseAgent {
       })
     }
 
-    // 2. SLA breach leads
+    // 2. SLA breach leads — org isolation: pending migration 015 (offmarket_leads has no org_id column)
     const { data: slaBreaches } = await supabaseAdmin
       .from('offmarket_leads')
       .select('id, nome, score, assigned_to, sla_contacted_at')

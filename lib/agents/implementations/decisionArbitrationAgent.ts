@@ -36,7 +36,7 @@ export class DecisionArbitrationAgent extends BaseAgent {
     const actions:  AgentAction[]  = []
 
     try {
-      // Query pending operator tasks
+      // Query pending operator tasks — org isolation: pending migration 015 (operator_tasks has no org_id column)
       const { data: tasks } = await supabaseAdmin
         .from('operator_tasks')
         .select('id, priority, status, created_at')

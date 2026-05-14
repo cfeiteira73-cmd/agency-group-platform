@@ -3,9 +3,9 @@
 // AMI: 22506 | SH-ROS Production Runtime
 // =============================================================================
 
-export { orchestrator, RuntimeValidationError }    from './orchestrator'
+export { orchestrator, RuntimeValidationError, RuntimePersistError } from './orchestrator'
 export { hotMemory, warmMemory, shortTermMemory, longTermMemory } from './memory'
-export { decisionEngine, computeEV, rankOutputs }  from './decisionEngine'
+export { decisionEngine, computeEV, rankOutputs, topN } from './decisionEngine'
 export type {
   RuntimeEvent,
   RuntimeEventType,

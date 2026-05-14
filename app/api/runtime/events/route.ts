@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { getAdminRole } from '@/lib/auth/adminAuth'
 import { orchestrator, hotMemory, warmMemory } from '@/lib/runtime'
 import type { RuntimeEvent, RuntimeEventType } from '@/lib/runtime'
 
@@ -28,6 +29,39 @@ export async function POST(req: NextRequest) {
   // AUTH
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // RBAC — only super_admin and ops_manager may POST events.
+  // Service-to-service callers (CRON_SECRET / INTERNAL_API_TOKEN) bypass RBAC.
+  const isServiceCall =
+    (process.env.CRON_SECRET     && (req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')) === process.env.CRON_SECRET) ||
+    (process.env.INTERNAL_API_TOKEN && (req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')) === process.env.INTERNAL_API_TOKEN)
+
+  if (!isServiceCall) {
+    // Extract email from the ag-auth-token cookie (base64url JSON payload before last '.')
+    let cookieEmail: string | null = null
+    try {
+      const cookieHeader = req.headers.get('cookie') ?? ''
+      const match = cookieHeader.match(/(?:^|;\s*)ag-auth-token=([^;]+)/)
+      if (match) {
+        const token   = decodeURIComponent(match[1])
+        const dotIdx  = token.lastIndexOf('.')
+        if (dotIdx !== -1) {
+          const data = JSON.parse(Buffer.from(token.slice(0, dotIdx), 'base64url').toString())
+          if (typeof data.email === 'string') cookieEmail = data.email
+        }
+      }
+    } catch { /* cookie absent or malformed — cookieEmail stays null */ }
+
+    if (cookieEmail) {
+      const adminUser = await getAdminRole(cookieEmail)
+      const role = adminUser?.role
+      if (role !== 'super_admin' && role !== 'ops_manager') {
+        return NextResponse.json({ error: 'Forbidden: insufficient role' }, { status: 403 })
+      }
+    }
+    // If cookieEmail is null here the auth passed via some other mechanism;
+    // isPortalAuth already validated — allow through.
   }
 
   let body: Record<string, unknown>

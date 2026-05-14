@@ -33,7 +33,7 @@ export class RiskGovernanceAgent extends BaseAgent {
       const now            = new Date()
       const thresholdDate  = new Date(now.getTime() - INACTIVITY_DAYS * 24 * 60 * 60 * 1000)
 
-      // Query active deals ordered by oldest activity first
+      // Query active deals ordered by oldest activity first — org isolation: pending migration 015 (deals has no org_id column)
       const { data: activeDeals } = await supabaseAdmin
         .from('deals')
         .select('id, ref, imovel, fase, valor, updated_at, agent_email, comprador')
@@ -72,7 +72,7 @@ export class RiskGovernanceAgent extends BaseAgent {
         }
       }
 
-      // Query qualified leads with overdue follow-up
+      // Query qualified leads with overdue follow-up — org isolation: pending migration 015 (contacts has no org_id column)
       const { data: overdueLeads } = await supabaseAdmin
         .from('contacts')
         .select('id, full_name, email, lead_score, next_followup_at, status')

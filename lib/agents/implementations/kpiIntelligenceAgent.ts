@@ -37,7 +37,7 @@ export class KpiIntelligenceAgent extends BaseAgent {
       const d7ago     = new Date(now.getTime() -  7 * 86_400_000).toISOString()
       const d14ago    = new Date(now.getTime() - 14 * 86_400_000).toISOString()
 
-      // 1. Contacts: last 30d vs prior 30d — contacts may not have org_id
+      // 1. Contacts: last 30d vs prior 30d — org isolation: pending migration 015 (contacts has no org_id column)
       const { count: leadsLast30 } = await supabaseAdmin
         .from('contacts')
         .select('id', { count: 'exact', head: true })
@@ -49,7 +49,7 @@ export class KpiIntelligenceAgent extends BaseAgent {
         .gte('created_at', d60ago)
         .lt('created_at', d30ago)
 
-      // WoW: last 7d vs prior 7d
+      // WoW: last 7d vs prior 7d — org isolation: pending migration 015 (contacts has no org_id column)
       const { count: leadsLast7 } = await supabaseAdmin
         .from('contacts')
         .select('id', { count: 'exact', head: true })
@@ -69,13 +69,13 @@ export class KpiIntelligenceAgent extends BaseAgent {
         ? ((leadsLast7 ?? 0) - leadsPrior7) / leadsPrior7
         : null
 
-      // 2. Pipeline value
+      // 2. Pipeline value — org isolation: pending migration 015 (deals has no org_id column)
       const { data: activeDeals } = await supabaseAdmin
         .from('deals')
         .select('id, fase, valor')
         .in('fase', ACTIVE_DEAL_STAGES)
         .not('valor', 'is', null)
-        .limit(200)
+        .limit(50)
 
       const pipelineValue    = (activeDeals ?? []).reduce((s, d) => s + ((d.valor as number) ?? 0), 0)
       const pipelineByStage: Record<string, { count: number; value: number }> = {}
@@ -90,7 +90,7 @@ export class KpiIntelligenceAgent extends BaseAgent {
       const { data: growthRows } = await supabaseAdmin
         .from('growth_metrics')
         .select('week_start, new_leads, new_qualified, new_clients, viral_coefficient, cac_eur')
-        .eq('organization_id', ctx.org_id)
+        .or(`organization_id.is.null,organization_id.eq.${ctx.org_id}`)
         .order('week_start', { ascending: false })
         .limit(4)
 

@@ -30,13 +30,13 @@ export class WorkflowAutomationAgent extends BaseAgent {
     const actions:  AgentAction[]  = []
 
     try {
-      // 1. Detect repeatedly-failing automations — automations_log may not have org_id
+      // 1. Detect repeatedly-failing automations — org isolation: pending migration 015 (automations_log has no org_id column)
       const { data: failedLogs } = await supabaseAdmin
         .from('automations_log')
         .select('id, workflow_name, status, created_at')
         .eq('status', 'error')
         .gte('created_at', ONE_WEEK_AGO)
-        .limit(200)
+        .limit(50)
 
       // Group by workflow_name
       const failCounts: Record<string, number> = {}
@@ -70,7 +70,7 @@ export class WorkflowAutomationAgent extends BaseAgent {
       }
 
       // 2. Contacts with lead_score > 50 and no activity in 7 days — nurture gap
-      // contacts table may not have org_id — skip org filter
+      // org isolation: pending migration 015 (contacts has no org_id column)
       const { data: dormantContacts } = await supabaseAdmin
         .from('contacts')
         .select('id, full_name, lead_score, status, updated_at')

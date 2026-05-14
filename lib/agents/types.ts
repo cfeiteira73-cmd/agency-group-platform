@@ -156,7 +156,13 @@ export interface AgentOutputContract {
   insight: string
   /** Ordered action recommendations */
   actions: string[]
-  /** Overall confidence 0–1 */
+  /**
+   * Probability that the recommended actions will succeed (0–1).
+   * Distinct from confidence: confidence = how sure the agent is of its analysis;
+   * probability = P(action achieves the desired outcome).
+   */
+  probability: number
+  /** Overall confidence 0–1 — how certain the agent is in its analysis */
   confidence: number
   /** Risk score 0–1 */
   risk_score: number

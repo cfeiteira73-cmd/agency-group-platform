@@ -27,12 +27,12 @@ export class GrowthStrategyAgent extends BaseAgent {
     const actions:  AgentAction[]  = []
 
     try {
-      // 1. Contact source distribution — contacts may not have org_id
+      // 1. Contact source distribution — org isolation: pending migration 015 (contacts has no org_id column)
       const { data: contactSources } = await supabaseAdmin
         .from('contacts')
         .select('source, status')
         .not('source', 'is', null)
-        .limit(500)
+        .limit(50)
 
       const sourceCounts: Record<string, number> = {}
       const sourceConverted: Record<string, number> = {}
@@ -63,11 +63,11 @@ export class GrowthStrategyAgent extends BaseAgent {
         })
       }
 
-      // 2. Referral conversion rate — referrals table may not have org_id
+      // 2. Referral conversion rate — org isolation: pending migration 015 (referrals has no org_id column)
       const { data: referrals } = await supabaseAdmin
         .from('referrals')
         .select('id, source, deal_id, reward_triggered, organization_id')
-        .limit(200)
+        .limit(50)
 
       const totalReferrals   = referrals?.length ?? 0
       const convertedRefs    = (referrals ?? []).filter(r => r.deal_id || r.reward_triggered).length
@@ -103,7 +103,7 @@ export class GrowthStrategyAgent extends BaseAgent {
       const { data: growthMetrics } = await supabaseAdmin
         .from('growth_metrics')
         .select('week_start, new_leads, organic_leads, paid_leads, cac_eur')
-        .eq('organization_id', ctx.org_id)
+        .or(`organization_id.is.null,organization_id.eq.${ctx.org_id}`)
         .not('cac_eur', 'is', null)
         .order('cac_eur', { ascending: true })
         .limit(10)

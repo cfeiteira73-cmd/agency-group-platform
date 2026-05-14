@@ -44,6 +44,7 @@ export class DealClosingAgent extends BaseAgent {
 
     try {
       const stages = Object.keys(CLOSING_SLA)
+      // org isolation: pending migration 015 (deals has no org_id column)
       const { data: deals } = await supabaseAdmin
         .from('deals')
         .select('id, ref, imovel, fase, valor, updated_at, agent_email, comprador')

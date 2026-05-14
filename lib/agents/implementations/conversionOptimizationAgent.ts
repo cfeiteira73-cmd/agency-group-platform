@@ -30,11 +30,11 @@ export class ConversionOptimizationAgent extends BaseAgent {
 
     try {
       // 1. Count contacts by status to compute drop-off rates
-      // contacts table may not have org_id yet — skip org filter for now
+      // org isolation: pending migration 015 (contacts has no org_id column)
       const { data: statusCounts } = await supabaseAdmin
         .from('contacts')
         .select('status')
-        .limit(500)
+        .limit(50)
 
       const counts: Record<string, number> = {}
       for (const row of statusCounts ?? []) {
@@ -87,7 +87,7 @@ export class ConversionOptimizationAgent extends BaseAgent {
         }
       }
 
-      // 2. High-score leads stalled for 14+ days
+      // 2. High-score leads stalled for 14+ days — org isolation: pending migration 015 (contacts has no org_id column)
       const stalledThreshold = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
       const { data: stalledLeads } = await supabaseAdmin
         .from('contacts')

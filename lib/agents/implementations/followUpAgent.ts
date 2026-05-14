@@ -21,12 +21,12 @@ export class FollowUpAgent extends BaseAgent {
     can_send_comms:         false,
   }
 
-  protected async execute(_ctx: AgentContext): Promise<{ insights: AgentInsight[]; actions: AgentAction[]; metadata: Record<string, unknown> }> {
+  protected async execute(ctx: AgentContext): Promise<{ insights: AgentInsight[]; actions: AgentAction[]; metadata: Record<string, unknown> }> {
     const insights: AgentInsight[] = []
     const actions:  AgentAction[]  = []
     const now = new Date().toISOString()
 
-    // Overdue follow-ups on contacts
+    // Overdue follow-ups on contacts — org isolation: pending migration 015 (contacts has no org_id column)
     const { data: overdueContacts } = await supabaseAdmin
       .from('contacts')
       .select('id, full_name, lead_score, next_followup_at, assigned_to, status')
@@ -61,7 +61,7 @@ export class FollowUpAgent extends BaseAgent {
     return {
       insights,
       actions,
-      metadata: { overdue_contacts: overdueContacts?.length ?? 0 },
+      metadata: { org_id: ctx.org_id, overdue_contacts: overdueContacts?.length ?? 0 },
     }
   }
 }

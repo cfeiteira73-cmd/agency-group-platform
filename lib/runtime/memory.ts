@@ -160,8 +160,23 @@ export const shortTermMemory = {
   getRecent:        hotMemory.getRecent.bind(hotMemory),
   has:              hotMemory.has.bind(hotMemory),
   clear:            hotMemory.clear.bind(hotMemory),
-  hasRecentEvent:   (_org_id: string, _type: unknown, _withinMs: number) => false,
-  get:              (org_id: string) => hotMemory.getRecent(org_id, HOT_LIMIT),
+
+  /**
+   * Returns true if the org has a recent event of the given type within the
+   * specified time window. Checks HOT memory cache first (fast path).
+   * If the cache is empty the result is conservative false — callers should
+   * not rely on this for hard deduplication; the DB unique constraint is the
+   * authoritative idempotency guard.
+   */
+  hasRecentEvent: (org_id: string, type: string, withinMs: number): boolean => {
+    const cutoff = Date.now() - withinMs
+    const entries = hotMemory.getRecent(org_id, HOT_LIMIT)
+    return entries.some(
+      e => e.type === type && new Date(e.timestamp).getTime() >= cutoff,
+    )
+  },
+
+  get: (org_id: string) => hotMemory.getRecent(org_id, HOT_LIMIT),
 }
 
 export const longTermMemory = {

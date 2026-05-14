@@ -4391,6 +4391,8 @@ export type Database = {
           agents_failed:    string[]
           latency_ms:       number | null
           economic_score:   number | null
+          event_timestamp:  string | null  // original emitter wall-clock (migration 017)
+          event_chain:      string[]        // causality chain of event_ids (migration 017)
           created_at:       string
           updated_at:       string
           processed_at:     string | null
@@ -4414,6 +4416,8 @@ export type Database = {
           agents_failed?:    string[]
           latency_ms?:      number | null
           economic_score?:  number | null
+          event_timestamp?: string | null  // original emitter wall-clock (migration 017)
+          event_chain?:     string[]        // causality chain of event_ids (migration 017)
           created_at?:      string
           updated_at?:      string
           processed_at?:    string | null
@@ -4429,6 +4433,8 @@ export type Database = {
           agents_failed?:    string[]
           latency_ms?:      number | null
           economic_score?:  number | null
+          event_timestamp?: string | null  // original emitter wall-clock (migration 017)
+          event_chain?:     string[]        // causality chain of event_ids (migration 017)
           updated_at?:      string
           processed_at?:    string | null
           completed_at?:    string | null

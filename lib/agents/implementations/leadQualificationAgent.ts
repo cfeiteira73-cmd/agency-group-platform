@@ -28,6 +28,7 @@ export class LeadQualificationAgent extends BaseAgent {
 
     try {
       // Query unscored leads: lead_score IS NULL or 0, status = 'lead'
+      // org isolation: pending migration 015 (contacts has no org_id column)
       const { data: unscoredLeads } = await supabaseAdmin
         .from('contacts')
         .select('id, full_name, email, status, lead_score, source, created_at')
@@ -67,6 +68,7 @@ export class LeadQualificationAgent extends BaseAgent {
       }
 
       // Query high-score leads still in 'lead' status (not promoted to prospect)
+      // org isolation: pending migration 015 (contacts has no org_id column)
       const { data: highScoreLeads } = await supabaseAdmin
         .from('contacts')
         .select('id, full_name, email, lead_score, status, next_followup_at, updated_at')

@@ -38,13 +38,13 @@ export class PricingStrategyAgent extends BaseAgent {
     const actions:  AgentAction[]  = []
 
     try {
-      // properties table — no org_id or area_m2 column; use localizacao for zone
+      // properties table — org isolation: pending migration 015 (properties has no org_id column)
       const { data: properties } = await supabaseAdmin
         .from('properties')
         .select('id, title, zone, price, price_per_sqm, area_m2, status')
         .eq('status', 'active')
         .not('price_per_sqm', 'is', null)
-        .limit(100)
+        .limit(50)
 
       let overpriced = 0
       let underpriced = 0

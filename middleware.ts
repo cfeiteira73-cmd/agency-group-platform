@@ -26,6 +26,7 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/deals':        { max: 120, window: 3_600_000 },
   '/api/properties':   { max: 300, window: 3_600_000 },
   '/api/matches':      { max:  60, window: 3_600_000 },
+  '/api/runtime':      { max:  60, window:    60_000 },
 }
 
 // ─── Bot blacklist (User-Agent) ──────────────────────────────────────────────
@@ -255,5 +256,6 @@ export const config = {
     '/api/properties/:path*',
     '/api/matches',
     '/api/matches/:path*',
+    '/api/runtime/:path*',
   ],
 }

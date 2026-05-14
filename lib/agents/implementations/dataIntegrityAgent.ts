@@ -31,7 +31,7 @@ export class DataIntegrityAgent extends BaseAgent {
 
     try {
       // 1. Contacts: un-contactable (no email AND no phone)
-      // contacts may not have org_id — skip filter
+      // org isolation: pending migration 015 (contacts has no org_id column)
       const { count: contactTotal } = await supabaseAdmin
         .from('contacts')
         .select('id', { count: 'exact', head: true })
@@ -47,7 +47,7 @@ export class DataIntegrityAgent extends BaseAgent {
         issues.push({ table: 'contacts', count: unContactable ?? 0, issue: 'sem email nem telefone' })
       }
 
-      // 2. Deals: missing valor or fase
+      // 2. Deals: missing valor or fase — org isolation: pending migration 015 (deals has no org_id column)
       const { count: dealTotal } = await supabaseAdmin
         .from('deals')
         .select('id', { count: 'exact', head: true })
@@ -62,7 +62,7 @@ export class DataIntegrityAgent extends BaseAgent {
         issues.push({ table: 'deals', count: dealsMissingData ?? 0, issue: 'valor ou fase em falta' })
       }
 
-      // 3. Offmarket leads: unscored
+      // 3. Offmarket leads: unscored — org isolation: pending migration 015 (offmarket_leads has no org_id column)
       const { count: leadTotal } = await supabaseAdmin
         .from('offmarket_leads')
         .select('id', { count: 'exact', head: true })
@@ -77,7 +77,7 @@ export class DataIntegrityAgent extends BaseAgent {
         issues.push({ table: 'offmarket_leads', count: unscoredLeads ?? 0, issue: 'score IS NULL' })
       }
 
-      // 4. Properties: missing price_per_m2
+      // 4. Properties: missing price_per_m2 — org isolation: pending migration 015 (properties has no org_id column)
       const { count: propTotal } = await supabaseAdmin
         .from('properties')
         .select('id', { count: 'exact', head: true })

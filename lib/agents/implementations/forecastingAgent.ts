@@ -31,6 +31,7 @@ export class ForecastingAgent extends BaseAgent {
       const { data: metrics } = await supabaseAdmin
         .from('growth_metrics')
         .select('new_leads, organic_leads, paid_leads, cac_eur, viral_coefficient, week_start, created_at')
+        .or(`organization_id.is.null,organization_id.eq.${ctx.org_id}`)
         .order('week_start', { ascending: false })
         .limit(12)
 
@@ -88,11 +89,12 @@ export class ForecastingAgent extends BaseAgent {
         }
       }
 
-      // Count active deals
+      // Count active deals — org isolation: pending migration 015 (deals has no org_id column)
       const { data: activeDeals } = await supabaseAdmin
         .from('deals')
         .select('id, valor, fase')
         .not('fase', 'in', '("Escritura Concluída","Perdido","Rejeitado")')
+        .limit(50)
 
       const dealList        = activeDeals ?? []
       const activeDealCount = dealList.length

@@ -38,6 +38,7 @@ export class AgentSupervisor extends BaseAgent {
         const { data: events } = await supabaseAdmin
           .from('runtime_events')
           .select('event_id, status, latency_ms, created_at')
+          .eq('org_id', ctx.org_id)
           .order('created_at', { ascending: false })
           .limit(100)
 
