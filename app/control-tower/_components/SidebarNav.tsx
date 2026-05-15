@@ -11,16 +11,18 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/control-tower',            label: 'Overview',    icon: '⬡' },
-  { href: '/control-tower/events',     label: 'Events',      icon: '⚡' },
-  { href: '/control-tower/agents',     label: 'Agents',      icon: '🤖' },
-  { href: '/control-tower/queue',      label: 'Queue',       icon: '⏳' },
-  { href: '/control-tower/memory',     label: 'Memory',      icon: '🧠' },
-  { href: '/control-tower/workflows',  label: 'Workflows',   icon: '🔗' },
-  { href: '/control-tower/learning',   label: 'Learning',    icon: '📈' },
-  { href: '/control-tower/compliance', label: 'Compliance',  icon: '🛡' },
-  { href: '/control-tower/recovery',   label: 'Recovery',    icon: '🔧' },
-  { href: '/control-tower/settings',   label: 'Settings',    icon: '⚙' },
+  { href: '/control-tower',             label: 'Overview',    icon: '⬡' },
+  { href: '/control-tower/events',      label: 'Events',      icon: '⚡' },
+  { href: '/control-tower/agents',      label: 'Agents',      icon: '🤖' },
+  { href: '/control-tower/queue',       label: 'Queue',       icon: '⏳' },
+  { href: '/control-tower/memory',      label: 'Memory',      icon: '🧠' },
+  { href: '/control-tower/workflows',   label: 'Workflows',   icon: '🔗' },
+  { href: '/control-tower/learning',    label: 'Learning',    icon: '📈' },
+  { href: '/control-tower/economics',   label: 'Economics',   icon: '💰' },
+  { href: '/control-tower/forensics',   label: 'Forensics',   icon: '🔬' },
+  { href: '/control-tower/compliance',  label: 'Compliance',  icon: '🛡' },
+  { href: '/control-tower/recovery',    label: 'Recovery',    icon: '🔧' },
+  { href: '/control-tower/settings',    label: 'Settings',    icon: '⚙' },
 ]
 
 interface SidebarNavProps {
