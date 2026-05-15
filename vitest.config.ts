@@ -9,7 +9,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     exclude: ['**/node_modules/**', '**/tests/e2e/**'],
-    include: ['**/*.test.ts', '**/tests/chaos/**/*.spec.ts', '**/tests/load/**/*.spec.ts'],
+    include: ['**/*.test.ts', '**/tests/chaos/**/*.spec.ts', '**/tests/load/**/*.spec.ts', '**/tests/global-scale/**/*.spec.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
