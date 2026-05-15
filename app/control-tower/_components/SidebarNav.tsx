@@ -20,9 +20,12 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/control-tower/learning',    label: 'Learning',    icon: '📈' },
   { href: '/control-tower/economics',   label: 'Economics',   icon: '💰' },
   { href: '/control-tower/forensics',   label: 'Forensics',   icon: '🔬' },
-  { href: '/control-tower/compliance',  label: 'Compliance',  icon: '🛡' },
-  { href: '/control-tower/recovery',    label: 'Recovery',    icon: '🔧' },
-  { href: '/control-tower/settings',    label: 'Settings',    icon: '⚙' },
+  { href: '/control-tower/observability', label: 'Observability', icon: '📡' },
+  { href: '/control-tower/security',     label: 'Security',     icon: '🔐' },
+  { href: '/control-tower/incidents',    label: 'Incidents',    icon: '🚨' },
+  { href: '/control-tower/compliance',   label: 'Compliance',   icon: '🛡' },
+  { href: '/control-tower/recovery',     label: 'Recovery',     icon: '🔧' },
+  { href: '/control-tower/settings',     label: 'Settings',     icon: '⚙' },
 ]
 
 interface SidebarNavProps {

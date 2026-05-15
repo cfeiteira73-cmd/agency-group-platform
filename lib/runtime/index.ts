@@ -55,6 +55,14 @@ export { distributedLockManager } from './recovery/distributedLocks'
 export { executionLeaseManager } from './recovery/executionLeases'
 export { splitBrainProtector } from './recovery/splitBrainProtection'
 
+// ── Ω-10: Reality Consistency + Economic Closed Loop + Incident Governance ───
+export { realityConsistencyEngine } from './realityConsistency'
+export type { ConsistencyReport, ConsistencyViolation } from './realityConsistency'
+export { economicClosedLoop } from './economicClosedLoop'
+export type { DealOutcome, ClosedLoopAdjustment, EconomicLoopHealth } from './economicClosedLoop'
+export { incidentGovernanceEngine } from './incidentGovernance'
+export type { IncidentRecord, IncidentSeverity, IncidentStatus } from './incidentGovernance'
+
 // ── Ω-9: Learning Engine ─────────────────────────────────────────────────────
 export { outcomeTracker } from './learning/outcomeTracking'
 export { reinforcementWeightStore } from './learning/reinforcementWeights'
@@ -63,3 +71,7 @@ export { scoringEvolutionTracker } from './learning/scoringEvolution'
 export { learningGovernance } from './learning/learningGovernance'
 export { roiOptimizer } from './learning/roiOptimization'
 export { executionLearner } from './learning/executionLearning'
+export { shadowExecutionEngine } from './learning/shadowExecution'
+export type { ShadowDivergenceReport } from './learning/shadowExecution'
+export { abTestingEngine } from './learning/abTesting'
+export type { ABResult } from './learning/abTesting'
