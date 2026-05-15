@@ -75,3 +75,36 @@ export { shadowExecutionEngine } from './learning/shadowExecution'
 export type { ShadowDivergenceReport } from './learning/shadowExecution'
 export { abTestingEngine } from './learning/abTesting'
 export type { ABResult } from './learning/abTesting'
+
+// ── Ω∞: Distributed Infrastructure ──────────────────────────────────────────
+export {
+  partitionStrategy,
+  kafkaClusterAdapter,
+  multiRegionRouter,
+  globalFailoverController,
+  distributedReplayEngine,
+  distributedBackpressureController,
+  regionalWorkerCoordinator,
+  HEARTBEAT_INTERVAL_MS,
+} from './distributed'
+export type {
+  Region, RoutingDecision, RegionHealth,
+  FailoverEvent, RegionCircuitBreaker,
+  BackpressureState, RegionBackpressure,
+  WorkerRegistration, ShardAssignment, CoordinatorState,
+  ReplayProgress, ReplaySummary,
+} from './distributed'
+
+// ── Ω∞: Economic Feedback Loop ───────────────────────────────────────────────
+export {
+  economicSignalIngestor,
+  signalNoiseFilter,
+  outcomeNormalizer,
+  rewardCalibrationEngine,
+  delayedRewardAttribution,
+  learningValidator,
+} from './feedback'
+export type {
+  EconomicSignal, SignalSource, NormalizedOutcome,
+  RewardSignal, CalibrationState, AttributionTrace, LearningHealth,
+} from './feedback'

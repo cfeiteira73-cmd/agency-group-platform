@@ -20,6 +20,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/control-tower/learning',    label: 'Learning',    icon: '📈' },
   { href: '/control-tower/economics',   label: 'Economics',   icon: '💰' },
   { href: '/control-tower/forensics',   label: 'Forensics',   icon: '🔬' },
+  { href: '/control-tower/revenue',       label: 'Revenue',      icon: '💶' },
+  { href: '/control-tower/distributed',  label: 'Distributed',  icon: '🌐' },
   { href: '/control-tower/observability', label: 'Observability', icon: '📡' },
   { href: '/control-tower/security',     label: 'Security',     icon: '🔐' },
   { href: '/control-tower/incidents',    label: 'Incidents',    icon: '🚨' },
