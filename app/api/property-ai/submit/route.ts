@@ -22,6 +22,30 @@ export const runtime = 'nodejs'
 export const maxDuration = 60 // seconds
 
 // ---------------------------------------------------------------------------
+// n8n live webhook — fire-and-forget, never blocks the pipeline
+// ---------------------------------------------------------------------------
+
+function triggerN8nLiveWebhook(payload: {
+  submission_id: string
+  org_id: string
+  listing_id: string
+  readiness_score: number
+  channels: string[]
+  optimal_price?: number
+}): void {
+  const webhookUrl = process.env.N8N_WEBHOOK_PROPERTY_LIVE
+  if (!webhookUrl) return
+  fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, event: 'property_live', fired_at: new Date().toISOString() }),
+    signal: AbortSignal.timeout(5_000),
+  }).catch((err) => {
+    logger.warn('[property-ai/submit] n8n webhook error', { submission_id: payload.submission_id, err })
+  })
+}
+
+// ---------------------------------------------------------------------------
 // Zod validation
 // ---------------------------------------------------------------------------
 
@@ -201,6 +225,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     )
 
     await updateStatus(submission_id, 'live')
+
+    // Fire n8n webhook (non-blocking — never delays response)
+    triggerN8nLiveWebhook({
+      submission_id,
+      org_id:          d.org_id,
+      listing_id:      listing.listing_id,
+      readiness_score: copilot.readiness.listing_readiness_score,
+      channels:        distributionPlan.planned_channels,
+      optimal_price:   copilot.pricing.recommended_price_eur,
+    })
 
     const elapsed = Date.now() - start
 
