@@ -128,6 +128,7 @@ export interface NavItem {
   label: string
   icon: string
   group: string
+  href?: string   // optional external route (opens via Next.js Link, skips setSection)
 }
 
 export type SectionId =

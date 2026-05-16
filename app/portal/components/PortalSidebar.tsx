@@ -66,21 +66,38 @@ export default function PortalSidebar({
               )
               lastGroup = item.group
             }
+            const navInner = (
+              <>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" style={{ flexShrink: 0 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>
+              </>
+            )
             rendered.push(
               <Tooltip key={item.id} content={item.label} position="right" darkMode>
-                <div
-                  role="menuitem"
-                  tabIndex={0}
-                  aria-current={section === item.id ? 'page' : undefined}
-                  className={`nav-item${section === item.id ? ' active' : ''}`}
-                  onClick={() => { setSection(item.id); setSidebarOpen(false) }}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSection(item.id); setSidebarOpen(false) } }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" style={{ flexShrink: 0 }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                  </svg>
-                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>
-                </div>
+                {item.href ? (
+                  <Link
+                    href={item.href}
+                    className={`nav-item${section === item.id ? ' active' : ''}`}
+                    aria-current={section === item.id ? 'page' : undefined}
+                    style={{ textDecoration: 'none' }}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    {navInner}
+                  </Link>
+                ) : (
+                  <div
+                    role="menuitem"
+                    tabIndex={0}
+                    aria-current={section === item.id ? 'page' : undefined}
+                    className={`nav-item${section === item.id ? ' active' : ''}`}
+                    onClick={() => { setSection(item.id); setSidebarOpen(false) }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSection(item.id); setSidebarOpen(false) } }}
+                  >
+                    {navInner}
+                  </div>
+                )}
               </Tooltip>
             )
           })
