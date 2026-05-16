@@ -58,48 +58,74 @@ interface UploadState {
   listing?: ListingResult
   copilot?: CopilotResult
   error?: string
+  processing_time_ms?: number
 }
 
-// ─── Mock data (Portugal 2026 market-calibrated) ─────────────────────────────
+// ─── API response → UI type mappers ──────────────────────────────────────────
 
-const MOCK_ANALYSIS: AnalysisResult = {
-  bedrooms: 3,
-  bathrooms: 2,
-  area_sqm: 145,
-  luxury_score: 78,
-  has_sea_view: true,
-  has_pool: false,
-  condition: 'excellent',
-  location: 'Cascais, Lisboa',
-  confidence: 0.87,
+function mapAnalysis(pipeline: Record<string, unknown>): AnalysisResult {
+  const ing = (pipeline.ingestion as Record<string, unknown>) ?? {}
+  const analysis = (ing.analysis as Record<string, unknown>) ?? {}
+  const loc = analysis.location as Record<string, unknown> | undefined
+  return {
+    bedrooms:      typeof analysis.bedrooms === 'number' ? analysis.bedrooms : undefined,
+    bathrooms:     typeof analysis.bathrooms === 'number' ? analysis.bathrooms : undefined,
+    area_sqm:      typeof analysis.area_sqm === 'number' ? analysis.area_sqm : undefined,
+    luxury_score:  typeof analysis.luxury_score === 'number' ? analysis.luxury_score : 0,
+    has_sea_view:  Boolean(analysis.has_sea_view),
+    has_pool:      Boolean(analysis.has_pool),
+    condition:     typeof analysis.condition === 'string' ? analysis.condition : 'unknown',
+    location:      loc?.city ? `${loc.city}${loc.neighborhood ? `, ${loc.neighborhood}` : ''}` : undefined,
+    confidence:    typeof ing.confidence === 'number' ? ing.confidence : 0.5,
+  }
 }
 
-const MOCK_READINESS: ReadinessResult = {
-  score: 84,
-  grade: 'B',
-  ready_to_publish: true,
-  blocking_issues: [],
+function mapReadiness(pipeline: Record<string, unknown>): ReadinessResult {
+  const cop = (pipeline.copilot as Record<string, unknown>) ?? {}
+  const score = typeof cop.readiness_score === 'number' ? cop.readiness_score : 50
+  const grade = score >= 90 ? 'A' : score >= 75 ? 'B' : score >= 60 ? 'C' : score >= 45 ? 'D' : 'F'
+  const items = Array.isArray(cop.action_items) ? (cop.action_items as string[]) : []
+  const blocking = items.filter((i) => i.toLowerCase().startsWith('⚠') || i.toLowerCase().startsWith('block'))
+  return {
+    score,
+    grade,
+    ready_to_publish: Boolean(cop.ready_to_publish),
+    blocking_issues:  blocking,
+  }
 }
 
-const MOCK_LISTING: ListingResult = {
-  title_pt: 'Apartamento T3 com Vista Mar Panorâmica, Cascais',
-  title_en: 'Stunning 3-Bedroom Sea View Apartment, Cascais',
-  description_pt:
-    'Magnífico apartamento com vistas panorâmicas sobre o Atlântico, localizado no coração de Cascais. Com 145m² de áreas generosas, acabamentos premium e exposição solar excepcional. Ideal para famílias internacionais e investidores Golden Visa.',
-  description_en:
-    'Magnificent apartment with panoramic Atlantic Ocean views in the heart of Cascais. 145m² of generous living space with premium finishes and exceptional sunlight. Ideal for international families and Golden Visa investors.',
-  estimated_price: 1_250_000,
+function mapListing(pipeline: Record<string, unknown>): ListingResult {
+  const list = (pipeline.listing as Record<string, unknown>) ?? {}
+  const titles = (list.title as Record<string, unknown>) ?? {}
+  const cop = (pipeline.copilot as Record<string, unknown>) ?? {}
+
+  // title shape: { standard: { pt, en, ... } }
+  const standard = (titles.standard as Record<string, string>) ?? {}
+  const premium  = (titles.premium  as Record<string, string>) ?? {}
+
+  const intel = (pipeline.intelligence as Record<string, unknown>) ?? {}
+  const priceRaw = typeof cop.optimal_price === 'number' ? cop.optimal_price : 0
+
+  return {
+    title_pt:       standard.pt ?? premium.pt ?? '',
+    title_en:       standard.en ?? premium.en ?? '',
+    description_pt: '', // descriptions not sent in summary response — fetched via /submissions/[id]
+    description_en: '',
+    estimated_price: priceRaw,
+    // pull demand score for display
+    _demand: typeof intel.demand_score === 'number' ? intel.demand_score : undefined,
+  } as ListingResult & { _demand?: number }
 }
 
-const MOCK_COPILOT: CopilotResult = {
-  recommended_price: 1_250_000,
-  publish_time: 'Tuesday 10:00',
-  primary_audience: 'North American HNW, 45–60, Golden Visa interest',
-  action_items: [
-    'Add video tour for +23% CTR',
-    'Include floorplan to unlock idealista publication',
-    'Consider paid boost on launch day',
-  ],
+function mapCopilot(pipeline: Record<string, unknown>): CopilotResult {
+  const cop = (pipeline.copilot as Record<string, unknown>) ?? {}
+  const items = Array.isArray(cop.action_items) ? (cop.action_items as string[]) : []
+  return {
+    recommended_price: typeof cop.optimal_price === 'number' ? cop.optimal_price : 0,
+    publish_time:      'Wednesday 10:00', // default from publishingTimingAdvisor
+    primary_audience:  typeof cop.ai_summary === 'string' ? cop.ai_summary : '',
+    action_items:      items.slice(0, 5),
+  }
 }
 
 // ─── Helper: format price ─────────────────────────────────────────────────────
@@ -754,49 +780,113 @@ export default function NewPropertyPage() {
     setState((s) => ({ ...s, files: [...s.files, ...newFiles] }))
   }, [])
 
-  const handleStart = useCallback(() => {
+  const handleStart = useCallback(async () => {
     if (state.files.length === 0 && !state.rawText && !state.rawUrl) return
 
-    // Step 1: uploading
+    const submissionId = crypto.randomUUID()
+
+    // ── Step 1: upload files ──────────────────────────────────────────────────
     setState((s) => ({ ...s, status: 'uploading', progress: 10 }))
 
-    // Step 2: analyzing
-    const t1 = setTimeout(() => {
-      setState((s) => ({ ...s, status: 'analyzing', progress: 30 }))
-    }, 1000)
+    let inputFiles: Array<{
+      file_id: string; url: string; type: string; mime_type?: string; size_bytes?: number; name?: string
+    }> = []
 
-    // Step 3: enriching (show analysis)
-    const t2 = setTimeout(() => {
+    if (state.files.length > 0) {
+      try {
+        const form = new FormData()
+        form.append('submission_id', submissionId)
+        for (const file of state.files) {
+          form.append('file', file)
+        }
+        const upRes = await fetch('/api/property-ai/upload', {
+          method: 'POST',
+          body: form,
+        })
+        if (upRes.ok) {
+          const upData = await upRes.json() as { files: typeof inputFiles }
+          inputFiles = upData.files ?? []
+        }
+      } catch (err) {
+        console.error('[property-ai/upload] error', err)
+        // non-blocking: continue with zero files (text/url may still drive the pipeline)
+      }
+    }
+
+    // ── Step 2: kick off AI pipeline ─────────────────────────────────────────
+    setState((s) => ({ ...s, status: 'analyzing', progress: 30 }))
+
+    // Derive org_id and agent_id from session (fallback to defaults)
+    const orgId   = 'agency-group'    // replaced by session.user.orgId when auth wired
+    const agentId = 'agent-dashboard' // replaced by session.user.id when auth wired
+
+    const submitBody = {
+      submission_id:   submissionId,
+      org_id:          orgId,
+      agent_id:        agentId,
+      input_files:     inputFiles,
+      raw_description: state.rawText || undefined,
+      raw_url:         state.rawUrl  || undefined,
+    }
+
+    // Progress ticker while waiting for the long-running pipeline response
+    const progressInterval = setInterval(() => {
+      setState((s) => {
+        if (s.progress >= 85 || s.status === 'ready' || s.status === 'error') return s
+        const next = s.progress < 40 ? s.progress + 8
+                   : s.progress < 65 ? s.progress + 5
+                   : s.progress + 2
+        const nextStatus: UploadStatus =
+          next < 45 ? 'analyzing'
+          : next < 65 ? 'enriching'
+          : 'generating'
+        return { ...s, progress: Math.min(next, 85), status: nextStatus }
+      })
+    }, 2500)
+
+    try {
+      const res = await fetch('/api/property-ai/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitBody),
+        signal: AbortSignal.timeout(90_000), // 90s client-side timeout
+      })
+
+      clearInterval(progressInterval)
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: 'Unknown error' })) as { message?: string }
+        setState((s) => ({ ...s, status: 'error', error: err.message ?? `HTTP ${res.status}` }))
+        return
+      }
+
+      const data = await res.json() as {
+        submission_id: string
+        status: string
+        pipeline: Record<string, unknown>
+        processing_time_ms: number
+      }
+
+      const pipeline = data.pipeline ?? {}
+      const analysis  = mapAnalysis(pipeline)
+      const readiness = mapReadiness(pipeline)
+      const listing   = mapListing(pipeline)
+      const copilot   = mapCopilot(pipeline)
+
       setState((s) => ({
         ...s,
-        status: 'enriching',
-        progress: 60,
-        analysis: MOCK_ANALYSIS,
+        status:              'ready',
+        progress:            100,
+        analysis,
+        readiness,
+        listing,
+        copilot,
+        processing_time_ms:  data.processing_time_ms,
       }))
-    }, 3000)
-
-    // Step 4: generating
-    const t3 = setTimeout(() => {
-      setState((s) => ({ ...s, status: 'generating', progress: 80 }))
-    }, 5000)
-
-    // Step 5: ready
-    const t4 = setTimeout(() => {
-      setState((s) => ({
-        ...s,
-        status: 'ready',
-        progress: 100,
-        readiness: MOCK_READINESS,
-        listing: MOCK_LISTING,
-        copilot: MOCK_COPILOT,
-      }))
-    }, 6500)
-
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-      clearTimeout(t3)
-      clearTimeout(t4)
+    } catch (err) {
+      clearInterval(progressInterval)
+      const msg = err instanceof Error ? err.message : 'Pipeline failed'
+      setState((s) => ({ ...s, status: 'error', error: msg }))
     }
   }, [state.files, state.rawText, state.rawUrl])
 
@@ -901,7 +991,7 @@ export default function NewPropertyPage() {
 
             <button
               type="button"
-              onClick={handleStart}
+              onClick={() => { void handleStart() }}
               disabled={!canStart}
               className={[
                 'w-full py-4 rounded-xl font-bold text-base transition-all duration-200',
@@ -968,7 +1058,10 @@ export default function NewPropertyPage() {
               </svg>
               <div>
                 <p className="text-emerald-400 font-semibold text-sm">
-                  Listing generated in ~65 seconds
+                  Listing generated
+                  {state.processing_time_ms
+                    ? ` in ${(state.processing_time_ms / 1000).toFixed(1)}s`
+                    : ''}
                 </p>
                 <p className="text-slate-500 text-xs mt-0.5">
                   6 languages ready · 10 distribution channels available ·
