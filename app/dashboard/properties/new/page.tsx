@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import Link from 'next/link'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -912,17 +913,29 @@ export default function NewPropertyPage() {
     <div className="min-h-screen bg-[#0A0A0F] text-slate-100">
       {/* ── Header ── */}
       <div className="border-b border-slate-800 bg-[#0A0A0F]/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">
-                Property AI Engine
-              </span>
+        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link
+              href="/dashboard/properties"
+              className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs font-medium transition-colors shrink-0 group"
+            >
+              <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Properties
+            </Link>
+            <div className="w-px h-4 bg-slate-800" />
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">
+                  Property AI Engine
+                </span>
+              </div>
+              <h1 className="text-lg font-bold text-slate-100 leading-none">
+                Upload a New Property
+              </h1>
             </div>
-            <h1 className="text-xl font-bold text-slate-100">
-              Upload a New Property
-            </h1>
           </div>
           <div className="flex items-center gap-3">
             {isReady && (

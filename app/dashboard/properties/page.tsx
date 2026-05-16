@@ -97,6 +97,7 @@ export default function PropertiesPage() {
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   const LIMIT = 20
 
@@ -133,21 +134,38 @@ export default function PropertiesPage() {
   const formatDate = (iso: string) =>
     new Intl.DateTimeFormat('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 
+  const filtered = submissions.filter(s =>
+    !search || (s.raw_description ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    s.submission_id.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-slate-100">
       {/* ── Header ── */}
       <div className="border-b border-slate-800 bg-[#0A0A0F]/80 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">Property AI Engine</span>
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link
+              href="/portal"
+              className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs font-medium transition-colors shrink-0 group"
+            >
+              <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Portal
+            </Link>
+            <div className="w-px h-4 bg-slate-800" />
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">Property AI Engine</span>
+              </div>
+              <h1 className="text-lg font-bold text-slate-100 leading-none">Properties</h1>
             </div>
-            <h1 className="text-xl font-bold text-slate-100">Properties</h1>
           </div>
           <Link
             href="/dashboard/properties/new"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold transition-colors shadow-lg shadow-blue-500/20 shrink-0"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -177,7 +195,15 @@ export default function PropertiesPage() {
         </div>
 
         {/* ── Filters ── */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            type="text"
+            placeholder="Search properties…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="bg-[#111118] border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-slate-600 w-48 transition-colors"
+          />
+          <div className="flex items-center gap-2">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.value}
@@ -193,6 +219,7 @@ export default function PropertiesPage() {
               {f.label}
             </button>
           ))}
+          </div>
           <span className="ml-auto text-xs text-slate-600">{total} total</span>
         </div>
 
@@ -218,7 +245,7 @@ export default function PropertiesPage() {
             {/* Rows */}
             {loading && submissions.length === 0 ? (
               <div className="px-5 py-10 text-center text-slate-600 text-sm">Loading…</div>
-            ) : submissions.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <div className="px-5 py-16 text-center">
                 <p className="text-slate-500 text-sm mb-3">No properties yet.</p>
                 <Link
@@ -229,7 +256,7 @@ export default function PropertiesPage() {
                 </Link>
               </div>
             ) : (
-              submissions.map((sub) => (
+              filtered.map((sub) => (
                 <Link
                   key={sub.submission_id}
                   href={`/dashboard/properties/${sub.submission_id}`}

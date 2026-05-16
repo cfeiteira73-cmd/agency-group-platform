@@ -37,5 +37,16 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     redirect('/portal/login')
   }
 
-  return <>{children}</>
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 1000,
+      background: '#0A0A0F',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+    }}>
+      {children}
+    </div>
+  )
 }
