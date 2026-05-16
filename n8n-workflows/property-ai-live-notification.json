@@ -1,0 +1,83 @@
+{
+  "name": "SH-ROS — Property AI Live Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "property-live",
+        "responseMode": "onReceived",
+        "responseCode": 200,
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Property Live Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract payload from webhook\nconst payload = $input.first().json.body || $input.first().json;\n\nconst submissionId = payload.submission_id;\nconst orgId = payload.org_id;\nconst listingId = payload.listing_id;\nconst readinessScore = payload.readiness_score;\nconst channels = Array.isArray(payload.channels) ? payload.channels : [];\nconst optimalPrice = payload.optimal_price;\nconst firedAt = payload.fired_at || new Date().toISOString();\n\n// Format price\nconst priceStr = optimalPrice \n  ? new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(optimalPrice)\n  : 'Preço não definido';\n\n// Build notification messages\nconst emailSubject = `[AG] Nova Propriedade LIVE — ${listingId.slice(0,8)}`;\nconst emailBody = `\nNova propriedade publicada automaticamente pelo Property AI Engine.\n\nSubmission ID: ${submissionId}\nListing ID: ${listingId}\nReadiness Score: ${readinessScore}/100\nPreço Recomendado: ${priceStr}\nCanais: ${channels.join(', ')}\nPublicado: ${new Date(firedAt).toLocaleString('pt-PT')}\n\nVer no dashboard: https://www.agencygroup.pt/dashboard/properties/${submissionId}\n`.trim();\n\nconst slackMsg = `🏠 *Nova propriedade LIVE* — Score ${readinessScore}/100\\n> ${priceStr} | ${channels.length} canais\\n<https://www.agencygroup.pt/dashboard/properties/${submissionId}|Ver detalhes →>`;\n\nreturn [{ json: { submissionId, listingId, readinessScore, priceStr, channels, emailSubject, emailBody, slackMsg, firedAt } }];"
+      },
+      "id": "prepare-notification",
+      "name": "Prepare Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@agencygroup.pt",
+        "toEmail": "geral@agencygroup.pt",
+        "subject": "={{ $json.emailSubject }}",
+        "text": "={{ $json.emailBody }}",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Email Agent",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [720, 200]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "tableId": "deals",
+        "data": {
+          "title": "=Angariação AI — {{ $json.submissionId.slice(0,8) }}",
+          "valor_total": "={{ $json.optimalPrice || 0 }}",
+          "fase": "Angariação",
+          "notes": "=Propriedade publicada automaticamente pelo Property AI Engine. Listing ID: {{ $json.listingId }}. Readiness: {{ $json.readinessScore }}/100.",
+          "created_at": "={{ $now.toISO() }}"
+        }
+      },
+      "id": "create-crm-deal",
+      "name": "Create CRM Deal",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [720, 400]
+    }
+  ],
+  "connections": {
+    "Property Live Webhook": {
+      "main": [[{ "node": "Prepare Notification", "type": "main", "index": 0 }]]
+    },
+    "Prepare Notification": {
+      "main": [
+        [
+          { "node": "Email Agent", "type": "main", "index": 0 },
+          { "node": "Create CRM Deal", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "description": "SH-ROS — Triggered when a property is published LIVE by the Property AI Engine. Sends email notification + creates CRM deal automatically.",
+    "tags": ["property-ai", "sh-ros", "ami-22506"]
+  }
+}
