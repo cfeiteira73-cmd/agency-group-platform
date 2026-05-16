@@ -146,13 +146,10 @@ export async function middleware(req: NextRequest) {
     return blocked
   }
 
-  // 2. Portal + Dashboard protection — token in URL or valid session cookie.
+  // 2. Portal protection — token in URL or valid session cookie.
   //    /portal/login is excluded from this guard so that unauthenticated
   //    users can always reach the login form without a redirect loop.
-  if (
-    (path.startsWith('/portal') && !path.startsWith('/portal/login')) ||
-    path.startsWith('/dashboard')
-  ) {
+  if (path.startsWith('/portal') && !path.startsWith('/portal/login')) {
     const urlToken    = req.nextUrl.searchParams.get('token')
     // Cookie name must match what /api/auth/verify sets: 'ag-auth-token'
     const cookieToken = req.cookies.get('ag-auth-token')?.value
@@ -233,8 +230,6 @@ export const config = {
     // still reach the login form in supported browsers.
     '/portal',
     '/portal/:path*',
-    '/dashboard',
-    '/dashboard/:path*',
     // AI / compute-heavy API routes (rate limited)
     '/api/radar/:path*',
     '/api/avm',
