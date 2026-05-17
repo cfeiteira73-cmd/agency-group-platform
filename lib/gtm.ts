@@ -59,6 +59,8 @@ type TrackEvent =
   | 'map_property_clicked'
   // UTM source recorded (fired after lead capture)
   | 'lead_attributed'
+  // Property AI Engine — homepage live feed clicks
+  | 'property_card_click'
 
 export function track(event: TrackEvent, params?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return

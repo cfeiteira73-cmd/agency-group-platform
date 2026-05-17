@@ -2,17 +2,62 @@
 
 import { useEffect, useState } from 'react'
 import { track } from '@/lib/gtm'
+import type { HomepageFeedItem } from '@/app/api/property-ai/homepage-feed/route'
 
-// ─── Properties data ──────────────────────────────────────────────────────────
-const PROPERTIES = [
-  { id: 'rev0', feat: true, badge: 'b-off', bl: 'Off-Market', zona: 'Cascais', zonaLabel: 'Cascais · Quinta da Marinha', tipo: 'Moradia', titulo: 'Villa Contemporânea com Piscina Infinita e Vista Mar', specs: ['5 Quartos', '620 m²', 'Piscina Infinita', 'Vista Mar', '3 Garagens', 'EPC A'], preco: 3800000, precoLabel: '€ 3.800.000', pm2: '€6.129/m²', quartos: 5, grad: 'linear-gradient(145deg,#1c3d28,#0b1a10 55%,#3d8b68 100%)', photo: '/properties/villa-cascais.jpg' },
-  { id: 'rev1', feat: false, badge: 'b-new', bl: 'Novo', zona: 'Lisboa', zonaLabel: 'Lisboa · Chiado', tipo: 'Apartamento', titulo: 'Penthouse com Terraço e Vista Rio Tejo', specs: ['4 Quartos', '280 m²', 'Vista Rio', 'EPC A'], preco: 2100000, precoLabel: '€ 2.100.000', pm2: '€7.500/m²', quartos: 4, grad: 'linear-gradient(145deg,#0c2030,#060e18 60%,#1c4a35 100%)', photo: '/properties/penthouse-lisboa.jpg' },
-  { id: 'rev2', feat: false, badge: 'b-exc', bl: 'Exclusivo', zona: 'Comporta', zonaLabel: 'Comporta · Grândola', tipo: 'Quinta', titulo: 'Herdade Privada nos Arrozais da Comporta', specs: ['6 Quartos', '850 m²', '12 hectares', 'Piscina'], preco: 6500000, precoLabel: '€ 6.500.000', pm2: '€7.647/m²', quartos: 6, grad: 'linear-gradient(145deg,#2e2009,#140e05 60%,#c9a96e 100%)', photo: '/properties/quinta-comporta.jpg' },
+// ─── Static fallback properties (shown when no live AI listings exist) ────────
+const STATIC_PROPERTIES = [
+  { id: 'rev0', feat: true, badge: 'b-off' as const, bl: 'Off-Market', zona: 'Cascais', zonaLabel: 'Cascais · Quinta da Marinha', tipo: 'Moradia', titulo: 'Villa Contemporânea com Piscina Infinita e Vista Mar', specs: ['5 Quartos', '620 m²', 'Piscina Infinita', 'Vista Mar', '3 Garagens', 'EPC A'], preco: 3800000, precoLabel: '€ 3.800.000', pm2: '€6.129/m²', quartos: 5, grad: 'linear-gradient(145deg,#1c3d28,#0b1a10 55%,#3d8b68 100%)', photo: '/properties/villa-cascais.jpg' },
+  { id: 'rev1', feat: false, badge: 'b-new' as const, bl: 'Novo', zona: 'Lisboa', zonaLabel: 'Lisboa · Chiado', tipo: 'Apartamento', titulo: 'Penthouse com Terraço e Vista Rio Tejo', specs: ['4 Quartos', '280 m²', 'Vista Rio', 'EPC A'], preco: 2100000, precoLabel: '€ 2.100.000', pm2: '€7.500/m²', quartos: 4, grad: 'linear-gradient(145deg,#0c2030,#060e18 60%,#1c4a35 100%)', photo: '/properties/penthouse-lisboa.jpg' },
+  { id: 'rev2', feat: false, badge: 'b-exc' as const, bl: 'Exclusivo', zona: 'Comporta', zonaLabel: 'Comporta · Grândola', tipo: 'Quinta', titulo: 'Herdade Privada nos Arrozais da Comporta', specs: ['6 Quartos', '850 m²', '12 hectares', 'Piscina'], preco: 6500000, precoLabel: '€ 6.500.000', pm2: '€7.647/m²', quartos: 6, grad: 'linear-gradient(145deg,#2e2009,#140e05 60%,#c9a96e 100%)', photo: '/properties/quinta-comporta.jpg' },
   { id: 'rev3', feat: false, badge: null, bl: null, zona: 'Cascais', zonaLabel: 'Abóboda · Cascais', tipo: 'Moradia', titulo: 'Moradia Contemporânea Nova Construção · Design Premium', specs: ['3 Quartos', '113 m²', 'Nova Construção'], preco: 1400000, precoLabel: '€ 1.400.000', pm2: '€12.389/m²', quartos: 3, grad: 'linear-gradient(145deg,#1a3a26,#081510 60%,#2d6a4f 100%)', photo: '/properties/moradia-cascais.jpg' },
   { id: 'rev4', feat: false, badge: null, bl: null, zona: 'Ericeira', zonaLabel: "Ericeira · Ribeira d'Ilhas", tipo: 'Apartamento', titulo: 'Duplex Vista Mar · World Surf Reserve · Ericeira', specs: ['3 Quartos', '189 m²', 'Vista Mar'], preco: 679000, precoLabel: '€ 679.000', pm2: '€3.593/m²', quartos: 3, grad: 'linear-gradient(145deg,#081e1e,#040f0f 60%,#1c4a35 100%)', photo: '/properties/duplex-ericeira.jpg' },
 ]
 
-type Property = typeof PROPERTIES[number]
+// ─── Property type — superset of both static & live feed shapes ───────────────
+type Property = {
+  id: string
+  feat: boolean
+  badge: 'b-off' | 'b-new' | 'b-exc' | null
+  bl: string | null
+  zona: string
+  zonaLabel: string
+  tipo: string
+  titulo: string
+  specs: string[]
+  preco: number
+  precoLabel: string
+  pm2: string
+  quartos: number
+  grad: string
+  photo: string
+  // Live-only fields (optional so static props are compatible)
+  submission_id?: string
+  placement_score?: number
+  demand_score?: number
+}
+
+function feedToProperty(item: HomepageFeedItem, index: number): Property {
+  return {
+    id: item.id,
+    feat: index === 0,
+    badge: item.badge,
+    bl: item.bl,
+    zona: item.zona,
+    zonaLabel: item.zonaLabel,
+    tipo: item.tipo,
+    titulo: item.titulo,
+    specs: item.specs,
+    preco: item.preco,
+    precoLabel: item.precoLabel,
+    pm2: item.pm2,
+    quartos: item.quartos,
+    grad: item.grad,
+    photo: item.photo,
+    submission_id: item.submission_id,
+    placement_score: item.placement_score,
+    demand_score: item.demand_score,
+  }
+}
 
 
 // ─── CPCV deals ───────────────────────────────────────────────────────────────
@@ -45,6 +90,37 @@ export default function HomePropertiesSection() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiSummary, setAiSummary] = useState('')
   const [cpcvDeals, setCpcvDeals] = useState(INITIAL_CPCV)
+  // ── Live AI properties from Property AI Engine ───────────────────────────
+  const [liveProperties, setLiveProperties] = useState<Property[]>([])
+  const [feedSource, setFeedSource] = useState<'live' | 'static'>('static')
+
+  // Fetch live AI-ranked listings — falls back to static on empty/error
+  useEffect(() => {
+    let cancelled = false
+    async function loadFeed() {
+      try {
+        const res = await fetch('/api/property-ai/homepage-feed', {
+          next: { revalidate: 900 },
+        } as RequestInit)
+        if (!res.ok) return
+        const data = await res.json() as { items: HomepageFeedItem[]; source: string; count: number }
+        if (cancelled) return
+        if (data.items && data.items.length > 0) {
+          setLiveProperties(data.items.map((item, i) => feedToProperty(item, i)))
+          setFeedSource('live')
+        }
+      } catch {
+        // silently fall back to static
+      }
+    }
+    void loadFeed()
+    return () => { cancelled = true }
+  }, [])
+
+  // Active property pool — live AI listings when available, static otherwise
+  const PROPERTIES: Property[] = feedSource === 'live' && liveProperties.length > 0
+    ? liveProperties
+    : STATIC_PROPERTIES
 
   // Listen for zone filter events from zone cards (dispatched from RSC-rendered zone links)
   useEffect(() => {
@@ -99,7 +175,8 @@ export default function HomePropertiesSection() {
     try {
       const res = await fetch('/api/properties/search-natural', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:naturalQuery})})
       const d = await res.json()
-      const matched = (d.matches||[]).map((m:{id:string})=>PROPERTIES.find(p=>p.id===m.id)).filter(Boolean) as Property[]
+      const pool = feedSource === 'live' && liveProperties.length > 0 ? liveProperties : STATIC_PROPERTIES
+      const matched = (d.matches||[]).map((m:{id:string})=>pool.find(p=>p.id===m.id)).filter(Boolean) as Property[]
       setAiResults(matched); setAiSummary(d.searchSummary||'')
     } catch { setAiResults([]) }
     finally { setAiLoading(false); document.getElementById('imoveis')?.scrollIntoView({behavior:'smooth'}) }
@@ -149,7 +226,16 @@ export default function HomePropertiesSection() {
         <div className="sw">
           <div className="im-head" style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:'48px'}}>
             <div>
-              <div className="sec-eye">Portfolio Exclusivo</div>
+              <div className="sec-eye" style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                Portfolio Exclusivo
+                {feedSource === 'live' && liveProperties.length > 0 && (
+                  <span style={{
+                    fontFamily:"'DM Mono',monospace",fontSize:'.42rem',letterSpacing:'.14em',
+                    color:'#c9a96e',border:'1px solid rgba(201,169,110,.3)',
+                    padding:'2px 8px',borderRadius:3,marginLeft:'6px',
+                  }}>✦ AI · {liveProperties.length} IMÓVEIS LIVE</span>
+                )}
+              </div>
               <h2 className="sec-h2" id="imH2">
                 <span className="text-reveal"><span className="text-reveal-inner">Cada Imóvel,</span></span>
                 <span className="text-reveal"><span className="text-reveal-inner"><em>Uma História.</em></span></span>
@@ -190,11 +276,31 @@ export default function HomePropertiesSection() {
           ) : (
             <div className="im-grid">
               {displayedProperties.map(im=>(
-                <a key={im.id} href={`/imoveis#${im.id}`} className={`imc${im.feat?' feat':''}`} style={{textDecoration:'none',color:'inherit',display:'block'}}>
+                <a
+                  key={im.id}
+                  href={im.submission_id ? `/imoveis/${im.submission_id}` : `/imoveis#${im.id}`}
+                  className={`imc${im.feat?' feat':''}`}
+                  style={{textDecoration:'none',color:'inherit',display:'block'}}
+                  onClick={() => track('property_card_click', {
+                    property_id: im.id,
+                    submission_id: im.submission_id ?? null,
+                    source: feedSource,
+                    zona: im.zona,
+                    preco: im.preco,
+                  })}
+                >
                   <div className="imc-img">
                     <div className="imc-img-reveal" id={im.id}></div>
                     <div className="imc-img-inner" style={{backgroundImage:`url(${im.photo})`,backgroundSize:'cover',backgroundPosition:'center'}}></div>
                     {im.badge && <span className={`imc-badge ${im.badge}`}>{im.bl}</span>}
+                    {feedSource === 'live' && im.placement_score && im.placement_score > 0 ? (
+                      <span style={{
+                        position:'absolute',top:10,right:10,background:'rgba(0,0,0,.65)',
+                        border:'1px solid rgba(201,169,110,.3)',color:'#c9a96e',
+                        fontFamily:"'DM Mono',monospace",fontSize:'.45rem',letterSpacing:'.12em',
+                        padding:'3px 7px',borderRadius:3,backdropFilter:'blur(4px)',
+                      }}>✦ AI</span>
+                    ) : null}
                   </div>
                   <div className="imc-body">
                     <div className="imc-zona">{im.zonaLabel}</div>
