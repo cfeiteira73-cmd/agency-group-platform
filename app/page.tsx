@@ -57,6 +57,7 @@ import HomeToast from './components/HomeToast'
 import HomeNav from './components/HomeNav'
 import MobileHome from './components/MobileHome'
 import HomeHeroTrack from './components/HomeHeroTrack'
+import BuyerIntentTracker from './components/BuyerIntentTracker'
 import { HOME_HERO } from './lib/homeContent'
 
 // ─── Server-side mobile detection ────────────────────────────────────────────
@@ -92,6 +93,7 @@ export default async function Home() {
         }) }}
       />
       <MobileHome />
+      <BuyerIntentTracker />
     </>
   )
 
@@ -194,6 +196,9 @@ export default async function Home() {
 
       {/* ── TRACKING CLIENT ISLAND — attaches click listeners to #hBtns CTAs ── */}
       <HomeHeroTrack device="desktop" />
+
+      {/* ── BUYER INTENT TRACKER — zero visual output, profiles visitor intent ── */}
+      <BuyerIntentTracker />
     </>
   )
 }
