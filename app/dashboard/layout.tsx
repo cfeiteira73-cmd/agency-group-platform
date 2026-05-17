@@ -32,6 +32,9 @@ const NAV_ITEMS = [
   { icon: '🏠', label: 'Property AI Engine',     href: '/dashboard/properties' },
   { icon: '⚡', label: 'Acções Prioritárias',     href: '/dashboard/actions' },
   { icon: '📊', label: 'Executive Revenue',       href: '/dashboard/executive' },
+  { icon: '🎯', label: 'Centro de Conversão',    href: '/dashboard/conversion-command' },
+  { icon: '⚙️', label: 'Simulações',              href: '/dashboard/simulations' },
+  { icon: '☀️', label: 'Brief Diário',            href: '/dashboard/daily-brief' },
 ] as const
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {

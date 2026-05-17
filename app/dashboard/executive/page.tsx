@@ -36,6 +36,25 @@ const C = {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+// Revenue intelligence types (mirrors lib/executive-revenue-v2, kept local to avoid 'use client' crossing server lib)
+
+interface RevenueLeakageItem {
+  property_id: string
+  leakage_type: 'overpriced' | 'underpriced' | 'stale' | 'low_demand' | 'missing_photos'
+  estimated_leakage_eur: number
+  priority: 'critical' | 'high' | 'medium'
+  action_required: string
+}
+
+interface AgentRankEntry {
+  agent_id: string
+  rank: number
+  revenue_score: number
+  total_commission_eur: number
+  efficiency_score: number
+  performance_label: 'elite' | 'strong' | 'developing' | 'needs_support'
+}
+
 interface DashboardData {
   pipeline_value_eur: number
   commission_estimate_eur: number
@@ -52,6 +71,11 @@ interface DashboardData {
   opportunities: RadarSignal[]
   narrative: string
   generated_at: string
+  // ── Revenue intelligence extensions ──────────────────────────────────────
+  leakage_items?: RevenueLeakageItem[]
+  total_leakage_monthly_eur?: number
+  snapshot_narrative?: string
+  agent_rankings?: AgentRankEntry[]
 }
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -519,6 +543,243 @@ function SectionHeading({ icon, title, sub }: { icon: string; title: string; sub
   )
 }
 
+// ─── Leakage type label (PT) ──────────────────────────────────────────────────
+
+const LEAKAGE_LABELS: Record<RevenueLeakageItem['leakage_type'], string> = {
+  overpriced:     'Preço acima do mercado',
+  underpriced:    'Preço abaixo do mercado',
+  stale:          'Imóvel estagnado',
+  low_demand:     'Procura baixa',
+  missing_photos: 'Sem fotografias',
+}
+
+const PRIORITY_META: Record<RevenueLeakageItem['priority'], { label: string; bg: string; color: string; border: string }> = {
+  critical: { label: 'Crítico', bg: 'rgba(248,113,113,0.12)', color: '#f87171', border: 'rgba(248,113,113,0.3)' },
+  high:     { label: 'Alto',    bg: 'rgba(251,191,36,0.12)',  color: '#fbbf24', border: 'rgba(251,191,36,0.3)' },
+  medium:   { label: 'Médio',   bg: 'rgba(201,169,110,0.12)', color: '#c9a96e', border: 'rgba(201,169,110,0.3)' },
+}
+
+// ─── Revenue Leakage Section ──────────────────────────────────────────────────
+
+function RevenueLeakageSection({
+  items,
+  totalLeakage,
+}: {
+  items: RevenueLeakageItem[]
+  totalLeakage: number
+}) {
+  const visible = items.slice(0, 5)
+
+  return (
+    <div>
+      {/* Section header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 10,
+          background: C.redBg, border: `1px solid ${C.redBorder}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 16, flexShrink: 0,
+        }}>
+          ⚠
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <h2 style={{
+            fontFamily: 'var(--font-cormorant,serif)',
+            fontSize: 22, fontWeight: 400, color: C.cream,
+            margin: 0, letterSpacing: '0.02em',
+          }}>
+            Receita em Risco
+          </h2>
+          {/* Pulsing red dot */}
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: C.red, display: 'inline-block',
+            animation: 'pulse 2s cubic-bezier(0.4,0,0.6,1) infinite',
+          }} />
+        </div>
+      </div>
+
+      {/* Total leakage card */}
+      <div style={{
+        background: C.redBg,
+        border: `1px solid ${C.redBorder}`,
+        borderRadius: 16, padding: '20px 24px',
+        display: 'flex', alignItems: 'center', gap: 20,
+        marginBottom: 14,
+      }}>
+        <div>
+          <p style={{
+            color: 'rgba(248,113,113,0.6)', fontSize: 10,
+            letterSpacing: '0.1em', textTransform: 'uppercase',
+            fontWeight: 600, fontFamily: 'var(--font-jost,system-ui)',
+            margin: '0 0 4px',
+          }}>
+            Fuga Total Estimada
+          </p>
+          <p style={{
+            fontFamily: 'var(--font-cormorant,serif)',
+            fontSize: 42, fontWeight: 600, lineHeight: 1,
+            color: C.red, margin: 0,
+            fontVariantNumeric: 'tabular-nums',
+          }}>
+            {fmtCurrency(totalLeakage)}
+            <span style={{
+              fontFamily: 'var(--font-jost,system-ui)',
+              fontSize: 14, fontWeight: 400, color: 'rgba(248,113,113,0.6)',
+              marginLeft: 6,
+            }}>
+              /mês
+            </span>
+          </p>
+        </div>
+        <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+          <p style={{
+            color: 'rgba(248,113,113,0.5)', fontSize: 11,
+            fontFamily: 'var(--font-jost,system-ui)', margin: 0,
+          }}>
+            {items.length} {items.length === 1 ? 'imóvel afectado' : 'imóveis afectados'}
+          </p>
+        </div>
+      </div>
+
+      {/* Leakage list */}
+      {visible.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {visible.map(item => {
+            const pm = PRIORITY_META[item.priority]
+            return (
+              <div key={`${item.property_id}-${item.leakage_type}`} style={{
+                background: C.card,
+                border: `1px solid ${C.border}`,
+                borderLeft: `3px solid ${pm.color}`,
+                borderRadius: '0 12px 12px 0',
+                padding: '14px 18px',
+                display: 'flex', alignItems: 'flex-start', gap: 14,
+              }}>
+                {/* Left: property + type */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{
+                      color: C.cream28, fontSize: 10,
+                      fontFamily: 'var(--font-jost,system-ui)',
+                      letterSpacing: '0.06em', textTransform: 'uppercase',
+                    }}>
+                      {item.property_id.slice(0, 8)}…
+                    </span>
+                    <span style={{
+                      display: 'inline-block', padding: '1px 8px', borderRadius: 99,
+                      background: pm.bg, color: pm.color, border: `1px solid ${pm.border}`,
+                      fontSize: 9, fontWeight: 600, letterSpacing: '0.05em',
+                      textTransform: 'uppercase', fontFamily: 'var(--font-jost,system-ui)',
+                    }}>
+                      {pm.label}
+                    </span>
+                  </div>
+                  <p style={{
+                    color: C.cream, fontSize: 13, fontWeight: 600,
+                    fontFamily: 'var(--font-jost,system-ui)', margin: '0 0 4px',
+                  }}>
+                    {LEAKAGE_LABELS[item.leakage_type]}
+                  </p>
+                  <p style={{
+                    color: C.cream28, fontSize: 11, lineHeight: 1.5,
+                    fontFamily: 'var(--font-jost,system-ui)', margin: 0,
+                  }}>
+                    {item.action_required}
+                  </p>
+                </div>
+
+                {/* Right: leakage EUR */}
+                <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                  <p style={{
+                    fontFamily: 'var(--font-cormorant,serif)',
+                    fontSize: 22, fontWeight: 600, color: C.red,
+                    margin: 0, fontVariantNumeric: 'tabular-nums',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {fmtCurrency(item.estimated_leakage_eur)}
+                  </p>
+                  <p style={{
+                    color: 'rgba(248,113,113,0.5)', fontSize: 10,
+                    fontFamily: 'var(--font-jost,system-ui)', margin: '2px 0 0',
+                  }}>
+                    /mês
+                  </p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {visible.length === 0 && (
+        <div style={{
+          background: C.greenBg, border: `1px solid ${C.greenBorder}`,
+          borderRadius: 12, padding: '16px 20px',
+          color: C.green, fontSize: 13,
+          fontFamily: 'var(--font-jost,system-ui)',
+        }}>
+          Nenhuma fuga de receita detectada — portfólio saudável.
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Executive AI Narrative Section ───────────────────────────────────────────
+
+function ExecutiveAINarrative({ narrative }: { narrative: string }) {
+  const text = narrative.trim()
+
+  return (
+    <div style={{
+      background: C.card,
+      border: `2px solid ${C.gold}`,
+      borderRadius: 20, padding: '28px 32px',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Decorative corner */}
+      <div style={{
+        position: 'absolute', top: -40, right: -40,
+        width: 140, height: 140, borderRadius: '50%',
+        background: 'rgba(201,169,110,0.05)', pointerEvents: 'none',
+      }} />
+
+      {/* Label */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+        <span style={{ color: C.gold, fontSize: 16 }}>✦</span>
+        <span style={{
+          color: C.cream28, fontSize: 10, letterSpacing: '0.12em',
+          textTransform: 'uppercase', fontWeight: 600,
+          fontFamily: 'var(--font-jost,system-ui)',
+        }}>
+          Análise Executiva IA
+        </span>
+      </div>
+
+      {/* Narrative text */}
+      {text ? (
+        <p style={{
+          fontFamily: 'var(--font-cormorant,serif)',
+          fontSize: 21, fontWeight: 400, lineHeight: 1.7,
+          color: C.cream, margin: 0, fontStyle: 'italic',
+          letterSpacing: '0.01em',
+        }}>
+          {text}
+        </p>
+      ) : (
+        <p style={{
+          fontFamily: 'var(--font-cormorant,serif)',
+          fontSize: 18, fontWeight: 400, lineHeight: 1.65,
+          color: C.cream55, margin: 0, fontStyle: 'italic',
+        }}>
+          Análise executiva a carregar — adicione imóveis live ao portfólio para activar o motor de inteligência de receita.
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ExecutiveDashboardPage() {
@@ -732,6 +993,15 @@ export default function ExecutiveDashboardPage() {
                 />
               </div>
             </div>
+
+            {/* ── Executive AI Narrative (full-width, gold border) ──────────── */}
+            <ExecutiveAINarrative narrative={data.snapshot_narrative ?? ''} />
+
+            {/* ── Revenue Leakage Section ───────────────────────────────────── */}
+            <RevenueLeakageSection
+              items={data.leakage_items ?? []}
+              totalLeakage={data.total_leakage_monthly_eur ?? 0}
+            />
 
             {/* ── Revenue This Month strip ─────────────────────────────────── */}
             {data.revenue_this_month_eur > 0 && (

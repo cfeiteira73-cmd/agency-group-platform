@@ -9,6 +9,8 @@ import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { opportunityRadar, RadarSignal } from '@/lib/executive/opportunityRadar'
 import { logger } from '@/lib/observability/logger'
+import { detectRevenueLeakage, buildExecutiveSnapshot } from '@/lib/executive-revenue-v2'
+import type { ListingRevenueSummary, AgentPerformanceSummary } from '@/lib/executive-revenue-v2'
 
 export const runtime = 'nodejs'
 export const maxDuration = 15
@@ -35,6 +37,11 @@ export interface ExecutiveDashboardResponse {
   opportunities: RadarSignal[]
   narrative: string
   generated_at: string
+  // ── Revenue intelligence extensions ────────────────────────────────────────
+  leakage_items: import('@/lib/executive-revenue-v2').RevenueLeakageItem[]
+  total_leakage_monthly_eur: number
+  snapshot_narrative: string
+  agent_rankings: import('@/lib/executive-revenue-v2').AgentRankEntry[]
 }
 
 // ─── Supabase fetchers (each silently returns zeros on error) ──────────────────
@@ -181,6 +188,113 @@ async function fetchDealsAgg(): Promise<DealsAgg> {
   }
 }
 
+// ─── Revenue intelligence fetchers ────────────────────────────────────────────
+
+async function fetchListingRevenueSummaries(): Promise<ListingRevenueSummary[]> {
+  try {
+    // Fetch live submission IDs
+    const subT = sb.from('property_ai_submissions') as {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => Promise<{
+          data: Array<{ submission_id: string }> | null
+          error: unknown
+        }>
+      }
+    }
+    const { data: subs, error: subErr } = await (subT.select('submission_id') as ReturnType<typeof subT.select>)
+      .eq('status', 'live')
+    if (subErr || !subs || subs.length === 0) return []
+
+    const ids = subs.map(s => s.submission_id)
+
+    // Fetch listings with pricing data
+    const listT = sb.from('property_ai_listings') as {
+      select: (cols: string) => {
+        in: (col: string, vals: string[]) => Promise<{
+          data: Array<{
+            submission_id: string
+            estimated_price_eur: number | null
+            avm_base?: number | null
+          }> | null
+          error: unknown
+        }>
+      }
+    }
+    const { data: listings, error: listErr } = await (listT.select('submission_id, estimated_price_eur, avm_base') as ReturnType<typeof listT.select>)
+      .in('submission_id', ids)
+    if (listErr || !listings) return []
+
+    // Fetch intelligence data for demand_score and inquiry_count
+    const intT = sb.from('property_ai_intelligence') as {
+      select: (cols: string) => {
+        in: (col: string, vals: string[]) => Promise<{
+          data: Array<{
+            submission_id: string
+            demand_score: number | null
+            inquiry_count?: number | null
+          }> | null
+          error: unknown
+        }>
+      }
+    }
+    const { data: intelligence } = await (intT.select('submission_id, demand_score, inquiry_count') as ReturnType<typeof intT.select>)
+      .in('submission_id', ids)
+    const intelMap = new Map<string, { demand_score: number; inquiry_count: number }>()
+    for (const row of intelligence ?? []) {
+      intelMap.set(row.submission_id, {
+        demand_score: Number(row.demand_score ?? 0),
+        inquiry_count: Number(row.inquiry_count ?? 0),
+      })
+    }
+
+    return listings.map(l => {
+      const intel = intelMap.get(l.submission_id) ?? { demand_score: 0, inquiry_count: 0 }
+      return {
+        property_id: l.submission_id,
+        listing_price_eur: Number(l.estimated_price_eur ?? 0),
+        avm_base_eur: Number(l.avm_base ?? 0),
+        days_on_market: 0, // not available in this query; default safe value
+        demand_score: intel.demand_score,
+        inquiry_count: intel.inquiry_count,
+      } satisfies ListingRevenueSummary
+    })
+  } catch {
+    return []
+  }
+}
+
+async function fetchAgentPerformanceSummaries(): Promise<AgentPerformanceSummary[]> {
+  try {
+    const t = sb.from('contacts') as {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => Promise<{
+          data: Array<{
+            id: string
+            contact_type?: string | null
+            score?: number | null
+          }> | null
+          error: unknown
+        }>
+      }
+    }
+    const { data, error } = await (t.select('id, contact_type, score') as ReturnType<typeof t.select>)
+      .eq('contact_type', 'agent')
+    if (error || !data || data.length === 0) return []
+
+    // Build minimal summaries from available contacts data
+    return data.map(agent => ({
+      agent_id: agent.id,
+      deals_closed: 0,
+      total_commission_eur: 0,
+      avg_days_to_close: 210, // Portugal market average
+      listings_active: 0,
+      conversion_rate: 0,
+    } satisfies AgentPerformanceSummary))
+  } catch {
+    return []
+  }
+}
+
 async function fetchRevenueThisMonth(): Promise<number> {
   try {
     const now = new Date()
@@ -254,12 +368,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       contactsAgg,
       dealsAgg,
       revenueThisMonth,
+      listingRevenueSummaries,
+      agentPerformanceSummaries,
     ] = await Promise.all([
       fetchSubmissionAgg(),
       fetchIntelligenceAgg(),
       fetchContactsAgg(),
       fetchDealsAgg(),
       fetchRevenueThisMonth(),
+      fetchListingRevenueSummaries(),
+      fetchAgentPerformanceSummaries(),
     ])
 
     // Pipeline value requires live count — run after submissions agg
@@ -276,6 +394,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     const topSignal = opportunities[0] ?? null
+
+    // ── Revenue intelligence (leakage + snapshot) ─────────────────────────────
+    let leakage_items: import('@/lib/executive-revenue-v2').RevenueLeakageItem[] = []
+    let total_leakage_monthly_eur = 0
+    let snapshot_narrative = ''
+    let agent_rankings: import('@/lib/executive-revenue-v2').AgentRankEntry[] = []
+
+    try {
+      leakage_items = detectRevenueLeakage(listingRevenueSummaries)
+      total_leakage_monthly_eur = leakage_items.reduce((s, i) => s + i.estimated_leakage_eur, 0)
+
+      const snapshot = buildExecutiveSnapshot(listingRevenueSummaries, agentPerformanceSummaries)
+      snapshot_narrative = snapshot.narrative
+      agent_rankings = snapshot.agent_rankings
+    } catch {
+      // Silently degrade — these are additive enrichments
+    }
 
     const narrative = buildNarrative(
       submissionAgg.live_listings,
@@ -301,6 +436,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       opportunities,
       narrative,
       generated_at: new Date().toISOString(),
+      leakage_items,
+      total_leakage_monthly_eur,
+      snapshot_narrative,
+      agent_rankings,
     }
 
     logger.info('[executive/dashboard] KPIs generated', {
@@ -334,6 +473,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       opportunities: [],
       narrative: 'Sistema executivo a inicializar. Dados disponíveis em breve.',
       generated_at: new Date().toISOString(),
+      leakage_items: [],
+      total_leakage_monthly_eur: 0,
+      snapshot_narrative: '',
+      agent_rankings: [],
     }
     return NextResponse.json(empty)
   }

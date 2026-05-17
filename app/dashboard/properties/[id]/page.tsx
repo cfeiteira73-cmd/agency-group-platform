@@ -6,6 +6,7 @@
 import { useState, useEffect, use, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import PricingIntelligencePanel from '@/app/components/dashboard/PricingIntelligencePanel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -659,6 +660,19 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </div>
             )}
+
+            {/* ── PRICING INTELLIGENCE PANEL ─────────────────────────────────────────── */}
+            <PricingIntelligencePanel
+              submissionId={id}
+              listingPrice={Number(price) || null}
+              areaSqm={Number(areaSqm) || null}
+              bedrooms={Number(bedrooms) || null}
+              city={loc && typeof loc.city === 'string' ? loc.city : null}
+              condition={condition || null}
+              luxuryScore={Number(luxScore) || null}
+              demandScore={intel && typeof intel.demand_score === 'number' ? intel.demand_score : null}
+              daysOnMarket={null}
+            />
 
             {/* ── Bottom save bar ───────────────────────────────────────────── */}
             {isDirty && (
