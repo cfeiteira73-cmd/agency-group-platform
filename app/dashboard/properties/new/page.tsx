@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -607,6 +608,7 @@ function PublishButton({ readiness, onPublish }: { readiness: ReadinessResult; o
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function NewPropertyPage() {
+  const router = useRouter()
   const [state, setState] = useState<UploadState>({ status: 'idle', files: [], rawText: '', rawUrl: '', progress: 0 })
 
   const handleFiles = useCallback((newFiles: File[]) => {
@@ -671,6 +673,10 @@ export default function NewPropertyPage() {
         copilot:   mapCopilot(pipeline),
         processing_time_ms: data.processing_time_ms,
       }))
+      // Redirect to detail page after 1.5s so user lands on full edit view
+      setTimeout(() => {
+        router.push(`/dashboard/properties/${data.submission_id}`)
+      }, 1500)
     } catch (err) {
       clearInterval(progressInterval)
       setState(s => ({ ...s, status: 'error', error: err instanceof Error ? err.message : 'Pipeline failed' }))
