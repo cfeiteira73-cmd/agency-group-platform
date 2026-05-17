@@ -1,659 +1,778 @@
 'use client'
 
-// AGENCY GROUP — SH-ROS | Dashboard Home · Revenue Intelligence
-// AMI 22506 · AG Elite Activo · Client component
+// AGENCY GROUP — SH-ROS | AMI: 22506
+// /dashboard — Revenue Command Center
+// Single surface answering: "Como faço mais dinheiro hoje?"
+// Pulls from /api/revenue-command/summary — the unified economic intelligence source.
+// =============================================================================
 
 import { useState, useEffect } from 'react'
+import type { RevenueImpactCard, ActionType } from '@/lib/value-attribution-engine'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Intelligence {
-  demand_score: number
-  homepage_placement_score: number
-  listing_readiness_score: number
-  investor_attractiveness: number
-}
-
-interface Submission {
-  submission_id: string
-  status: string
-  intelligence?: Intelligence | null
-}
-
-interface SubmissionsResponse {
-  submissions: Submission[]
-  total: number
-}
-
-interface AgentAction {
-  id: string
-  title?: string
-  description?: string
-  priority?: string
-  urgency?: string
-}
-
-interface ActionsResponse {
-  actions?: AgentAction[]
-}
-
-// ─── AG brand tokens ─────────────────────────────────────────────────────────
+// ─── Brand tokens ─────────────────────────────────────────────────────────────
 
 const C = {
-  bg:         '#0c1f15',
-  card:       '#111e16',
-  cardAlt:    '#0f1c12',
-  border:     'rgba(201,169,110,0.15)',
-  borderHov:  'rgba(201,169,110,0.35)',
-  divider:    'rgba(201,169,110,0.08)',
-  gold:       '#c9a96e',
-  goldDim:    'rgba(201,169,110,0.12)',
-  goldBorder: 'rgba(201,169,110,0.22)',
-  cream:      '#f4f0e6',
-  cream55:    'rgba(244,240,230,0.55)',
-  cream28:    'rgba(244,240,230,0.28)',
-  cream10:    'rgba(244,240,230,0.08)',
-  green:      '#4ade80',
-  greenDim:   'rgba(74,222,128,0.1)',
-  greenBorder:'rgba(74,222,128,0.25)',
+  bg:          '#0c1f15',
+  card:        '#111e16',
+  border:      'rgba(201,169,110,0.15)',
+  goldBorder:  'rgba(201,169,110,0.22)',
+  divider:     'rgba(201,169,110,0.08)',
+  gold:        '#c9a96e',
+  goldDim:     'rgba(201,169,110,0.12)',
+  cream:       '#f4f0e6',
+  cream55:     'rgba(244,240,230,0.55)',
+  cream28:     'rgba(244,240,230,0.28)',
+  cream10:     'rgba(244,240,230,0.07)',
+  green:       '#4ade80',
+  greenDim:    'rgba(74,222,128,0.09)',
+  greenBorder: 'rgba(74,222,128,0.22)',
+  amber:       '#fbbf24',
+  amberDim:    'rgba(251,191,36,0.1)',
+  red:         '#f87171',
+  redDim:      'rgba(248,113,113,0.09)',
+  redBorder:   'rgba(248,113,113,0.25)',
 }
 
-// ─── Static fallback actions ──────────────────────────────────────────────────
+// ─── Summary type ─────────────────────────────────────────────────────────────
 
-const FALLBACK_ACTIONS = [
-  {
-    id: 'fa-1',
-    title: '2 imóveis precisam de fotos melhores',
-    urgency: 'HOJE',
-  },
-  {
-    id: 'fa-2',
-    title: '1 lead quente sem follow-up há 48h',
-    urgency: 'HOJE',
-  },
-  {
-    id: 'fa-3',
-    title: '1 imóvel com preço acima do mercado',
-    urgency: 'ESTA SEMANA',
-  },
-]
+interface RevenueSummary {
+  pipeline_value_eur: number
+  commission_potential_eur: number
+  monthly_forecast_eur: number
+  total_leakage_eur: number
+  listings_with_leakage: number
+  live_count: number
+  avg_demand_score: number
+  hot_leads_count: number
+  top_actions: RevenueImpactCard[]
+  funnel_health: 'strong' | 'moderate' | 'weak'
+  active_deals: number
+  closed_deals_total_commission: number
+  computed_at: string
+}
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Formatters ───────────────────────────────────────────────────────────────
 
-function KpiCard({
-  icon,
-  label,
-  value,
-  sub,
-  accent = false,
+function fmtM(n: number): string {
+  if (n >= 1_000_000) return `€${(n / 1_000_000).toFixed(2).replace('.', ',')} M`
+  if (n >= 1_000)     return `€${Math.round(n / 1000)}K`
+  return `€${Math.round(n).toLocaleString('pt-PT')}`
+}
+
+function fmtShort(n: number): string {
+  if (n >= 1_000_000) return `€${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000)     return `€${Math.round(n / 1000)}K`
+  return `€${Math.round(n)}`
+}
+
+function fmtTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
+  } catch { return '--:--' }
+}
+
+// ─── Action type → Portuguese label ──────────────────────────────────────────
+
+const ACTION_LABELS: Record<ActionType, string> = {
+  price_reduction:   'Reduzir Preço',
+  photo_upgrade:     'Melhorar Fotografias',
+  homepage_boost:    'Destaque Homepage',
+  campaign_send:     'Enviar Campanha',
+  inquiry_response:  'Responder a Inquérito',
+  visit_booking:     'Agendar Visita',
+  offer_submission:  'Submeter Proposta',
+  negotiation_move:  'Negociação',
+  listing_refresh:   'Renovar Listagem',
+  deal_pack_send:    'Deal Pack',
+  follow_up_call:    'Follow-up',
+}
+
+// ─── Urgency config ───────────────────────────────────────────────────────────
+
+const URGENCY = {
+  critical: { label: 'Crítico', color: C.red,   bg: C.redDim,   border: C.redBorder   },
+  high:     { label: 'Alto',    color: C.amber,  bg: C.amberDim, border: 'rgba(251,191,36,0.28)' },
+  medium:   { label: 'Médio',   color: C.gold,   bg: C.goldDim,  border: C.goldBorder  },
+  low:      { label: 'Baixo',   color: C.green,  bg: C.greenDim, border: C.greenBorder },
+}
+
+// ─── Shimmer ──────────────────────────────────────────────────────────────────
+
+function Shimmer({ h = 20, w = '100%', r = 8 }: { h?: number; w?: string; r?: number }) {
+  return (
+    <div style={{
+      height: h,
+      width: w,
+      borderRadius: r,
+      background: `linear-gradient(90deg, ${C.goldDim} 0%, rgba(201,169,110,0.22) 50%, ${C.goldDim} 100%)`,
+      backgroundSize: '200% 100%',
+      animation: 'ag-shimmer 1.6s ease-in-out infinite',
+    }} />
+  )
+}
+
+// ─── KPI Pulse Card ───────────────────────────────────────────────────────────
+
+function PulseCard({
+  icon, label, value, sub, accent = false, danger = false,
 }: {
-  icon: string
-  label: string
-  value: string | number
-  sub?: string
-  accent?: boolean
+  icon: string; label: string; value: string; sub?: string; accent?: boolean; danger?: boolean
 }) {
   return (
     <div style={{
       background: C.card,
-      border: `1px solid ${accent ? C.goldBorder : C.border}`,
-      borderRadius: 16,
-      padding: '22px 20px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 12,
-      transition: 'border-color 0.2s',
+      border: `1px solid ${danger ? C.redBorder : accent ? C.goldBorder : C.border}`,
+      borderRadius: 14,
+      padding: '18px 18px',
       position: 'relative',
       overflow: 'hidden',
     }}>
-      {accent && (
+      {(accent || danger) && (
         <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 2,
-          background: 'linear-gradient(90deg, transparent, #c9a96e, transparent)',
+          position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+          background: danger
+            ? 'linear-gradient(90deg, transparent, #f87171, transparent)'
+            : 'linear-gradient(90deg, transparent, #c9a96e, transparent)',
         }} />
       )}
+      <div style={{ fontSize: 20, marginBottom: 10 }}>{icon}</div>
       <div style={{
-        width: 40,
-        height: 40,
-        borderRadius: 10,
-        background: C.goldDim,
-        border: `1px solid ${C.goldBorder}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 18,
-        flexShrink: 0,
+        fontFamily: 'var(--font-cormorant, serif)',
+        fontSize: 28,
+        fontWeight: 600,
+        color: danger ? C.red : C.gold,
+        lineHeight: 1,
+        marginBottom: 6,
+        letterSpacing: '-0.01em',
       }}>
-        {icon}
+        {value}
       </div>
-      <div>
-        <p style={{
-          color: C.gold,
-          fontWeight: 700,
-          fontSize: 28,
-          lineHeight: 1,
-          fontVariantNumeric: 'tabular-nums',
-          fontFamily: 'var(--font-cormorant, serif)',
-          margin: 0,
-        }}>
-          {value}
-        </p>
-        <p style={{
-          color: C.cream28,
-          fontSize: 11,
-          marginTop: 5,
-          letterSpacing: '0.07em',
-          textTransform: 'uppercase',
+      <div style={{
+        fontFamily: 'var(--font-jost, system-ui)',
+        fontSize: 10,
+        color: C.cream28,
+        textTransform: 'uppercase' as const,
+        letterSpacing: '0.07em',
+        fontWeight: 600,
+      }}>
+        {label}
+      </div>
+      {sub && (
+        <div style={{
           fontFamily: 'var(--font-jost, system-ui)',
+          fontSize: 10,
+          color: C.cream28,
+          marginTop: 3,
         }}>
-          {label}
-        </p>
-        {sub && (
-          <p style={{
-            color: C.cream28,
-            fontSize: 10,
-            marginTop: 4,
-            letterSpacing: '0.03em',
-            fontFamily: 'var(--font-jost, system-ui)',
-          }}>
-            {sub}
-          </p>
-        )}
-      </div>
+          {sub}
+        </div>
+      )}
     </div>
   )
 }
 
-function ActionCard({ title, urgency }: { title: string; urgency?: string }) {
-  const isToday = urgency === 'HOJE'
+// ─── Action Card ─────────────────────────────────────────────────────────────
+
+function ActionCard({ card, rank }: { card: RevenueImpactCard; rank: number }) {
+  const u = URGENCY[card.urgency] ?? URGENCY.medium
+
   return (
     <div style={{
       background: C.card,
       border: `1px solid ${C.border}`,
-      borderLeft: `3px solid ${C.gold}`,
-      borderRadius: '0 12px 12px 0',
-      padding: '14px 16px',
+      borderRadius: 14,
+      padding: '18px 20px',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: 'column',
       gap: 12,
+      flex: 1,
+      minWidth: 0,
     }}>
-      <p style={{
-        color: C.cream,
-        fontSize: 13,
-        fontWeight: 400,
-        margin: 0,
-        fontFamily: 'var(--font-jost, system-ui)',
-        lineHeight: 1.4,
-      }}>
-        {title}
-      </p>
-      {urgency && (
+      {/* Rank + urgency */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{
-          flexShrink: 0,
-          padding: '3px 8px',
-          borderRadius: 99,
+          fontFamily: 'var(--font-jost, system-ui)',
+          fontSize: 10,
+          color: C.cream28,
+          fontWeight: 700,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase' as const,
+        }}>
+          Acção #{rank}
+        </span>
+        <span style={{
           fontSize: 10,
           fontWeight: 700,
-          letterSpacing: '0.07em',
-          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase' as const,
+          padding: '2px 8px',
+          borderRadius: 4,
+          background: u.bg,
+          border: `1px solid ${u.border}`,
+          color: u.color,
           fontFamily: 'var(--font-jost, system-ui)',
-          background: isToday ? 'rgba(201,169,110,0.15)' : 'rgba(244,240,230,0.06)',
-          color: isToday ? C.gold : C.cream28,
-          border: `1px solid ${isToday ? C.goldBorder : 'rgba(244,240,230,0.1)'}`,
         }}>
-          {urgency}
+          {u.label}
         </span>
-      )}
+      </div>
+
+      {/* Title */}
+      <h3 style={{
+        fontFamily: 'var(--font-jost, system-ui)',
+        fontSize: 15,
+        fontWeight: 700,
+        color: C.cream,
+        margin: 0,
+        lineHeight: 1.3,
+      }}>
+        {ACTION_LABELS[card.action_type] ?? card.action_type}
+      </h3>
+
+      {/* Revenue impact — the hero number */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 6,
+      }}>
+        <span style={{
+          fontFamily: 'var(--font-cormorant, serif)',
+          fontSize: 30,
+          fontWeight: 700,
+          color: C.gold,
+          lineHeight: 1,
+          letterSpacing: '-0.01em',
+        }}>
+          {fmtShort(card.expected_value_eur)}
+        </span>
+        <span style={{
+          fontFamily: 'var(--font-jost, system-ui)',
+          fontSize: 11,
+          color: C.cream55,
+        }}>
+          receita esperada
+        </span>
+      </div>
+
+      {/* Metrics row */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+        <span style={{
+          fontSize: 11,
+          color: C.cream55,
+          background: C.goldDim,
+          padding: '2px 7px',
+          borderRadius: 4,
+          fontFamily: 'var(--font-jost, system-ui)',
+        }}>
+          +{card.conversion_lift_pct}% conversão
+        </span>
+        <span style={{
+          fontSize: 11,
+          color: C.cream55,
+          background: C.greenDim,
+          padding: '2px 7px',
+          borderRadius: 4,
+          fontFamily: 'var(--font-jost, system-ui)',
+        }}>
+          {card.time_to_close_delta_days} dias
+        </span>
+      </div>
+
+      {/* Confidence bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{
+          flex: 1, height: 3, background: C.goldDim, borderRadius: 2, overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${Math.round(card.confidence * 100)}%`,
+            height: '100%', background: C.gold, borderRadius: 2,
+          }} />
+        </div>
+        <span style={{
+          fontSize: 10, color: C.cream28, fontFamily: 'var(--font-jost, system-ui)',
+        }}>
+          {Math.round(card.confidence * 100)}% conf.
+        </span>
+      </div>
+
+      {/* CTA */}
+      <a href="/dashboard/actions" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        padding: '9px 0',
+        borderRadius: 9,
+        border: `1px solid ${C.goldBorder}`,
+        background: 'transparent',
+        color: C.gold,
+        fontFamily: 'var(--font-jost, system-ui)',
+        fontSize: 12,
+        fontWeight: 700,
+        textDecoration: 'none',
+        letterSpacing: '0.03em',
+        transition: 'background 0.15s',
+      }}>
+        Executar → €{Math.round(card.expected_value_eur / 1000)}K
+      </a>
     </div>
   )
 }
 
-// ─── Format currency ──────────────────────────────────────────────────────────
+// ─── Quick-access tile ────────────────────────────────────────────────────────
 
-function formatEur(value: number): string {
-  if (value >= 1_000_000) {
-    return `€${(value / 1_000_000).toFixed(2).replace('.', ',')} M`
-  }
-  return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value)
+function QuickTile({ icon, label, href, sub }: { icon: string; label: string; href: string; sub?: string }) {
+  return (
+    <a href={href} style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      padding: '14px 16px',
+      borderRadius: 10,
+      background: C.card,
+      border: `1px solid ${C.border}`,
+      color: C.cream55,
+      fontSize: 13,
+      fontWeight: 500,
+      textDecoration: 'none',
+      fontFamily: 'var(--font-jost, system-ui)',
+      transition: 'all 0.15s',
+    }}>
+      <span style={{ fontSize: 18 }}>{icon}</span>
+      <div style={{ minWidth: 0 }}>
+        <div>{label}</div>
+        {sub && <div style={{ fontSize: 10, color: C.cream28, marginTop: 1 }}>{sub}</div>}
+      </div>
+      <span style={{ marginLeft: 'auto', color: C.gold, fontSize: 14 }}>→</span>
+    </a>
+  )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Funnel health badge ──────────────────────────────────────────────────────
+
+function HealthBadge({ health }: { health: 'strong' | 'moderate' | 'weak' }) {
+  const map = {
+    strong:   { icon: '🟢', label: 'Forte',     color: C.green, bg: C.greenDim, border: C.greenBorder },
+    moderate: { icon: '🟡', label: 'Moderado',  color: C.amber, bg: C.amberDim, border: 'rgba(251,191,36,0.25)' },
+    weak:     { icon: '🔴', label: 'Fraco',     color: C.red,   bg: C.redDim,   border: C.redBorder },
+  }
+  const s = map[health]
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      padding: '4px 12px',
+      borderRadius: 20,
+      background: s.bg,
+      border: `1px solid ${s.border}`,
+      color: s.color,
+      fontFamily: 'var(--font-jost, system-ui)',
+      fontSize: 13,
+      fontWeight: 700,
+    }}>
+      {s.icon} {s.label}
+    </span>
+  )
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function DashboardHomePage() {
-  const [submissions, setSubmissions]         = useState<Submission[]>([])
-  const [actions, setActions]                 = useState<{ id: string; title: string; urgency?: string }[]>([])
-  const [loadingSubmissions, setLoadingSubs]  = useState(true)
-  const [loadingActions, setLoadingActions]   = useState(true)
+  const [data, setData]       = useState<RevenueSummary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [clock, setClock]     = useState('')
 
-  // Fetch submissions for KPI computation
+  // Live clock
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date()
+      setClock(now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }))
+    }
+    tick()
+    const id = setInterval(tick, 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Fetch revenue summary
   useEffect(() => {
     const ctrl = new AbortController()
-    fetch('/api/property-ai/submissions?org_id=agency-group&limit=100', { signal: ctrl.signal })
-      .then(r => r.ok ? r.json() as Promise<SubmissionsResponse> : Promise.reject())
-      .then(data => setSubmissions(data.submissions ?? []))
-      .catch(() => setSubmissions([]))
-      .finally(() => setLoadingSubs(false))
+    fetch('/api/revenue-command/summary', { signal: ctrl.signal })
+      .then(r => r.ok ? r.json() as Promise<RevenueSummary> : Promise.reject())
+      .then(d => { setData(d); setLoading(false) })
+      .catch(() => setLoading(false))
     return () => ctrl.abort()
   }, [])
 
-  // Fetch action queue
-  useEffect(() => {
-    const ctrl = new AbortController()
-    fetch('/api/agent/actions?limit=3', { signal: ctrl.signal })
-      .then(r => r.ok ? r.json() as Promise<ActionsResponse> : Promise.reject())
-      .then(data => {
-        const list = data.actions ?? []
-        if (list.length > 0) {
-          setActions(list.slice(0, 3).map(a => ({
-            id: a.id,
-            title: a.title ?? a.description ?? 'Acção pendente',
-            urgency: a.urgency ?? a.priority ?? 'ESTA SEMANA',
-          })))
-        } else {
-          setActions(FALLBACK_ACTIONS)
-        }
-      })
-      .catch(() => setActions(FALLBACK_ACTIONS))
-      .finally(() => setLoadingActions(false))
-    return () => ctrl.abort()
-  }, [])
-
-  // ── KPI computations ────────────────────────────────────────────────────────
-  const liveCount = submissions.filter(s => s.status === 'live').length
-
-  const pipelineCount = submissions.filter(s =>
-    ['ingesting', 'analyzing', 'enriching', 'generating'].includes(s.status)
-  ).length
-
-  const liveWithScore = submissions.filter(
-    s => s.status === 'live' && typeof s.intelligence?.demand_score === 'number'
-  )
-  const avgDemand = liveWithScore.length > 0
-    ? Math.round(liveWithScore.reduce((acc, s) => acc + (s.intelligence?.demand_score ?? 0), 0) / liveWithScore.length)
-    : 0
-
-  const homepageReady = submissions.filter(
-    s => (s.intelligence?.homepage_placement_score ?? 0) >= 70
-  ).length
-
-  // Estimated commission: live count × avg price €1.2M × 5%
-  const commissionEstimate = liveCount * 1_200_000 * 0.05
-
-  const isLoading = loadingSubmissions
+  const hasLeakage = (data?.total_leakage_eur ?? 0) > 0
+  const hasTopActions = (data?.top_actions?.length ?? 0) > 0
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: C.bg,
-      fontFamily: 'var(--font-jost, system-ui)',
-      color: C.cream,
-    }}>
+    <>
       <style>{`
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-        @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes ag-shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .ag-dash-link:hover { color: #c9a96e !important; }
-        .ag-ql-link {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 13px 18px;
-          border-radius: 10px;
-          background: #111e16;
-          border: 1px solid rgba(201,169,110,0.15);
-          color: rgba(244,240,230,0.55);
-          font-size: 13px;
-          font-weight: 500;
-          text-decoration: none;
-          font-family: var(--font-jost, system-ui);
-          transition: all 0.15s;
-        }
-        .ag-ql-link:hover {
-          border-color: rgba(201,169,110,0.35);
-          color: #f4f0e6;
-          background: rgba(201,169,110,0.05);
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .ag-ql:hover {
+          border-color: rgba(201,169,110,0.35) !important;
+          color: #f4f0e6 !important;
+          background: rgba(201,169,110,0.04) !important;
         }
       `}</style>
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div style={{
-        borderBottom: `1px solid ${C.border}`,
-        background: `linear-gradient(180deg, #0c1f15 0%, rgba(12,31,21,0.95) 100%)`,
-        backdropFilter: 'blur(12px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-      }}>
-        <div style={{ maxWidth: 1060, margin: '0 auto', padding: '0 32px' }}>
-          {/* Breadcrumb */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            paddingTop: 12,
-            paddingBottom: 4,
-          }}>
-            <span style={{
-              color: C.gold,
-              fontSize: 11,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              fontWeight: 500,
-            }}>
-              Dashboard
-            </span>
-          </div>
+      <div style={{ minHeight: '100vh', background: C.bg, fontFamily: 'var(--font-jost, system-ui)' }}>
 
-          {/* Title row */}
-          <div style={{ paddingBottom: 22 }}>
+        {/* ── Sticky header ───────────────────────────────────────────────── */}
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          background: `linear-gradient(180deg, #0c1f15 0%, rgba(12,31,21,0.97) 100%)`,
+          borderBottom: `1px solid ${C.divider}`,
+          padding: '16px 32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16,
+        }}>
+          <div>
+            <p style={{
+              fontFamily: 'var(--font-jost, system-ui)',
+              fontSize: 10,
+              color: C.cream28,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              margin: '0 0 2px',
+            }}>
+              Revenue Command Center
+            </p>
             <h1 style={{
               fontFamily: 'var(--font-cormorant, serif)',
-              fontSize: 38,
-              fontWeight: 300,
-              letterSpacing: '0.02em',
+              fontSize: 28,
+              fontWeight: 600,
               color: C.cream,
-              lineHeight: 1.1,
               margin: 0,
+              letterSpacing: '0.01em',
             }}>
-              Revenue{' '}
-              <span style={{ color: C.gold, fontStyle: 'italic' }}>Intelligence</span>
+              Como faço mais dinheiro{' '}
+              <em style={{ color: C.gold }}>hoje?</em>
             </h1>
-            <p style={{
-              color: C.cream28,
-              fontSize: 12,
-              marginTop: 7,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              fontFamily: 'var(--font-jost, system-ui)',
-            }}>
-              Sistema Autónomo de Receita · AG Elite Activo
-            </p>
           </div>
-        </div>
-      </div>
 
-      {/* ── Body ───────────────────────────────────────────────────────────── */}
-      <div style={{
-        maxWidth: 1060,
-        margin: '0 auto',
-        padding: '32px 32px 64px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 32,
-        animation: 'fadeUp 0.35s ease',
-      }}>
-
-        {/* ── KPI Cards ────────────────────────────────────────────────────── */}
-        <section>
-          <p style={{
-            fontSize: 10,
-            color: C.cream28,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            fontWeight: 600,
-            marginBottom: 14,
-          }}>
-            Visão Geral do Portfolio
-          </p>
-          {isLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+            {/* Live clock */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 12,
+              fontFamily: 'var(--font-cormorant, serif)',
+              fontSize: 24,
+              fontWeight: 600,
+              color: C.cream55,
+              letterSpacing: '0.02em',
             }}>
-              {[0,1,2,3].map(i => (
-                <div key={i} style={{
-                  background: C.card,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 16,
-                  height: 130,
-                  animation: 'pulse 1.8s ease infinite',
-                  animationDelay: `${i * 0.12}s`,
-                }} />
-              ))}
+              {clock}
             </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 12,
-            }}>
-              <KpiCard
-                icon="🏛"
-                label="Imóveis Live"
-                value={liveCount}
-                sub="Listings activos"
-                accent
-              />
-              <KpiCard
-                icon="⟳"
-                label="Pipeline de Análise"
-                value={pipelineCount}
-                sub="Em processamento IA"
-              />
-              <KpiCard
-                icon="◈"
-                label="Score Médio Demand"
-                value={liveWithScore.length > 0 ? `${avgDemand}` : '—'}
-                sub="Imóveis live com score"
-              />
-              <KpiCard
-                icon="✦"
-                label="Prontos p/ Homepage"
-                value={homepageReady}
-                sub="Score placement ≥ 70"
-              />
-            </div>
-          )}
-        </section>
 
-        {/* ── Two-column: Actions + Revenue ────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
-
-          {/* Action Queue */}
-          <section>
+            {/* SH-ROS badge */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 14,
+              gap: 7,
+              background: C.goldDim,
+              border: `1px solid ${C.goldBorder}`,
+              borderRadius: 8,
+              padding: '5px 12px',
             }}>
-              <p style={{
+              <div style={{
+                width: 6, height: 6, borderRadius: '50%', background: C.gold,
+                animation: 'pulse 2s ease infinite',
+              }} />
+              <span style={{
+                fontFamily: 'var(--font-jost, system-ui)',
                 fontSize: 10,
-                color: C.cream28,
-                letterSpacing: '0.1em',
+                color: C.gold,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                fontWeight: 600,
-                margin: 0,
               }}>
-                Acções Prioritárias
-              </p>
-              <a href="/dashboard/actions" className="ag-dash-link" style={{
-                color: C.cream28,
+                SH-ROS · AG Elite
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Body ────────────────────────────────────────────────────────── */}
+        <div style={{
+          maxWidth: 1080,
+          margin: '0 auto',
+          padding: '28px 32px 72px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 32,
+          animation: 'fadeUp 0.3s ease',
+        }}>
+
+          {/* ── Revenue Pulse — 4 KPI cards ─────────────────────────────── */}
+          <section>
+            <p style={{
+              fontSize: 10, color: C.cream28, letterSpacing: '0.1em',
+              textTransform: 'uppercase', fontWeight: 600, marginBottom: 12,
+            }}>
+              Pulso de Receita
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              {loading ? (
+                [...Array(4)].map((_, i) => (
+                  <div key={i} style={{
+                    background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, height: 120,
+                    animation: 'pulse 1.8s ease infinite', animationDelay: `${i * 0.1}s`,
+                  }} />
+                ))
+              ) : (
+                <>
+                  <PulseCard
+                    icon="🏛"
+                    label="Pipeline Total"
+                    value={fmtM(data?.pipeline_value_eur ?? 0)}
+                    sub={`${data?.live_count ?? 0} imóveis live`}
+                    accent
+                  />
+                  <PulseCard
+                    icon="✦"
+                    label="Comissão Potencial"
+                    value={fmtM(data?.commission_potential_eur ?? 0)}
+                    sub="A 5% · portfolio actual"
+                    accent
+                  />
+                  <PulseCard
+                    icon="◈"
+                    label="Previsão Mensal"
+                    value={fmtM(data?.monthly_forecast_eur ?? 0)}
+                    sub="Estimativa de fecho mensal"
+                  />
+                  <PulseCard
+                    icon="⚠"
+                    label="Receita em Risco"
+                    value={hasLeakage ? fmtM(data!.total_leakage_eur) : '€0'}
+                    sub={hasLeakage ? `${data?.listings_with_leakage} imóveis em perda` : 'Sem perdas detectadas'}
+                    danger={hasLeakage}
+                  />
+                </>
+              )}
+            </div>
+          </section>
+
+          {/* ── Top 3 Actions — "As tuas 3 acções mais importantes hoje" ─── */}
+          <section>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <p style={{
+                  fontSize: 10, color: C.cream28, letterSpacing: '0.1em',
+                  textTransform: 'uppercase', fontWeight: 600, margin: '0 0 4px',
+                }}>
+                  As Tuas 3 Acções Mais Importantes Hoje
+                </p>
+                <p style={{ fontSize: 12, color: C.cream55, margin: 0 }}>
+                  Ordenadas por impacto em €. Cada acção tem aprovação humana antes de execução.
+                </p>
+              </div>
+              <a href="/dashboard/actions" style={{
+                fontFamily: 'var(--font-jost, system-ui)',
                 fontSize: 11,
+                color: C.cream28,
                 textDecoration: 'none',
-                letterSpacing: '0.04em',
-                transition: 'color 0.15s',
+                whiteSpace: 'nowrap',
               }}>
                 Ver todas →
               </a>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {loadingActions ? (
-                [0, 1, 2].map(i => (
+            <div style={{ display: 'flex', gap: 14 }}>
+              {loading ? (
+                [...Array(3)].map((_, i) => (
                   <div key={i} style={{
-                    background: C.card,
-                    border: `1px solid ${C.border}`,
-                    borderLeft: `3px solid ${C.goldBorder}`,
-                    borderRadius: '0 12px 12px 0',
-                    height: 50,
-                    animation: 'pulse 1.8s ease infinite',
-                    animationDelay: `${i * 0.1}s`,
+                    flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, height: 220,
+                    animation: 'pulse 1.8s ease infinite', animationDelay: `${i * 0.12}s`,
                   }} />
                 ))
-              ) : (
-                actions.map(a => (
-                  <ActionCard key={a.id} title={a.title} urgency={a.urgency} />
+              ) : hasTopActions ? (
+                (data!.top_actions ?? []).slice(0, 3).map((card, i) => (
+                  <ActionCard key={card.action_id} card={card} rank={i + 1} />
                 ))
+              ) : (
+                <div style={{
+                  flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 14,
+                  padding: '32px 24px', textAlign: 'center',
+                }}>
+                  <p style={{ color: C.cream55, fontSize: 14, margin: 0 }}>
+                    Adicione imóveis para activar as recomendações de receita.
+                  </p>
+                  <a href="/dashboard/properties" style={{
+                    display: 'inline-block',
+                    marginTop: 14,
+                    padding: '9px 20px',
+                    borderRadius: 9,
+                    border: `1px solid ${C.goldBorder}`,
+                    color: C.gold,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    fontFamily: 'var(--font-jost, system-ui)',
+                  }}>
+                    Adicionar Imóvel →
+                  </a>
+                </div>
               )}
             </div>
           </section>
 
-          {/* Revenue Summary */}
-          <section>
-            <p style={{
-              fontSize: 10,
-              color: C.cream28,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              fontWeight: 600,
-              marginBottom: 14,
-            }}>
-              Receita Estimada
-            </p>
+          {/* ── Intelligence row ─────────────────────────────────────────── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
+            {/* Funnel health */}
+            <div style={{
+              background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '22px 22px',
+            }}>
+              <p style={{
+                fontSize: 10, color: C.cream28, letterSpacing: '0.1em',
+                textTransform: 'uppercase', fontWeight: 600, margin: '0 0 14px',
+              }}>
+                Saúde do Funil de Vendas
+              </p>
+
+              {loading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <Shimmer h={30} w="60%" />
+                  <Shimmer h={18} />
+                  <Shimmer h={18} />
+                </div>
+              ) : (
+                <>
+                  <HealthBadge health={data?.funnel_health ?? 'moderate'} />
+                  <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {[
+                      { label: 'Imóveis live',    value: String(data?.live_count ?? 0),        dim: 'listings activos' },
+                      { label: 'Score de procura', value: String(data?.avg_demand_score ?? 0) + '/100', dim: 'média do portfolio' },
+                      { label: 'Leads quentes',   value: String(data?.hot_leads_count ?? 0),   dim: 'score ≥ 75' },
+                      { label: 'Deals activos',   value: String(data?.active_deals ?? 0),      dim: 'em negociação' },
+                    ].map(item => (
+                      <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: 'var(--font-jost, system-ui)', fontSize: 12, color: C.cream55 }}>
+                          {item.label}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-jost, system-ui)', fontSize: 14, fontWeight: 700, color: C.cream }}>
+                          {item.value}
+                          <span style={{ fontSize: 10, color: C.cream28, marginLeft: 5 }}>{item.dim}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Revenue leakage */}
             <div style={{
               background: C.card,
-              border: `1px solid ${C.goldBorder}`,
-              borderRadius: 16,
-              padding: '24px 22px',
-              position: 'relative',
-              overflow: 'hidden',
+              border: `1px solid ${hasLeakage && !loading ? C.redBorder : C.border}`,
+              borderRadius: 14,
+              padding: '22px 22px',
             }}>
-              {/* Decorative top bar */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 2,
-                background: 'linear-gradient(90deg, transparent 0%, #c9a96e 40%, #c9a96e 60%, transparent 100%)',
-              }} />
-
               <p style={{
-                color: C.cream28,
-                fontSize: 11,
-                letterSpacing: '0.07em',
-                textTransform: 'uppercase',
-                margin: '0 0 10px',
-                fontFamily: 'var(--font-jost, system-ui)',
+                fontSize: 10, color: C.cream28, letterSpacing: '0.1em',
+                textTransform: 'uppercase', fontWeight: 600, margin: '0 0 14px',
               }}>
-                Comissão Potencial Estimada
+                Receita em Risco
               </p>
 
-              {isLoading ? (
-                <div style={{
-                  height: 52,
-                  width: '70%',
-                  borderRadius: 8,
-                  background: C.goldDim,
-                  animation: 'pulse 1.8s ease infinite',
-                }} />
+              {loading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <Shimmer h={44} w="70%" />
+                  <Shimmer h={16} />
+                  <Shimmer h={16} />
+                </div>
+              ) : hasLeakage ? (
+                <>
+                  <div style={{
+                    fontFamily: 'var(--font-cormorant, serif)',
+                    fontSize: 38,
+                    fontWeight: 700,
+                    color: C.red,
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1,
+                    marginBottom: 8,
+                  }}>
+                    {fmtM(data!.total_leakage_eur)}
+                    <span style={{ fontSize: 14, color: C.cream28, marginLeft: 8 }}>/mês</span>
+                  </div>
+                  <p style={{ fontFamily: 'var(--font-jost, system-ui)', fontSize: 12, color: C.cream55, margin: '0 0 16px' }}>
+                    {data!.listings_with_leakage} imóvel(eis) com receita em perda detectada — acção recomendada imediata.
+                  </p>
+                  <a href="/dashboard/executive" style={{
+                    display: 'inline-block',
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    background: C.redDim,
+                    border: `1px solid ${C.redBorder}`,
+                    color: C.red,
+                    fontFamily: 'var(--font-jost, system-ui)',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                  }}>
+                    Ver Análise Completa →
+                  </a>
+                </>
               ) : (
-                <p style={{
-                  color: C.gold,
-                  fontFamily: 'var(--font-cormorant, serif)',
-                  fontSize: 42,
-                  fontWeight: 600,
-                  lineHeight: 1,
-                  margin: 0,
-                  letterSpacing: '-0.01em',
-                }}>
-                  {formatEur(commissionEstimate)}
-                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 24 }}>✓</span>
+                  <p style={{ fontFamily: 'var(--font-jost, system-ui)', fontSize: 13, color: C.green, margin: 0, fontWeight: 600 }}>
+                    Sem perdas detectadas
+                  </p>
+                  <p style={{ fontFamily: 'var(--font-jost, system-ui)', fontSize: 11, color: C.cream55, margin: 0 }}>
+                    Todos os imóveis dentro das bandas de preço óptimas.
+                  </p>
+                </div>
               )}
+            </div>
+          </div>
 
-              <p style={{
-                color: C.cream28,
-                fontSize: 11,
-                marginTop: 12,
-                fontFamily: 'var(--font-jost, system-ui)',
-                lineHeight: 1.5,
-              }}>
-                Baseado em {liveCount} imóve{liveCount !== 1 ? 'is' : 'l'} live
-                · preço médio €1,2M · comissão 5%
-              </p>
-
-              <div style={{
-                marginTop: 16,
-                paddingTop: 14,
-                borderTop: `1px solid ${C.divider}`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}>
-                <div style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: C.gold,
-                  animation: 'pulse 2s ease infinite',
-                }} />
-                <span style={{
-                  color: C.cream28,
-                  fontSize: 10,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  fontFamily: 'var(--font-jost, system-ui)',
-                }}>
-                  Estimativa indicativa · sujeita a negociação
-                </span>
-              </div>
+          {/* ── Quick Access Grid ────────────────────────────────────────── */}
+          <section>
+            <p style={{
+              fontSize: 10, color: C.cream28, letterSpacing: '0.1em',
+              textTransform: 'uppercase', fontWeight: 600, marginBottom: 12,
+            }}>
+              Acesso Rápido
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <QuickTile icon="☀️" label="Brief Diário"       href="/dashboard/daily-brief"        sub="Começa aqui" />
+              <QuickTile icon="⚡" label="Acções Prioritárias" href="/dashboard/actions"            sub="Fila de execução" />
+              <QuickTile icon="🏠" label="Property AI Engine"  href="/dashboard/properties"        sub="Imóveis + análise IA" />
+              <QuickTile icon="🎯" label="Centro de Conversão" href="/dashboard/conversion-command" sub="Funil + probabilidades" />
+              <QuickTile icon="📊" label="Executive Revenue"   href="/dashboard/executive"          sub="P&L + leakage" />
+              <QuickTile icon="🚀" label="Activação de Agente" href="/dashboard/onboarding"         sub="< 15 min setup" />
             </div>
           </section>
-        </div>
 
-        {/* ── Quick Links ──────────────────────────────────────────────────── */}
-        <section>
+          {/* ── Footer ──────────────────────────────────────────────────── */}
           <p style={{
+            fontFamily: 'var(--font-jost, system-ui)',
             fontSize: 10,
             color: C.cream28,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            fontWeight: 600,
-            marginBottom: 14,
+            letterSpacing: '0.06em',
+            textAlign: 'center',
+            marginTop: 4,
           }}>
-            Acesso Rápido
+            Agency Group · AMI 22506 · SH-ROS recalibra diariamente
+            {data?.computed_at ? ` · Dados de ${fmtTime(data.computed_at)}` : ''}
           </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            <a href="/dashboard/properties" className="ag-ql-link">
-              <span>🏠 Ver todos os imóveis</span>
-              <span style={{ fontSize: 14, color: C.gold }}>→</span>
-            </a>
-            <a href="/dashboard/actions" className="ag-ql-link">
-              <span>⚡ Acções Prioritárias</span>
-              <span style={{ fontSize: 14, color: C.gold }}>→</span>
-            </a>
-            <a href="/dashboard/executive" className="ag-ql-link">
-              <span>📊 Executive Revenue</span>
-              <span style={{ fontSize: 14, color: C.gold }}>→</span>
-            </a>
-          </div>
-        </section>
-
-        {/* ── Footer note ──────────────────────────────────────────────────── */}
-        <p style={{
-          color: C.cream28,
-          fontSize: 10,
-          letterSpacing: '0.06em',
-          textAlign: 'center',
-          marginTop: 8,
-          fontFamily: 'var(--font-jost, system-ui)',
-        }}>
-          Agency Group · AMI 22506 · Comissão 5% · CPCV 50% + Escritura 50%
-        </p>
-
+        </div>
       </div>
-    </div>
+    </>
   )
 }

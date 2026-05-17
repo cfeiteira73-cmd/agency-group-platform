@@ -39,6 +39,7 @@ const NAV_ITEMS = [
   { icon: '🎯', label: 'Centro de Conversão',    href: '/dashboard/conversion-command' },
   { icon: '📊', label: 'Executive Revenue',       href: '/dashboard/executive' },
   { icon: '⚙️', label: 'Simulações',              href: '/dashboard/simulations' },
+  { icon: '🚀', label: 'Activar Agente',          href: '/dashboard/onboarding' },
 ] as const
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
