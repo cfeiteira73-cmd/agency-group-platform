@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import type {
   PropertySubmission,
   PropertyAnalysis,
+  PropertyType,
   InputFile,
   ArchitectureStyle,
   PropertyCondition,
@@ -15,6 +16,7 @@ import { visionAnalyzer } from './visionAnalyzer'
 import { ocrDocumentIntelligence } from './ocrDocumentIntelligence'
 import { voiceIntelligence } from './voiceIntelligence'
 import { geospatialIntelligence, type GeospatialResult } from './geospatialIntelligence'
+import { urlScraper, type UrlScrapedData } from './urlScraper'
 
 const sb = supabaseAdmin as unknown as { from: (t: string) => unknown }
 
@@ -96,41 +98,67 @@ function buildPropertyAnalysis(
   vision: Awaited<ReturnType<typeof visionAnalyzer.analyze>>,
   docExtraction: DocumentExtractionResult | undefined,
   voiceResult: VoiceAnalysisResult | undefined,
-  geo: GeospatialResult
+  geo: GeospatialResult,
+  urlData: UrlScrapedData | null,
 ): PropertyAnalysis {
   const analysis_id = crypto.randomUUID()
   const now = new Date()
 
+  // ── Merge property_type: url scraper > voice > vision ──────────────────────
+  const VALID_PROPERTY_TYPES: PropertyType[] = ['apartment', 'villa', 'townhouse', 'penthouse', 'studio', 'commercial', 'land', 'garage']
+  const rawUrlPt = urlData?.property_type
+  const urlPt: PropertyType | undefined = rawUrlPt && VALID_PROPERTY_TYPES.includes(rawUrlPt) ? rawUrlPt : undefined
+  const visionPt: PropertyType | undefined = vision.property_type ?? undefined
+  const property_type: PropertyType | undefined = urlPt ?? visionPt ?? undefined
+
+  // ── Bedrooms: url > voice > vision ─────────────────────────────────────────
   const bedrooms =
-    vision.bedroom_count > 0
-      ? vision.bedroom_count
-      : voiceResult?.extracted_facts.bedrooms
+    (urlData?.bedrooms && urlData.bedrooms > 0 ? urlData.bedrooms : null)
+    ?? (voiceResult?.extracted_facts.bedrooms ?? null)
+    ?? (vision.bedroom_count > 0 ? vision.bedroom_count : null)
+    ?? undefined
 
+  // ── Bathrooms: url > voice > vision ────────────────────────────────────────
   const bathrooms =
-    vision.bathroom_count > 0
-      ? vision.bathroom_count
-      : voiceResult?.extracted_facts.bathrooms
+    (urlData?.bathrooms && urlData.bathrooms > 0 ? urlData.bathrooms : null)
+    ?? (voiceResult?.extracted_facts.bathrooms ?? null)
+    ?? (vision.bathroom_count > 0 ? vision.bathroom_count : null)
+    ?? undefined
 
+  // ── Area: url > doc > voice ─────────────────────────────────────────────────
   const area_sqm =
-    docExtraction?.area_sqm ?? voiceResult?.extracted_facts.area_sqm
+    (urlData?.area_sqm && urlData.area_sqm > 0 ? urlData.area_sqm : null)
+    ?? (docExtraction?.area_sqm ?? null)
+    ?? (voiceResult?.extracted_facts.area_sqm ?? null)
+    ?? undefined
 
-  const energy_class = mergeEnergyClass(undefined, docExtraction?.energy_class)
+  // ── Energy class: url > doc > vision ───────────────────────────────────────
+  const ENERGY_CLASSES: EnergyClass[] = ['A+', 'A', 'B', 'B-', 'C', 'D', 'E', 'F', 'unknown']
+  const rawUrlEnergy = urlData?.energy_class as EnergyClass | undefined
+  const urlEnergy: EnergyClass | undefined = rawUrlEnergy && ENERGY_CLASSES.includes(rawUrlEnergy) ? rawUrlEnergy : undefined
+  const energy_class = mergeEnergyClass(urlEnergy, docExtraction?.energy_class)
 
-  const condition: PropertyCondition = vision.renovation_probability > 0.6
-    ? 'needs_renovation'
-    : vision.renovation_probability < 0.2
-      ? 'excellent'
-      : 'good'
+  const condition: PropertyCondition =
+    (urlData?.condition === 'new' ? 'new' :
+     urlData?.condition === 'excellent' ? 'excellent' :
+     urlData?.condition === 'good' ? 'good' :
+     urlData?.condition === 'needs_renovation' ? 'needs_renovation' :
+     vision.renovation_probability > 0.6 ? 'needs_renovation'
+     : vision.renovation_probability < 0.2 ? 'excellent'
+     : 'good')
 
   const architectureStyle: ArchitectureStyle =
     vision.architecture_style as ArchitectureStyle ?? 'contemporary'
 
   const stagingQuality: StagingQuality = vision.furniture_staging
 
-  const location = geo.inferred_city
+  // ── Location: url > geo ─────────────────────────────────────────────────────
+  const locationCity = urlData?.location_city ?? geo.inferred_city
+  const locationNeighborhood = urlData?.location_neighborhood ?? geo.inferred_neighborhood
+  const location = locationCity
     ? {
-        city: geo.inferred_city,
-        neighborhood: geo.inferred_neighborhood,
+        city: locationCity,
+        neighborhood: locationNeighborhood,
         walkability_score: geo.walkability_score,
         premium_zone: geo.premium_zone,
         zone_classification: geo.zone_classification,
@@ -138,29 +166,37 @@ function buildPropertyAnalysis(
       }
     : undefined
 
+  // ── Boolean features: OR across all sources ─────────────────────────────────
+  const has_pool    = vision.has_pool    || Boolean(urlData?.has_pool)
+  const has_garden  = vision.has_garden  || Boolean(urlData?.has_garden)
+  const has_parking = vision.has_parking || Boolean(urlData?.has_garage)
+  const has_elevator = vision.has_elevator || Boolean(urlData?.has_elevator)
+  const has_sea_view = vision.has_sea_view || Boolean(urlData?.has_sea_view)
+
   const confidence = weightedConfidence([
     { value: vision.confidence, weight: 3 },
     { value: geo.confidence, weight: 2 },
     { value: docExtraction?.extraction_confidence ?? 0.3, weight: 1 },
     { value: voiceResult?.confidence ?? 0.3, weight: 1 },
+    { value: urlData?.confidence ?? 0, weight: urlData ? 2 : 0 },
   ])
 
   return {
     analysis_id,
     submission_id: submissionId,
     org_id: orgId,
-    property_type: undefined, // to be inferred in a later enrichment pass
+    property_type,
     bedrooms,
     bathrooms,
     area_sqm,
-    floor: undefined,
+    floor: urlData?.floor ?? undefined,
     condition,
     energy_class,
-    has_pool: vision.has_pool,
-    has_garden: vision.has_garden,
-    has_parking: false, // requires dedicated parking detection in future
-    has_elevator: false,
-    has_sea_view: vision.has_sea_view,
+    has_pool,
+    has_garden,
+    has_parking,
+    has_elevator,
+    has_sea_view,
     has_golf_view: vision.has_golf_view,
     has_city_view: vision.has_city_view,
     has_mountain_view: vision.has_mountain_view,
@@ -192,12 +228,13 @@ class MediaIngestionOrchestrator {
     const pdfFiles = input_files.filter((f) => f.type === 'pdf')
     const audioFiles = input_files.filter((f) => f.type === 'audio')
 
-    const descriptionText = raw_description ?? submission.raw_url ?? ''
+    const hasRawUrl = !!submission.raw_url && submission.raw_url.startsWith('http')
+    const descriptionText = raw_description ?? (hasRawUrl ? '' : submission.raw_url ?? '')
 
     const allImageUrls = [...photoUrls]
 
-    // Run all analyzers in parallel
-    const [visionResult, docResults, voiceResults, geoResult] = await Promise.all([
+    // Run all analyzers in parallel — including URL scraper if raw_url provided
+    const [visionResult, docResults, voiceResults, geoResult, urlData] = await Promise.all([
       photoUrls.length > 0
         ? visionAnalyzer.analyze(allImageUrls, submission_id)
         : visionAnalyzer.analyze([], submission_id),
@@ -214,7 +251,16 @@ class MediaIngestionOrchestrator {
         )
       ),
 
-      geospatialIntelligence.analyzeLocation(descriptionText, allImageUrls, submission_id),
+      geospatialIntelligence.analyzeLocation(
+        descriptionText || (hasRawUrl ? submission.raw_url! : ''),
+        allImageUrls,
+        submission_id,
+      ),
+
+      // Scrape website URL if provided — enriches property data significantly
+      hasRawUrl
+        ? urlScraper.scrape(submission.raw_url!, submission_id)
+        : Promise.resolve(null as UrlScrapedData | null),
     ])
 
     // Merge document extractions — take best energy_class and smallest area_sqm
@@ -244,7 +290,8 @@ class MediaIngestionOrchestrator {
       visionResult,
       mergedDoc,
       mergedVoice,
-      geoResult
+      geoResult,
+      urlData,
     )
 
     const missing_info = detectMissingInfo(analysis, mergedDoc)

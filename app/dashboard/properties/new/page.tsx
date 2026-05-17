@@ -222,7 +222,7 @@ function DragDropZone({ files, onFiles, disabled }: { files: File[]; onFiles: (f
         transform: dragging ? 'scale(1.01)' : 'scale(1)',
       }}
     >
-      <input ref={inputRef} type="file" multiple accept="image/*,video/*,.pdf,audio/*"
+      <input ref={inputRef} type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.zip,audio/*"
         style={{ display: 'none' }} onChange={e => e.target.files && onFiles(Array.from(e.target.files))} disabled={disabled} />
 
       {!hasFiles ? (
@@ -240,10 +240,10 @@ function DragDropZone({ files, onFiles, disabled }: { files: File[]; onFiles: (f
             Drop property files here
           </p>
           <p style={{ color: C.cream28, fontSize: 12, textAlign: 'center', maxWidth: 320, lineHeight: 1.6 }}>
-            Photos · Videos · PDFs · Voice memos — up to 50 files.<br/>AI extracts everything automatically.
+Photos · Videos · PDFs · Word · ZIP · Voice memos — up to 50 files.<br/>AI extracts everything automatically.
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 20 }}>
-            {['JPG / PNG', 'MP4 / MOV', 'PDF', 'M4A / MP3'].map(t => (
+            {['JPG / PNG', 'MP4 / MOV', 'PDF', 'DOC / ZIP', 'M4A / MP3'].map(t => (
               <span key={t} style={{
                 padding: '4px 12px', borderRadius: 99, fontSize: 10,
                 background: C.goldDim, border: `1px solid ${C.goldBorder}`,
@@ -758,9 +758,9 @@ export default function NewPropertyPage() {
             <div style={{ display: 'flex', gap: 12 }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', fontSize: 10, color: C.cream28, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-                  URL — Instagram, website, listing
+                  URL — idealista, imovirtual, OLX, ERA, RE/MAX, qualquer website
                 </label>
-                <input type="url" placeholder="https://www.instagram.com/p/…"
+                <input type="url" placeholder="https://www.idealista.pt/imovel/…"
                   value={state.rawUrl}
                   onChange={e => setState(s => ({ ...s, rawUrl: e.target.value }))}
                   style={{

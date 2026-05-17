@@ -15,13 +15,50 @@ export const maxDuration = 30
 const BUCKET = 'property-media'
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50 MB per file
 const ALLOWED_MIME_PREFIXES = ['image/', 'video/', 'audio/', 'application/pdf']
+const ALLOWED_MIME_EXACT = [
+  'application/pdf',
+  // Word documents
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  // PowerPoint
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  // ZIP archives (often contain photo galleries from agencies)
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/octet-stream', // some browsers send ZIP as this
+]
 
-function detectFileType(mime: string): 'photo' | 'video' | 'audio' | 'pdf' | 'drone' {
+// Extension-based fallback when MIME is wrong (common in Windows)
+const ALLOWED_EXTENSIONS = new Set([
+  'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif', 'tiff', 'bmp', // photos
+  'mp4', 'mov', 'avi', 'mkv', 'webm',    // videos
+  'mp3', 'wav', 'm4a', 'ogg', 'aac',     // audio
+  'pdf',                                   // PDFs
+  'doc', 'docx',                          // Word
+  'ppt', 'pptx',                          // PowerPoint
+  'zip',                                   // ZIP archives
+])
+
+function isAllowedFile(mime: string, filename: string): boolean {
+  if (ALLOWED_MIME_PREFIXES.some(p => mime.startsWith(p))) return true
+  if (ALLOWED_MIME_EXACT.includes(mime)) return true
+  const ext = filename.split('.').pop()?.toLowerCase() ?? ''
+  return ALLOWED_EXTENSIONS.has(ext)
+}
+
+function detectFileType(mime: string, filename?: string): 'photo' | 'video' | 'audio' | 'pdf' | 'drone' {
   if (mime.startsWith('image/')) return 'photo'
   if (mime.startsWith('video/')) return 'video'
   if (mime.startsWith('audio/')) return 'audio'
   if (mime === 'application/pdf') return 'pdf'
-  return 'photo' // default
+  // Extension fallback
+  const ext = (filename ?? '').split('.').pop()?.toLowerCase() ?? ''
+  if (['doc', 'docx', 'ppt', 'pptx', 'zip'].includes(ext)) return 'pdf' // treat docs as pdf pipeline
+  if (['mp3', 'wav', 'm4a', 'ogg', 'aac'].includes(ext)) return 'audio'
+  if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext)) return 'video'
+  if (['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'tiff'].includes(ext)) return 'photo'
+  return 'pdf' // default for unknown — will be OCR-processed
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -63,10 +100,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   for (const file of fileEntries) {
     if (!(file instanceof File)) continue
 
-    // Validate MIME type
+    // Validate MIME type (with extension fallback — browsers often mis-report DOCX/ZIP)
     const mime = file.type || 'application/octet-stream'
-    const isAllowed = ALLOWED_MIME_PREFIXES.some((p) => mime.startsWith(p))
-    if (!isAllowed) {
+    if (!isAllowedFile(mime, file.name)) {
       errors.push(`Skipped ${file.name}: unsupported type ${mime}`)
       continue
     }
@@ -114,7 +150,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       results.push({
         file_id:    fileId,
         url:        publicUrl,
-        type:       detectFileType(mime),
+        type:       detectFileType(mime, file.name),
         mime_type:  mime,
         size_bytes: file.size,
         name:       file.name,
