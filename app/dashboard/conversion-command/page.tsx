@@ -279,13 +279,23 @@ export default function ConversionCommandPage() {
   // built from the prediction's p_close + property_value using the same engine.
   const [actionCards, setActionCards] = useState<RevenueImpactCard[]>([])
 
-  const fetchFunnel = useCallback((value: number, signal: AbortSignal) => {
+  const fetchFunnel = useCallback((value: number, intentOption: IntentOption, signal: AbortSignal) => {
     setLoading(true)
     setError(null)
 
+    // p_close baseline varies by buyer intent profile
+    const P_CLOSE_BY_INTENT: Record<IntentOption, string> = {
+      investor:      '0.12',
+      luxury_buyer:  '0.09',
+      family:        '0.07',
+      relocating:    '0.10',
+      international: '0.06',
+    }
+
     const params = new URLSearchParams({
       property_value_eur: String(value),
-      current_p_close: '0.08',
+      current_p_close: P_CLOSE_BY_INTENT[intentOption] ?? '0.08',
+      buyer_intent: intentOption,
     })
 
     fetch(`/api/conversion/funnel?${params.toString()}`, { signal })
@@ -313,9 +323,9 @@ export default function ConversionCommandPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetchFunnel(propertyValue, controller.signal)
+    fetchFunnel(propertyValue, intent, controller.signal)
     return () => controller.abort()
-  }, [propertyValue, fetchFunnel])
+  }, [propertyValue, intent, fetchFunnel])
 
   const prediction = data?.prediction
   const topAction = data?.top_action ?? null

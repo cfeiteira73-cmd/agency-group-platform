@@ -201,7 +201,8 @@ export function predictRevenue(
   void agents // agents reserved for future calibration
 
   const monthly = listings.reduce((sum, l) => {
-    return sum + l.listing_price_eur * 0.05 * (l.demand_score / 100) * 0.08
+    // 0.143 ≈ 1/7 months — correct monthly close rate for 210-day median DOM
+    return sum + l.listing_price_eur * 0.05 * (l.demand_score / 100) * 0.143
   }, 0)
 
   const quarterly = monthly * 3 * 0.85

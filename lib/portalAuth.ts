@@ -9,7 +9,7 @@
 // =============================================================================
 
 import { NextRequest } from 'next/server'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 
 export async function isPortalAuth(req: NextRequest): Promise<boolean> {
@@ -35,7 +35,15 @@ export async function isPortalAuth(req: NextRequest): Promise<boolean> {
   const payload  = cookieValue.slice(0, dotIdx)
   const sig      = cookieValue.slice(dotIdx + 1)
   const expected = createHmac('sha256', secret).update(payload).digest('hex')
-  if (expected !== sig) return false
+  // Constant-time comparison to prevent timing oracle attacks
+  try {
+    const expectedBuf = Buffer.from(expected, 'hex')
+    const sigBuf      = Buffer.from(sig, 'hex')
+    if (sigBuf.length !== expectedBuf.length) return false
+    if (!timingSafeEqual(expectedBuf, sigBuf)) return false
+  } catch {
+    return false
+  }
 
   try {
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString())

@@ -348,9 +348,10 @@ function compToValue(
       comp.condition,
       comp.bedrooms,
     )
-    // Reverse-adjust for input property's own condition to get "neutral" comp
+    // Reverse comp's condition adjustment, then apply input's condition
+    const compCondMult  = CONDITION_AVM_MULT[comp.condition  ?? 'good'] ?? 1.0
     const inputCondMult = CONDITION_AVM_MULT[input.condition ?? 'good'] ?? 1.0
-    return Math.round(adjusted / inputCondMult * inputCondMult)
+    return Math.round(adjusted / compCondMult * inputCondMult)
   }
 
   // Fallback: use raw price as comp (less reliable)

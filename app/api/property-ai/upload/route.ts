@@ -26,7 +26,8 @@ const ALLOWED_MIME_EXACT = [
   // ZIP archives (often contain photo galleries from agencies)
   'application/zip',
   'application/x-zip-compressed',
-  'application/octet-stream', // some browsers send ZIP as this
+  // NOTE: application/octet-stream intentionally excluded — too permissive.
+  // ZIP files sent as octet-stream are accepted via the ALLOWED_EXTENSIONS fallback below.
 ]
 
 // Extension-based fallback when MIME is wrong (common in Windows)

@@ -5,7 +5,7 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 import type { ReactNode } from 'react'
 
 async function verifyPortalCookie(token: string): Promise<boolean> {
@@ -17,8 +17,12 @@ async function verifyPortalCookie(token: string): Promise<boolean> {
     const payload = token.slice(0, dotIdx)
     const sig     = token.slice(dotIdx + 1)
     // Must match lib/portalAuth.ts exactly — Node.js HMAC, base64url decode
-    const expected = createHmac('sha256', secret).update(payload).digest('hex')
-    if (expected !== sig) return false
+    const expected    = createHmac('sha256', secret).update(payload).digest('hex')
+    // Constant-time comparison to prevent timing oracle attacks
+    const expectedBuf = Buffer.from(expected, 'hex')
+    const sigBuf      = Buffer.from(sig, 'hex')
+    if (sigBuf.length !== expectedBuf.length) return false
+    if (!timingSafeEqual(expectedBuf, sigBuf)) return false
     const data = JSON.parse(Buffer.from(payload, 'base64url').toString())
     return !!data.email && Date.now() < data.exp
   } catch {
@@ -29,12 +33,12 @@ async function verifyPortalCookie(token: string): Promise<boolean> {
 // ─── Nav items ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { icon: '🏠', label: 'Property AI Engine',     href: '/dashboard/properties' },
-  { icon: '⚡', label: 'Acções Prioritárias',     href: '/dashboard/actions' },
-  { icon: '📊', label: 'Executive Revenue',       href: '/dashboard/executive' },
-  { icon: '🎯', label: 'Centro de Conversão',    href: '/dashboard/conversion-command' },
-  { icon: '⚙️', label: 'Simulações',              href: '/dashboard/simulations' },
   { icon: '☀️', label: 'Brief Diário',            href: '/dashboard/daily-brief' },
+  { icon: '⚡', label: 'Acções Prioritárias',     href: '/dashboard/actions' },
+  { icon: '🏠', label: 'Property AI Engine',     href: '/dashboard/properties' },
+  { icon: '🎯', label: 'Centro de Conversão',    href: '/dashboard/conversion-command' },
+  { icon: '📊', label: 'Executive Revenue',       href: '/dashboard/executive' },
+  { icon: '⚙️', label: 'Simulações',              href: '/dashboard/simulations' },
 ] as const
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
