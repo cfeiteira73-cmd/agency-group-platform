@@ -83,14 +83,14 @@ interface SearchResult {
 }
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
+// SECURITY: x-vercel-cron header removed — it is not proof of authenticity
+// (any external client can send it). CRON_SECRET is the only valid credential.
 function isAuthorized(req: NextRequest): boolean {
-  // Vercel cron sends x-vercel-cron: 1
-  if (req.headers.get('x-vercel-cron') === '1') return true
-  // Manual trigger via Bearer token
-  const auth = req.headers.get('authorization') || ''
+  const auth = req.headers.get('authorization') || req.headers.get('x-cron-secret') || ''
   const secret = process.env.CRON_SECRET
-  if (secret && auth === `Bearer ${secret}`) return true
-  return false
+  if (!secret) return false
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
+  return token === secret
 }
 
 // ─── Fetch deals for one zone ─────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { logger } from '@/lib/observability/logger'
 
 export const runtime = 'nodejs'
+export const maxDuration = 15
 
 // ---------------------------------------------------------------------------
 // Types

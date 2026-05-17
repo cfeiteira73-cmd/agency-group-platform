@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { STATIC_FALLBACK, refreshZone } from '../route'
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
+// SECURITY: x-vercel-cron header removed — not proof of authenticity.
 function isAuthorized(req: NextRequest): boolean {
-  if (req.headers.get('x-vercel-cron') === '1') return true
-  const auth = req.headers.get('authorization') || ''
+  const auth = req.headers.get('authorization') || req.headers.get('x-cron-secret') || ''
   const secret = process.env.CRON_SECRET
-  if (secret && auth === `Bearer ${secret}`) return true
-  return false
+  if (!secret) return false
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
+  return token === secret
 }
 
 // ─── GET /api/market-data/refresh (Vercel cron weekly) ───────────────────────

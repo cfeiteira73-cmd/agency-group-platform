@@ -839,7 +839,7 @@ export default function ExecutiveDashboardPage() {
 
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 14, paddingBottom: 4 }}>
-            <Link href="/portal" style={{
+            <Link href="/dashboard" style={{
               color: C.cream28, fontSize: 11, textDecoration: 'none',
               letterSpacing: '0.08em', textTransform: 'uppercase',
               fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4,

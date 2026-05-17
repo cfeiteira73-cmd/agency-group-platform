@@ -229,7 +229,7 @@ export default function PropertiesPage() {
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 32px' }}>
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: 4 }}>
-            <Link href="/portal" className="ag-portal-link" style={{
+            <Link href="/dashboard" className="ag-portal-link" style={{
               color: C.cream28, fontSize: 11, textDecoration: 'none',
               letterSpacing: '0.08em', textTransform: 'uppercase',
               fontWeight: 500, transition: 'color 0.15s',

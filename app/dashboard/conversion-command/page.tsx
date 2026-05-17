@@ -481,7 +481,7 @@ export default function ConversionCommandPage() {
               color: C.cream28,
               paddingBottom: 10,
             }}>
-              Modo demo · sem sessão activa
+              Simula o impacto de cada decisão antes de executar
             </div>
           </div>
 
@@ -701,9 +701,10 @@ export default function ConversionCommandPage() {
                   </div>
                 </div>
 
-                {/* Execute button */}
+                {/* Execute button — navigates to Acções Prioritárias */}
                 <button
                   type="button"
+                  onClick={() => { window.location.href = '/dashboard/actions' }}
                   style={{
                     background: 'transparent',
                     border: `1.5px solid ${C.gold}`,
@@ -720,7 +721,7 @@ export default function ConversionCommandPage() {
                     alignSelf: 'center',
                   }}
                 >
-                  Executar Acção
+                  Executar Acção →
                 </button>
               </div>
             </div>

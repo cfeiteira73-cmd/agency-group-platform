@@ -196,12 +196,12 @@ export function computePricingIntelligence(inputs: PricingInputs): PricingIntell
 
   const estimated_days = estimateDaysOnMarket(ds, city, pricing_risk)
   const inquiry_rate = estimateInquiryRate(ds, pricing_risk)
-  const conversion_probability = Math.round(
+  const conversion_probability = Math.min(100, Math.round(
     (ds ?? 50) * 0.4 +
     (pricing_risk === 'optimal' ? 20 : pricing_risk === 'underpriced' ? 25 : 5) +
     (inputs.has_sea_view ? 8 : 0) +
     (inputs.has_pool ? 5 : 0)
-  )
+  ))
   const negotiation_probability = Math.min(85, Math.round(overpricing_probability * 0.7 + 20))
 
   // ── Luxury premium ────────────────────────────────────────────────────────

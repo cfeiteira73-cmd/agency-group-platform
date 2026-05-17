@@ -380,6 +380,7 @@ function HealthBadge({ health }: { health: 'strong' | 'moderate' | 'weak' }) {
 export default function DashboardHomePage() {
   const [data, setData]       = useState<RevenueSummary | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(false)
   const [clock, setClock]     = useState('')
 
   // Live clock
@@ -397,14 +398,58 @@ export default function DashboardHomePage() {
   useEffect(() => {
     const ctrl = new AbortController()
     fetch('/api/revenue-command/summary', { signal: ctrl.signal })
-      .then(r => r.ok ? r.json() as Promise<RevenueSummary> : Promise.reject())
+      .then(r => r.ok ? r.json() as Promise<RevenueSummary> : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then(d => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch((e) => {
+        if ((e as Error)?.name === 'AbortError') return
+        setError(true)
+        setLoading(false)
+      })
     return () => ctrl.abort()
   }, [])
 
   const hasLeakage = (data?.total_leakage_eur ?? 0) > 0
   const hasTopActions = (data?.top_actions?.length ?? 0) > 0
+
+  // ── Error banner ─────────────────────────────────────────────────────────────
+  const ErrorBanner = error ? (
+    <div style={{
+      background: 'rgba(248,113,113,0.08)',
+      border: '1px solid rgba(248,113,113,0.25)',
+      borderRadius: 12,
+      padding: '14px 20px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 16,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 16 }}>⚠️</span>
+        <span style={{ fontFamily: 'var(--font-jost, system-ui)', fontSize: 13, color: '#f87171' }}>
+          Não foi possível carregar os dados de receita. A ligar de novo…
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={() => { setError(false); setLoading(true); window.location.reload() }}
+        style={{
+          background: 'rgba(248,113,113,0.12)',
+          border: '1px solid rgba(248,113,113,0.3)',
+          borderRadius: 7,
+          padding: '5px 14px',
+          color: '#f87171',
+          fontFamily: 'var(--font-jost, system-ui)',
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.05em',
+          cursor: 'pointer',
+          textTransform: 'uppercase' as const,
+        }}
+      >
+        ↻ Tentar
+      </button>
+    </div>
+  ) : null
 
   return (
     <>
@@ -514,6 +559,7 @@ export default function DashboardHomePage() {
           gap: 32,
           animation: 'fadeUp 0.3s ease',
         }}>
+          {ErrorBanner}
 
           {/* ── Revenue Pulse — 4 KPI cards ─────────────────────────────── */}
           <section>

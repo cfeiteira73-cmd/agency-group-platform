@@ -356,7 +356,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px' }}>
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: 4 }}>
-            <Link href="/portal" className="ag-back" style={{ color: C.cream28, fontSize: 11, textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4, transition: 'color 0.15s' }}>
+            <Link href="/dashboard/properties" className="ag-back" style={{ color: C.cream28, fontSize: 11, textDecoration: 'none', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4, transition: 'color 0.15s' }}>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
               Portal
             </Link>

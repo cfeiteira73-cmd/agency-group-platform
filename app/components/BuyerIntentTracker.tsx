@@ -144,6 +144,9 @@ export default function BuyerIntentTracker(): null {
     // ── 2. Scroll depth via IntersectionObserver ────────────────────────────
     const scrollSentDepths = new Set<number>()
 
+    // Track ResizeObservers so they can be disconnected in cleanup
+    const resizeObservers: ResizeObserver[] = []
+
     const createDepthSentinel = (depthPercent: number): HTMLElement | null => {
       try {
         const sentinel = document.createElement('div')
@@ -172,8 +175,10 @@ export default function BuyerIntentTracker(): null {
         observer.observe(sentinel)
 
         // Update sentinel position if content height changes
+        // Stored in resizeObservers array so cleanup() can disconnect it
         const resizeObserver = new ResizeObserver(updatePosition)
         resizeObserver.observe(document.documentElement)
+        resizeObservers.push(resizeObserver)
 
         return sentinel
       } catch {
@@ -252,6 +257,7 @@ export default function BuyerIntentTracker(): null {
         scrollSentDepths.clear()
         sentinel50?.remove()
         sentinel90?.remove()
+        resizeObservers.forEach(ro => ro.disconnect())
         window.removeEventListener('ag:listing-viewed',  handleListingViewed)
         window.removeEventListener('ag:filter-applied',  handleFilterApplied)
         window.removeEventListener('ag:inquiry-start',   handleInquiryStart)

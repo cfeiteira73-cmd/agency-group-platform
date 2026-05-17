@@ -54,8 +54,10 @@ const VISION_DEFAULTS: VisionAnalysisResult = {
 }
 
 async function callClaudeVision(imageUrl: string, prompt: string): Promise<string> {
+  // 30s timeout prevents indefinite hang if Anthropic API is unresponsive
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
+    signal: AbortSignal.timeout(30_000),
     headers: {
       'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
       'anthropic-version': '2023-06-01',

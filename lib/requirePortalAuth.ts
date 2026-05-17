@@ -15,7 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 
 export interface PortalAuthResult {
@@ -69,7 +69,13 @@ export async function requirePortalAuth(req: NextRequest): Promise<PortalAuthChe
         const sig      = cookieValue.slice(dotIdx + 1)
         const expected = createHmac('sha256', secret).update(payload).digest('hex')
 
-        if (expected === sig) {
+        // Constant-time comparison — prevents timing oracle on HMAC signature
+        const expectedBuf = Buffer.from(expected, 'hex')
+        const sigBuf      = Buffer.from(sig,      'hex')
+        const valid = sigBuf.length === expectedBuf.length &&
+          (() => { try { return timingSafeEqual(expectedBuf, sigBuf) } catch { return false } })()
+
+        if (valid) {
           try {
             const data = JSON.parse(Buffer.from(payload, 'base64url').toString()) as { email?: string; exp?: number }
             if (data.email && data.exp && Date.now() < data.exp) {

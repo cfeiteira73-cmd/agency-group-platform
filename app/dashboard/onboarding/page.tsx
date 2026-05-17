@@ -170,24 +170,38 @@ function StepCard({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
-  const DEMO_AGENT_ID = 'demo-agent-001'
-
+  const [agentId, setAgentId]     = useState<string>('') // resolved from /api/auth/me
+  const [agentEmail, setAgentEmail] = useState<string>('')
   const [progress, setProgress]   = useState<OnboardingProgress | null>(null)
   const [loading, setLoading]     = useState(true)
   const [actionLoading, setAL]    = useState(false)
   const [copied, setCopied]       = useState(false)
 
-  // Fetch current progress
+  // Resolve real agent identity from auth cookie, fall back to generic
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() as Promise<{ ok: boolean; email?: string }> : Promise.reject())
+      .then(data => {
+        const email = data.email ?? ''
+        setAgentEmail(email)
+        // Use email as stable agent_id key (URL-safe)
+        setAgentId(email ? `agent-${email.replace(/[^a-zA-Z0-9]/g, '-')}` : 'demo-agent-001')
+      })
+      .catch(() => setAgentId('demo-agent-001'))
+  }, [])
+
+  // Fetch current progress (depends on agentId being resolved)
   const fetchProgress = useCallback(() => {
+    if (!agentId) return
     setLoading(true)
-    fetch(`/api/distribution/onboard?agent_id=${DEMO_AGENT_ID}`)
+    fetch(`/api/distribution/onboard?agent_id=${encodeURIComponent(agentId)}`)
       .then(r => r.ok ? r.json() as Promise<ApiResponse> : Promise.reject())
       .then(data => setProgress(data.progress))
       .catch(() => {
         // Fallback: create fresh progress locally
         setProgress({
-          agent_id: DEMO_AGENT_ID,
-          email: '',
+          agent_id: agentId,
+          email: agentEmail,
           steps_completed: [],
           current_step: 'account',
           completion_pct: 0,
@@ -197,9 +211,10 @@ export default function OnboardingPage() {
         })
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [agentId, agentEmail])
 
-  useEffect(() => { fetchProgress() }, [fetchProgress])
+  // Trigger once agentId is resolved
+  useEffect(() => { if (agentId) fetchProgress() }, [agentId, fetchProgress])
 
   // Advance a step
   const handleAction = (step: OnboardingStep) => {

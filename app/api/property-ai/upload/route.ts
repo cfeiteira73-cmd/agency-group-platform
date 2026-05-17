@@ -14,6 +14,7 @@ export const maxDuration = 30
 
 const BUCKET = 'property-media'
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50 MB per file
+const MAX_FILES_PER_BATCH = 10          // DoS guard — limits OOM + timeout risk
 const ALLOWED_MIME_PREFIXES = ['image/', 'video/', 'audio/', 'application/pdf']
 const ALLOWED_MIME_EXACT = [
   'application/pdf',
@@ -85,6 +86,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   if (!fileEntries || fileEntries.length === 0) {
     return NextResponse.json({ error: 'No files provided' }, { status: 400 })
+  }
+
+  if (fileEntries.length > MAX_FILES_PER_BATCH) {
+    return NextResponse.json(
+      { error: `Too many files. Maximum ${MAX_FILES_PER_BATCH} files per request.` },
+      { status: 400 },
+    )
   }
 
   const results: Array<{

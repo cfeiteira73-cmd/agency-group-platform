@@ -180,6 +180,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const deals = dealsRaw as DealRow[]
 
   // ── 4. Fetch hot contacts ────────────────────────────────────────────────
+  // safeQuery applies .limit(200) — sufficient for hot_leads_count heuristic
   const contactsRaw = await safeQuery(db, 'contacts', 'id, score, status')
   const contacts = contactsRaw as ContactRow[]
 

@@ -7,6 +7,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createHmac, timingSafeEqual } from 'crypto'
 import type { ReactNode } from 'react'
+import SidebarNav from './SidebarNav'
 
 async function verifyPortalCookie(token: string): Promise<boolean> {
   const secret = process.env.AUTH_SECRET
@@ -130,70 +131,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           </a>
         </div>
 
-        {/* Navigation items */}
+        {/* Navigation items — client component for active state via usePathname */}
         <nav style={{ flex: 1, padding: '16px 10px' }}>
-          <style>{`
-            .ag-nav-item {
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              padding: 9px 12px;
-              border-radius: 9px;
-              text-decoration: none;
-              color: rgba(244,240,230,0.55);
-              font-size: 13px;
-              font-weight: 500;
-              letter-spacing: 0.01em;
-              font-family: var(--font-jost, system-ui);
-              transition: all 0.15s;
-              margin-bottom: 2px;
-            }
-            .ag-nav-item:hover {
-              background: rgba(201,169,110,0.08);
-              color: rgba(244,240,230,0.85);
-            }
-            .ag-nav-item-icon {
-              width: 30px;
-              height: 30px;
-              border-radius: 7px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 14px;
-              flex-shrink: 0;
-              background: transparent;
-              transition: background 0.15s;
-            }
-            .ag-nav-item:hover .ag-nav-item-icon {
-              background: rgba(201,169,110,0.1);
-            }
-            .ag-back-link {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              padding: 9px 12px;
-              border-radius: 9px;
-              text-decoration: none;
-              color: rgba(244,240,230,0.28);
-              font-size: 11px;
-              font-weight: 500;
-              letter-spacing: 0.04em;
-              text-transform: uppercase;
-              font-family: var(--font-jost, system-ui);
-              transition: color 0.15s;
-              margin-top: 4px;
-            }
-            .ag-back-link:hover {
-              color: rgba(244,240,230,0.55);
-            }
-          `}</style>
-
-          {NAV_ITEMS.map((item) => (
-            <a key={item.href} href={item.href} className="ag-nav-item">
-              <span className="ag-nav-item-icon">{item.icon}</span>
-              {item.label}
-            </a>
-          ))}
+          <SidebarNav items={NAV_ITEMS} />
         </nav>
 
         {/* Bottom: back to main site */}

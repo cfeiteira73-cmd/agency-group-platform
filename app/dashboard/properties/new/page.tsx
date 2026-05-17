@@ -708,7 +708,7 @@ export default function NewPropertyPage() {
       }}>
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 32px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 12, paddingBottom: 4 }}>
-            <Link href="/portal" className="ag-back" style={{
+            <Link href="/dashboard/properties" className="ag-back" style={{
               color: C.cream28, fontSize: 11, textDecoration: 'none',
               letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500,
               display: 'flex', alignItems: 'center', gap: 4, transition: 'color 0.15s',

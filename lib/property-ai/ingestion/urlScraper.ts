@@ -100,7 +100,12 @@ function truncateForClaude(text: string, maxChars = 8000): string {
 // Claude extraction prompt
 // ---------------------------------------------------------------------------
 
-function buildExtractionPrompt(text: string, url: string, portal: string): string {
+function buildExtractionPrompt(rawText: string, url: string, portal: string): string {
+  // Escape closing XML tag so malicious pages cannot escape the content block
+  const text = rawText
+    .replace(/<\/page_content>/gi, '<\\/page_content>')
+    .replace(/<page_content>/gi, '<\\/page_content_open>')
+
   return `You are a world-class real estate data extraction AI. You've been given scraped text from a property listing page.
 
 Portal detected: ${portal}
