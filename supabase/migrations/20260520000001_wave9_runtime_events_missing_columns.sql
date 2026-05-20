@@ -53,7 +53,7 @@ AS $$
   WITH claimed AS (
     SELECT event_id
     FROM   public.runtime_events
-    WHERE  org_id = p_org_id
+    WHERE  org_id::text = p_org_id
       AND  status = 'pending'
     ORDER  BY priority_weight DESC, created_at ASC
     LIMIT  p_count
@@ -68,26 +68,31 @@ AS $$
 $$;
 
 -- Fix event_history cross-tenant RLS leak (all authenticated users could read all rows)
--- Drop permissive policy and replace with tenant-scoped one
-DROP POLICY IF EXISTS "authenticated_read_event_history" ON public.event_history;
-
+-- Drop permissive policy and replace with tenant-scoped one (safe-guarded: table may not exist)
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns
-             WHERE table_name = 'event_history' AND column_name = 'tenant_id') THEN
-    EXECUTE $policy$
-      CREATE POLICY "tenant_scoped_read_event_history"
-        ON public.event_history
-        FOR SELECT TO authenticated
-        USING (tenant_id = current_setting('app.tenant_id', true))
-    $policy$;
-  ELSE
-    -- No tenant_id column: fall back to denying public access
-    EXECUTE $policy$
-      CREATE POLICY "deny_crossteant_event_history"
-        ON public.event_history
-        FOR SELECT TO authenticated
-        USING (false)
-    $policy$;
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_schema = 'public' AND table_name = 'event_history') THEN
+    -- Drop old overly-permissive policy
+    EXECUTE $x$ DROP POLICY IF EXISTS "authenticated_read_event_history" ON public.event_history $x$;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'public' AND table_name = 'event_history'
+                 AND column_name = 'tenant_id') THEN
+      EXECUTE $policy$
+        CREATE POLICY "tenant_scoped_read_event_history"
+          ON public.event_history
+          FOR SELECT TO authenticated
+          USING (tenant_id = current_setting('app.tenant_id', true))
+      $policy$;
+    ELSE
+      -- No tenant_id column: deny cross-tenant access
+      EXECUTE $policy$
+        CREATE POLICY "deny_crosstenant_event_history"
+          ON public.event_history
+          FOR SELECT TO authenticated
+          USING (false)
+      $policy$;
+    END IF;
   END IF;
 END $$;

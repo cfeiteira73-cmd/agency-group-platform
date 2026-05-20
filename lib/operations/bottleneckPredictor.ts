@@ -24,12 +24,20 @@ export class BottleneckPredictor {
   async predictBottlenecks(org_id: string): Promise<BottleneckPrediction[]> {
     const predictions: BottleneckPrediction[] = []
 
-    // Fetch active deals with their stages
+    // Parse valor (TEXT like "€ 1.250.000") to a safe number
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parseValor = (v: any): number => {
+      if (typeof v === 'number') return v
+      if (!v) return 0
+      const n = parseFloat(String(v).replace(/[€\s.]/g, '').replace(',', '.'))
+      return isNaN(n) ? 0 : n
+    }
+
+    // Fetch active deals with their fase (stage) — uses portal-compat columns
     const { data, error } = await sb
       .from('deals')
-      .select('id, stage, value_eur, assigned_to, created_at, updated_at')
-      .eq('org_id', org_id)
-      .eq('status', 'active')
+      .select('id, fase, valor, created_at, updated_at')
+      .eq('tenant_id', org_id)
       .limit(500)
 
     if (error) {
@@ -43,15 +51,14 @@ export class BottleneckPredictor {
     // Count deals per stage
     const stageCounts: Record<string, number> = {}
     const stageValues: Record<string, number> = {}
-    const agentLoad: Record<string, number> = {}
 
     for (const d of deals) {
-      const stage = (d.stage as string) ?? 'unknown'
+      const stage = (d.fase as string) ?? 'unknown'
       stageCounts[stage] = (stageCounts[stage] ?? 0) + 1
-      stageValues[stage] = (stageValues[stage] ?? 0) + ((d.value_eur as number) ?? 0)
-      const agent = (d.assigned_to as string) ?? 'unassigned'
-      agentLoad[agent] = (agentLoad[agent] ?? 0) + 1
+      stageValues[stage] = (stageValues[stage] ?? 0) + parseValor(d.valor)
     }
+    // Note: assigned_to/assigned_consultant not selected; agent-load bottleneck removed
+    const agentLoad: Record<string, number> = {}
 
     // Normal expected distribution across 8 stages
     const expectedPerStage = deals.length / 8

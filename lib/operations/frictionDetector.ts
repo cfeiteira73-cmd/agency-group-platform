@@ -31,10 +31,20 @@ export class FrictionDetector {
     const frictions: FrictionPoint[] = []
     const now = new Date().toISOString()
 
+    // Parse valor (TEXT like "€ 1.250.000") to a safe number
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parseValor = (v: any): number => {
+      if (typeof v === 'number') return v
+      if (!v) return 0
+      const cleaned = String(v).replace(/[€\s.]/g, '').replace(',', '.')
+      const n = parseFloat(cleaned)
+      return isNaN(n) ? 0 : n
+    }
+
     const { data, error } = await sb
       .from('deals')
-      .select('id, stage, status, value_eur, updated_at, created_at, assigned_to')
-      .eq('org_id', org_id)
+      .select('id, fase, valor, updated_at, created_at')
+      .eq('tenant_id', org_id)
       .gte('created_at', from)
       .limit(500)
 
@@ -46,10 +56,10 @@ export class FrictionDetector {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const deals: any[] = data ?? []
 
-    // Group by stage
+    // Group by fase (stage)
     const byStage: Record<string, typeof deals> = {}
     for (const d of deals) {
-      const stage = (d.stage as string) ?? 'unknown'
+      const stage = (d.fase as string) ?? 'unknown'
       if (!byStage[stage]) byStage[stage] = []
       byStage[stage].push(d)
     }
@@ -59,7 +69,7 @@ export class FrictionDetector {
       const stalled = stageDeals.filter((d: any) => {
         const daysSinceUpdate =
           (Date.now() - new Date(d.updated_at as string).getTime()) / 86_400_000
-        return daysSinceUpdate > 14 && d.status === 'active'
+        return daysSinceUpdate > 14
       })
 
       if (stalled.length >= 2) {
@@ -68,7 +78,7 @@ export class FrictionDetector {
         )
         const avg_delay = stalledDays.reduce((s: number, v: number) => s + v, 0) / stalled.length
         const at_risk = stalled.reduce((s: number, d: any) =>
-          s + ((d.value_eur as number) ?? 0), 0)
+          s + parseValor(d.valor), 0)
 
         frictions.push({
           id: randomUUID(), org_id,
@@ -84,23 +94,7 @@ export class FrictionDetector {
       }
     }
 
-    // Missing assignment
-    const unassigned = deals.filter((d: any) => !d.assigned_to && d.status === 'active')
-    if (unassigned.length > 0) {
-      frictions.push({
-        id: randomUUID(), org_id,
-        location: 'assignment:unassigned',
-        friction_type: 'agent_gap',
-        affected_deals: unassigned.map((d: any) => d.id as string),
-        avg_delay_days: 0,
-        estimated_revenue_at_risk_eur: unassigned.reduce(
-          (s: number, d: any) => s + ((d.value_eur as number) ?? 0), 0
-        ),
-        occurrence_count: unassigned.length,
-        first_detected: now,
-        suggested_fix: 'Auto-assign unassigned deals via round-robin or EV-based routing',
-      })
-    }
+    // Note: assigned_to/assigned_consultant not selected — skip assignment gap check
 
     logger.info('[FrictionDetector] Detection complete', { org_id, frictions: frictions.length })
     return frictions
