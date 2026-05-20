@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { createClient } from '@/lib/supabase/server'
 import track from '@/lib/trackLearningEvent'
+import { emit } from '@/lib/events/producers'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
@@ -97,14 +98,28 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Non-blocking learning event
+    const agentEmail = session.user.email ?? null
+    const corrId2    = getRequestCorrelationId(req)
+    // Non-blocking learning event (direct Supabase path — proven analytics)
     track.contactCreated({
-      lead_id:       data?.id ?? null,
-      agent_email:   session.user.email ?? null,
-      correlation_id: getRequestCorrelationId(req),
-      source_system: 'api',
-      metadata: { source: body.source ?? null, lead_score: body.lead_score ?? 0 },
+      lead_id:        data?.id ?? null,
+      agent_email:    agentEmail,
+      correlation_id: corrId2,
+      source_system:  'api',
+      metadata:       { source: body.source ?? null, lead_score: body.lead_score ?? 0 },
     })
+    // Event bus activation — typed lead_created event with dedup + DLQ (fire-and-forget)
+    void emit.leadCreated(
+      {
+        lead_id:     String(data?.id ?? ''),
+        nome:        body.full_name || body.name || '',
+        source:      body.source ?? null,
+        assigned_to: agentEmail,
+        score:       body.lead_score ?? null,
+        cidade:      body.preferred_locations?.[0] ?? null,
+      },
+      { correlation_id: corrId2, source_system: 'api' },
+    )
 
     return NextResponse.json({ success: true, contact: data }, { status: 201 })
   } catch (error) {

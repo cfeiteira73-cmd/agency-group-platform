@@ -91,6 +91,10 @@ export class BusinessPrimitiveEngine {
     const mtd_start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
     // Fetch deals — use deal_value (DDL column), tenant_id (portal-compat column)
+    // SRE: Supabase queries are wrapped in try/catch so a DB outage returns an empty
+    // pipeline rather than throwing uncaught and crashing the CEO dashboard caller.
+    // The 60s in-memory cache is intentionally NOT populated on error — next call retries.
+    try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [deals_res, contacts_res] = await Promise.all([
       (sb.from('deals') as any)
@@ -195,6 +199,31 @@ export class BusinessPrimitiveEngine {
     })
 
     return pipeline
+
+    } catch (err) {
+      // Supabase unavailable — return safe empty pipeline so callers never crash.
+      // Cache is NOT populated so the next call retries against a (hopefully) healthy DB.
+      logger.error('[BusinessPrimitive] Supabase error in getPipeline — returning empty pipeline', {
+        org_id,
+        error: err instanceof Error ? err.message : String(err),
+      })
+      return {
+        org_id,
+        active_leads:       0,
+        hot_leads:          0,
+        proposals_pending:  0,
+        deals_in_progress:  0,
+        deals_won_mtd:      0,
+        deals_lost_mtd:     0,
+        pipeline_value:     0,
+        expected_revenue:   0,
+        revenue_mtd:        0,
+        commission_mtd:     0,
+        avg_days_to_close:  null,
+        close_rate_30d:     null,
+        computed_at:        new Date().toISOString(),
+      }
+    }
   }
 
   /**

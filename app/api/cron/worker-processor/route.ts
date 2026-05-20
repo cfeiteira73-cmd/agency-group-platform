@@ -9,6 +9,10 @@ import { withCronLock } from '@/lib/ops/withCronLock'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+// P0 SRE: maxDuration MUST be set or Vercel defaults to 60s on Pro (10s on Hobby).
+// processAllQueues() is unbounded — without this, any queue backlog kills the function
+// mid-execution, orphans the Redis lock for 6 minutes, and halts queue draining.
+export const maxDuration = 300
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const cronSecret = process.env.CRON_SECRET

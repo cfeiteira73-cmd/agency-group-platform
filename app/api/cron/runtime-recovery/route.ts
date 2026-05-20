@@ -12,6 +12,10 @@ import { withCronLock } from '@/lib/ops/withCronLock'
 import { safeCompare } from '@/lib/safeCompare'
 
 export const runtime = 'nodejs'
+// P0 SRE: maxDuration MUST be set. Default is 60s on Pro (10s on Hobby).
+// Recovery loop iterates 20 orphaned events with per-event DB round-trips.
+// Without this, Vercel kills mid-execution, leaving events partially re-dispatched.
+export const maxDuration = 120
 
 // Events stuck in 'processing' for > 5 minutes are considered orphaned
 const ORPHAN_THRESHOLD_MS = 5 * 60 * 1000

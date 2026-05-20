@@ -34,7 +34,7 @@ async function logRedisIncident(cronName: string, errorMsg: string): Promise<voi
   try {
     const { supabaseAdmin } = await import('@/lib/supabase')
     await supabaseAdmin.from('incidents').insert({
-      tenant_id:        'agency-group',
+      tenant_id:        process.env.SYSTEM_ORG_ID ?? 'agency-group',
       severity:         'P1',
       subsystem:        'cache',
       raw_error:        `Redis unreachable for cron lock '${cronName}' after 3 retries: ${errorMsg}`,
@@ -69,9 +69,12 @@ async function upstashSet(
 
   while (attempt < MAX_ATTEMPTS) {
     try {
+      // AbortSignal.timeout(5000): prevents infinite hang when Upstash is up but
+      // extremely slow. Without this, a hanging fetch burns the entire cron budget
+      // (up to maxDuration) before the lock is even acquired.
       const res = await fetch(
         `${url}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}?NX=true&EX=${ttlSec}`,
-        { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
+        { method: 'GET', headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(5_000) },
       )
 
       if (res.status === 429) {
@@ -106,8 +109,9 @@ async function upstashDel(key: string): Promise<void> {
 
   try {
     await fetch(`${url}/del/${encodeURIComponent(key)}`, {
-      method: 'GET',
+      method:  'GET',
       headers: { Authorization: `Bearer ${token}` },
+      signal:  AbortSignal.timeout(3_000),  // Best-effort — TTL will expire it anyway
     })
   } catch {
     // Best-effort release — TTL will expire it anyway

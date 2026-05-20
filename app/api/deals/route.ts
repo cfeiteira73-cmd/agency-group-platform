@@ -12,6 +12,7 @@ import { auth } from '@/auth'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import track from '@/lib/trackLearningEvent'
+import { emit } from '@/lib/events/producers'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { recordCausalStep } from '@/lib/observability/causalTrace'
 
@@ -202,14 +203,28 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         .single()
 
       if (!error && data) {
-        // Non-blocking learning event
+        const agentEmail = (session?.user as { email?: string })?.email ?? null
+        const corrId2    = getRequestCorrelationId(req)
+        // Non-blocking learning event (direct Supabase path — proven analytics)
         track.dealCreated({
-          deal_id:     data.id ?? null,
-          agent_email: (session?.user as { email?: string })?.email ?? null,
-          correlation_id: getRequestCorrelationId(req),
-          source_system: 'api',
-          metadata: { fase: body.fase, ref, imovel: body.imovel },
+          deal_id:        data.id ?? null,
+          agent_email:    agentEmail,
+          correlation_id: corrId2,
+          source_system:  'api',
+          metadata:       { fase: body.fase, ref, imovel: body.imovel },
         })
+        // Event bus activation — richer typed event with dedup + DLQ (fire-and-forget)
+        void emit.dealCreated(
+          {
+            deal_id:     data.id ?? null,
+            agent_email: agentEmail,
+            fase:        faseStr,
+            ref,
+            imovel:      String(body.imovel),
+            valor:       valorNum,
+          },
+          { correlation_id: corrId2, source_system: 'api' },
+        )
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { status: 201, headers: rateLimitHeaders() })
       }
       if (error) console.warn('[deals POST] Supabase error:', error.message)
@@ -304,6 +319,19 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
             success: true,
             metadata: { newStage: fase, previousStage: (data as Record<string, unknown>)?.fase },
           })
+          // Event bus activation — emit typed stage-advanced event (fire-and-forget)
+          void emit.dealStageAdvanced(
+            {
+              deal_id:     dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+              from_stage:  null,  // previous stage not fetched before update — omitted intentionally
+              to_stage:    fase,
+              agent_email: agentEmail,
+              deal_value:  typeof (data as Record<string, unknown>)?.deal_value === 'number'
+                ? (data as Record<string, unknown>).deal_value as number
+                : null,
+            },
+            { correlation_id: corrId, source_system: 'api' },
+          )
         }
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
       }
