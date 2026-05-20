@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Nurture Candidates API
 // POST /api/automation/nurture-candidates
 // Called hourly by n8n wf-R to find contacts due for D+1/D+7/D+30 nurture email
@@ -54,11 +54,13 @@ export async function POST(req: NextRequest) {
       const createdAfter  = new Date(now - win.maxMs).toISOString()
       const createdBefore = new Date(now - win.minMs).toISOString()
 
+      const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
       // Fetch contacts in window — status=lead, has email, no opt-out
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: contacts, error } = await supabaseAdmin
+      const { data: contacts, error } = await (supabaseAdmin as any)
         .from('contacts')
         .select('id, name, full_name, email, source, preferred_locations, notes')
+        .eq('tenant_id', tenantId)
         .gte('created_at', createdAfter)
         .lte('created_at', createdBefore)
         .eq('status', 'lead')

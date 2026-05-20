@@ -29,6 +29,7 @@ export async function GET(
   if (!gate.authed) return gate.response
 
   const { id } = await params
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
 
   // Base columns always in schema
   const { data: baseData, error } = await supabase
@@ -39,6 +40,7 @@ export async function GET(
       sent_at, viewed_at, ai_summary, metadata
     `)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .single()
 
   if (error || !baseData) {
@@ -67,6 +69,7 @@ export async function GET(
         .from('deal_packs')
         .select('view_count, status')
         .eq('id', id)
+        .eq('tenant_id', tenantId)
         .single()
 
       const newCount  = (Number(current?.view_count ?? 0)) + 1
@@ -80,6 +83,7 @@ export async function GET(
           ...(newStatus !== current?.status ? { status: newStatus } : {}),
         })
         .eq('id', id)
+        .eq('tenant_id', tenantId)
     } catch {
       // Non-blocking — view tracking must never crash the GET response
     }
@@ -100,6 +104,7 @@ export async function PATCH(
   if (!gate.authed) return gate.response
 
   const { id } = await params
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
 
   let body: Record<string, unknown>
   try {
@@ -130,6 +135,7 @@ export async function PATCH(
     .from('deal_packs')
     .update(updates)
     .eq('id', id)
+    .eq('tenant_id', tenantId)
     .select('id, status, sent_at, viewed_at, updated_at')
     .single()
 
@@ -161,11 +167,13 @@ export async function DELETE(
   if (!gate.authed) return gate.response
 
   const { id } = await params
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
 
   const { error } = await supabase
     .from('deal_packs')
     .delete()
     .eq('id', id)
+    .eq('tenant_id', tenantId)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

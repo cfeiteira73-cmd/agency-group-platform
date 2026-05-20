@@ -1,6 +1,7 @@
 // AGENCY GROUP — SH-ROS Property AI | AMI: 22506
 
 import { logger } from '@/lib/observability/logger'
+import { withAI } from '@/lib/ops/withAI'
 
 export interface ImageScore {
   asset_id: string
@@ -51,32 +52,34 @@ For each image return:
 
 Return ONLY a valid JSON array, no markdown, no explanation.`
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-opus-4-5',
-      max_tokens: 2000,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            ...imageContent,
-            { type: 'text', text: prompt },
-          ],
-        },
-      ],
-    }),
-  })
-
-  const data = await resp.json() as { content?: Array<{ text?: string }> }
-  const raw = data.content?.[0]?.text ?? '[]'
-  const cleaned = raw.trim().replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim()
-  return JSON.parse(cleaned) as ClaudeVisionScore[]
+  return withAI('anthropic-opus', async () => {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 2000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              ...imageContent,
+              { type: 'text', text: prompt },
+            ],
+          },
+        ],
+      }),
+    })
+    if (!resp.ok) throw new Error(`Anthropic error: ${resp.status}`)
+    const data = await resp.json() as { content?: Array<{ text?: string }> }
+    const raw = data.content?.[0]?.text ?? '[]'
+    const cleaned = raw.trim().replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim()
+    return JSON.parse(cleaned) as ClaudeVisionScore[]
+  }, [])
 }
 
 function detectDuplicates(scores: ImageScore[]): ImageScore[] {

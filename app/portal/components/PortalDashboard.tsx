@@ -358,14 +358,17 @@ export default function PortalDashboard({
         setKpiError(false)
         try {
           const dealsData = await dealsRes.value.json()
-          const rawDeals: { valor?: string; escrituraDate?: string; cpcvDate?: string }[] =
+          const rawDeals: { valor?: string; escrituraDate?: string; cpcvDate?: string; fase?: string; stage?: string }[] =
             Array.isArray(dealsData?.data) ? dealsData.data : []
 
-          const totalPipelineValue = rawDeals.reduce((sum, d) => sum + parsePTValueShared(d.valor), 0)
-          const activeDealCount = rawDeals.length
+          const CLOSED_STAGES_FILTER = ['Escritura Concluída','Escritura','fechado','pos_venda','post_sale','Perdido','Rejeitado','escritura_sell']
+          const openDeals = rawDeals.filter(d => !CLOSED_STAGES_FILTER.includes(d.fase ?? d.stage ?? ''))
+
+          const totalPipelineValue = openDeals.reduce((sum, d) => sum + parsePTValueShared(d.valor), 0)
+          const activeDealCount = openDeals.length
           const estimatedCommission = totalPipelineValue * COMMISSION_RATE
           const currentMonthStr = new Date().toISOString().slice(0, 7)
-          const closingThisMonth = rawDeals.filter(
+          const closingThisMonth = openDeals.filter(
             d =>
               (d.escrituraDate && d.escrituraDate.includes(currentMonthStr)) ||
               (d.cpcvDate && d.cpcvDate.includes(currentMonthStr))

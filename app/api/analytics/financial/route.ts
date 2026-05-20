@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Financial Intelligence API
 // GET /api/analytics/financial — P&L, pipeline, win rate, forecast
 // Auth: requirePortalAuth
@@ -78,23 +78,26 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const { since, until } = getPeriodWindow(period)
 
   const sb = supabaseAdmin
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
   try {
     // ── 1. Closed deals: revenue + count + avg deal value ────────────────────
     let dealsData: Record<string, unknown>[] = []
     try {
       // Try with gci_net + sale_price first
-      const { data, error } = await sb
+      const { data, error } = await (sb as any)
         .from('deals')
         .select('id, stage, gci_net, sale_price, asking_price, deal_value, fase, valor, created_at')
+        .eq('tenant_id', tenantId)
         .gte('created_at', since)
         .lte('created_at', until)
 
       if (error && String(error.code) === '42703') {
         // Fallback with minimum cols
-        const { data: fallback } = await sb
+        const { data: fallback } = await (sb as any)
           .from('deals')
           .select('id, fase, valor, created_at')
+          .eq('tenant_id', tenantId)
           .gte('created_at', since)
           .lte('created_at', until)
         dealsData = fallback ?? []

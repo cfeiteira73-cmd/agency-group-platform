@@ -40,6 +40,7 @@ import { logAIDecision }              from '@/lib/observability/ai-audit'
 import { generateCorrelationId }      from '@/lib/observability/correlation'
 import { checkPolicy, trackTokensUsed } from '@/lib/ai/policyEngine'
 import { validateAgentOutput }        from '@/lib/ai/contracts'
+import { emit }                       from '@/lib/events/producers'
 import type { ZodSchema }             from 'zod'
 
 // ---------------------------------------------------------------------------
@@ -106,6 +107,18 @@ export async function withAI<T>(
 
   // Resolved tenant — callers should pass tenantId for accurate cost attribution
   const resolvedTenant = tenantId ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
+  // ── Event: ai_requested — fire-and-forget before any AI call ────────────────
+  void emit.aiRequested(
+    {
+      correlation_id:   correlationId,
+      component,
+      model:            null,
+      estimated_tokens: null,
+      revenue_context:  revenueContext ?? null,
+    },
+    { correlation_id: correlationId, source_system: 'api' },
+  )
 
   // ── Hard policy gate — runs before any AI call ──────────────────────────────
   const policyCtx = {
@@ -233,6 +246,36 @@ export async function withAI<T>(
       created_at:      new Date().toISOString(),
     })
 
+    // ── Event: ai_executed — fire-and-forget after result ───────────────────
+    void emit.aiExecuted(
+      {
+        correlation_id: correlationId,
+        component,
+        model:          component,
+        input_tokens:   inputTokens,
+        output_tokens:  outputTokens,
+        latency_ms:     Date.now() - start,
+        success:        !usedFallback,
+        fallback_used:  usedFallback,
+      },
+      { correlation_id: correlationId, source_system: 'api' },
+    )
+
+    // ── Event: ai_billed — fire-and-forget when cost is known ───────────────
+    if (cost_usd !== undefined && cost_usd > 0) {
+      void emit.aiBilled(
+        {
+          correlation_id: correlationId,
+          component,
+          cost_usd,
+          input_tokens:   inputTokens,
+          output_tokens:  outputTokens,
+          billing_period: new Date().toISOString().slice(0, 7),
+        },
+        { correlation_id: correlationId, source_system: 'api' },
+      )
+    }
+
     return result
   } catch (err) {
     const errorType =
@@ -254,6 +297,21 @@ export async function withAI<T>(
       tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
+
+    // ── Event: ai_executed (failure path) — fire-and-forget ─────────────────
+    void emit.aiExecuted(
+      {
+        correlation_id: correlationId,
+        component,
+        model:          component,
+        input_tokens:   0,
+        output_tokens:  0,
+        latency_ms:     Date.now() - start,
+        success:        false,
+        fallback_used:  true,
+      },
+      { correlation_id: correlationId, source_system: 'api' },
+    )
 
     throw err
   }
@@ -293,6 +351,18 @@ export async function withAIStream<T>(
   const start = Date.now()
 
   const resolvedTenant = tenantId ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
+  // ── Event: ai_requested — fire-and-forget before any AI call ────────────────
+  void emit.aiRequested(
+    {
+      correlation_id:   correlationId,
+      component,
+      model:            null,
+      estimated_tokens: null,
+      revenue_context:  revenueContext ?? null,
+    },
+    { correlation_id: correlationId, source_system: 'api' },
+  )
 
   // ── Hard policy gate — runs before any AI call ──────────────────────────────
   const policyCtx = {
@@ -373,6 +443,21 @@ export async function withAIStream<T>(
       created_at:      new Date().toISOString(),
     })
 
+    // ── Event: ai_executed — fire-and-forget after stream handshake ─────────
+    void emit.aiExecuted(
+      {
+        correlation_id: correlationId,
+        component,
+        model:          component,
+        input_tokens:   0,
+        output_tokens:  0,
+        latency_ms:     Date.now() - start,
+        success:        !usedFallback,
+        fallback_used:  usedFallback,
+      },
+      { correlation_id: correlationId, source_system: 'api' },
+    )
+
     return result
   } catch (err) {
     const errorType =
@@ -394,6 +479,21 @@ export async function withAIStream<T>(
       tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
+
+    // ── Event: ai_executed (failure path) — fire-and-forget ─────────────────
+    void emit.aiExecuted(
+      {
+        correlation_id: correlationId,
+        component,
+        model:          component,
+        input_tokens:   0,
+        output_tokens:  0,
+        latency_ms:     Date.now() - start,
+        success:        false,
+        fallback_used:  true,
+      },
+      { correlation_id: correlationId, source_system: 'api' },
+    )
 
     throw err
   }

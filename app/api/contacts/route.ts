@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { createClient } from '@/lib/supabase/server'
 import track from '@/lib/trackLearningEvent'
@@ -21,10 +21,12 @@ export async function GET(req: NextRequest) {
     const page    = parseInt(searchParams.get('page') || '1')
     const limit   = parseInt(searchParams.get('limit') || '50')
 
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
     const supabase = await createClient()
     let query = supabase
       .from('contacts')
       .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1)
 
@@ -72,6 +74,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'full_name is required' }, { status: 400 })
     }
 
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('contacts')
@@ -91,7 +94,7 @@ export async function POST(req: NextRequest) {
         last_contact_at:    body.last_contact_at || body.last_contact || null,
         lead_score:         body.lead_score || 0,
         assigned_to:        session.user.id,
-        tenant_id:          req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
+        tenant_id:          tenantId,
       })
       .select()
       .single()
@@ -143,6 +146,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 })
     }
 
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
     const supabase = await createClient()
 
     // Build update object (only allowed fields)
@@ -172,6 +176,7 @@ export async function PUT(req: NextRequest) {
       .from('contacts')
       .update(updateData)
       .eq('id', id)
+      .eq('tenant_id', tenantId)
 
     // Agents can only update their own contacts
     if (session.user.role !== 'admin') {
@@ -204,6 +209,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 })
     }
 
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
     const supabase = await createClient()
 
     // Soft delete: mark as inactive
@@ -211,6 +217,7 @@ export async function DELETE(req: NextRequest) {
       .from('contacts')
       .update({ status: 'inactive', updated_at: new Date().toISOString() })
       .eq('id', id)
+      .eq('tenant_id', tenantId)
 
     if (session.user.role !== 'admin') {
       query = query.eq('assigned_to', session.user.id)

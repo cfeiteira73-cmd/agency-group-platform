@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // FORGOTTEN LEADS — Agency Group
 // Leads with no next_followup_at for > N days (default 7)
 // Portal: GET /api/automation/forgotten-leads
@@ -47,9 +47,12 @@ export async function GET(req: NextRequest) {
     // 1. Have no next_followup_at set, OR next_followup_at is past
     // 2. Status is active (lead/prospect/qualified/active)
     // 3. last_contact_at was > N days ago
-    const { data, error } = await supabaseAdmin
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error }: { data: any[] | null; error: any } = await (supabaseAdmin as any)
       .from('contacts')
       .select('id, full_name, email, phone, status, lead_tier, lead_score, source, preferred_locations, budget_max, last_contact_at, next_followup_at, notes, created_at')
+      .eq('tenant_id', tenantId)
       .in('status', ['lead', 'prospect', 'qualified', 'active'])
       .or(`next_followup_at.is.null,next_followup_at.lt.${new Date().toISOString()}`)
       .lt('last_contact_at', cutoff.toISOString())

@@ -39,6 +39,7 @@ import {
 import { withCronLock }              from '@/lib/ops/withCronLock'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
 import { safeCompare }               from '@/lib/safeCompare'
+import { emit }                      from '@/lib/events/producers'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 300
@@ -474,6 +475,37 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // ── 3b. Write V2 grades (opportunity_grade, score_v2_confidence_adjusted) ─
     await writeGrades(propertiesWithId, stats)
+
+    // ── 3c. Emit property events (fire-and-forget, wrapped in try-catch) ─────
+    try {
+      for (const prop of propertiesWithId) {
+        void emit.propertyIngested(
+          {
+            property_id:  prop.id,
+            source:       'sync_listings_cron',
+            listing_url:  null,
+            price_eur:    prop.price ?? null,
+            zona:         (prop as PropertyInput & { zone?: string }).zone ?? null,
+            type:         prop.type ?? null,
+          },
+          { correlation_id: corrId, source_system: 'cron' },
+        )
+      }
+      for (const s of scored) {
+        void emit.propertyScored(
+          {
+            property_id:       s.id,
+            opportunity_score: s.opportunity_score,
+            previous_score:    null,
+            score_reason:      s.score_reason ?? null,
+            investor_suitable: s.investor_suitable ?? false,
+          },
+          { correlation_id: corrId, source_system: 'cron' },
+        )
+      }
+    } catch {
+      // Event emission failures must never break the cron
+    }
 
     // ── 4. Detect + write signals ────────────────────────────────────────────
     await processSignals(propertiesWithId, stats)

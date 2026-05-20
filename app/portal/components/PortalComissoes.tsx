@@ -387,7 +387,7 @@ export default function PortalComissoes() {
 
   // ─── Monthly forecast ──────────────────────────────────────────────────────
   const monthlyForecasts: { month: string; low: number; mid: number; high: number }[] = (() => {
-    const now = new Date(2026, 3, 5) // current date from context
+    const now = new Date()
     return [1, 2, 3].map(offset => {
       const target = new Date(now.getFullYear(), now.getMonth() + offset, 1)
       const monthName = target.toLocaleDateString('pt-PT', { month: 'short', year: '2-digit' })

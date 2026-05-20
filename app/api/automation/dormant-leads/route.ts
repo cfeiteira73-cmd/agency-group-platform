@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
@@ -31,9 +31,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const cutoffStr = cutoff.toISOString().split('T')[0]
     const cutoffIso = cutoff.toISOString()
 
-    const { data, error } = await supabaseAdmin
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+    const { data, error } = await (supabaseAdmin as any)
       .from('contacts')
       .select('id, full_name, email, phone, last_contact_at, lead_score, status, preferred_locations, budget_max, lead_tier')
+      .eq('tenant_id', tenantId)
       .in('status', ['lead', 'prospect'])
       .or(`last_contact_at.lt.${cutoffIso},last_contact_at.is.null`)
       .order('lead_score', { ascending: false })

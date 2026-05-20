@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Revenue Forecasting Engine
 // GET /api/analytics/forecast
 //
@@ -93,12 +93,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const auth = await requirePortalAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 })
 
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   try {
     // ── Fetch all open deals ────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: rawDeals, error } = await supabaseAdmin
+    const { data: rawDeals, error } = await (supabaseAdmin as any)
       .from('deals')
       .select('id, imovel, comprador, fase, valor, expected_fee, realized_fee, updated_at, created_at, agent_email')
+      .eq('tenant_id', tenantId)
       .not('fase', 'ilike', '%cancelad%')
       .not('fase', 'ilike', '%perdido%')
 

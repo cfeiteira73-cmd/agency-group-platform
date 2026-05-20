@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Partner Performance Analytics
 // GET /api/partners/performance — partner sourcing metrics from Supabase
 // Returns: top by properties, top by revenue, inactive, next actions
@@ -45,9 +45,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // ── 2. Fetch deals with partner_id populated ──────────────────────────────
     // Uses portal-compat columns confirmed in production (migration 003 + 20260426_002)
     // stage/deal_value/gci_net/zone/source not in minimal schema — omitted to avoid 42703
-    const { data: partnerDeals, error: pDealsErr } = await supabaseAdmin
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+    const { data: partnerDeals, error: pDealsErr } = await (supabaseAdmin as any)
       .from('deals')
       .select('id, partner_id, fase, valor, expected_fee, realized_fee, created_at')
+      .eq('tenant_id', tenantId)
       .not('partner_id', 'is', null)
 
     if (pDealsErr) {

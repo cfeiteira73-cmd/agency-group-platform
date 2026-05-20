@@ -7,6 +7,7 @@
 
 import { logger } from '@/lib/observability/logger'
 import type { PropertyType } from '@/lib/property-ai/types'
+import { withAI } from '@/lib/ops/withAI'
 
 export interface UrlScrapedData {
   title?: string
@@ -152,27 +153,29 @@ ${text}
 // ---------------------------------------------------------------------------
 
 async function callClaudeExtract(prompt: string): Promise<string> {
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-opus-4-5',
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-    signal: AbortSignal.timeout(30_000),
-  })
+  return withAI('anthropic-opus', async () => {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: AbortSignal.timeout(30_000),
+    })
 
-  if (!resp.ok) {
-    throw new Error(`Claude API error: ${resp.status}`)
-  }
+    if (!resp.ok) {
+      throw new Error(`Anthropic error: ${resp.status}`)
+    }
 
-  const data = await resp.json() as { content?: Array<{ text?: string }> }
-  return data.content?.[0]?.text ?? ''
+    const data = await resp.json() as { content?: Array<{ text?: string }> }
+    return data.content?.[0]?.text ?? ''
+  }, '')
 }
 
 // ---------------------------------------------------------------------------

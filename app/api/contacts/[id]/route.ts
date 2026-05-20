@@ -54,10 +54,12 @@ export async function PATCH(
     if (budget_max) updatePayload.budget_max = budget_max
     if (timeline)   updatePayload.timeline   = timeline
 
-    const { error } = await supabaseAdmin
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+    const { error } = await (supabaseAdmin as any)
       .from('contacts')
       .update(updatePayload)
       .eq('id', id)
+      .eq('tenant_id', tenantId)
 
     if (error) {
       console.error('[contacts/id] patch error:', error, { corrId })
@@ -91,11 +93,13 @@ export async function DELETE(
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
     }
 
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
     // Load contact to check ownership
-    const { data: contact, error: fetchError } = await supabaseAdmin
+    const { data: contact, error: fetchError } = await (supabaseAdmin as any)
       .from('contacts')
       .select('agent_email')
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .single()
 
     if (fetchError || !contact) {
@@ -113,10 +117,11 @@ export async function DELETE(
       }
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await (supabaseAdmin as any)
       .from('contacts')
       .delete()
       .eq('id', id)
+      .eq('tenant_id', tenantId)
 
     if (error) {
       console.error('[contacts/id] delete error:', error, { corrId })

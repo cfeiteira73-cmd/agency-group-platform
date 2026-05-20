@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // GET /api/deal-packs — List deal packs (portal auth required)
 // Query: ?status=ready&limit=50&offset=0
 // =============================================================================
@@ -22,9 +22,12 @@ export async function GET(req: NextRequest) {
     const limit   = Math.min(parseInt(searchParams.get('limit')  || '100'), 200)
     const offset  = parseInt(searchParams.get('offset') || '0')
 
-    let query = supabaseAdmin
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query: any = (supabaseAdmin as any)
       .from('deal_packs')
       .select('*')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 

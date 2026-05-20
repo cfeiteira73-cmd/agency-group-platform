@@ -4,6 +4,7 @@ import { logger } from '@/lib/observability/logger'
 import type { ArchitectureStyle, StagingQuality, PropertyType } from '@/lib/property-ai/types'
 import { withAnthropicRetry } from '@/lib/ops/withRetry'
 import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
+import { withAI } from '@/lib/ops/withAI'
 
 interface VisionAnalysisResult {
   rooms_detected: string[]
@@ -66,31 +67,36 @@ const VISION_FAILURE: VisionAnalysisResult = {
 async function callClaudeVision(imageUrl: string, prompt: string): Promise<string> {
   // 30s timeout prevents indefinite hang if Anthropic API is unresponsive
   // withAnthropicRetry adds 3 attempts with 1s→2s backoff for transient 5xx/529 errors
-  const data = await withAnthropicRetry(() =>
-    fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: AbortSignal.timeout(30_000),
-      headers: {
-        'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-5',
-        max_tokens: 1024,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'url', url: imageUrl } },
-              { type: 'text', text: prompt },
-            ],
-          },
-        ],
-      }),
-    }).then((resp) => resp.json() as Promise<{ content?: Array<{ text?: string }> }>)
-  )
-  return data.content?.[0]?.text ?? ''
+  return withAI('anthropic-opus', async () => {
+    const data = await withAnthropicRetry(() =>
+      fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        signal: AbortSignal.timeout(30_000),
+        headers: {
+          'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-5',
+          max_tokens: 1024,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'url', url: imageUrl } },
+                { type: 'text', text: prompt },
+              ],
+            },
+          ],
+        }),
+      }).then((resp) => {
+        if (!resp.ok) throw new Error(`Anthropic error: ${resp.status}`)
+        return resp.json() as Promise<{ content?: Array<{ text?: string }> }>
+      })
+    )
+    return data.content?.[0]?.text ?? ''
+  }, '')
 }
 
 const VISION_PROMPT = `Analyze this real estate property photo and return a JSON object with EXACTLY these fields:

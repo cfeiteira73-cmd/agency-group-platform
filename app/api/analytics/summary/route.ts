@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // AGENCY GROUP — Analytics Summary API v1.0
 // GET /api/analytics/summary — aggregated KPIs from Supabase
 // Returns: totalGCI, dealsCountByStage, topAgents, conversionsByZona, gci12m
@@ -35,40 +35,6 @@ export interface AnalyticsSummary {
 }
 
 // ---------------------------------------------------------------------------
-// Mock fallback — realistic AG data
-// ---------------------------------------------------------------------------
-
-const MOCK_SUMMARY: AnalyticsSummary = {
-  gciMensal: 168700,
-  gciYTD: 1175000,
-  gci12m: [62400, 78300, 91200, 84700, 68900, 72100, 95400, 118600, 134200, 142800, 156400, 168700],
-  gci12mLabels: ['Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez', 'Jan', 'Fev', 'Mar'],
-  pipelineAtivo: 4326000,
-  dealsCountByStage: [
-    { stage: 'Qualificação', deals: 8,  valor: 4200000, prob: 20, color: '#e74c3c' },
-    { stage: 'Visita',       deals: 5,  valor: 3800000, prob: 40, color: '#c9a96e' },
-    { stage: 'Proposta',     deals: 4,  valor: 3100000, prob: 60, color: '#c9a96e' },
-    { stage: 'CPCV',         deals: 3,  valor: 2400000, prob: 85, color: '#1c4a35' },
-    { stage: 'Escritura',    deals: 2,  valor: 1600000, prob: 95, color: '#1c4a35' },
-  ],
-  topAgents: [
-    { name: 'Sofia Martins',   gciMes: 38400, gciYTD: 312800, dealsFechados: 14, pipeline: 1240000, conversao: 4.8, diasCiclo: 72,  score: 94, calls: 68, emails: 142, visitas: 24, propostas: 11 },
-    { name: 'Ricardo Fonseca', gciMes: 29700, gciYTD: 241500, dealsFechados: 11, pipeline: 980000,  conversao: 3.9, diasCiclo: 84,  score: 87, calls: 54, emails: 118, visitas: 19, propostas: 8  },
-    { name: 'Ana Rodrigues',   gciMes: 24100, gciYTD: 198600, dealsFechados: 9,  pipeline: 730000,  conversao: 3.4, diasCiclo: 91,  score: 81, calls: 47, emails: 96,  visitas: 16, propostas: 7  },
-    { name: 'Bruno Carvalho',  gciMes: 18600, gciYTD: 152300, dealsFechados: 7,  pipeline: 540000,  conversao: 2.8, diasCiclo: 102, score: 73, calls: 39, emails: 78,  visitas: 12, propostas: 5  },
-    { name: 'Inês Almeida',    gciMes: 14200, gciYTD: 118400, dealsFechados: 5,  pipeline: 380000,  conversao: 2.1, diasCiclo: 118, score: 65, calls: 31, emails: 62,  visitas: 9,  propostas: 3  },
-  ],
-  conversionsByZona: [
-    { zona: 'Lisboa',  valor: 1842000, pct: 42, color: '#1c4a35' },
-    { zona: 'Cascais', valor: 1008800, pct: 23, color: '#2d6e52' },
-    { zona: 'Algarve', valor: 789200,  pct: 18, color: '#c9a96e' },
-    { zona: 'Porto',   valor: 526300,  pct: 12, color: '#a07840' },
-    { zona: 'Madeira', valor: 219300,  pct: 5,  color: '#6b4e28' },
-  ],
-  source: 'mock',
-}
-
-// ---------------------------------------------------------------------------
 // Empty summary \u2014 returned when DB is unavailable (no fake metrics)
 // ---------------------------------------------------------------------------
 
@@ -101,7 +67,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Tenant scope — summary must never aggregate cross-tenant deals
-    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
     // ── 1. Try Supabase ─────────────────────────────────────────────────────
     // Confirmed production columns (migration 003 + 20260426_002):

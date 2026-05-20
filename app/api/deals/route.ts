@@ -216,6 +216,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           source_system:  'api',
           metadata:       { fase: body.fase, ref, imovel: body.imovel },
         })
+        // Causal trace step for deal creation
+        recordCausalStep({
+          correlation_id: corrId2,
+          tenant_id:      req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
+          step_type:      'db_mutation',
+          entity_type:    'deal',
+          entity_id:      data.id ?? undefined,
+          action:         'deal_created',
+          success:        true,
+          metadata:       { deal_id: data.id ?? null, valor: valorNum, fase: faseStr },
+        })
         // Event bus activation — richer typed event with dedup + DLQ (fire-and-forget)
         void emit.dealCreated(
           {
@@ -335,6 +346,22 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
             },
             { correlation_id: corrId, source_system: 'api' },
           )
+
+          // Emit dealClosed when deal reaches a terminal closed stage (fire-and-forget)
+          const CLOSED_STAGES = ['Escritura Concluída', 'Escritura', 'fechado', 'post_sale', 'pos_venda']
+          if (CLOSED_STAGES.includes(fase)) {
+            void emit.dealClosed(
+              {
+                deal_id:     dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+                agent_email: agentEmail,
+                deal_ref:    typeof ref === 'string' ? ref : null,
+                deal_value:  typeof (data as Record<string, unknown>)?.deal_value === 'number'
+                  ? (data as Record<string, unknown>).deal_value as number
+                  : null,
+              },
+              { correlation_id: corrId, source_system: 'api' },
+            )
+          }
         }
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
       }

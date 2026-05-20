@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Revenue Analytics Engine
 // GET /api/analytics/revenue — real revenue KPIs from Supabase
 // Metrics: GCI, pipeline, fees, funnel rates, by zona/partner
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   // Tenant scope — analytics must never leak cross-tenant revenue data
-  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
   try {
     // ── Fetch deals — progressive column discovery ────────────────────────────

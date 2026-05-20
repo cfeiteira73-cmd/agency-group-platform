@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Pipeline Priority Engine
 // GET /api/priority — returns top priority actions from live Supabase data
 // Computes dynamically from: contacts, matches, deal_packs, deals + priority_items
@@ -63,6 +63,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const limit  = Math.min(50, parseInt(sp.get('limit') ?? '20', 10))
   const status = sp.get('status') ?? 'open'   // open | all | resolved
   const engine = sp.get('engine') !== 'false'  // compute dynamic items (default true)
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
   // ── 1. Fetch persisted priority_items from DB ────────────────────────────────
   const persistedItems: PriorityItem[] = []
@@ -71,6 +72,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const piTable = (supabaseAdmin as any).from('priority_items')
     let q = piTable
       .select('*')
+      .eq('tenant_id', tenantId)
       .order('priority_score', { ascending: false })
       .order('deadline', { ascending: true, nullsFirst: false })
       .limit(limit)
@@ -89,9 +91,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     try {
       // A) HIGH LEAD SCORE — no recent contact (>72h)
-      const { data: hotLeads } = await supabaseAdmin
+      const { data: hotLeads } = await (supabaseAdmin as any)
         .from('contacts')
         .select('id, name, email, lead_score, updated_at, role')
+        .eq('tenant_id', tenantId)
         .gte('lead_score', 70)
         .order('lead_score', { ascending: false })
         .limit(10)
@@ -119,9 +122,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       // B) MATCH SCORE ≥80 — no deal pack sent
-      const { data: topMatches } = await supabaseAdmin
+      const { data: topMatches } = await (supabaseAdmin as any)
         .from('matches')
         .select('id, lead_id, property_id, property_title, match_score, created_at, status')
+        .eq('tenant_id', tenantId)
         .gte('match_score', 80)
         .eq('status', 'pending')
         .order('match_score', { ascending: false })
@@ -148,9 +152,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       // C) DEAL PACK SENT — no response after 48h
       const cutoff48h = new Date(now - 48 * 60 * 60 * 1000).toISOString()
-      const { data: stalePacks } = await supabaseAdmin
+      const { data: stalePacks } = await (supabaseAdmin as any)
         .from('deal_packs')
         .select('id, lead_id, property_id, status, sent_at, view_count')
+        .eq('tenant_id', tenantId)
         .eq('status', 'sent')
         .lt('sent_at', cutoff48h)
         .eq('view_count', 0)
@@ -179,9 +184,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // D) DEALS STUCK IN FASE > SLA
       // Uses portal-compat columns: fase (PT stage), imovel (title), valor (TEXT revenue)
       // expected_fee is available if migration 20260426_002 ran; falls back to valor × 5%
-      const { data: activeDeals } = await supabaseAdmin
+      const { data: activeDeals } = await (supabaseAdmin as any)
         .from('deals')
         .select('id, title, imovel, fase, updated_at, valor, expected_fee, created_at')
+        .eq('tenant_id', tenantId)
         .not('fase', 'ilike', '%escritura%')
         .not('fase', 'ilike', '%fechado%')
         .not('fase', 'eq', 'lost')
@@ -224,9 +230,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       // E) HOT SELLER LEADS — no consultation booked
-      const { data: sellers } = await supabaseAdmin
+      const { data: sellers } = await (supabaseAdmin as any)
         .from('contacts')
         .select('id, name, email, seller_stage, seller_asking_price, seller_urgency, created_at')
+        .eq('tenant_id', tenantId)
         .eq('is_seller', true)
         .in('seller_stage', ['prospecting', 'appraisal'])
         .order('created_at', { ascending: false })
@@ -310,6 +317,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from('priority_items')
@@ -323,6 +331,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         owner_id: owner_id ?? auth.email,
         revenue_impact: revenue_impact ?? null,
         source: 'manual',
+        tenant_id: tenantId,
       })
       .select()
       .single()
@@ -355,12 +364,14 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   if (resolved_at) updates.resolved_at = resolved_at
   if (status === 'resolved' && !resolved_at) updates.resolved_at = new Date().toISOString()
 
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from('priority_items')
       .update(updates)
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select()
       .single()
 

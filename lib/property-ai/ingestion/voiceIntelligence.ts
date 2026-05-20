@@ -1,6 +1,7 @@
 // AGENCY GROUP — SH-ROS Property AI | AMI: 22506
 
 import { logger } from '@/lib/observability/logger'
+import { withAI } from '@/lib/ops/withAI'
 
 interface VoiceAnalysisResult {
   transcription: string
@@ -55,26 +56,29 @@ ${text}
 Return only the JSON object, no additional text.`
 
 async function analyzeTranscriptionText(transcription: string): Promise<Omit<VoiceAnalysisResult, 'transcription'>> {
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-opus-4-5',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: [{ type: 'text', text: TEXT_ANALYSIS_PROMPT(transcription) }],
-        },
-      ],
-    }),
-  })
-  const data = (await resp.json()) as { content?: Array<{ text?: string }> }
-  return parseAnalysisResponse(data.content?.[0]?.text ?? '')
+  return withAI('anthropic-opus', async () => {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: [{ type: 'text', text: TEXT_ANALYSIS_PROMPT(transcription) }],
+          },
+        ],
+      }),
+    })
+    if (!resp.ok) throw new Error(`Anthropic error: ${resp.status}`)
+    const data = (await resp.json()) as { content?: Array<{ text?: string }> }
+    return parseAnalysisResponse(data.content?.[0]?.text ?? '')
+  }, omitTranscription(DEFAULT_RESULT))
 }
 
 function parseAnalysisResponse(raw: string): Omit<VoiceAnalysisResult, 'transcription'> {

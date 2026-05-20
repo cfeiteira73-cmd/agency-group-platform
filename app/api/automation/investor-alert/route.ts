@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
@@ -33,11 +33,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const propertyPrice = property.preco || property.price || 0
     const propertyPriceFloor = propertyPrice * 0.85
 
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
     // Find matching investors from Supabase
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: investors } = await supabaseAdmin
+    const { data: investors } = await (supabaseAdmin as any)
       .from('contacts')
       .select('id, full_name, email, phone, whatsapp, budget_min, budget_max, preferred_locations, typologies_wanted, status, lead_tier')
+      .eq('tenant_id', tenantId)
       .in('status', ['prospect', 'qualified', 'active'])
       .lte('budget_min', propertyPrice)
       .gte('budget_max', propertyPriceFloor)

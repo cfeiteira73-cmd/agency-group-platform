@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { createClient } from '@supabase/supabase-js'
@@ -322,7 +322,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Tenant scope — daily-brief must never aggregate cross-tenant data
-    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
     // Today's window
     const todayStart = new Date(targetDate)

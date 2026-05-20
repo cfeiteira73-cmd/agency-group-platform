@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Investor Alerts Cron
 // GET /api/cron/investor-alerts
 // Scheduled: daily at 08:30 UTC via vercel.json (after sync-listings at 06:00)
@@ -312,7 +312,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const minScore    = parseInt(req.nextUrl.searchParams.get('min_score') ?? '75', 10)
   const maxHoursOld = parseInt(req.nextUrl.searchParams.get('hours') ?? '24', 10)
   // Tenant scope — alerts must never cross org boundaries
-  const tenantId    = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+  const tenantId    = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
   try {
     // 1. Fetch fresh high-score properties

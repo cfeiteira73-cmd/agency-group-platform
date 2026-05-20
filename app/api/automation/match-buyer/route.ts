@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Buyer-Property Matching API v2.0
 // POST /api/automation/match-buyer
 // Matches buyer profile against LIVE Supabase properties via pgvector
@@ -337,6 +337,7 @@ async function persistMatches(
   results: MatchResult[],
   agentEmail?: string
 ): Promise<string[]> {
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const rows = results.map((r) => ({
     lead_id:              leadId,
     property_id:          r.property.id ?? null,
@@ -355,6 +356,7 @@ async function persistMatches(
     match_weaknesses:     r.decision.match_weaknesses,
     priority_level:       r.decision.priority_level,
     next_action_deadline: r.decision.next_action_deadline,
+    tenant_id:            tenantId,
   }))
 
   const { data } = await supabase.from('matches').insert(rows).select('id')
@@ -470,9 +472,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (properties.length === 0) {
       // ── Step 2c: Last-resort Supabase filter (no embedding) ─────────────────
+      const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
       const { data: raw } = await supabase
         .from('properties')
         .select('id, nome, zona, preco, quartos, area, tipo, status')
+        .eq('tenant_id', tenantId)
         .eq('status', 'active')
         .gte('preco', buyer.budget_min)
         .lte('preco', Math.round(buyer.budget_max * 1.1))

@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // AGENCY GROUP — Agentic CRM Orchestrator v1.0
 // POST /api/automation/agent — Sofia AI autonomous CRM analysis loop
 // Uses Claude tool-use to: identify stalled deals, score leads,
@@ -334,7 +334,7 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
   // TENANT FIX: use canonical env var — x-tenant-id header is untrusted (IDOR risk)
-  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

@@ -2,6 +2,7 @@
 
 import { logger } from '@/lib/observability/logger'
 import type { ZoneClassification } from '@/lib/property-ai/types'
+import { withAI } from '@/lib/ops/withAI'
 
 interface GeospatialResult {
   inferred_city?: string
@@ -102,21 +103,24 @@ ${description}
 Focus on Portuguese cities, neighborhoods, and landmarks. Return only the JSON object.`
 
 async function callClaude(prompt: string): Promise<string> {
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-opus-4-5',
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
-    }),
-  })
-  const data = (await resp.json()) as { content?: Array<{ text?: string }> }
-  return data.content?.[0]?.text ?? ''
+  return withAI('anthropic-opus', async () => {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+      }),
+    })
+    if (!resp.ok) throw new Error(`Anthropic error: ${resp.status}`)
+    const data = (await resp.json()) as { content?: Array<{ text?: string }> }
+    return data.content?.[0]?.text ?? ''
+  }, '')
 }
 
 class GeospatialIntelligence {

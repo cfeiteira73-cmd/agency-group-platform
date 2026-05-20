@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // AGENCY GROUP — CRM Contacts API v1.0
 // GET  /api/crm  — list contacts (with filters + pagination)
 // POST /api/crm  — create contact
@@ -308,7 +308,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const zone   = searchParams.get('zone')
 
     // Tenant scope — CRM contacts must never leak cross-tenant data
-    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
     // --- Try Supabase ---
     try {

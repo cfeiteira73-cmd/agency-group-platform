@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Autonomous Revenue Loop
 // POST /api/automation/revenue-loop
 //
@@ -111,11 +111,12 @@ function isClosedFase(fase: unknown): boolean {
 
 // ── Check if a priority item already exists (dedup) ───────────────────────────
 
-async function hasOpenItem(entityType: string, entityId: string): Promise<boolean> {
+async function hasOpenItem(entityType: string, entityId: string, tenantId: string): Promise<boolean> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { count } = await (supabaseAdmin as any)
     .from('priority_items')
     .select('id', { count: 'exact', head: true })
+    .eq('tenant_id', tenantId)
     .eq('entity_type', entityType)
     .eq('entity_id', String(entityId))
     .eq('status', 'open')
@@ -131,6 +132,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const cycleStart     = Date.now()
   const correlationId  = randomUUID()
+  const tenantId       = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const report: CycleReport = {
     correlation_id:         correlationId,
     cycle_at:               new Date().toISOString(),
@@ -152,9 +154,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // ───────────────────────────────────────────────────────────────────────────
   try {
     const cutoff = new Date(Date.now() - RULES.STALE_MATCH_HOURS * 3600_000).toISOString()
-    const { data: staleMatches } = await supabaseAdmin
+    const { data: staleMatches } = await (supabaseAdmin as any)
       .from('matches')
       .select('id, lead_id, property_title, match_score, created_at, next_best_action')
+      .eq('tenant_id', tenantId)
       .gte('match_score', RULES.HIGH_SCORE_THRESHOLD)
       .eq('status', 'pending')
       .lt('created_at', cutoff)
@@ -162,7 +165,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     for (const m of (staleMatches ?? [])) {
       report.actions_evaluated++
-      const alreadyOpen = await hasOpenItem('match', String(m.id))
+      const alreadyOpen = await hasOpenItem('match', String(m.id), tenantId)
       if (alreadyOpen) { report.already_open++; continue }
 
       const hrs = hoursSince(m.created_at)
@@ -195,9 +198,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // ───────────────────────────────────────────────────────────────────────────
   try {
     const cutoff = new Date(Date.now() - RULES.STALE_PACK_HOURS * 3600_000).toISOString()
-    const { data: stalePacks } = await supabaseAdmin
+    const { data: stalePacks } = await (supabaseAdmin as any)
       .from('deal_packs')
       .select('id, lead_id, title, sent_at, view_count')
+      .eq('tenant_id', tenantId)
       .eq('status', 'sent')
       .lt('sent_at', cutoff)
       .limit(20)
@@ -207,7 +211,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const viewCount = Number(dp.view_count ?? 0)
       if (viewCount > 0) { report.skipped++; continue }  // was viewed — OK
 
-      const alreadyOpen = await hasOpenItem('deal_pack', String(dp.id))
+      const alreadyOpen = await hasOpenItem('deal_pack', String(dp.id), tenantId)
       if (alreadyOpen) { report.already_open++; continue }
 
       const hrs = hoursSince(dp.sent_at)
@@ -238,9 +242,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // STEP 3: OBSERVE — Active deals stuck > SLA (using fase — portal schema)
   // ───────────────────────────────────────────────────────────────────────────
   try {
-    const { data: deals } = await supabaseAdmin
+    const { data: deals } = await (supabaseAdmin as any)
       .from('deals')
       .select('id, imovel, title, fase, updated_at, valor, expected_fee, created_at')
+      .eq('tenant_id', tenantId)
       .not('fase', 'ilike', '%escritura%')
       .not('fase', 'ilike', '%fechado%')
       .not('fase', 'eq', 'lost')
@@ -254,7 +259,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (hrs < RULES.STUCK_DEAL_HOURS) { report.skipped++; continue }
 
       report.actions_evaluated++
-      const alreadyOpen = await hasOpenItem('deal', String(deal.id))
+      const alreadyOpen = await hasOpenItem('deal', String(deal.id), tenantId)
       if (alreadyOpen) { report.already_open++; continue }
 
       const fee = parseRev(deal.expected_fee) || parseRev(deal.valor) * COMMISSION_RATE
@@ -288,9 +293,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // STEP 4: OBSERVE — Hot leads with no recent match (score ≥70, no match in 7d)
   // ───────────────────────────────────────────────────────────────────────────
   try {
-    const { data: hotLeads } = await supabaseAdmin
+    const { data: hotLeads } = await (supabaseAdmin as any)
       .from('contacts')
       .select('id, name, lead_score, updated_at')
+      .eq('tenant_id', tenantId)
       .gte('lead_score', 70)
       .order('lead_score', { ascending: false })
       .limit(20)
@@ -300,9 +306,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const leadIds = hotLeads.map((l: Record<string,unknown>) => String(l.id))
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600_000).toISOString()
 
-      const { data: recentMatches } = await supabaseAdmin
+      const { data: recentMatches } = await (supabaseAdmin as any)
         .from('matches')
         .select('lead_id')
+        .eq('tenant_id', tenantId)
         .in('lead_id', leadIds)
         .gte('created_at', sevenDaysAgo)
 
@@ -317,7 +324,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         if (hrs < 168) { report.skipped++; continue }  // only if stale >7d
 
         report.actions_evaluated++
-        const alreadyOpen = await hasOpenItem('contact', String(lead.id))
+        const alreadyOpen = await hasOpenItem('contact', String(lead.id), tenantId)
         if (alreadyOpen) { report.already_open++; continue }
 
         newItems.push({
@@ -349,6 +356,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // STEP 5: ACT — Batch insert new priority_items (safety limit enforced)
   // ───────────────────────────────────────────────────────────────────────────
   const toInsert = newItems.slice(0, RULES.MAX_PRIORITY_ITEMS_PER_RUN)
+    .map(item => ({ ...item, tenant_id: tenantId }))
 
   if (toInsert.length > 0) {
     try {

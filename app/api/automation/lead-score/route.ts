@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Lead Scoring API
 // POST /api/automation/lead-score
 // Scores leads 0-100, classifies A/B/C, returns recommended action
@@ -10,6 +10,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
 import track from '@/lib/trackLearningEvent'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { emit } from '@/lib/events/producers'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -332,7 +333,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // --- Upsert to Supabase contacts table (best-effort, up to 3 retries) ---
     // Tenant scope — contacts must be scoped to avoid cross-tenant data leaks
-    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
     const upsertPayload: Record<string, unknown> = {
       full_name:            leadData.name,
@@ -405,6 +406,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         detected_intent: deriveIntent(leadData.source, leadData.message),
       },
     })
+
+    // Event bus — leadQualified (fire-and-forget)
+    const leadId = typeof raw.id === 'string' ? raw.id : corrId
+    void emit.leadQualified(
+      {
+        lead_id:      leadId,
+        qualified_by: 'engine',
+        score:        result.score,
+        budget_min:   null,
+        budget_max:   budgetValue ?? null,
+        zona:         null,
+      },
+      { correlation_id: corrId, source_system: 'engine' },
+    )
 
     return NextResponse.json(result, { status: 200 })
   } catch (error) {

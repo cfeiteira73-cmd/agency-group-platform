@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Agency Group — Properties API
 // GET  /api/properties  — portal-authenticated listing query
 // POST /api/properties  — public partner submission (parceiros form)
@@ -173,7 +173,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // Tenant scope — property reads must never leak cross-tenant listings
-    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
     // Try with portal-compat columns (migration 003)
     try {

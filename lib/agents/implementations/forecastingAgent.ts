@@ -93,7 +93,7 @@ export class ForecastingAgent extends BaseAgent {
       const { data: activeDeals } = await supabaseAdmin
         .from('deals')
         .select('id, valor, fase')
-        .not('fase', 'in', '("Escritura Concluída","Perdido","Rejeitado")')
+        .not('fase', 'in', '("Escritura Concluída","Escritura","fechado","post_sale","pos_venda","Perdido","Rejeitado","escritura_sell")')
         .limit(50)
 
       const dealList        = activeDeals ?? []

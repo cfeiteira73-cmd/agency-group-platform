@@ -107,7 +107,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // REVENUE FIX: pipeline_value must only include ACTIVE (non-closed) deals.
       // Previously summed ALL deals — inflated pipeline as closed deals accumulated.
       // CLOSED_STAGES must match businessPrimitiveEngine.ts and revenueAttribution.ts.
-      const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída']
+      const CLOSED_STAGES = ['Escritura Concluída', 'Escritura', 'fechado', 'pos_venda', 'post_sale', 'Perdido', 'Rejeitado', 'escritura_sell']
 
       const { data: allDeals } = await supabase
         .from('deals')
