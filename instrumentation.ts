@@ -93,9 +93,27 @@ export async function register() {
       try {
         const { registerAllHandlers } = await import('@/lib/workers/handlers/index')
         registerAllHandlers()
-        console.log('[AG] ✓ Worker handlers registered (5 handlers active)')
+        console.log('[AG] ✓ Worker handlers registered (7 handlers active)')
       } catch (e) {
         console.warn('[AG] Worker handler registration failed (non-fatal):', e)
+      }
+    })()
+
+    // Wire Kafka event bus adapter — active when KAFKA_BROKERS env var is set.
+    // Falls back to in-memory + Supabase persistence when not configured.
+    void (async () => {
+      try {
+        const { createKafkaAdapterFromEnv } = await import('@/lib/events/kafkaAdapter')
+        const { eventBus }                  = await import('@/lib/events/bus')
+        const adapter = createKafkaAdapterFromEnv()
+        if (adapter) {
+          eventBus.setAdapter(adapter)
+          console.log('[AG] ✓ Kafka event bus adapter wired')
+        } else {
+          console.log('[AG] ⚠ KAFKA_BROKERS not set — event bus using in-memory adapter')
+        }
+      } catch (e) {
+        console.warn('[AG] Kafka adapter wiring failed (non-fatal — falling back to default):', e)
       }
     })()
 

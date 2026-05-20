@@ -7,6 +7,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase'
 import { getQueueAdapter } from '@/lib/queue/adapter'
+import { emit } from '@/lib/events/producers'
 import type { WorkerJob, WorkerResult } from '../types'
 
 // ─── Payload ──────────────────────────────────────────────────────────────────
@@ -122,7 +123,21 @@ export async function enrichmentHandler(
       }
     }
 
-    // 4. Enqueue scoring job
+    // 4. Emit propertyEnriched event (fire-and-forget)
+    if (Object.keys(patch).length > 0) {
+      void emit.propertyEnriched(
+        {
+          property_id,
+          price_per_m2:    derivedPricePerM2,
+          investment_tier: investmentTier,
+          geo_tier:        geoTier,
+          enriched_at:     new Date().toISOString(),
+        },
+        { source_system: 'engine' },
+      )
+    }
+
+    // 5. Enqueue scoring job
     try {
       await getQueueAdapter().enqueue(
         'scoring_jobs',

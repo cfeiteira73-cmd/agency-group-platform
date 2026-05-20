@@ -229,7 +229,7 @@ class EventBus {
       .insert({
         event_id:        event.event_id,
         correlation_id:  event.correlation_id ?? 'unknown',
-        tenant_id:       event.tenant_id ?? 'agency-group',
+        tenant_id:       event.tenant_id ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
         event_type:      event.event_type,
         idempotency_key: event.idempotency_key ?? null,
         payload:         event as unknown as Record<string, unknown>,

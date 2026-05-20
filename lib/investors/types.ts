@@ -28,6 +28,10 @@ export interface InvestorProfile {
   company:     string | null
   nationality: string | null
 
+  // ── Classification ───────────────────────────────────────────────────────
+  /** Investor type — matches DB enum */
+  investor_type: 'individual' | 'family_office' | 'fund' | 'institution' | null
+
   // ── Capital parameters ────────────────────────────────────────────────────
   /** Minimum ticket size in EUR */
   capital_min_eur: number | null

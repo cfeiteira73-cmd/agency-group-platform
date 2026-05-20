@@ -12,6 +12,7 @@ import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { CANONICAL_TENANT_UUID } from '@/lib/constants/pipeline'
 import { createInvestor, getInvestors } from '@/lib/investors/investorService'
+import { emit } from '@/lib/events/producers'
 import type { RiskTolerance, InvestorStatus } from '@/lib/investors/types'
 
 export const runtime = 'nodejs'
@@ -156,6 +157,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     )
 
     console.log(`[POST /api/investors] created investor ${investor.id} — "${investor.full_name}" | tenant=${tenantId}`, { corrId })
+
+    // Emit investorCreated event (fire-and-forget — network effect tracking)
+    void emit.investorCreated(
+      {
+        investor_id:     investor.id,
+        investor_type:   investor.investor_type ?? 'individual',
+        capital_min_eur: investor.capital_min_eur ?? null,
+        capital_max_eur: investor.capital_max_eur ?? null,
+        geography:       investor.geography_preference ?? [],
+        risk_tolerance:  investor.risk_tolerance ?? 'moderate',
+        tenant_id:       tenantId,
+      },
+      { correlation_id: corrId, source_system: 'api' },
+    )
 
     return NextResponse.json({ investor }, { status: 201 })
   } catch (err) {

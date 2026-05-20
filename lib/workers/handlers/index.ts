@@ -12,12 +12,16 @@ import { enrichmentHandler }  from './enrichmentHandler'
 import { replayHandler }      from './replayHandler'
 import { dlqHandler }         from './dlqHandler'
 import { followupHandler }    from './followupHandler'
+import { commissionHandler }       from './commissionHandler'
+import { marketIntelligenceHandler } from './marketIntelligenceHandler'
 
 export type { ScoringJobPayload }    from './scoringHandler'
 export type { EnrichmentJobPayload } from './enrichmentHandler'
 export type { ReplayJobPayload }     from './replayHandler'
 export type { DlqJobPayload }        from './dlqHandler'
 export type { FollowupJobPayload }   from './followupHandler'
+export type { CommissionJobPayload }           from './commissionHandler'
+export type { MarketIntelligenceJobPayload }    from './marketIntelligenceHandler'
 
 export {
   scoringHandler,
@@ -25,6 +29,8 @@ export {
   replayHandler,
   dlqHandler,
   followupHandler,
+  commissionHandler,
+  marketIntelligenceHandler,
 }
 
 /**
@@ -38,4 +44,6 @@ export function registerAllHandlers(): void {
   registerWorkerHandler('replay',        replayHandler)
   registerWorkerHandler('dlq-processor', dlqHandler)
   registerWorkerHandler('followup',      followupHandler)
+  registerWorkerHandler('commission',          commissionHandler)
+  registerWorkerHandler('market-intelligence', marketIntelligenceHandler)
 }

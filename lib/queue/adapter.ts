@@ -108,7 +108,7 @@ export class SupabaseQueueAdapter implements QueueAdapter {
     const row = {
       queue,
       payload: payload as Record<string, unknown>,
-      tenant_id: options.tenant_id ?? 'agency-group',
+      tenant_id: options.tenant_id ?? process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
       correlation_id: options.correlation_id ?? null,
       max_attempts: options.max_attempts ?? 3,
       scheduled_at: scheduledAt,

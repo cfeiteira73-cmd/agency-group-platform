@@ -20,6 +20,8 @@ import type {
   DealUpdatedEvent, RevenueRecognizedEvent,
   AIRequestedEvent, AIExecutedEvent, AIBilledEvent,
   SystemFailureEvent, SystemRecoveryEvent,
+  CommissionCalculatedEvent, InvestorCreatedEvent, PropertyNormalizedEvent,
+  PropertyEnrichedEvent, MarketSnapshotGeneratedEvent, DealLineageTracedEvent,
 } from './types'
 
 type Ctx = { correlation_id?: string | null; source_system?: 'api' | 'n8n' | 'cron' | 'engine' | 'agent' }
@@ -58,6 +60,13 @@ export const producers = {
   aiBilled:               (p: AIBilledEvent['payload'],               ctx: Ctx = {}) => ({ event_type: 'ai_billed'                as const, ...base('ai_billed', ctx),                payload: p } satisfies AIBilledEvent),
   systemFailure:          (p: SystemFailureEvent['payload'],          ctx: Ctx = {}) => ({ event_type: 'system_failure'           as const, ...base('system_failure', ctx),           payload: p } satisfies SystemFailureEvent),
   systemRecovery:         (p: SystemRecoveryEvent['payload'],         ctx: Ctx = {}) => ({ event_type: 'system_recovery'          as const, ...base('system_recovery', ctx),          payload: p } satisfies SystemRecoveryEvent),
+  // Wave 22 — European Intelligence Infrastructure
+  commissionCalculated:    (p: CommissionCalculatedEvent['payload'],    ctx: Ctx = {}) => ({ event_type: 'commission_calculated'    as const, ...base('commission_calculated', ctx),    payload: p } satisfies CommissionCalculatedEvent),
+  investorCreated:         (p: InvestorCreatedEvent['payload'],         ctx: Ctx = {}) => ({ event_type: 'investor_created'         as const, ...base('investor_created', ctx),         payload: p } satisfies InvestorCreatedEvent),
+  propertyNormalized:      (p: PropertyNormalizedEvent['payload'],      ctx: Ctx = {}) => ({ event_type: 'property_normalized'      as const, ...base('property_normalized', ctx),      payload: p } satisfies PropertyNormalizedEvent),
+  propertyEnriched:        (p: PropertyEnrichedEvent['payload'],        ctx: Ctx = {}) => ({ event_type: 'property_enriched'        as const, ...base('property_enriched', ctx),        payload: p } satisfies PropertyEnrichedEvent),
+  marketSnapshotGenerated: (p: MarketSnapshotGeneratedEvent['payload'], ctx: Ctx = {}) => ({ event_type: 'market_snapshot_generated' as const, ...base('market_snapshot_generated', ctx), payload: p } satisfies MarketSnapshotGeneratedEvent),
+  dealLineageTraced:       (p: DealLineageTracedEvent['payload'],       ctx: Ctx = {}) => ({ event_type: 'deal_lineage_traced'      as const, ...base('deal_lineage_traced', ctx),      payload: p } satisfies DealLineageTracedEvent),
 }
 
 /** Convenience: produce + publish in one call */
@@ -93,4 +102,11 @@ export const emit = {
   aiBilled:               async (p: AIBilledEvent['payload'],               ctx?: Ctx) => void eventBus.publish(producers.aiBilled(p, ctx)),
   systemFailure:          async (p: SystemFailureEvent['payload'],          ctx?: Ctx) => void eventBus.publish(producers.systemFailure(p, ctx)),
   systemRecovery:         async (p: SystemRecoveryEvent['payload'],         ctx?: Ctx) => void eventBus.publish(producers.systemRecovery(p, ctx)),
+  // Wave 22 — European Intelligence Infrastructure
+  commissionCalculated:    async (p: CommissionCalculatedEvent['payload'],    ctx?: Ctx) => void eventBus.publish(producers.commissionCalculated(p, ctx)),
+  investorCreated:         async (p: InvestorCreatedEvent['payload'],         ctx?: Ctx) => void eventBus.publish(producers.investorCreated(p, ctx)),
+  propertyNormalized:      async (p: PropertyNormalizedEvent['payload'],      ctx?: Ctx) => void eventBus.publish(producers.propertyNormalized(p, ctx)),
+  propertyEnriched:        async (p: PropertyEnrichedEvent['payload'],        ctx?: Ctx) => void eventBus.publish(producers.propertyEnriched(p, ctx)),
+  marketSnapshotGenerated: async (p: MarketSnapshotGeneratedEvent['payload'], ctx?: Ctx) => void eventBus.publish(producers.marketSnapshotGenerated(p, ctx)),
+  dealLineageTraced:       async (p: DealLineageTracedEvent['payload'],       ctx?: Ctx) => void eventBus.publish(producers.dealLineageTraced(p, ctx)),
 }

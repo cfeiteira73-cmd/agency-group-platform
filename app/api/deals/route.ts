@@ -16,6 +16,7 @@ import { emit } from '@/lib/events/producers'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { recordCausalStep } from '@/lib/observability/causalTrace'
 import { WON_STAGES } from '@/lib/constants/pipeline'
+import { getQueueAdapter } from '@/lib/queue/adapter'
 
 export const runtime = 'nodejs'
 
@@ -398,6 +399,23 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               },
               { correlation_id: corrId, source_system: 'api' },
             )
+            // Enqueue commission calculation job (async worker — deterministic, auditable)
+            void getQueueAdapter().enqueue(
+              'commission_jobs',
+              {
+                deal_id:        dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+                tenant_id:      tenantId,
+                deal_value_eur: dealValue,
+                zone:           typeof (data as Record<string, unknown>)?.zona === 'string'
+                  ? (data as Record<string, unknown>).zona as string : null,
+                agent_email:    agentEmail,
+                deal_ref:       typeof ref === 'string' ? ref : null,
+                correlation_id: corrId,
+              },
+              { tenant_id: tenantId },
+            ).catch((e: unknown) => {
+              console.warn('[deals PUT] commission job enqueue failed:', e instanceof Error ? e.message : String(e))
+            })
           }
 
           // Emit dealRejected when deal is lost (fire-and-forget)

@@ -13,6 +13,9 @@ export type WorkerName =
   | 'analytics'
   | 'followup'
   | 'scoring'
+  | 'commission'
+  | 'market-intelligence'
+  | 'notification'
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -55,5 +58,8 @@ export const WORKER_REGISTRY: Record<WorkerName, WorkerConfig> = {
   'enrichment':    { name: 'enrichment',    queue: 'enrichment_jobs', concurrency: 5,  retryDelayMs: 5000,  timeoutMs: 30000,  enabled: true  },
   'analytics':     { name: 'analytics',     queue: 'analytics_jobs',  concurrency: 2,  retryDelayMs: 5000,  timeoutMs: 60000,  enabled: false },
   'followup':      { name: 'followup',      queue: 'followup_jobs',   concurrency: 3,  retryDelayMs: 5000,  timeoutMs: 30000,  enabled: true  },
-  'scoring':       { name: 'scoring',       queue: 'scoring_jobs',    concurrency: 5,  retryDelayMs: 3000,  timeoutMs: 20000,  enabled: true  },
+  'scoring':             { name: 'scoring',             queue: 'scoring_jobs',     concurrency: 5,  retryDelayMs: 3000,  timeoutMs: 20000,  enabled: true  },
+  'commission':          { name: 'commission',          queue: 'commission_jobs',  concurrency: 3,  retryDelayMs: 5000,  timeoutMs: 30000,  enabled: true  },
+  'market-intelligence': { name: 'market-intelligence', queue: 'market_jobs',      concurrency: 1,  retryDelayMs: 30000, timeoutMs: 60000,  enabled: true  },
+  'notification':        { name: 'notification',        queue: 'notification_jobs', concurrency: 5, retryDelayMs: 5000,  timeoutMs: 15000,  enabled: false },  // wired later
 }

@@ -70,6 +70,13 @@ export type EventType =
   | 'ai_billed'
   | 'system_failure'
   | 'system_recovery'
+  // Wave 22 — European Intelligence Infrastructure
+  | 'commission_calculated'
+  | 'investor_created'
+  | 'property_normalized'
+  | 'property_enriched'
+  | 'market_snapshot_generated'
+  | 'deal_lineage_traced'
 
 // ─── Typed payloads ───────────────────────────────────────────────────────────
 
@@ -411,6 +418,82 @@ export interface SystemRecoveryEvent extends BaseEvent {
   }
 }
 
+export interface CommissionCalculatedEvent extends BaseEvent {
+  event_type: 'commission_calculated'
+  payload: {
+    deal_id: string | null
+    commission_id: string
+    gross_eur: number
+    net_eur: number
+    agency_split_eur: number
+    agent_split_eur: number
+    rate: number
+    tier: 'standard' | 'premium' | 'institutional'
+    agent_email: string | null
+  }
+}
+
+export interface InvestorCreatedEvent extends BaseEvent {
+  event_type: 'investor_created'
+  payload: {
+    investor_id: string
+    investor_type: string
+    capital_min_eur: number | null
+    capital_max_eur: number | null
+    geography: string[]
+    risk_tolerance: string
+    tenant_id: string
+  }
+}
+
+export interface PropertyNormalizedEvent extends BaseEvent {
+  event_type: 'property_normalized'
+  payload: {
+    property_id: string
+    provider: string
+    price: number
+    city: string | null
+    area_m2: number | null
+    normalized_at: string
+  }
+}
+
+export interface PropertyEnrichedEvent extends BaseEvent {
+  event_type: 'property_enriched'
+  payload: {
+    property_id: string
+    price_per_m2: number | null
+    investment_tier: string | null
+    geo_tier: string | null
+    enriched_at: string
+  }
+}
+
+export interface MarketSnapshotGeneratedEvent extends BaseEvent {
+  event_type: 'market_snapshot_generated'
+  payload: {
+    snapshot_id: string
+    active_properties: number
+    total_investors: number
+    liquidity_ratio: number
+    avg_match_score: number
+    snapshot_date: string
+    tenant_id: string
+  }
+}
+
+export interface DealLineageTracedEvent extends BaseEvent {
+  event_type: 'deal_lineage_traced'
+  payload: {
+    deal_id: string
+    lead_id: string | null
+    property_id: string | null
+    investor_id: string | null
+    revenue_event_id: string | null
+    chain_complete: boolean
+  }
+}
+
 // ─── Union type ───────────────────────────────────────────────────────────────
 
 export type AnyPlatformEvent =
@@ -445,6 +528,12 @@ export type AnyPlatformEvent =
   | AIBilledEvent
   | SystemFailureEvent
   | SystemRecoveryEvent
+  | CommissionCalculatedEvent
+  | InvestorCreatedEvent
+  | PropertyNormalizedEvent
+  | PropertyEnrichedEvent
+  | MarketSnapshotGeneratedEvent
+  | DealLineageTracedEvent
 
 // ─── Event schema versioning ──────────────────────────────────────────────────
 
