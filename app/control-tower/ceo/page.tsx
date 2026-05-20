@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { supabaseAdmin } from '@/lib/supabase'
 import type { GovernanceStatusResponse } from '@/app/api/control-tower/governance-status/route'
+import { CLOSED_STAGES } from '@/lib/constants/pipeline'
 
 export const revalidate = 60 // ISR 60s
 
@@ -51,8 +52,8 @@ async function fetchAIDecisionsCount(): Promise<number> {
   }
 }
 
-// Canonical closed stages — must match kpi-snapshot, businessPrimitiveEngine, revenueAttribution
-const CEO_CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída']
+// Use canonical closed stages from pipeline constants (import above)
+const CEO_CLOSED_STAGES = CLOSED_STAGES as readonly string[]
 
 async function fetchPipelineValue(): Promise<string> {
   try {

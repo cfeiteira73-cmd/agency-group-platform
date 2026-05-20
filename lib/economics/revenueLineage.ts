@@ -4,6 +4,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase'
 import logger from '@/lib/logger'
+import { WON_STAGES } from '@/lib/constants/pipeline'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabaseAdmin as any
@@ -69,7 +70,6 @@ export class RevenueLineageBuilder {
       .eq('tenant_id', org_id)
       .limit(20)
 
-    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída']
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dealData: any[] = deals ?? []
     let total_revenue_eur = 0
@@ -77,7 +77,7 @@ export class RevenueLineageBuilder {
     for (const deal of dealData) {
       const deal_id = deal.id as string
       const val = (deal.deal_value as number) ?? 0
-      if (CLOSED_STAGES.includes(deal.fase as string)) total_revenue_eur += val
+      if ((WON_STAGES as readonly string[]).includes(deal.fase as string)) total_revenue_eur += val
 
       nodes.push({
         id: deal_id,

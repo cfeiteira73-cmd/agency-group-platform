@@ -143,3 +143,64 @@ export const LEAD_SCORING_WEIGHTS = {
  * when no deal-specific signal is available.
  */
 export const MONTHLY_CLOSE_RATE = 1 / 7 // ≈ 0.143
+
+// ─── Closed stage constants ───────────────────────────────────────────────────
+
+/**
+ * ALL terminal deal stages (won + lost).
+ * Used to EXCLUDE deals from the active pipeline (they are no longer moveable).
+ * Import this for pipeline value calculations and dashboard pipeline filters.
+ *
+ * NEVER define inline stage lists — always import from here.
+ */
+export const CLOSED_STAGES = [
+  'Escritura Concluída',  // primary PT won stage
+  'Escritura',            // abbreviated won
+  'fechado',              // generic closed (PT)
+  'post_sale',            // EN post-sale won
+  'pos_venda',            // PT post-sale won
+  'Perdido',              // lost deal — terminal, no revenue
+  'Rejeitado',            // rejected deal — terminal, no revenue
+  'escritura_sell',       // sell-side closing
+] as const
+
+export type ClosedStage = (typeof CLOSED_STAGES)[number]
+
+/**
+ * Won deal stages only (generates revenue).
+ * Use for revenue calculations, commission attribution, and `emit.dealClosed`.
+ * Does NOT include Perdido / Rejeitado.
+ */
+export const WON_STAGES = [
+  'Escritura Concluída',
+  'Escritura',
+  'fechado',
+  'post_sale',
+  'pos_venda',
+  'escritura_sell',
+] as const
+
+export type WonStage = (typeof WON_STAGES)[number]
+
+/** Returns true if the stage is in CLOSED_STAGES (terminal — won OR lost) */
+export function isTerminalStage(fase: unknown): boolean {
+  if (!fase || typeof fase !== 'string') return false
+  return (CLOSED_STAGES as readonly string[]).includes(fase)
+}
+
+/** Returns true if the stage is in WON_STAGES (generates revenue) */
+export function isWonStage(fase: unknown): boolean {
+  if (!fase || typeof fase !== 'string') return false
+  return (WON_STAGES as readonly string[]).includes(fase)
+}
+
+// ─── Tenant identity ─────────────────────────────────────────────────────────
+
+/**
+ * Canonical fallback tenant UUID for the single-tenant (agency-group org).
+ * Always prefer runtime env vars:
+ *   process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? CANONICAL_TENANT_UUID
+ * This constant is the last-resort sentinel — safe to import in both client
+ * and server components since it is a static literal, not an env var read.
+ */
+export const CANONICAL_TENANT_UUID = '00000000-0000-0000-0000-000000000001'

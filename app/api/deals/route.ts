@@ -15,6 +15,7 @@ import track from '@/lib/trackLearningEvent'
 import { emit } from '@/lib/events/producers'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { recordCausalStep } from '@/lib/observability/causalTrace'
+import { WON_STAGES } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 
@@ -175,7 +176,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       'post_sale': 1.0, 'escritura': 1.0, 'escritura_sell': 1.0,
     }
 
-    const CLOSED_FASE_VALUES = ['Escritura', 'Escritura Concluída', 'post_sale', 'escritura', 'escritura_sell']
+    const CLOSED_FASE_VALUES = WON_STAGES as readonly string[]
 
     // Try Supabase (uses portal-compat columns from migration 003)
     try {
@@ -347,9 +348,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
             { correlation_id: corrId, source_system: 'api' },
           )
 
-          // Emit dealClosed when deal reaches a terminal closed stage (fire-and-forget)
-          const CLOSED_STAGES = ['Escritura Concluída', 'Escritura', 'fechado', 'post_sale', 'pos_venda']
-          if (CLOSED_STAGES.includes(fase)) {
+          // Emit dealClosed when deal reaches a won/revenue stage (fire-and-forget)
+          if ((WON_STAGES as readonly string[]).includes(fase)) {
             void emit.dealClosed(
               {
                 deal_id:     dealId ?? String((data as Record<string, unknown>)?.id ?? ''),

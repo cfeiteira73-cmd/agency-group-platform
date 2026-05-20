@@ -4,6 +4,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase'
 import logger from '@/lib/logger'
+import { WON_STAGES } from '@/lib/constants/pipeline'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabaseAdmin as any
@@ -61,10 +62,9 @@ export class EconomicBenchmarkEngine {
       return this._emptyBenchmark(org_id, period_days)
     }
 
-    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída']
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allDeals: any[] = data ?? []
-    const wonDeals = allDeals.filter((d: any) => CLOSED_STAGES.includes(d.fase as string))
+    const wonDeals = allDeals.filter((d: any) => (WON_STAGES as readonly string[]).includes(d.fase as string))
 
     const total_pipeline_eur = allDeals.reduce((s: number, d: any) =>
       s + ((d.deal_value as number) ?? 0), 0)

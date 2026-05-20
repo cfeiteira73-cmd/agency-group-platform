@@ -82,7 +82,7 @@ async function scoreDrift(db: DbClient): Promise<{ score: number; alerts: string
   const { data: storedHashes } = await db
     .from('vault_file_hashes')
     .select('path, hash')
-    .eq('tenant_id', 'agency-group')
+    .eq('tenant_id', process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001')
 
   const hashMap = new Map<string, string>()
   if (storedHashes) {
@@ -115,7 +115,7 @@ async function scoreBackupFreshness(db: DbClient): Promise<{ score: number; aler
   const { data } = await db
     .from('vault_snapshots')
     .select('created_at')
-    .eq('tenant_id', 'agency-group')
+    .eq('tenant_id', process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001')
     .gte('created_at', cutoff)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -195,7 +195,7 @@ export async function computeIntegrityScores(): Promise<IntegrityScores> {
 
   // Persist scores
   void db.from('vault_integrity_scores').insert({
-    tenant_id: 'agency-group',
+    tenant_id: process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
     vault_completeness: scores.vault_completeness,
     drift_score: scores.drift_score,
     backup_freshness: scores.backup_freshness,

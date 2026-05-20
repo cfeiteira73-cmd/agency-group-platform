@@ -9,6 +9,7 @@ import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import log from '@/lib/logger'
+import { WON_STAGES } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 
@@ -81,7 +82,11 @@ export async function GET(req: NextRequest) {
         .lte('created_at', endDate)
 
       if (deals) {
-        const CLOSED_STAGES = new Set<string>(['escritura', 'escritura_sell', 'post_sale'])
+        // WON_STAGES normalised to lowercase for `stage` column (EN lowercase schema)
+        const CLOSED_STAGES = new Set<string>([
+          ...(WON_STAGES as readonly string[]),
+          ...WON_STAGES.map(s => s.toLowerCase()),
+        ])
         const agentMap: Record<string, { gci: number; deals: number; pipeline: number }> = {}
 
         for (const d of (deals as unknown as DealRow[])) {

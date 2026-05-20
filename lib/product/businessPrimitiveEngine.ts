@@ -5,7 +5,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase'
 import logger from '@/lib/logger'
-import { COMMISSION_RATE } from '@/lib/constants/pipeline'
+import { COMMISSION_RATE, CLOSED_STAGES } from '@/lib/constants/pipeline'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -116,9 +116,8 @@ export class BusinessPrimitiveEngine {
     // STAGE TRUTH: 'post_sale', 'escritura', 'escritura_sell' are FASE values (portal-compat TEXT col).
     // deals.stage is the DDL enum (qualification/proposal/etc) — NOT used for closed detection.
     // Always use d.fase for closed-stage checks. Fall back to d.stage only if fase is absent.
-    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída'] as const
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isClosed = (d: any): boolean => CLOSED_STAGES.includes(d.fase ?? d.stage ?? '')
+    const isClosed = (d: any): boolean => (CLOSED_STAGES as readonly string[]).includes(d.fase ?? d.stage ?? '')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const active_deals   = deals.filter((d: any) => !isClosed(d))
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
