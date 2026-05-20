@@ -49,7 +49,7 @@ export type WorkerHandler<T = unknown> = (job: WorkerJob<T>) => Promise<WorkerRe
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const WORKER_REGISTRY: Record<WorkerName, WorkerConfig> = {
-  'ai-execution':  { name: 'ai-execution',  queue: 'ai_jobs',         concurrency: 3,  retryDelayMs: 5000,  timeoutMs: 120000, enabled: true  },
+  'ai-execution':  { name: 'ai-execution',  queue: 'ai_jobs',         concurrency: 3,  retryDelayMs: 5000,  timeoutMs: 120000, enabled: false },  // no handler implemented yet
   'replay':        { name: 'replay',        queue: 'replay_jobs',     concurrency: 1,  retryDelayMs: 10000, timeoutMs: 60000,  enabled: true  },
   'dlq-processor': { name: 'dlq-processor', queue: 'dlq',             concurrency: 2,  retryDelayMs: 30000, timeoutMs: 30000,  enabled: true  },
   'enrichment':    { name: 'enrichment',    queue: 'enrichment_jobs', concurrency: 5,  retryDelayMs: 5000,  timeoutMs: 30000,  enabled: true  },

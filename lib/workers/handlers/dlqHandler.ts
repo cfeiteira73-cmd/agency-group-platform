@@ -20,6 +20,13 @@ export interface DlqJobPayload {
   original_payload: unknown
   failure_reason:   string
   tenant_id:        string
+  /**
+   * Number of times this DLQ entry has already been retried.
+   * Starts at 0 when a job first enters the DLQ.
+   * Incremented each time the DLQ handler re-enqueues to the original queue.
+   * DLQ handler will emit DLQ_OVERFLOW (and stop retrying) when retry_count >= 2.
+   */
+  retry_count?: number
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -34,6 +41,7 @@ export async function dlqHandler(
     original_payload,
     failure_reason,
     tenant_id,
+    retry_count: embeddedRetryCount,
   } = job.payload
 
   try {
@@ -60,18 +68,12 @@ export async function dlqHandler(
       })
     }
 
-    // 2. Count previous failures for this job_id in job_queue
-    const { count: failureCount, error: countErr } = await (supabaseAdmin as any)
-      .from('job_queue')
-      .select('id', { count: 'exact', head: true })
-      .eq('id', original_job_id)
-      .eq('status', 'failed')
-
-    if (countErr) {
-      console.warn(`[dlqHandler] could not count failures for ${original_job_id}:`, countErr.message)
-    }
-
-    const retryCount = failureCount ?? 0
+    // 2. Determine retry count from the embedded payload field.
+    //    Using the DB-based count (querying job_queue for failed rows) is unreliable
+    //    because: (a) rows may be deleted after nack, and (b) the same original_job_id
+    //    will always return ≤1 row regardless of how many times it has been retried.
+    //    The payload-embedded counter is incremented by this handler on each retry cycle.
+    const retryCount = embeddedRetryCount ?? 0
 
     // 3. Decide: retry or overflow
     if (retryCount < 2) {
@@ -79,6 +81,9 @@ export async function dlqHandler(
       const delaySeconds = 60 * (retryCount + 1)
 
       try {
+        // Re-enqueue the original payload to the original queue for retry.
+        // Callers that send jobs to the DLQ queue should include retry_count
+        // in the DlqJobPayload so subsequent DLQ cycles see the incremented counter.
         await getQueueAdapter().enqueue(
           original_queue,
           original_payload,

@@ -27,7 +27,8 @@ let handlersLoaded = false
 async function tryLoadHandlers(): Promise<void> {
   if (handlersLoaded) return
   try {
-    await import('@/lib/workers/handlers/index')
+    const mod = await import('@/lib/workers/handlers/index')
+    mod.registerAllHandlers()
     handlersLoaded = true
   } catch {
     console.warn('[workers/run] lib/workers/handlers/index not available — workers will run in stub mode (jobs acked without processing).')

@@ -22,6 +22,7 @@ export async function register() {
       { key: 'CRON_SECRET',                  description: 'Cron jobs unauthenticated — automation vulnerable',             severity: 'WARNING' },
       { key: 'INTERNAL_API_BASE',            description: 'Control Tower fetches will fail silently (all panels empty)',    severity: 'CRITICAL' },
       { key: 'SYSTEM_ORG_ID',               description: 'Using hardcoded fallback UUID — set explicitly to 00000000-0000-0000-0000-000000000001', severity: 'WARNING' },
+      { key: 'EVENT_HISTORY_ENABLED',       description: 'Event history writes disabled (default ON) — set EVENT_HISTORY_ENABLED=false to explicitly opt out, or set =true to silence this warning', severity: 'WARNING' },
     ]
 
     const missing = REQUIRED.filter(v => !process.env[v.key])
@@ -83,6 +84,18 @@ export async function register() {
         }
       } catch (e) {
         console.warn('[AG] SYSTEM_ORG_ID validator failed (non-fatal):', e)
+      }
+    })()
+
+    // Wire background worker handlers — must run once at server startup so
+    // processQueue() dispatches reach real handlers instead of stub-ack mode.
+    void (async () => {
+      try {
+        const { registerAllHandlers } = await import('@/lib/workers/handlers/index')
+        registerAllHandlers()
+        console.log('[AG] ✓ Worker handlers registered (5 handlers active)')
+      } catch (e) {
+        console.warn('[AG] Worker handler registration failed (non-fatal):', e)
       }
     })()
 

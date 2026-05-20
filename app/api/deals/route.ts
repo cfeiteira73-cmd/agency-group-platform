@@ -41,6 +41,10 @@ const VALID_FASES = [
   'CPCV Assinado', 'Financiamento', 'Escritura Marcada', 'Escritura Concluída',
   // v2 stages
   'Contacto', 'Qualificado', 'Visita', 'Proposta', 'Negociação', 'CPCV', 'Escritura',
+  // terminal stages (won)
+  'fechado', 'post_sale', 'pos_venda', 'escritura_sell',
+  // terminal stages (lost) — must be in VALID_FASES or the PUT handler rejects them with 400
+  'Perdido', 'Rejeitado', 'lost', 'rejected',
 ]
 
 // ---------------------------------------------------------------------------
@@ -348,16 +352,43 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
             { correlation_id: corrId, source_system: 'api' },
           )
 
-          // Emit dealClosed when deal reaches a won/revenue stage (fire-and-forget)
+          // Emit dealClosed + revenueRecognized when deal reaches a won/revenue stage
           if ((WON_STAGES as readonly string[]).includes(fase)) {
+            const dealValue = typeof (data as Record<string, unknown>)?.deal_value === 'number'
+              ? (data as Record<string, unknown>).deal_value as number
+              : 0
             void emit.dealClosed(
               {
                 deal_id:     dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
                 agent_email: agentEmail,
                 deal_ref:    typeof ref === 'string' ? ref : null,
-                deal_value:  typeof (data as Record<string, unknown>)?.deal_value === 'number'
-                  ? (data as Record<string, unknown>).deal_value as number
+                deal_value:  dealValue || null,
+              },
+              { correlation_id: corrId, source_system: 'api' },
+            )
+            void emit.revenueRecognized(
+              {
+                deal_id:        dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+                amount_eur:     dealValue,
+                commission_eur: dealValue * 0.05,   // 5% commission
+                agent_email:    agentEmail,
+                zona:           typeof (data as Record<string, unknown>)?.zona === 'string'
+                  ? (data as Record<string, unknown>).zona as string
                   : null,
+                recognized_at: new Date().toISOString(),
+              },
+              { correlation_id: corrId, source_system: 'api' },
+            )
+          }
+
+          // Emit dealRejected when deal is lost (fire-and-forget)
+          if (['Perdido', 'Rejeitado', 'lost', 'rejected'].includes(fase)) {
+            void emit.dealRejected(
+              {
+                deal_id:     dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+                agent_email: agentEmail,
+                deal_ref:    typeof ref === 'string' ? ref : null,
+                reason:      fase,
               },
               { correlation_id: corrId, source_system: 'api' },
             )

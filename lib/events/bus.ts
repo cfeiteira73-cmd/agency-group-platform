@@ -217,7 +217,9 @@ class EventBus {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private persistToHistory(event: AnyPlatformEvent): void {
-    if (process.env.EVENT_HISTORY_ENABLED !== 'true') return
+    // Opt-out model: write to event_history unless explicitly disabled.
+    // Set EVENT_HISTORY_ENABLED=false in env to turn off (e.g., local dev without the table).
+    if (process.env.EVENT_HISTORY_ENABLED === 'false') return
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     if (!url || !key) return
