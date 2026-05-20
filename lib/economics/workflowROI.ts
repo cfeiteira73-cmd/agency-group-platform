@@ -36,7 +36,7 @@ export class WorkflowROITracker {
     const { data: execs, error } = await sb
       .from('learning_events')
       .select('metadata')
-      .eq('org_id', org_id)
+      .eq('tenant_id', org_id)
       .eq('event_type', 'workflow_execution')
       .contains('metadata', { workflow_name })
       .gte('created_at', from)
@@ -101,7 +101,7 @@ export class WorkflowROITracker {
     const { data: rows, error } = await sb
       .from('learning_events')
       .select('metadata')
-      .eq('org_id', org_id)
+      .eq('tenant_id', org_id)
       .eq('event_type', 'workflow_execution')
       .gte('created_at', from)
       .limit(5000)

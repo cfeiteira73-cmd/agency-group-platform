@@ -44,9 +44,9 @@ export class RevenueLineageBuilder {
     // 1. Root contact node
     const { data: contact } = await sb
       .from('contacts')
-      .select('id, full_name, email, created_at, status, source')
+      .select('id, full_name, email, created_at')
       .eq('id', lead_id)
-      .eq('org_id', org_id)
+      .eq('tenant_id', org_id)
       .single()
 
     if (!contact) {
@@ -64,24 +64,25 @@ export class RevenueLineageBuilder {
     // 2. Deals for this contact
     const { data: deals } = await sb
       .from('deals')
-      .select('id, value_eur, status, stage, created_at, updated_at, assigned_to')
+      .select('id, deal_value, fase, created_at, actual_close_date, assigned_consultant')
       .eq('contact_id', lead_id)
-      .eq('org_id', org_id)
+      .eq('tenant_id', org_id)
       .limit(20)
 
+    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell']
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dealData: any[] = deals ?? []
     let total_revenue_eur = 0
 
     for (const deal of dealData) {
       const deal_id = deal.id as string
-      const val = (deal.value_eur as number) ?? 0
-      if (deal.status === 'closed_won') total_revenue_eur += val
+      const val = (deal.deal_value as number) ?? 0
+      if (CLOSED_STAGES.includes(deal.fase as string)) total_revenue_eur += val
 
       nodes.push({
         id: deal_id,
         type: 'deal',
-        label: `Deal ${deal_id.slice(0, 8)} — ${deal.stage}`,
+        label: `Deal ${deal_id.slice(0, 8)} — ${deal.fase}`,
         timestamp: deal.created_at as string,
         value_eur: val,
       })
@@ -92,7 +93,7 @@ export class RevenueLineageBuilder {
         delay_ms: Math.max(0,
           new Date(deal.created_at as string).getTime() -
           new Date(contact.created_at as string).getTime()
-        ),
+        ) as number,
       })
     }
 
@@ -100,7 +101,7 @@ export class RevenueLineageBuilder {
     const { data: events } = await sb
       .from('learning_events')
       .select('metadata, created_at, event_type')
-      .eq('org_id', org_id)
+      .eq('tenant_id', org_id)
       .contains('metadata', { contact_id: lead_id })
       .order('created_at', { ascending: true })
       .limit(50)

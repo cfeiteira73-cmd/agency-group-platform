@@ -26,7 +26,6 @@ interface TraceRecord {
 async function persistTraceRecord(record: TraceRecord): Promise<void> {
   if (process.env.CAUSAL_TRACE_ENABLED === 'false') return
   try {
-    const { supabaseAdmin } = await import('@/lib/supabase')
     await sb.from('causal_trace').insert({
       correlation_id: record.trace_id,
       tenant_id:      (record.attributes['org_id'] as string) ?? 'agency-group',

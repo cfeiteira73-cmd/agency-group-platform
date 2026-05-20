@@ -212,13 +212,14 @@ async function checkDLQ(): Promise<CheckResult> {
 export async function GET(req: NextRequest): Promise<NextResponse> {
   // Auth: allow CRON_SECRET bearer, or open in dev
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const token = (req.headers.get('authorization') ?? '').replace('Bearer ', '')
-    // Allow unauthenticated in test/dev; require secret in production
-    const isDev = process.env.NODE_ENV === 'development'
-    if (!isDev && token && !safeCompare(token, cronSecret)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'Health check not configured' }, { status: 503 })
+  }
+  const token = (req.headers.get('authorization') ?? '').replace('Bearer ', '')
+  // Allow unauthenticated in test/dev; require secret in production
+  const isDev = process.env.NODE_ENV === 'development'
+  if (!isDev && !safeCompare(token, cronSecret)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // Run all checks in parallel

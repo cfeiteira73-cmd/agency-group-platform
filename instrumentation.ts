@@ -53,6 +53,35 @@ export async function register() {
       console.error('[AG] ✗ AUTH_SECRET is too short — must be >= 32 characters')
     }
 
+    // Schema drift check — fire-and-forget, never blocks startup
+    void (async () => {
+      try {
+        const { verifySchema } = await import('@/lib/db/schemaVerifier')
+        const result = await verifySchema()
+        if (!result.ok) {
+          const driftSummary = result.drifts
+            .map(d => `[${d.table}] missing: ${d.missing.join(', ')}`)
+            .join(' | ')
+          console.error(`[AG] ✗ SCHEMA DRIFT at startup: ${driftSummary}`)
+          // Write P0 incident — pipeline is broken if columns are missing
+          const { supabaseAdmin } = await import('@/lib/supabase')
+          await supabaseAdmin.from('incidents').insert({
+            tenant_id:        'agency-group',
+            severity:         'P0',
+            subsystem:        'database',
+            raw_error:        `Schema drift detected at startup: ${driftSummary}`,
+            status:           'open',
+            metrics_snapshot: { drifts: result.drifts },
+            detected_at:      new Date().toISOString(),
+          })
+        } else {
+          console.log('[AG] ✓ Schema verified — no column drift')
+        }
+      } catch (e) {
+        console.warn('[AG] Schema verifier failed (non-fatal):', e)
+      }
+    })()
+
     // INTERNAL_API_BASE must NOT be localhost in production.
     // All Control Tower RSC pages do server-side fetches via this base URL.
     // If it points to localhost, every Control Tower panel silently returns empty data.

@@ -32,9 +32,9 @@ export class AgentProfitabilityEngine {
 
     const { data, error } = await sb
       .from('deals')
-      .select('value_eur, status, created_at, updated_at')
-      .eq('org_id', org_id)
-      .eq('assigned_to', agent_id)
+      .select('deal_value, fase, created_at, actual_close_date')
+      .eq('tenant_id', org_id)
+      .eq('assigned_consultant', agent_id)
       .gte('created_at', from)
       .limit(500)
 
@@ -42,10 +42,11 @@ export class AgentProfitabilityEngine {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allDeals: any[] = data ?? []
-    const wonDeals = allDeals.filter((d: any) => d.status === 'closed_won')
+    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell']
+    const wonDeals = allDeals.filter((d: any) => CLOSED_STAGES.includes(d.fase as string))
 
     const revenue_generated_eur = wonDeals.reduce(
-      (s: number, d: any) => s + ((d.value_eur as number) ?? 0), 0
+      (s: number, d: any) => s + ((d.deal_value as number) ?? 0), 0
     )
     const deals_closed = wonDeals.length
     const avg_deal_size_eur = deals_closed > 0 ? revenue_generated_eur / deals_closed : 0
@@ -53,7 +54,8 @@ export class AgentProfitabilityEngine {
 
     const avg_close_days = deals_closed > 0
       ? wonDeals.reduce((s: number, d: any) => {
-          const diff = new Date(d.updated_at as string).getTime() -
+          const closeDate = d.actual_close_date ?? d.created_at
+          const diff = new Date(closeDate as string).getTime() -
             new Date(d.created_at as string).getTime()
           return s + diff / 86_400_000
         }, 0) / deals_closed
@@ -95,14 +97,14 @@ export class AgentProfitabilityEngine {
     // Discover unique agents from deals
     const { data } = await sb
       .from('deals')
-      .select('assigned_to')
-      .eq('org_id', org_id)
+      .select('assigned_consultant')
+      .eq('tenant_id', org_id)
       .gte('created_at', from)
       .limit(1000)
 
     const agents = new Set<string>(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (data ?? []).map((d: any) => d.assigned_to as string).filter(Boolean)
+      (data ?? []).map((d: any) => d.assigned_consultant as string).filter(Boolean)
     )
 
     // Process in batches of 5 to avoid saturating the connection pool

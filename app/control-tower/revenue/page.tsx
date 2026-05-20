@@ -12,7 +12,9 @@ export const revalidate = 30  // ISR 30s
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 async function getRevenueData() {
-  const SYSTEM_ORG = 'system'
+  // Use the real tenant UUID from the organizations table (slug: 'agency-group')
+  // Fallback to env var for flexibility across environments
+  const SYSTEM_ORG = process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
   const [dashboard, funnel, daily_target] = await Promise.all([
     productAPI.loadDashboard({ org_id: SYSTEM_ORG, agent_id: 'control-tower' }),

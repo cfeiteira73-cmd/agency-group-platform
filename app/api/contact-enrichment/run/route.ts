@@ -29,6 +29,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { safeCompare } from '@/lib/safeCompare'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
@@ -198,7 +199,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const secret = process.env.CRON_SECRET
   const incoming = req.headers.get('x-cron-secret')
     ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  if (!secret || incoming !== secret) {
+  if (!secret || !incoming || !safeCompare(incoming, secret)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -228,7 +229,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const cronSecret = process.env.CRON_SECRET
   const incomingCron = req.headers.get('x-cron-secret')
     ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  const isCron = cronSecret && incomingCron === cronSecret
+  const isCron = cronSecret && incomingCron && safeCompare(incomingCron, cronSecret)
 
   if (!isCron) {
     const session = await auth()

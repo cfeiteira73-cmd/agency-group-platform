@@ -51,8 +51,8 @@ export class EconomicBenchmarkEngine {
 
     const { data, error } = await sb
       .from('deals')
-      .select('value_eur, status, created_at, updated_at')
-      .eq('org_id', org_id)
+      .select('deal_value, fase, created_at, actual_close_date')
+      .eq('tenant_id', org_id)
       .gte('created_at', from)
       .limit(1000)
 
@@ -61,19 +61,21 @@ export class EconomicBenchmarkEngine {
       return this._emptyBenchmark(org_id, period_days)
     }
 
+    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell']
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allDeals: any[] = data ?? []
-    const wonDeals = allDeals.filter((d: any) => d.status === 'closed_won')
+    const wonDeals = allDeals.filter((d: any) => CLOSED_STAGES.includes(d.fase as string))
 
     const total_pipeline_eur = allDeals.reduce((s: number, d: any) =>
-      s + ((d.value_eur as number) ?? 0), 0)
+      s + ((d.deal_value as number) ?? 0), 0)
     const total_closed_eur = wonDeals.reduce((s: number, d: any) =>
-      s + ((d.value_eur as number) ?? 0), 0)
+      s + ((d.deal_value as number) ?? 0), 0)
     const close_rate = allDeals.length > 0 ? wonDeals.length / allDeals.length : 0
     const avg_deal_size_eur = wonDeals.length > 0 ? total_closed_eur / wonDeals.length : 0
     const avg_days_to_close = wonDeals.length > 0
       ? wonDeals.reduce((s: number, d: any) => {
-          const diff = new Date(d.updated_at as string).getTime() -
+          const closeDate = d.actual_close_date ?? d.created_at
+          const diff = new Date(closeDate as string).getTime() -
             new Date(d.created_at as string).getTime()
           return s + diff / 86_400_000
         }, 0) / wonDeals.length
@@ -118,7 +120,7 @@ export class EconomicBenchmarkEngine {
     const { data } = await sb
       .from('learning_events')
       .select('metadata')
-      .eq('org_id', org_id)
+      .eq('tenant_id', org_id)
       .eq('event_type', 'ev_computed')
       .gte('created_at', from)
       .limit(1000)

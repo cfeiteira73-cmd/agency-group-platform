@@ -28,6 +28,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { safeCompare } from '@/lib/safeCompare'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
@@ -36,7 +37,7 @@ export const runtime = 'nodejs'
 async function isAuthorized(req: NextRequest): Promise<boolean> {
   const cronSecret = process.env.CRON_SECRET
   const incoming = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  if (cronSecret && incoming === cronSecret) return true
+  if (cronSecret && incoming && safeCompare(incoming, cronSecret)) return true
   const session = await auth()
   return !!session
 }

@@ -32,9 +32,9 @@ export class OpportunityCostAnalyzer {
 
     const { data, error } = await sb
       .from('deals')
-      .select('id, value_eur, stage, assigned_to, updated_at, created_at')
-      .eq('org_id', org_id)
-      .eq('status', 'active')
+      .select('id, deal_value, fase, assigned_consultant, updated_at, created_at')
+      .eq('tenant_id', org_id)
+      .not('fase', 'in', '(post_sale,escritura,escritura_sell)')
       .lt('updated_at', stall_threshold)
       .limit(200)
 
@@ -51,7 +51,7 @@ export class OpportunityCostAnalyzer {
     let total_stall_days = 0
 
     for (const d of stalledDeals) {
-      stalled_value_eur += (d.value_eur as number) ?? 0
+      stalled_value_eur += (d.deal_value as number) ?? 0
       const stall_days = Math.max(0,
         (Date.now() - new Date(d.updated_at as string).getTime()) / 86_400_000
       )
@@ -70,12 +70,12 @@ export class OpportunityCostAnalyzer {
         const stall_days = Math.max(0,
           (Date.now() - new Date(d.updated_at as string).getTime()) / 86_400_000
         )
-        const val = (d.value_eur as number) ?? 0
+        const val = (d.deal_value as number) ?? 0
         const urgency: 'critical' | 'high' | 'medium' =
           stall_days > 30 ? 'critical' : stall_days > 14 ? 'high' : 'medium'
         return {
           deal_id: d.id as string,
-          recommended_action: this._recommendAction(d.stage as string, stall_days),
+          recommended_action: this._recommendAction(d.fase as string, stall_days),
           urgency,
           estimated_recovery_eur: Math.round(Math.max(0, val * (1 - stall_days * DAILY_PROBABILITY_DECAY)) * 100) / 100,
         }

@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin }             from '@/lib/supabase'
 import { portalAuthGate }            from '@/lib/requirePortalAuth'
+import { safeCompare }               from '@/lib/safeCompare'
 import { getZone }                   from '@/lib/market/zones'
 
 export const runtime    = 'nodejs'
@@ -31,7 +32,7 @@ async function authGate(req: NextRequest): Promise<{ ok: boolean; email: string 
     const token =
       req.headers.get('x-cron-secret') ??
       req.headers.get('authorization')?.replace('Bearer ', '').trim()
-    if (token === cronSecret) return { ok: true, email: null }
+    if (token && safeCompare(token, cronSecret)) return { ok: true, email: null }
   }
 
   // Portal auth path

@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { safeCompare } from '@/lib/safeCompare'
 import { runPriceIntel } from '@/app/api/offmarket-leads/[id]/price-intel/route'
 import { runMatchBuyers } from '@/app/api/offmarket-leads/[id]/match-buyers/route'
 import { runDealEval } from '@/app/api/offmarket-leads/[id]/deal-eval/route'
@@ -25,7 +26,7 @@ async function isAuthorized(req: NextRequest): Promise<boolean> {
   const cronSecret = process.env.CRON_SECRET
   const incoming = req.headers.get('x-cron-secret')
     ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  if (cronSecret && incoming === cronSecret) return true
+  if (cronSecret && incoming && safeCompare(incoming, cronSecret)) return true
   const session = await auth()
   return !!session
 }

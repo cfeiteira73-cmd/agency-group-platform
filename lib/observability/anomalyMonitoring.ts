@@ -254,7 +254,7 @@ export class AnomalyMonitor {
       this._dlqWindow.shift()
     }
     // Persist DLQ event to runtime_events so cold starts can reconstitute the window
-    void supabaseAdmin.from('runtime_events').insert({
+    void Promise.resolve(supabaseAdmin.from('runtime_events').insert({
       org_id:           'agency-group',
       type:             'dlq_event',
       status:           'completed',
@@ -263,8 +263,10 @@ export class AnomalyMonitor {
       source_system:    'agent',
       payload:          { recorded_at: new Date(now).toISOString() },
       event_timestamp:  new Date(now).toISOString(),
-    }).then(({ error }: { error: { message: string } | null }) => {
+    })).then(({ error }: { error: { message: string } | null }) => {
       if (error) console.warn('[AnomalyMonitor] DLQ persist failed:', error.message)
+    }).catch((err: unknown) => {
+      console.warn('[AnomalyMonitor] DLQ persist threw:', err)
     })
   }
 

@@ -46,6 +46,12 @@ const EXPECTED_COLUMNS: Record<string, string[]> = {
   tenants: [
     'id', 'slug', 'name', 'plan', 'org_id', 'created_at',
   ],
+  learning_events: [
+    'id', 'event_type', 'lead_id', 'deal_id', 'property_id',
+    'deal_pack_id', 'agent_email', 'match_score', 'metadata', 'created_at',
+    // Multi-tenant column (added via migration 20260521_add_tenant_id_learning_events)
+    'tenant_id',
+  ],
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────

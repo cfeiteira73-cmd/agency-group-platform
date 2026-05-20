@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { requirePortalAuth } from '@/lib/requirePortalAuth'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
+  const auth = await requirePortalAuth(req)
+  if (!auth.ok) return auth.response
   try {
     const subscription = await req.json()
 
@@ -37,6 +40,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requirePortalAuth(req)
+  if (!auth.ok) return auth.response
   try {
     const { endpoint } = await req.json()
     if (!endpoint) return NextResponse.json({ error: 'Endpoint required' }, { status: 400 })

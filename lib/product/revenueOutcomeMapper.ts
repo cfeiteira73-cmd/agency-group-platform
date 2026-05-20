@@ -257,10 +257,10 @@ export class RevenueOutcomeMapper {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (sb.from('deals') as any)
-      .select('id, value, stage, metadata, created_at, closed_at')
-      .eq('org_id', org_id)
-      .eq('stage', 'closed_won')
-      .gte('closed_at', since_ts)
+      .select('id, deal_value, fase, metadata, created_at, actual_close_date')
+      .eq('tenant_id', org_id)
+      .in('fase', ['post_sale', 'escritura', 'escritura_sell'])
+      .gte('actual_close_date', since_ts)
       .limit(500)
 
     if (error || !data) {
@@ -277,7 +277,7 @@ export class RevenueOutcomeMapper {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const deals = data as any[]
 
-    const total_revenue   = deals.reduce((s: number, d: { value: number }) => s + (d.value ?? 0), 0)
+    const total_revenue   = deals.reduce((s: number, d: { deal_value: number }) => s + (d.deal_value ?? 0), 0)
     const total_commission = total_revenue * COMMISSION_RATE
 
     // Group by source
@@ -287,14 +287,14 @@ export class RevenueOutcomeMapper {
       const source = (deal.metadata?.source as string) ?? 'organic'
       if (!source_map[source]) source_map[source] = { deals: 0, revenue: 0 }
       source_map[source].deals++
-      source_map[source].revenue += deal.value ?? 0
+      source_map[source].revenue += deal.deal_value ?? 0
     }
 
-    const by_source = Object.entries(source_map).map(([source, data]) => ({
+    const by_source = Object.entries(source_map).map(([source, sdata]) => ({
       source,
-      deals:      data.deals,
-      revenue:    data.revenue,
-      commission: data.revenue * COMMISSION_RATE,
+      deals:      sdata.deals,
+      revenue:    sdata.revenue,
+      commission: sdata.revenue * COMMISSION_RATE,
     }))
 
     // Group by agent
@@ -304,13 +304,13 @@ export class RevenueOutcomeMapper {
       const agent_id = (deal.metadata?.agent_id as string) ?? 'unassigned'
       if (!agent_map[agent_id]) agent_map[agent_id] = { deals: 0, revenue: 0 }
       agent_map[agent_id].deals++
-      agent_map[agent_id].revenue += deal.value ?? 0
+      agent_map[agent_id].revenue += deal.deal_value ?? 0
     }
 
-    const by_agent = Object.entries(agent_map).map(([agent_id, data]) => ({
+    const by_agent = Object.entries(agent_map).map(([agent_id, adata]) => ({
       agent_id,
-      deals:      data.deals,
-      revenue:    data.revenue,
+      deals:      adata.deals,
+      revenue:    adata.revenue,
       close_rate: 0.18,  // would need total attempts to compute accurately
     }))
 

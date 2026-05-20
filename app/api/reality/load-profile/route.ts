@@ -16,6 +16,7 @@ import {
   getSystemLoadProfile,
   type RealWorldLoadProfile,
 } from '@/lib/reality/humanTrafficRouter'
+import { safeCompare } from '@/lib/safeCompare'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +28,7 @@ function authenticate(req: NextRequest): boolean {
   const token = authHeader.slice(7)
   const expected = process.env.INTERNAL_API_SECRET
   if (!expected) return false
-  return token === expected
+  return safeCompare(token, expected)
 }
 
 // ─── GET handler ─────────────────────────────────────────────────────────────

@@ -56,12 +56,12 @@ async function fetchPipelineValue(): Promise<string> {
     const sb = supabaseAdmin as unknown as { from: (t: string) => unknown }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (sb.from('deals') as any)
-      .select('valor')
-      .not('stage', 'eq', 'closed_lost')
+      .select('deal_value')
+      .not('fase', 'in', '(perdido,cancelado)')
     if (error || !data) return '—'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const total: number = (data as any[]).reduce((sum: number, row: any) => {
-      const v = typeof row.valor === 'number' ? row.valor : parseFloat(row.valor ?? '0')
+      const v = typeof row.deal_value === 'number' ? row.deal_value : Number(row.deal_value ?? 0)
       return sum + (isNaN(v) ? 0 : v)
     }, 0)
     if (total === 0) return '—'

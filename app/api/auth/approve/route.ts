@@ -45,9 +45,64 @@ function page(title: string, body: string, color: string) {
   )
 }
 
+/**
+ * GET /api/auth/approve?token=...
+ *
+ * Two-step protection against email-scanner prefetch:
+ * GET shows a confirmation page with a POST form.
+ * POST actually executes the approval (sends the magic link).
+ *
+ * This prevents security scanners (Barracuda, Outlook Safe Links, etc.)
+ * that blindly GET all links in emails from triggering the approval action.
+ */
 export async function GET(req: NextRequest) {
+  const SECRET = process.env.AUTH_SECRET
+  if (!SECRET) return page('Erro', 'Servidor não configurado.', '#7f1d1d')
+
+  const token = req.nextUrl.searchParams.get('token')
+  if (!token) return page('Erro', 'Token em falta.', '#7f1d1d')
+
+  const data = verifyToken(token, SECRET)
+  if (!data || data.type !== 'approval') return page('Inválido', 'Token inválido.', '#7f1d1d')
+  if (Date.now() > (data.exp as number)) return page('Expirado', 'Link expirou (24h). O agente deve pedir novamente.', '#7f1d1d')
+
+  const email = data.email as string
+  const actionUrl = `/api/auth/approve?token=${encodeURIComponent(token)}`
+
+  // Show confirmation form — scanner bots issue GET only, never POST.
+  return new NextResponse(
+    `<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"/>
+    <title>Confirmar Aprovação · Agency Group</title></head>
+    <body style="margin:0;padding:0;background:#0c1f15;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh">
+      <div style="text-align:center;padding:48px 32px;max-width:480px">
+        <p style="margin:0 0 8px;font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(201,169,110,.6)">AMI 22506</p>
+        <h1 style="margin:0 0 24px;font-size:1.3rem;font-weight:300;color:#f4f0e6;letter-spacing:.05em">Agency Group</h1>
+        <p style="margin:0 0 24px;font-size:.9rem;line-height:1.8;color:rgba(244,240,230,.7)">
+          Clica para aprovar o acesso de<br/>
+          <strong style="color:#c9a96e">${email}</strong>
+        </p>
+        <form method="POST" action="${actionUrl}">
+          <button type="submit"
+            style="background:#c9a96e;color:#0c1f15;padding:15px 36px;border:none;cursor:pointer;font-size:.7rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase">
+            Aprovar Acesso
+          </button>
+        </form>
+        <p style="margin:32px 0 0;font-size:.6rem;color:rgba(244,240,230,.25)">Agency Group · Mediação Imobiliária Lda · AMI 22506</p>
+      </div>
+    </body></html>`,
+    { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+  )
+}
+
+/**
+ * POST /api/auth/approve?token=...
+ * Executes the approval: sends magic link to the requesting agent.
+ */
+export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
-  const SECRET = process.env.AUTH_SECRET!
+  const SECRET = process.env.AUTH_SECRET
+  if (!SECRET) return page('Erro', 'Servidor não configurado.', '#7f1d1d')
+
   const resend = new Resend(process.env.RESEND_API_KEY)
   const token = req.nextUrl.searchParams.get('token')
   if (!token) return page('Erro', 'Token em falta.', '#7f1d1d')
@@ -92,10 +147,6 @@ export async function GET(req: NextRequest) {
   })
   if (sendErr) console.error('Resend approve email error:', sendErr, { corrId })
 
-  // DO NOT redirect the admin to the magic link — that would consume the
-  // one-time token from the admin's browser, leaving the agent with an
-  // already-used link that returns 401 "Link inválido ou já utilizado".
-  // The magic link email was already sent to the agent above; just confirm.
   return new NextResponse(
     `<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"/>
     <title>Acesso Aprovado · Agency Group</title></head>
