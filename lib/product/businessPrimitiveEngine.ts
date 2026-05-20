@@ -274,7 +274,10 @@ export class BusinessPrimitiveEngine {
       avg_deal_value:     pipeline.deals_won_mtd > 0
         ? pipeline.revenue_mtd / pipeline.deals_won_mtd : 0,
       vs_previous_period: 0,  // would require previous period data
-      on_track_for_target: pipeline.commission_mtd >= monthly_target * 0.5,
+      // on_track: compare GROSS revenue to gross target (both same unit).
+      // Previous version compared commission_mtd (5% of revenue) vs monthly_target
+      // (gross revenue figure) — always false at 5% commission rate.
+      on_track_for_target: pipeline.revenue_mtd >= monthly_target * 0.5,
       monthly_target,
     }
   }

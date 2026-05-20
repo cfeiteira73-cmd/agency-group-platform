@@ -106,12 +106,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // ── Deal metrics ──────────────────────────────────────────────────────────
       const { data: allDeals } = await supabase
         .from('deals')
-        .select('fase, valor')
+        .select('fase, deal_value')
         .eq('tenant_id', tenantId)
 
       const totalDeals = allDeals?.length ?? 0
       const pipelineValue = allDeals?.reduce(
-        (sum, d) => sum + (Number((d as { valor: string | number }).valor) || 0), 0
+        (sum, d) => sum + (Number((d as { deal_value: string | number }).deal_value) || 0), 0
       ) ?? 0
       const avgDealValue  = totalDeals > 0 ? Math.round(pipelineValue / totalDeals) : 0
 

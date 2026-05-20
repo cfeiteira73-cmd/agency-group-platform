@@ -90,7 +90,7 @@ export async function withAI<T>(
   // ── Hard policy gate — runs before any AI call ──────────────────────────────
   const policyCtx = {
     agentId:               component,
-    tenantId:              'agency-group',
+    tenantId:              process.env.SYSTEM_ORG_ID ?? 'agency-group',
     correlationId,
     estimatedInputTokens:  1000,
     estimatedOutputTokens: 500,
@@ -259,7 +259,7 @@ export async function withAIStream<T>(
   // ── Hard policy gate — runs before any AI call ──────────────────────────────
   const policyCtx = {
     agentId:               component,
-    tenantId:              'agency-group',
+    tenantId:              process.env.SYSTEM_ORG_ID ?? 'agency-group',
     correlationId,
     estimatedInputTokens:  1000,
     estimatedOutputTokens: 500,

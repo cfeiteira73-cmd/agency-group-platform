@@ -3,6 +3,7 @@ import { useState, useMemo, useCallback, useRef, useEffect, type DragEvent } fro
 import { useUIStore } from '../stores/uiStore'
 import { useDealStore } from '../stores/dealStore'
 import { PIPELINE_STAGES, STAGE_PCT, STAGE_COLOR, CHECKLISTS } from './constants'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 import type { Deal } from './types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,7 +23,7 @@ type DealTabId = 'checklist' | 'investor' | 'dealroom' | 'timeline' | 'nego' | '
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const COMMISSION_RATE = 0.05
+// COMMISSION_RATE imported from @/lib/constants/pipeline (canonical 5%)
 const STALE_DAYS = 14
 
 const STAGE_PROB: Record<string, number> = {

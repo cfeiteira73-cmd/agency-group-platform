@@ -1,7 +1,8 @@
 // =============================================================================
 // Portal Auth Helper — verifies one of:
 //   1. x-cron-secret / Authorization: Bearer header (CRON_SECRET or INTERNAL_API_TOKEN)
-//   2. ag-auth-token cookie (portal magic-link session, HMAC-SHA256 signed)
+//   2. NextAuth v5 session (Google OAuth / credentials) — parity with requirePortalAuth
+//   3. ag-auth-token cookie (portal magic-link session, HMAC-SHA256 signed)
 //
 // Usage in route handlers (nodejs runtime only):
 //   import { isPortalAuth } from '@/lib/portalAuth'
@@ -9,6 +10,7 @@
 // =============================================================================
 
 import { NextRequest } from 'next/server'
+import { auth } from '@/auth'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 
@@ -29,7 +31,15 @@ export async function isPortalAuth(req: NextRequest): Promise<boolean> {
   if (cronSecret    && incoming && timingSafeCompare(incoming, cronSecret))   return true
   if (internalToken && incoming && timingSafeCompare(incoming, internalToken)) return true
 
-  // 2. ag-auth-token cookie (portal magic-link session)
+  // 2. NextAuth v5 session (Google OAuth / credentials)
+  try {
+    const session = await auth()
+    if (session?.user?.email) return true
+  } catch {
+    // auth() throws outside request context — fall through to cookie check
+  }
+
+  // 3. ag-auth-token cookie (portal magic-link session)
   const secret = process.env.AUTH_SECRET
   if (!secret) return false
 
