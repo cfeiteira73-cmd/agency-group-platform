@@ -27,7 +27,7 @@ export interface AnalyticsSummary {
   dealsCountByStage: { stage: string; deals: number; valor: number; prob: number; color: string }[]
   topAgents: { name: string; gciMes: number; gciYTD: number; dealsFechados: number; pipeline: number; conversao: number; diasCiclo: number; score: number; calls: number; emails: number; visitas: number; propostas: number }[]
   conversionsByZona: { zona: string; valor: number; pct: number; color: string }[]
-  source: 'supabase' | 'mock'
+  source: 'supabase' | 'mock' | 'unavailable'
   // ── Period-over-period deltas (undefined when previous period has no data) ──
   gciMensalDelta?: number      // % change vs previous calendar month
   gciMensalPrev?: number       // previous month absolute GCI (for context)
@@ -68,6 +68,22 @@ const MOCK_SUMMARY: AnalyticsSummary = {
   source: 'mock',
 }
 
+// ---------------------------------------------------------------------------
+// Empty summary \u2014 returned when DB is unavailable (no fake metrics)
+// ---------------------------------------------------------------------------
+
+const PT_MONTHS_CONST = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+const EMPTY_SUMMARY: AnalyticsSummary = {
+  gciMensal: 0, gciYTD: 0,
+  gci12m:        new Array(12).fill(0) as number[],
+  gci12mLabels:  PT_MONTHS_CONST,
+  pipelineAtivo: 0,
+  dealsCountByStage: [],
+  topAgents:         [],
+  conversionsByZona: [],
+  source: 'unavailable',
+}
+
 // Stage probability \u2014 delegates to canonical lib/constants/pipeline
 
 // ---------------------------------------------------------------------------
@@ -100,9 +116,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { data: dealsData, error: dealsError } = await dealsQuery
 
     if (dealsError || !dealsData) {
-      // Supabase unavailable — return mock
+      // Supabase unavailable — return honest empty response (no fake metrics)
       console.warn('[analytics/summary] deals query failed:', dealsError?.message ?? 'no data')
-      return NextResponse.json(MOCK_SUMMARY, { headers: { 'Cache-Control': 'no-store' } })
+      return NextResponse.json(
+        { ...EMPTY_SUMMARY, source: 'unavailable' as const },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
     }
 
     // Helper: extract commission fee from a deal (mirrors revenue route logic)
@@ -215,7 +234,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // ── 4. Build response ────────────────────────────────────────────────────
     // topAgents: try `agents` table first; fall back to deriving from deal packs
     // (agent_email on deal_packs is the most reliable agent activity signal)
-    let topAgents = MOCK_SUMMARY.topAgents
+    let topAgents: AnalyticsSummary['topAgents'] = []
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- agents table columns not in typed schema
       const { data: agentsData } = await (supabaseAdmin as any).from('agents')
@@ -282,7 +301,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // conversionsByZona: group closed deals by zona/imovel prefix
     // Note: zona column may not exist (migration 003 doesn't add it to deals)
     // Fallback: aggregate by fase='escritura/fechado' across all deals
-    let conversionsByZona = MOCK_SUMMARY.conversionsByZona
+    let conversionsByZona: AnalyticsSummary['conversionsByZona'] = []
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: zonaData } = await (supabaseAdmin.from('deals') as any)
@@ -313,32 +332,31 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // no zona column — use mock
     }
 
-    // Determine if we got real data or fell back to mock values
-    const hasRealGci = gciMensal > 0 || gciYTD > 0 || gci12m.some(v => v > 0)
-    const hasRealPipeline = totalPipeline > 0
-    const hasRealDeals = dealsCountByStage.length > 0
-
+    // Wave 19: use real data only — no mock fallbacks (zero fake metrics mandate)
     const summary: AnalyticsSummary = {
-      gciMensal:          gciMensal  || MOCK_SUMMARY.gciMensal,
-      gciYTD:             gciYTD     || MOCK_SUMMARY.gciYTD,
-      gci12m:             gci12m.some(v => v > 0) ? gci12m : MOCK_SUMMARY.gci12m,
-      gci12mLabels:       gci12mLabels.length === 12 ? gci12mLabels : MOCK_SUMMARY.gci12mLabels,
-      pipelineAtivo:      totalPipeline || MOCK_SUMMARY.pipelineAtivo,
-      dealsCountByStage:  dealsCountByStage.length > 0 ? dealsCountByStage : MOCK_SUMMARY.dealsCountByStage,
+      gciMensal,
+      gciYTD,
+      gci12m,
+      gci12mLabels:       gci12mLabels.length === 12 ? gci12mLabels : EMPTY_SUMMARY.gci12mLabels,
+      pipelineAtivo:      totalPipeline,
+      dealsCountByStage,
       topAgents,
       conversionsByZona,
-      source: (hasRealGci || hasRealPipeline || hasRealDeals) ? 'supabase' : 'mock',
+      source:             'supabase',
       // Deltas are only set when real previous-period data exists.
       // undefined means "no prior data available" — frontend must NOT show a delta.
       gciMensalDelta,
-      gciMensalPrev:  gciMensalPrev  > 0 ? gciMensalPrev  : undefined,
-      dealsMonthDelta: dealsMonthDelta,
+      gciMensalPrev:      gciMensalPrev  > 0 ? gciMensalPrev  : undefined,
+      dealsMonthDelta,
     }
 
     return NextResponse.json(summary, { headers: { 'Cache-Control': 'no-store' } })
 
   } catch {
-    // Full fallback
-    return NextResponse.json(MOCK_SUMMARY, { headers: { 'Cache-Control': 'no-store' } })
+    // Full fallback — return honest empty response (no fake metrics)
+    return NextResponse.json(
+      { ...EMPTY_SUMMARY, source: 'unavailable' as const },
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
   }
 }

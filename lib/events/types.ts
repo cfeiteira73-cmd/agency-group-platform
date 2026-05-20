@@ -59,6 +59,17 @@ export type EventType =
   | 'deal_rejected'
   | 'call_booked'
   | 'lead_scored'
+  // Wave 19 — Compass-level event backbone (9 new event types)
+  | 'property_ingested'
+  | 'property_scored'
+  | 'lead_qualified'
+  | 'deal_updated'
+  | 'revenue_recognized'
+  | 'ai_requested'
+  | 'ai_executed'
+  | 'ai_billed'
+  | 'system_failure'
+  | 'system_recovery'
 
 // ─── Typed payloads ───────────────────────────────────────────────────────────
 
@@ -280,6 +291,126 @@ export interface LeadScoredEvent extends BaseEvent {
   }
 }
 
+// ─── Wave 19 event interfaces ─────────────────────────────────────────────────
+
+export interface PropertyIngestedEvent extends BaseEvent {
+  event_type: 'property_ingested'
+  payload: {
+    property_id: string
+    source: string | null
+    listing_url: string | null
+    price_eur: number | null
+    zona: string | null
+    type: string | null
+  }
+}
+
+export interface PropertyScoredEvent extends BaseEvent {
+  event_type: 'property_scored'
+  payload: {
+    property_id: string
+    opportunity_score: number
+    previous_score: number | null
+    score_reason: string | null
+    investor_suitable: boolean
+  }
+}
+
+export interface LeadQualifiedEvent extends BaseEvent {
+  event_type: 'lead_qualified'
+  payload: {
+    lead_id: string
+    qualified_by: 'agent' | 'engine' | 'ai'
+    score: number | null
+    budget_min: number | null
+    budget_max: number | null
+    zona: string | null
+  }
+}
+
+export interface DealUpdatedEvent extends BaseEvent {
+  event_type: 'deal_updated'
+  payload: {
+    deal_id: string
+    field_changed: string
+    old_value: unknown
+    new_value: unknown
+    updated_by: string | null
+  }
+}
+
+export interface RevenueRecognizedEvent extends BaseEvent {
+  event_type: 'revenue_recognized'
+  payload: {
+    deal_id: string | null
+    amount_eur: number
+    commission_eur: number
+    agent_email: string | null
+    zona: string | null
+    recognized_at: string
+  }
+}
+
+export interface AIRequestedEvent extends BaseEvent {
+  event_type: 'ai_requested'
+  payload: {
+    correlation_id: string
+    component: string
+    model: string | null
+    estimated_tokens: number | null
+    revenue_context: string | null
+  }
+}
+
+export interface AIExecutedEvent extends BaseEvent {
+  event_type: 'ai_executed'
+  payload: {
+    correlation_id: string
+    component: string
+    model: string
+    input_tokens: number
+    output_tokens: number
+    latency_ms: number
+    success: boolean
+    fallback_used: boolean
+  }
+}
+
+export interface AIBilledEvent extends BaseEvent {
+  event_type: 'ai_billed'
+  payload: {
+    correlation_id: string
+    component: string
+    cost_usd: number
+    input_tokens: number
+    output_tokens: number
+    billing_period: string  // ISO date YYYY-MM
+  }
+}
+
+export interface SystemFailureEvent extends BaseEvent {
+  event_type: 'system_failure'
+  payload: {
+    failure_type: string
+    component: string
+    severity: 'P0' | 'P1' | 'P2' | 'P3'
+    error_message: string
+    error_code: string | null
+    auto_recovery_attempted: boolean
+  }
+}
+
+export interface SystemRecoveryEvent extends BaseEvent {
+  event_type: 'system_recovery'
+  payload: {
+    failure_event_id: string | null
+    component: string
+    recovery_type: 'auto' | 'manual' | 'circuit_reset'
+    recovery_time_ms: number | null
+    recovered_at: string
+  }
+}
+
 // ─── Union type ───────────────────────────────────────────────────────────────
 
 export type AnyPlatformEvent =
@@ -303,6 +434,17 @@ export type AnyPlatformEvent =
   | DealRejectedEvent
   | CallBookedEvent
   | LeadScoredEvent
+  // Wave 19 additions
+  | PropertyIngestedEvent
+  | PropertyScoredEvent
+  | LeadQualifiedEvent
+  | DealUpdatedEvent
+  | RevenueRecognizedEvent
+  | AIRequestedEvent
+  | AIExecutedEvent
+  | AIBilledEvent
+  | SystemFailureEvent
+  | SystemRecoveryEvent
 
 // ─── Event schema versioning ──────────────────────────────────────────────────
 

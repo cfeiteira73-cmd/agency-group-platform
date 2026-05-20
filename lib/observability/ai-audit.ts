@@ -50,6 +50,10 @@ export interface AIAuditEntry {
   error_type?: string
   /** Optional business tag — e.g. 'deal_pack' | 'sofia_chat' | 'whatsapp' */
   revenue_context?: string
+  /** Tenant identifier for multi-tenant AI cost tracking (Wave 19) */
+  tenant_id?: string
+  /** USD cost of this API call: (input + output tokens) × model rate (Wave 19) */
+  cost_usd?: number
   /** ISO-8601 UTC timestamp — callers should pass new Date().toISOString() */
   created_at: string
 }
@@ -112,6 +116,8 @@ export function logAIDecision(entry: AIAuditEntry): void {
       fallback_used:   entry.fallback_used,
       error_type:      entry.error_type ?? null,
       revenue_context: entry.revenue_context ?? null,
+      tenant_id:       entry.tenant_id ?? null,   // Wave 19: per-tenant cost tracking
+      cost_usd:        entry.cost_usd ?? null,    // Wave 19: USD cost per call
       created_at:      entry.created_at,
     })
     .then(({ error }: { error: { message: string } | null }) => {
@@ -155,6 +161,8 @@ export function logAIDecision(entry: AIAuditEntry): void {
         fallback_used:   entry.fallback_used,
         error_type:      entry.error_type   ?? null,
         revenue_context: entry.revenue_context ?? null,
+        tenant_id:       entry.tenant_id    ?? null,  // Wave 19
+        cost_usd:        entry.cost_usd     ?? null,  // Wave 19
         // ai-timeline page reads these keys from metadata
         agent:           entry.model,
         policy:          entry.error_type ?? 'allow',

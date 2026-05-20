@@ -7,6 +7,7 @@
 
 import { eventBus } from './bus'
 import type {
+  EventType,
   LeadCreatedEvent, DealCreatedEvent, DealStageAdvancedEvent,
   MatchCreatedEvent, DistributionSentEvent, DistributionAcceptedEvent,
   DistributionRejectedEvent, ModelPromotedEvent, RollbackTriggeredEvent,
@@ -14,12 +15,16 @@ import type {
   ReferralCreatedEvent, AnomalyDetectedEvent, ProposalSentEvent,
   CpcvSignedEvent, DealClosedEvent, DealRejectedEvent, CallBookedEvent,
   LeadScoredEvent,
+  // Wave 19 — new event types
+  PropertyIngestedEvent, PropertyScoredEvent, LeadQualifiedEvent,
+  DealUpdatedEvent, RevenueRecognizedEvent,
+  AIRequestedEvent, AIExecutedEvent, AIBilledEvent,
+  SystemFailureEvent, SystemRecoveryEvent,
 } from './types'
 
 type Ctx = { correlation_id?: string | null; source_system?: 'api' | 'n8n' | 'cron' | 'engine' | 'agent' }
 
-const base = (type: LeadCreatedEvent['event_type'] | DealCreatedEvent['event_type'] | DealStageAdvancedEvent['event_type'] | MatchCreatedEvent['event_type'] | DistributionSentEvent['event_type'] | DistributionAcceptedEvent['event_type'] | DistributionRejectedEvent['event_type'] | ModelPromotedEvent['event_type'] | RollbackTriggeredEvent['event_type'] | GovernanceOverrideEvent['event_type'] | LeakageDetectedEvent['event_type'] | ClientMilestoneReachedEvent['event_type'] | ReferralCreatedEvent['event_type'] | AnomalyDetectedEvent['event_type'] | ProposalSentEvent['event_type'] | CpcvSignedEvent['event_type'] | DealClosedEvent['event_type'] | DealRejectedEvent['event_type'] | CallBookedEvent['event_type'] | LeadScoredEvent['event_type'], ctx: Ctx) =>
-  eventBus.createBase(type, ctx)
+const base = (type: EventType, ctx: Ctx) => eventBus.createBase(type, ctx)
 
 export const producers = {
   leadCreated:            (p: LeadCreatedEvent['payload'],            ctx: Ctx = {}) => ({ event_type: 'lead_created'             as const, ...base('lead_created', ctx),             payload: p } satisfies LeadCreatedEvent),
@@ -42,6 +47,17 @@ export const producers = {
   dealRejected:           (p: DealRejectedEvent['payload'],           ctx: Ctx = {}) => ({ event_type: 'deal_rejected'            as const, ...base('deal_rejected', ctx),            payload: p } satisfies DealRejectedEvent),
   callBooked:             (p: CallBookedEvent['payload'],             ctx: Ctx = {}) => ({ event_type: 'call_booked'              as const, ...base('call_booked', ctx),              payload: p } satisfies CallBookedEvent),
   leadScored:             (p: LeadScoredEvent['payload'],             ctx: Ctx = {}) => ({ event_type: 'lead_scored'              as const, ...base('lead_scored', ctx),              payload: p } satisfies LeadScoredEvent),
+  // Wave 19 — Compass-level event backbone
+  propertyIngested:       (p: PropertyIngestedEvent['payload'],       ctx: Ctx = {}) => ({ event_type: 'property_ingested'        as const, ...base('property_ingested', ctx),        payload: p } satisfies PropertyIngestedEvent),
+  propertyScored:         (p: PropertyScoredEvent['payload'],         ctx: Ctx = {}) => ({ event_type: 'property_scored'          as const, ...base('property_scored', ctx),          payload: p } satisfies PropertyScoredEvent),
+  leadQualified:          (p: LeadQualifiedEvent['payload'],          ctx: Ctx = {}) => ({ event_type: 'lead_qualified'           as const, ...base('lead_qualified', ctx),           payload: p } satisfies LeadQualifiedEvent),
+  dealUpdated:            (p: DealUpdatedEvent['payload'],            ctx: Ctx = {}) => ({ event_type: 'deal_updated'             as const, ...base('deal_updated', ctx),             payload: p } satisfies DealUpdatedEvent),
+  revenueRecognized:      (p: RevenueRecognizedEvent['payload'],      ctx: Ctx = {}) => ({ event_type: 'revenue_recognized'       as const, ...base('revenue_recognized', ctx),       payload: p } satisfies RevenueRecognizedEvent),
+  aiRequested:            (p: AIRequestedEvent['payload'],            ctx: Ctx = {}) => ({ event_type: 'ai_requested'             as const, ...base('ai_requested', ctx),             payload: p } satisfies AIRequestedEvent),
+  aiExecuted:             (p: AIExecutedEvent['payload'],             ctx: Ctx = {}) => ({ event_type: 'ai_executed'              as const, ...base('ai_executed', ctx),              payload: p } satisfies AIExecutedEvent),
+  aiBilled:               (p: AIBilledEvent['payload'],               ctx: Ctx = {}) => ({ event_type: 'ai_billed'                as const, ...base('ai_billed', ctx),                payload: p } satisfies AIBilledEvent),
+  systemFailure:          (p: SystemFailureEvent['payload'],          ctx: Ctx = {}) => ({ event_type: 'system_failure'           as const, ...base('system_failure', ctx),           payload: p } satisfies SystemFailureEvent),
+  systemRecovery:         (p: SystemRecoveryEvent['payload'],         ctx: Ctx = {}) => ({ event_type: 'system_recovery'          as const, ...base('system_recovery', ctx),          payload: p } satisfies SystemRecoveryEvent),
 }
 
 /** Convenience: produce + publish in one call */
@@ -66,4 +82,15 @@ export const emit = {
   dealRejected:           async (p: DealRejectedEvent['payload'],           ctx?: Ctx) => void eventBus.publish(producers.dealRejected(p, ctx)),
   callBooked:             async (p: CallBookedEvent['payload'],             ctx?: Ctx) => void eventBus.publish(producers.callBooked(p, ctx)),
   leadScored:             async (p: LeadScoredEvent['payload'],             ctx?: Ctx) => void eventBus.publish(producers.leadScored(p, ctx)),
+  // Wave 19 — Compass-level event backbone
+  propertyIngested:       async (p: PropertyIngestedEvent['payload'],       ctx?: Ctx) => void eventBus.publish(producers.propertyIngested(p, ctx)),
+  propertyScored:         async (p: PropertyScoredEvent['payload'],         ctx?: Ctx) => void eventBus.publish(producers.propertyScored(p, ctx)),
+  leadQualified:          async (p: LeadQualifiedEvent['payload'],          ctx?: Ctx) => void eventBus.publish(producers.leadQualified(p, ctx)),
+  dealUpdated:            async (p: DealUpdatedEvent['payload'],            ctx?: Ctx) => void eventBus.publish(producers.dealUpdated(p, ctx)),
+  revenueRecognized:      async (p: RevenueRecognizedEvent['payload'],      ctx?: Ctx) => void eventBus.publish(producers.revenueRecognized(p, ctx)),
+  aiRequested:            async (p: AIRequestedEvent['payload'],            ctx?: Ctx) => void eventBus.publish(producers.aiRequested(p, ctx)),
+  aiExecuted:             async (p: AIExecutedEvent['payload'],             ctx?: Ctx) => void eventBus.publish(producers.aiExecuted(p, ctx)),
+  aiBilled:               async (p: AIBilledEvent['payload'],               ctx?: Ctx) => void eventBus.publish(producers.aiBilled(p, ctx)),
+  systemFailure:          async (p: SystemFailureEvent['payload'],          ctx?: Ctx) => void eventBus.publish(producers.systemFailure(p, ctx)),
+  systemRecovery:         async (p: SystemRecoveryEvent['payload'],         ctx?: Ctx) => void eventBus.publish(producers.systemRecovery(p, ctx)),
 }

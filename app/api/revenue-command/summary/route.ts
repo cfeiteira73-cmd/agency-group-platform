@@ -129,7 +129,7 @@ function buildTopActions(listings: ListingRevenueSummary[]): RevenueImpactCard[]
           actionType,
           listing.listing_price_eur,
           closeProb,
-          0.05,
+          COMMISSION_RATE,  // Wave 19: canonical constant — never hardcode commission rate
           listing.property_id,
         )
         cards.push(card)

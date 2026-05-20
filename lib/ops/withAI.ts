@@ -51,6 +51,22 @@ export type AIComponent =
   | 'anthropic-haiku'   // Claude Haiku calls
   | 'anthropic'         // Generic catch-all
 
+// ── Model cost rates per 1,000 tokens (USD) — updated 2026-05-20 ──────────────
+// Source: Anthropic pricing page. Update when rates change.
+const MODEL_COST_RATES: Record<AIComponent, { input: number; output: number }> = {
+  'anthropic-opus':  { input: 0.015000, output: 0.075000 },  // Claude Opus
+  'anthropic-haiku': { input: 0.000800, output: 0.004000 },  // Claude 3.5 Haiku
+  'anthropic':       { input: 0.003000, output: 0.015000 },  // Claude Sonnet (default)
+}
+
+/** Compute USD cost for an AI call. Returns 6-decimal precision. */
+function computeCostUsd(component: AIComponent, inputTokens: number, outputTokens: number): number {
+  const rates = MODEL_COST_RATES[component]
+  return Math.round(
+    ((inputTokens / 1000) * rates.input + (outputTokens / 1000) * rates.output) * 1_000_000
+  ) / 1_000_000
+}
+
 // ---------------------------------------------------------------------------
 // withAI
 // ---------------------------------------------------------------------------
@@ -83,14 +99,18 @@ export async function withAI<T>(
   fallback: T,
   revenueContext?: string,
   outputSchema?: ZodSchema,
+  tenantId?: string,  // Wave 19: per-tenant budget enforcement + cost attribution
 ): Promise<T> {
   const correlationId = generateCorrelationId()
   const start = Date.now()
 
+  // Resolved tenant — callers should pass tenantId for accurate cost attribution
+  const resolvedTenant = tenantId ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
   // ── Hard policy gate — runs before any AI call ──────────────────────────────
   const policyCtx = {
     agentId:               component,
-    tenantId:              process.env.SYSTEM_ORG_ID ?? 'agency-group',
+    tenantId:              resolvedTenant,  // Wave 19: per-tenant (was hardcoded)
     correlationId,
     estimatedInputTokens:  1000,
     estimatedOutputTokens: 500,
@@ -115,6 +135,7 @@ export async function withAI<T>(
       fallback_used:   true,
       error_type:      'governance_unavailable',
       revenue_context: revenueContext,
+      tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
     return fallback
@@ -143,6 +164,7 @@ export async function withAI<T>(
       fallback_used:   true,
       error_type:      'circuit_open',
       revenue_context: revenueContext,
+      tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
     // Let withCircuitBreaker return fallback normally (consistent behaviour)
@@ -158,15 +180,18 @@ export async function withAI<T>(
 
     const usedFallback = Object.is(result, fallback)
 
+    // Wave 19: extract token counts before logAIDecision for cost attribution
+    let inputTokens  = 0
+    let outputTokens = 0
     if (!usedFallback) {
-      const inputTokens  = (result as Record<string, unknown> | null)?.['usage'] != null
+      inputTokens  = (result as Record<string, unknown> | null)?.['usage'] != null
         ? ((result as Record<string, unknown>)['usage'] as Record<string, number>)['input_tokens']  ?? 0
         : 0
-      const outputTokens = (result as Record<string, unknown> | null)?.['usage'] != null
+      outputTokens = (result as Record<string, unknown> | null)?.['usage'] != null
         ? ((result as Record<string, unknown>)['usage'] as Record<string, number>)['output_tokens'] ?? 0
         : 0
       if (inputTokens + outputTokens > 0) {
-        void trackTokensUsed('agency-group', component, inputTokens + outputTokens)
+        void trackTokensUsed(resolvedTenant, component, inputTokens + outputTokens)  // Wave 19: per-tenant
       }
 
       // ── Optional Zod output validation (best-effort — never blocks) ─────────
@@ -187,15 +212,24 @@ export async function withAI<T>(
       }
     }
 
+    // Wave 19: compute USD cost for audit log (6 decimal precision)
+    const cost_usd = inputTokens + outputTokens > 0
+      ? computeCostUsd(component, inputTokens, outputTokens)
+      : undefined
+
     logAIDecision({
       correlation_id:  correlationId,
       model:           component,
       circuit_name:    component,
+      input_tokens:    inputTokens  > 0 ? inputTokens  : undefined,
+      output_tokens:   outputTokens > 0 ? outputTokens : undefined,
       latency_ms:      Date.now() - start,
       success:         !usedFallback,
       fallback_used:   usedFallback,
       error_type:      usedFallback ? 'error' : undefined,
       revenue_context: revenueContext,
+      tenant_id:       resolvedTenant,
+      cost_usd,
       created_at:      new Date().toISOString(),
     })
 
@@ -217,6 +251,7 @@ export async function withAI<T>(
       fallback_used:   false,
       error_type:      errorType,
       revenue_context: revenueContext,
+      tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
 
@@ -251,15 +286,18 @@ export async function withAIStream<T>(
   fn: () => Promise<T>,
   fallback: T,
   revenueContext?: string,
+  tenantId?: string,  // Wave 19: per-tenant budget enforcement
 ): Promise<T> {
   // No retry for streams — retrying a stream would result in partial/duplicate output
   const correlationId = generateCorrelationId()
   const start = Date.now()
 
+  const resolvedTenant = tenantId ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
   // ── Hard policy gate — runs before any AI call ──────────────────────────────
   const policyCtx = {
     agentId:               component,
-    tenantId:              process.env.SYSTEM_ORG_ID ?? 'agency-group',
+    tenantId:              resolvedTenant,  // Wave 19: per-tenant (was hardcoded)
     correlationId,
     estimatedInputTokens:  1000,
     estimatedOutputTokens: 500,
@@ -284,6 +322,7 @@ export async function withAIStream<T>(
       fallback_used:   true,
       error_type:      'governance_unavailable',
       revenue_context: revenueContext,
+      tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
     return fallback
@@ -310,6 +349,7 @@ export async function withAIStream<T>(
       fallback_used:   true,
       error_type:      'circuit_open',
       revenue_context: revenueContext,
+      tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
     return fallback
@@ -329,6 +369,7 @@ export async function withAIStream<T>(
       fallback_used:   usedFallback,
       error_type:      usedFallback ? 'error' : undefined,
       revenue_context: revenueContext,
+      tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
 
@@ -350,6 +391,7 @@ export async function withAIStream<T>(
       fallback_used:   false,
       error_type:      errorType,
       revenue_context: revenueContext,
+      tenant_id:       resolvedTenant,
       created_at:      new Date().toISOString(),
     })
 
