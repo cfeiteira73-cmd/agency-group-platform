@@ -105,10 +105,13 @@ export class DistributedTracer {
     agent_id: string,
     event_id: string,
     callback: () => Promise<unknown>,
+    org_id?: string,
   ): Promise<unknown> {
+    const resolvedOrgId = org_id ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
     const span = tracingProvider.startSpan(`shros.agent.${agent_id}`, {
       agent_id,
       event_id,
+      org_id: resolvedOrgId,
     })
     const started_at = new Date().toISOString()
 
@@ -122,7 +125,7 @@ export class DistributedTracer {
         started_at,
         ended_at,
         duration_ms: Date.now() - span.started_at,
-        attributes: { agent_id, event_id },
+        attributes: { agent_id, event_id, org_id: resolvedOrgId },
       }
       this._log.push(record)
       void persistTraceRecord(record)
@@ -138,7 +141,7 @@ export class DistributedTracer {
         started_at,
         ended_at,
         duration_ms: Date.now() - span.started_at,
-        attributes: { agent_id, event_id },
+        attributes: { agent_id, event_id, org_id: resolvedOrgId },
         error: error.message,
       }
       this._log.push(record)

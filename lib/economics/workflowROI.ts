@@ -58,7 +58,7 @@ export class WorkflowROITracker {
       .from('deals')
       .select('deal_value')
       .eq('tenant_id', org_id)
-      .in('fase', ['post_sale', 'escritura', 'escritura_sell'])
+      .in('fase', ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída'])
       .gte('actual_close_date', from)
       .limit(500)
 
@@ -131,7 +131,7 @@ export class WorkflowROITracker {
       .from('deals')
       .select('deal_value')
       .eq('tenant_id', org_id)
-      .in('fase', ['post_sale', 'escritura', 'escritura_sell'])
+      .in('fase', ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída'])
       .gte('actual_close_date', from)
       .limit(500)
 

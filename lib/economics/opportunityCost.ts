@@ -34,7 +34,7 @@ export class OpportunityCostAnalyzer {
       .from('deals')
       .select('id, deal_value, fase, assigned_consultant, updated_at, created_at')
       .eq('tenant_id', org_id)
-      .not('fase', 'in', '(post_sale,escritura,escritura_sell)')
+      .not('fase', 'in', '(post_sale,escritura,escritura_sell,Escritura,Escritura Concluída)')
       .lt('updated_at', stall_threshold)
       .limit(200)
 

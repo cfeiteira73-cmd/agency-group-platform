@@ -141,7 +141,7 @@ async function persistMetricSnapshot(snapshot: MetricsSnapshot): Promise<void> {
     // Lazy import to avoid loading supabase on module init
     const { supabaseAdmin } = await import('@/lib/supabase')
     await supabaseAdmin.from('runtime_events').insert({
-      org_id:          'agency-group',
+      org_id:          process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
       type:            'metric_snapshot',
       status:          'completed',
       correlation_id:  `metrics-${snapshot.timestamp}`,

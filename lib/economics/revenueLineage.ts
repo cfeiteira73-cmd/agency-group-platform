@@ -69,7 +69,7 @@ export class RevenueLineageBuilder {
       .eq('tenant_id', org_id)
       .limit(20)
 
-    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell']
+    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída']
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dealData: any[] = deals ?? []
     let total_revenue_eur = 0

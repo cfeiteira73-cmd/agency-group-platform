@@ -163,9 +163,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const ref = String(body.ref || `AG-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`)
 
+    const STAGE_PROBABILITY: Record<string, number> = {
+      'Contacto': 0.05, 'Qualificado': 0.12, 'Visita': 0.18,
+      'Proposta': 0.35, 'Proposta Enviada': 0.40, 'Proposta Aceite': 0.55,
+      'Negociação': 0.65, 'CPCV': 0.85, 'CPCV Assinado': 0.90,
+      'Escritura': 1.0, 'Escritura Concluída': 1.0, 'Escritura Marcada': 0.95,
+      'post_sale': 1.0, 'escritura': 1.0, 'escritura_sell': 1.0,
+    }
+
+    const CLOSED_FASE_VALUES = ['Escritura', 'Escritura Concluída', 'post_sale', 'escritura', 'escritura_sell']
+
     // Try Supabase (uses portal-compat columns from migration 003)
     try {
       const valorNum = typeof body.valor === 'number' ? body.valor : parseFloat(String(body.valor)) || 0
+      const faseStr  = String(body.fase || 'Contacto')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabaseAdmin.from('deals') as any)
         .insert({
@@ -173,7 +184,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           ref,
           imovel:      String(body.imovel),
           valor:       `€ ${valorNum.toLocaleString('pt-PT')}`,
-          fase:        String(body.fase || 'Contacto'),
+          fase:        faseStr,
           comprador:   typeof body.comprador === 'string'   ? body.comprador    : null,
           notas:       typeof body.notas === 'string'       ? body.notas        : null,
           // Standard columns (migration 001)
@@ -181,6 +192,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           deal_value:  valorNum,
           property_id: typeof body.property_id === 'string' ? body.property_id : null,
           agent_id:    typeof body.agent_id === 'string'    ? body.agent_id     : null,
+          // Economics-critical columns
+          tenant_id:            req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
+          assigned_consultant:  (session?.user as { email?: string })?.email ?? null,
+          probability:          STAGE_PROBABILITY[faseStr] ?? 0.05,
+          actual_close_date:    CLOSED_FASE_VALUES.includes(faseStr) ? new Date().toISOString() : null,
         })
         .select()
         .single()

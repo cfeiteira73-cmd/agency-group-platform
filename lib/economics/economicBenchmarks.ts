@@ -61,7 +61,7 @@ export class EconomicBenchmarkEngine {
       return this._emptyBenchmark(org_id, period_days)
     }
 
-    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell']
+    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída']
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allDeals: any[] = data ?? []
     const wonDeals = allDeals.filter((d: any) => CLOSED_STAGES.includes(d.fase as string))

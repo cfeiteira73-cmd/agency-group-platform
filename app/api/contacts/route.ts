@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
         last_contact_at:    body.last_contact_at || body.last_contact || null,
         lead_score:         body.lead_score || 0,
         assigned_to:        session.user.id,
+        tenant_id:          req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
       })
       .select()
       .single()

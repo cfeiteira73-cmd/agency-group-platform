@@ -100,7 +100,15 @@ const STAGE_PROBABILITIES: Record<string, number> = {
   escritura_completed:  1.00,
 }
 
-const MONTHLY_TARGET  = Number(process.env.ORG_MONTHLY_REVENUE_TARGET ?? '50000')
+// ORG_MONTHLY_COMMISSION_TARGET: monthly commission target in EUR (default 50K).
+// Falls back to ORG_MONTHLY_REVENUE_TARGET for backwards compatibility.
+// NOTE: ORG_MONTHLY_REVENUE_TARGET in businessPrimitiveEngine is a gross revenue target (default 2M).
+//       Use ORG_MONTHLY_COMMISSION_TARGET here to avoid semantic collision.
+const MONTHLY_TARGET  = Number(
+  process.env.ORG_MONTHLY_COMMISSION_TARGET ??
+  process.env.ORG_MONTHLY_REVENUE_TARGET ??
+  '50000'
+)
 
 // ─── Revenue Outcome Mapper ───────────────────────────────────────────────────
 
@@ -267,7 +275,7 @@ export class RevenueOutcomeMapper {
     const { data, error } = await (sb.from('deals') as any)
       .select('id, deal_value, fase, metadata, created_at, actual_close_date')
       .eq('tenant_id', org_id)
-      .in('fase', ['post_sale', 'escritura', 'escritura_sell'])
+      .in('fase', ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída'])
       .gte('actual_close_date', since_ts)
       .limit(500)
 

@@ -31,6 +31,14 @@ const LIMITS: Record<string, { max: number; window: number }> = {
   '/api/properties':   { max: 300, window: 3_600_000 },
   '/api/matches':      { max:  60, window: 3_600_000 },
   '/api/runtime':      { max:  60, window:    60_000 },
+  // AI routes without portal auth — rate-limited to prevent budget drain
+  '/api/search':       { max:  20, window: 3_600_000 },
+  '/api/sofia':        { max:  30, window: 3_600_000 },
+  // Additional AI-heavy routes
+  '/api/market':       { max:  30, window: 3_600_000 },
+  '/api/investor':     { max:  20, window: 3_600_000 },
+  '/api/deal':         { max:  60, window: 3_600_000 },
+  '/api/executive':    { max:  30, window: 3_600_000 },
 }
 
 // ─── Bot blacklist (User-Agent) ──────────────────────────────────────────────

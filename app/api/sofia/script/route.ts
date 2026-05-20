@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { withAI } from '@/lib/ops/withAI'
+import { isPortalAuth } from '@/lib/portalAuth'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
@@ -17,6 +18,9 @@ const LANG_INSTR: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
+  if (!await isPortalAuth(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const { property, language, purpose } = await req.json()
 
