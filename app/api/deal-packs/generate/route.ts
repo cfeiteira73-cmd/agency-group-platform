@@ -10,8 +10,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
 import track from '@/lib/trackLearningEvent'
-import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
-import { withAnthropicRetry } from '@/lib/ops/withRetry'
+import { withAI } from '@/lib/ops/withAI'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { recordCausalStep } from '@/lib/observability/causalTrace'
 import { createHash } from 'crypto'
@@ -285,21 +284,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     useType,
   })
 
-  // withCircuitBreaker: open after 5 Anthropic failures; withAnthropicRetry: 3 attempts + backoff.
-  // Haiku circuit is tracked separately from Vision circuit — different rate-limit buckets.
-  // Fallback null → 503 so callers can retry later rather than receiving corrupted output.
+  // withAI: policy gate + circuit breaker + retry.
+  // Haiku circuit is tracked separately from Opus — different rate-limit buckets.
+  // Fallback null → 503 so callers can retry rather than receiving corrupted output.
   let claudeJson: Record<string, unknown>
   try {
-    const message = await withCircuitBreaker<Anthropic.Message | null>(
+    const message = await withAI<Anthropic.Message | null>(
       'anthropic-haiku',
-      (): Promise<Anthropic.Message | null> => withAnthropicRetry(() =>
-        client.messages.create({
-          model:      'claude-haiku-4-5',
-          max_tokens: 2048,
-          messages:   [{ role: 'user', content: prompt }],
-        })
-      ),
-      null,  // fallback: circuit OPEN → 503 below
+      () => client.messages.create({
+        model:      'claude-haiku-4-5',
+        max_tokens: 2048,
+        messages:   [{ role: 'user', content: prompt }],
+      }),
+      null,  // fallback: circuit OPEN or policy DENY → 503 below
+      'deal-pack-generation',
     )
 
     if (message === null) {

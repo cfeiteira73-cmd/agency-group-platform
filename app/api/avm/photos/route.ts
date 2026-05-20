@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { auth } from '@/auth'
-import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
-import { withAnthropicRetry } from '@/lib/ops/withRetry'
+import { withAI } from '@/lib/ops/withAI'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -81,13 +80,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No valid photo URLs' }, { status: 400 })
     }
 
-    // withCircuitBreaker: opens after 5 consecutive Anthropic failures (60s recovery probe).
-    // withAnthropicRetry: 3 attempts with 1s→2s backoff before the CB records a failure.
+    // withAI: policy gate + circuit breaker + retry (opus-class for vision models).
     // Fallback null → 503 response below — never hangs the caller.
-    const claudeResponse = await withCircuitBreaker<Anthropic.Message | null>(
-      'anthropic-vision',
-      (): Promise<Anthropic.Message | null> => withAnthropicRetry(() =>
-        anthropic.messages.create({
+    const claudeResponse = await withAI<Anthropic.Message | null>(
+      'anthropic-opus',
+      () => anthropic.messages.create({
           model: 'claude-opus-4-5',
           max_tokens: 1500,
           messages: [{
@@ -132,9 +129,9 @@ Scoring guide:
               },
             ],
           }],
-        })
-      ),
+        }),
       null,  // fallback: circuit OPEN → return 503 immediately
+      'avm-photo-scoring',
     )
 
     if (claudeResponse === null) {

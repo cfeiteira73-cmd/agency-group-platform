@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 import Anthropic from '@anthropic-ai/sdk'
 import { sendWhatsApp } from '@/lib/whatsapp/client'
-import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
-import { withAnthropicRetry } from '@/lib/ops/withRetry'
+import { withAI } from '@/lib/ops/withAI'
 import { recordCausalStep } from '@/lib/observability/causalTrace'
 
 // Normal WhatsApp webhook payloads are <10 KB.
@@ -167,9 +166,9 @@ export async function POST(req: NextRequest) {
               .replace(/###\s*(System|Human|Assistant|User):/gi, '[filtered]')
               .trim()
 
-            // GDPR compliant: log only truncated identifier, never full phone number
+            // GDPR compliant: log only truncated identifier, never full phone/name
             const phoneHash = from ? `***${from.slice(-4)}` : 'unknown'
-            console.log(`[WhatsApp] Incoming from ${senderName} (${phoneHash})${!sofiaActive ? ' [Sofia inactiva — só CRM]' : ''}`)
+            console.log(`[WhatsApp] Incoming from contact (${phoneHash})${!sofiaActive ? ' [Sofia inactiva — só CRM]' : ''}`)
 
             // Dedup: skip if Meta is re-delivering a message we already processed
             if (await isMessageDuplicate(message.id)) {
@@ -278,20 +277,19 @@ Nome do contacto: ${name}.`
   try {
     const client = new Anthropic({ apiKey })
 
-    // withCircuitBreaker + withAnthropicRetry: Sofia replies are non-critical
+    // withAI: policy gate + circuit breaker + retry. Sofia replies are non-critical
     // (WhatsApp always returns 200 to Meta). A failed reply does not break the
-    // webhook — the CB prevents hammering Anthropic when their API is degraded.
-    const response = await withCircuitBreaker<Anthropic.Message | null>(
+    // webhook — governance + CB prevent hammering Anthropic when degraded.
+    const response = await withAI<Anthropic.Message | null>(
       'anthropic-haiku',
-      (): Promise<Anthropic.Message | null> => withAnthropicRetry(() =>
-        client.messages.create({
-          model: 'claude-haiku-3-5-20241022',
-          max_tokens: 160,
-          system: systemPrompt,
-          messages: [{ role: 'user', content: text }],
-        })
-      ),
-      null,  // fallback: circuit OPEN → skip reply (logged below)
+      () => client.messages.create({
+        model: 'claude-haiku-3-5-20241022',
+        max_tokens: 160,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: text }],
+      }),
+      null,  // fallback: circuit OPEN or policy DENY → skip reply (logged below)
+      'whatsapp-sofia-reply',
     )
 
     if (response === null) {
