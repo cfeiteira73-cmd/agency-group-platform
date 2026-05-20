@@ -53,6 +53,36 @@ export async function register() {
       console.error('[AG] ✗ AUTH_SECRET is too short — must be >= 32 characters')
     }
 
+    // SYSTEM_ORG_ID boot guard — fail-closed: validates UUID v4 + tenants table lookup.
+    // If invalid → P1 incident. Revenue dashboard will show empty state until fixed.
+    void (async () => {
+      try {
+        const { validateSystemOrgId } = await import('@/lib/bootstrap/systemOrgValidator')
+        const orgResult = await validateSystemOrgId()
+        if (!orgResult.ok) {
+          console.error(
+            `[AG] ✗ SYSTEM_ORG_ID INVALID — revenue dashboard will be empty: ${orgResult.error}`,
+            '\n    Fix: add SYSTEM_ORG_ID=<UUID from tenants table> to Vercel env vars',
+            '\n    Run: SELECT id, slug FROM tenants; in Supabase SQL editor',
+          )
+          const { supabaseAdmin } = await import('@/lib/supabase')
+          await supabaseAdmin.from('incidents').insert({
+            tenant_id:        orgResult.org_id ?? 'unknown',
+            severity:         'P1',
+            subsystem:        'config',
+            raw_error:        `SYSTEM_ORG_ID boot validation failed: ${orgResult.error}`,
+            status:           'open',
+            metrics_snapshot: { org_id: orgResult.org_id, checked_at: orgResult.checked_at },
+            detected_at:      new Date().toISOString(),
+          })
+        } else {
+          console.log(`[AG] ✓ SYSTEM_ORG_ID valid — tenant: ${orgResult.tenant_slug} (${orgResult.org_id})`)
+        }
+      } catch (e) {
+        console.warn('[AG] SYSTEM_ORG_ID validator failed (non-fatal):', e)
+      }
+    })()
+
     // Schema drift check — fire-and-forget, never blocks startup
     void (async () => {
       try {

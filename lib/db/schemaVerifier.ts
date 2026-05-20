@@ -18,38 +18,55 @@ import { supabaseAdmin } from '@/lib/supabase'
 // Key = table name. Value = array of required column names.
 // These are the columns that have caused production bugs — add others as needed.
 
+// ─── VERIFIED AGAINST PRODUCTION DB 2026-05-20 ───────────────────────────────
+// Each entry reflects ACTUAL columns in Supabase (dhmfnzsqzdutelzzejay).
+// Do NOT add expected columns here unless you have verified they exist.
+// Rule: if the column is in this list and absent in DB → P0 incident at startup.
+//
+// Wave 12 ground truth:
+//  • deals:    original portal columns + portal-compat (portal_compat_v1 migration)
+//  • contacts: original portal columns + portal-compat (portal_compat_v1 migration)
+//  • orgs table is 'organizations', NOT 'tenants'
+//  • governance_approvals schema differs from Wave 11 assumption: no approval_id/actor_id/resource_type
+//  • learning_events has org_id (TEXT primary tenant key) + tenant_id (TEXT added Wave 11)
+
 const EXPECTED_COLUMNS: Record<string, string[]> = {
   deals: [
-    'id', 'title', 'deal_value', 'stage', 'probability',
-    'contact_id', 'property_id', 'assigned_consultant',
+    // ── Original portal columns (always existed) ──────────────────────────────
+    'id', 'agent_email', 'ref', 'imovel', 'valor', 'fase', 'tenant_id',
+    // ── Portal-compat columns (added by portal_compat_v1_deals_contacts) ─────
+    // Required by all economics files: agentProfitability, economicBenchmarks,
+    // opportunityCost, revenueAttribution, revenueLineage, revenueOutcomeMapper
+    'deal_value', 'stage', 'probability', 'assigned_consultant',
     'actual_close_date', 'lost_at',
-    // Portal-compat columns (added by 003_portal_compat.sql)
-    'valor', 'fase', 'tenant_id',
   ],
   contacts: [
-    'id', 'full_name', 'email', 'phone',
-    'status', 'lead_score', 'lead_tier',
-    // Multi-tenant column (added by 20260430_002)
-    'tenant_id',
+    // ── Original portal columns (always existed) ──────────────────────────────
+    'id', 'agent_email', 'name', 'email', 'phone', 'status', 'tenant_id',
+    // ── Portal-compat columns (added by portal_compat_v1_deals_contacts) ─────
+    'full_name', 'lead_score', 'lead_tier', 'clearbit_data',
   ],
   kpi_snapshots: [
-    'id', 'snapshot_date', 'pipeline_value',  // NOT pipeline_value_eur
+    // Verified: snapshot_date, pipeline_value, total_leads, total_deals, avg_deal_value all exist
+    'id', 'snapshot_date', 'pipeline_value',
     'total_leads', 'total_deals', 'avg_deal_value',
   ],
   governance_approvals: [
-    'id',
-    // approvalFlow.ts columns (added by 20260520000005)
-    'approval_id', 'tenant_id', 'actor_id', 'action_type',
-    'resource_type', 'risk_level', 'description', 'context',
-    'status', 'requested_at', 'expires_at',
+    // NOTE: actual schema differs from Wave 11 assumption.
+    // incident_id + execution_mode exist; approval_id/actor_id/resource_type do NOT.
+    'id', 'tenant_id', 'incident_id', 'action_type',
+    'status', 'requested_by', 'context', 'created_at',
   ],
-  tenants: [
-    'id', 'slug', 'name', 'plan', 'org_id', 'created_at',
+  organizations: [
+    // NOTE: table is 'organizations', NOT 'tenants' — Wave 11 schema map was wrong.
+    // agency-group org: id=00000000-0000-0000-0000-000000000001, slug='agency-group'
+    'id', 'slug', 'name', 'plan', 'status', 'created_at',
   ],
   learning_events: [
-    'id', 'event_type', 'lead_id', 'deal_id', 'property_id',
-    'deal_pack_id', 'agent_email', 'match_score', 'metadata', 'created_at',
-    // Multi-tenant column (added via migration 20260521_add_tenant_id_learning_events)
+    // org_id (TEXT) is the primary tenant key; tenant_id (TEXT) was added Wave 11.
+    // Wave 11 assumption of deal_pack_id/agent_email/match_score was wrong — those don't exist.
+    'id', 'org_id', 'event_type', 'lead_id', 'deal_id',
+    'metadata', 'created_at',
     'tenant_id',
   ],
 }

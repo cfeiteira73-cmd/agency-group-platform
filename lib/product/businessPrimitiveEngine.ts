@@ -94,7 +94,7 @@ export class BusinessPrimitiveEngine {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [deals_res, contacts_res] = await Promise.all([
       (sb.from('deals') as any)
-        .select('id, deal_value, stage, probability, created_at, actual_close_date, lost_at')
+        .select('id, deal_value, stage, fase, probability, created_at, actual_close_date, lost_at')
         .eq('tenant_id', org_id)
         .limit(1_000),
 
@@ -109,13 +109,19 @@ export class BusinessPrimitiveEngine {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contacts = (contacts_res.data ?? []) as any[]
 
-    // deals.stage is a deal_stage enum in DDL; deals.fase is the Portuguese text alias
-    const active_deals    = deals.filter((d: { stage: string }) =>
-      !['post_sale', 'escritura', 'escritura_sell'].includes(d.stage ?? ''))
-    const deals_won_mtd   = deals.filter((d: { stage: string; actual_close_date: string | null }) =>
-      ['post_sale', 'escritura', 'escritura_sell'].includes(d.stage ?? '') &&
-      d.actual_close_date && d.actual_close_date >= mtd_start)
-    const deals_lost_mtd  = deals.filter((d: { lost_at: string | null }) =>
+    // STAGE TRUTH: 'post_sale', 'escritura', 'escritura_sell' are FASE values (portal-compat TEXT col).
+    // deals.stage is the DDL enum (qualification/proposal/etc) — NOT used for closed detection.
+    // Always use d.fase for closed-stage checks. Fall back to d.stage only if fase is absent.
+    const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell'] as const
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isClosed = (d: any): boolean => CLOSED_STAGES.includes(d.fase ?? d.stage ?? '')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const active_deals   = deals.filter((d: any) => !isClosed(d))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const deals_won_mtd  = deals.filter((d: any) =>
+      isClosed(d) && d.actual_close_date && d.actual_close_date >= mtd_start)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const deals_lost_mtd = deals.filter((d: any) =>
       d.lost_at && d.lost_at >= mtd_start)
 
     const pipeline_value    = active_deals.reduce((s: number, d: { deal_value: number }) => s + (d.deal_value ?? 0), 0)
@@ -130,8 +136,7 @@ export class BusinessPrimitiveEngine {
     // Returns null when no closed deals exist — display as '—' in UI, never '210'.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const closedDealsWithDates = deals.filter((d: any) =>
-      ['post_sale', 'escritura', 'escritura_sell'].includes(d.stage ?? '') &&
-      d.actual_close_date && d.created_at
+      isClosed(d) && d.actual_close_date && d.created_at
     )
     let avg_days_to_close: number | null = null
     if (closedDealsWithDates.length > 0) {
@@ -151,9 +156,8 @@ export class BusinessPrimitiveEngine {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const deals30d       = deals.filter((d: any) => d.created_at >= since30d)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const won30d         = deals.filter((d: any) =>
-      ['post_sale', 'escritura', 'escritura_sell'].includes(d.stage ?? '') &&
-      d.actual_close_date && d.actual_close_date >= since30d
+    const won30d = deals.filter((d: any) =>
+      isClosed(d) && d.actual_close_date && d.actual_close_date >= since30d
     )
     const close_rate_30d: number | null = deals30d.length > 0
       ? won30d.length / deals30d.length
@@ -164,7 +168,11 @@ export class BusinessPrimitiveEngine {
       active_leads:       contacts.filter((c: { status: string }) =>
         !['client', 'lost'].includes(c.status ?? '')).length,
       hot_leads,
-      proposals_pending:  contacts.filter((c: { status: string }) => c.status === 'negotiating').length,
+      // FIXED: proposals_pending was incorrectly counting contacts with status='negotiating'.
+      // Proposals are deal-level, not contact-level. Count active deals with probability >= 0.5
+      // (probability is set by the CRM at deal creation, represents mid-to-late funnel).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      proposals_pending:  active_deals.filter((d: any) => (d.probability ?? 0) >= 0.5).length,
       deals_in_progress:  active_deals.length,
       deals_won_mtd:      deals_won_mtd.length,
       deals_lost_mtd:     deals_lost_mtd.length,
@@ -234,7 +242,10 @@ export class BusinessPrimitiveEngine {
         stage:         mappedStage,
         score,
         priority:      score >= 80 ? 'critical' : score >= 60 ? 'high' : score >= 40 ? 'medium' : 'low',
-        expected_value: (row.clearbit_data?.estimated_num_employees as number) ?? 500_000,
+        // FIXED: was using clearbit_data.estimated_num_employees as deal value — wrong field.
+        // Lead summaries don't have an associated deal at this stage; set to 0.
+        // To show deal value, query deals linked to this contact separately.
+        expected_value: 0,
         days_in_stage:  days_active,
         next_action:    this._suggestNextAction(row.status, score),
         next_action_due: this._suggestActionDate(row.status, days_active),
@@ -249,7 +260,10 @@ export class BusinessPrimitiveEngine {
   async getRevenueSnapshot(org_id: string, period: RevenueSnapshot['period']): Promise<RevenueSnapshot> {
     const pipeline = await this.getPipeline(org_id)
 
-    const monthly_target = 2_000_000  // €2M/month default target
+    // Monthly gross revenue target: €2M default (= ~€100K/month commission at 5%).
+    // Override via ORG_MONTHLY_REVENUE_TARGET env var (set per-tenant in Vercel).
+    // This is GROSS deal value target, not commission target.
+    const monthly_target = Number(process.env.ORG_MONTHLY_REVENUE_TARGET ?? 2_000_000)
 
     return {
       org_id,

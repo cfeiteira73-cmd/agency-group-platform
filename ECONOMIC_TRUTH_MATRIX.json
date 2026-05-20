@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-20T00:00:00.000Z",
+    "wave": "Wave 12 — Ground Truth Verification",
+    "mandate": "Every revenue number must trace to a verified DB column"
+  },
+  "deals_schema_truth": {
+    "revenue_column":        { "name": "deal_value",         "type": "numeric",    "source": "portal_compat_v1 migration", "note": "Numeric copy of valor (bigint). Use this for all arithmetic." },
+    "display_column":        { "name": "valor",              "type": "bigint",     "source": "original portal", "note": "Integer euros (e.g. 1500000). Use deal_value for calculations." },
+    "stage_column":          { "name": "fase",               "type": "text",       "source": "original portal", "note": "Portuguese portal stage text. CANONICAL for closed-stage detection." },
+    "stage_compat_column":   { "name": "stage",              "type": "text",       "source": "portal_compat_v1 migration", "note": "Synced from fase. Use fase for stage logic, stage for compatibility." },
+    "tenant_column":         { "name": "tenant_id",          "type": "uuid",       "source": "original portal" },
+    "agent_column":          { "name": "assigned_consultant","type": "text",       "source": "portal_compat_v1 migration", "note": "Synced from agent_email. agent_email is the original column." },
+    "close_date_column":     { "name": "actual_close_date",  "type": "timestamptz","source": "portal_compat_v1 migration" },
+    "lost_column":           { "name": "lost_at",            "type": "timestamptz","source": "portal_compat_v1 migration" },
+    "probability_column":    { "name": "probability",        "type": "numeric",    "source": "portal_compat_v1 migration", "note": "Set by CRM at deal creation. Default 0.05." }
+  },
+  "closed_stages": {
+    "values": ["post_sale", "escritura", "escritura_sell"],
+    "column": "fase",
+    "note": "These are FASE values (portal Portuguese stage). NOT deal.stage enum values."
+  },
+  "contacts_schema_truth": {
+    "name_original":  { "name": "name",       "type": "text",     "note": "Original portal contact name" },
+    "name_compat":    { "name": "full_name",   "type": "text",     "source": "portal_compat_v1", "note": "Synced from name. Economics code uses full_name." },
+    "score_column":   { "name": "lead_score",  "type": "smallint", "source": "portal_compat_v1", "default": 0 },
+    "tier_column":    { "name": "lead_tier",   "type": "text",     "source": "portal_compat_v1", "default": "LOW" },
+    "budget_columns": { "names": ["budget_min", "budget_max"], "type": "bigint", "note": "Original portal columns for lead budget range" }
+  },
+  "economics_files_column_mapping": {
+    "agentProfitability.ts":   { "value": "deal_value", "tenant": "tenant_id", "agent": "assigned_consultant", "stage": "fase", "close_date": "actual_close_date" },
+    "economicBenchmarks.ts":   { "value": "deal_value", "tenant": "tenant_id", "stage": "fase" },
+    "opportunityCost.ts":      { "value": "deal_value", "tenant": "tenant_id", "stage": "fase", "note": "NOT IN (post_sale, escritura, escritura_sell)" },
+    "revenueAttribution.ts":   { "value": "deal_value", "tenant": "tenant_id", "agent": "assigned_consultant", "close_date": "actual_close_date" },
+    "revenueLineage.ts":       { "value": "deal_value", "tenant": "tenant_id", "stage": "fase" },
+    "revenueOutcomeMapper.ts": { "value": "deal_value", "tenant": "tenant_id", "close_date": "actual_close_date" },
+    "workflowROI.ts":          { "tenant": "tenant_id", "note": "learning_events uses tenant_id (text added Wave 11) + org_id (original)" },
+    "businessPrimitiveEngine.ts": {
+      "fixed_wave12": ["d.stage → d.fase for closed detection", "proposals_pending uses deal.probability >= 0.5", "expected_value: 0 (was clearbit employees)", "monthly_target from ORG_MONTHLY_REVENUE_TARGET env var"],
+      "select": "id, deal_value, stage, fase, probability, created_at, actual_close_date, lost_at"
+    }
+  },
+  "revenue_constants": {
+    "COMMISSION_RATE": 0.05,
+    "CLOSED_STAGES": ["post_sale", "escritura", "escritura_sell"],
+    "SYSTEM_ORG_ID": "00000000-0000-0000-0000-000000000001",
+    "SYSTEM_ORG_ID_SOURCE": "env var SYSTEM_ORG_ID (Vercel) — validated at boot by systemOrgValidator.ts",
+    "MONTHLY_REVENUE_TARGET_SOURCE": "env var ORG_MONTHLY_REVENUE_TARGET — default 2_000_000"
+  }
+}

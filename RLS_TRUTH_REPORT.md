@@ -1,0 +1,106 @@
+# SH-ROS RLS Truth Report
+**Wave 12 — Ground Truth Verification**  
+**Date:** 2026-05-20  
+**Project:** dhmfnzsqzdutelzzejay (agency-group-soros)  
+**Verified via:** Supabase MCP `pg_policies` + `information_schema`
+
+---
+
+## Executive Summary
+
+Wave 11 assumed 5 applied migrations including an RLS policy (`000005`). Reality check revealed:
+- 3 policies had `(agent_email = CURRENT_USER) OR true` — universally permissive (CRITICAL)
+- `tenants` table does not exist — table is `organizations`
+- Portal-compat columns (`deal_value`, `assigned_consultant`, etc.) had never been applied
+- All fixed in Wave 12 via two Supabase MCP migrations
+
+---
+
+## RLS Policy Audit (Post-Wave 12)
+
+### ✅ PASS — Properly isolated
+
+| Table | Policy | Roles | Isolation |
+|-------|--------|-------|-----------|
+| `runtime_events` | `runtime_events_org_isolation` | `{public}` | `org_id = JWT claims.org_id` — proper tenant isolation |
+| `org_members` | `org_members_agent_read` | `{authenticated}` | `org_id IN (SELECT org_id FROM org_members WHERE email = auth.email())` |
+| `organizations` | `orgs_agent_read` | `{authenticated}` | org_members join |
+| `contacts` | `contacts_authenticated_access` | `{authenticated}` | `agent_email = auth.email() OR tenant_id IN (org_members)` ← **FIXED Wave 12** |
+| `deals` | `deals_authenticated_access` | `{authenticated}` | `agent_email = auth.email() OR tenant_id IN (org_members)` ← **FIXED Wave 12** |
+| `properties` | `properties_authenticated_write` | `{authenticated}` | `agent_email = auth.email() OR tenant_id IN (org_members)` ← **FIXED Wave 12** |
+| `governance_approvals` | `governance_service_role` | `{service_role}` | Full access to service role only — correct |
+| `kpi_snapshots` | `kpi_snapshots_service_role` | `{service_role}` | Full access to service role only |
+
+### ⚠️ ACCEPTABLE — Intentionally wide-open
+
+| Table | Policy | Reason |
+|-------|--------|--------|
+| `properties` | `properties_public_read` SELECT | Real estate portal: listings must be publicly visible |
+| `ai_audit_log` | `ai_audit_log_auth_read` SELECT `true` | Audit logs readable by all authenticated agents |
+| `causal_trace` | `causal_trace_auth_read` SELECT `true` | Observability: all authenticated agents can read traces |
+| `learning_events` | `learning_events_agent_read` SELECT `true` | Learning data: all authenticated agents can read |
+| `event_history` | `event_history_auth_read` SELECT `true` | Event history readable by all authenticated |
+| `incidents` | `incidents_auth_read` SELECT `true` | Incidents readable by all authenticated |
+
+### ❌ CLOSED — Removed in Wave 12
+
+| Table | Old Policy | Issue |
+|-------|-----------|-------|
+| `contacts` | `contacts_agent_access` | `USING ((agent_email = CURRENT_USER) OR true)` — `OR true` made ALL contacts visible to ALL public users including anonymous |
+| `deals` | `deals_agent_access` | Same `OR true` — all deals world-readable |
+| `properties` | `properties_agent_write` | Same `OR true` — anonymous users could write properties |
+
+---
+
+## Tenant Isolation Analysis
+
+### Tables with tenant_id column
+
+| Table | tenant_id type | Nullable | Has tenant RLS |
+|-------|---------------|----------|----------------|
+| `deals` | uuid | YES | ✅ (contacts_authenticated_access) |
+| `contacts` | uuid | YES | ✅ (contacts_authenticated_access) |
+| `deal_packs` | uuid | YES | via service_role only |
+| `matches` | uuid | YES | via service_role only |
+| `properties` | uuid | YES | ✅ (properties_authenticated_write) |
+| `ai_audit_log` | text | YES | service_role + auth read |
+| `audit_log` | uuid | YES | actor_email check |
+| `causal_trace` | text | NO | auth read (wide) |
+| `governance_approvals` | text | NO | service_role only |
+| `incidents` | text | NO | auth read (wide) |
+| `learning_events` | text | YES | auth read (wide) |
+
+### Tables using org_id (not tenant_id) for isolation
+
+| Table | Column | Isolation |
+|-------|--------|-----------|
+| `runtime_events` | `org_id` (text) | JWT claims `org_id` — proper isolation ✅ |
+| `learning_events` | `org_id` (text) | Primary tenant key (tenant_id was added supplementally) |
+
+---
+
+## Critical Finding: `tenants` table does not exist
+
+Wave 11 `schemaVerifier.ts` monitored `tenants` table. **`tenants` does not exist.**
+The multi-tenant org table is `organizations`.
+
+**Fixed:** `schemaVerifier.ts` updated to monitor `organizations` instead of `tenants`.
+**Fixed:** `systemOrgValidator.ts` updated to query `organizations`.
+
+Organization data verified:
+```
+id:   00000000-0000-0000-0000-000000000001
+slug: agency-group
+name: Agency Group
+plan: agency
+```
+
+---
+
+## Migration 000005 Fate
+
+Wave 11 claimed `000005 (RLS policy)` was applied. The actual Supabase migration history shows 10 migrations all from `2026-05-20`, none matching a `000005` name. The runtime_events RLS exists and is correct. The contacts/deals/properties OR-true policies were the unverified residual risk.
+
+---
+
+*Generated by Wave 12 Ground Truth Verification — Squad C*

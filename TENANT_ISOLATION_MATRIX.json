@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-20T00:00:00.000Z",
+    "wave": "Wave 12 — Ground Truth Verification",
+    "verified_via": "Supabase MCP pg_policies + information_schema",
+    "project_id": "dhmfnzsqzdutelzzejay"
+  },
+  "org_table": {
+    "name": "organizations",
+    "note": "NOT 'tenants' — Wave 11 schema map was wrong",
+    "agency_group_id": "00000000-0000-0000-0000-000000000001",
+    "agency_group_slug": "agency-group"
+  },
+  "tenant_column_map": {
+    "deals":               { "column": "tenant_id", "type": "uuid",   "nullable": true,  "rls_enforced": true,  "policy": "deals_authenticated_access" },
+    "contacts":            { "column": "tenant_id", "type": "uuid",   "nullable": true,  "rls_enforced": true,  "policy": "contacts_authenticated_access" },
+    "properties":          { "column": "tenant_id", "type": "uuid",   "nullable": true,  "rls_enforced": true,  "policy": "properties_authenticated_write" },
+    "deal_packs":          { "column": "tenant_id", "type": "uuid",   "nullable": true,  "rls_enforced": false, "policy": "service_role_only" },
+    "matches":             { "column": "tenant_id", "type": "uuid",   "nullable": true,  "rls_enforced": false, "policy": "service_role_only" },
+    "learning_events":     { "column": "tenant_id", "type": "text",   "nullable": true,  "rls_enforced": false, "note": "org_id is primary tenant key; tenant_id supplemental" },
+    "runtime_events":      { "column": "org_id",    "type": "text",   "nullable": false, "rls_enforced": true,  "policy": "runtime_events_org_isolation", "isolation": "JWT claims" },
+    "causal_trace":        { "column": "tenant_id", "type": "text",   "nullable": false, "rls_enforced": false, "note": "auth read is wide-open (observability)" },
+    "governance_approvals":{ "column": "tenant_id", "type": "text",   "nullable": false, "rls_enforced": false, "policy": "service_role_only" },
+    "incidents":           { "column": "tenant_id", "type": "text",   "nullable": false, "rls_enforced": false, "note": "auth read wide-open; service_role full access" },
+    "ai_audit_log":        { "column": "tenant_id", "type": "text",   "nullable": true,  "rls_enforced": false, "note": "auth read wide-open" },
+    "audit_log":           { "column": "tenant_id", "type": "uuid",   "nullable": true,  "rls_enforced": true,  "policy": "audit_log_agent_read (actor_email = auth.email())" }
+  },
+  "rls_policies_fixed_wave12": [
+    {
+      "table": "contacts",
+      "old_policy": "contacts_agent_access",
+      "old_qual": "((agent_email = CURRENT_USER) OR true)",
+      "issue": "OR true made ALL contacts readable/writable by ALL public users including anonymous",
+      "new_policy": "contacts_authenticated_access",
+      "new_qual": "agent_email = auth.email() OR tenant_id IN (SELECT org_id FROM org_members WHERE email = auth.email())",
+      "new_roles": "{authenticated}"
+    },
+    {
+      "table": "deals",
+      "old_policy": "deals_agent_access",
+      "old_qual": "((agent_email = CURRENT_USER) OR true)",
+      "issue": "OR true: all deals world-readable by anonymous users",
+      "new_policy": "deals_authenticated_access",
+      "new_qual": "agent_email = auth.email() OR tenant_id IN (SELECT org_id FROM org_members WHERE email = auth.email())",
+      "new_roles": "{authenticated}"
+    },
+    {
+      "table": "properties",
+      "old_policy": "properties_agent_write",
+      "old_qual": "((agent_email = CURRENT_USER) OR true)",
+      "issue": "OR true: anonymous users could write/delete all properties",
+      "new_policy": "properties_authenticated_write",
+      "new_qual": "agent_email = auth.email() OR tenant_id IN (SELECT org_id FROM org_members WHERE email = auth.email())",
+      "new_roles": "{authenticated}",
+      "kept": "properties_public_read (SELECT true) — required for public property listings"
+    }
+  ],
+  "residual_risks": [
+    {
+      "id": "RLS-RISK-001",
+      "table": "deal_packs",
+      "policy": "deal_packs_agent_read",
+      "qual": "true",
+      "roles": "{public}",
+      "severity": "MEDIUM",
+      "note": "All deal packs publicly readable — should be tenant-scoped"
+    },
+    {
+      "id": "RLS-RISK-002",
+      "table": "matches",
+      "policy": "matches_agent_read",
+      "qual": "true",
+      "roles": "{public}",
+      "severity": "MEDIUM",
+      "note": "All matches publicly readable"
+    },
+    {
+      "id": "RLS-RISK-003",
+      "tables": ["learning_events", "causal_trace", "incidents", "ai_audit_log", "event_history"],
+      "severity": "LOW",
+      "note": "Wide-open reads for authenticated users — acceptable for internal observability platform"
+    }
+  ]
+}
