@@ -121,7 +121,7 @@ Gera o pitch em JSON com esta estrutura exacta:
       const result = JSON.parse(clean)
       return NextResponse.json({ success: true, pitch: result })
     } catch {
-      return NextResponse.json({ error: 'Parse failed', raw: text }, { status: 500 })
+      return NextResponse.json({ error: 'AI response could not be parsed. Please retry.' }, { status: 502 })
     }
   } catch (error) {
     console.error('investor-pitch error:', error, { corrId })

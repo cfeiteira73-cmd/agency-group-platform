@@ -69,6 +69,24 @@ const EXPECTED_COLUMNS: Record<string, string[]> = {
     'metadata', 'created_at',
     'tenant_id',
   ],
+  priority_items: [
+    // Wave 14: org_id column added by priority_items_add_org_id_and_rls migration.
+    // RLS now enforced via org_members lookup.
+    'id', 'entity_type', 'entity_id', 'priority_score', 'reason',
+    'next_best_action', 'deadline', 'owner_id', 'revenue_impact',
+    'status', 'source', 'created_at', 'org_id',
+  ],
+  runtime_events_warm: [
+    // Event bus warm store — tracks in-flight and recently processed events
+    'event_id', 'org_id', 'type', 'status', 'priority',
+    'retry_count', 'correlation_id', 'trace_id', 'source_system',
+    'payload', 'result', 'latency_ms', 'created_at', 'updated_at',
+  ],
+  runtime_events_dlq: [
+    // Dead letter queue — events that exhausted all retries
+    'event_id', 'org_id', 'type', 'retry_count', 'correlation_id',
+    'payload', 'result', 'created_at', 'updated_at',
+  ],
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────

@@ -44,10 +44,11 @@ interface BaselineRecord {
 // Redis helpers for alert deduplication
 // ---------------------------------------------------------------------------
 
-async function redisSet(key: string, value: string, ttlSec: number): Promise<string | null> {
+// Returns 'NEW' when key was set (alert not deduped), 'EXISTS' when key existed (alert deduped), 'UNAVAILABLE' when Redis unreachable
+async function redisSetNX(key: string, value: string, ttlSec: number): Promise<'NEW' | 'EXISTS' | 'UNAVAILABLE'> {
   const url   = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
-  if (!url || !token) return null
+  if (!url || !token) return 'UNAVAILABLE'
   let attempt = 0
   while (attempt < 3) {
     try {
@@ -56,7 +57,6 @@ async function redisSet(key: string, value: string, ttlSec: number): Promise<str
         { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
       )
       if (res.status === 429) {
-        // Rate limited — exponential backoff
         await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 200))
         attempt++
         continue
@@ -64,21 +64,22 @@ async function redisSet(key: string, value: string, ttlSec: number): Promise<str
       if (!res.ok) {
         console.error('[AnomalyMonitor] Redis set failed — unreachable, logging incident')
         void _writeRedisIncident('redis_unreachable', `HTTP ${res.status} from Upstash`)
-        return null
+        return 'UNAVAILABLE'
       }
       const json = await res.json() as { result: string | null }
-      return json.result
+      // Redis NX: returns 'OK' when key was set (new), null when key already existed
+      return json.result === 'OK' ? 'NEW' : 'EXISTS'
     } catch (err) {
       attempt++
       if (attempt >= 3) {
         console.error('[AnomalyMonitor] Redis unreachable after 3 attempts:', err)
         void _writeRedisIncident('redis_unreachable', String(err))
-        return null
+        return 'UNAVAILABLE'
       }
       await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 200))
     }
   }
-  return null
+  return 'UNAVAILABLE'
 }
 
 async function _writeRedisIncident(type: string, detail: string): Promise<void> {
@@ -95,13 +96,14 @@ async function _writeRedisIncident(type: string, detail: string): Promise<void> 
 }
 
 async function isAlertDeduped(alertId: string): Promise<boolean> {
-  const result = await redisSet(`alert_dedup:${alertId}`, '1', 3600)
-  // redisSet returns 'OK' when key was set (not previously deduped), null when key existed
-  if (result === null) {
-    // Could mean: deduped (key existed) OR Redis unavailable — either way, skip to be safe
-    return true
+  const result = await redisSetNX(`alert_dedup:${alertId}`, '1', 3600)
+  if (result === 'UNAVAILABLE') {
+    // Redis down — do NOT suppress alerts. Fail open so critical alerts are never silently dropped.
+    console.warn('[AnomalyMonitor] Redis unavailable for dedup check — sending alert without dedup')
+    return false
   }
-  return false // 'OK' = new alert, not deduped
+  // 'EXISTS' = already deduped (alert was sent within TTL window), 'NEW' = first occurrence
+  return result === 'EXISTS'
 }
 
 export class AnomalyMonitor {

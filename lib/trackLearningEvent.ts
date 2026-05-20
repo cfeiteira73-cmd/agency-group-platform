@@ -61,6 +61,10 @@ export interface TrackPayload {
   sequence_num?: number | null
   /** system that fired this event: 'api', 'n8n', 'cron', 'engine' */
   source_system?: 'api' | 'n8n' | 'cron' | 'engine' | null
+  /** primary tenant/org identifier — attaches event to the correct org */
+  org_id?: string | null
+  /** supplemental tenant identifier */
+  tenant_id?: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -171,6 +175,8 @@ async function insertEvent(
       correlation_id: payload.correlation_id ?? null,
       session_id:     payload.session_id     ?? null,
       source_system:  payload.source_system  ?? 'api',
+      org_id:         payload.org_id      ?? process.env.SYSTEM_ORG_ID ?? null,
+      tenant_id:      payload.tenant_id   ?? process.env.SYSTEM_ORG_ID ?? null,
       metadata:       enrichedMeta,
     })
   } catch {

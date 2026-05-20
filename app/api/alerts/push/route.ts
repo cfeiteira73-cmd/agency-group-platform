@@ -266,7 +266,7 @@ async function handler(req: NextRequest): Promise<NextResponse> {
 
     if (error) {
       console.error('[alerts/push] Query error:', error)
-      return NextResponse.json({ error: 'DB query failed', details: error }, { status: 500 })
+      return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
     const leads: AlertLead[] = (evaluatedLeads ?? []) as unknown as AlertLead[]

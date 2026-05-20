@@ -213,7 +213,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     .order('score', { ascending: false })
     .limit(20)
 
-  if (error) return NextResponse.json({ error: 'DB error', details: error }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Database error' }, { status: 500 })
 
   const results: EnrichmentResult[] = []
   for (const row of leads ?? []) {
@@ -263,7 +263,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         .limit(Math.min(50, limit))
 
       if (error) {
-        return NextResponse.json({ error: 'DB query failed', details: error }, { status: 500 })
+        return NextResponse.json({ error: 'Database error' }, { status: 500 })
       }
 
       const results: EnrichmentResult[] = []

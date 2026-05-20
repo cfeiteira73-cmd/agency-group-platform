@@ -127,7 +127,7 @@ Gera copy completo. Responde APENAS com JSON válido sem markdown:
         }
       })
     } catch {
-      return NextResponse.json({ error: 'Failed to parse description', raw: text }, { status: 500 })
+      return NextResponse.json({ text: text, structured: false })
     }
   } catch (error) {
     console.error('generate-description error:', error, { corrId })

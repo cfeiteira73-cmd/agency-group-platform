@@ -100,7 +100,7 @@ const STAGE_PROBABILITIES: Record<string, number> = {
   escritura_completed:  1.00,
 }
 
-const MONTHLY_TARGET  = 50_000 // €50K/month commission target per org
+const MONTHLY_TARGET  = Number(process.env.ORG_MONTHLY_REVENUE_TARGET ?? '50000')
 
 // ─── Revenue Outcome Mapper ───────────────────────────────────────────────────
 
@@ -118,7 +118,7 @@ export class RevenueOutcomeMapper {
     stage?:       string
   }): RevenueEvent {
     const probability = STAGE_PROBABILITIES[params.event_type] ?? 0.18
-    const gross       = params.gross_value ?? 500_000  // default €500K
+    const gross       = params.gross_value ?? 0  // if no value provided, use 0 (honest)
     const commission  = gross * COMMISSION_RATE
     const expected    = commission * probability
 
@@ -153,30 +153,34 @@ export class RevenueOutcomeMapper {
     const pipeline = await businessPrimitiveEngine.getPipeline(org_id)
     const now      = new Date().toISOString()
 
+    const avg_deal_value = pipeline.deals_in_progress > 0
+      ? pipeline.pipeline_value / pipeline.deals_in_progress
+      : Number(process.env.ORG_AVG_DEAL_VALUE ?? '500000')
+
     const stages = [
       {
         stage:           'Leads',
         count:           pipeline.active_leads,
-        total_value:     pipeline.active_leads * 500_000,
+        total_value:     pipeline.active_leads * avg_deal_value * 0.8,
         conversion_rate: 0.20,
         avg_days:        14,
-        revenue_at_risk: pipeline.active_leads * 500_000 * COMMISSION_RATE * 0.20,
+        revenue_at_risk: pipeline.active_leads * avg_deal_value * 0.8 * COMMISSION_RATE * 0.20,
       },
       {
         stage:           'Hot Leads (≥80)',
         count:           pipeline.hot_leads,
-        total_value:     pipeline.hot_leads * 700_000,
+        total_value:     pipeline.hot_leads * avg_deal_value,
         conversion_rate: 0.45,
         avg_days:        21,
-        revenue_at_risk: pipeline.hot_leads * 700_000 * COMMISSION_RATE * 0.45,
+        revenue_at_risk: pipeline.hot_leads * avg_deal_value * COMMISSION_RATE * 0.45,
       },
       {
         stage:           'Proposals',
         count:           pipeline.proposals_pending,
-        total_value:     pipeline.proposals_pending * 650_000,
+        total_value:     pipeline.proposals_pending * avg_deal_value,
         conversion_rate: 0.60,
         avg_days:        30,
-        revenue_at_risk: pipeline.proposals_pending * 650_000 * COMMISSION_RATE * 0.60,
+        revenue_at_risk: pipeline.proposals_pending * avg_deal_value * COMMISSION_RATE * 0.60,
       },
       {
         stage:           'Active Deals',
@@ -224,8 +228,12 @@ export class RevenueOutcomeMapper {
     const daily_target = MONTHLY_TARGET / days_in_month
     const actual       = pipeline.commission_mtd / day_of_month  // daily avg so far
 
+    const avg_deal_value_target = pipeline.deals_in_progress > 0
+      ? pipeline.pipeline_value / pipeline.deals_in_progress
+      : Number(process.env.ORG_AVG_DEAL_VALUE ?? '500000')
+
     const pipeline_contribution =
-      (pipeline.proposals_pending * 650_000 * COMMISSION_RATE * 0.60) / 30
+      (pipeline.proposals_pending * avg_deal_value_target * COMMISSION_RATE * 0.60) / 30
 
     const on_track = actual >= daily_target * 0.8
 

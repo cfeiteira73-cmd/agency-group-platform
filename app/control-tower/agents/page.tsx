@@ -59,7 +59,7 @@ function AgentsSkeleton() {
 }
 
 async function AgentsContent() {
-  const agents = await fetchAgents('default')
+  const agents = await fetchAgents(process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001')
 
   const healthy  = agents.filter(a => a.status === 'healthy').length
   const degraded = agents.filter(a => a.status === 'degraded').length

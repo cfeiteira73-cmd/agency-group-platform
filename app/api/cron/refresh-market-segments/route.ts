@@ -13,7 +13,15 @@ export const maxDuration = 60
 export async function GET(req: NextRequest) {
   const secret       = req.headers.get('authorization')?.replace('Bearer ', '')
   const cronExpected = process.env.CRON_SECRET
-  if (!cronExpected || !secret || secret !== cronExpected) {
+  if (!cronExpected || !secret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  // Timing-safe comparison prevents secret enumeration via timing attacks
+  const { timingSafeEqual } = await import('crypto')
+  const a = Buffer.from(secret,       'utf8')
+  const b = Buffer.from(cronExpected, 'utf8')
+  const match = a.length === b.length && timingSafeEqual(a, b)
+  if (!match) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

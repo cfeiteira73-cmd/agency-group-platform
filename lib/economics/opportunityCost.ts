@@ -64,7 +64,7 @@ export class OpportunityCostAnalyzer {
 
     // Recovery actions for top stalled deals
     const recovery_actions = stalledDeals
-      .sort((a: any, b: any) => ((b.value_eur as number) ?? 0) - ((a.value_eur as number) ?? 0))
+      .sort((a: any, b: any) => ((b.deal_value as number) ?? 0) - ((a.deal_value as number) ?? 0))
       .slice(0, 10)
       .map((d: any) => {
         const stall_days = Math.max(0,

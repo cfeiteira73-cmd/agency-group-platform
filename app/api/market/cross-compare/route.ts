@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { withAI } from '@/lib/ops/withAI'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { requirePortalAuth } from '@/lib/requirePortalAuth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -46,6 +47,10 @@ function scoreMarket(m: typeof MARKETS[string], profile: string, budget: number)
 
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
+  const authResult = await requirePortalAuth(req)
+  if (!authResult.ok) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const { markets, budget, investorProfile, nationality, purpose } = await req.json()
 

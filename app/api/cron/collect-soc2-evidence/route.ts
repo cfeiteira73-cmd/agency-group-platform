@@ -14,7 +14,15 @@ export async function GET(req: NextRequest) {
   // ── Auth ──────────────────────────────────────────────────────────────────
   const secret       = req.headers.get('authorization')?.replace('Bearer ', '')
   const cronExpected = process.env.CRON_SECRET
-  if (!cronExpected || !secret || secret !== cronExpected) {
+  if (!cronExpected || !secret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  // Timing-safe comparison prevents secret enumeration via timing attacks
+  const { timingSafeEqual } = await import('crypto')
+  const a = Buffer.from(secret,       'utf8')
+  const b = Buffer.from(cronExpected, 'utf8')
+  const match = a.length === b.length && timingSafeEqual(a, b)
+  if (!match) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -23,7 +31,7 @@ export async function GET(req: NextRequest) {
   try {
     // ── Resolve org_id ───────────────────────────────────────────────────────
     // Collect for the system/agency org. In multi-tenant production, iterate orgs.
-    const org_id = process.env.DEFAULT_ORG_ID ?? 'default'
+    const org_id = process.env.SYSTEM_ORG_ID ?? process.env.DEFAULT_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
     // ── Run collection ───────────────────────────────────────────────────────
     const collector = new SOC2EvidenceCollector()

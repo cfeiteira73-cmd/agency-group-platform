@@ -10,7 +10,7 @@ import { aggregateTenantUsage } from '@/lib/billing/stripeReporter'
 export const revalidate = 60
 
 async function EconomicsContent() {
-  const tenantId = 'agency-group'
+  const tenantId = process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const [breakdown, usage] = await Promise.all([
     computeTenantCostBreakdown(tenantId).catch(() => null),
     aggregateTenantUsage(tenantId).catch(() => null),

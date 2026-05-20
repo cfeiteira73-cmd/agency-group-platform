@@ -5,6 +5,7 @@
 
 import { Suspense } from 'react'
 import { ReplayButton } from './ReplayButton'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const revalidate = 30 // ISR 30s
 
@@ -243,7 +244,7 @@ async function RevenueIntelligencePanel() {
   const p = data?.pipeline
   const f = data?.funnel
 
-  const commissionForecast = p ? (p.pipeline_value ?? 0) * 0.05 : null
+  const commissionForecast = p ? (p.pipeline_value ?? 0) * COMMISSION_RATE : null
   const activeDealCount    = p ? (p.deals_in_progress ?? 0) : null
   const avgDealSize        = p && p.deals_in_progress > 0
     ? (p.pipeline_value ?? 0) / p.deals_in_progress
