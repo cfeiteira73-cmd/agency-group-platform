@@ -331,6 +331,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const result = scoreLeadRequest(leadData)
 
     // --- Upsert to Supabase contacts table (best-effort, up to 3 retries) ---
+    // Tenant scope — contacts must be scoped to avoid cross-tenant data leaks
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
     const upsertPayload: Record<string, unknown> = {
       full_name:            leadData.name,
       email:                leadData.email ?? null,
@@ -346,6 +349,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       detected_intent:      deriveIntent(leadData.source, leadData.message),
       timeline:             leadData.timeline ?? null,
       gdpr_consent:         !!(leadData.email || leadData.phone),
+      // TENANT FIX: include tenant_id so new contacts are correctly scoped
+      tenant_id:            tenantId,
       next_followup_at:     (() => {
         const d = new Date()
         const isSeller = deriveIntent(leadData.source, leadData.message) === 'sell'

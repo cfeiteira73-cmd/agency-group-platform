@@ -86,18 +86,21 @@ interface AlertResult {
 // ---------------------------------------------------------------------------
 
 async function fetchFreshHighScoreProperties(
+  tenantId: string,
   minScore  = 75,
   maxHoursOld = 24,
 ): Promise<AlertProperty[]> {
   const since = new Date(Date.now() - maxHoursOld * 60 * 60 * 1000).toISOString()
 
-  const { data, error } = await supabaseAdmin
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabaseAdmin as any)
     .from('properties')
     .select([
       'id', 'title', 'price', 'zone', 'zone_key', 'type',
       'area_m2', 'bedrooms', 'opportunity_score', 'score_reason',
       'estimated_rental_yield', 'is_exclusive', 'is_off_market', 'photos',
     ].join(','))
+    .eq('tenant_id', tenantId)   // TENANT FIX: scope to current org
     .eq('status', 'active')
     .eq('investor_suitable', true)
     .gte('opportunity_score', minScore)
@@ -115,6 +118,7 @@ async function fetchFreshHighScoreProperties(
 
 async function findMatchingInvestors(
   property: AlertProperty,
+  tenantId: string,
 ): Promise<MatchedInvestor[]> {
   const priceFloor = property.price * 0.85  // 15% below asking (negotiation room)
   const priceCeil  = property.price * 1.10  // 10% above (investor flexibility)
@@ -124,9 +128,10 @@ async function findMatchingInvestors(
 
   // Base query — budget range match
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = supabaseAdmin
+  let query = (supabaseAdmin as any)
     .from('contacts')
     .select('id, full_name, email, whatsapp, budget_max, lead_tier, agent_email')
+    .eq('tenant_id', tenantId)   // TENANT FIX: scope to current org
     .in('status', ['prospect', 'qualified', 'active', 'vip'])
     .eq('opt_out_whatsapp', false)
     .lte('budget_min', priceCeil)
@@ -222,6 +227,7 @@ async function createDealPack(
   property:  AlertProperty,
   investors: MatchedInvestor[],
   message:   string,
+  tenantId:  string,
 ): Promise<string | null> {
   if (investors.length === 0) return null
 
@@ -229,11 +235,12 @@ async function createDealPack(
   const lead = investors[0]
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await (supabaseAdmin as any)
     .from('deal_packs')
     .insert({
       property_id:  property.id,
       lead_id:      lead.id,
+      tenant_id:    tenantId,   // TENANT FIX: scope deal pack to current org
       created_by:   lead.agent_email ?? 'system@agency-group.pt',
       status:       'ready',
       title:        property.title,       // required by schema
@@ -304,10 +311,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const minScore    = parseInt(req.nextUrl.searchParams.get('min_score') ?? '75', 10)
   const maxHoursOld = parseInt(req.nextUrl.searchParams.get('hours') ?? '24', 10)
+  // Tenant scope — alerts must never cross org boundaries
+  const tenantId    = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
 
   try {
     // 1. Fetch fresh high-score properties
-    const properties = await fetchFreshHighScoreProperties(minScore, maxHoursOld)
+    const properties = await fetchFreshHighScoreProperties(tenantId, minScore, maxHoursOld)
 
     if (properties.length === 0) {
       return NextResponse.json({
@@ -331,7 +340,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       try {
         // Find investors + generate message in parallel
         const [investors, message] = await Promise.all([
-          findMatchingInvestors(property),
+          findMatchingInvestors(property, tenantId),
           generateAlertMessage(property),
         ])
 
@@ -340,7 +349,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
         // Create deal pack if investors found
         if (investors.length > 0) {
-          result.deal_pack_id = await createDealPack(property, investors, message)
+          result.deal_pack_id = await createDealPack(property, investors, message, tenantId)
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)

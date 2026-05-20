@@ -307,8 +307,10 @@ async function fetchPropertiesFromDB(criteria: ExtractedCriteria): Promise<Searc
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
 
-  // SECURITY: IP-based rate limiting — this route makes 2 Claude calls per request.
-  // Without this, unauthenticated callers can exhaust Anthropic budget freely.
+  // SECURITY: This is a public route (Sofia property search on agencygroup.pt) — hard
+  // auth would break unauthenticated visitors. Protection is IP-based rate limiting:
+  // 15 requests/hour per IP. withAI governance wraps the Anthropic call (circuit
+  // breaker + policy engine) to prevent runaway spend even if rate limit is bypassed.
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
     ?? req.headers.get('x-real-ip')
     ?? '127.0.0.1'
