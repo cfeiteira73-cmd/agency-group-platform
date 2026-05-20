@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { withAI } from '@/lib/ops/withAI'
+import { rateLimit } from '@/lib/rateLimit'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
@@ -305,6 +306,20 @@ async function fetchPropertiesFromDB(criteria: ExtractedCriteria): Promise<Searc
 
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
+
+  // SECURITY: IP-based rate limiting — this route makes 2 Claude calls per request.
+  // Without this, unauthenticated callers can exhaust Anthropic budget freely.
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    ?? req.headers.get('x-real-ip')
+    ?? '127.0.0.1'
+  const rl = await rateLimit(`search:${ip}`, { maxAttempts: 15, windowMs: 3_600_000 })
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Too many search requests. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': '3600', 'X-RateLimit-Limit': '15' } },
+    )
+  }
+
   try {
     const body = await req.json() as { query?: unknown; language?: unknown; sessionId?: unknown }
     const { query, language = 'pt' } = body

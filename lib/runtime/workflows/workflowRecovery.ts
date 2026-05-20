@@ -28,14 +28,20 @@ export class WorkflowRecoveryEngine {
   ): Promise<number> {
     const cutoff = new Date(Date.now() - stuck_threshold_ms).toISOString()
 
+    // TENANT ISOLATION BUG FIX: Supabase query builder is IMMUTABLE — each chained
+    // method returns a NEW object. The original `query.eq(...)` pattern silently drops
+    // the tenant filter because the result is never assigned back.
+    // SCHEMA FIX: learning_events uses 'tenant_id' UUID, NOT 'org_id' — verified by
+    // DB schema audit (20260430_002_organizations_tenant_foundation.sql). Filtering on
+    // 'org_id' silently returns 0 rows as the column does not exist.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query = (supabaseAdmin.from('learning_events') as any)
-      .select('metadata, org_id, created_at')
+    let query = (supabaseAdmin.from('learning_events') as any)
+      .select('metadata, tenant_id, created_at')
       .eq('event_type', 'workflow_started')
       .lt('created_at', cutoff)
 
     if (org_id) {
-      query.eq('org_id', org_id)
+      query = query.eq('tenant_id', org_id)   // ← MUST reassign (immutable builder)
     }
 
     const { data, error } = await query.order('created_at', { ascending: true }).limit(100)
@@ -177,11 +183,12 @@ export class WorkflowRecoveryEngine {
   async detectOrphaned(org_id: string): Promise<string[]> {
     const orphan_threshold = new Date(Date.now() - DEFAULT_STUCK_THRESHOLD_MS).toISOString()
 
+    // SCHEMA FIX: learning_events column is 'tenant_id' UUID, not 'org_id'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin.from('learning_events') as any)
       .select('metadata, created_at')
       .eq('event_type', 'workflow_started')
-      .eq('org_id', org_id)
+      .eq('tenant_id', org_id)
       .lt('created_at', orphan_threshold)
       .order('created_at', { ascending: false })
       .limit(200)

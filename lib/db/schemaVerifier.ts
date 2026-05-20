@@ -60,14 +60,17 @@ const EXPECTED_COLUMNS: Record<string, string[]> = {
   organizations: [
     // NOTE: table is 'organizations', NOT 'tenants' — Wave 11 schema map was wrong.
     // agency-group org: id=00000000-0000-0000-0000-000000000001, slug='agency-group'
-    'id', 'slug', 'name', 'plan', 'status', 'created_at',
+    // SCHEMA FIX 2026-05-20: 'status' column does NOT exist on organizations table.
+    // Real columns: id, name, slug, plan, settings, created_at, updated_at
+    // Removed 'status' to eliminate false P0 startup incident.
+    'id', 'slug', 'name', 'plan', 'created_at',
   ],
   learning_events: [
-    // org_id (TEXT) is the primary tenant key; tenant_id (TEXT) was added Wave 11.
-    // Wave 11 assumption of deal_pack_id/agent_email/match_score was wrong — those don't exist.
-    'id', 'org_id', 'event_type', 'lead_id', 'deal_id',
+    // SCHEMA FIX 2026-05-20: 'org_id' column does NOT exist on learning_events.
+    // The tenant column is 'tenant_id UUID' (from 20260430_002_organizations_tenant_foundation.sql).
+    // Keeping 'org_id' here caused false P0 schema drift alerts at every startup.
+    'id', 'tenant_id', 'event_type', 'lead_id', 'deal_id',
     'metadata', 'created_at',
-    'tenant_id',
   ],
   priority_items: [
     // Wave 14: org_id column added by priority_items_add_org_id_and_rls migration.

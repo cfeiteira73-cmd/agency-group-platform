@@ -52,7 +52,7 @@ export class GDPREngine {
         const { data: rows, error: fetchErr } = await (supabaseAdmin as any)
           .from(table)
           .select('id')
-          .eq('org_id', org_id)
+          .eq('tenant_id', org_id)
           .eq('email', email)
 
         if (fetchErr) {
@@ -74,7 +74,7 @@ export class GDPREngine {
         const { error: updateErr } = await (supabaseAdmin as any)
           .from(table)
           .update(anonymized)
-          .eq('org_id', org_id)
+          .eq('tenant_id', org_id)
           .eq('email', email)
 
         if (updateErr) {
@@ -93,14 +93,14 @@ export class GDPREngine {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: leRows } = await (supabaseAdmin.from('learning_events') as any)
         .select('id')
-        .eq('org_id', org_id)
+        .eq('tenant_id', org_id)
         .contains('metadata', { email })
 
       if (leRows && leRows.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabaseAdmin.from('learning_events') as any)
           .delete()
-          .eq('org_id', org_id)
+          .eq('tenant_id', org_id)
           .contains('metadata', { email })
         records_deleted += leRows.length
         tables_affected.push('learning_events')
@@ -141,7 +141,7 @@ export class GDPREngine {
         const { data: rows, error } = await (supabaseAdmin as any)
           .from(table)
           .select('*')
-          .eq('org_id', org_id)
+          .eq('tenant_id', org_id)
           .eq('email', email)
 
         if (error) {
@@ -177,7 +177,7 @@ export class GDPREngine {
         const { error } = await (supabaseAdmin as any)
           .from(table)
           .update(corrections)
-          .eq('org_id', org_id)
+          .eq('tenant_id', org_id)
           .eq('email', email)
 
         if (error) {
@@ -199,7 +199,7 @@ export class GDPREngine {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabaseAdmin.from('learning_events') as any)
         .select('metadata, created_at')
-        .eq('org_id', org_id)
+        .eq('tenant_id', org_id)
         .eq('event_type', 'consent_record')
         .order('created_at', { ascending: false })
         .limit(50)

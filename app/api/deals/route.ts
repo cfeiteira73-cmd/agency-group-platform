@@ -47,7 +47,8 @@ const VALID_FASES = [
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const corrId = getRequestCorrelationId(req)
+  const corrId    = getRequestCorrelationId(req)
+  const tenantId  = req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -55,20 +56,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   try {
     const { searchParams } = new URL(req.url)
-    const stage     = searchParams.get('stage')
-    const agentId   = searchParams.get('agent_id')
-    const minValue  = searchParams.get('min_value') ? parseFloat(searchParams.get('min_value')!) : null
-    const status    = searchParams.get('status')
-    const search    = searchParams.get('search')
-    const fase      = searchParams.get('fase') ?? stage  // support both param names
-    const page      = Math.max(parseInt(searchParams.get('page')  ?? '1'),  1)
-    const limit     = Math.min(parseInt(searchParams.get('limit') ?? '50'), 100)
+    const stage    = searchParams.get('stage')
+    const agentId  = searchParams.get('agent_id')
+    const minValue = searchParams.get('min_value') ? parseFloat(searchParams.get('min_value')!) : null
+    const search   = searchParams.get('search')
+    const fase     = searchParams.get('fase') ?? stage  // support both param names
+    const page     = Math.max(parseInt(searchParams.get('page')  ?? '1'),  1)
+    const limit    = Math.min(parseInt(searchParams.get('limit') ?? '50'), 100)
 
     // --- Try Supabase ---
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabaseAdmin.from('deals') as any)
         .select('*', { count: 'exact' })
+        .eq('tenant_id', tenantId)          // TENANT SCOPE: all deal reads scoped to caller's org
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1)
 
@@ -76,12 +77,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         query = query.eq('agent_id', agentId)
       }
 
-      if (fase && fase !== 'all')     query = query.eq('fase', fase)
-      // Note: deals table has no 'status' column — status filter is mock-only
-      if (minValue !== null)          query = query.gte('valor', minValue)
+      if (fase && fase !== 'all') query = query.eq('fase', fase)
+      if (minValue !== null)      query = query.gte('valor', minValue)
       if (search) {
+        // SECURITY: sanitise search before embedding in PostgREST .or() filter string
+        // (contacts/route.ts has this — deals was missing it)
+        const safeSearch = search.replace(/[%(),']/g, '').slice(0, 100)
         query = query.or(
-          `imovel.ilike.%${search}%,comprador.ilike.%${search}%,ref.ilike.%${search}%`
+          `imovel.ilike.%${safeSearch}%,comprador.ilike.%${safeSearch}%,ref.ilike.%${safeSearch}%`
         )
       }
 

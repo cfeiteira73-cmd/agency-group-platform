@@ -1,11 +1,18 @@
 // =============================================================================
-// GET /api/alerts/unsubscribe?email=...&zona=...&tipo=...
-// One-click unsubscribe link — no auth required (email in URL acts as token)
-// Returns HTML redirect page so it works from email clients
+// GET /api/alerts/unsubscribe?email=...&zona=...&tipo=...&token=HMAC
+// One-click unsubscribe — HMAC-SHA256 token required (AUTH_SECRET-signed)
+//
+// SECURITY: plain email-in-URL is an IDOR — any attacker knowing a victim's
+// email can unsubscribe them. Fix: token = HMAC_SHA256(AUTH_SECRET, email:zona:tipo)
+// Token generation: use lib/security/unsubscribeToken.ts → generateUnsubscribeToken()
+// Backward compat: links without a token are rejected with a 403 + helpful message.
+//
+// Returns HTML page so it works from email clients
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createHmac, timingSafeEqual } from 'crypto'
 
 export const runtime = 'nodejs'
 
@@ -16,17 +23,48 @@ function getServiceClient() {
   return createClient(url, key)
 }
 
+/** Constant-time HMAC token verification. Returns true only if token is valid. */
+function verifyUnsubscribeToken(email: string, zona: string, tipo: string, token: string): boolean {
+  const secret = process.env.AUTH_SECRET
+  if (!secret) {
+    // AUTH_SECRET not configured — fail closed (safer than fail open)
+    console.error('[alerts/unsubscribe] AUTH_SECRET not set — rejecting all requests')
+    return false
+  }
+  const expected = createHmac('sha256', secret)
+    .update(`${email}:${zona}:${tipo}`)
+    .digest('hex')
+  try {
+    const buf1 = Buffer.from(token, 'hex')
+    const buf2 = Buffer.from(expected, 'hex')
+    if (buf1.length !== buf2.length) return false
+    return timingSafeEqual(buf1, buf2)
+  } catch {
+    return false
+  }
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const email = searchParams.get('email')?.trim().toLowerCase()
-  const zona = searchParams.get('zona') ?? 'Todas'
-  const tipo = searchParams.get('tipo') ?? 'Todos'
+  const zona  = searchParams.get('zona')  ?? 'Todas'
+  const tipo  = searchParams.get('tipo')  ?? 'Todos'
+  const token = searchParams.get('token') ?? ''
 
   if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
     return new NextResponse(unsubscribePage('error', 'Link de cancelamento inválido.'), {
       status: 400,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
+  }
+
+  // SECURITY: Verify HMAC token — prevents IDOR unsubscribe attack
+  if (!verifyUnsubscribeToken(email, zona, tipo, token)) {
+    console.warn('[alerts/unsubscribe] Invalid or missing HMAC token', { email: email.slice(0, 3) + '***' })
+    return new NextResponse(
+      unsubscribePage('error', 'Este link de cancelamento expirou ou é inválido. Por favor, clique no link mais recente no seu email.'),
+      { status: 403, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+    )
   }
 
   const client = getServiceClient()

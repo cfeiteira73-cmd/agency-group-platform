@@ -1,6 +1,9 @@
 // =============================================================================
 // CONTACTS [id] — Agency Group
-// PATCH: public qualification fields (use_type, budget, timeline)
+// PATCH: portal auth required — qualification fields (use_type, budget, timeline)
+//        NOTE: was previously "public" — SECURITY FIX: contact UUIDs are not
+//        secrets. Any public PATCH allows arbitrary CRM data corruption via IDOR.
+//        Callers must authenticate (portal session, magic-link cookie, or service token).
 // DELETE: portal auth required + ownership RBAC (agents delete own; admin deletes any)
 // =============================================================================
 
@@ -24,6 +27,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // SECURITY FIX: require portal auth — contact UUIDs are not secrets (IDOR risk)
+  const authCheck = await requirePortalAuth(req)
+  if (!authCheck.ok) return authCheck.response
+
   const corrId = getRequestCorrelationId(req)
   try {
     const { id } = await params

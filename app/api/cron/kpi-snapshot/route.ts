@@ -104,16 +104,22 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       // ── Deal metrics ──────────────────────────────────────────────────────────
+      // REVENUE FIX: pipeline_value must only include ACTIVE (non-closed) deals.
+      // Previously summed ALL deals — inflated pipeline as closed deals accumulated.
+      // CLOSED_STAGES must match businessPrimitiveEngine.ts and revenueAttribution.ts.
+      const CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída']
+
       const { data: allDeals } = await supabase
         .from('deals')
         .select('fase, deal_value')
         .eq('tenant_id', tenantId)
 
-      const totalDeals = allDeals?.length ?? 0
-      const pipelineValue = allDeals?.reduce(
+      const totalDeals    = allDeals?.length ?? 0
+      const activeDeals   = allDeals?.filter(d => !CLOSED_STAGES.includes((d as { fase: string }).fase ?? '')) ?? []
+      const pipelineValue = activeDeals.reduce(
         (sum, d) => sum + (Number((d as { deal_value: string | number }).deal_value) || 0), 0
-      ) ?? 0
-      const avgDealValue  = totalDeals > 0 ? Math.round(pipelineValue / totalDeals) : 0
+      )
+      const avgDealValue  = activeDeals.length > 0 ? Math.round(pipelineValue / activeDeals.length) : 0
 
       const dealsByStage: Record<string, number> = {}
       for (const d of allDeals ?? []) {

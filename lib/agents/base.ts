@@ -151,15 +151,20 @@ export abstract class BaseAgent {
 
         case 'send_notification': {
           // Emit system alert for notification downstream consumers
+          // SCHEMA FIX: system_alerts has no resource_type/resource_id/metadata columns.
+          // All extra fields go into the 'context' JSONB column.
           const { error } = await supabaseAdmin.from('system_alerts').insert({
-            alert_type:    'agent_notification',
-            severity:      action.risk === 'high' ? 'P1' : 'P2',
-            title:         `[Agent] ${action.description.slice(0, 100)}`,
-            message:       action.description,
-            resource_type: this.id,                                        // agent id stored in resource_type
-            resource_id:   action.entity_id ?? null,
-            status:        'open' as const,
-            metadata:      { ...action.payload, entity_type: action.entity_type, entity_id: action.entity_id },
+            alert_type: 'agent_notification',
+            severity:   action.risk === 'high' ? 'P1' : 'P2',
+            title:      `[Agent] ${action.description.slice(0, 100)}`,
+            message:    action.description,
+            status:     'open' as const,
+            context:    {
+              agent_id:    this.id,
+              entity_type: action.entity_type,
+              entity_id:   action.entity_id ?? null,
+              ...action.payload,
+            },
           })
           if (error) console.warn(`[Agent:${this.id}] send_notification failed:`, error.message)
           break
@@ -194,14 +199,18 @@ export abstract class BaseAgent {
               metadata:    { ...action.payload, agent_id: this.id, org_id: ctx.org_id },
             }),
             supabaseAdmin.from('system_alerts').insert({
-              alert_type:    'escalation',
-              severity:      'P1',
-              title:         `[ESCALATION] ${action.description.slice(0, 100)}`,
-              message:       action.description,
-              resource_type: this.id,                   // agent id stored in resource_type
-              resource_id:   action.entity_id ?? null,
-              status:        'open' as const,
-              metadata:      action.payload ?? null,
+              // SCHEMA FIX: system_alerts has no resource_type/resource_id/metadata columns.
+              // All extra fields go into the 'context' JSONB column.
+              alert_type: 'escalation',
+              severity:   'P1',
+              title:      `[ESCALATION] ${action.description.slice(0, 100)}`,
+              message:    action.description,
+              status:     'open' as const,
+              context:    {
+                agent_id:  this.id,
+                entity_id: action.entity_id ?? null,
+                ...(action.payload ?? {}),
+              },
             }),
           ]).then(results => {
             for (const { error } of results) {

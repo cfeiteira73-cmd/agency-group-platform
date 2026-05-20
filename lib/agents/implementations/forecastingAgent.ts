@@ -98,7 +98,15 @@ export class ForecastingAgent extends BaseAgent {
 
       const dealList        = activeDeals ?? []
       const activeDealCount = dealList.length
-      const pipelineValue   = dealList.reduce((sum, d) => sum + (d.valor ?? 0), 0)
+      // SCHEMA FIX: deals.valor is TEXT (e.g. "€ 1.250.000") — must parse, NOT treat as number.
+      // Using `d.valor ?? 0` on a TEXT column returns the raw string when non-null,
+      // causing arithmetic NaN. Use parseFloat after stripping non-numeric characters.
+      const parseValorText  = (v: unknown): number => {
+        if (!v) return 0
+        if (typeof v === 'number') return v
+        return parseFloat(String(v).replace(/[^\d.]/g, '')) || 0
+      }
+      const pipelineValue   = dealList.reduce((sum, d) => sum + parseValorText(d.valor), 0)
       const pipelineM       = (pipelineValue / 1_000_000).toFixed(2)
 
       insights.push({

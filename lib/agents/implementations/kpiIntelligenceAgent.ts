@@ -78,13 +78,20 @@ export class KpiIntelligenceAgent extends BaseAgent {
         .not('valor', 'is', null)
         .limit(50)
 
-      const pipelineValue    = (activeDeals ?? []).reduce((s, d) => s + ((d.valor as number) ?? 0), 0)
+      // SCHEMA FIX: deals.valor is TEXT (e.g. "€ 1.250.000") — casting to number produces NaN.
+      // Must strip non-numeric characters before arithmetic.
+      const parseValorText = (v: unknown): number => {
+        if (!v) return 0
+        if (typeof v === 'number') return v
+        return parseFloat(String(v).replace(/[^\d.]/g, '')) || 0
+      }
+      const pipelineValue    = (activeDeals ?? []).reduce((s, d) => s + parseValorText(d.valor), 0)
       const pipelineByStage: Record<string, { count: number; value: number }> = {}
       for (const d of activeDeals ?? []) {
         const stage = d.fase ?? 'unknown'
         if (!pipelineByStage[stage]) pipelineByStage[stage] = { count: 0, value: 0 }
         pipelineByStage[stage].count++
-        pipelineByStage[stage].value += (d.valor as number) ?? 0
+        pipelineByStage[stage].value += parseValorText(d.valor)
       }
 
       // 3. Growth metrics — 4 weeks trend

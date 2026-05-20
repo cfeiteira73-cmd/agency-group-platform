@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import Anthropic from '@anthropic-ai/sdk'
+import { withAI } from '@/lib/ops/withAI'
 import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
-import { withAnthropicRetry } from '@/lib/ops/withRetry'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const client = new Anthropic()
@@ -23,28 +23,20 @@ interface PropertyData {
 
 // ─── Script generator ─────────────────────────────────────────────────────────
 
-async function generateVideoScript(
-  property: PropertyData,
-  lang: 'pt' | 'en' = 'pt',
-): Promise<string> {
-  // withAnthropicRetry: 3 attempts + backoff; circuit breaker applied at call site
-  const response = await withAnthropicRetry(() => client.messages.create({
-    model: 'claude-opus-4-5',
-    max_tokens: 500,
-    system:
-      lang === 'pt'
-        ? `És Sofia, a consultora de imobiliário de luxo da Agency Group (AMI 22506). \
+// buildScriptMessages: pure helpers — no AI call, testable in isolation
+function buildScriptMessages(property: PropertyData, lang: 'pt' | 'en') {
+  const system =
+    lang === 'pt'
+      ? `És Sofia, a consultora de imobiliário de luxo da Agency Group (AMI 22506). \
 Escreves scripts de vídeo profissionais, entusiastas e concisas para apresentação de imóveis. \
 Máximo 45 segundos de fala (≈110 palavras). Tom: premium, confiante, pessoal.`
-        : `You are Sofia, luxury real estate consultant at Agency Group (AMI 22506). \
+      : `You are Sofia, luxury real estate consultant at Agency Group (AMI 22506). \
 Write professional, enthusiastic, concise video scripts for property presentations. \
-Maximum 45 seconds of speech (≈110 words). Tone: premium, confident, personal.`,
-    messages: [
-      {
-        role: 'user',
-        content:
-          lang === 'pt'
-            ? `Cria um script de vídeo de 45 segundos para este imóvel:
+Maximum 45 seconds of speech (≈110 words). Tone: premium, confident, personal.`
+
+  const userContent =
+    lang === 'pt'
+      ? `Cria um script de vídeo de 45 segundos para este imóvel:
 Título: ${property.title}
 Zona: ${property.zone}
 Tipo: ${property.type}
@@ -57,7 +49,7 @@ ${property.rentalYield ? `Yield: ${property.rentalYield}%` : ''}
 
 O script deve: apresentar o imóvel com entusiasmo, destacar 2-3 pontos únicos, \
 mencionar a zona/localização, terminar com CTA para Agency Group.`
-            : `Create a 45-second video script for this property:
+      : `Create a 45-second video script for this property:
 Title: ${property.title}
 Zone: ${property.zone}
 Type: ${property.type}
@@ -69,12 +61,9 @@ Description: ${property.description}
 ${property.rentalYield ? `Yield: ${property.rentalYield}%` : ''}
 
 Script should: introduce enthusiastically, highlight 2-3 unique points, \
-mention location, end with Agency Group CTA.`,
-      },
-    ],
-  }))  // closes client.messages.create({}) and withAnthropicRetry(() => ...)
+mention location, end with Agency Group CTA.`
 
-  return response.content[0].type === 'text' ? response.content[0].text : ''
+  return { system, messages: [{ role: 'user' as const, content: userContent }] }
 }
 
 // ─── HeyGen video creation ────────────────────────────────────────────────────
@@ -184,12 +173,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Property data required' }, { status: 400 })
     }
 
-    // Step 1 — generate AI script with Claude Opus (circuit-breaker guarded)
-    const script = await withCircuitBreaker<string | null>(
-      'anthropic-vision',
-      () => generateVideoScript(property, lang),
-      null,  // fallback: circuit OPEN → 503 below
+    // Step 1 — generate AI script with Claude Opus via withAI (policy gate + circuit breaker +
+    // retry + token tracking + audit log — full governance chain, not just circuit breaker)
+    const { system, messages } = buildScriptMessages(property, lang)
+    const aiResponse = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({ model: 'claude-opus-4-5', max_tokens: 500, system, messages }),
+      null,
+      'heygen-video-script',
     )
+    const script = aiResponse !== null && aiResponse.content[0].type === 'text'
+      ? aiResponse.content[0].text
+      : null
 
     if (script === null) {
       return NextResponse.json(

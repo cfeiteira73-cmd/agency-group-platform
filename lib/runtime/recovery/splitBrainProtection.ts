@@ -70,14 +70,15 @@ export class SplitBrainProtector {
       if (conflict.resolution === 'manual_required') {
         // Escalate to system_alerts for operator review
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // SCHEMA FIX: system_alerts has no org_id or metadata columns.
+        // org_id and conflict details go into 'context' JSONB.
         await (supabaseAdmin as any).from('system_alerts').insert({
           alert_type: 'split_brain_conflict',
-          severity: 'high',
-          org_id: conflict.org_id,
-          title: `Split-brain conflict on event ${conflict.event_id}`,
-          message: `Conflicting statuses detected: ${conflict.conflicting_statuses.join(' vs ')}. Manual resolution required.`,
-          metadata: conflict as unknown as Record<string, unknown>,
-          status: 'open',
+          severity:   'P1',
+          title:      `Split-brain conflict on event ${conflict.event_id}`,
+          message:    `Conflicting statuses detected: ${conflict.conflicting_statuses.join(' vs ')}. Manual resolution required.`,
+          status:     'open',
+          context:    conflict as unknown as Record<string, unknown>,
         })
         return
       }
