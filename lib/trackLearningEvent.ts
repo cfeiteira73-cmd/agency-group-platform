@@ -164,20 +164,25 @@ async function insertEvent(
   try {
     await client.from('learning_events').insert({
       event_type,
-      lead_id:        toId(payload.lead_id),
-      deal_id:        toId(payload.deal_id),
-      property_id:    payload.property_id  ?? null,
-      match_id:       payload.match_id     ?? null,
-      deal_pack_id:   payload.deal_pack_id ?? null,
-      agent_email:    payload.agent_email  ?? null,
-      match_score:    payload.match_score  ?? null,
+      lead_id:          toId(payload.lead_id),
+      deal_id:          toId(payload.deal_id),
+      property_id:      payload.property_id  ?? null,
+      match_id:         payload.match_id     ?? null,
+      deal_pack_id:     payload.deal_pack_id ?? null,
+      agent_email:      payload.agent_email  ?? null,
+      match_score:      payload.match_score  ?? null,
       // Event bus correlation — written if columns exist (migration 20260429_*)
-      correlation_id: payload.correlation_id ?? null,
-      session_id:     payload.session_id     ?? null,
-      source_system:  payload.source_system  ?? 'api',
-      org_id:         payload.org_id      ?? process.env.SYSTEM_ORG_ID ?? null,
-      tenant_id:      payload.tenant_id   ?? process.env.SYSTEM_ORG_ID ?? null,
-      metadata:       enrichedMeta,
+      correlation_id:   payload.correlation_id ?? null,
+      session_id:       payload.session_id     ?? null,
+      source_system:    payload.source_system  ?? 'api',
+      // SCHEMA FIX: learning_events has 'tenant_id UUID', NOT 'org_id'.
+      // Removed org_id — it does not exist on this table and was silently failing.
+      tenant_id:        payload.tenant_id ?? payload.org_id ?? process.env.SYSTEM_ORG_ID ?? null,
+      // IDEMPOTENCY FIX: pass key to DB so the partial UNIQUE INDEX can deduplicate
+      // cross-instance (multiple Vercel Edge replicas). Migration 20260522000001 added
+      // the idempotency_key column + index. Without this, DB dedup was never active.
+      idempotency_key:  idempotencyKey,
+      metadata:         enrichedMeta,
     })
   } catch {
     // Intentionally silent — tracking must never break the calling code

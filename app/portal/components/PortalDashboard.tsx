@@ -22,6 +22,7 @@ import { scoreAllContacts } from '../lib/leadScoring'
 import { scoreAllDeals } from '../lib/dealScoring'
 import type { ScoredContact } from '../lib/leadScoring'
 import type { ScoredDeal } from '../lib/dealScoring'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 import { detectOpportunities } from '../lib/intelligence/opportunity'
 import { generateCopilot } from '../lib/intelligence/copilot'
 import { generateRevenueForecast } from '../lib/intelligence/forecast'
@@ -362,7 +363,7 @@ export default function PortalDashboard({
 
           const totalPipelineValue = rawDeals.reduce((sum, d) => sum + parsePTValueShared(d.valor), 0)
           const activeDealCount = rawDeals.length
-          const estimatedCommission = totalPipelineValue * 0.05
+          const estimatedCommission = totalPipelineValue * COMMISSION_RATE
           const currentMonthStr = new Date().toISOString().slice(0, 7)
           const closingThisMonth = rawDeals.filter(
             d =>
@@ -462,7 +463,7 @@ export default function PortalDashboard({
   // ── Live KPI helpers: use real Supabase data when available ─────────────────
   const livePipeline = liveKPIs.source === 'live' ? liveKPIs.pipeline : pipelineTotal
   const liveDealCount = liveKPIs.source === 'live' ? liveKPIs.deals : deals.length
-  const liveGCI = Math.round((liveKPIs.source === 'live' ? liveKPIs.commission : pipelineTotal * 0.05) / 1000)
+  const liveGCI = Math.round((liveKPIs.source === 'live' ? liveKPIs.commission : pipelineTotal * COMMISSION_RATE) / 1000)
   const liveClosingNow = liveKPIs.source === 'live' ? liveKPIs.closingNow : cpcvDeals.length
   const liveTotalContacts = liveKPIs.source === 'live' && liveKPIs.contactCount > 0 ? liveKPIs.contactCount : crmContacts.length
 
@@ -475,7 +476,7 @@ export default function PortalDashboard({
     return diffDays > 5 && diffDays <= 14
   }), [deals])
   const stalledGCI = useMemo(() => stalledDeals.reduce((s, d) => {
-    return s + parseValorLocal(d.valor) * 0.05
+    return s + parseValorLocal(d.valor) * COMMISSION_RATE
   }, 0), [stalledDeals])
 
   // ── Stage velocity — computed from real deals, not hardcoded ─────────────────

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+import { withAI } from '@/lib/ops/withAI';
 import { rateLimit } from '@/lib/rateLimit';
 import { isPortalAuth } from '@/lib/portalAuth';
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+
+const anthropicClient = new Anthropic();
 
 /**
  * AG·AI Proxy — /api/ai
@@ -27,7 +31,7 @@ function resolveModel(model: string): string {
   return 'claude-sonnet-4-6';
 }
 
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+// sleep removed — withAI governance handles exponential retry internally
 
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
@@ -45,8 +49,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY não configurada' }, { status: 500 });
   }
 
@@ -58,51 +61,32 @@ export async function POST(req: NextRequest) {
   }
 
   // Corrige o modelo automaticamente
-  if (typeof body.model === 'string') {
-    body.model = resolveModel(body.model);
-  } else {
-    body.model = 'claude-sonnet-4-6';
+  const model = typeof body.model === 'string' ? resolveModel(body.model) : 'claude-sonnet-4-6';
+  const messages = body.messages as Anthropic.MessageParam[] ?? [];
+  const system   = typeof body.system === 'string' ? body.system : undefined;
+  const maxTok   = typeof body.max_tokens === 'number' ? body.max_tokens : 1024;
+
+  // GOVERNANCE FIX: was raw fetch() with custom retry loop — bypassed withAI governance.
+  // withAI provides: policyEngine → circuit breaker → exponential retry → token tracking → audit log
+  const result = await withAI(
+    'anthropic',
+    () => anthropicClient.messages.create({
+      model,
+      max_tokens: maxTok,
+      messages,
+      ...(system ? { system } : {}),
+    }),
+    null,
+    'ai-proxy',
+  )
+
+  if (result === null) {
+    console.error('[AG·AI] withAI returned null (circuit open or policy denied)', { corrId })
+    return NextResponse.json(
+      { type: 'error', error: { type: 'service_unavailable', message: 'Serviço temporariamente indisponível. Tenta novamente em 30 segundos.' } },
+      { status: 503 },
+    )
   }
 
-  const MAX_RETRIES = 3;
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    if (attempt > 0) {
-      await sleep(1500 * attempt); // 1.5s, 3s
-    }
-
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = await response.json() as Record<string, unknown>;
-
-      // 529 = overloaded → retry
-      if (response.status === 529 && attempt < MAX_RETRIES - 1) {
-        console.warn(`[AG·AI] Anthropic overloaded, tentativa ${attempt + 1}/${MAX_RETRIES}`);
-        lastError = data;
-        continue;
-      }
-
-      return NextResponse.json(data, { status: response.status });
-
-    } catch (err) {
-      console.error(`[AG·AI] Tentativa ${attempt + 1} falhou:`, err, { corrId });
-      lastError = err;
-    }
-  }
-
-  console.error('[AG·AI] Todas as tentativas falharam:', lastError, { corrId });
-  return NextResponse.json(
-    { type: 'error', error: { type: 'service_unavailable', message: 'Serviço temporariamente indisponível. Tenta novamente em 30 segundos.' } },
-    { status: 503 }
-  );
+  return NextResponse.json(result);
 }

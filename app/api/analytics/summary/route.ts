@@ -84,6 +84,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   void request // parameter required by Next.js route handler signature
 
   try {
+    // Tenant scope — summary must never aggregate cross-tenant deals
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
     // ── 1. Try Supabase ─────────────────────────────────────────────────────
     // Confirmed production columns (migration 003 + 20260426_002):
     //   fase (TEXT), valor (TEXT "€ 1.250.000"), expected_fee (NUMERIC), realized_fee (NUMERIC)
@@ -91,6 +94,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const dealsQuery = (supabaseAdmin.from('deals') as any)
       .select('fase, valor, expected_fee, realized_fee, agent_id, created_at')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
 
     const { data: dealsData, error: dealsError } = await dealsQuery

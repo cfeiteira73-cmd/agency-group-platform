@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 import { exportToPDF } from '../utils/export'
 import { useDealStore } from '../stores/dealStore'
 import { useUIStore } from '../stores/uiStore'
@@ -349,12 +350,12 @@ export default function PortalComissoes() {
   const pipelineWeighted = deals.reduce((s, d) => {
     const val = parseValor(d.valor)
     const pct = STAGE_PCT_C[d.fase] || 0
-    return s + val * 0.05 * pct
+    return s + val * COMMISSION_RATE * pct
   }, 0)
 
   const realized = deals
     .filter(d => d.fase === 'Escritura Concluída')
-    .reduce((s, d) => s + parseValor(d.valor) * 0.05, 0)
+    .reduce((s, d) => s + parseValor(d.valor) * COMMISSION_RATE, 0)
 
   const irsWithholding = pipelineWeighted * 0.25
   const netExpected = pipelineWeighted * 0.75
@@ -366,12 +367,12 @@ export default function PortalComissoes() {
   const byStage = Object.entries(STAGE_PCT_C).map(([stage, pct]) => {
     const stageDeals = deals.filter(d => d.fase === stage)
     const stageVal = stageDeals.reduce((s, d) => s + parseValor(d.valor), 0)
-    const stageComm = stageVal * 0.05 * pct
+    const stageComm = stageVal * COMMISSION_RATE * pct
     return { stage, deals: stageDeals.length, value: stageVal, commission: stageComm, probability: pct }
   }).filter(s => s.deals > 0)
 
   const topDeal = deals.reduce((best, d) => {
-    const v = parseValor(d.valor) * 0.05
+    const v = parseValor(d.valor) * COMMISSION_RATE
     return v > best.v ? { d, v } : best
   }, { d: deals[0], v: 0 })
 
@@ -397,7 +398,7 @@ export default function PortalComissoes() {
         if (d.fase === 'Escritura Concluída') continue
         const daysToClose = STAGE_DAYS_TO_CLOSE[d.fase] ?? 210
         const val = parseValor(d.valor)
-        const comm = val * 0.05 * 0.75 // net after IRS
+        const comm = val * COMMISSION_RATE * 0.75 // net after IRS
         // Gaussian-style weight: peak if daysToClose ~ daysAway
         const diff = Math.abs(daysToClose - daysAway)
         const weight = Math.exp(-(diff * diff) / (2 * 30 * 30)) // sigma = 30 days
@@ -441,7 +442,7 @@ export default function PortalComissoes() {
         <tbody>${deals.map(d => {
       const v = parseValor(d.valor)
       const pct = STAGE_PCT_C[d.fase] || 0
-      return `<tr><td>${d.imovel}</td><td>${fmt2(v)}</td><td>${d.fase}</td><td>${fmt2(v * 0.05)}</td><td>${Math.round(pct * 100)}%</td><td>${fmt2(v * 0.05 * pct)}</td></tr>`
+      return `<tr><td>${d.imovel}</td><td>${fmt2(v)}</td><td>${d.fase}</td><td>${fmt2(v * COMMISSION_RATE)}</td><td>${Math.round(pct * 100)}%</td><td>${fmt2(v * COMMISSION_RATE * pct)}</td></tr>`
     }).join('')}</tbody>
       </table>
     `
@@ -561,7 +562,7 @@ export default function PortalComissoes() {
         </div>
         {deals.map((d, i) => {
           const v = parseValor(d.valor)
-          const comm = v * 0.05
+          const comm = v * COMMISSION_RATE
           const pct = STAGE_PCT_C[d.fase] || 0
           const ponderado = comm * pct
           return (

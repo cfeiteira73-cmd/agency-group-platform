@@ -51,19 +51,26 @@ async function fetchAIDecisionsCount(): Promise<number> {
   }
 }
 
+// Canonical closed stages — must match kpi-snapshot, businessPrimitiveEngine, revenueAttribution
+const CEO_CLOSED_STAGES = ['post_sale', 'escritura', 'escritura_sell', 'Escritura', 'Escritura Concluída']
+
 async function fetchPipelineValue(): Promise<string> {
   try {
     const sb = supabaseAdmin as unknown as { from: (t: string) => unknown }
+    // PIPELINE FIX: was .not('fase','in','(perdido,cancelado)') — incomplete exclusion.
+    // Closed stages (CPCV/Escritura) would inflate pipeline as deals accumulated.
+    // Now uses canonical CLOSED_STAGES list consistent with kpi-snapshot cron.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (sb.from('deals') as any)
-      .select('deal_value')
-      .not('fase', 'in', '(perdido,cancelado)')
+      .select('deal_value, fase')
     if (error || !data) return '—'
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const total: number = (data as any[]).reduce((sum: number, row: any) => {
-      const v = typeof row.deal_value === 'number' ? row.deal_value : Number(row.deal_value ?? 0)
-      return sum + (isNaN(v) ? 0 : v)
-    }, 0)
+    const total: number = (data as any[])
+      .filter((row: any) => !CEO_CLOSED_STAGES.includes(row.fase ?? ''))
+      .reduce((sum: number, row: any) => {
+        const v = typeof row.deal_value === 'number' ? row.deal_value : Number(row.deal_value ?? 0)
+        return sum + (isNaN(v) ? 0 : v)
+      }, 0)
     if (total === 0) return '—'
     const millions = total / 1_000_000
     return `€${millions.toFixed(1)}M`

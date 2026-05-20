@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import Anthropic from '@anthropic-ai/sdk'
+import { withAI } from '@/lib/ops/withAI'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { rateLimit } from '@/lib/rateLimit'
 import { isPortalAuth } from '@/lib/portalAuth'
+
+const anthropicClient = new Anthropic()
 
 const RadarSchema = z.object({
   url: z.string().min(5, 'URL ou texto inválido'),
@@ -907,16 +911,21 @@ INSTRUÇÃO: Analisa com rigor máximo. ${isAuction ? 'É um LEILÃO — avalia 
       return NextResponse.json(mockResponse)
     }
 
-    const cr = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-api-key': CLAUDE_KEY, 'anthropic-version':'2023-06-01' },
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3500, messages:[{ role:'user', content: prompt }] }),
-      signal: AbortSignal.timeout(58000),
-    })
-    if (!cr.ok) throw new Error(`Claude: ${cr.status}`)
-
-    const cd = await cr.json()
-    const rawTxt = (cd.content?.[0] as { text: string })?.text ?? '{}'
+    // GOVERNANCE FIX: was raw fetch() bypassing withAI policy chain.
+    // withAI provides: policyEngine → circuit breaker → retry → token tracking → audit log
+    const aiResult = await withAI(
+      'anthropic',
+      () => anthropicClient.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3500,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null,
+      'radar-analysis',
+    )
+    const rawTxt = aiResult !== null && aiResult.content[0].type === 'text'
+      ? aiResult.content[0].text
+      : '{}'
     let analise: Record<string, unknown> = {}
     try {
       const m = rawTxt.match(/\{[\s\S]*\}/)

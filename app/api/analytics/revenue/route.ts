@@ -82,23 +82,30 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       since = new Date(now.getFullYear(), 0, 1).toISOString()
   }
 
+  // Tenant scope — analytics must never leak cross-tenant revenue data
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
   try {
     // ── Fetch deals — progressive column discovery ────────────────────────────
     // Minimum confirmed: id, fase, valor, contact_id, created_at
     // stage/comissao/deal_value/zona/gci_net confirmed NOT in this DB instance.
     // Try with optional migration-002 cols; retry without on 42703.
     type DealsResult = { data: Record<string, unknown>[] | null; error: { code?: string; message?: string } | null }
-    let dealsResult: DealsResult = await supabaseAdmin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let dealsResult: DealsResult = await (supabaseAdmin as any)
       .from('deals')
       .select('id, fase, valor, contact_id, partner_id, partner_fee_pct, expected_fee, realized_fee, created_at')
+      .eq('tenant_id', tenantId)
       .gte('created_at', since)
       .not('fase', 'ilike', '%cancelad%') as unknown as DealsResult
 
     // 42703 = a listed column doesn't exist → retry with absolute minimum
     if (dealsResult.error && String(dealsResult.error.code) === '42703') {
-      dealsResult = await supabaseAdmin
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dealsResult = await (supabaseAdmin as any)
         .from('deals')
         .select('id, fase, valor, contact_id, created_at')
+        .eq('tenant_id', tenantId)
         .gte('created_at', since)
         .not('fase', 'ilike', '%cancelad%') as unknown as DealsResult
     }
