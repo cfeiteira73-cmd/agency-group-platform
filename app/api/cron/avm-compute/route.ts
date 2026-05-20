@@ -22,7 +22,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { batchComputeAVM }           from '@/lib/valuation/avm'
 import { supabaseAdmin }             from '@/lib/supabase'
-import { withCronLock }              from '@/lib/ops/cronLock'
+import { withCronLock }              from '@/lib/ops/withCronLock'
 import { safeCompare }               from '@/lib/safeCompare'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
 

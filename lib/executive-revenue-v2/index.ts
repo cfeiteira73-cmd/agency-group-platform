@@ -18,7 +18,7 @@ export interface AgentPerformanceSummary {
   agent_id: string
   deals_closed: number
   total_commission_eur: number
-  avg_days_to_close: number
+  avg_days_to_close: number | null  // null = no closed deals yet — never hardcode a benchmark
   listings_active: number
   conversion_rate: number
 }
@@ -157,7 +157,10 @@ export function rankAgents(
   const scored = agents.map((agent) => {
     const commissionComponent = (agent.total_commission_eur / 10_000) * 0.4
     const conversionComponent = (agent.conversion_rate * 100) * 0.3
-    const speedComponent = (1 / Math.max(agent.avg_days_to_close, 1)) * 5_000 * 0.3
+    // If avg_days_to_close is null (no closed deals), speed component is 0 — no fabricated benchmark
+    const speedComponent = agent.avg_days_to_close != null
+      ? (1 / Math.max(agent.avg_days_to_close, 1)) * 5_000 * 0.3
+      : 0
 
     const rawScore = commissionComponent + conversionComponent + speedComponent
     const revenue_score = Math.round(Math.max(0, Math.min(100, rawScore)))

@@ -12,14 +12,22 @@ import { NextRequest } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 
+// Constant-time string comparison to prevent timing oracle attacks on secrets.
+function timingSafeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
+}
+
 export async function isPortalAuth(req: NextRequest): Promise<boolean> {
   // 1. CRON_SECRET or INTERNAL_API_TOKEN header (crons + n8n internal calls)
   const cronSecret     = process.env.CRON_SECRET
   const internalToken  = process.env.INTERNAL_API_TOKEN
   const incoming       = req.headers.get('x-cron-secret')
     ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  if (cronSecret    && incoming === cronSecret)   return true
-  if (internalToken && incoming === internalToken) return true
+  if (cronSecret    && incoming && timingSafeCompare(incoming, cronSecret))   return true
+  if (internalToken && incoming && timingSafeCompare(incoming, internalToken)) return true
 
   // 2. ag-auth-token cookie (portal magic-link session)
   const secret = process.env.AUTH_SECRET

@@ -1,6 +1,15 @@
 // AGENCY GROUP — SH-ROS Observability: anomalyMonitoring | AMI: 22506
+//
+// Persistence strategy:
+//   _baselines  → write-through cache backed by `anomaly_baselines` Supabase table.
+//                 On cold start (empty Map) the first checkMetrics() call loads from DB.
+//   _dlqWindow  → write-through cache backed by `runtime_events` table query.
+//                 Cold start reconstitutes the last-5-min DLQ events from DB.
+//   Alert dedup → Upstash Redis key `alert_dedup:{alertId}` with 1-hour TTL.
 
 import { supabaseAdmin } from '@/lib/supabase'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabaseAdmin as any
 import { metricsRegistry } from './metricsRegistry'
 
 export interface AnomalyCheck {
@@ -31,10 +40,78 @@ interface BaselineRecord {
   last_updated: number
 }
 
+// ---------------------------------------------------------------------------
+// Redis helpers for alert deduplication
+// ---------------------------------------------------------------------------
+
+async function redisSet(key: string, value: string, ttlSec: number): Promise<string | null> {
+  const url   = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return null
+  let attempt = 0
+  while (attempt < 3) {
+    try {
+      const res = await fetch(
+        `${url}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}?NX=true&EX=${ttlSec}`,
+        { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
+      )
+      if (res.status === 429) {
+        // Rate limited — exponential backoff
+        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 200))
+        attempt++
+        continue
+      }
+      if (!res.ok) {
+        console.error('[AnomalyMonitor] Redis set failed — unreachable, logging incident')
+        void _writeRedisIncident('redis_unreachable', `HTTP ${res.status} from Upstash`)
+        return null
+      }
+      const json = await res.json() as { result: string | null }
+      return json.result
+    } catch (err) {
+      attempt++
+      if (attempt >= 3) {
+        console.error('[AnomalyMonitor] Redis unreachable after 3 attempts:', err)
+        void _writeRedisIncident('redis_unreachable', String(err))
+        return null
+      }
+      await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 200))
+    }
+  }
+  return null
+}
+
+async function _writeRedisIncident(type: string, detail: string): Promise<void> {
+  try {
+    await supabaseAdmin.from('incidents').insert({
+      tenant_id:        'agency-group',
+      severity:         'P2',
+      subsystem:        'cache',
+      raw_error:        `Redis ${type}: ${detail}`,
+      status:           'open',
+      metrics_snapshot: { source: 'anomaly-monitor', type },
+    })
+  } catch { /* best effort */ }
+}
+
+async function isAlertDeduped(alertId: string): Promise<boolean> {
+  const result = await redisSet(`alert_dedup:${alertId}`, '1', 3600)
+  // redisSet returns 'OK' when key was set (not previously deduped), null when key existed
+  if (result === null) {
+    // Could mean: deduped (key existed) OR Redis unavailable — either way, skip to be safe
+    return true
+  }
+  return false // 'OK' = new alert, not deduped
+}
+
 export class AnomalyMonitor {
   private readonly _callbacks: AnomalyCallback[] = []
+  // Write-through cache: populated from Supabase on first access (cold start recovery)
   private readonly _baselines: Map<string, BaselineRecord> = new Map()
-  private readonly _dlqWindow: number[] = [] // timestamps of DLQ events
+  private _baselinesLoaded = false
+  // Write-through cache: DLQ event timestamps — reconstituted from DB on cold start
+  private readonly _dlqWindow: number[] = []
+  private _dlqLoaded = false
 
   /**
    * Run all anomaly checks for a single tenant/org and return a summary.
@@ -68,6 +145,9 @@ export class AnomalyMonitor {
   }
 
   async checkMetrics(org_id?: string): Promise<AnomalyCheck[]> {
+    // Recover persistent state on cold start
+    await Promise.all([this._ensureBaselinesLoaded(), this._ensureDLQLoaded()])
+
     const checks: AnomalyCheck[] = []
     const snapshot = metricsRegistry.exportJSON()
     const now = new Date().toISOString()
@@ -164,26 +244,103 @@ export class AnomalyMonitor {
     this._callbacks.push(callback)
   }
 
-  /** Record a DLQ event timestamp (called externally) */
+  /** Record a DLQ event timestamp (called externally) — persists to runtime_events */
   recordDLQEvent(): void {
-    this._dlqWindow.push(Date.now())
-    // Clean old entries
-    const fiveMinAgo = Date.now() - 5 * 60 * 1000
+    const now = Date.now()
+    this._dlqWindow.push(now)
+    // Clean old in-memory entries
+    const fiveMinAgo = now - 5 * 60 * 1000
     while (this._dlqWindow.length > 0 && this._dlqWindow[0] < fiveMinAgo) {
       this._dlqWindow.shift()
+    }
+    // Persist DLQ event to runtime_events so cold starts can reconstitute the window
+    void supabaseAdmin.from('runtime_events').insert({
+      org_id:           'agency-group',
+      type:             'dlq_event',
+      status:           'completed',
+      correlation_id:   `dlq-${now}`,
+      trace_id:         'system-anomaly-monitor',
+      source_system:    'agent',
+      payload:          { recorded_at: new Date(now).toISOString() },
+      event_timestamp:  new Date(now).toISOString(),
+    }).then(({ error }: { error: { message: string } | null }) => {
+      if (error) console.warn('[AnomalyMonitor] DLQ persist failed:', error.message)
+    })
+  }
+
+  /** Load DLQ window from DB on cold start */
+  private async _ensureDLQLoaded(): Promise<void> {
+    if (this._dlqLoaded) return
+    this._dlqLoaded = true
+    try {
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+      const { data } = await supabaseAdmin
+        .from('runtime_events')
+        .select('event_timestamp')
+        .eq('type', 'dlq_event')
+        .gte('event_timestamp', fiveMinAgo)
+      if (data) {
+        for (const row of data as { event_timestamp: string }[]) {
+          this._dlqWindow.push(new Date(row.event_timestamp).getTime())
+        }
+        this._dlqWindow.sort((a, b) => a - b)
+      }
+    } catch (err) {
+      console.warn('[AnomalyMonitor] DLQ cold-start load failed:', err)
     }
   }
 
   private _getOrSetBaseline(key: string, currentValue: number): number {
     const rec = this._baselines.get(key)
     if (!rec) {
-      this._baselines.set(key, { sum: currentValue, count: 1, last_updated: Date.now() })
+      const newRec: BaselineRecord = { sum: currentValue, count: 1, last_updated: Date.now() }
+      this._baselines.set(key, newRec)
+      // Persist new baseline
+      void this._persistBaseline(key, newRec)
       return currentValue
     }
     // Rolling average: update baseline with EMA (alpha=0.1)
     const updated = rec.sum * 0.9 + currentValue * 0.1
-    this._baselines.set(key, { sum: updated, count: rec.count + 1, last_updated: Date.now() })
+    const updatedRec: BaselineRecord = { sum: updated, count: rec.count + 1, last_updated: Date.now() }
+    this._baselines.set(key, updatedRec)
+    // Persist updated baseline (fire-and-forget)
+    void this._persistBaseline(key, updatedRec)
     return rec.sum
+  }
+
+  private async _persistBaseline(key: string, rec: BaselineRecord): Promise<void> {
+    try {
+      await sb.from('anomaly_baselines').upsert({
+        baseline_key: key,
+        ema_value: rec.sum,
+        sample_count: rec.count,
+        last_updated: new Date(rec.last_updated).toISOString(),
+      }, { onConflict: 'baseline_key' })
+    } catch (err) {
+      console.warn('[AnomalyMonitor] baseline persist failed:', err)
+    }
+  }
+
+  /** Load baselines from Supabase on cold start */
+  private async _ensureBaselinesLoaded(): Promise<void> {
+    if (this._baselinesLoaded) return
+    this._baselinesLoaded = true
+    try {
+      const { data } = await sb
+        .from('anomaly_baselines')
+        .select('baseline_key, ema_value, sample_count, last_updated')
+      if (data) {
+        for (const row of data as { baseline_key: string; ema_value: number; sample_count: number; last_updated: string }[]) {
+          this._baselines.set(row.baseline_key, {
+            sum:          row.ema_value,
+            count:        row.sample_count,
+            last_updated: new Date(row.last_updated).getTime(),
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('[AnomalyMonitor] baselines cold-start load failed:', err)
+    }
   }
 
   private _sumCounters(
@@ -203,6 +360,14 @@ export class AnomalyMonitor {
   }
 
   private async _emitCriticalAlert(check: AnomalyCheck): Promise<void> {
+    // Deduplicate: skip if same alert was emitted within the last hour
+    const alertId = `${check.metric}:${check.org_id ?? 'global'}:${check.severity}`
+    const deduped = await isAlertDeduped(alertId)
+    if (deduped) {
+      console.log(`[AnomalyMonitor] alert deduped (Redis TTL active): ${alertId}`)
+      return
+    }
+
     try {
       await supabaseAdmin.from('system_alerts').insert({
         alert_type: 'anomaly_detected',

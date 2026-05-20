@@ -122,7 +122,8 @@ function getCausalClient() {
 export async function recordCausalStep(
   step: Omit<CausalStep, 'created_at'>,
 ): Promise<void> {
-  if (process.env.CAUSAL_TRACE_ENABLED !== 'true') return
+  // Default-enabled: only skip when explicitly set to 'false'
+  if (process.env.CAUSAL_TRACE_ENABLED === 'false') return
 
   const client = getCausalClient()
   if (!client) {
@@ -172,7 +173,7 @@ export async function recordCausalStep(
  *   const chain = await getCausalChain(correlationId)
  */
 export async function getCausalChain(correlationId: string): Promise<CausalStep[]> {
-  if (process.env.CAUSAL_TRACE_ENABLED !== 'true') return []
+  if (process.env.CAUSAL_TRACE_ENABLED === 'false') return []
 
   const client = getCausalClient()
   if (!client) {
@@ -210,7 +211,7 @@ export async function getRevenueTrace(
   entityId: string,
   entityType: string,
 ): Promise<CausalStep[]> {
-  if (process.env.CAUSAL_TRACE_ENABLED !== 'true') return []
+  if (process.env.CAUSAL_TRACE_ENABLED === 'false') return []
 
   const client = getCausalClient()
   if (!client) {

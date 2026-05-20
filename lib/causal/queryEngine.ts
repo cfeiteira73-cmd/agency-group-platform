@@ -281,7 +281,7 @@ export async function findRevenueLeak(tenantId: string): Promise<RevenueLeakRepo
     analyzedAt: new Date().toISOString(),
   }
 
-  if (process.env.CAUSAL_TRACE_ENABLED !== 'true') return empty
+  if (process.env.CAUSAL_TRACE_ENABLED === 'false') return empty
 
   const client = getQueryClient()
   if (!client) {

@@ -18,6 +18,14 @@ import { auth } from '@/auth'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 
+// Constant-time string comparison to prevent timing oracle attacks on secrets.
+function timingSafeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
+}
+
 export interface PortalAuthResult {
   ok: true
   email: string
@@ -43,8 +51,8 @@ export async function requirePortalAuth(req: NextRequest): Promise<PortalAuthChe
   const incoming      = req.headers.get('x-cron-secret')
     ?? req.headers.get('authorization')?.replace('Bearer ', '')
 
-  if (cronSecret    && incoming === cronSecret)    return { ok: true, email: 'cron@agencygroup.pt',     via: 'service_token' }
-  if (internalToken && incoming === internalToken) return { ok: true, email: 'internal@agencygroup.pt', via: 'service_token' }
+  if (cronSecret    && incoming && timingSafeCompare(incoming, cronSecret))    return { ok: true, email: 'cron@agencygroup.pt',     via: 'service_token' }
+  if (internalToken && incoming && timingSafeCompare(incoming, internalToken)) return { ok: true, email: 'internal@agencygroup.pt', via: 'service_token' }
 
   // 2. ── NextAuth v5 session (Google OAuth / credentials) ────────────────────
   try {

@@ -5,6 +5,7 @@ import { Suspense } from 'react'
 import { KPICard } from './_components/KPICard'
 import { SparklineBar } from './_components/SparklineBar'
 import { StatusBadge } from './_components/StatusBadge'
+import type { SystemHealthResponse, SystemLayerStatus } from '@/app/api/control-tower/system-health/route'
 
 interface OverviewData {
   kpis: {
@@ -21,6 +22,18 @@ interface OverviewData {
   active_alerts: Array<{ id: string; alert_type: string; severity: string; message: string; created_at: string }>
 }
 
+async function fetchSystemHealth(): Promise<SystemHealthResponse | null> {
+  try {
+    const baseUrl = process.env.INTERNAL_API_BASE ?? 'http://localhost:3000'
+    const res = await fetch(`${baseUrl}/api/control-tower/system-health`, {
+      headers: { Authorization: `Bearer ${process.env.INTERNAL_API_TOKEN ?? process.env.CRON_SECRET ?? ''}` },
+      next: { revalidate: 30 },
+    })
+    if (!res.ok) return null
+    return res.json() as Promise<SystemHealthResponse>
+  } catch { return null }
+}
+
 async function fetchOverview(org_id: string): Promise<OverviewData | null> {
   try {
     const baseUrl = process.env.INTERNAL_API_BASE ?? 'http://localhost:3000'
@@ -34,7 +47,10 @@ async function fetchOverview(org_id: string): Promise<OverviewData | null> {
 }
 
 async function ControlTowerOverviewContent() {
-  const data = await fetchOverview(process.env.DEFAULT_TENANT_ID ?? 'agency-group')
+  const [data, systemHealth] = await Promise.all([
+    fetchOverview(process.env.DEFAULT_TENANT_ID ?? 'agency-group'),
+    fetchSystemHealth(),
+  ])
 
   const kpis = data?.kpis
   const sparkline = data?.sparkline_24h ?? new Array(24).fill(0)
@@ -157,34 +173,64 @@ async function ControlTowerOverviewContent() {
 
       {/* System Layers Status */}
       <div>
-        <p className="text-xs text-slate-400 font-medium mb-3 uppercase tracking-widest">System Layers Status</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">System Layers Status</p>
+          {systemHealth ? (
+            <span className="text-[10px] text-slate-600 font-mono">
+              checked {new Date(systemHealth.computed_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          ) : (
+            <span className="text-[10px] text-red-500 font-mono">health API unavailable</span>
+          )}
+        </div>
         <div className="grid grid-cols-4 gap-3 sm:grid-cols-4 xl:grid-cols-7">
-          {([
-            { name: 'AI Control',    status: 'Governed',             detail: 'withAI() · always active' },
-            { name: 'Event Bus',     status: 'Active',               detail: 'Exactly-once delivery' },
-            { name: 'Causal Graph',  status: '3 views',              detail: 'CONCURRENTLY indexed' },
-            { name: 'Multi-Tenant',  status: 'Isolated',             detail: 'RLS active' },
-            { name: 'Security',      status: 'Audit chain',          detail: 'active' },
-            { name: 'Distributed',   status: 'Redis Streams',        detail: 'Fail-open' },
-            { name: 'Compliance',    status: 'SOC2 path',            detail: 'active' },
-          ] satisfies Array<{ name: string; status: string; detail: string }>).map((layer) => (
-            <div
-              key={layer.name}
-              className="bg-[#111118] border border-slate-800 rounded-lg p-3 flex flex-col gap-2 min-w-0"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="relative flex h-2 w-2 flex-shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                </span>
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium truncate">
-                  {layer.name}
-                </p>
+          {(systemHealth?.layers ?? [
+            // Fallback when health API fails — all UNKNOWN, gray dots
+            { name: 'Event Bus',       status: 'UNKNOWN', detail: 'Health API unreachable', dot: 'gray' } as SystemLayerStatus,
+            { name: 'AI Layer',        status: 'UNKNOWN', detail: 'Health API unreachable', dot: 'gray' } as SystemLayerStatus,
+            { name: 'Revenue Engine',  status: 'UNKNOWN', detail: 'Health API unreachable', dot: 'gray' } as SystemLayerStatus,
+            { name: 'Causal Graph',    status: 'UNKNOWN', detail: 'Health API unreachable', dot: 'gray' } as SystemLayerStatus,
+            { name: 'Self-Healing',    status: 'UNKNOWN', detail: 'Health API unreachable', dot: 'gray' } as SystemLayerStatus,
+            { name: 'Multi-Tenant',    status: 'UNKNOWN', detail: 'Health API unreachable', dot: 'gray' } as SystemLayerStatus,
+            { name: 'Security',        status: 'UNKNOWN', detail: 'Health API unreachable', dot: 'gray' } as SystemLayerStatus,
+          ]).map((layer) => {
+            // Map dot color to Tailwind classes
+            const dotBg =
+              layer.dot === 'green'  ? 'bg-green-500'  :
+              layer.dot === 'yellow' ? 'bg-amber-400'  :
+              layer.dot === 'red'    ? 'bg-red-500'    :
+              'bg-slate-500'
+
+            const pingBg =
+              layer.dot === 'green'  ? 'bg-green-400'  :
+              layer.dot === 'yellow' ? 'bg-amber-300'  :
+              layer.dot === 'red'    ? 'bg-red-400'    :
+              'bg-slate-400'
+
+            // Only ping (animate) when truly active/green
+            const shouldPing = layer.dot === 'green'
+
+            return (
+              <div
+                key={layer.name}
+                className="bg-[#111118] border border-slate-800 rounded-lg p-3 flex flex-col gap-2 min-w-0"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="relative flex h-2 w-2 flex-shrink-0">
+                    {shouldPing && (
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${pingBg} opacity-75`} />
+                    )}
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${dotBg}`} />
+                  </span>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium truncate">
+                    {layer.name}
+                  </p>
+                </div>
+                <p className="text-xs font-semibold text-slate-200 leading-tight">{layer.status}</p>
+                <p className="text-[10px] text-slate-600 font-mono leading-tight truncate">{layer.detail}</p>
               </div>
-              <p className="text-xs font-semibold text-slate-200 leading-tight">{layer.status}</p>
-              <p className="text-[10px] text-slate-600 font-mono leading-tight">{layer.detail}</p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </>

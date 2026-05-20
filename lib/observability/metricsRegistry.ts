@@ -1,4 +1,10 @@
 // AGENCY GROUP — SH-ROS Observability: metricsRegistry | AMI: 22506
+//
+// Persistence strategy:
+//   Counter/Gauge/Histogram values are in-memory for low-latency reads.
+//   On every exportJSON() call, a snapshot is flushed to `runtime_events`
+//   (event_type='metric_snapshot') so historical data survives cold starts.
+//   Snapshot writes are fire-and-forget — never block the caller.
 
 export interface MetricCounter {
   inc(amount?: number): void
@@ -127,6 +133,43 @@ class HistogramImpl implements MetricHistogram {
 }
 
 // ---------------------------------------------------------------------------
+// Supabase snapshot writer (lazy import to avoid circular deps)
+// ---------------------------------------------------------------------------
+
+async function persistMetricSnapshot(snapshot: MetricsSnapshot): Promise<void> {
+  try {
+    // Lazy import to avoid loading supabase on module init
+    const { supabaseAdmin } = await import('@/lib/supabase')
+    await supabaseAdmin.from('runtime_events').insert({
+      org_id:          'agency-group',
+      type:            'metric_snapshot',
+      status:          'completed',
+      correlation_id:  `metrics-${snapshot.timestamp}`,
+      trace_id:        'system-metrics-registry',
+      source_system:   'engine',
+      payload: {
+        counters:   snapshot.counters,
+        gauges:     snapshot.gauges,
+        // Histograms serialised as summary stats only (not raw observations)
+        histograms: Object.fromEntries(
+          Object.entries(snapshot.histograms).map(([k, v]) => [k, {
+            count: v.count,
+            sum:   v.sum,
+            p50:   v.p50,
+            p95:   v.p95,
+            p99:   v.p99,
+          }]),
+        ),
+      },
+      event_timestamp: snapshot.timestamp,
+    })
+  } catch (err) {
+    // Silently degrade — never break the metrics path
+    console.warn('[MetricsRegistry] snapshot persist failed:', err)
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -134,6 +177,8 @@ export class MetricsRegistry {
   private counters: Map<string, CounterImpl> = new Map()
   private gauges: Map<string, GaugeImpl> = new Map()
   private histograms: Map<string, HistogramImpl> = new Map()
+  /** Tracks last persist time to throttle snapshot writes (max once per 60s) */
+  private _lastPersistMs = 0
 
   private metricKey(name: string, labels: Record<string, string> = {}): string {
     const labelStr = Object.entries(labels)
@@ -214,12 +259,21 @@ export class MetricsRegistry {
       histograms[key] = hist.getStats()
     }
 
-    return {
+    const snapshot: MetricsSnapshot = {
       timestamp: new Date().toISOString(),
       counters,
       gauges,
       histograms,
     }
+
+    // Throttled fire-and-forget persist: max once per 60 seconds
+    const nowMs = Date.now()
+    if (nowMs - this._lastPersistMs >= 60_000) {
+      this._lastPersistMs = nowMs
+      void persistMetricSnapshot(snapshot)
+    }
+
+    return snapshot
   }
 
   reset(): void {

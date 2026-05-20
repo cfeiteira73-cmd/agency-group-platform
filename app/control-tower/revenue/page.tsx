@@ -31,7 +31,8 @@ function eur(value: number): string {
   return `€${value.toFixed(0)}`
 }
 
-function pct(value: number): string {
+function pct(value: number | null | undefined): string {
+  if (value == null) return '—'
   return `${(value * 100).toFixed(1)}%`
 }
 
@@ -119,7 +120,7 @@ export default async function RevenuePage() {
           { label: 'Active Leads',      value: String(pipeline.active_leads),   sub: 'in pipeline' },
           { label: 'Proposals Pending', value: String(pipeline.proposals_pending), sub: 'awaiting response' },
           { label: 'Deals Active',      value: String(pipeline.deals_in_progress), sub: 'in progress' },
-          { label: 'Close Rate 30d',    value: pct(pipeline.close_rate_30d),    sub: 'vs 18% market avg' },
+          { label: 'Close Rate 30d',    value: pct(pipeline.close_rate_30d),    sub: pipeline.close_rate_30d == null ? 'No closed deals yet' : 'deals won / total 30d' },
         ].map(kpi => (
           <div key={kpi.label} className="bg-[#111118] border border-slate-800 rounded-lg p-4">
             <p className="text-slate-400 text-xs font-medium uppercase tracking-wide">{kpi.label}</p>

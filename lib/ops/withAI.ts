@@ -95,10 +95,30 @@ export async function withAI<T>(
     estimatedInputTokens:  1000,
     estimatedOutputTokens: 500,
   }
-  const policy = await checkPolicy(policyCtx).catch(() => ({
-    decision: 'ALLOW' as const,
-    reason:   'policy-check-failed',
-  }))
+
+  // FAIL-CLOSED: if governance infrastructure is unavailable, do NOT execute
+  // the AI call. Return 503-equivalent fallback and log prominently.
+  let policy: { decision: 'ALLOW' | 'DENY' | 'ESCALATE'; reason: string }
+  try {
+    policy = await checkPolicy(policyCtx)
+  } catch (err) {
+    console.error(
+      `[withAI] GOVERNANCE UNAVAILABLE for ${component} — failing closed (GOV_503):`,
+      err instanceof Error ? err.message : err,
+    )
+    logAIDecision({
+      correlation_id:  correlationId,
+      model:           component,
+      circuit_name:    component,
+      latency_ms:      Date.now() - start,
+      success:         false,
+      fallback_used:   true,
+      error_type:      'governance_unavailable',
+      revenue_context: revenueContext,
+      created_at:      new Date().toISOString(),
+    })
+    return fallback
+  }
 
   if (policy.decision === 'DENY') {
     console.warn(`[withAI] Policy DENY for ${component}: ${policy.reason}`)
@@ -244,10 +264,30 @@ export async function withAIStream<T>(
     estimatedInputTokens:  1000,
     estimatedOutputTokens: 500,
   }
-  const policy = await checkPolicy(policyCtx).catch(() => ({
-    decision: 'ALLOW' as const,
-    reason:   'policy-check-failed',
-  }))
+
+  // FAIL-CLOSED: if governance infrastructure is unavailable, do NOT execute
+  // the AI call. Return 503-equivalent fallback and log prominently.
+  let policy: { decision: 'ALLOW' | 'DENY' | 'ESCALATE'; reason: string }
+  try {
+    policy = await checkPolicy(policyCtx)
+  } catch (err) {
+    console.error(
+      `[withAIStream] GOVERNANCE UNAVAILABLE for ${component} — failing closed (GOV_503):`,
+      err instanceof Error ? err.message : err,
+    )
+    logAIDecision({
+      correlation_id:  correlationId,
+      model:           component,
+      circuit_name:    component,
+      latency_ms:      Date.now() - start,
+      success:         false,
+      fallback_used:   true,
+      error_type:      'governance_unavailable',
+      revenue_context: revenueContext,
+      created_at:      new Date().toISOString(),
+    })
+    return fallback
+  }
 
   if (policy.decision === 'DENY') {
     console.warn(`[withAIStream] Policy DENY for ${component}: ${policy.reason}`)

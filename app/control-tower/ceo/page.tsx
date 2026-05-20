@@ -6,6 +6,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { supabaseAdmin } from '@/lib/supabase'
+import type { GovernanceStatusResponse } from '@/app/api/control-tower/governance-status/route'
 
 export const revalidate = 60 // ISR 60s
 
@@ -30,16 +31,7 @@ interface IncidentRow {
   status?: string
 }
 
-// ─── Static fallbacks ─────────────────────────────────────────────────────────
-
-const FORECAST_DATA_FALLBACK: ChartDataPoint[] = [
-  { month: 'Jan', value: 2.1 },
-  { month: 'Fev', value: 2.4 },
-  { month: 'Mar', value: 2.8 },
-  { month: 'Abr', value: 3.1 },
-  { month: 'Mai', value: 3.4 },
-  { month: 'Jun', value: 3.8 },
-]
+// No static fallbacks — if no real data exists return empty array
 
 // ─── Data Fetchers ────────────────────────────────────────────────────────────
 
@@ -143,10 +135,27 @@ async function fetchActiveTenants(): Promise<string> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { count, error } = await (sb.from('tenants') as any)
       .select('id', { count: 'exact', head: true })
-    if (error) return '1'
-    return String(typeof count === 'number' ? count : 1)
+    // Table may not exist yet — return '—' rather than the fake hardcoded '1'
+    if (error) return '—'
+    if (typeof count !== 'number') return '—'
+    return String(count)
   } catch {
-    return '1'
+    return '—'
+  }
+}
+
+async function fetchGovernanceStatus(): Promise<GovernanceStatusResponse | null> {
+  try {
+    const baseUrl = process.env.INTERNAL_API_BASE ?? 'http://localhost:3000'
+    const token   = process.env.INTERNAL_API_TOKEN ?? process.env.CRON_SECRET ?? ''
+    const res = await fetch(`${baseUrl}/api/control-tower/governance-status`, {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 60 },
+    })
+    if (!res.ok) return null
+    return res.json() as Promise<GovernanceStatusResponse>
+  } catch {
+    return null
   }
 }
 
@@ -155,15 +164,15 @@ async function fetchChartData(): Promise<ChartDataPoint[]> {
     const sb = supabaseAdmin as unknown as { from: (t: string) => unknown }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (sb.from('kpi_snapshots') as any)
-      .select('snapshot_date, pipeline_value_eur')
+      .select('snapshot_date, pipeline_value')
       .order('snapshot_date', { ascending: true })
       .limit(12)
 
-    if (error || !data) return FORECAST_DATA_FALLBACK
+    if (error || !data) return []
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = data as any[]
-    if (rows.length === 0) return FORECAST_DATA_FALLBACK
+    if (rows.length === 0) return []
 
     // Group by month (YYYY-MM), take last 6
     const byMonth: Record<string, number> = {}
@@ -171,9 +180,9 @@ async function fetchChartData(): Promise<ChartDataPoint[]> {
       if (!row.snapshot_date) continue
       const d = new Date(row.snapshot_date as string)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      const v = typeof row.pipeline_value_eur === 'number'
-        ? row.pipeline_value_eur
-        : parseFloat(row.pipeline_value_eur ?? '0')
+      const v = typeof row.pipeline_value === 'number'
+        ? row.pipeline_value
+        : parseFloat(row.pipeline_value ?? '0')
       if (!isNaN(v)) {
         byMonth[key] = (byMonth[key] ?? 0) + v
       }
@@ -192,9 +201,9 @@ async function fetchChartData(): Promise<ChartDataPoint[]> {
         }
       })
 
-    return sorted.length > 0 ? sorted : FORECAST_DATA_FALLBACK
+    return sorted
   } catch {
-    return FORECAST_DATA_FALLBACK
+    return []
   }
 }
 
@@ -218,43 +227,73 @@ async function fetchTopAlerts(): Promise<IncidentRow[]> {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+// dataState distinguishes WHY a value is '—':
+//   'ok'    — has real data, display normally
+//   'empty' — query succeeded, 0 rows (gray, "No data yet")
+//   'error' — query failed (red, "Query failed")
+//   'stale' — last updated >24h ago (yellow, message passed via trend)
+type DataState = 'ok' | 'empty' | 'error' | 'stale'
+
 function StatCard({
   label,
   value,
   trend,
   trendDir,
   color,
+  dataState = 'ok',
 }: {
   label: string
   value: string
   trend?: string
   trendDir?: 'up' | 'down' | 'neutral'
   color?: 'green' | 'blue' | 'amber' | 'purple' | 'default'
+  dataState?: DataState
 }) {
-  const valueColor =
-    color === 'green'  ? 'text-green-400'  :
-    color === 'blue'   ? 'text-blue-400'   :
-    color === 'amber'  ? 'text-amber-400'  :
-    color === 'purple' ? 'text-purple-400' :
-    'text-slate-100'
+  // Override colors when data is degraded
+  const isOk = dataState === 'ok'
+
+  const valueColor = !isOk
+    ? dataState === 'error' ? 'text-red-400'    :
+      dataState === 'stale' ? 'text-amber-400'  :
+      'text-slate-500'   // empty → gray
+    : color === 'green'  ? 'text-green-400'  :
+      color === 'blue'   ? 'text-blue-400'   :
+      color === 'amber'  ? 'text-amber-400'  :
+      color === 'purple' ? 'text-purple-400' :
+      'text-slate-100'
 
   const trendColor =
-    trendDir === 'up'      ? 'text-green-400' :
-    trendDir === 'down'    ? 'text-red-400'   :
+    !isOk             ? (dataState === 'error' ? 'text-red-400' : dataState === 'stale' ? 'text-amber-400' : 'text-slate-500') :
+    trendDir === 'up'   ? 'text-green-400' :
+    trendDir === 'down' ? 'text-red-400'   :
     'text-slate-400'
 
   const trendIcon =
+    !isOk             ? (dataState === 'error' ? '✗' : dataState === 'stale' ? '⚠' : '○') :
     trendDir === 'up'   ? '↑' :
     trendDir === 'down' ? '↓' :
     '→'
 
+  const stateTrend =
+    dataState === 'empty' ? 'No data — system not yet operational' :
+    dataState === 'error' ? 'Query failed — check DB connection'   :
+    undefined
+
+  const displayTrend = stateTrend ?? trend
+
+  // Border color hint for degraded states
+  const borderClass =
+    dataState === 'error' ? 'border-red-900/50'   :
+    dataState === 'stale' ? 'border-amber-900/50' :
+    'border-slate-800'
+
   return (
-    <div className="bg-[#111118] border border-slate-800 rounded-lg p-4 flex flex-col gap-1 min-w-0">
+    <div className={`bg-[#111118] border ${borderClass} rounded-lg p-4 flex flex-col gap-1 min-w-0`}>
       <p className="text-xs text-slate-500 uppercase tracking-widest font-medium truncate">{label}</p>
       <p className={`text-3xl font-bold leading-none ${valueColor}`}>{value}</p>
-      {trend && (
+      {displayTrend && (
         <div className="flex items-center gap-1 mt-1">
-          <span className={`text-xs font-mono ${trendColor}`}>{trendIcon} {trend}</span>
+          <span className={`text-xs font-mono ${trendColor}`}>{trendIcon} {displayTrend}</span>
         </div>
       )}
     </div>
@@ -265,23 +304,30 @@ function StatusRow({
   label,
   status,
   dot,
+  detail,
 }: {
   label: string
   status: string
-  dot: 'green' | 'amber' | 'red' | 'blue'
+  dot: 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'orange'
+  detail?: string
 }) {
   const dotColor =
-    dot === 'green' ? 'bg-green-400' :
-    dot === 'amber' ? 'bg-amber-400' :
-    dot === 'red'   ? 'bg-red-400'   :
+    dot === 'green'  ? 'bg-green-400'  :
+    dot === 'amber'  ? 'bg-amber-400'  :
+    dot === 'orange' ? 'bg-orange-400' :
+    dot === 'red'    ? 'bg-red-400'    :
+    dot === 'gray'   ? 'bg-slate-500'  :
     'bg-blue-400'
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
-      <span className="text-sm text-slate-300">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className={`w-2 h-2 rounded-full ${dotColor}`} />
-        <span className="text-xs text-slate-400 font-mono">{status}</span>
+    <div className="flex items-start justify-between py-2 border-b border-slate-800 last:border-0 gap-2">
+      <span className="text-sm text-slate-300 flex-shrink-0">{label}</span>
+      <div className="flex flex-col items-end gap-0.5">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+          <span className="text-xs text-slate-400 font-mono">{status}</span>
+        </div>
+        {detail && <span className="text-[10px] text-slate-600 font-mono text-right max-w-[180px] truncate">{detail}</span>}
       </div>
     </div>
   )
@@ -325,6 +371,14 @@ function AlertCard({
 // ─── Revenue Bar Chart (HTML/CSS — no external lib) ──────────────────────────
 
 function RevenueBarChart({ data }: { data: ChartDataPoint[] }) {
+  if (data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-32 gap-2">
+        <p className="text-slate-500 text-sm">No KPI snapshots yet</p>
+        <p className="text-slate-600 text-xs font-mono">Run the KPI cron to populate kpi_snapshots</p>
+      </div>
+    )
+  }
   const maxValue = Math.max(...data.map(d => d.value), 0.01)
   return (
     <div className="flex flex-col gap-3">
@@ -376,6 +430,16 @@ function CEOSkeleton() {
 
 // ─── Dynamic content ──────────────────────────────────────────────────────────
 
+// ─── Dot color helpers for governance ─────────────────────────────────────────
+
+function govDot(status: string): 'green' | 'amber' | 'orange' | 'red' | 'gray' | 'blue' {
+  if (status === 'ACTIVE' || status === 'LIVE' || status === 'HEALTHY' || status === 'READY') return 'green'
+  if (status === 'IDLE' || status === 'EMPTY') return 'amber'
+  if (status === 'OPEN') return 'orange'
+  if (status === 'UNAVAILABLE' || status === 'ERROR') return 'red'
+  return 'gray'
+}
+
 async function CEOContent() {
   const [
     aiDecisionsResult,
@@ -385,6 +449,7 @@ async function CEOContent() {
     tenantsResult,
     chartResult,
     alertsResult,
+    governanceResult,
   ] = await Promise.allSettled([
     fetchAIDecisionsCount(),
     fetchPipelineValue(),
@@ -393,15 +458,24 @@ async function CEOContent() {
     fetchActiveTenants(),
     fetchChartData(),
     fetchTopAlerts(),
+    fetchGovernanceStatus(),
   ])
 
   const aiDecisionsToday = aiDecisionsResult.status === 'fulfilled' ? aiDecisionsResult.value : 0
   const pipelineValue    = pipelineResult.status    === 'fulfilled' ? pipelineResult.value    : '—'
   const aiROI            = aiROIResult.status        === 'fulfilled' ? aiROIResult.value        : '—'
   const conversionRate   = conversionResult.status   === 'fulfilled' ? conversionResult.value   : '—'
-  const activeTenants    = tenantsResult.status      === 'fulfilled' ? tenantsResult.value      : '1'
-  const chartData        = chartResult.status        === 'fulfilled' ? chartResult.value        : FORECAST_DATA_FALLBACK
+  const activeTenants    = tenantsResult.status      === 'fulfilled' ? tenantsResult.value      : '—'
+  const chartData        = chartResult.status        === 'fulfilled' ? chartResult.value        : []
   const incidents        = alertsResult.status       === 'fulfilled' ? alertsResult.value       : []
+  const governance       = governanceResult.status   === 'fulfilled' ? governanceResult.value   : null
+
+  // Revenue target — read from env, never hardcoded
+  const targetEur  = process.env.REVENUE_TARGET_EUR  ? parseInt(process.env.REVENUE_TARGET_EUR, 10)  : null
+  const targetDate = process.env.REVENUE_TARGET_DATE ?? null
+  const targetLabel = targetEur && targetDate
+    ? `Target: €${(targetEur / 1_000_000).toFixed(1)}M by ${new Date(targetDate).toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' })}`
+    : 'No revenue target set'
 
   // Map incidents to AlertCard severity
   function incidentSeverity(row: IncidentRow): 'warning' | 'success' | 'info' {
@@ -423,6 +497,12 @@ async function CEOContent() {
 
   const useStaticAlerts = incidents.length === 0
 
+  // Derive dataState for each card
+  const pipelineState: DataState  = pipelineResult.status  === 'rejected' ? 'error' : pipelineValue  === '—' ? 'empty' : 'ok'
+  const aiROIState: DataState     = aiROIResult.status     === 'rejected' ? 'error' : aiROI          === '—' ? 'empty' : 'ok'
+  const conversionState: DataState= conversionResult.status === 'rejected' ? 'error' : conversionRate === '—' ? 'empty' : 'ok'
+  const tenantsState: DataState   = tenantsResult.status   === 'rejected' ? 'error' : activeTenants  === '—' ? 'empty' : 'ok'
+
   return (
     <>
       {/* TOP METRICS ROW */}
@@ -430,16 +510,18 @@ async function CEOContent() {
         <StatCard
           label="Pipeline Value"
           value={pipelineValue}
-          trend="Pipeline total"
-          trendDir="up"
+          trend="Active deals · not closed_lost"
+          trendDir={pipelineState === 'ok' ? 'up' : 'neutral'}
           color="green"
+          dataState={pipelineState}
         />
         <StatCard
           label="AI ROI"
           value={aiROI}
           trend="Est. revenue / token cost"
-          trendDir="up"
+          trendDir={aiROIState === 'ok' ? 'up' : 'neutral'}
           color="blue"
+          dataState={aiROIState}
         />
         <StatCard
           label="Conversion Rate"
@@ -447,13 +529,15 @@ async function CEOContent() {
           trend="Lead → Deal"
           trendDir="neutral"
           color="amber"
+          dataState={conversionState}
         />
         <StatCard
           label="Active Tenants"
           value={activeTenants}
-          trend="Agency Group Portugal"
+          trend={tenantsState === 'empty' ? undefined : 'Agency Group Portugal'}
           trendDir="neutral"
           color="purple"
+          dataState={tenantsState}
         />
       </div>
 
@@ -477,48 +561,66 @@ async function CEOContent() {
               <span className="w-3 h-3 rounded bg-blue-600" />
               <span className="text-xs text-slate-500">Projected pipeline</span>
             </div>
-            <span className="text-xs text-slate-600 font-mono">Target: €3.8M by Jun 2026</span>
+            <span className="text-xs text-slate-600 font-mono">{targetLabel}</span>
           </div>
         </div>
 
         {/* AI Governance Summary — 40% */}
         <div className="col-span-4 bg-[#111118] border border-slate-800 rounded-lg p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-4">AI Governance Summary</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-slate-200">AI Governance</h2>
+            {!governance && (
+              <span className="text-[10px] text-slate-500 font-mono">fetch failed</span>
+            )}
+          </div>
           <div className="space-y-0">
             <StatusRow
               label="Policy Engine"
-              status="ACTIVE"
-              dot="green"
+              status={governance?.policyEngine.status ?? 'UNKNOWN'}
+              dot={govDot(governance?.policyEngine.status ?? 'UNKNOWN')}
+              detail={governance?.policyEngine.detail}
             />
             <StatusRow
               label="Budget Governor"
-              status="ACTIVE"
-              dot="green"
+              status={governance?.budgetGovernor.status ?? 'UNKNOWN'}
+              dot={govDot(governance?.budgetGovernor.status ?? 'UNKNOWN')}
+              detail={governance?.budgetGovernor.detail}
             />
             <StatusRow
-              label="AI Decisions Today"
+              label="AI Decisions (24h)"
               status={String(aiDecisionsToday > 0 ? aiDecisionsToday : '—')}
-              dot="blue"
+              dot={aiDecisionsToday > 0 ? 'blue' : 'gray'}
             />
             <StatusRow
               label="Circuit Breakers"
-              status="All Circuits Healthy"
-              dot="green"
+              status={
+                governance?.circuitBreakers.status === 'HEALTHY'
+                  ? 'All Healthy'
+                  : governance?.circuitBreakers.status === 'OPEN'
+                    ? `${governance.circuitBreakers.openCircuits} OPEN`
+                    : governance?.circuitBreakers.status ?? 'UNKNOWN'
+              }
+              dot={govDot(governance?.circuitBreakers.status ?? 'UNKNOWN')}
+              detail={governance?.circuitBreakers.detail}
             />
             <StatusRow
               label="Audit Log"
-              status="LIVE"
-              dot="green"
+              status={governance?.auditLog.status ?? 'UNKNOWN'}
+              dot={govDot(governance?.auditLog.status ?? 'UNKNOWN')}
+              detail={governance?.auditLog.detail}
             />
             <StatusRow
               label="Replay Engine"
-              status="READY"
-              dot="blue"
+              status={governance?.replayEngine.status ?? 'UNKNOWN'}
+              dot={govDot(governance?.replayEngine.status ?? 'UNKNOWN')}
+              detail={governance?.replayEngine.detail}
             />
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800">
             <p className="text-xs text-slate-500">
-              AI governance active · GDPR Art.17+20 compliant · audit log live
+              {governance
+                ? `Checked ${new Date(governance.computed_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+                : 'Governance API unavailable'}
             </p>
           </div>
         </div>

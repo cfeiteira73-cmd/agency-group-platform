@@ -365,14 +365,14 @@ export async function GET(req: NextRequest) {
 
   if (mode === 'active') {
     const authHeader = req.headers.get('authorization')
-    const isCron = req.headers.get('x-vercel-cron') === '1'
-    // Accept CRON_SECRET (Vercel cron), PORTAL_API_SECRET (n8n wf-Q), or ADMIN_SECRET
+    // x-vercel-cron header alone is NOT sufficient — it can be spoofed by any external caller.
+    // A valid secret is always required. The cron header is checked but is not a bypass on its own.
     const validSecrets = [
       process.env.CRON_SECRET,
       process.env.PORTAL_API_SECRET,
       process.env.ADMIN_SECRET,
     ].filter(Boolean) as string[]
-    const isAuthorized = isCron || validSecrets.some(s => safeCompare(authHeader ?? '', `Bearer ${s}`))
+    const isAuthorized = validSecrets.some(s => safeCompare(authHeader ?? '', `Bearer ${s}`))
     if (!isAuthorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

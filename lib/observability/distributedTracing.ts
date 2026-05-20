@@ -1,6 +1,16 @@
 // AGENCY GROUP — SH-ROS Observability: distributedTracing | AMI: 22506
+//
+// Persistence strategy:
+//   Each trace record is written to `causal_trace` (Supabase) as a fire-and-forget
+//   insert (step_type='distributed_trace'). The in-memory _log remains as a
+//   write-through cache for the current request context only. Cold starts read
+//   from causal_trace — no historical data is lost.
 
 import { tracingProvider } from './tracingProvider'
+import { supabaseAdmin } from '@/lib/supabase'
+// causal_trace not yet in generated types — cast to any until types are regenerated
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabaseAdmin as any
 
 interface TraceRecord {
   trace_id: string
@@ -13,7 +23,36 @@ interface TraceRecord {
   error?: string
 }
 
+async function persistTraceRecord(record: TraceRecord): Promise<void> {
+  if (process.env.CAUSAL_TRACE_ENABLED === 'false') return
+  try {
+    const { supabaseAdmin } = await import('@/lib/supabase')
+    await sb.from('causal_trace').insert({
+      correlation_id: record.trace_id,
+      tenant_id:      (record.attributes['org_id'] as string) ?? 'agency-group',
+      step_type:      'distributed_trace',
+      agent_id:       (record.attributes['agent_id'] as string) ?? null,
+      entity_id:      (record.attributes['event_id'] as string) ?? null,
+      entity_type:    'span',
+      action:         record.name,
+      latency_ms:     record.duration_ms,
+      success:        !record.error,
+      error_message:  record.error ?? null,
+      metadata: {
+        span_id:    record.span_id,
+        started_at: record.started_at,
+        ended_at:   record.ended_at,
+        attributes: record.attributes,
+      },
+      created_at: record.started_at,
+    })
+  } catch (err) {
+    console.warn('[DistributedTracer] persist failed:', err)
+  }
+}
+
 export class DistributedTracer {
+  /** In-memory log serves as write-through cache for current process lifetime */
   private readonly _log: TraceRecord[] = []
 
   async traceEvent(
@@ -30,7 +69,7 @@ export class DistributedTracer {
     try {
       const result = await callback()
       const ended_at = new Date().toISOString()
-      this._log.push({
+      const record: TraceRecord = {
         trace_id: span.trace_id,
         span_id: span.span_id,
         name: `shros.event.${event_id}`,
@@ -38,13 +77,15 @@ export class DistributedTracer {
         ended_at,
         duration_ms: Date.now() - span.started_at,
         attributes: { event_id, org_id },
-      })
+      }
+      this._log.push(record)
+      void persistTraceRecord(record)
       span.end()
       return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       const ended_at = new Date().toISOString()
-      this._log.push({
+      const record: TraceRecord = {
         trace_id: span.trace_id,
         span_id: span.span_id,
         name: `shros.event.${event_id}`,
@@ -53,7 +94,9 @@ export class DistributedTracer {
         duration_ms: Date.now() - span.started_at,
         attributes: { event_id, org_id },
         error: error.message,
-      })
+      }
+      this._log.push(record)
+      void persistTraceRecord(record)
       span.end(error)
       throw err
     }
@@ -73,7 +116,7 @@ export class DistributedTracer {
     try {
       const result = await callback()
       const ended_at = new Date().toISOString()
-      this._log.push({
+      const record: TraceRecord = {
         trace_id: span.trace_id,
         span_id: span.span_id,
         name: `shros.agent.${agent_id}`,
@@ -81,13 +124,15 @@ export class DistributedTracer {
         ended_at,
         duration_ms: Date.now() - span.started_at,
         attributes: { agent_id, event_id },
-      })
+      }
+      this._log.push(record)
+      void persistTraceRecord(record)
       span.end()
       return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       const ended_at = new Date().toISOString()
-      this._log.push({
+      const record: TraceRecord = {
         trace_id: span.trace_id,
         span_id: span.span_id,
         name: `shros.agent.${agent_id}`,
@@ -96,7 +141,9 @@ export class DistributedTracer {
         duration_ms: Date.now() - span.started_at,
         attributes: { agent_id, event_id },
         error: error.message,
-      })
+      }
+      this._log.push(record)
+      void persistTraceRecord(record)
       span.end(error)
       throw err
     }

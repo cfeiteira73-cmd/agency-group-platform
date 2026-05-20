@@ -19,31 +19,84 @@
 //   If Upstash is not configured, the lock is skipped (fail-open) so crons
 //   always run — better than silently blocking in development.
 //
+// ERROR HANDLING:
+//   429 (rate limit): exponential backoff — 3 retries with 200ms, 400ms, 800ms delays.
+//   Unreachable after all retries: fail-open (cron runs) + writes to incidents table.
+//   This prevents a transient Redis outage from silently skipping critical crons.
+//
 // TypeScript strict — 0 errors
 // =============================================================================
 
 const LOCK_KEY_PREFIX = 'cron:lock:'
 
+/** Write a structured incident to Supabase when Redis is unreachable — fire-and-forget. */
+async function logRedisIncident(cronName: string, errorMsg: string): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import('@/lib/supabase')
+    await supabaseAdmin.from('incidents').insert({
+      tenant_id:        'agency-group',
+      severity:         'P1',
+      subsystem:        'cache',
+      raw_error:        `Redis unreachable for cron lock '${cronName}' after 3 retries: ${errorMsg}`,
+      status:           'open',
+      metrics_snapshot: { cron_name: cronName, error: errorMsg },
+      detected_at:      new Date().toISOString(),
+    })
+  } catch {
+    // Supabase also unavailable — log to console as last resort
+    console.error(`[withCronLock] Redis AND Supabase unreachable for cron '${cronName}'`)
+  }
+}
+
+/**
+ * Attempt SET NX EX with exponential backoff on 429.
+ * Returns:
+ *   'OK'       — lock acquired
+ *   null       — lock already held (key exists)
+ *   'FAILED'   — Redis unreachable after all retries (caller should fail-open)
+ */
 async function upstashSet(
   key:    string,
   value:  string,
   ttlSec: number,
-): Promise<string | null> {
+): Promise<string | null | 'FAILED'> {
   const url   = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
-  if (!url || !token) return null   // not configured
+  if (!url || !token) return null   // not configured → caller treats as fail-open
 
-  try {
-    const res = await fetch(`${url}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}?NX=true&EX=${ttlSec}`, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) return null
-    const json = await res.json() as { result: string | null }
-    return json.result   // "OK" if acquired, null if key already existed
-  } catch {
-    return null
+  let attempt = 0
+  const MAX_ATTEMPTS = 3
+
+  while (attempt < MAX_ATTEMPTS) {
+    try {
+      const res = await fetch(
+        `${url}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}?NX=true&EX=${ttlSec}`,
+        { method: 'GET', headers: { Authorization: `Bearer ${token}` } },
+      )
+
+      if (res.status === 429) {
+        // Rate-limited — backoff and retry
+        const delayMs = Math.pow(2, attempt) * 200   // 200ms, 400ms, 800ms
+        await new Promise(r => setTimeout(r, delayMs))
+        attempt++
+        continue
+      }
+
+      if (!res.ok) {
+        console.warn(`[withCronLock] Upstash HTTP ${res.status} for key ${key}`)
+        return 'FAILED'
+      }
+
+      const json = await res.json() as { result: string | null }
+      return json.result   // "OK" if acquired, null if key already existed
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.warn(`[withCronLock] Upstash fetch error (attempt ${attempt + 1}): ${msg}`)
+      attempt++
+    }
   }
+
+  return 'FAILED'
 }
 
 async function upstashDel(key: string): Promise<void> {
@@ -78,20 +131,29 @@ export async function withCronLock<T>(
   const ttlSec = ttlMinutes * 60
   const lockId = crypto.randomUUID()
 
-  const acquired = await upstashSet(key, lockId, ttlSec)
-
-  // Upstash not configured → fail-open (always run)
   const upstashConfigured =
     !!process.env.UPSTASH_REDIS_REST_URL &&
     !!process.env.UPSTASH_REDIS_REST_TOKEN
 
-  if (upstashConfigured && acquired !== 'OK') {
-    console.log(`[cronLock] ${cronName} already running — skipping this invocation`)
-    return null
-  }
-
   if (!upstashConfigured) {
     console.warn('[cronLock] Upstash not configured — running without distributed lock')
+    return await fn()
+  }
+
+  const acquired = await upstashSet(key, lockId, ttlSec)
+
+  if (acquired === 'FAILED') {
+    // Redis unreachable after retries — fail-open so the cron still runs.
+    // Log incident asynchronously — don't block the cron.
+    void logRedisIncident(cronName, 'Upstash unreachable after 3 retries')
+    console.warn(`[cronLock] Redis unreachable for '${cronName}' — running without lock (fail-open)`)
+    return await fn()
+  }
+
+  if (acquired !== 'OK') {
+    // Lock held by another instance — skip this invocation
+    console.log(`[cronLock] ${cronName} already running — skipping this invocation`)
+    return null
   }
 
   try {

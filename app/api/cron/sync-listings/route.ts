@@ -36,7 +36,7 @@ import {
   signalToPriorityItem,
   type SignalPropertyInput,
 }                                    from '@/lib/scoring/signalDetector'
-import { withCronLock }              from '@/lib/ops/cronLock'
+import { withCronLock }              from '@/lib/ops/withCronLock'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
 import { safeCompare }               from '@/lib/safeCompare'
 

@@ -11,7 +11,7 @@
 //   5. Audit log     → auditLogger.logAudit()              (fire-and-forget)
 //
 // Design principles:
-//   - Fail-open: governance failure NEVER blocks production
+//   - Fail-CLOSED: governance failure blocks the AI call with GOV_503
 //   - All external calls wrapped in try/catch
 //   - No module-level side effects
 //   - Streaming via AsyncGenerator
@@ -125,7 +125,8 @@ function fireAuditLog(
 /**
  * Runs both policy and token budget checks.
  * Returns the combined PolicyResult (most restrictive decision wins).
- * Fail-open: if either check throws, logs a warning and returns ALLOW.
+ * Fail-CLOSED: if either check throws, the exception propagates so the caller
+ * can return GOV_503 rather than silently allowing the AI call.
  *
  * Decision priority: DENY > ESCALATE > ALLOW
  */
@@ -139,51 +140,45 @@ export async function withPolicyGate(
   let policyResult: PolicyResult = { decision: 'ALLOW', reason: 'Default pass-through' }
   let budgetResult: PolicyResult = { decision: 'ALLOW', reason: 'Default pass-through' }
 
-  // ── Policy check ────────────────────────────────────────────────────────────
-  try {
-    const policyCtx: PolicyContext = {
-      agentId:               ctx.agentId,
-      tenantId:              ctx.tenantId,
-      correlationId:         ctx.correlationId,
-      estimatedInputTokens:  ctx.estimatedInputTokens,
-      estimatedOutputTokens: ctx.estimatedOutputTokens,
-      riskLevel:             ctx.riskLevel,
-      callerRoute:           ctx.callerRoute,
-    }
-    policyResult = await checkPolicy(policyCtx)
-  } catch (err) {
-    console.warn('[AI Runtime] policyEngine.checkPolicy threw — fail-open:', err)
+  // ── Policy check — FAIL-CLOSED: let errors propagate ───────────────────────
+  const policyCtx: PolicyContext = {
+    agentId:               ctx.agentId,
+    tenantId:              ctx.tenantId,
+    correlationId:         ctx.correlationId,
+    estimatedInputTokens:  ctx.estimatedInputTokens,
+    estimatedOutputTokens: ctx.estimatedOutputTokens,
+    riskLevel:             ctx.riskLevel,
+    callerRoute:           ctx.callerRoute,
   }
+  policyResult = await checkPolicy(policyCtx)
+  // ^ If this throws, the error propagates — caller must handle as GOV_503
 
   // If already DENY, skip budget check
   if (policyResult.decision === 'DENY') return policyResult
 
-  // ── Token budget check ──────────────────────────────────────────────────────
-  try {
-    // We need the plan — attempt to read from env, default to 'unlimited' (fail-open)
-    const plan = process.env.TENANT_PLAN ?? 'starter'
-    const budgetCheck = await checkTokenBudget(
-      ctx.tenantId,
-      plan,
-      ctx.agentId,
-      estimated,
-    )
-    if (!budgetCheck.allowed) {
-      budgetResult = {
-        decision:        'DENY',
-        reason:          budgetCheck.reason,
-        remainingBudget: budgetCheck.remaining_tenant === -1 ? undefined : budgetCheck.remaining_tenant,
-      }
-    } else {
-      budgetResult = {
-        decision:         'ALLOW',
-        reason:           budgetCheck.reason,
-        remainingBudget:  budgetCheck.remaining_tenant === -1 ? undefined : budgetCheck.remaining_tenant,
-        recommended_model: budgetCheck.recommended_model,
-      }
+  // ── Token budget check — FAIL-CLOSED: let errors propagate ─────────────────
+  const plan = process.env.TENANT_PLAN ?? 'starter'
+  const budgetCheck = await checkTokenBudget(
+    ctx.tenantId,
+    plan,
+    ctx.agentId,
+    estimated,
+  )
+  // ^ If this throws, the error propagates — caller must handle as GOV_503
+
+  if (!budgetCheck.allowed) {
+    budgetResult = {
+      decision:        'DENY',
+      reason:          budgetCheck.reason,
+      remainingBudget: budgetCheck.remaining_tenant === -1 ? undefined : budgetCheck.remaining_tenant,
     }
-  } catch (err) {
-    console.warn('[AI Runtime] tokenGovernor.checkTokenBudget threw — fail-open:', err)
+  } else {
+    budgetResult = {
+      decision:         'ALLOW',
+      reason:           budgetCheck.reason,
+      remainingBudget:  budgetCheck.remaining_tenant === -1 ? undefined : budgetCheck.remaining_tenant,
+      recommended_model: budgetCheck.recommended_model,
+    }
   }
 
   // ── Merge: DENY wins, then ESCALATE, then ALLOW ────────────────────────────
@@ -220,12 +215,19 @@ export async function withBudgetGuard<T>(
 ): Promise<AICallResult<T>> {
   const t0 = now()
 
-  // ── 1. Policy + budget gate ────────────────────────────────────────────────
-  let gateResult: PolicyResult = { decision: 'ALLOW', reason: 'Default' }
+  // ── 1. Policy + budget gate — FAIL-CLOSED ─────────────────────────────────
+  // If governance infrastructure (Redis, policyEngine) is unavailable, we must
+  // NOT execute the AI call. Throw with a structured GOV_503 error so the
+  // caller can surface 503 to the client.
+  let gateResult: PolicyResult
   try {
     gateResult = await withPolicyGate(ctx)
   } catch (err) {
-    console.warn('[AI Runtime] withPolicyGate threw unexpectedly — fail-open:', err)
+    const govErr = new Error(
+      `[AI Runtime] GOVERNANCE UNAVAILABLE — failing closed (GOV_503): ${err instanceof Error ? err.message : String(err)}`,
+    )
+    ;(govErr as NodeJS.ErrnoException).code = 'GOV_503'
+    throw govErr
   }
 
   // ── 2. Handle DENY ─────────────────────────────────────────────────────────
@@ -385,11 +387,16 @@ export async function* withAIStream(
   const t0 = now()
 
   // ── 1. Policy gate (blocking — must complete before first chunk) ───────────
-  let gateResult: PolicyResult = { decision: 'ALLOW', reason: 'Default' }
+  // FAIL-CLOSED: governance failure throws GOV_503, never silently proceeds.
+  let gateResult: PolicyResult
   try {
     gateResult = await withPolicyGate(ctx)
   } catch (err) {
-    console.warn('[AI Runtime] withAIStream — gate threw, fail-open:', err)
+    const govErr = new Error(
+      `[AI Runtime] GOVERNANCE UNAVAILABLE — stream failing closed (GOV_503): ${err instanceof Error ? err.message : String(err)}`,
+    )
+    ;(govErr as NodeJS.ErrnoException).code = 'GOV_503'
+    throw govErr
   }
 
   if (gateResult.decision === 'DENY') {

@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse }         from 'next/server'
 import { batchUpdateAllPartnerTiers }        from '@/lib/commercial/partnerTiering'
 import { supabaseAdmin }                     from '@/lib/supabase'
-import { withCronLock }                      from '@/lib/ops/cronLock'
+import { withCronLock }                      from '@/lib/ops/withCronLock'
 import { safeCompare }                       from '@/lib/safeCompare'
 import { cronCorrelationId }                 from '@/lib/observability/correlation'
 

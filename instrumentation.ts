@@ -20,6 +20,7 @@ export async function register() {
       { key: 'PORTAL_API_SECRET',            description: 'Lead scoring disabled — all leads arrive without tier/score',  severity: 'CRITICAL' },
       { key: 'N8N_WEBHOOK_URL',              description: 'n8n automation disabled — leads not routed to workflows',      severity: 'WARNING' },
       { key: 'CRON_SECRET',                  description: 'Cron jobs unauthenticated — automation vulnerable',             severity: 'WARNING' },
+      { key: 'INTERNAL_API_BASE',            description: 'Control Tower fetches will fail silently (all panels empty)',    severity: 'CRITICAL' },
     ]
 
     const missing = REQUIRED.filter(v => !process.env[v.key])
@@ -50,6 +51,39 @@ export async function register() {
     const authSecret = process.env.AUTH_SECRET
     if (authSecret && authSecret.length < 32) {
       console.error('[AG] ✗ AUTH_SECRET is too short — must be >= 32 characters')
+    }
+
+    // INTERNAL_API_BASE must NOT be localhost in production.
+    // All Control Tower RSC pages do server-side fetches via this base URL.
+    // If it points to localhost, every Control Tower panel silently returns empty data.
+    const internalApiBase = process.env.INTERNAL_API_BASE
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
+    if (isProduction && internalApiBase) {
+      if (internalApiBase.includes('localhost') || internalApiBase.includes('127.0.0.1')) {
+        console.error(
+          '[AG] ✗ CRITICAL: INTERNAL_API_BASE is set to localhost in production!',
+          '\n    All Control Tower pages will show empty/skeleton state.',
+          '\n    Fix: set INTERNAL_API_BASE=https://your-production-domain.vercel.app in Vercel env vars.',
+          `\n    Current value: ${internalApiBase}`,
+        )
+        // Write incident to Supabase — fire-and-forget so startup never blocks
+        void (async () => {
+          try {
+            const { supabaseAdmin } = await import('@/lib/supabase')
+            await supabaseAdmin.from('incidents').insert({
+              tenant_id:   'agency-group',
+              severity:    'P0',
+              subsystem:   'api',
+              raw_error:   `INTERNAL_API_BASE misconfiguration: ${internalApiBase} — all Control Tower panels will return empty data`,
+              status:      'open',
+              metrics_snapshot: { env: process.env.VERCEL_ENV ?? process.env.NODE_ENV },
+              detected_at: new Date().toISOString(),
+            })
+          } catch {
+            // Best-effort — if Supabase isn't configured yet, just skip
+          }
+        })()
+      }
     }
   }
 }

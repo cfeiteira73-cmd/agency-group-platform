@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse }   from 'next/server'
 import { supabaseAdmin }               from '@/lib/supabase'
 import { createAlert, buildAlert }     from '@/lib/ops/alertEngine'
-import { withCronLock }                from '@/lib/ops/cronLock'
+import { withCronLock }                from '@/lib/ops/withCronLock'
 import { safeCompare }                 from '@/lib/safeCompare'
 import { cronCorrelationId }           from '@/lib/observability/correlation'
 

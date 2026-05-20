@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { rateLimit } from '@/lib/rateLimit'
 import { withAI } from '@/lib/ops/withAI'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 const AVMSchema = z.object({
   zona:       z.string().optional().default('Lisboa'),
@@ -438,6 +439,9 @@ function methodMomentum(estimativaBase: number, trendYoy: number, trendQtq: numb
 // ─── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const corrId = getRequestCorrelationId(req)
   // Rate limit: 5 AVM valuations/minute per IP (expensive Claude Vision call)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'

@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
 import { withAIStream } from '@/lib/ops/withAI'
 import { buildAgentEnvelope } from '@/lib/ai/contracts'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 export const runtime = 'nodejs'
 
@@ -102,6 +103,9 @@ Activate premium mode: off-market exclusives, direct partner introductions, disc
 - Always end multi-step conversations with a concrete next step`
 
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
   // ── Content-length guard ────────────────────────────────────────────────────
   const contentLen = req.headers.get('content-length')
   if (contentLen !== null) {

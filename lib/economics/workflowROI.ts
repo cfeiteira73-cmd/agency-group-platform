@@ -28,7 +28,8 @@ export class WorkflowROITracker {
   async calculateWorkflowROI(
     workflow_name: string,
     org_id: string,
-    period_days: number
+    period_days: number,
+    totalWorkflows = 1
   ): Promise<WorkflowROIRecord> {
     const from = new Date(Date.now() - period_days * 86_400_000).toISOString()
 
@@ -55,19 +56,20 @@ export class WorkflowROITracker {
 
     const { data: deals } = await sb
       .from('deals')
-      .select('value_eur')
-      .eq('org_id', org_id)
-      .eq('status', 'closed_won')
-      .gte('updated_at', from)
+      .select('deal_value')
+      .eq('tenant_id', org_id)
+      .in('stage', ['post_sale', 'escritura', 'escritura_sell'])
+      .gte('actual_close_date', from)
       .limit(500)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const total_org_revenue = (deals ?? []).reduce((s: number, d: any) =>
-      s + ((d.value_eur as number) ?? 0), 0)
+      s + ((d.deal_value as number) ?? 0), 0)
 
     const total_exec = exData.length
-    // Attribution: cap at 20% and distribute evenly if >1 workflow active (prevent >100% total)
-    const attribution_share = Math.min(0.2, 1)
+    // Attribution: divide evenly among all active workflows, capped at 20% each.
+    // Caller should pass totalWorkflows to prevent >100% total attribution.
+    const attribution_share = Math.min(0.2, 1 / Math.max(1, totalWorkflows))
     const revenue_generated_eur = total_exec > 0 ? total_org_revenue * attribution_share : 0
     const estimated_cost_eur = total_duration_ms * COST_PER_MS_EUR
     const roi_multiplier = estimated_cost_eur > 0
@@ -127,15 +129,15 @@ export class WorkflowROITracker {
     // Fetch org revenue once for all workflows
     const { data: deals } = await sb
       .from('deals')
-      .select('value_eur')
-      .eq('org_id', org_id)
-      .eq('status', 'closed_won')
-      .gte('updated_at', from)
+      .select('deal_value')
+      .eq('tenant_id', org_id)
+      .in('stage', ['post_sale', 'escritura', 'escritura_sell'])
+      .gte('actual_close_date', from)
       .limit(500)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const total_org_revenue = (deals ?? []).reduce((s: number, d: any) =>
-      s + ((d.value_eur as number) ?? 0), 0)
+      s + ((d.deal_value as number) ?? 0), 0)
 
     const records: WorkflowROIRecord[] = []
     // Attribution: divide equally among all active workflows, capped at 20% each

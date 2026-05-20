@@ -87,7 +87,7 @@ interface PipelineData {
   active_leads: number
   proposals_pending: number
   deals_in_progress: number
-  close_rate_30d: number
+  close_rate_30d: number | null
   deals_won_mtd: number
 }
 
@@ -144,7 +144,7 @@ async function fetchRevenueData(): Promise<{ pipeline: PipelineData; funnel: Fun
 
 // Causal steps — browse recent rows directly from Supabase (RSC server context)
 async function fetchRecentCausalSteps(limit = 10): Promise<CausalStep[]> {
-  if (process.env.CAUSAL_TRACE_ENABLED !== 'true') return []
+  if (process.env.CAUSAL_TRACE_ENABLED === 'false') return []
   try {
     const { createClient } = await import('@supabase/supabase-js')
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -276,7 +276,7 @@ async function RevenueIntelligencePanel() {
       value: avgDealSize != null ? eur(avgDealSize) : '—',
       trend: '↑',
       trendUp: true,
-      sub: `Close rate ${p ? pctFmt(p.close_rate_30d ?? 0) : '—'} (30d)`,
+      sub: `Close rate ${p ? (p.close_rate_30d != null ? pctFmt(p.close_rate_30d) : '—') : '—'} (30d)`,
     },
   ]
 

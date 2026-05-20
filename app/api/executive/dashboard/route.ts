@@ -288,7 +288,7 @@ async function fetchAgentPerformanceSummaries(): Promise<AgentPerformanceSummary
       agent_id: agent.id,
       deals_closed: 0,
       total_commission_eur: 0,
-      avg_days_to_close: 210, // Portugal market average
+      avg_days_to_close: null, // No closed deals — cannot compute; display as '—'
       listings_active: 0,
       conversion_rate: 0,
     } satisfies AgentPerformanceSummary))

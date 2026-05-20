@@ -295,15 +295,22 @@ function makeRemediationDecision(
 // ─── Verification ─────────────────────────────────────────────────────────────
 
 /**
- * Verifies whether a remediation action likely resolved the incident.
+ * Verifies whether a remediation action produced MEASURABLE improvement.
  *
  * Strategy per action type:
- *   THROTTLE  → check LoadStatus.mode is STRESSED or better (not CRITICAL/EMERGENCY)
+ *   THROTTLE  → query runtime_events to compare error count in the 5 minutes
+ *               BEFORE the action vs the 5 minutes AFTER. Healing is confirmed
+ *               only when the post-action error count is ≤80% of pre-action
+ *               (i.e. ≥20% reduction). Checking load mode is INTENTIONALLY
+ *               avoided here: THROTTLE sets mode to STRESSED, so asserting
+ *               mode === 'STRESSED' is a tautology that always passes.
  *   ROLLBACK  → check `rollback:active:{tenantId}` key exists in Redis
+ *               AND the current load mode is not CRITICAL/EMERGENCY
  *   REROUTE   → check `routing:{tenantId}:preferred_region` is set in Redis
  *   others    → assumed healed if action executed without error
  *
- * Fail-open: returns true on any unexpected error (optimistic assumption).
+ * Fail-CLOSED: returns false on any unexpected error so incidents stay open
+ *              and are not falsely marked as resolved.
  */
 export async function verifyRemediation(
   incident: IncidentRow,
@@ -313,16 +320,100 @@ export async function verifyRemediation(
     switch (action.action_type) {
 
       case 'THROTTLE': {
-        // Change 9: pass tenantId as first arg to match new per-tenant loadGovernor API
-        const status = await getLoadStatus(incident.tenant_id)
-        // STRESSED or NORMAL = throttle succeeded; CRITICAL/EMERGENCY = still bad
-        return status.mode === 'STRESSED' || status.mode === 'NORMAL'
+        // Measure actual improvement via error counts in runtime_events.
+        // Pre-window: 10 min before the incident was detected (proxy for before-throttle).
+        // Post-window: 5 min ending now (after throttle has had time to take effect).
+        //
+        // We use the incidents table metrics_snapshot as the "before" baseline when
+        // runtime_events data is unavailable — it is captured at detection time,
+        // before any remediation ran.
+
+        const detectedAt = new Date(incident.detected_at).getTime()
+        const preStart   = new Date(detectedAt - 10 * 60 * 1000).toISOString()
+        const preEnd     = new Date(detectedAt).toISOString()
+        const postStart  = new Date(detectedAt).toISOString()
+        const postEnd    = new Date().toISOString()
+
+        // Baseline error rate from the metrics snapshot captured at incident detection.
+        // This is our ground truth for "before throttle".
+        const snapshotErrorRate: number =
+          typeof incident.metrics_snapshot?.error_rate === 'number'
+            ? incident.metrics_snapshot.error_rate
+            : -1
+
+        // Query runtime_events for actual error counts before/after.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rte = (supabaseAdmin as any).from('runtime_events')
+
+        const [{ count: preCount, error: preErr }, { count: postCount, error: postErr }] =
+          await Promise.all([
+            rte
+              .select('*', { count: 'exact', head: true })
+              .eq('tenant_id', incident.tenant_id)
+              .eq('success', false)
+              .gte('created_at', preStart)
+              .lt('created_at',  preEnd),
+            rte
+              .select('*', { count: 'exact', head: true })
+              .eq('tenant_id', incident.tenant_id)
+              .eq('success', false)
+              .gte('created_at', postStart)
+              .lt('created_at',  postEnd),
+          ])
+
+        if (preErr || postErr) {
+          // DB query failed — fall back to snapshot error_rate check.
+          // If snapshot is unavailable too, we cannot verify — fail closed.
+          if (snapshotErrorRate < 0) {
+            console.warn(
+              '[verifyRemediation] THROTTLE: runtime_events query failed and no snapshot error_rate — failing closed',
+            )
+            return false
+          }
+          // Snapshot exists: throttle is considered effective only if the
+          // current load mode dropped below CRITICAL (not just STRESSED, which
+          // THROTTLE sets by design, making it still tautological). We require
+          // NORMAL or STRESSED AND that the snapshot error_rate was above a
+          // meaningful threshold before throttle was applied.
+          const status = await getLoadStatus(incident.tenant_id)
+          const modeImproved = status.mode === 'NORMAL' || status.mode === 'STRESSED'
+          const errorRateWasHigh = snapshotErrorRate > 0.05 // >5% error rate pre-incident
+          console.warn(
+            `[verifyRemediation] THROTTLE (fallback path): mode=${status.mode} snapshotErrRate=${snapshotErrorRate} → healed=${modeImproved && errorRateWasHigh}`,
+          )
+          return modeImproved && errorRateWasHigh
+        }
+
+        const before = preCount  ?? 0
+        const after  = postCount ?? 0
+
+        if (before === 0) {
+          // No errors recorded before throttle — nothing to compare against.
+          // Could be a no-error baseline or a metrics gap. Be conservative: not verified.
+          console.warn('[verifyRemediation] THROTTLE: pre-action error count is 0 — cannot confirm improvement')
+          return false
+        }
+
+        // Require ≥20% reduction in error count to confirm healing.
+        const reductionPct = (before - after) / before
+        const healed = reductionPct >= 0.20
+
+        console.info(
+          `[verifyRemediation] THROTTLE: errors before=${before} after=${after} reduction=${(reductionPct * 100).toFixed(1)}% → healed=${healed}`,
+        )
+        return healed
       }
 
       case 'ROLLBACK': {
+        // Confirm the rollback marker is set AND the system is not in a worse mode.
         const key = `rollback:active:${incident.tenant_id}`
-        const val = await redisGet(key)
-        return val !== null
+        const [val, status] = await Promise.all([
+          redisGet(key),
+          getLoadStatus(incident.tenant_id),
+        ])
+        const rollbackActive = val !== null
+        const modeOk = status.mode !== 'CRITICAL' && status.mode !== 'EMERGENCY'
+        return rollbackActive && modeOk
       }
 
       case 'REROUTE': {
@@ -336,10 +427,10 @@ export async function verifyRemediation(
         return true
     }
   } catch (err) {
-    // Change 6: fail-CLOSED — an unexpected verification error must not be treated
+    // Fail-CLOSED — an unexpected verification error must not be treated
     // as a successful healing confirmation. Return false so the incident remains open.
     console.warn(
-      '[verifyRemediation] verification failed — failing CLOSED (returning false):',
+      '[verifyRemediation] verification threw — failing CLOSED (returning false):',
       err instanceof Error ? err.message : err,
     )
     return false

@@ -2,7 +2,7 @@
 // Daily 04:00 — Recompute decay-adjusted ROI scores for all recipient profiles
 
 import { NextRequest, NextResponse } from 'next/server'
-import { withCronLock }              from '@/lib/ops/cronLock'
+import { withCronLock }              from '@/lib/ops/withCronLock'
 import { batchComputeDecay }         from '@/lib/intelligence/engagementDecay'
 import { supabaseAdmin }             from '@/lib/supabase'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
@@ -34,11 +34,10 @@ export async function GET(req: NextRequest) {
       })
 
     return { processed, updated }
-  }, {
-    onSkip: () => console.log('[refresh-engagement-decay] skipped — lock held'),
   })
 
   if (result === null) {
+    console.log('[refresh-engagement-decay] skipped — lock held')
     return NextResponse.json({ skipped: true, reason: 'lock_held' })
   }
 

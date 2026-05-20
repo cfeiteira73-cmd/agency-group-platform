@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { rateLimit } from '@/lib/rateLimit'
+import { isPortalAuth } from '@/lib/portalAuth'
 
 const RadarSchema = z.object({
   url: z.string().min(5, 'URL ou texto inválido'),
@@ -530,6 +531,9 @@ async function scrapeBankPortal(url: string, bank: string): Promise<Record<strin
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  if (!(await isPortalAuth(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   const corrId = getRequestCorrelationId(req)
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'

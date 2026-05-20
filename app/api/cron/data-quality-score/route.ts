@@ -6,7 +6,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { withCronLock } from '@/lib/ops/cronLock'
+import { withCronLock } from '@/lib/ops/withCronLock'
 import { safeCompare } from '@/lib/safeCompare'
 import { supabaseAdmin } from '@/lib/supabase'
 import { scoreContact, generateDataQualityReport } from '@/lib/commercial/dataQuality'

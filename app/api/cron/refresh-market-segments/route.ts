@@ -2,7 +2,7 @@
 // Daily 04:30 — Refresh all multi-period market segment trends (7d/30d/90d)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { withCronLock }              from '@/lib/ops/cronLock'
+import { withCronLock }              from '@/lib/ops/withCronLock'
 import { batchRefreshAllSegments }   from '@/lib/intelligence/marketSegments'
 import { supabaseAdmin }             from '@/lib/supabase'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
@@ -35,11 +35,10 @@ export async function GET(req: NextRequest) {
       })
 
     return { refreshed, errors }
-  }, {
-    onSkip: () => console.log('[refresh-market-segments] skipped — lock held'),
   })
 
   if (result === null) {
+    console.log('[refresh-market-segments] skipped — lock held')
     return NextResponse.json({ skipped: true, reason: 'lock_held' })
   }
 
