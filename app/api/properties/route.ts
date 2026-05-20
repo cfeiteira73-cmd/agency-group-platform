@@ -172,12 +172,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ data: [], source: 'error', error: 'Supabase not configured' })
     }
 
+    // Tenant scope — property reads must never leak cross-tenant listings
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
     // Try with portal-compat columns (migration 003)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- properties legacy select uses Portuguese aliases mapped in JS below
       let query = (supabaseAdmin as any)
         .from('properties')
         .select('id, title, zone, type, price, area_m2, bedrooms, bathrooms, energy_certificate, status, description, features')
+        .eq('tenant_id', tenantId)  // TENANT FIX: scope to current org
         .not('title', 'is', null)  // Only portal-populated rows
         .limit(limit)
 

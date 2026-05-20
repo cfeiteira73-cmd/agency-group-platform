@@ -144,7 +144,8 @@ const CRM_TOOLS: Anthropic.Tool[] = [
 
 // ─── Tool Execution ──────────────────────────────────────────────────────────
 
-async function executeTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+// TENANT FIX: executeTool now accepts tenantId for cross-tenant isolation
+async function executeTool(name: string, input: Record<string, unknown>, tenantId: string): Promise<unknown> {
   switch (name) {
     case 'get_stalled_deals': {
       const days = (input.days_stalled as number) || 7
@@ -155,6 +156,7 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       let query = (supabase as any)
         .from('deals')
         .select('id, title, imovel, fase, comprador, property_id, valor, last_activity_at, created_at, agent_id, notes, notas')
+        .eq('tenant_id', tenantId)   // TENANT FIX
         .lt('last_activity_at', cutoff)
         .not('fase', 'ilike', '%fechado%')
         .not('fase', 'ilike', '%escritura%')
@@ -174,6 +176,7 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       const { data, error } = await (supabase as any)
         .from('deals')
         .select('*, properties(nome, zona, preco, quartos, area, tipo)')
+        .eq('tenant_id', tenantId)   // TENANT FIX
         .eq('id', input.deal_id as string)
         .single()
       if (error) return { error: error.message }
@@ -190,6 +193,7 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       const { error } = await (supabase as any)
         .from('deals')
         .update({ lead_score: score, scored_at: new Date().toISOString() })
+        .eq('tenant_id', tenantId)   // TENANT FIX
         .eq('id', input.deal_id as string)
       return { score, updated: !error }
     }
@@ -281,6 +285,7 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
           fase: input.new_stage,  // portal-compat column (TEXT)
           last_activity_at: new Date().toISOString(),
         })
+        .eq('tenant_id', tenantId)   // TENANT FIX
         .eq('id', input.deal_id as string)
 
       if (!error) {
@@ -302,6 +307,7 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
       let query = (supabase as any)
         .from('properties')
         .select('id, nome, zona, preco, quartos, area, tipo, fotos')
+        .eq('tenant_id', tenantId)   // TENANT FIX
         .eq('status', 'active')
         .limit((input.limit as number) || 5)
 
@@ -327,7 +333,8 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
 
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
-  const tenantId = req.headers.get('x-tenant-id') ?? 'agency-group'
+  // TENANT FIX: use canonical env var — x-tenant-id header is untrusted (IDOR risk)
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -410,7 +417,7 @@ Always be strategic. Quality over quantity. Max 10 deals per run.`
       for (const block of response.content) {
         if (block.type !== 'tool_use') continue
 
-        const result = await executeTool(block.name, block.input as Record<string, unknown>)
+        const result = await executeTool(block.name, block.input as Record<string, unknown>, tenantId)
         results.push({ tool: block.name, input: block.input as Record<string, unknown>, result })
 
         ;(toolResults.content as Anthropic.ToolResultBlockParam[]).push({

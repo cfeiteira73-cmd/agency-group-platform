@@ -321,26 +321,36 @@ export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Tenant scope — daily-brief must never aggregate cross-tenant data
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
     // Today's window
     const todayStart = new Date(targetDate)
     todayStart.setHours(0, 0, 0, 0)
     const todayStartISO = todayStart.toISOString()
 
     // Fetch real data in parallel — graceful on individual failures
+    // TENANT FIX: all queries scoped to current org
     const [leadsRes, dealsRes, propertiesRes] = await Promise.allSettled([
-      supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
         .from('leads')
         .select('id, status, created_at, contact_name, budget, zona, score, last_contact')
+        .eq('tenant_id', tenantId)
         .gte('created_at', todayStartISO),
-      supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
         .from('deals')
         .select('id, fase, imovel, comprador, valor, updated_at')
+        .eq('tenant_id', tenantId)
         .not('fase', 'ilike', '%fechado%')
         .not('fase', 'ilike', '%perdido%')
         .not('fase', 'ilike', '%escritura%'),
-      supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
         .from('properties')
         .select('id, nome, preco, zona, status, dias_mercado')
+        .eq('tenant_id', tenantId)
         .eq('status', 'active')
         .limit(20),
     ])
