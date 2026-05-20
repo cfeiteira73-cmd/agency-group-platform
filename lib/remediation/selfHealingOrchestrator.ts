@@ -417,14 +417,57 @@ export async function verifyRemediation(
       }
 
       case 'REROUTE': {
+        // Check routing key is still active AND load mode improved from CRITICAL.
+        // Key-only check was tautological (action sets the same key); mode check
+        // provides an independent signal that traffic actually shifted.
         const key = `routing:${incident.tenant_id}:preferred_region`
-        const val = await redisGet(key)
-        return val !== null
+        const [val, status] = await Promise.all([
+          redisGet(key),
+          getLoadStatus(incident.tenant_id),
+        ])
+        const routeActive = val !== null
+        const modeOk = status.mode !== 'CRITICAL' && status.mode !== 'EMERGENCY'
+        console.info(
+          `[verifyRemediation] REROUTE: routeKey=${routeActive} mode=${status.mode} → healed=${routeActive && modeOk}`,
+        )
+        return routeActive && modeOk
       }
 
-      default:
-        // SCALE_UP, ISOLATE_TENANT, DISABLE_FEATURE — assume success if action ran
-        return true
+      case 'SCALE_UP': {
+        // Verify scale_up flag is still active AND load pressure has decreased.
+        const key = `scale_up:${incident.tenant_id}`
+        const [val, status] = await Promise.all([
+          redisGet(key),
+          getLoadStatus(incident.tenant_id),
+        ])
+        const scaleActive = val !== null
+        const modeOk = status.mode === 'NORMAL' || status.mode === 'STRESSED'
+        console.info(
+          `[verifyRemediation] SCALE_UP: flagKey=${scaleActive} mode=${status.mode} → healed=${scaleActive && modeOk}`,
+        )
+        return scaleActive && modeOk
+      }
+
+      case 'DISABLE_FEATURE': {
+        // Verify the feature disable flag is still set (could expire or be cleared).
+        // feature_disabled:{tenantId}:{feature} — same key as FEATURE_FLAG_KEY in autonomousRemediator.
+        const featureTenantId = action.tenant_id ?? incident.tenant_id
+        const flagKey = `feature_disabled:${featureTenantId}:${action.target}`
+        const val = await redisGet(flagKey)
+        const flagActive = val !== null
+        console.info(
+          `[verifyRemediation] DISABLE_FEATURE: feature=${action.target} flagKey=${flagActive} → healed=${flagActive}`,
+        )
+        return flagActive
+      }
+
+      case 'ISOLATE_TENANT':
+        // ISOLATE_TENANT always requires MANUAL_APPROVAL — should never reach
+        // AUTO verification. Log and return false to keep incident open.
+        console.warn(
+          `[verifyRemediation] ISOLATE_TENANT reached AUTO verification — incident=${incident.incident_id}. This should be MANUAL_APPROVAL. Returning false.`,
+        )
+        return false
     }
   } catch (err) {
     // Fail-CLOSED — an unexpected verification error must not be treated

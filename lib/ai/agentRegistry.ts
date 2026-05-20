@@ -124,6 +124,63 @@ export const AGENT_REGISTRY: Record<string, AgentConfig> = {
     capabilities: ['email_generation', 'whatsapp_message', 'sms_generation'],
     revenueContext: 'followup',
   },
+
+  // ─── Circuit-level budget entries ─────────────────────────────────────────
+  // withAI() passes the circuit name as agentId. Without these entries the
+  // policyEngine falls through to the unregistered-component pass-through,
+  // bypassing budget enforcement. These entries register the circuits so
+  // monthly token budgets are tracked and the policy gate is meaningful.
+  'anthropic-opus': {
+    id: 'anthropic-opus',
+    displayName: 'Anthropic Opus (circuit)',
+    model: 'claude-opus-4-5',
+    circuitName: 'anthropic-opus',
+    maxTokens: 4096,
+    maxRetries: 2,
+    timeoutMs: 120000,
+    latencySLA: 60000,
+    costPer1kInputTokens: 0.015,
+    costPer1kOutputTokens: 0.075,
+    monthlyTokenBudget: 10_000_000,   // 10M tokens/month hard cap across all opus calls
+    riskLevel: 'high',
+    fallbackPolicy: 'queue_for_retry',
+    capabilities: ['vision', 'complex_reasoning', 'photo_scoring', 'risk_analysis'],
+    revenueContext: 'opus_circuit',
+  },
+  'anthropic-haiku': {
+    id: 'anthropic-haiku',
+    displayName: 'Anthropic Haiku (circuit)',
+    model: 'claude-haiku-4-5',
+    circuitName: 'anthropic-haiku',
+    maxTokens: 2048,
+    maxRetries: 2,
+    timeoutMs: 30000,
+    latencySLA: 10000,
+    costPer1kInputTokens: 0.001,
+    costPer1kOutputTokens: 0.005,
+    monthlyTokenBudget: 50_000_000,   // 50M tokens/month — haiku is cheap, high volume
+    riskLevel: 'low',
+    fallbackPolicy: 'skip',
+    capabilities: ['short_reply', 'intent_classification', 'deal_pack_generation'],
+    revenueContext: 'haiku_circuit',
+  },
+  'anthropic': {
+    id: 'anthropic',
+    displayName: 'Anthropic Generic (circuit)',
+    model: 'claude-sonnet-4-6',
+    circuitName: 'anthropic',
+    maxTokens: 2048,
+    maxRetries: 2,
+    timeoutMs: 60000,
+    latencySLA: 30000,
+    costPer1kInputTokens: 0.003,
+    costPer1kOutputTokens: 0.015,
+    monthlyTokenBudget: 20_000_000,
+    riskLevel: 'medium',
+    fallbackPolicy: 'queue_for_retry',
+    capabilities: ['general'],
+    revenueContext: 'generic_circuit',
+  },
 }
 
 export function getAgentConfig(agentId: string): AgentConfig | null {
