@@ -294,7 +294,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             }))
         }
       } catch {
-        // keep MOCK_SUMMARY.topAgents
+        // topAgents stays as [] — no mock fallback (zero fake metrics mandate)
       }
     }
 
