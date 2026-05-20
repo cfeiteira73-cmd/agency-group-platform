@@ -21,6 +21,7 @@ export async function register() {
       { key: 'N8N_WEBHOOK_URL',              description: 'n8n automation disabled — leads not routed to workflows',      severity: 'WARNING' },
       { key: 'CRON_SECRET',                  description: 'Cron jobs unauthenticated — automation vulnerable',             severity: 'WARNING' },
       { key: 'INTERNAL_API_BASE',            description: 'Control Tower fetches will fail silently (all panels empty)',    severity: 'CRITICAL' },
+      { key: 'SYSTEM_ORG_ID',               description: 'Using hardcoded fallback UUID — set explicitly to 00000000-0000-0000-0000-000000000001', severity: 'WARNING' },
     ]
 
     const missing = REQUIRED.filter(v => !process.env[v.key])
@@ -53,8 +54,9 @@ export async function register() {
       console.error('[AG] ✗ AUTH_SECRET is too short — must be >= 32 characters')
     }
 
-    // SYSTEM_ORG_ID boot guard — fail-closed: validates UUID v4 + tenants table lookup.
-    // If invalid → P1 incident. Revenue dashboard will show empty state until fixed.
+    // SYSTEM_ORG_ID boot guard — validates UUID v4 + organizations table lookup.
+    // Hard fail (P1 incident): UUID malformed or not found in DB.
+    // Soft warn: env var not set but verified fallback UUID used — system works.
     void (async () => {
       try {
         const { validateSystemOrgId } = await import('@/lib/bootstrap/systemOrgValidator')
@@ -62,8 +64,7 @@ export async function register() {
         if (!orgResult.ok) {
           console.error(
             `[AG] ✗ SYSTEM_ORG_ID INVALID — revenue dashboard will be empty: ${orgResult.error}`,
-            '\n    Fix: add SYSTEM_ORG_ID=<UUID from tenants table> to Vercel env vars',
-            '\n    Run: SELECT id, slug FROM tenants; in Supabase SQL editor',
+            '\n    Fix: add SYSTEM_ORG_ID=00000000-0000-0000-0000-000000000001 to Vercel env vars',
           )
           const { supabaseAdmin } = await import('@/lib/supabase')
           await supabaseAdmin.from('incidents').insert({
@@ -75,6 +76,8 @@ export async function register() {
             metrics_snapshot: { org_id: orgResult.org_id, checked_at: orgResult.checked_at },
             detected_at:      new Date().toISOString(),
           })
+        } else if (orgResult.using_fallback) {
+          console.warn(`[AG] ⚠ SYSTEM_ORG_ID using verified fallback (${orgResult.org_id}) — set env var in Vercel to silence`)
         } else {
           console.log(`[AG] ✓ SYSTEM_ORG_ID valid — tenant: ${orgResult.tenant_slug} (${orgResult.org_id})`)
         }

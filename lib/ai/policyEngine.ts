@@ -34,18 +34,21 @@ async function getBudgetKey(tenantId: string, agentId: string): Promise<string> 
   return `agent:budget:${tenantId}:${agentId}:${month}`
 }
 
-async function getTokensUsed(tenantId: string, agentId: string): Promise<number> {
-  if (!UPSTASH_URL || !UPSTASH_TOKEN) return 0
+// Returns null when Redis is unavailable (not configured OR network error).
+// Callers that have a budget configured MUST treat null as DENY (fail-closed).
+// Returns 0 when Redis is reachable but no tokens have been used yet.
+async function getTokensUsed(tenantId: string, agentId: string): Promise<number | null> {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null   // Redis not configured → fail-closed
   try {
     const key = await getBudgetKey(tenantId, agentId)
     const res = await fetch(`${UPSTASH_URL}/get/${encodeURIComponent(key)}`, {
       headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
       signal: AbortSignal.timeout(2000),
     })
-    if (!res.ok) return 0
+    if (!res.ok) return null   // Redis HTTP error → fail-closed
     const { result } = await res.json() as { result: string | null }
     return result ? parseInt(result, 10) : 0
-  } catch { return 0 }
+  } catch { return null }      // Network / timeout → fail-closed
 }
 
 export async function trackTokensUsed(
@@ -89,14 +92,26 @@ export async function checkPolicy(ctx: PolicyContext): Promise<PolicyResult> {
     return { decision: 'ESCALATE', reason: 'Critical risk agent requires production environment' }
   }
 
-  // Rule 3: Token budget enforcement
+  // Rule 3: Token budget enforcement — FAIL-CLOSED when Redis absent
   if (agent.monthlyTokenBudget) {
     const used = await getTokensUsed(tenantId, agentId)
+
+    // FAIL-CLOSED: if Redis is unavailable and this agent has a budget cap,
+    // DENY rather than allow uncapped spend. This is the safe default.
+    // To allow degraded-mode pass-through, remove the budget entry from AGENT_REGISTRY.
+    if (used === null) {
+      return {
+        decision: 'DENY',
+        reason: `Redis unavailable — cannot verify token budget for ${agentId}; failing closed to prevent runaway spend`,
+        remainingBudget: 0,
+      }
+    }
+
     const projected = used + estimatedInputTokens + estimatedOutputTokens
     if (projected > agent.monthlyTokenBudget) {
       return {
         decision: 'DENY',
-        reason: `Monthly token budget exceeded: ${used}/${agent.monthlyTokenBudget}`,
+        reason: `Monthly token budget exceeded: ${used.toLocaleString()}/${agent.monthlyTokenBudget.toLocaleString()} tokens`,
         remainingBudget: Math.max(0, agent.monthlyTokenBudget - used),
       }
     }

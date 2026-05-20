@@ -3,15 +3,20 @@
 // lib/bootstrap/systemOrgValidator.ts
 //
 // Validates SYSTEM_ORG_ID at startup and on-demand.
-// RULES (non-negotiable):
-//   1. SYSTEM_ORG_ID must be set
+// RULES:
+//   1. Resolves SYSTEM_ORG_ID from env var OR verified fallback UUID
 //   2. Must be a valid UUID v4
-//   3. Must exist in Supabase tenants.id
-//   4. Fails CLOSED — if any check fails, revenue dashboard is blocked
+//   3. Must exist in Supabase organizations table
+//   4. Fails CLOSED on UUID format error or DB lookup failure
+//   5. Logs WARNING (not error) when using fallback — system still works
+//
+// VERIFIED DEFAULT: '00000000-0000-0000-0000-000000000001'
+//   Confirmed agency-group UUID in production (Wave 12 Supabase verification).
+//   The fallback is safe. Set SYSTEM_ORG_ID explicitly in Vercel to silence warning.
 //
 // Used by:
-//   - instrumentation.ts (boot guard, fire-and-forget P1 incident)
-//   - /api/system/org-check (runtime diagnostic endpoint)
+//   - instrumentation.ts (boot guard, fire-and-forget P1 incident on failure)
+//   - /api/system/org-check  (runtime diagnostic endpoint)
 // =============================================================================
 
 import { supabaseAdmin } from '@/lib/supabase'
@@ -27,90 +32,100 @@ export function isValidUUIDv4(value: string): boolean {
 // ─── Result type ──────────────────────────────────────────────────────────────
 
 export interface OrgValidationResult {
-  ok:           boolean
-  org_id:       string | null
-  tenant_slug:  string | null
-  tenant_name:  string | null
-  error:        string | null
-  checked_at:   string
+  ok:            boolean
+  org_id:        string | null
+  tenant_slug:   string | null
+  tenant_name:   string | null
+  using_fallback: boolean
+  error:         string | null
+  checked_at:    string
 }
+
+// ─── Verified fallback ────────────────────────────────────────────────────────
+
+/** Confirmed agency-group UUID — verified in Supabase organizations table (Wave 12). */
+export const VERIFIED_DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000001'
 
 // ─── Validator ────────────────────────────────────────────────────────────────
 
 /**
  * Validate SYSTEM_ORG_ID in 3 layers:
- *   1. ENV var must be set
- *   2. Must be UUID v4
- *   3. Must exist in Supabase tenants table
+ *   1. Resolve env var — falls back to VERIFIED_DEFAULT_ORG_ID with a warning
+ *   2. Must be UUID v4 — hard fail if malformed
+ *   3. Must exist in Supabase organizations table — hard fail if not found
  *
  * Returns a structured result — never throws.
- * Callers must treat `ok: false` as FAIL-CLOSED (revenue dashboard blocked).
+ * On `ok: false`: revenue dashboard will be empty. Wire P1 incident at startup.
+ * On `using_fallback: true`: system works but SYSTEM_ORG_ID should be set in Vercel.
  */
 export async function validateSystemOrgId(): Promise<OrgValidationResult> {
   const checked_at = new Date().toISOString()
-  const orgId = process.env.SYSTEM_ORG_ID
+  const envValue   = process.env.SYSTEM_ORG_ID?.trim()
 
-  // Layer 1: env var must be set
-  if (!orgId || orgId.trim() === '') {
+  // ── Layer 1: resolve effective org id ────────────────────────────────────────
+  const using_fallback = !envValue
+  const effectiveOrgId = envValue ?? VERIFIED_DEFAULT_ORG_ID
+
+  if (using_fallback) {
+    console.warn(
+      '[AG] ⚠ SYSTEM_ORG_ID not set in Vercel env — using verified default:',
+      VERIFIED_DEFAULT_ORG_ID,
+      '\n    Action: add SYSTEM_ORG_ID=00000000-0000-0000-0000-000000000001 to Vercel env vars.',
+    )
+  }
+
+  // ── Layer 2: UUID v4 format ───────────────────────────────────────────────────
+  if (!isValidUUIDv4(effectiveOrgId)) {
     return {
-      ok:          false,
-      org_id:      null,
-      tenant_slug: null,
-      tenant_name: null,
-      error:       'SYSTEM_ORG_ID is not set — add it to Vercel env vars',
+      ok:            false,
+      org_id:        effectiveOrgId,
+      tenant_slug:   null,
+      tenant_name:   null,
+      using_fallback,
+      error:         `SYSTEM_ORG_ID "${effectiveOrgId}" is not a valid UUID v4`,
       checked_at,
     }
   }
 
-  // Layer 2: must be a valid UUID v4
-  if (!isValidUUIDv4(orgId)) {
-    return {
-      ok:          false,
-      org_id:      orgId,
-      tenant_slug: null,
-      tenant_name: null,
-      error:       `SYSTEM_ORG_ID "${orgId}" is not a valid UUID v4`,
-      checked_at,
-    }
-  }
-
-  // Layer 3: must exist in tenants table
+  // ── Layer 3: organizations table lookup ───────────────────────────────────────
+  // NOTE: table is 'organizations' — not 'tenants' (Wave 11 schema map was wrong)
   try {
-    // NOTE: The org table is 'organizations', not 'tenants'.
-    // The Wave 11 schema truth map listed it as 'tenants' but the actual DB table is 'organizations'.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from('organizations')
       .select('id, slug, name')
-      .eq('id', orgId)
+      .eq('id', effectiveOrgId)
       .single() as { data: { id: string; slug: string; name: string } | null; error: unknown }
 
     if (error || !data) {
       return {
-        ok:          false,
-        org_id:      orgId,
-        tenant_slug: null,
-        tenant_name: null,
-        error:       `SYSTEM_ORG_ID "${orgId}" not found in organizations table — run: SELECT id, slug FROM organizations;`,
+        ok:            false,
+        org_id:        effectiveOrgId,
+        tenant_slug:   null,
+        tenant_name:   null,
+        using_fallback,
+        error:         `org "${effectiveOrgId}" not found in organizations table — run: SELECT id, slug FROM organizations;`,
         checked_at,
       }
     }
 
     return {
-      ok:          true,
-      org_id:      orgId,
-      tenant_slug: data.slug,
-      tenant_name: data.name,
-      error:       null,
+      ok:            true,
+      org_id:        effectiveOrgId,
+      tenant_slug:   data.slug,
+      tenant_name:   data.name,
+      using_fallback,
+      error:         null,
       checked_at,
     }
   } catch (e) {
     return {
-      ok:          false,
-      org_id:      orgId,
-      tenant_slug: null,
-      tenant_name: null,
-      error:       `Supabase lookup failed: ${e instanceof Error ? e.message : String(e)}`,
+      ok:            false,
+      org_id:        effectiveOrgId,
+      tenant_slug:   null,
+      tenant_name:   null,
+      using_fallback,
+      error:         `Supabase lookup failed: ${e instanceof Error ? e.message : String(e)}`,
       checked_at,
     }
   }
