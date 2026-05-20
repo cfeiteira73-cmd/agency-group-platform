@@ -1,6 +1,7 @@
 // AGENCY GROUP — Control Tower: Incidents | AMI: 22506
 // Phase Ω∞-7: P1-P4 incident management + SLO tracking
 
+import { Suspense } from 'react'
 import { KPICard } from '@/app/control-tower/_components/KPICard'
 import { StatusBadge } from '@/app/control-tower/_components/StatusBadge'
 import { incidentGovernanceEngine } from '@/lib/runtime/incidentGovernance'
@@ -17,6 +18,7 @@ async function getIncidentData() {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
+  P0: 'text-red-300 bg-red-900/60 border-red-700',
   P1: 'text-red-400 bg-red-900/30 border-red-700',
   P2: 'text-orange-400 bg-orange-900/20 border-orange-700',
   P3: 'text-amber-400 bg-amber-900/20 border-amber-700',
@@ -39,34 +41,67 @@ function minutesAgo(ts: string): string {
   return `${h}h ${m}m ago`
 }
 
-export default async function IncidentsPage() {
+// ─── Skeleton shown while IncidentsContent streams in ─────────────────────────
+
+function IncidentsSkeleton() {
+  return (
+    <div className="space-y-3">
+      {/* KPI skeletons */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-20 bg-[#1A1A24] rounded-lg animate-pulse border border-slate-800" />
+        ))}
+      </div>
+      {/* Incident list skeleton */}
+      <div className="bg-[#0F0F17] border border-slate-800 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-800">
+          <div className="h-4 w-32 bg-[#1A1A24] rounded animate-pulse" />
+        </div>
+        <div className="divide-y divide-slate-800/50">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="px-5 py-4">
+              <div className="h-16 bg-[#1A1A24] rounded-lg animate-pulse border border-slate-800" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Async data section — streams after header ────────────────────────────────
+
+async function IncidentsContent() {
   const { openIncidents } = await getIncidentData()
 
-  const p1Count = openIncidents.filter(i => i.severity === 'P1').length
-  const p2Count = openIncidents.filter(i => i.severity === 'P2').length
-  const sloBreached = openIncidents.filter(i => i.slo_breached).length
+  const p0Count        = openIncidents.filter(i => i.severity === 'P0').length
+  const p1Count        = openIncidents.filter(i => i.severity === 'P1').length
+  const p2Count        = openIncidents.filter(i => i.severity === 'P2').length
+  const sloBreached    = openIncidents.filter(i => i.slo_breached).length
   const unacknowledged = openIncidents.filter(i => !i.acknowledged_at).length
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100">Incident Governance</h1>
-          <p className="text-slate-400 text-sm mt-1">P1–P4 severity tracking · SLO compliance · MTTR monitoring</p>
+    <>
+      {/* P0 alert banner */}
+      {p0Count > 0 && (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/70 border border-red-600 rounded-lg w-fit">
+          <span className="w-2 h-2 rounded-full bg-red-300 animate-pulse" />
+          <span className="text-red-200 text-sm font-bold">{p0Count} P0 CRITICAL ACTIVE</span>
         </div>
-        {p1Count > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/40 border border-red-700 rounded-lg">
-            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
-            <span className="text-red-300 text-sm font-bold">{p1Count} P1 ACTIVE</span>
-          </div>
-        )}
-      </div>
+      )}
+
+      {/* P1 alert banner */}
+      {p1Count > 0 && (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/40 border border-red-700 rounded-lg w-fit">
+          <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+          <span className="text-red-300 text-sm font-bold">{p1Count} P1 ACTIVE</span>
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard title="Open Incidents" value={openIncidents.length} color={openIncidents.length > 0 ? 'red' : 'green'} />
-        <KPICard title="P1 / P2" value={`${p1Count} / ${p2Count}`} color={p1Count > 0 ? 'red' : p2Count > 0 ? 'amber' : 'green'} />
+        <KPICard title="P0 / P1 / P2" value={`${p0Count} / ${p1Count} / ${p2Count}`} color={p0Count > 0 ? 'red' : p1Count > 0 ? 'red' : p2Count > 0 ? 'amber' : 'green'} />
         <KPICard title="SLO Breached" value={sloBreached} color={sloBreached > 0 ? 'red' : 'green'} />
         <KPICard title="Unacknowledged" value={unacknowledged} color={unacknowledged > 0 ? 'amber' : 'green'} />
       </div>
@@ -87,6 +122,7 @@ export default async function IncidentsPage() {
           <div className="divide-y divide-slate-800/50">
             {openIncidents.map((incident) => {
               const slo = {
+                P0: { ack: 5, resolve: 30 },
                 P1: { ack: 5, resolve: 60 },
                 P2: { ack: 15, resolve: 240 },
                 P3: { ack: 60, resolve: 1440 },
@@ -158,9 +194,9 @@ export default async function IncidentsPage() {
       {/* SLO Reference */}
       <div className="bg-[#0F0F17] border border-slate-800 rounded-lg p-4">
         <h3 className="text-slate-300 text-xs font-semibold uppercase tracking-wider mb-3">SLO Targets</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {(['P1', 'P2', 'P3', 'P4'] as const).map(sev => {
-            const thresholds = { P1: [5, 60], P2: [15, 240], P3: [60, 1440], P4: [240, 4320] }[sev]
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {(['P0', 'P1', 'P2', 'P3', 'P4'] as const).map(sev => {
+            const thresholds = { P0: [5, 30], P1: [5, 60], P2: [15, 240], P3: [60, 1440], P4: [240, 4320] }[sev]
             return (
               <div key={sev} className={`rounded px-3 py-2 border ${SEVERITY_COLORS[sev]}`}>
                 <p className="font-bold text-sm">{sev}</p>
@@ -171,6 +207,27 @@ export default async function IncidentsPage() {
           })}
         </div>
       </div>
+    </>
+  )
+}
+
+// ─── Page component — header renders immediately ──────────────────────────────
+
+export default function IncidentsPage() {
+  return (
+    <div className="space-y-8">
+      {/* Static header renders immediately — no data dependency */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Incident Governance</h1>
+          <p className="text-slate-400 text-sm mt-1">P1–P4 severity tracking · SLO compliance · MTTR monitoring</p>
+        </div>
+      </div>
+
+      {/* Data-heavy content streams in with skeleton */}
+      <Suspense fallback={<IncidentsSkeleton />}>
+        <IncidentsContent />
+      </Suspense>
     </div>
   )
 }

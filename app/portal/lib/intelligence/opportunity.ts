@@ -16,6 +16,7 @@
 import type { ScoredContact } from '../leadScoring'
 import type { ScoredDeal } from '../dealScoring'
 import { parsePTValue } from '../../utils/format'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,7 +85,7 @@ function detectNeglectedHighValueLeads(contacts: ScoredContact[]): Opportunity[]
     const name     = contact.name ?? 'Contacto sem nome'
     const priority = scoring.band === 'A' ? 'critical' : 'high'
     const conf     = scoring.band === 'A' ? 'high' : 'medium'
-    const comm     = budgetMax * 0.05
+    const comm     = budgetMax * COMMISSION_RATE
 
     results.push({
       id:                 `NEGLECTED_HIGH_VALUE_LEAD:${contact.id}`,
@@ -119,7 +120,7 @@ function detectStalledHighPotentialDeals(deals: ScoredDeal[]): Opportunity[] {
     const ref      = deal.ref ?? deal.id ?? 'Deal'
     const priority = scoring.dealScore >= 80 ? 'critical' : 'high'
     const dealVal  = parsePTValue(deal.valor)
-    const comm     = dealVal > 0 ? dealVal * 0.05 : undefined
+    const comm     = dealVal > 0 ? dealVal * COMMISSION_RATE : undefined
 
     results.push({
       id:                 `STALLED_HIGH_POTENTIAL_DEAL:${deal.id ?? ref}`,
@@ -153,7 +154,7 @@ function detectReengagementOpportunities(contacts: ScoredContact[]): Opportunity
     const name     = contact.name ?? 'Contacto sem nome'
     const priority = scoring.band === 'A' ? 'high' : 'medium'
     const budgetMax = contact.budgetMax ?? 0
-    const comm     = budgetMax > 0 ? budgetMax * 0.05 : undefined
+    const comm     = budgetMax > 0 ? budgetMax * COMMISSION_RATE : undefined
 
     results.push({
       id:                 `REENGAGEMENT_OPPORTUNITY:${contact.id}`,
@@ -186,7 +187,7 @@ function detectFastConversionSignals(contacts: ScoredContact[]): Opportunity[] {
 
     const name      = contact.name ?? 'Contacto sem nome'
     const budgetMax = contact.budgetMax ?? 0
-    const comm      = budgetMax > 0 ? budgetMax * 0.05 : undefined
+    const comm      = budgetMax > 0 ? budgetMax * COMMISSION_RATE : undefined
 
     results.push({
       id:                 `FAST_CONVERSION_SIGNAL:${contact.id}`,
@@ -240,7 +241,7 @@ function detectClosingWindowOpen(deals: ScoredDeal[]): Opportunity[] {
     const priority = completionRate < 0.5 ? 'critical' : 'high'
     const ref      = deal.ref ?? deal.id ?? 'Deal'
     const dealVal  = parsePTValue(deal.valor)
-    const comm     = dealVal > 0 ? dealVal * 0.05 : undefined
+    const comm     = dealVal > 0 ? dealVal * COMMISSION_RATE : undefined
 
     results.push({
       id:                 `CLOSING_WINDOW_OPEN:${deal.id ?? ref}`,

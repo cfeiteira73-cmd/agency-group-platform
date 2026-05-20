@@ -6,6 +6,7 @@
 // =============================================================================
 
 import { randomUUID } from 'crypto'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Channel & segment types ──────────────────────────────────────────────────
 
@@ -128,7 +129,7 @@ function estimateRevenueImpact(
   confidence: number,
 ): number {
   // Expected commission: 5% of sale price, discounted by channel conversion rate + confidence
-  const commission = price_eur * 0.05
+  const commission = price_eur * COMMISSION_RATE
   const channelConversionRate: Record<MarketingChannelType, number> = {
     email: 0.04,
     whatsapp: 0.06,

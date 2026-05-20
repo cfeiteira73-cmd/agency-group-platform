@@ -9,6 +9,7 @@ import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { opportunityRadar } from '@/lib/executive/opportunityRadar'
 import { logger } from '@/lib/observability/logger'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 export const maxDuration = 15
@@ -133,7 +134,7 @@ export async function GET(req: NextRequest) {
 
   // ── Revenue snapshot ──────────────────────────────────────────────────────
   // hot_leads × avg deal value (€500K) × commission (5%) × close rate (8%)
-  const estimated_daily_opportunity_eur = Math.round(hot_leads * 500_000 * 0.05 * 0.08)
+  const estimated_daily_opportunity_eur = Math.round(hot_leads * 500_000 * COMMISSION_RATE * 0.08)
 
   // ── Morning actions ───────────────────────────────────────────────────────
   const morning_actions: MorningAction[] = []

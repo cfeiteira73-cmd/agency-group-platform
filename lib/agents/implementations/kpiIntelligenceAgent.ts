@@ -7,6 +7,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { BaseAgent } from '../base'
 import type { AgentConfig, AgentContext, AgentInsight, AgentAction } from '../types'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 const ACTIVE_DEAL_STAGES = [
   'Proposta', 'Proposta Enviada', 'Negociação', 'Due Diligence', 'CPCV', 'CPCV Assinado', 'Financiamento',
@@ -129,7 +130,7 @@ export class KpiIntelligenceAgent extends BaseAgent {
         summary:            `KPI executivo: ${leadsLast30} leads (30d) | Pipeline €${Math.round(pipelineValue / 1000)}K | ${activeDeals?.length ?? 0} deals activos | WoW leads ${leadGrowthWoW !== null ? (leadGrowthWoW >= 0 ? '+' : '') + Math.round(leadGrowthWoW * 100) + '%' : 'N/A'}`,
         severity:           anomalies.length > 0 ? 'warning' : 'info',
         confidence:         0.9,
-        revenue_impact_eur: pipelineValue * 0.05,
+        revenue_impact_eur: pipelineValue * COMMISSION_RATE,
         entity_type:        'org',
         entity_id:          ctx.org_id,
         evidence:           {

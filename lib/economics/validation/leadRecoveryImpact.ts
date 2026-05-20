@@ -1,10 +1,9 @@
 // AGENCY GROUP — SH-ROS | AMI: 22506
 
 import { logger } from '@/lib/observability/logger'
-
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 const RECOVERY_AUTOMATION_COST_EUR_PER_MONTH = 200 // estimated operational cost
-const COMMISSION_RATE = 0.05
 const AVG_DEAL_VALUE_EUR = 320_000
 
 export interface RecoveredLead {

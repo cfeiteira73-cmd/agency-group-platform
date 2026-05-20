@@ -51,6 +51,9 @@ function getNestedValue(obj: Messages, path: string): string {
 }
 
 // ─── Load messages for a locale ──────────────────────────────────────────────
+// SAFE: In-process message cache. JSON locale files are static build artifacts —
+// they never change at runtime. Reloading from disk on cold start is a one-time
+// cost (dynamic import, then cached). No cross-instance consistency needed.
 const messageCache = new Map<Locale, Messages>()
 
 export async function loadMessages(locale: Locale): Promise<Messages> {

@@ -105,9 +105,16 @@ export class AgentProfitabilityEngine {
       (data ?? []).map((d: any) => d.assigned_to as string).filter(Boolean)
     )
 
+    // Process in batches of 5 to avoid saturating the connection pool
+    const BATCH_SIZE = 5
+    const agentArr = Array.from(agents)
     const scores: AgentProfitabilityScore[] = []
-    for (const agent_id of agents) {
-      scores.push(await this.scoreAgent(agent_id, org_id, period_days))
+    for (let i = 0; i < agentArr.length; i += BATCH_SIZE) {
+      const batch = agentArr.slice(i, i + BATCH_SIZE)
+      const batchResults = await Promise.all(
+        batch.map(agent_id => this.scoreAgent(agent_id, org_id, period_days).catch(() => null))
+      )
+      scores.push(...batchResults.filter((r): r is AgentProfitabilityScore => r !== null))
     }
 
     scores.sort((a, b) => b.economic_efficiency_score - a.economic_efficiency_score)

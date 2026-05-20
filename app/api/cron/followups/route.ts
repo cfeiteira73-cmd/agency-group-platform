@@ -1,7 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { withCronLock } from '@/lib/ops/cronLock'
 import { safeCompare } from '@/lib/safeCompare'
 import { cronCorrelationId } from '@/lib/observability/correlation'
+import { recordCausalStep } from '@/lib/observability/causalTrace'
+
+// ─── Per-contact idempotency — Redis SET NX EX ────────────────────────────────
+// Prevents double-sending if: (a) markFollowUpSent fails (Notion timeout),
+// (b) cron fires twice within the same window (clock drift / Vercel retry).
+// Key: `fu:<notionId>:<date>` — scoped to today so each contact gets max 1 email/day.
+// Fail-open: no Redis → always send (maintains existing behaviour).
+
+async function hasFollowUpSentToday(notionId: string): Promise<boolean> {
+  const url   = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return false  // fail-open
+
+  const todayKey = new Date().toISOString().slice(0, 10)  // YYYY-MM-DD
+  const key = `fu:${notionId}:${todayKey}`
+
+  try {
+    const res = await fetch(`${url}/pipeline`, {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      // SET key 1 NX EX 86400 — 24h TTL, covers the full calendar day + buffer
+      body:    JSON.stringify([['SET', key, '1', 'NX', 'EX', '86400']]),
+      signal:  AbortSignal.timeout(400),
+    })
+    if (!res.ok) return false
+    const [cmd] = await res.json() as [{ result: string | null }]
+    // "OK" = first time today (not a duplicate); null = already sent today
+    return cmd?.result !== 'OK'
+  } catch {
+    return false  // fail-open
+  }
+}
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN ?? ''
 const NOTION_CRM   = process.env.NOTION_CRM_DB || '385a010f42244ef79b0a2ead4f258698'
@@ -229,7 +262,9 @@ export async function GET(req: NextRequest) {
   if (!cronSecret) return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 })
   if (!safeCompare(authHeader ?? '', `Bearer ${cronSecret}`)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const lockResult = await withCronLock('followups', 3, async () => {
   const corrId = cronCorrelationId('followups')
+  const tenantId = req.headers.get('x-tenant-id') ?? 'agency-group'
 
   if (!NOTION_TOKEN || !RESEND_KEY) {
     return NextResponse.json({ error: 'Missing credentials', sent: 0 })
@@ -249,12 +284,28 @@ export async function GET(req: NextRequest) {
   // Send 3-day follow-ups
   for (const contact of contacts3) {
     try {
+      // Idempotency: skip if already sent today (Redis SET NX EX 86400)
+      if (await hasFollowUpSentToday(contact.id)) {
+        console.log('[followups] Already sent today — skipping', { id: contact.id })
+        continue
+      }
       const { subject, html } = buildEmail3Days(contact, contact.lingua)
       await resend.emails.send({
         from: FROM_EMAIL,
         to: contact.email,
         subject,
         html,
+      })
+      void recordCausalStep({
+        correlation_id: contact.id ?? 'followup-cron',
+        tenant_id: tenantId,
+        step_type: 'email_sent',
+        entity_type: 'contact',
+        entity_id: contact.id,
+        agent_id: 'followup-generator',
+        action: 'followup_email_sent',
+        success: true,
+        metadata: { subject, to: contact.email },
       })
       await markFollowUpSent(contact.id).catch(err =>
         console.error('[followups] markFollowUpSent failed for contact', contact.id, ':', err?.message ?? err)
@@ -268,12 +319,28 @@ export async function GET(req: NextRequest) {
   // Send 7-day follow-ups
   for (const contact of contacts7) {
     try {
+      // Idempotency: skip if already sent today (Redis SET NX EX 86400)
+      if (await hasFollowUpSentToday(contact.id)) {
+        console.log('[followups] Already sent today — skipping', { id: contact.id })
+        continue
+      }
       const { subject, html } = buildEmail7Days(contact, contact.lingua)
       await resend.emails.send({
         from: FROM_EMAIL,
         to: contact.email,
         subject,
         html,
+      })
+      void recordCausalStep({
+        correlation_id: contact.id ?? 'followup-cron',
+        tenant_id: tenantId,
+        step_type: 'email_sent',
+        entity_type: 'contact',
+        entity_id: contact.id,
+        agent_id: 'followup-generator',
+        action: 'followup_email_sent',
+        success: true,
+        metadata: { subject, to: contact.email },
       })
       await markFollowUpSent(contact.id).catch(err =>
         console.error('[followups] markFollowUpSent failed for contact', contact.id, ':', err?.message ?? err)
@@ -285,4 +352,10 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, ...results, correlation_id: corrId }, { headers: { 'x-correlation-id': corrId } })
+  }) // end withCronLock
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return lockResult
 }

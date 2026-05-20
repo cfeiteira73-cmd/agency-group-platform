@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { getAdminRole } from '@/lib/auth/adminAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -17,6 +19,7 @@ type RecoveryAction = 'recover_orphans' | 'replay_dlq' | 'reconcile' | 'full_rec
 // ─── GET — current recovery status ───────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -74,7 +77,7 @@ export async function GET(req: NextRequest) {
     }, { status: 200 })
 
   } catch (err) {
-    console.error('[GET /api/control-tower/recovery]', err)
+    console.error('[GET /api/control-tower/recovery]', err, { corrId })
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }
@@ -82,14 +85,16 @@ export async function GET(req: NextRequest) {
 // ─── POST — trigger recovery action ──────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   // RBAC — only super_admin and ops_manager may trigger recovery
+  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '') ?? ''
   const isServiceCall =
-    (process.env.CRON_SECRET     && (req.headers.get('authorization')?.replace('Bearer ', '') ?? '') === process.env.CRON_SECRET) ||
-    (process.env.INTERNAL_API_TOKEN && (req.headers.get('authorization')?.replace('Bearer ', '') ?? '') === process.env.INTERNAL_API_TOKEN)
+    (process.env.CRON_SECRET      && safeCompare(authHeader, process.env.CRON_SECRET)) ||
+    (process.env.INTERNAL_API_TOKEN && safeCompare(authHeader, process.env.INTERNAL_API_TOKEN))
 
   if (!isServiceCall) {
     let cookieEmail: string | null = null
@@ -199,7 +204,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result, { status: 200 })
 
   } catch (err) {
-    console.error('[POST /api/control-tower/recovery]', { action, org_id, error: err })
+    console.error('[POST /api/control-tower/recovery]', { action, org_id, error: err, corrId })
     return NextResponse.json({ error: 'Recovery failed', run_id: runId }, { status: 500 })
   }
 }

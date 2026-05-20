@@ -82,9 +82,15 @@ function getAdminClient() {
 
 // ---------------------------------------------------------------------------
 // Idempotency cache — prevents duplicate events within the same process
-// Simple in-memory Set; keys expire after EVENT_DEDUP_WINDOW_MS
-// For distributed dedup, the DB upsert on idempotency_key column is the
-// authoritative guard (migration 20260430_002_event_idempotency.sql)
+// Simple in-memory Map; keys expire after EVENT_DEDUP_WINDOW_MS
+// NOTE: The DB upsert on idempotency_key (migration 20260430_002_event_idempotency.sql)
+// is the authoritative distributed dedup guard. This in-memory map is a
+// same-process short-circuit only — it provides NO cross-instance dedup
+// on Vercel. If the DB migration has been applied, this is acceptable as a
+// best-effort optimisation (MEDIUM risk). If the DB column does not exist,
+// this becomes CRITICAL — duplicate learning_events will corrupt ML training data.
+// TODO: CRITICAL (if DB idempotency_key column missing) — move to Redis (Upstash).
+// GitHub Issue: trackLearningEvent dedup is per-process only — verify DB constraint (#INFRA-012)
 // ---------------------------------------------------------------------------
 
 const EVENT_DEDUP_WINDOW_MS = 30_000  // 30 seconds

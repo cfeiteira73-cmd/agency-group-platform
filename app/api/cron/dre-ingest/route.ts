@@ -19,6 +19,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { withCronLock }              from '@/lib/ops/cronLock'
+import { safeCompare }               from '@/lib/safeCompare'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
 
 export const runtime    = 'nodejs'
@@ -34,7 +36,7 @@ function authCheck(req: NextRequest): boolean {
   const token =
     req.headers.get('x-cron-secret') ??
     req.headers.get('authorization')?.replace('Bearer ', '').trim()
-  return token === secret
+  return !!token && safeCompare(token, secret)
 }
 
 // ---------------------------------------------------------------------------
@@ -263,6 +265,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lockResult = await withCronLock('dre-ingest', 3, async () => {
   const corrId    = cronCorrelationId('dre-ingest')
   const startedAt = new Date().toISOString()
   const t0        = Date.now()
@@ -357,4 +360,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     },
     { status: errors.length > 0 && created === 0 ? 500 : 200, headers: { 'x-correlation-id': corrId } },
   )
+  }) // end withCronLock
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return lockResult
 }

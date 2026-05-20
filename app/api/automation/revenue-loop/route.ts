@@ -29,6 +29,7 @@ import { safeCompare } from '@/lib/safeCompare'
 import track from '@/lib/trackLearningEvent'
 import log from '@/lib/logger'
 import { randomUUID } from 'crypto'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -256,7 +257,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const alreadyOpen = await hasOpenItem('deal', String(deal.id))
       if (alreadyOpen) { report.already_open++; continue }
 
-      const fee = parseRev(deal.expected_fee) || parseRev(deal.valor) * 0.05
+      const fee = parseRev(deal.expected_fee) || parseRev(deal.valor) * COMMISSION_RATE
       report.revenue_at_risk += fee
 
       const score = Math.min(100, 65 + Math.round((hrs - RULES.STUCK_DEAL_HOURS) / 24))

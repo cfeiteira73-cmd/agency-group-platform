@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const TABLE = 'contacts'
 
@@ -78,6 +79,7 @@ function computeBuyerScore(params: {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ contact_id, name: contact.full_name, score, reason, saved: true })
   } catch (err) {
-    console.error('[buyers/score POST]', err)
+    console.error('[buyers/score POST]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -129,6 +131,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
@@ -207,7 +210,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       generated_at: now,
     })
   } catch (err) {
-    console.error('[buyers/score GET]', err)
+    console.error('[buyers/score GET]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

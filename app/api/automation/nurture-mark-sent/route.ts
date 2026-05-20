@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -22,6 +23,7 @@ function isAuthorized(req: NextRequest): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -62,13 +64,13 @@ export async function POST(req: NextRequest) {
         console.warn('[nurture-mark-sent] nurture_log table not yet created — skipping log')
         return NextResponse.json({ success: true, status: 'log_table_missing' })
       }
-      console.error('[nurture-mark-sent] insert error:', error.message)
+      console.error('[nurture-mark-sent] insert error:', error.message, { corrId })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, contact_id: contactId, sequence_day: sequenceDay })
   } catch (err) {
-    console.error('[nurture-mark-sent] error:', err)
+    console.error('[nurture-mark-sent] error:', err, { corrId })
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

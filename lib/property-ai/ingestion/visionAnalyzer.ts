@@ -2,6 +2,8 @@
 
 import { logger } from '@/lib/observability/logger'
 import type { ArchitectureStyle, StagingQuality, PropertyType } from '@/lib/property-ai/types'
+import { withAnthropicRetry } from '@/lib/ops/withRetry'
+import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
 
 interface VisionAnalysisResult {
   rooms_detected: string[]
@@ -53,31 +55,41 @@ const VISION_DEFAULTS: VisionAnalysisResult = {
   confidence: 0.3,
 }
 
+// Explicit failure sentinel — confidence:0 distinguishes "real failure" from
+// "no images provided" (VISION_DEFAULTS confidence:0.3).
+// Downstream callers MUST check confidence === 0 and reject/skip the result.
+const VISION_FAILURE: VisionAnalysisResult = {
+  ...VISION_DEFAULTS,
+  confidence: 0,   // sentinel: this image FAILED analysis — do not use for decisions
+}
+
 async function callClaudeVision(imageUrl: string, prompt: string): Promise<string> {
   // 30s timeout prevents indefinite hang if Anthropic API is unresponsive
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    signal: AbortSignal.timeout(30_000),
-    headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-opus-4-5',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'url', url: imageUrl } },
-            { type: 'text', text: prompt },
-          ],
-        },
-      ],
-    }),
-  })
-  const data = (await resp.json()) as { content?: Array<{ text?: string }> }
+  // withAnthropicRetry adds 3 attempts with 1s→2s backoff for transient 5xx/529 errors
+  const data = await withAnthropicRetry(() =>
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      signal: AbortSignal.timeout(30_000),
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-5',
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'url', url: imageUrl } },
+              { type: 'text', text: prompt },
+            ],
+          },
+        ],
+      }),
+    }).then((resp) => resp.json() as Promise<{ content?: Array<{ text?: string }> }>)
+  )
   return data.content?.[0]?.text ?? ''
 }
 
@@ -115,15 +127,21 @@ Return only the JSON object, no additional text.`
 function mergeVisionResults(results: VisionAnalysisResult[]): VisionAnalysisResult {
   if (results.length === 0) return { ...VISION_DEFAULTS }
 
-  const allRooms = Array.from(new Set(results.flatMap((r) => r.rooms_detected)))
+  // Filter out explicit failures (confidence === 0) before merging.
+  // If ALL images failed, return VISION_FAILURE so callers can detect total failure.
+  const valid = results.filter(r => r.confidence > 0)
+  if (valid.length === 0) return { ...VISION_FAILURE }
+  const results_to_merge = valid
+
+  const allRooms = Array.from(new Set(results_to_merge.flatMap((r) => r.rooms_detected)))
   const avg = (key: keyof VisionAnalysisResult): number => {
-    const vals = results.map((r) => r[key] as number).filter((v) => typeof v === 'number')
+    const vals = results_to_merge.map((r) => r[key] as number).filter((v) => typeof v === 'number')
     return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
   }
   const any = (key: keyof VisionAnalysisResult): boolean =>
-    results.some((r) => r[key] === true)
+    results_to_merge.some((r) => r[key] === true)
   const majority = <T>(key: keyof VisionAnalysisResult): T => {
-    const vals = results.map((r) => r[key] as T)
+    const vals = results_to_merge.map((r) => r[key] as T)
     const counts = new Map<T, number>()
     for (const v of vals) counts.set(v, (counts.get(v) ?? 0) + 1)
     let best: T = vals[0]
@@ -135,7 +153,7 @@ function mergeVisionResults(results: VisionAnalysisResult[]): VisionAnalysisResu
   }
 
   // Best property_type: pick most frequent non-null value
-  const ptVals = results.map(r => r.property_type).filter((v): v is PropertyType => v !== null)
+  const ptVals = results_to_merge.map(r => r.property_type).filter((v): v is PropertyType => v !== null)
   const ptCounts = new Map<PropertyType, number>()
   for (const v of ptVals) ptCounts.set(v, (ptCounts.get(v) ?? 0) + 1)
   let bestPt: PropertyType | null = null
@@ -181,47 +199,60 @@ class VisionAnalyzer {
     const VALID_PROPERTY_TYPES: PropertyType[] = ['apartment', 'villa', 'townhouse', 'penthouse', 'studio', 'commercial', 'land', 'garage']
 
     const results = await Promise.all(imageUrls.map(async (url): Promise<VisionAnalysisResult> => {
-      try {
-        const raw = await callClaudeVision(url, VISION_PROMPT)
-        const jsonMatch = raw.match(/\{[\s\S]*\}/)
-        if (!jsonMatch) {
-          logger.warn('[VisionAnalyzer] no JSON in response', { submissionId, url })
-          return { ...VISION_DEFAULTS }
-        }
-        const parsed = JSON.parse(jsonMatch[0]) as Partial<VisionAnalysisResult>
-        const parsedPt = parsed.property_type as string | null
-        const validPt: PropertyType | null = (parsedPt && VALID_PROPERTY_TYPES.includes(parsedPt as PropertyType))
-          ? parsedPt as PropertyType
-          : null
+      // withCircuitBreaker guards against Anthropic API failures.
+      // API errors (from callClaudeVision) re-throw → CB records failure → circuit opens after threshold.
+      // Parse failures (no JSON / bad JSON) return VISION_FAILURE directly without tripping the circuit
+      // (they reflect prompt/response quality, not connectivity).
+      // When circuit is OPEN or fn throws: returns { ...VISION_FAILURE } (confidence:0 sentinel).
+      return withCircuitBreaker<VisionAnalysisResult>(
+        'anthropic-vision',
+        async (): Promise<VisionAnalysisResult> => {
+          // Wrap API call so failures are logged before re-throwing to the CB
+          const raw = await callClaudeVision(url, VISION_PROMPT).catch((err) => {
+            logger.error('[VisionAnalyzer] API call failed — will trip circuit breaker', { submissionId, url, err })
+            throw err  // re-throw: CB records failure, returns VISION_FAILURE fallback
+          })
 
-        return {
-          rooms_detected: Array.isArray(parsed.rooms_detected) ? parsed.rooms_detected : [],
-          bathroom_count: typeof parsed.bathroom_count === 'number' ? parsed.bathroom_count : 0,
-          bedroom_count: typeof parsed.bedroom_count === 'number' ? parsed.bedroom_count : 0,
-          kitchen_quality: parsed.kitchen_quality ?? 'unknown',
-          luxury_score: typeof parsed.luxury_score === 'number' ? parsed.luxury_score : 50,
-          renovation_needed: parsed.renovation_needed ?? false,
-          renovation_probability: typeof parsed.renovation_probability === 'number' ? parsed.renovation_probability : 0.2,
-          sunlight_score: typeof parsed.sunlight_score === 'number' ? parsed.sunlight_score : 50,
-          has_outdoor: parsed.has_outdoor ?? false,
-          has_pool: parsed.has_pool ?? false,
-          has_garden: parsed.has_garden ?? false,
-          has_parking: parsed.has_parking ?? false,
-          has_elevator: parsed.has_elevator ?? false,
-          has_sea_view: parsed.has_sea_view ?? false,
-          has_golf_view: parsed.has_golf_view ?? false,
-          has_city_view: parsed.has_city_view ?? false,
-          has_mountain_view: parsed.has_mountain_view ?? false,
-          property_type: validPt,
-          architecture_style: (parsed.architecture_style as ArchitectureStyle) ?? 'contemporary',
-          furniture_staging: (parsed.furniture_staging as StagingQuality) ?? 'basic',
-          construction_quality: parsed.construction_quality ?? 'standard',
-          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.5,
-        }
-      } catch (err) {
-        logger.error('[VisionAnalyzer] failed to analyze image', { submissionId, url, err })
-        return { ...VISION_DEFAULTS }
-      }
+          const jsonMatch = raw.match(/\{[\s\S]*\}/)
+          if (!jsonMatch) {
+            // Parse failure: not Anthropic's fault — do NOT trip the circuit breaker
+            logger.warn('[VisionAnalyzer] no JSON in response — returning failure sentinel', { submissionId, url })
+            return { ...VISION_FAILURE }
+          }
+
+          const parsed = JSON.parse(jsonMatch[0]) as Partial<VisionAnalysisResult>
+          const parsedPt = parsed.property_type as string | null
+          const validPt: PropertyType | null = (parsedPt && VALID_PROPERTY_TYPES.includes(parsedPt as PropertyType))
+            ? parsedPt as PropertyType
+            : null
+
+          return {
+            rooms_detected:         Array.isArray(parsed.rooms_detected) ? parsed.rooms_detected : [],
+            bathroom_count:         typeof parsed.bathroom_count         === 'number' ? parsed.bathroom_count         : 0,
+            bedroom_count:          typeof parsed.bedroom_count          === 'number' ? parsed.bedroom_count          : 0,
+            kitchen_quality:        parsed.kitchen_quality        ?? 'unknown',
+            luxury_score:           typeof parsed.luxury_score           === 'number' ? parsed.luxury_score           : 50,
+            renovation_needed:      parsed.renovation_needed      ?? false,
+            renovation_probability: typeof parsed.renovation_probability === 'number' ? parsed.renovation_probability : 0.2,
+            sunlight_score:         typeof parsed.sunlight_score         === 'number' ? parsed.sunlight_score         : 50,
+            has_outdoor:            parsed.has_outdoor            ?? false,
+            has_pool:               parsed.has_pool               ?? false,
+            has_garden:             parsed.has_garden             ?? false,
+            has_parking:            parsed.has_parking            ?? false,
+            has_elevator:           parsed.has_elevator           ?? false,
+            has_sea_view:           parsed.has_sea_view           ?? false,
+            has_golf_view:          parsed.has_golf_view          ?? false,
+            has_city_view:          parsed.has_city_view          ?? false,
+            has_mountain_view:      parsed.has_mountain_view      ?? false,
+            property_type:          validPt,
+            architecture_style:     (parsed.architecture_style  as ArchitectureStyle) ?? 'contemporary',
+            furniture_staging:      (parsed.furniture_staging   as StagingQuality)    ?? 'basic',
+            construction_quality:   parsed.construction_quality ?? 'standard',
+            confidence:             typeof parsed.confidence === 'number' ? parsed.confidence : 0.5,
+          }
+        },
+        { ...VISION_FAILURE },  // fallback: circuit OPEN or fn throws → confidence:0 sentinel
+      )
     }))
 
     const merged = mergeVisionResults(results)

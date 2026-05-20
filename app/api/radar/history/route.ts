@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PricePoint {
@@ -16,8 +17,66 @@ interface PriceHistory {
   delta_pct: number
 }
 
-// ─── In-memory fallback store ─────────────────────────────────────────────────
-const memoryStore = new Map<string, PricePoint[]>()
+// ─── Upstash Redis helpers ────────────────────────────────────────────────────
+// Raw fetch to UPSTASH_REDIS_REST_URL — same pattern as lib/rateLimit.ts.
+// Fail-open: if env vars are absent or the call throws, returns null so callers
+// fall through to Notion or degrade gracefully.
+
+const REDIS_KEY = (id: string) => `radar:history:${id}`
+const REDIS_TTL = 604800 // 7 days
+
+function upstashConfigured(): boolean {
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+}
+
+async function redisGet(key: string): Promise<string | null> {
+  try {
+    const url   = process.env.UPSTASH_REDIS_REST_URL!
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN!
+    const res = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!res.ok) return null
+    const json = await res.json() as { result: string | null }
+    return json.result ?? null
+  } catch {
+    return null
+  }
+}
+
+async function redisSet(key: string, value: string, exSeconds: number): Promise<void> {
+  try {
+    const url   = process.env.UPSTASH_REDIS_REST_URL!
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN!
+    await fetch(`${url}/set/${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([value, 'EX', exSeconds]),
+      signal: AbortSignal.timeout(5000),
+    })
+  } catch {
+    // fire-and-forget — failure is non-fatal
+  }
+}
+
+// Read price-point array from Redis for a given URL.
+async function getHistoryFromRedis(url: string): Promise<PricePoint[] | null> {
+  if (!upstashConfigured()) return null
+  const raw = await redisGet(REDIS_KEY(url))
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as PricePoint[]
+  } catch {
+    return null
+  }
+}
+
+// Persist price-point array to Redis (overwrites previous value, keeps 7-day TTL).
+async function setHistoryInRedis(url: string, points: PricePoint[]): Promise<void> {
+  if (!upstashConfigured()) return
+  await redisSet(REDIS_KEY(url), JSON.stringify(points), REDIS_TTL)
+}
 
 // ─── Notion helpers ────────────────────────────────────────────────────────────
 const NOTION_TOKEN = () => process.env.NOTION_TOKEN
@@ -118,6 +177,7 @@ function computeTrend(history: PricePoint[]): { trend: 'down' | 'stable' | 'up';
 
 // ─── GET /api/radar/history?url=... ──────────────────────────────────────────
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const { searchParams } = new URL(req.url)
     const url = searchParams.get('url')
@@ -135,11 +195,13 @@ export async function GET(req: NextRequest) {
       try {
         history = await getHistoryFromNotion(url)
       } catch (notionErr) {
-        console.error('Notion read failed, using memory store:', notionErr)
-        history = memoryStore.get(url) ?? []
+        console.error('Notion read failed, trying Redis fallback:', notionErr, { corrId })
+        // Fall back to Redis
+        history = (await getHistoryFromRedis(url)) ?? []
       }
     } else {
-      history = memoryStore.get(url) ?? []
+      // No Notion configured — use Redis as primary store
+      history = (await getHistoryFromRedis(url)) ?? []
     }
 
     const { trend, delta_pct } = computeTrend(history)
@@ -156,6 +218,7 @@ export async function GET(req: NextRequest) {
 
 // ─── POST /api/radar/history — Add price data point ──────────────────────────
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const body = (await req.json()) as Record<string, unknown>
     const url = String(body.url ?? '')
@@ -183,20 +246,20 @@ export async function POST(req: NextRequest) {
       try {
         await addToNotion({ url, preco, zona, platform, score })
       } catch (notionErr) {
-        console.error('Notion write failed, storing in memory:', notionErr)
-        // Fall through to memory store
-        const existing = memoryStore.get(url) ?? []
+        console.error('Notion write failed, storing in Redis:', notionErr, { corrId })
+        // Fall back to Redis
+        const existing = (await getHistoryFromRedis(url)) ?? []
         existing.push(point)
-        memoryStore.set(url, existing.slice(-50)) // keep last 50 entries
+        await setHistoryInRedis(url, existing.slice(-50))
       }
     } else {
-      // Use memory store
-      const existing = memoryStore.get(url) ?? []
+      // No Notion configured — use Redis as primary store
+      const existing = (await getHistoryFromRedis(url)) ?? []
       // Avoid duplicate same-day entries
       const today = new Date().toISOString().split('T')[0]
       const filteredExisting = existing.filter(e => !e.data.startsWith(today))
       filteredExisting.push(point)
-      memoryStore.set(url, filteredExisting.slice(-50))
+      await setHistoryInRedis(url, filteredExisting.slice(-50))
     }
 
     // Return current history
@@ -205,10 +268,10 @@ export async function POST(req: NextRequest) {
       try {
         history = await getHistoryFromNotion(url)
       } catch {
-        history = memoryStore.get(url) ?? [point]
+        history = (await getHistoryFromRedis(url)) ?? [point]
       }
     } else {
-      history = memoryStore.get(url) ?? [point]
+      history = (await getHistoryFromRedis(url)) ?? [point]
     }
 
     const { trend, delta_pct } = computeTrend(history)

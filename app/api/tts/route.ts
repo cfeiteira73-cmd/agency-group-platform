@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const err = await res.text()
-      console.error('[tts] OpenAI error:', err)
+      console.error('[tts] OpenAI error:', err, { corrId })
       return NextResponse.json({ error: 'TTS failed' }, { status: 500 })
     }
 
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('[tts] Error:', error)
+    console.error('[tts] Error:', error, { corrId })
     return NextResponse.json({ error: 'TTS failed' }, { status: 500 })
   }
 }

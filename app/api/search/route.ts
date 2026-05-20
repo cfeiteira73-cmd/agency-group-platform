@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -302,6 +304,7 @@ async function fetchPropertiesFromDB(criteria: ExtractedCriteria): Promise<Searc
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const body = await req.json() as { query?: unknown; language?: unknown; sessionId?: unknown }
     const { query, language = 'pt' } = body
@@ -312,13 +315,15 @@ export async function POST(req: NextRequest) {
 
     const lang = typeof language === 'string' ? language : 'pt'
 
-    // Use Claude Haiku to extract structured search criteria from natural language
-    const extractionResponse = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 500,
-      messages: [{
-        role: 'user',
-        content: `Extract property search criteria from this query. Return ONLY valid JSON, no markdown.
+    // Use Claude to extract structured search criteria from natural language
+    const extractionResponse = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: `Extract property search criteria from this query. Return ONLY valid JSON, no markdown.
 
 Query: "${query}"
 
@@ -342,20 +347,25 @@ Rules:
 - For "rental yield" / "investment" queries → useCase: "rental_yield"
 - For "capital appreciation" / "valorização" queries → useCase: "capital_appreciation"
 - For "family" / "lifestyle" queries → useCase: "lifestyle"`,
-      }],
-    })
+        }],
+      }),
+      null,
+    )
 
     let criteria: ExtractedCriteria = {}
-    try {
-      const content = extractionResponse.content[0]
-      if (content.type === 'text') {
-        const jsonMatch = content.text.match(/\{[\s\S]*\}/)
-        if (jsonMatch) criteria = JSON.parse(jsonMatch[0]) as ExtractedCriteria
+    if (extractionResponse !== null) {
+      try {
+        const content = extractionResponse.content[0]
+        if (content.type === 'text') {
+          const jsonMatch = content.text.match(/\{[\s\S]*\}/)
+          if (jsonMatch) criteria = JSON.parse(jsonMatch[0]) as ExtractedCriteria
+        }
+      } catch {
+        // Extraction failed — proceed with empty criteria (return all, sorted by relevance)
+        criteria = {}
       }
-    } catch {
-      // Extraction failed — proceed with empty criteria (return all, sorted by relevance)
-      criteria = {}
     }
+    // If circuit open (extractionResponse === null), criteria stays {} — DB search proceeds normally
 
     // 1. Try semantic search (requires OPENAI_API_KEY + pgvector embeddings)
     const semanticFilters: SemanticFilters = {
@@ -426,23 +436,26 @@ Rules:
 
     // Generate AI summary of results in the user's language
     const topResult = results[0]
-    const aiSummaryResponse = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 300,
-      system: `You are Sofia, Agency Group's AI property advisor. AMI 22506. Be concise, expert and warm. Respond in ${lang === 'en' ? 'English' : 'Portuguese (European)'}.`,
-      messages: [{
-        role: 'user',
-        content: `Client asked: "${query}"
+    const aiSummaryResponse = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 300,
+        system: `You are Sofia, Agency Group's AI property advisor. AMI 22506. Be concise, expert and warm. Respond in ${lang === 'en' ? 'English' : 'Portuguese (European)'}.`,
+        messages: [{
+          role: 'user',
+          content: `Client asked: "${query}"
 We found ${results.length} matching properties.
 Top result: ${topResult ? `${topResult.title} — €${topResult.price.toLocaleString('pt-PT')} — ${topResult.zone} — ${topResult.rentalYield}% yield` : 'none'}
 Write a 2-sentence expert response summarising what we found and why it matches their needs. Do not list all properties — just confirm the match and highlight what makes the top result relevant.`,
-      }],
-    })
+        }],
+      }),
+      null,
+    )
 
-    const aiMessage =
-      aiSummaryResponse.content[0].type === 'text'
-        ? aiSummaryResponse.content[0].text
-        : ''
+    const aiMessage = aiSummaryResponse !== null && aiSummaryResponse.content[0].type === 'text'
+      ? aiSummaryResponse.content[0].text
+      : ''
 
     return NextResponse.json({
       query,
@@ -457,7 +470,7 @@ Write a 2-sentence expert response summarising what we found and why it matches 
       searchedAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Search API error:', error)
+    console.error('Search API error:', error, { corrId })
     return NextResponse.json({ error: 'Search failed' }, { status: 500 })
   }
 }

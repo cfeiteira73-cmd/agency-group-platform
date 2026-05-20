@@ -21,6 +21,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -86,6 +87,7 @@ interface LearningInsight {
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   const auth = await requirePortalAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 })
 
@@ -102,7 +104,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .order('created_at', { ascending: true })
 
     if (evErr) {
-      console.error('[analytics/learning] events query failed:', evErr.message)
+      console.error('[analytics/learning] events query failed:', evErr.message, { corrId })
       return NextResponse.json({ error: evErr.message }, { status: 500 })
     }
 
@@ -357,7 +359,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e ?? 'unknown')
-    console.error('[analytics/learning]', msg)
+    console.error('[analytics/learning]', msg, { corrId })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

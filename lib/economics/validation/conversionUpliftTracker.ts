@@ -1,13 +1,12 @@
 // AGENCY GROUP — SH-ROS | AMI: 22506
 
 import { logger } from '@/lib/observability/logger'
-
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // Portugal market baseline: 18% close rate
 const BASELINE_CONVERSION_RATE = 0.18
 const MIN_SAMPLE_FOR_CONFIDENCE = 20
 const AVG_DEAL_VALUE_EUR = 320_000
-const COMMISSION_RATE = 0.05
 
 export interface ConversionSnapshot {
   snapshot_id: string

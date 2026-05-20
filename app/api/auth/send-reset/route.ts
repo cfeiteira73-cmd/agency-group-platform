@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
+import { withResend } from '@/lib/ops/withResend'
 import { z } from 'zod'
 
 const SendResetSchema = z.object({
@@ -54,11 +55,13 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.agencygroup.pt'
     const resetLink = `${baseUrl}/auth/reset-password/confirm?token=${token}`
 
+    const corrId = crypto.randomUUID()
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const { error: emailError } = await resend.emails.send({
-      from: 'Agency Group <noreply@agencygroup.pt>',
-      to: user.email,
-      subject: 'Recuperação de Password · Agency Group',
+    const { error: emailError } = await withResend(
+      () => resend.emails.send({
+        from: 'Agency Group <noreply@agencygroup.pt>',
+        to: user.email,
+        subject: 'Recuperação de Password · Agency Group',
       html: `
         <!DOCTYPE html>
         <html>
@@ -90,10 +93,12 @@ export async function POST(req: NextRequest) {
         </body>
         </html>
       `,
-    })
+      }),
+      corrId,
+    )
 
     if (emailError) {
-      console.error('[send-reset] Resend error:', emailError)
+      console.error('[send-reset] Resend error:', { corrId, error: emailError })
       // Still return success — don't expose internal errors to the user
     }
 

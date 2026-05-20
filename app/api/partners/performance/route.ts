@@ -8,10 +8,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   // ── Auth ────────────────────────────────────────────────────────────────────
   const auth = await requirePortalAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 })
@@ -86,7 +89,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         // Priority: realized_fee → expected_fee → valor × 5%
         const fee = Number(d.realized_fee)
           || Number(d.expected_fee)
-          || parseValor(d.valor) * 0.05
+          || parseValor(d.valor) * COMMISSION_RATE
         return s + fee
       }, 0)
 
@@ -194,7 +197,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'unknown error'
-    console.error('[partners/performance]', msg)
+    console.error('[partners/performance]', msg, { corrId })
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { auth } from '@/auth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -8,6 +10,7 @@ export const maxDuration = 30
 const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -55,11 +58,19 @@ Gera o relatório em JSON:
   "nextWeekFocus": "string"
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 700,
-      messages: [{ role: 'user', content: prompt }]
-    })
+    const response = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 700,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      null,
+    )
+
+    if (response === null) {
+      return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -71,7 +82,7 @@ Gera o relatório em JSON:
       return NextResponse.json({ error: 'Parse error', raw: text }, { status: 500 })
     }
   } catch (error) {
-    console.error('Weekly report error:', error)
+    console.error('Weekly report error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao gerar relatório' }, { status: 500 })
   }
 }

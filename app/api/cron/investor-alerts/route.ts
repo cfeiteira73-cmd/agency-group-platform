@@ -20,7 +20,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { withCronLock }              from '@/lib/ops/cronLock'
+import { safeCompare }               from '@/lib/safeCompare'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
+import { withAI }                    from '@/lib/ops/withAI'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 120
@@ -35,7 +38,7 @@ function authCheck(req: NextRequest): boolean {
   const token =
     req.headers.get('x-cron-secret') ??
     req.headers.get('authorization')?.replace('Bearer ', '').trim()
-  return token === secret
+  return !!token && safeCompare(token, secret)
 }
 
 // ---------------------------------------------------------------------------
@@ -172,13 +175,15 @@ async function generateAlertMessage(property: AlertProperty): Promise<string> {
       ? ' (imóvel exclusivo, fora do portal)' : ''
     const score = property.opportunity_score
 
-    const msg = await client.messages.create({
-      model:      'claude-3-5-haiku-20241022',
-      max_tokens: 200,
-      system:     'Agente imobiliário de luxo em Portugal. Responde APENAS com a mensagem de WhatsApp, sem aspas, sem JSON, sem prefixos.',
-      messages: [{
-        role:    'user',
-        content: `Escreve uma mensagem WhatsApp (máx 2 frases, português europeu formal) para alertar um investidor VIP sobre esta oportunidade imobiliária${exclusive}.
+    const msg = await withAI(
+      'anthropic-haiku',
+      () => client.messages.create({
+        model:      'claude-3-5-haiku-20241022',
+        max_tokens: 200,
+        system:     'Agente imobiliário de luxo em Portugal. Responde APENAS com a mensagem de WhatsApp, sem aspas, sem JSON, sem prefixos.',
+        messages: [{
+          role:    'user',
+          content: `Escreve uma mensagem WhatsApp (máx 2 frases, português europeu formal) para alertar um investidor VIP sobre esta oportunidade imobiliária${exclusive}.
 
 IMÓVEL:
 - ${[area, quartos, tipo].filter(Boolean).join(' · ')} em ${zona}
@@ -187,8 +192,12 @@ IMÓVEL:
 ${property.score_reason ? `- Destaque: ${property.score_reason}` : ''}
 
 Menciona zona + preço + exclusividade. Cria urgência real. Convida contacto imediato.`,
-      }],
-    })
+        }],
+      }),
+      null,
+    )
+
+    if (msg === null) return fallback
 
     const text = msg.content[0].type === 'text' ? msg.content[0].text.trim() : ''
     return text || fallback
@@ -286,6 +295,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lockResult = await withCronLock('investor-alerts', 3, async () => {
   const corrId    = cronCorrelationId('investor-alerts')
   const startedAt = new Date().toISOString()
   const t0        = Date.now()
@@ -367,4 +377,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     },
     { status: errors.length > 0 && results.length === 0 ? 500 : 200, headers: { 'x-correlation-id': corrId } },
   )
+  }) // end withCronLock
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return lockResult
 }

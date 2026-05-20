@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
 import { generateCallEngineOutput, type CallLeadInput } from '@/lib/call-engine'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -26,6 +27,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -55,7 +57,7 @@ export async function GET(
       generated_at: new Date().toISOString(),
     })
   } catch (err) {
-    console.error('[call-script]', err)
+    console.error('[call-script]', err, { corrId })
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

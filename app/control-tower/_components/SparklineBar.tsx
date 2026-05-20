@@ -1,4 +1,5 @@
-'use client'
+// Pure render component — no hooks/state, intentionally omits 'use client'
+// Renders server-side in RSC pages, avoiding unnecessary client hydration.
 
 interface SparklineBarProps {
   data: number[]

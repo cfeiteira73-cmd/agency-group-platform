@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -43,6 +45,7 @@ function scoreMarket(m: typeof MARKETS[string], profile: string, budget: number)
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const { markets, budget, investorProfile, nationality, purpose } = await req.json()
 
@@ -114,11 +117,19 @@ Responde em JSON compacto em português europeu:
   "recommendation": "recomendação final personalizada para ${investorProfile || 'este'} investidor (2-3 frases)"
 }`
 
-    const aiRes = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 800,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const aiRes = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 800,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null,
+    )
+
+    if (aiRes === null) {
+      return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const aiText = aiRes.content[0].type === 'text' ? aiRes.content[0].text : '{}'
     const aiClean = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -132,7 +143,7 @@ Responde em JSON compacto em português europeu:
       generatedAt: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('[Cross Compare] Error:', error)
+    console.error('[Cross Compare] Error:', error, { corrId })
     return NextResponse.json({ error: 'Erro na comparação de mercados' }, { status: 500 })
   }
 }

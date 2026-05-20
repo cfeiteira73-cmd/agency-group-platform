@@ -14,12 +14,28 @@ export interface BaseEvent {
   occurred_at: string
   /** Request correlation ID for distributed tracing */
   correlation_id: string | null
+  /** Tenant identifier for multi-tenant event isolation */
+  tenant_id: string
   /** Source system that emitted the event */
   source_system: 'api' | 'n8n' | 'cron' | 'engine' | 'agent'
   /** Schema version for replay compatibility */
   schema_version: '1.0'
   /** Optional idempotency key — same key = same effect */
   idempotency_key?: string
+  /** Kafka-style partition key: '{tenant_id}:{event_type}' for ordered processing */
+  partition_key?: string
+  /** Global monotonic sequence number — assigned by DB BIGSERIAL after persist */
+  global_seq?: number
+  /** SHA-256(event_id + tenant_id) — used for idempotent replay dedup */
+  replay_token?: string
+  /** Originating region: 'eu-west' | 'eu-north' | 'us-east' | 'ap-southeast' */
+  region?: string
+  /**
+   * Lamport logical clock — monotonically increasing per tenant, region-independent.
+   * Enables causal ordering without global wall-clock coordination.
+   * Assigned by enrichEvent() via Redis INCR on 'lamport:{tenant_id}'.
+   */
+  logical_timestamp?: number
 }
 
 export type EventType =
@@ -287,3 +303,27 @@ export type AnyPlatformEvent =
   | DealRejectedEvent
   | CallBookedEvent
   | LeadScoredEvent
+
+// ─── Event schema versioning ──────────────────────────────────────────────────
+
+/** Bump when making breaking changes to the event payload shape. */
+export const CURRENT_EVENT_SCHEMA_VERSION = 1 as const
+export type EventSchemaVersion = 1 | 2
+
+/**
+ * Validate that an unknown value is a parseable event at a supported schema
+ * version. Returns `valid: false` for anything above CURRENT_EVENT_SCHEMA_VERSION
+ * so callers can quarantine or upgrade-migrate before processing.
+ *
+ * Backward-compatible: events with no `schema_version` field are treated as v1.
+ *
+ * Usage:
+ *   const { valid, version } = ensureEventVersion(rawPayload)
+ *   if (!valid) throw new Error(`Unsupported event schema v${version}`)
+ */
+export function ensureEventVersion(event: unknown): { valid: boolean; version: number } {
+  if (!event || typeof event !== 'object') return { valid: false, version: 0 }
+  const ev = event as Record<string, unknown>
+  const version = typeof ev.schema_version === 'number' ? ev.schema_version : 1
+  return { valid: version <= CURRENT_EVENT_SCHEMA_VERSION, version }
+}

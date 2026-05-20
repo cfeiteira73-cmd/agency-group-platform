@@ -6,7 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
-import { safeCompare } from '@/lib/safeCompare'
+import { requireServiceAuth } from '@/lib/auth/serviceAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -501,6 +502,7 @@ const MOCK_SIGNALS: Signal[] = [
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   try {
     const { searchParams } = new URL(request.url)
     const statusFilter   = searchParams.get('status') as SignalStatus | null
@@ -533,7 +535,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       note: 'Mock data — production will use DR API + market scraper via FastAPI on Railway',
     })
   } catch (error) {
-    console.error('[signals GET] Error:', error)
+    console.error('[signals GET] Error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -543,10 +545,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const authHeader = request.headers.get('authorization')
-  const secret = process.env.PORTAL_API_SECRET
-  if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
-  if (!safeCompare(authHeader ?? '', `Bearer ${secret}`)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const corrId = getRequestCorrelationId(request)
+  const authCheck = await requireServiceAuth(request)
+  if (!authCheck.ok) return authCheck.response
 
   try {
     const body: unknown = await request.json()
@@ -635,7 +636,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 201 }
     )
   } catch (error) {
-    console.error('[signals POST] Error:', error)
+    console.error('[signals POST] Error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

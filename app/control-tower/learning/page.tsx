@@ -1,4 +1,7 @@
 // AGENCY GROUP — SH-ROS Control Tower: Learning | AMI: 22506
+export const revalidate = 30
+
+import { Suspense } from 'react'
 import { SparklineBar } from '../_components/SparklineBar'
 
 interface AgentWeight {
@@ -49,16 +52,11 @@ async function fetchLearningData(org_id: string): Promise<LearningData | null> {
   } catch { return null }
 }
 
-export default async function LearningPage() {
+async function LearningContent() {
   const data = await fetchLearningData('default')
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-lg font-semibold text-slate-100">Learning Engine</h1>
-        <p className="text-xs text-slate-500 font-mono mt-0.5">Outcome tracking · Platt calibration · Reinforcement weights</p>
-      </div>
-
+    <>
       {!data ? (
         <div className="bg-[#111118] border border-slate-800 rounded-lg p-8 text-center">
           <p className="text-slate-500 text-sm">Learning data unavailable</p>
@@ -218,6 +216,44 @@ export default async function LearningPage() {
           )}
         </>
       )}
+    </>
+  )
+}
+
+function LearningSkeleton() {
+  return (
+    <>
+      <div className="grid grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-20 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="h-24 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        <div className="h-24 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+      </div>
+      <div className="space-y-2">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="h-10 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+    </>
+  )
+}
+
+export default function LearningPage() {
+  return (
+    <div className="space-y-5">
+      {/* Header — renders immediately */}
+      <div>
+        <h1 className="text-lg font-semibold text-slate-100">Learning Engine</h1>
+        <p className="text-xs text-slate-500 font-mono mt-0.5">Outcome tracking · Platt calibration · Reinforcement weights</p>
+      </div>
+
+      {/* Data streams in */}
+      <Suspense fallback={<LearningSkeleton />}>
+        <LearningContent />
+      </Suspense>
     </div>
   )
 }

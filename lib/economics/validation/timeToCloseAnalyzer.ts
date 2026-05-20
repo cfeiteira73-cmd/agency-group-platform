@@ -1,12 +1,11 @@
 // AGENCY GROUP — SH-ROS | AMI: 22506
 
 import { logger } from '@/lib/observability/logger'
-
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // Portugal market baseline: 210 avg days to close
 const PORTUGAL_BASELINE_DAYS = 210
 const AVG_DEAL_VALUE_EUR = 320_000
-const COMMISSION_RATE = 0.05
 // Annual discount rate for time-value-of-money calculation (opportunity cost)
 const ANNUAL_DISCOUNT_RATE = 0.08
 

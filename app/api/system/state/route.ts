@@ -24,6 +24,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import log from '@/lib/logger'
+import { getStageProbability, COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -111,18 +112,9 @@ function isClosedFase(f: unknown): boolean {
   return n.includes('escritura') || n.includes('fechado') || n.includes('posvenda')
 }
 
-const STAGE_PROB: Record<string, number> = {
-  contacto: 0.05, qualificacao: 0.20, visitaagendada: 0.35, visitarealizada: 0.45,
-  proposta: 0.60, negociacao: 0.70, cpcv: 0.85, escritura: 1.0, fechado: 1.0,
-}
-function stagePct(f: unknown): number {
-  const k = normFase(f)
-  if (STAGE_PROB[k]) return STAGE_PROB[k]
-  for (const [key, v] of Object.entries(STAGE_PROB)) {
-    if (k.includes(key) || key.includes(k)) return v
-  }
-  return 0.10
-}
+// Stage probabilities and commission rate imported from canonical source
+// See lib/constants/pipeline.ts — do NOT redefine here
+const stagePct = getStageProbability
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 
@@ -248,7 +240,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const openDeals    = dealData.filter(d => !isClosedFase(d.fase))
 
     const feeFor = (d: Record<string, unknown>) =>
-      parseRev(d.realized_fee) || parseRev(d.expected_fee) || parseRev(d.valor) * 0.05
+      parseRev(d.realized_fee) || parseRev(d.expected_fee) || parseRev(d.valor) * COMMISSION_RATE
 
     const pipelineValue = openDeals.reduce((s, d) => s + parseRev(d.valor) * stagePct(d.fase), 0)
     const revenueClosed = closedDeals.reduce((s, d) => s + feeFor(d), 0)

@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
 import type { ContactStatus } from '@/lib/database.types'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // Safe query wrapper
 async function safeQuery<T>(
@@ -35,6 +36,7 @@ async function safeCount(fn: () => PromiseLike<{ count: number | null; error: un
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -225,7 +227,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       generated_at:        now.toISOString(),
     })
   } catch (err) {
-    console.error('[buyers/pool GET]', err)
+    console.error('[buyers/pool GET]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { createClient } from '@/lib/supabase/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   // Properties list is semi-public — allow anon for active properties
   const isAuthenticated = !!session?.user?.id
@@ -40,7 +42,10 @@ export async function GET(req: NextRequest) {
     if (badge)   query = query.eq('badge', badge)
     if (precoMin) query = query.gte('preco', parseFloat(precoMin))
     if (precoMax) query = query.lte('preco', parseFloat(precoMax))
-    if (search)  query = query.or(`nome.ilike.%${search}%,bairro.ilike.%${search}%,zona.ilike.%${search}%`)
+    if (search) {
+      const safeSearch = (search as string).replace(/[%(),']/g, '').slice(0, 100)
+      query = query.or(`nome.ilike.%${safeSearch}%,bairro.ilike.%${safeSearch}%,zona.ilike.%${safeSearch}%`)
+    }
 
     const { data, error, count } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -54,12 +59,13 @@ export async function GET(req: NextRequest) {
       pages: Math.ceil((count || 0) / limit),
     })
   } catch (error) {
-    console.error('GET /api/properties/db error:', error)
+    console.error('GET /api/properties/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id || session.user.role === 'viewer') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -115,13 +121,13 @@ export async function POST(req: NextRequest) {
     // Non-blocking — property creation never fails due to n8n unavailability
     if (data && body.status !== 'off-market' && body.status !== 'sold') {
       triggerN8nNewProperty(data).catch(err =>
-        console.error('[properties/db] n8n new-property webhook failed:', err?.message ?? err)
+        console.error('[properties/db] n8n new-property webhook failed:', err?.message ?? err, { corrId })
       )
     }
 
     return NextResponse.json({ success: true, property: data }, { status: 201 })
   } catch (error) {
-    console.error('POST /api/properties/db error:', error)
+    console.error('POST /api/properties/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -154,6 +160,7 @@ async function triggerN8nNewProperty(property: Record<string, unknown>): Promise
 }
 
 export async function PUT(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id || session.user.role === 'viewer') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -190,12 +197,13 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true, property: data })
   } catch (error) {
-    console.error('PUT /api/properties/db error:', error)
+    console.error('PUT /api/properties/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id || session.user.role !== 'admin') {
     return NextResponse.json({ error: 'Only admins can delete properties' }, { status: 403 })
@@ -223,7 +231,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Property marked as off-market' })
   } catch (error) {
-    console.error('DELETE /api/properties/db error:', error)
+    console.error('DELETE /api/properties/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,4 +1,5 @@
 // AGENCY GROUP — SH-ROS Control Tower: Settings | AMI: 22506
+export const revalidate = 30
 
 interface ConfigSection {
   title: string

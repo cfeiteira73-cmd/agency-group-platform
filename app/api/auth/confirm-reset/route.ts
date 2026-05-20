@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const limit = await rateLimit(ip, { maxAttempts: 5, windowMs: 15 * 60 * 1000 })
   if (!limit.success) {
@@ -55,13 +57,13 @@ export async function POST(req: NextRequest) {
       .eq('id', user.id)
 
     if (updateError) {
-      console.error('[confirm-reset] DB update error:', updateError)
+      console.error('[confirm-reset] DB update error:', updateError, { corrId })
       return NextResponse.json({ error: 'Erro ao guardar a nova password. Tente novamente.' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('[confirm-reset] Error:', err)
+    console.error('[confirm-reset] Error:', err, { corrId })
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 }

@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -34,6 +35,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -130,7 +132,7 @@ export async function POST(
       .single()
 
     if (patchErr || !updated) {
-      console.error('[log-action] Patch error:', patchErr)
+      console.error('[log-action] Patch error:', patchErr, { corrId })
       return NextResponse.json({ error: patchErr?.message ?? 'Erro ao registar acção' }, { status: 500 })
     }
 
@@ -170,7 +172,7 @@ export async function POST(
       logged_at: now,
     })
   } catch (err) {
-    console.error('[log-action]', err)
+    console.error('[log-action]', err, { corrId })
     return NextResponse.json({ error: 'Internal error', details: String(err) }, { status: 500 })
   }
 }

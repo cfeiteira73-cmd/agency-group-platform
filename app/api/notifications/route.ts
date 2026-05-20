@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // Typed shorthand — bypasses PostgrestVersion: "12" never-type issue
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -197,6 +198,7 @@ function generateMockNotifications(): AppNotification[] {
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -263,7 +265,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(response, { headers: responseHeaders() })
   } catch (error) {
-    console.error('[notifications GET]', error)
+    console.error('[notifications GET]', error, { corrId })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: responseHeaders() }
@@ -277,6 +279,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -355,7 +358,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { headers: responseHeaders() }
     )
   } catch (error) {
-    console.error('[notifications POST]', error)
+    console.error('[notifications POST]', error, { corrId })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: responseHeaders() }

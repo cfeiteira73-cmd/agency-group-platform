@@ -6,6 +6,7 @@
 import { businessPrimitiveEngine }  from './businessPrimitiveEngine'
 import { outcomeAbstractionLayer }  from './outcomeAbstractionLayer'
 import logger from '@/lib/logger'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ export class SimplifiedDecisionInterface {
             instruction:      `${lead.next_action} — ${lead.name} has score ${lead.score}/100`,
             expected_outcome: 'Progress to next pipeline stage',
             time_estimate:    '15 min',
-            revenue_impact:   lead.expected_value * 0.05,
+            revenue_impact:   lead.expected_value * COMMISSION_RATE,
             due_by:           lead.next_action_due,
           })
         } else if (lead.score >= 60 && lead.days_in_stage > 7) {
@@ -138,7 +139,7 @@ export class SimplifiedDecisionInterface {
     }
 
     if (request.context_type === 'revenue_forecast') {
-      const on_pace = pipeline.commission_mtd >= (pipeline.pipeline_value * 0.05 * 0.3)
+      const on_pace = pipeline.commission_mtd >= (pipeline.pipeline_value * COMMISSION_RATE * 0.3)
       if (!on_pace) {
         actions.push({
           action_id:        `act:${action_counter++}`,
@@ -149,7 +150,7 @@ export class SimplifiedDecisionInterface {
           instruction:      'Revenue behind pace — call top 3 hot leads today',
           expected_outcome: 'Accelerate at least 1 deal closure this month',
           time_estimate:    '45 min',
-          revenue_impact:   320_000 * 0.05,  // avg deal commission
+          revenue_impact:   320_000 * COMMISSION_RATE,  // avg deal commission
           due_by:           new Date(Date.now() + 4 * 3_600_000).toISOString(),  // 4h
         })
       }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -14,6 +16,7 @@ const LANG_INSTR: Record<string, string> = {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const { property, language, purpose } = await req.json()
 
@@ -36,16 +39,24 @@ ${langInstr}
 
 Gera um script de apresentação em voz para o avatar, máximo 100 palavras. Tom natural, cálido e profissional — como se fosses a Sofia a falar directamente com o cliente. Sem emojis, sem labels, só o texto puro que a Sofia irá dizer em voz alta.`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 400,
-      messages: [{ role: 'user', content: prompt }]
-    })
+    const response = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      null,
+    )
+
+    if (response === null) {
+      return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const script = response.content[0].type === 'text' ? response.content[0].text.trim() : ''
     return NextResponse.json({ success: true, script })
   } catch (error) {
-    console.error('Sofia script error:', error)
+    console.error('Sofia script error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao gerar script' }, { status: 500 })
   }
 }

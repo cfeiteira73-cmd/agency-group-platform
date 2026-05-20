@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { safeCompare } from '@/lib/safeCompare'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -37,6 +39,7 @@ function mockBriefing(contact: Record<string, unknown>, matchedCount: number) {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const authHeader = req.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -112,12 +115,17 @@ Responde APENAS em JSON válido:
   "warningFlags": ["flag de atenção se aplicável — ex: preço fora de mercado, objecções esperadas, sinais de falta de seriedade"] ou []
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 800,
-      system: 'És um agente imobiliário de luxo sénior em Portugal. Respondes APENAS com JSON válido, sem texto adicional.',
-      messages: [{ role: 'user', content: prompt }]
-    })
+    const response = await withAI('anthropic-opus', () =>
+      client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 800,
+        system: 'És um agente imobiliário de luxo sénior em Portugal. Respondes APENAS com JSON válido, sem texto adicional.',
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null
+    )
+
+    if (!response) return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503, headers: { 'Retry-After': '60' } })
 
     const raw = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -128,7 +136,7 @@ Responde APENAS em JSON válido:
       return NextResponse.json({ error: 'Parse error', raw }, { status: 500 })
     }
   } catch (error) {
-    console.error('[meeting-prep] Error:', error)
+    console.error('[meeting-prep] Error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao gerar briefing' }, { status: 500 })
   }
 }

@@ -1,4 +1,7 @@
 // AGENCY GROUP — SH-ROS Control Tower: Events | AMI: 22506
+export const revalidate = 10
+
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { StatusBadge } from '../_components/StatusBadge'
 
@@ -37,17 +40,12 @@ const PRIORITY_COLORS: Record<string, string> = {
   low:      'text-slate-400 bg-slate-700/40',
 }
 
-export default async function EventsPage() {
+async function EventsContent() {
   const events = await fetchEvents('default', 50)
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-100">Event Stream</h1>
-          <p className="text-xs text-slate-500 font-mono mt-0.5">{events.length} events loaded</p>
-        </div>
-      </div>
+    <>
+      <p className="text-xs text-slate-500 font-mono">{events.length} events loaded</p>
 
       {events.length === 0 ? (
         <div className="bg-[#111118] border border-slate-800 rounded-lg p-8 text-center">
@@ -100,6 +98,34 @@ export default async function EventsPage() {
           </table>
         </div>
       )}
+    </>
+  )
+}
+
+function EventsSkeleton() {
+  return (
+    <div className="space-y-2">
+      {[...Array(10)].map((_, i) => (
+        <div key={i} className="h-10 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+      ))}
+    </div>
+  )
+}
+
+export default function EventsPage() {
+  return (
+    <div className="space-y-4">
+      {/* Header — renders immediately */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-100">Event Stream</h1>
+        </div>
+      </div>
+
+      {/* Data streams in */}
+      <Suspense fallback={<EventsSkeleton />}>
+        <EventsContent />
+      </Suspense>
     </div>
   )
 }

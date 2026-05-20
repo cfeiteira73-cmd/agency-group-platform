@@ -11,6 +11,8 @@ import { opportunityRadar, RadarSignal } from '@/lib/executive/opportunityRadar'
 import { logger } from '@/lib/observability/logger'
 import { detectRevenueLeakage, buildExecutiveSnapshot } from '@/lib/executive-revenue-v2'
 import type { ListingRevenueSummary, AgentPerformanceSummary } from '@/lib/executive-revenue-v2'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 export const maxDuration = 15
@@ -319,7 +321,7 @@ async function fetchRevenueThisMonth(): Promise<number> {
     return data.reduce((sum, d) => {
       // Prefer explicit commission field; fall back to 5% of deal value
       const comm = Number(d.commission_eur ?? 0)
-      const derived = Number(d.value_eur ?? 0) * 0.05
+      const derived = Number(d.value_eur ?? 0) * COMMISSION_RATE
       return sum + (comm > 0 ? comm : derived)
     }, 0)
   } catch {
@@ -356,6 +358,7 @@ function buildNarrative(
 // ─── GET handler ───────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -382,7 +385,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // Pipeline value requires live count — run after submissions agg
     const pipelineValue = await fetchPipelineValue(submissionAgg.live_listings)
-    const commissionEstimate = pipelineValue * 0.05
+    const commissionEstimate = pipelineValue * COMMISSION_RATE
 
     // Opportunity radar scan (synchronous — template-based)
     let opportunities: RadarSignal[] = []
@@ -455,7 +458,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       },
     })
   } catch (err) {
-    logger.error('[executive/dashboard] unhandled error', { err })
+    logger.error('[executive/dashboard] unhandled error', { err, corrId })
     // Return zeros — dashboard degrades gracefully
     const empty: ExecutiveDashboardResponse = {
       pipeline_value_eur: 0,

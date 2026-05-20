@@ -4,18 +4,21 @@
 import { NextRequest, NextResponse }   from 'next/server'
 import { supabaseAdmin }               from '@/lib/supabase'
 import { createAlert, buildAlert }     from '@/lib/ops/alertEngine'
+import { withCronLock }                from '@/lib/ops/cronLock'
+import { safeCompare }                 from '@/lib/safeCompare'
 import { cronCorrelationId }           from '@/lib/observability/correlation'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 60
 
 export async function GET(req: NextRequest) {
-  const cronSecret   = req.headers.get('authorization')?.replace('Bearer ', '')
+  const cronSecret   = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
   const cronExpected = process.env.CRON_SECRET
-  if (!cronExpected || !cronSecret || cronSecret !== cronExpected) {
+  if (!cronExpected || !cronSecret || !safeCompare(cronSecret, cronExpected)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const result = await withCronLock('health-check', 2, async () => {
   const corrId = cronCorrelationId('health-check')
 
   try {
@@ -115,4 +118,10 @@ export async function GET(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+  }) // end withCronLock
+
+  if (result === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return result
 }

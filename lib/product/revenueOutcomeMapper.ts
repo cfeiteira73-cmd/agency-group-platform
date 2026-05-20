@@ -7,6 +7,7 @@
 import { supabaseAdmin }           from '@/lib/supabase'
 import { businessPrimitiveEngine } from './businessPrimitiveEngine'
 import logger from '@/lib/logger'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -99,7 +100,6 @@ const STAGE_PROBABILITIES: Record<string, number> = {
   escritura_completed:  1.00,
 }
 
-const COMMISSION_RATE = 0.05   // 5% Agency Group standard
 const MONTHLY_TARGET  = 50_000 // €50K/month commission target per org
 
 // ─── Revenue Outcome Mapper ───────────────────────────────────────────────────
@@ -160,7 +160,7 @@ export class RevenueOutcomeMapper {
         total_value:     pipeline.active_leads * 500_000,
         conversion_rate: 0.20,
         avg_days:        14,
-        revenue_at_risk: pipeline.active_leads * 500_000 * 0.05 * 0.20,
+        revenue_at_risk: pipeline.active_leads * 500_000 * COMMISSION_RATE * 0.20,
       },
       {
         stage:           'Hot Leads (≥80)',
@@ -168,7 +168,7 @@ export class RevenueOutcomeMapper {
         total_value:     pipeline.hot_leads * 700_000,
         conversion_rate: 0.45,
         avg_days:        21,
-        revenue_at_risk: pipeline.hot_leads * 700_000 * 0.05 * 0.45,
+        revenue_at_risk: pipeline.hot_leads * 700_000 * COMMISSION_RATE * 0.45,
       },
       {
         stage:           'Proposals',
@@ -176,7 +176,7 @@ export class RevenueOutcomeMapper {
         total_value:     pipeline.proposals_pending * 650_000,
         conversion_rate: 0.60,
         avg_days:        30,
-        revenue_at_risk: pipeline.proposals_pending * 650_000 * 0.05 * 0.60,
+        revenue_at_risk: pipeline.proposals_pending * 650_000 * COMMISSION_RATE * 0.60,
       },
       {
         stage:           'Active Deals',
@@ -184,7 +184,7 @@ export class RevenueOutcomeMapper {
         total_value:     pipeline.pipeline_value,
         conversion_rate: 0.75,
         avg_days:        60,
-        revenue_at_risk: pipeline.pipeline_value * 0.05 * 0.75,
+        revenue_at_risk: pipeline.pipeline_value * COMMISSION_RATE * 0.75,
       },
       {
         stage:           'Won MTD',

@@ -1,29 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { rateLimit } from '@/lib/rateLimit'
 
 const RadarSchema = z.object({
   url: z.string().min(5, 'URL ou texto inválido'),
 })
 
-// ─── Cache 6h ─────────────────────────────────────────────────────────────────
-const responseCache = new Map<string, { data: unknown; ts: number }>()
-const CACHE_TTL = 6 * 60 * 60 * 1000
+// ─── SSRF allowlist ────────────────────────────────────────────────────────────
+const ALLOWED_SCRAPE_HOSTS = new Set([
+  'idealista.pt', 'idealista.com', 'imovirtual.com', 'casa.sapo.pt',
+  'remax.pt', 'century21.pt', 'era.pt', 'supercasa.pt', 'jll.pt',
+  'cushmanwakefield.com', 'savills.pt', 'knightfrank.com',
+  'bpiexpressoimobiliario.pt', 'portaldahabitacao.pt',
+  // Leilões
+  'e-leiloes.pt', 'leiloestax.pt', 'leiloesverde.pt', 'vende.pt',
+  // Judicial
+  'citius.tribunaisnet.mj.pt',
+  // Banca
+  'bpiexpressoimobiliario.pt', 'millenniumbcp.pt', 'cgd.pt',
+  'novobanco.pt', 'santander.pt', 'montepio.pt', 'creditoagricola.pt', 'bankinter.pt',
+])
+
+function isAllowedScrapeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') return false
+    const hostname = parsed.hostname.replace(/^www\./, '')
+    return ALLOWED_SCRAPE_HOSTS.has(hostname)
+  } catch {
+    return false
+  }
+}
+
+// ─── Cache 6h (Upstash) ───────────────────────────────────────────────────────
+const UPSTASH_URL   = process.env.UPSTASH_REDIS_REST_URL
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN
+
+async function getCachedRadar(key: string): Promise<unknown | null> {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null
+  try {
+    const res = await fetch(`${UPSTASH_URL}/get/radar:cache:${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}` },
+      signal: AbortSignal.timeout(3000),
+    })
+    if (!res.ok) return null
+    const { result } = await res.json() as { result: string | null }
+    return result ? JSON.parse(result) : null
+  } catch { return null }
+}
+
+async function setCachedRadar(key: string, value: unknown): Promise<void> {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return
+  try {
+    await fetch(`${UPSTASH_URL}/set/radar:cache:${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${UPSTASH_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: JSON.stringify(value), ex: 21600 }),
+      signal: AbortSignal.timeout(3000),
+    })
+  } catch { /* fail silently */ }
+}
 
 function hashKey(s: string): string {
   let h = 0
   for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0 }
   return String(Math.abs(h))
-}
-
-// ─── Rate limit 30/hour ────────────────────────────────────────────────────────
-const rateMap = new Map<string, { count: number; reset: number }>()
-function checkRate(ip: string): boolean {
-  const now = Date.now()
-  const e = rateMap.get(ip)
-  if (!e || now > e.reset) { rateMap.set(ip, { count: 1, reset: now + 3600000 }); return true }
-  if (e.count >= 30) return false
-  e.count++; return true
 }
 
 // ─── Zone Market Data Q1 2026 ─────────────────────────────────────────────────
@@ -491,7 +533,8 @@ export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-    if (!checkRate(ip)) return NextResponse.json({ error: 'Rate limit: 30 pedidos/hora.' }, { status: 429 })
+    const rl = await rateLimit(`mw:${ip}`, { maxAttempts: 30, windowMs: 3_600_000 })
+    if (!rl.success) return NextResponse.json({ error: 'Rate limit: 30 pedidos/hora.' }, { status: 429 })
 
     const rawBody = await req.json()
     const parsedBody = RadarSchema.safeParse(rawBody)
@@ -501,8 +544,8 @@ export async function POST(req: NextRequest) {
     const urlStr = parsedBody.data.url.trim()
 
     const cacheKey = hashKey(urlStr)
-    const cached = responseCache.get(cacheKey)
-    if (cached && Date.now() - cached.ts < CACHE_TTL) return NextResponse.json({ ...cached.data as object, cached: true })
+    const cached = await getCachedRadar(cacheKey)
+    if (cached) return NextResponse.json({ ...cached as object, cached: true })
 
     const CLAUDE_KEY  = process.env.ANTHROPIC_API_KEY
 
@@ -510,6 +553,12 @@ export async function POST(req: NextRequest) {
     const isAuction = isAuctionPlatform(platform)
     const isBank = isBankPlatform(platform)
     const bankName = isBank ? getBankName(platform) : ''
+
+    // ── SSRF guard — validate before entering scrape pipeline ─────────────────
+    if (platform !== 'texto' && !isAllowedScrapeUrl(urlStr)) {
+      console.warn('[Radar] Blocked SSRF attempt — URL not in allowlist:', urlStr.slice(0, 100))
+      return NextResponse.json({ error: 'URL not allowed' }, { status: 400 })
+    }
 
     // ── Parallel: scrape + live rates ──────────────────────────────────────────
     let raw: Record<string, unknown> | null = null
@@ -850,7 +899,7 @@ INSTRUÇÃO: Analisa com rigor máximo. ${isAuction ? 'É um LEILÃO — avalia 
         analise: mockAnalise,
         _demo: true,
       }
-      responseCache.set(cacheKey, { data: mockResponse, ts: Date.now() })
+      await setCachedRadar(cacheKey, mockResponse)
       return NextResponse.json(mockResponse)
     }
 
@@ -920,7 +969,7 @@ INSTRUÇÃO: Analisa com rigor máximo. ${isAuction ? 'É um LEILÃO — avalia 
       analise,
     }
 
-    responseCache.set(cacheKey, { data: responseData, ts: Date.now() })
+    await setCachedRadar(cacheKey, responseData)
     const radarRes = NextResponse.json(responseData)
     radarRes.headers.set('x-correlation-id', corrId)
     return radarRes

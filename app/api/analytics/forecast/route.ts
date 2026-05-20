@@ -15,28 +15,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getStageProbability, COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// ---------------------------------------------------------------------------
-// Stage probability weights (calibrated to Portuguese RE market)
-// ---------------------------------------------------------------------------
-const STAGE_PROB: Record<string, number> = {
-  contacto:        0.05,
-  qualificacao:    0.15,
-  qualificado:     0.15,
-  visitaagendada:  0.30,
-  visitarealizada: 0.40,
-  proposta:        0.55,
-  propostaaceite:  0.65,
-  negociacao:      0.70,
-  cpcv:            0.85,
-  cpcvassinado:    0.90,
-  escritura:       0.97,
-  posvenda:        1.00,
-  fechado:         1.00,
-}
+// Stage probability — delegates to canonical lib/constants/pipeline
 
 // Stage SLA (max days before it's "stalled")
 const STAGE_SLA_DAYS: Record<string, number> = {
@@ -54,12 +38,7 @@ function normFase(s: unknown): string {
 }
 
 function getFaseProb(fase: unknown): number {
-  const key = normFase(fase)
-  if (STAGE_PROB[key]) return STAGE_PROB[key]
-  for (const [k, v] of Object.entries(STAGE_PROB)) {
-    if (key.includes(k) || k.includes(key)) return v
-  }
-  return 0.10  // unknown stage = 10% base probability
+  return getStageProbability(fase)
 }
 
 function getFaseSLA(fase: unknown): number {
@@ -137,7 +116,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const dealForecasts = openDeals.map(deal => {
       const baseProb      = getFaseProb(deal.fase)
       const valor         = parseValor(deal.valor)
-      const expectedFee   = Number(deal.expected_fee) || valor * 0.05
+      const expectedFee   = Number(deal.expected_fee) || valor * COMMISSION_RATE
       const updatedAt     = deal.updated_at ? new Date(String(deal.updated_at)).getTime() : now
       const daysSinceMove = Math.floor((now - updatedAt) / 86_400_000)
       const slaDays       = getFaseSLA(deal.fase)
@@ -191,7 +170,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // ── Closed deals performance ────────────────────────────────────────────
     const closedRevenue = closedDeals.reduce((s, d) => {
-      const fee = Number(d.realized_fee) || Number(d.expected_fee) || parseValor(d.valor) * 0.05
+      const fee = Number(d.realized_fee) || Number(d.expected_fee) || parseValor(d.valor) * COMMISSION_RATE
       return s + fee
     }, 0)
 

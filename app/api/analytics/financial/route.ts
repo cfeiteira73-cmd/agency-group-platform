@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import log from '@/lib/logger'
+import { getStageProbability, COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 
@@ -47,12 +48,19 @@ function parseNum(v: unknown): number {
   return 0
 }
 
+// ── Stage probability — delegates to canonical lib/constants/pipeline ─────────
+// getStageProbability handles normalisation (lowercase, diacritics, spaces)
+
+function stageProb(stage: unknown): number {
+  return getStageProbability(stage)
+}
+
 // ── Closed stage detection ────────────────────────────────────────────────────
 
-const CLOSED_STAGES = new Set(['escritura', 'post_sale', 'postsale', 'posvenda', 'fechado'])
+const CLOSED_STAGES = new Set(['escritura', 'postsale', 'posvenda', 'fechado'])
 
 function isClosed(stage: unknown): boolean {
-  const s = String(stage ?? '').toLowerCase().replace(/[\s\-_]+/g, '')
+  const s = String(stage ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[\s\-_]+/g, '')
   for (const cs of CLOSED_STAGES) {
     if (s.includes(cs)) return true
   }
@@ -105,8 +113,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       parseNum(d.gci_net) ||
       parseNum(d.realized_fee) ||
       parseNum(d.expected_fee) ||
-      parseNum(d.sale_price) * 0.05 ||
-      parseNum(d.valor) * 0.05
+      parseNum(d.sale_price) * COMMISSION_RATE ||
+      parseNum(d.valor) * COMMISSION_RATE
 
     const dealValue = (d: Record<string, unknown>): number =>
       parseNum(d.sale_price) ||
@@ -119,10 +127,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const total_closed_value = closedDeals.reduce((s, d) => s + dealValue(d), 0)
     const avg_deal_value = deals_closed > 0 ? total_closed_value / deals_closed : 0
 
-    // ── 2. Pipeline value: open deals × asking_price × 5% × 0.5 probability ──
+    // ── 2. Pipeline value: open deals weighted by stage-probability ─────────────
+    // Uses the same STAGE_PROB_MAP as /api/analytics/revenue to ensure consistency.
+    // Formula: deal_value × commission_rate(5%) × close_probability(by stage)
+    // Previously used a flat 50% for all stages — now stage-aware.
     const pipeline_value = openDeals.reduce((s, d) => {
       const price = dealValue(d)
-      return s + price * 0.05 * 0.5
+      const prob  = stageProb(d.stage ?? d.fase)
+      return s + price * COMMISSION_RATE * prob
     }, 0)
 
     // ── 3. Win/loss → win rate ────────────────────────────────────────────────

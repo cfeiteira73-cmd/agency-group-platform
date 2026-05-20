@@ -5,10 +5,12 @@ import { NextRequest, NextResponse }   from 'next/server'
 import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { supabaseAdmin }               from '@/lib/supabase'
+import { getRequestCorrelationId }     from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -159,7 +161,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (err) {
-    console.error('[inventory-forecast GET]', err)
+    console.error('[inventory-forecast GET]', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

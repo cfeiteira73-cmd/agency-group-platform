@@ -35,6 +35,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -76,6 +77,7 @@ async function callInternal(path: string, leadId: string, siteUrl: string): Prom
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -173,7 +175,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       .single()
 
     if (createErr || !lead) {
-      console.error('[offmarket/manual] Create error:', createErr)
+      console.error('[offmarket/manual] Create error:', createErr, { corrId })
       return NextResponse.json({ error: createErr?.message ?? 'Erro ao criar lead' }, { status: 500 })
     }
 
@@ -295,7 +297,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }, { status: 201 })
 
   } catch (err) {
-    console.error('[offmarket/manual] Error:', err)
+    console.error('[offmarket/manual] Error:', err, { corrId })
     return NextResponse.json({ error: 'Internal error', details: String(err) }, { status: 500 })
   }
 }

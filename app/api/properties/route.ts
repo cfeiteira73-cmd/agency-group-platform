@@ -10,6 +10,7 @@ import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { z } from 'zod'
 import { rateLimit } from '@/lib/rateLimit'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const PartnerSubmissionSchema = z.object({
   // Agency details
@@ -37,6 +38,7 @@ const PartnerSubmissionSchema = z.object({
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   // Rate limit: 3 submissions per IP per hour
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
           ?? request.headers.get('x-real-ip')
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             updated_at: new Date().toISOString(),
           }, { onConflict: 'email', ignoreDuplicates: false })
       } catch (e) {
-        console.error('[properties POST] contacts upsert error:', e)
+        console.error('[properties POST] contacts upsert error:', e, { corrId })
       }
 
       // 2. Save property as pending_review in properties table
@@ -140,18 +142,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           `,
         })
       } catch (e) {
-        console.error('[properties POST] Resend alert error:', e)
+        console.error('[properties POST] Resend alert error:', e, { corrId })
       }
     }
 
     return NextResponse.json({ success: true, message: 'Proposta recebida com sucesso.' })
   } catch (err) {
-    console.error('[properties POST] error:', err)
+    console.error('[properties POST] error:', err, { corrId })
     return NextResponse.json({ error: 'Erro interno. Tente novamente.' }, { status: 500 })
   }
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -255,7 +258,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Return empty — component will use PORTAL_PROPERTIES fallback
     return NextResponse.json({ data: [], total: 0, source: 'empty' })
   } catch (error) {
-    console.error('[properties GET]', error)
-    return NextResponse.json({ data: [], source: 'error' }, { status: 500 })
+    console.error('[properties GET]', error, { corrId })
+    return NextResponse.json({ error: 'Internal server error', data: [], source: 'error' }, { status: 500 })
   }
 }

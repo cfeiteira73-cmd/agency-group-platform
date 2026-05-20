@@ -7,6 +7,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { BaseAgent } from '../base'
 import type { AgentConfig, AgentContext, AgentInsight, AgentAction } from '../types'
+import { LEAD_SCORE_THRESHOLDS } from '@/lib/constants/pipeline'
 
 export class RevenueLeakAgent extends BaseAgent {
   readonly id = 'revenue-leak' as const
@@ -31,7 +32,7 @@ export class RevenueLeakAgent extends BaseAgent {
     const { data: stalledLeads } = await supabaseAdmin
       .from('offmarket_leads')
       .select('id, nome, score, assigned_to, last_contact_at, deal_priority_score')
-      .gte('score', 70)
+      .gte('score', LEAD_SCORE_THRESHOLDS.HIGH)
       .in('status', ['new', 'contacted', 'interested'])
       .or(`last_contact_at.lt.${stalledThreshold},last_contact_at.is.null`)
       .limit(20)

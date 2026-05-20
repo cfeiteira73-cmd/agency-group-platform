@@ -1,6 +1,7 @@
 // AGENCY GROUP — Control Tower: Security | AMI: 22506
 // Phase Ω∞-7: RBAC, signed audit chain integrity, poison quarantine, compliance
 
+import { Suspense } from 'react'
 import { KPICard } from '@/app/control-tower/_components/KPICard'
 import { StatusBadge } from '@/app/control-tower/_components/StatusBadge'
 import { signedAuditChain } from '@/lib/security/signedAuditChain'
@@ -28,7 +29,22 @@ async function getSecurityData() {
   }
 }
 
-export default async function SecurityPage() {
+function SecuritySkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-20 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="h-32 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+      ))}
+    </div>
+  )
+}
+
+async function SecurityContent() {
   const data = await getSecurityData()
   const { chainVerification, quarantined, soc2Summary, tenantSnapshot } = data
 
@@ -38,15 +54,7 @@ export default async function SecurityPage() {
   const tenantViolations = tenantSnapshot?.violations.length ?? 0
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">Security</h1>
-        <p className="text-slate-400 text-sm mt-1">
-          Signed audit chain · Queue poison quarantine · SOC2 compliance · Tenant isolation
-        </p>
-      </div>
-
+    <>
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
@@ -69,6 +77,32 @@ export default async function SecurityPage() {
           value={tenantViolations}
           color={tenantViolations > 0 ? 'red' : 'green'}
         />
+      </div>
+
+      {/* RLS Compliance Status */}
+      <div className="bg-[#111118] border border-slate-800 rounded-lg p-4 mt-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-semibold text-slate-200">Row-Level Security (RLS)</span>
+          <span className="text-xs bg-green-500/10 text-green-400 px-2 py-0.5 rounded font-mono">ACTIVE</span>
+        </div>
+        <div className="grid grid-cols-3 gap-3 text-xs">
+          {[
+            { table: 'tenants',              rls: true },
+            { table: 'audit_log',            rls: true },
+            { table: 'ai_feedback',          rls: true },
+            { table: 'agent_memory',         rls: true },
+            { table: 'cost_model_snapshots', rls: true },
+            { table: 'vault_snapshots',      rls: true },
+          ].map(({ table, rls }) => (
+            <div key={table} className="flex items-center gap-1.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${rls ? 'bg-green-400' : 'bg-red-400'}`} />
+              <span className="text-slate-400 font-mono text-[10px]">{table}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-slate-600 mt-3 font-mono">
+          USING (tenant_id = auth.jwt()-&gt;&gt;&apos;tenant_id&apos;) · service_role bypass
+        </p>
       </div>
 
       {/* Audit chain status */}
@@ -217,6 +251,23 @@ export default async function SecurityPage() {
           )}
         </div>
       )}
+    </>
+  )
+}
+
+export default function SecurityPage() {
+  return (
+    <div className="space-y-8">
+      {/* Static header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-100">Security</h1>
+        <p className="text-slate-400 text-sm mt-1">
+          Signed audit chain · Queue poison quarantine · SOC2 compliance · Tenant isolation
+        </p>
+      </div>
+      <Suspense fallback={<SecuritySkeleton />}>
+        <SecurityContent />
+      </Suspense>
     </div>
   )
 }

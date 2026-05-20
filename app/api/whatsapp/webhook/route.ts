@@ -2,8 +2,43 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 import Anthropic from '@anthropic-ai/sdk'
 import { sendWhatsApp } from '@/lib/whatsapp/client'
+import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
+import { withAnthropicRetry } from '@/lib/ops/withRetry'
+import { recordCausalStep } from '@/lib/observability/causalTrace'
+
+// Normal WhatsApp webhook payloads are <10 KB.
+// Reject oversized payloads before req.text() to prevent memory exhaustion.
+const MAX_BODY_BYTES = 128 * 1024  // 128 KB — generous headroom, stops payload-flooding
 
 export const runtime = 'nodejs'
+
+// ─── Redis dedup — prevent double-processing Meta retries ────────────────────
+// Meta's webhook delivery is at-least-once; the same message.id can arrive
+// multiple times if our 200 is delayed.  SET NX EX marks each id as seen for
+// 1 h.  Fail-open when Upstash is not configured (dev / CI).
+
+async function isMessageDuplicate(messageId: string): Promise<boolean> {
+  const url   = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return false   // fail-open: no Redis → always process
+
+  try {
+    const key = `wa:msg:${messageId}`
+    const res = await fetch(`${url}/pipeline`, {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      // SET key 1 NX EX 3600  — "OK" means first write (new), null means already exists
+      body:    JSON.stringify([['SET', key, '1', 'EX', '3600', 'NX']]),
+    })
+    if (!res.ok) return false  // Redis error → fail-open
+    const [cmd] = await res.json() as [{ result: string | null }]
+    // result === "OK"  → key was just created → NOT a duplicate
+    // result === null  → key already existed  → IS  a duplicate
+    return cmd?.result !== 'OK'
+  } catch {
+    return false  // network error → fail-open
+  }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,9 +71,17 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const mode = searchParams.get('hub.mode')
   const token = searchParams.get('hub.verify_token')
-  const challenge = searchParams.get('hub.challenge')
+  const challenge = searchParams.get('hub.challenge') ?? ''
 
-  if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+  // Guard against oversized challenge (prevents memory amplification)
+  if (challenge.length > 512) {
+    return new NextResponse('Bad Request', { status: 400 })
+  }
+
+  if (mode === 'subscribe' && timingSafeEqual(
+    Buffer.from(token ?? ''),
+    Buffer.from(process.env.WHATSAPP_VERIFY_TOKEN ?? '')
+  )) {
     console.log('[WhatsApp] Webhook verified')
     return new NextResponse(challenge, { status: 200 })
   }
@@ -51,8 +94,27 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    // ── Payload size guard — BEFORE reading body ──────────────────────────────
+    // Content-Length may be omitted by proxies; the guard is best-effort.
+    // Without this check, a large payload would be fully buffered into memory
+    // before HMAC validation runs, enabling memory-exhaustion attacks.
+    const contentLengthHeader = req.headers.get('content-length')
+    if (contentLengthHeader !== null) {
+      const byteLen = parseInt(contentLengthHeader, 10)
+      if (!isNaN(byteLen) && byteLen > MAX_BODY_BYTES) {
+        console.warn(`[WhatsApp] Payload too large: ${byteLen} bytes — rejecting before body read`)
+        return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+      }
+    }
+
     // ── Read raw body (needed for HMAC before parsing) ────────────────────────
     const rawBody = await req.text()
+
+    // Secondary size check on actual body length (covers missing Content-Length header)
+    if (rawBody.length > MAX_BODY_BYTES) {
+      console.warn(`[WhatsApp] Body too large after read: ${rawBody.length} bytes — rejecting`)
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+    }
 
     // ── Validate Meta HMAC signature ─────────────────────────────────────────
     const appSecret = process.env.WHATSAPP_APP_SECRET
@@ -86,6 +148,8 @@ export async function POST(req: NextRequest) {
       console.log('[WhatsApp] Sofia inactiva (WHATSAPP_ACTIVE=false) — a registar mensagens mas sem resposta automática')
     }
 
+    const tenantId = req.headers.get('x-tenant-id') ?? 'agency-group'
+
     for (const entry of body.entry ?? []) {
       for (const change of entry.changes ?? []) {
         const value = change.value
@@ -107,6 +171,12 @@ export async function POST(req: NextRequest) {
             const phoneHash = from ? `***${from.slice(-4)}` : 'unknown'
             console.log(`[WhatsApp] Incoming from ${senderName} (${phoneHash})${!sofiaActive ? ' [Sofia inactiva — só CRM]' : ''}`)
 
+            // Dedup: skip if Meta is re-delivering a message we already processed
+            if (await isMessageDuplicate(message.id)) {
+              console.log(`[WhatsApp] Duplicate message ${message.id} — skipping`)
+              continue
+            }
+
             // Auto-lead creation from inbound WhatsApp — sempre activo (independente de sofiaActive)
             // Extracts name + phone and upserts into CRM contacts
             if (message.type === 'text' && text.trim()) {
@@ -116,11 +186,12 @@ export async function POST(req: NextRequest) {
                 name: senderName,
                 text,
                 messageId: message.id,
+                tenantId,
               })
 
               // Sofia auto-response — only when WHATSAPP_ACTIVE=true
               if (sofiaActive) {
-                void generateAndSendSofiaReply({ to: from, name: senderName, text })
+                void generateAndSendSofiaReply({ to: from, name: senderName, text, tenantId })
               }
             }
           }
@@ -177,8 +248,9 @@ async function generateAndSendSofiaReply(params: {
   to: string
   name: string
   text: string
+  tenantId: string
 }): Promise<void> {
-  const { to, name, text } = params
+  const { to, name, text, tenantId } = params
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -206,13 +278,28 @@ Nome do contacto: ${name}.`
   try {
     const client = new Anthropic({ apiKey })
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-3-5-20241022',
-      max_tokens: 160,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: text }],
-    })
+    // withCircuitBreaker + withAnthropicRetry: Sofia replies are non-critical
+    // (WhatsApp always returns 200 to Meta). A failed reply does not break the
+    // webhook — the CB prevents hammering Anthropic when their API is degraded.
+    const response = await withCircuitBreaker<Anthropic.Message | null>(
+      'anthropic-haiku',
+      (): Promise<Anthropic.Message | null> => withAnthropicRetry(() =>
+        client.messages.create({
+          model: 'claude-haiku-3-5-20241022',
+          max_tokens: 160,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: text }],
+        })
+      ),
+      null,  // fallback: circuit OPEN → skip reply (logged below)
+    )
 
+    if (response === null) {
+      console.warn('[WhatsApp/Sofia] Anthropic circuit breaker OPEN — skipping auto-reply')
+      return
+    }
+
+    // response is guaranteed non-null here (we returned early if null above)
     const replyBlock = response.content.find(b => b.type === 'text')
     if (!replyBlock || replyBlock.type !== 'text') {
       console.warn('[WhatsApp/Sofia] No text block in Anthropic response')
@@ -231,6 +318,16 @@ Nome do contacto: ${name}.`
     } else {
       console.error('[WhatsApp/Sofia] Send failed:', result.error)
     }
+
+    void recordCausalStep({
+      correlation_id: to,
+      tenant_id: tenantId,
+      step_type: 'whatsapp_sent',
+      agent_id: 'sofia-whatsapp',
+      action: 'auto_reply',
+      success: result.success,
+      metadata: { intent, messageId: result.messageId },
+    })
   } catch (error) {
     console.error('[WhatsApp/Sofia] generateAndSendSofiaReply error:', error)
   }
@@ -243,8 +340,9 @@ async function handleIncomingMessage(params: {
   name: string
   text: string
   messageId: string
+  tenantId: string
 }): Promise<void> {
-  const { from, name, text } = params
+  const { from, name, text, tenantId } = params
 
   try {
     // Lazy import to avoid loading supabase on every request
@@ -270,6 +368,17 @@ async function handleIncomingMessage(params: {
     }
 
     console.log(`[WhatsApp] Contact upserted: id=${contact?.id}`)
+
+    void recordCausalStep({
+      correlation_id: params.messageId,
+      tenant_id: tenantId,
+      step_type: 'event_received',
+      entity_type: 'contact',
+      entity_id: contact?.id ?? from,
+      action: 'whatsapp_inbound',
+      success: true,
+      metadata: { name, channel: 'whatsapp' },
+    })
   } catch (err) {
     console.error('[WhatsApp] handleIncomingMessage error:', err)
   }

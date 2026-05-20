@@ -9,8 +9,8 @@ import logger from '@/lib/logger'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type IncidentSeverity = 'P1' | 'P2' | 'P3' | 'P4'
-export type IncidentStatus = 'open' | 'investigating' | 'mitigating' | 'resolved' | 'postmortem'
+export type IncidentSeverity = 'P0' | 'P1' | 'P2' | 'P3' | 'P4'
+export type IncidentStatus = 'open' | 'investigating' | 'mitigating' | 'resolved' | 'postmortem' | 'escalated' | 'autopsy_complete'
 
 export interface SLOThresholds {
   ack_minutes: number      // time to acknowledge
@@ -18,7 +18,8 @@ export interface SLOThresholds {
 }
 
 export const SLO_BY_SEVERITY: Record<IncidentSeverity, SLOThresholds> = {
-  P1: { ack_minutes: 5,  resolve_minutes: 60  },   // Revenue impact, system down
+  P0: { ack_minutes: 5,  resolve_minutes: 30   },  // Existential: system down, data loss, security breach
+  P1: { ack_minutes: 5,  resolve_minutes: 60   },  // Revenue impact, system down
   P2: { ack_minutes: 15, resolve_minutes: 240  },  // Significant degradation
   P3: { ack_minutes: 60, resolve_minutes: 1440 },  // Minor degradation
   P4: { ack_minutes: 240, resolve_minutes: 4320 }, // Informational

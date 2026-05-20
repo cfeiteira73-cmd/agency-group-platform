@@ -36,6 +36,7 @@ import {
   signalToPriorityItem,
   type SignalPropertyInput,
 }                                    from '@/lib/scoring/signalDetector'
+import { withCronLock }              from '@/lib/ops/cronLock'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
 import { safeCompare }               from '@/lib/safeCompare'
 
@@ -280,6 +281,7 @@ async function writePriceHistory(
   // to avoid duplicate entries on double-run (cron retry / manual trigger)
   const sinceDedup = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const ids = reductions.map(p => p.id!).filter(Boolean)
+  if (ids.length === 0) return  // all reductions had null ids — nothing to dedup or insert
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: recentEntries } = await supabaseAdmin
@@ -404,6 +406,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lockResult = await withCronLock('sync-listings', 7, async () => {
   const corrId = cronCorrelationId('sync-listings')
 
   const startedAt = new Date().toISOString()
@@ -507,4 +510,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   )
   res.headers.set('x-correlation-id', corrId)
   return res
+  }) // end withCronLock
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return lockResult
 }

@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import Anthropic from '@anthropic-ai/sdk'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -62,11 +64,16 @@ Regras:
 - NÃO incluir assinatura, NÃO incluir cabeçalhos de email
 - Só o corpo do email`
 
-  const r = await client.messages.create({
-    model:      'claude-haiku-4-5-20251001',
-    max_tokens: 600,
-    messages:   [{ role: 'user', content: prompt }],
-  })
+  const r = await withAI(
+    'anthropic-haiku',
+    () => client.messages.create({
+      model:      'claude-haiku-4-5-20251001',
+      max_tokens: 600,
+      messages:   [{ role: 'user', content: prompt }],
+    }),
+    null,
+  )
+  if (r === null) return ''  // caller has fallback string
   return ((r.content[0] as { text: string }).text || '').trim()
 }
 
@@ -138,6 +145,7 @@ ${rows ? `
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -182,7 +190,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     try {
       aiBody = await generateAiEmailBody(payload.docTitle, payload.fields, anthropicKey)
     } catch (err) {
-      console.error('[send-doc] AI body error:', err)
+      console.error('[send-doc] AI body error:', err, { corrId })
       aiBody = `Em anexo enviamos o documento "${payload.docTitle}". Solicitamos que reveja com atenção e nos contacte para qualquer esclarecimento.\n\nCom os melhores cumprimentos,`
     }
   } else {
@@ -212,13 +220,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const { data, error } = await resend.emails.send(sendParams)
     if (error) {
-      console.error('[send-doc] Resend error:', error)
+      console.error('[send-doc] Resend error:', error, { corrId })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     return NextResponse.json({ success: true, id: data?.id })
   } catch (err: unknown) {
     const e = err as Error
-    console.error('[send-doc] Exception:', e)
+    console.error('[send-doc] Exception:', e, { corrId })
     return NextResponse.json({ error: e.message || 'Erro interno' }, { status: 500 })
   }
 }

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -19,6 +20,7 @@ const REPORT_DOWNLOAD_LINKS: Record<string, string> = {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const body = await req.json() as { email?: string; name?: string; report?: string; type?: string }
     const { email, name, report, type } = body
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
           created_at: new Date().toISOString(),
         }, { onConflict: 'email' })
     } catch (dbErr) {
-      console.error('[reports/request] DB upsert failed:', dbErr)
+      console.error('[reports/request] DB upsert failed:', dbErr, { corrId })
       // Continue — email delivery is primary
     }
 
@@ -130,7 +132,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (emailErr) {
-      console.error('[reports/request] Resend error:', emailErr)
+      console.error('[reports/request] Resend error:', emailErr, { corrId })
       // Don't fail the request — DB was already logged, WhatsApp fallback in frontend
       return NextResponse.json({ ok: true, warning: 'email queued with delay' })
     }
@@ -138,7 +140,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
 
   } catch (err) {
-    console.error('[reports/request] Unexpected error:', err)
+    console.error('[reports/request] Unexpected error:', err, { corrId })
     return NextResponse.json({ error: 'internal error' }, { status: 500 })
   }
 }

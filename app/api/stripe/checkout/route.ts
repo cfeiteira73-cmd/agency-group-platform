@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, PLANS, PlanKey } from '@/lib/stripe'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 3 checkout attempts per IP per hour (prevents payment abuse)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await rateLimit(`stripe:checkout:${ip}`, { maxAttempts: 3, windowMs: 60 * 60 * 1000 })
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Demasiadas tentativas. Tente novamente em 60 minutos.' },
+      { status: 429, headers: { 'Retry-After': '3600' } },
+    )
+  }
+
   try {
     const body = await req.json()
     const { plan, email, name } = body as { plan: PlanKey; email: string; name: string }

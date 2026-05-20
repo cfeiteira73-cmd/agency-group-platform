@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { auth } from '@/auth'
 import { rateLimit } from '@/lib/rateLimit'
+import { withResend } from '@/lib/ops/withResend'
 
 const RESEND_KEY  = process.env.RESEND_API_KEY ?? ''
 const FROM_EMAIL  = 'Agency Group <geral@agencygroup.pt>'
@@ -142,28 +143,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, note: 'Email skipped — no RESEND_API_KEY' })
     }
 
+    const corrId = crypto.randomUUID()
     const resend = new Resend(RESEND_KEY)
-    const sends: Promise<unknown>[] = []
 
     // Notify admin
-    sends.push(resend.emails.send({
-      from: FROM_EMAIL,
-      to: ADMIN_EMAIL,
-      subject: `📅 Nova Visita — ${propertyRef} · ${date} ${time}`,
-      html: buildAdminEmail(body),
-    }))
+    const adminSend = withResend(
+      () => resend.emails.send({
+        from: FROM_EMAIL,
+        to: ADMIN_EMAIL,
+        subject: `📅 Nova Visita — ${propertyRef} · ${date} ${time}`,
+        html: buildAdminEmail(body),
+      }),
+      corrId,
+    )
 
     // Confirm to client if email provided
-    if (body.email) {
-      sends.push(resend.emails.send({
-        from: FROM_EMAIL,
-        to: body.email,
-        subject: `Visita confirmada — ${body.propertyName} · ${date}`,
-        html: buildClientEmail(body),
-      }))
-    }
+    const clientSend = body.email
+      ? withResend(
+          () => resend.emails.send({
+            from: FROM_EMAIL,
+            to: body.email!,
+            subject: `Visita confirmada — ${body.propertyName} · ${date}`,
+            html: buildClientEmail(body),
+          }),
+          corrId,
+        )
+      : Promise.resolve(null)
 
-    await Promise.allSettled(sends)
+    const [adminResult, clientResult] = await Promise.allSettled([adminSend, clientSend])
+    if (adminResult.status === 'rejected') {
+      console.error('[booking] Admin email failed:', { corrId, reason: adminResult.reason })
+    }
+    if (clientResult.status === 'rejected') {
+      console.error('[booking] Client email failed:', { corrId, reason: clientResult.reason })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (err) {

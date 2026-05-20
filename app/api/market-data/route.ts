@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -83,6 +84,11 @@ const MARKET_DATA_UPDATED_AT = '2026-Q1'
 // ---------------------------------------------------------------------------
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
+// TODO: CRITICAL — move to Redis (Upstash). This 7-day cache resets on every cold
+// start, causing repeated live Idealista scraping per instance. This defeats the
+// 7-day TTL entirely and may trigger scraper bans from excessive requests.
+// Store in Upstash with SETEX 604800 (7 days) so scrape results survive restarts.
+// GitHub Issue: market-data cache lost on cold starts — repeated Idealista scraping (#INFRA-010)
 const marketCache = new Map<string, CacheEntry>()
 
 // ---------------------------------------------------------------------------
@@ -349,6 +355,7 @@ function filterByType(data: FullMarketData, type: string | null): unknown {
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const { searchParams } = new URL(req.url)
     const zone = searchParams.get('zone') ?? searchParams.get('zona')
@@ -390,7 +397,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // Full data response
     return NextResponse.json(fullData, { headers: cacheHeaders() })
   } catch (err) {
-    console.error('[market-data GET]', err)
+    console.error('[market-data GET]', err, { corrId })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: cacheHeaders() }
@@ -403,6 +410,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   // Manual cache refresh — requires portal auth to prevent abuse
   // (each full refresh triggers 20+ outbound fetches to Idealista)
   if (!(await isPortalAuth(req))) {
@@ -429,7 +437,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       refreshed_at:  new Date().toISOString(), // actual scrape time, not data vintage
     }, { headers: cacheHeaders() })
   } catch (err) {
-    console.error('[market-data POST]', err)
+    console.error('[market-data POST]', err, { corrId })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: cacheHeaders() }

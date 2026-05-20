@@ -1,4 +1,7 @@
 // AGENCY GROUP — SH-ROS Control Tower: Memory | AMI: 22506
+export const revalidate = 30
+
+import { Suspense } from 'react'
 import { SparklineBar } from '../_components/SparklineBar'
 
 interface MemoryData {
@@ -64,17 +67,11 @@ function MetricRow({ label, value, mono = true }: { label: string; value: string
   )
 }
 
-export default async function MemoryPage() {
+async function MemoryContent() {
   const data = await fetchMemoryData('default')
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div>
-        <h1 className="text-lg font-semibold text-slate-100">Memory System</h1>
-        <p className="text-xs text-slate-500 font-mono mt-0.5">HOT → WARM → COLD memory hierarchy</p>
-      </div>
-
+    <>
       {!data ? (
         <div className="bg-[#111118] border border-slate-800 rounded-lg p-8 text-center">
           <p className="text-slate-500 text-sm">Memory data unavailable</p>
@@ -185,6 +182,37 @@ export default async function MemoryPage() {
           </div>
         </>
       )}
+    </>
+  )
+}
+
+function MemorySkeleton() {
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-48 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+      <div className="h-24 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+      <div className="h-20 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+    </>
+  )
+}
+
+export default function MemoryPage() {
+  return (
+    <div className="space-y-5">
+      {/* Header — renders immediately */}
+      <div>
+        <h1 className="text-lg font-semibold text-slate-100">Memory System</h1>
+        <p className="text-xs text-slate-500 font-mono mt-0.5">HOT → WARM → COLD memory hierarchy</p>
+      </div>
+
+      {/* Data streams in */}
+      <Suspense fallback={<MemorySkeleton />}>
+        <MemoryContent />
+      </Suspense>
     </div>
   )
 }

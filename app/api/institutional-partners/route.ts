@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const TABLE = 'institutional_partners'
 const DEFAULT_PAGE_SIZE = 50
@@ -18,6 +19,7 @@ const VALID_TIPOS = [
 ]
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
     if (!session) {
@@ -53,12 +55,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       pagination: { page, limit, total: count ?? 0, pages: Math.ceil((count ?? 0) / limit) },
     })
   } catch (err) {
-    console.error('[institutional-partners GET]', err)
+    console.error('[institutional-partners GET]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
     if (!session) {
@@ -111,7 +114,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.log(`[institutional-partners POST] Created partner "${payload.nome}" tipo=${payload.tipo}`)
     return NextResponse.json(inserted, { status: 201 })
   } catch (err) {
-    console.error('[institutional-partners POST]', err)
+    console.error('[institutional-partners POST]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

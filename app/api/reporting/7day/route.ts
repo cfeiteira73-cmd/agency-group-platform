@@ -20,8 +20,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret')
@@ -520,7 +523,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         // Realistic (conservative) CPCV forecast — only visita+buyer HIGH+readiness≥60
         realistic_cpcv_count:         realisticCPCVLeads.length,
         realistic_cpcv_value_eur:     realisticCPCVValueEur,
-        realistic_commission_eur:     Math.round(realisticCPCVValueEur * 0.05),
+        realistic_commission_eur:     Math.round(realisticCPCVValueEur * COMMISSION_RATE),
         realistic_cpcv_leads:         realisticCPCVLeads,
         // Scale readiness check (targets for 50 leads, 50 buyers)
         scale_readiness: {
@@ -547,7 +550,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         })(),
         pipeline_value_eur:      pipelineValueEur,
         cpcv_forecast_value_eur: cpcvForecastValueEur,
-        commission_forecast_eur: Math.round(cpcvForecastValueEur * 0.05),
+        commission_forecast_eur: Math.round(cpcvForecastValueEur * COMMISSION_RATE),
         cpcv_forecast_leads:     cpcvForecast,
       },
 
@@ -566,7 +569,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       },
     })
   } catch (err) {
-    console.error('[reporting/7day]', err)
+    console.error('[reporting/7day]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

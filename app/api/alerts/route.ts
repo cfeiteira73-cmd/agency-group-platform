@@ -4,6 +4,7 @@ import nodemailer from 'nodemailer'
 import { createClient as createSupabaseServiceClient } from '@supabase/supabase-js'
 import { safeCompare } from '@/lib/safeCompare'
 import { rateLimit } from '@/lib/rateLimit'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AlertSubscription {
@@ -286,6 +287,7 @@ function buildDealAlertEmail(sub: AlertSubscription, deal: Record<string, unknow
 
 // ─── POST /api/alerts — Create subscription ───────────────────────────────────
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   // Rate limit: 5 subscriptions / 10 min per IP — prevents email harvesting & spam
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
   const limited = await rateLimit(ip, { maxAttempts: 5, windowMs: 10 * 60 * 1000 })
@@ -327,12 +329,12 @@ export async function POST(req: NextRequest) {
     // 1. Persist to Supabase (primary)
     const saved = await createInSupabase(subscription)
     if (!saved) {
-      console.error('Failed to persist saved search to Supabase')
+      console.error('Failed to persist saved search to Supabase', { corrId })
     }
 
     // 2. Fire n8n webhook (async, non-blocking)
     triggerN8nSavedSearch(subscription).catch(err =>
-      console.error('[alerts] n8n saved-search webhook failed:', err?.message ?? err)
+      console.error('[alerts] n8n saved-search webhook failed:', err?.message ?? err, { corrId })
     )
 
     // 3. Send confirmation email (async, non-blocking)
@@ -341,7 +343,7 @@ export async function POST(req: NextRequest) {
       subject: 'Alerta de Imóveis Ativado — Agency Group',
       html: buildConfirmationEmail(subscription),
     }).catch(err =>
-      console.error('[alerts] confirmation email failed:', err?.message ?? err)
+      console.error('[alerts] confirmation email failed:', err?.message ?? err, { corrId })
     )
 
     return NextResponse.json({
@@ -351,7 +353,7 @@ export async function POST(req: NextRequest) {
       stored: saved ? 'supabase' : 'degraded',
     })
   } catch (err) {
-    console.error('Alert API error:', err)
+    console.error('Alert API error:', err, { corrId })
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

@@ -3,6 +3,9 @@ import type { MessageParam } from '@anthropic-ai/sdk/resources/messages/messages
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
+import { withAIStream } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { detectPromptInjection } from '@/lib/security/intrusionDetection'
 
 export const runtime = 'edge'
 
@@ -278,6 +281,7 @@ const ChatRequestSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
     const { allowed } = await checkRateLimit(ip)
@@ -304,6 +308,19 @@ export async function POST(req: NextRequest) {
 
     if (validMessages.length === 0) {
       return new Response('No valid messages', { status: 400 })
+    }
+
+    // Prompt injection check on the last user message
+    const lastUserMsg = validMessages.filter(m => m.role === 'user').pop()?.content ?? ''
+    const injectionCheck = detectPromptInjection(
+      typeof lastUserMsg === 'string' ? lastUserMsg : JSON.stringify(lastUserMsg),
+      'chat'
+    )
+    if (injectionCheck !== null) {
+      return new Response(
+        JSON.stringify({ error: 'Message contains disallowed content', signals: [injectionCheck] }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
     // Fetch live data in parallel — non-blocking if Supabase is unavailable
@@ -336,14 +353,40 @@ export async function POST(req: NextRequest) {
 
     const fullSystemPrompt = BASE_SYSTEM_PROMPT + propertyContext + memoryContext + langHint
 
-    const stream = await client.messages.stream({
-      model: 'claude-opus-4-6',
-      max_tokens: 600,
-      system: fullSystemPrompt,
-      messages: validMessages,
-    })
+    const stream = await withAIStream(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-6',
+        max_tokens: 600,
+        stream: true,
+        system: fullSystemPrompt,
+        messages: validMessages,
+      }),
+      null,
+    )
 
     const encoder = new TextEncoder()
+
+    if (stream === null) {
+      const cbFallback = new ReadableStream({
+        start(controller) {
+          const payload = JSON.stringify({ delta: { text: '\n\n_Serviço IA temporariamente indisponível. Por favor tente novamente em breve._' } })
+          controller.enqueue(encoder.encode(`data: ${payload}\n\n`))
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+          controller.close()
+        },
+      })
+      return new Response(cbFallback, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no',
+          'X-Session-Id': sessionId,
+        },
+      })
+    }
+
     const readable = new ReadableStream({
       async start(controller) {
         try {
@@ -387,7 +430,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (err) {
-    console.error('Chat API error:', err)
+    console.error('Chat API error:', err, { corrId })
     return new Response('Internal Server Error', { status: 500 })
   }
 }

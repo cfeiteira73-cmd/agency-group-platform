@@ -7,6 +7,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { BaseAgent } from '../base'
 import type { AgentConfig, AgentContext, AgentInsight, AgentAction } from '../types'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export class GrowthStrategyAgent extends BaseAgent {
   readonly id = 'growth-strategy' as const
@@ -79,7 +80,7 @@ export class GrowthStrategyAgent extends BaseAgent {
           summary:            `Taxa de conversão de referrals: ${Math.round(referralConvRate * 100)}% (${convertedRefs}/${totalReferrals})`,
           severity:           referralConvRate < 0.10 ? 'warning' : 'info',
           confidence:         0.85,
-          revenue_impact_eur: convertedRefs * 25000 * 0.05,
+          revenue_impact_eur: convertedRefs * 25000 * COMMISSION_RATE,
           entity_type:        'referral_program',
           entity_id:          null,
           evidence:           { total: totalReferrals, converted: convertedRefs, rate: referralConvRate },

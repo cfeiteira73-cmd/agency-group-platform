@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendWhatsApp, templates, type TemplateName } from '@/lib/whatsapp/client'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, messageId: result.messageId })
   } catch (error) {
-    console.error('[WhatsApp] Send route error:', error)
+    console.error('[WhatsApp] Send route error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao enviar mensagem' }, { status: 500 })
   }
 }

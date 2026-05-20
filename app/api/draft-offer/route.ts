@@ -2,6 +2,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -38,6 +40,10 @@ const DraftOfferSchema = z.object({
 })
 
 // ─── Rate limiting ─────────────────────────────────────────────────────────────
+// TODO: CRITICAL — move to Redis (Upstash). This Map resets on every cold start
+// and allows unlimited AI calls (expensive: ~€0.015/call) on each new serverless
+// instance. Replace with lib/rateLimit.ts (already Upstash-backed).
+// GitHub Issue: draft-offer AI endpoint rate limit bypassed on cold starts (#INFRA-003)
 
 const rateMap = new Map<string, { count: number; reset: number }>()
 function checkRate(ip: string): boolean {
@@ -84,6 +90,7 @@ const TYPE_LABELS: Record<string, Record<string, string>> = {
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -162,12 +169,36 @@ Responda EXCLUSIVAMENTE com este JSON (sem markdown, sem texto extra):
   const client = new Anthropic()
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 2000,
-      system: SYSTEM,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const message = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 2000,
+        system: SYSTEM,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null,
+    )
+
+    if (message === null) {
+      return NextResponse.json({
+        subject: typeLabel,
+        body: '',
+        keyTerms: [
+          { label: 'Preço', value: fmtEuro(d.offerPrice) },
+          { label: 'Sinal', value: fmtEuro(sinalEuro) },
+          { label: 'CPCV', value: d.conditions.dataCPCV || 'A acordar' },
+          { label: 'Escritura', value: d.conditions.dataEscritura || 'A acordar' },
+          { label: 'Condições', value: conditionsList },
+        ],
+        urgencyLevel: 'media',
+        negotiationAdvice: '',
+        redFlags: [],
+        strengths: [],
+        offerSummary: `${d.property.nome} · ${fmtEuro(d.offerPrice)}`,
+        _circuit: 'open',
+      }, { status: 503 })
+    }
 
     const raw = message.content[0]?.type === 'text' ? message.content[0].text.trim() : ''
 
@@ -199,7 +230,7 @@ Responda EXCLUSIVAMENTE com este JSON (sem markdown, sem texto extra):
 
     return NextResponse.json(result)
   } catch (err) {
-    console.error('[draft-offer] Anthropic error:', err)
+    console.error('[draft-offer] Anthropic error:', err, { corrId })
     return NextResponse.json(
       { error: 'Erro ao gerar proposta. Verifique a chave API.' },
       { status: 502 },

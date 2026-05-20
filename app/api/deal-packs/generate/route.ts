@@ -10,9 +10,42 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
 import track from '@/lib/trackLearningEvent'
+import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
+import { withAnthropicRetry } from '@/lib/ops/withRetry'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { recordCausalStep } from '@/lib/observability/causalTrace'
+import { createHash } from 'crypto'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
+
+// ---------------------------------------------------------------------------
+// Idempotency — Redis SET NX (same pattern as WhatsApp dedup)
+// Prevents duplicate AI generations when callers retry on network timeout.
+// Key: dp:gen:<sha256(deal_id|property_id|lead_id)> — TTL 3600s (1h).
+// Fail-open: if Redis is unavailable, generation proceeds normally.
+// ---------------------------------------------------------------------------
+
+async function isDuplicateGeneration(key: string): Promise<boolean> {
+  const url   = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !token) return false  // fail-open: no Redis → always proceed
+
+  try {
+    const res = await fetch(`${url}/pipeline`, {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body:    JSON.stringify([['SET', `dp:gen:${key}`, '1', 'NX', 'EX', '3600']]),
+      signal:  AbortSignal.timeout(400),  // never block the AI call path
+    })
+    if (!res.ok) return false  // Redis error → fail-open
+    const [cmd] = await res.json() as [{ result: string | null }]
+    // "OK" = key just created (not a duplicate); null = already existed (duplicate)
+    return cmd?.result !== 'OK'
+  } catch {
+    return false  // network error → fail-open
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Supabase (service role)
@@ -123,6 +156,8 @@ Gere exactamente em formato JSON (sem markdown, apenas JSON válido):
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
+  const tenantId = req.headers.get('x-tenant-id') ?? 'agency-group'
   const gate = await portalAuthGate(req)
   if (!gate.authed) return gate.response
 
@@ -212,6 +247,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     useType          = body.buyer_profile.use_type ?? null
   }
 
+  // ── Idempotency guard — prevent duplicate deal pack generation ────────────
+  // Key combines the inputs that uniquely determine a deal pack.
+  // SHA-256 keeps the key short and avoids injecting raw UUIDs into Redis keys.
+  const dedupInput = `${body.deal_id ?? ''}|${propDbId ?? body.property_id ?? ''}|${body.lead_id ?? ''}`
+  const dedupKey   = createHash('sha256').update(dedupInput).digest('hex')
+
+  if (await isDuplicateGeneration(dedupKey)) {
+    console.log('[deal-packs/generate] Duplicate generation request suppressed', { corrId, dedupKey })
+    return NextResponse.json(
+      { error: 'A deal pack for this combination is already being generated. Please wait and retry.' },
+      { status: 409, headers: { 'Retry-After': '10' } }
+    )
+  }
+
   // ── Generate with Claude ───────────────────────────────────────────────────
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -236,13 +285,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     useType,
   })
 
+  // withCircuitBreaker: open after 5 Anthropic failures; withAnthropicRetry: 3 attempts + backoff.
+  // Haiku circuit is tracked separately from Vision circuit — different rate-limit buckets.
+  // Fallback null → 503 so callers can retry later rather than receiving corrupted output.
   let claudeJson: Record<string, unknown>
   try {
-    const message = await client.messages.create({
-      model:      'claude-haiku-4-5',
-      max_tokens: 2048,
-      messages:   [{ role: 'user', content: prompt }],
-    })
+    const message = await withCircuitBreaker<Anthropic.Message | null>(
+      'anthropic-haiku',
+      (): Promise<Anthropic.Message | null> => withAnthropicRetry(() =>
+        client.messages.create({
+          model:      'claude-haiku-4-5',
+          max_tokens: 2048,
+          messages:   [{ role: 'user', content: prompt }],
+        })
+      ),
+      null,  // fallback: circuit OPEN → 503 below
+    )
+
+    if (message === null) {
+      return NextResponse.json(
+        { error: 'Deal pack generation temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      )
+    }
 
     const rawText = message.content
       .filter((b) => b.type === 'text')
@@ -254,7 +319,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const jsonStr = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
     claudeJson = JSON.parse(jsonStr) as Record<string, unknown>
   } catch (err) {
-    console.error('[deal-packs/generate] Claude error:', err)
+    console.error('[deal-packs/generate] Claude error:', err, { corrId })
     return NextResponse.json({ error: 'AI generation failed. Try again.' }, { status: 502 })
   }
 
@@ -331,9 +396,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   if (insertError) {
-    console.error('[deal-packs/generate] Supabase insert error:', insertError)
+    console.error('[deal-packs/generate] Supabase insert error:', insertError, { corrId })
     return NextResponse.json({ error: 'Failed to save deal pack' }, { status: 500 })
   }
+
+  // ── Causal trace: deal_pack_generated ────────────────────────────────────
+  void recordCausalStep({
+    correlation_id: corrId ?? body.deal_id ?? inserted?.id ?? 'deal-pack',
+    tenant_id: tenantId,
+    step_type: 'ai_decision',
+    entity_type: 'deal',
+    entity_id: body.deal_id ?? propDbId ?? inserted?.id ?? undefined,
+    agent_id: 'crm-orchestrator',
+    action: 'deal_pack_generated',
+    success: true,
+    metadata: { packId: inserted?.id, channel: 'portal', language: buyerNationality ?? 'pt' },
+  })
 
   // ── Learning event: deal_pack_generated ───────────────────────────────────
   track.dealPackGenerated({

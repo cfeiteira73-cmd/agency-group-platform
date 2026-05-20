@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rateLimit';
 import { isPortalAuth } from '@/lib/portalAuth';
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 /**
  * AG·AI Proxy — /api/ai
@@ -29,6 +30,7 @@ function resolveModel(model: string): string {
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -93,12 +95,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(data, { status: response.status });
 
     } catch (err) {
-      console.error(`[AG·AI] Tentativa ${attempt + 1} falhou:`, err);
+      console.error(`[AG·AI] Tentativa ${attempt + 1} falhou:`, err, { corrId });
       lastError = err;
     }
   }
 
-  console.error('[AG·AI] Todas as tentativas falharam:', lastError);
+  console.error('[AG·AI] Todas as tentativas falharam:', lastError, { corrId });
   return NextResponse.json(
     { type: 'error', error: { type: 'service_unavailable', message: 'Serviço temporariamente indisponível. Tenta novamente em 30 segundos.' } },
     { status: 503 }

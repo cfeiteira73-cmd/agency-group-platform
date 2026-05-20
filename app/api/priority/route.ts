@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 
@@ -202,7 +203,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
             const expectedFee = deal.expected_fee != null
               ? Number(deal.expected_fee)
               : deal.valor
-                ? (parseFloat(String(deal.valor).replace(/[^0-9.]/g, '')) || 0) * 0.05
+                ? (parseFloat(String(deal.valor).replace(/[^0-9.]/g, '')) || 0) * COMMISSION_RATE
                 : null
             dynamicItems.push({
               id:               `dyn-deal-${deal.id}`,
@@ -247,7 +248,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
               deadline:         s.seller_urgency === 'urgent' ? addHours(4) : addHours(48),
               owner_id:         null,
               revenue_impact:   s.seller_asking_price
-                ? Math.round(s.seller_asking_price * 0.05)
+                ? Math.round(s.seller_asking_price * COMMISSION_RATE)
                 : null,
               status:           'open',
               source:           'engine',

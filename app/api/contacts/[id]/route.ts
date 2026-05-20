@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -23,6 +24,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const { id } = await params
     if (!id || id.length < 4) {
@@ -51,13 +53,13 @@ export async function PATCH(
       .eq('id', id)
 
     if (error) {
-      console.error('[contacts/id] patch error:', error)
+      console.error('[contacts/id] patch error:', error, { corrId })
       return NextResponse.json({ error: 'Erro ao actualizar' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('[contacts/id] error:', err)
+    console.error('[contacts/id] error:', err, { corrId })
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
@@ -72,6 +74,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const corrId = getRequestCorrelationId(req)
   const authCheck = await requirePortalAuth(req)
   if (!authCheck.ok) return authCheck.response
 
@@ -109,13 +112,13 @@ export async function DELETE(
       .eq('id', id)
 
     if (error) {
-      console.error('[contacts/id] delete error:', error)
+      console.error('[contacts/id] delete error:', error, { corrId })
       return NextResponse.json({ error: 'Erro ao eliminar contacto' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, deleted_id: id })
   } catch (err) {
-    console.error('[contacts/id] delete error:', err)
+    console.error('[contacts/id] delete error:', err, { corrId })
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

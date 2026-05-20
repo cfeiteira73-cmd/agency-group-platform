@@ -4441,6 +4441,128 @@ export type Database = {
         }
         Relationships: []
       }
+
+      // -----------------------------------------------------------------------
+      // governance_approvals
+      // -----------------------------------------------------------------------
+      governance_approvals: {
+        Row: {
+          id: string
+          tenant_id: string
+          incident_id: string
+          action_type: string
+          execution_mode: string
+          requested_by: string
+          approved_by: string | null
+          status: 'pending' | 'approved' | 'rejected' | 'expired'
+          context: Record<string, unknown>
+          causal_confidence: number | null
+          confidence: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          incident_id: string
+          action_type: string
+          execution_mode?: string
+          requested_by?: string
+          approved_by?: string | null
+          status?: 'pending' | 'approved' | 'rejected' | 'expired'
+          context?: Record<string, unknown>
+          causal_confidence?: number | null
+          confidence?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          incident_id?: string
+          action_type?: string
+          execution_mode?: string
+          requested_by?: string
+          approved_by?: string | null
+          status?: 'pending' | 'approved' | 'rejected' | 'expired'
+          context?: Record<string, unknown>
+          causal_confidence?: number | null
+          confidence?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
+      // -----------------------------------------------------------------------
+      // incidents
+      // -----------------------------------------------------------------------
+      incidents: {
+        Row: {
+          incident_id: string
+          tenant_id: string
+          severity: 'P0' | 'P1' | 'P2' | 'P3'
+          status: 'open' | 'investigating' | 'resolved' | 'escalated' | 'autopsy_complete'
+          subsystem: string
+          region: string | null
+          raw_error: string | null
+          classification: string | null
+          timestamp: string
+          detected_at: string
+          resolved_at: string | null
+          healing_attempts: number
+          metrics_snapshot: Record<string, unknown> | null
+          impact: Record<string, unknown> | null
+          autopsy_report: Record<string, unknown> | null
+          source_correlation_id: string | null
+          causal_chain: Record<string, unknown> | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          incident_id?: string
+          tenant_id: string
+          severity: 'P0' | 'P1' | 'P2' | 'P3'
+          status?: 'open' | 'investigating' | 'resolved' | 'escalated' | 'autopsy_complete'
+          subsystem: string
+          region?: string | null
+          raw_error?: string | null
+          classification?: string | null
+          timestamp?: string
+          detected_at?: string
+          resolved_at?: string | null
+          healing_attempts?: number
+          metrics_snapshot?: Record<string, unknown> | null
+          impact?: Record<string, unknown> | null
+          autopsy_report?: Record<string, unknown> | null
+          source_correlation_id?: string | null
+          causal_chain?: Record<string, unknown> | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          incident_id?: string
+          tenant_id?: string
+          severity?: 'P0' | 'P1' | 'P2' | 'P3'
+          status?: 'open' | 'investigating' | 'resolved' | 'escalated' | 'autopsy_complete'
+          subsystem?: string
+          region?: string | null
+          raw_error?: string | null
+          classification?: string | null
+          timestamp?: string
+          detected_at?: string
+          resolved_at?: string | null
+          healing_attempts?: number
+          metrics_snapshot?: Record<string, unknown> | null
+          impact?: Record<string, unknown> | null
+          autopsy_report?: Record<string, unknown> | null
+          source_correlation_id?: string | null
+          causal_chain?: Record<string, unknown> | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
 
     // -----------------------------------------------------------------------

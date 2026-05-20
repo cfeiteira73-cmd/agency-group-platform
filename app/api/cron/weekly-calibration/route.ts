@@ -6,6 +6,7 @@ import { NextRequest, NextResponse }   from 'next/server'
 import { runWeeklyCalibration }        from '@/lib/intelligence/recalibrationEngine'
 import { buildAlert, createAlert }     from '@/lib/ops/alertEngine'
 import { withCronLock }                from '@/lib/ops/cronLock'
+import { safeCompare }                 from '@/lib/safeCompare'
 import { supabaseAdmin }               from '@/lib/supabase'
 import { cronCorrelationId }           from '@/lib/observability/correlation'
 
@@ -13,9 +14,9 @@ export const runtime     = 'nodejs'
 export const maxDuration = 60
 
 export async function GET(req: NextRequest) {
-  const cronSecret   = req.headers.get('authorization')?.replace('Bearer ', '')
+  const cronSecret   = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
   const cronExpected = process.env.CRON_SECRET
-  if (!cronExpected || !cronSecret || cronSecret !== cronExpected) {
+  if (!cronExpected || !cronSecret || !safeCompare(cronSecret, cronExpected)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -20,6 +20,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { getStageProbability, COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 
@@ -32,25 +34,9 @@ function normFase(s: unknown): string {
     .replace(/[\s\-_]+/g, '')          // strip separators
 }
 
-// ── Stage probability — covers PT portal values + EN enum fallbacks ───────────
-const STAGE_PROB_MAP: Record<string, number> = {
-  contacto: 0.05, angariacao: 0.05, lead: 0.05,
-  qualificacao: 0.20, qualificado: 0.20, qualification: 0.20,
-  visitaagendada: 0.35, visitascheduled: 0.35,
-  visitarealizada: 0.45, visitadone: 0.45, visita: 0.40,
-  proposta: 0.60, proposal: 0.60,
-  negociacao: 0.70, negotiation: 0.70,
-  cpcv: 0.85,
-  escritura: 1.0, fechado: 1.0, posvenda: 1.0, postsale: 1.0,
-}
-
+// ── Stage probability — delegates to canonical lib/constants/pipeline ─────────
 function stagePct(fase: unknown): number {
-  const key = normFase(fase)
-  if (STAGE_PROB_MAP[key] !== undefined) return STAGE_PROB_MAP[key]
-  for (const [k, v] of Object.entries(STAGE_PROB_MAP)) {
-    if (key.includes(k) || k.includes(key)) return v
-  }
-  return 0.10
+  return getStageProbability(fase)
 }
 
 // ── Closed-deal detection (any PT/EN closed stage) ────────────────────────────
@@ -74,6 +60,7 @@ function parseRev(v: unknown): number {
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   // ── Auth ─────────────────────────────────────────────────────────────────────
   const auth = await requirePortalAuth(req)
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 })
@@ -129,7 +116,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const dealFee = (d: Record<string, unknown>): number =>
       parseRev(d.realized_fee)
       || parseRev(d.expected_fee)
-      || parseRev(d.valor) * 0.05
+      || parseRev(d.valor) * COMMISSION_RATE
 
     const dealValue = (d: Record<string, unknown>): number =>
       parseRev(d.valor)
@@ -137,7 +124,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     // ── Core revenue metrics ──────────────────────────────────────────────────
     const revenue_closed   = closedDeals.reduce((s, d) => s + dealFee(d), 0)
     const revenue_expected = activeDeals.reduce((s, d) => s + dealFee(d), 0)
-    const pipeline_value   = allDeals.reduce((s, d) => s + dealValue(d) * stagePct(d.fase), 0)
+    // pipeline_value = weighted expected revenue from OPEN deals only.
+    // Closed deals are counted in revenue_closed — including them here causes double-counting.
+    const pipeline_value   = activeDeals.reduce((s, d) => s + dealValue(d) * stagePct(d.fase), 0)
 
     const agency_net = closedDeals.reduce((sum, d) =>
       sum + dealFee(d) * (1 - (Number(d.partner_fee_pct) || 0)), 0)
@@ -297,7 +286,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       : (typeof e === 'object' && e !== null)
         ? JSON.stringify(e)
         : String(e ?? 'unknown error')
-    console.error('[revenue analytics]', msg, e)
+    console.error('[revenue analytics]', msg, e, { corrId })
     return NextResponse.json({ error: msg, source: 'error' }, { status: 500 })
   }
 }

@@ -20,6 +20,7 @@
 import { supabaseAdmin }        from '@/lib/supabase'
 import { getLeakageThresholds } from '@/lib/platform/config'
 import type { LeakageThresholds } from '@/lib/platform/config'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -179,7 +180,7 @@ async function detectDealStuck(_t: LeakageThresholds): Promise<LeakItem[]> {
     const revenueRaw = typeof deal.valor === 'string'
       ? parseFloat(deal.valor.replace(/[^\d.]/g, ''))
       : (deal.valor ?? 0)
-    const revenueEst = isNaN(revenueRaw) ? null : revenueRaw * 0.05  // 5% commission
+    const revenueEst = isNaN(revenueRaw) ? null : revenueRaw * COMMISSION_RATE  // 5% commission
 
     leaks.push({
       id:          String(deal.id),
@@ -291,6 +292,17 @@ export async function detectRevenueLeakage(): Promise<LeakItem[]> {
     detectHumanFailureOpen(t),
     detectDormantHighValue(t),
   ])
+
+  // Log any rejected detectors — silent rejection = invisible leakage gap
+  const detectorNames = ['HIGH_SCORE_NO_CONTACT', 'CPCV_READY_NO_ACTION', 'DEAL_STUCK', 'HUMAN_FAILURE_OPEN', 'DORMANT_HIGH_VALUE']
+  const results       = [noContact, cpcvReady, stuck, humanFail, dormant]
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      console.error(`[revenueLeakage] detector ${detectorNames[i]} FAILED — leakage category silently absent`, {
+        error: r.reason instanceof Error ? r.reason.message : String(r.reason),
+      })
+    }
+  })
 
   const all: LeakItem[] = [
     ...(noContact.status  === 'fulfilled' ? noContact.value  : []),

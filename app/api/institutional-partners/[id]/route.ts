@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const TABLE = 'institutional_partners'
 
@@ -19,9 +20,10 @@ const ALLOWED_PATCH_FIELDS = new Set([
 ])
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -36,7 +38,7 @@ export async function GET(
     if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(data)
   } catch (err) {
-    console.error('[institutional-partners GET/:id]', err)
+    console.error('[institutional-partners GET/:id]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -45,6 +47,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -76,7 +79,7 @@ export async function PATCH(
     if (error) throw error
     return NextResponse.json(data)
   } catch (err) {
-    console.error('[institutional-partners PATCH/:id]', err)
+    console.error('[institutional-partners PATCH/:id]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

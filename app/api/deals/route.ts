@@ -13,6 +13,7 @@ import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import track from '@/lib/trackLearningEvent'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { recordCausalStep } from '@/lib/observability/causalTrace'
 
 export const runtime = 'nodejs'
 
@@ -45,6 +46,7 @@ const VALID_FASES = [
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -115,7 +117,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     // Supabase unavailable — return empty result with explicit note (no mock data)
-    console.error('[deals GET] Supabase unavailable after retry')
+    console.error('[deals GET] Supabase unavailable after retry', { corrId })
     return NextResponse.json({
       data:    [],
       total:   0,
@@ -126,7 +128,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       message: 'Base de dados temporariamente indisponível. Tente novamente.',
     }, { status: 200, headers: rateLimitHeaders() })
   } catch (error) {
-    console.error('[deals GET]', error)
+    console.error('[deals GET]', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
 }
@@ -136,6 +138,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -199,13 +202,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // Supabase unavailable — cannot persist deal, return 503
-    console.error('[deals POST] Supabase unavailable — deal not created')
+    console.error('[deals POST] Supabase unavailable — deal not created', { corrId })
     return NextResponse.json(
       { error: 'Serviço indisponível. Deal não foi guardado. Tente novamente.' },
       { status: 503, headers: rateLimitHeaders() }
     )
   } catch (error) {
-    console.error('[deals POST]', error)
+    console.error('[deals POST]', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
 }
@@ -215,6 +218,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function PUT(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
+  const tenantId = req.headers.get('x-tenant-id') ?? 'agency-group'
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -272,6 +277,17 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
           } else if (['Visita', 'visita_agendada', 'Visita Agendada'].includes(fase)) {
             track.callBooked(basePayload)
           }
+
+          void recordCausalStep({
+            correlation_id: corrId,
+            tenant_id: tenantId,
+            step_type: 'db_mutation',
+            entity_type: 'deal',
+            entity_id: dealId ?? (data as Record<string, unknown>)?.id as string | undefined,
+            action: 'stage_updated',
+            success: true,
+            metadata: { newStage: fase, previousStage: (data as Record<string, unknown>)?.fase },
+          })
         }
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
       }
@@ -281,13 +297,13 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
     }
 
     // Supabase unavailable — cannot update deal
-    console.error('[deals PUT] Supabase unavailable — deal not updated')
+    console.error('[deals PUT] Supabase unavailable — deal not updated', { corrId })
     return NextResponse.json(
       { error: 'Serviço indisponível. Alteração não foi guardada. Tente novamente.' },
       { status: 503, headers: rateLimitHeaders() }
     )
   } catch (error) {
-    console.error('[deals PUT]', error)
+    console.error('[deals PUT]', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
 }
@@ -297,6 +313,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if ((session.user as { role?: string }).role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -319,7 +336,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ success: true, message: 'Deal deleted (mock)', source: 'mock' }, { headers: rateLimitHeaders() })
   } catch (error) {
-    console.error('[deals DELETE]', error)
+    console.error('[deals DELETE]', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
 }

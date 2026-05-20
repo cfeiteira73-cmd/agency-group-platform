@@ -8,25 +8,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
 import { safeCompare } from '@/lib/safeCompare'
+import { requireServiceAuth } from '@/lib/auth/serviceAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const TABLE = 'offmarket_leads'
 const DEFAULT_PAGE_SIZE = 50
 
-function isAuthorized(req: NextRequest, session: { user?: unknown } | null): boolean {
+async function isAuthorized(req: NextRequest, session: { user?: unknown } | null): Promise<boolean> {
   if (session?.user) return true
+  const serviceCheck = await requireServiceAuth(req)
+  if (serviceCheck.ok) return true
+  // Also accept PORTAL_API_SECRET (not covered by requireServiceAuth)
   const authHeader = req.headers.get('authorization') ?? ''
-  const xCronSecret = req.headers.get('x-cron-secret') ?? ''
-  return (
-    safeCompare(authHeader, `Bearer ${process.env.CRON_SECRET ?? ''}`) ||
-    safeCompare(authHeader, `Bearer ${process.env.PORTAL_API_SECRET ?? ''}`) ||
-    safeCompare(xCronSecret, process.env.CRON_SECRET ?? '')
-  )
+  return safeCompare(authHeader, `Bearer ${process.env.PORTAL_API_SECRET ?? ''}`)
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
-    if (!isAuthorized(req, session)) {
+    if (!await isAuthorized(req, session)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -60,16 +61,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       pagination: { page, limit, total: count ?? 0, pages: Math.ceil((count ?? 0) / limit) },
     })
   } catch (err) {
-    console.error('[offmarket-leads GET]', err)
+    console.error('[offmarket-leads GET]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     // Accept either: (1) authenticated portal session, or (2) Bearer/x-cron-secret for Apify/n8n
     const session = await auth()
-    if (!isAuthorized(req, session)) {
+    if (!await isAuthorized(req, session)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -150,7 +152,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.log(`[offmarket-leads POST] Created lead "${payload.nome}" score=${payload.score} city=${payload.cidade}`)
     return NextResponse.json(inserted, { status: 201 })
   } catch (err) {
-    console.error('[offmarket-leads POST]', err)
+    console.error('[offmarket-leads POST]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

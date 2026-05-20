@@ -12,6 +12,7 @@
 // =============================================================================
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ---------------------------------------------------------------------------
 // Revenue calculation chain
@@ -33,7 +34,7 @@ describe('Revenue calculation chain', () => {
             .replace(/\.(?=\d{3})/g, '')        // remove PT thousands-separator dots (1.000.000 → 1000000)
             .replace(',', '.')                  // PT decimal comma → dot
         ) || 0
-    return raw * 0.05
+    return raw * COMMISSION_RATE
   }
 
   it('uses realized_fee when available', () => {

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { auth } from '@/auth'
+import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
+import { withAnthropicRetry } from '@/lib/ops/withRetry'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -42,6 +45,7 @@ interface PhotoAnalysisResult {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -77,16 +81,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No valid photo URLs' }, { status: 400 })
     }
 
-    const response = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 1500,
-      messages: [{
-        role: 'user',
-        content: [
-          ...imageContents,
-          {
-            type: 'text',
-            text: `You are a luxury real estate photography expert. Analyze these ${imageContents.length} property photos for the Portuguese luxury market (Agency Group, AMI 22506).
+    // withCircuitBreaker: opens after 5 consecutive Anthropic failures (60s recovery probe).
+    // withAnthropicRetry: 3 attempts with 1s→2s backoff before the CB records a failure.
+    // Fallback null → 503 response below — never hangs the caller.
+    const claudeResponse = await withCircuitBreaker<Anthropic.Message | null>(
+      'anthropic-vision',
+      (): Promise<Anthropic.Message | null> => withAnthropicRetry(() =>
+        anthropic.messages.create({
+          model: 'claude-opus-4-5',
+          max_tokens: 1500,
+          messages: [{
+            role: 'user',
+            content: [
+              ...imageContents,
+              {
+                type: 'text',
+                text: `You are a luxury real estate photography expert. Analyze these ${imageContents.length} property photos for the Portuguese luxury market (Agency Group, AMI 22506).
 
 Return ONLY valid JSON (no markdown):
 {
@@ -119,12 +129,22 @@ Scoring guide:
 - grade: A(90+), B(75-89), C(60-74), D(45-59), F(<45)
 - issues: from [dark, blurry, clutter, bad_angle, reflection, distortion, small_room]
 - strengths: from [natural_light, wide_angle, luxury_finish, garden_view, pool, sea_view, staged, high_ceiling]`,
-          },
-        ],
-      }],
-    })
+              },
+            ],
+          }],
+        })
+      ),
+      null,  // fallback: circuit OPEN → return 503 immediately
+    )
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+    if (claudeResponse === null) {
+      return NextResponse.json(
+        { error: 'Photo analysis service temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      )
+    }
+
+    const text = claudeResponse.content[0].type === 'text' ? claudeResponse.content[0].text : '{}'
 
     // Parse JSON response
     let parsed: {
@@ -164,7 +184,7 @@ Scoring guide:
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error('[avm/photos] Error:', error)
+    console.error('[avm/photos] Error:', error, { corrId })
     return NextResponse.json({ error: 'Photo analysis failed' }, { status: 500 })
   }
 }

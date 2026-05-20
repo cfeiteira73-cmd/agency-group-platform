@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const FinancingSchema = z.object({
   country_code:     z.string().toUpperCase().default('OTHER'),
@@ -181,6 +182,7 @@ function calcPMT(principal: number, annualRate: number, months: number): number 
 
 // ─── POST /api/financing ─────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const raw = await req.json()
     const parsed = FinancingSchema.safeParse(raw)
@@ -277,7 +279,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (err) {
-    console.error(err)
+    console.error(err, { corrId })
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 }

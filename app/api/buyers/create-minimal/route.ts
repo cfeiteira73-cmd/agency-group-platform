@@ -28,6 +28,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -97,6 +98,7 @@ function computeReadinessScore(
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -194,7 +196,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       .single()
 
     if (insertErr || !contact) {
-      console.error('[buyers/create-minimal] Insert error:', insertErr)
+      console.error('[buyers/create-minimal] Insert error:', insertErr, { corrId })
       return NextResponse.json({ error: insertErr?.message ?? 'Erro ao criar buyer' }, { status: 500 })
     }
 
@@ -231,7 +233,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }, { status: 201 })
 
   } catch (err) {
-    console.error('[buyers/create-minimal] Error:', err)
+    console.error('[buyers/create-minimal] Error:', err, { corrId })
     return NextResponse.json({ error: 'Internal error', details: String(err) }, { status: 500 })
   }
 }

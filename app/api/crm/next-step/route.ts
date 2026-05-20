@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { safeCompare } from '@/lib/safeCompare'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -27,6 +29,7 @@ function mockNextStep(contact: Record<string, unknown>) {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const authHeader = req.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -89,12 +92,20 @@ JSON de resposta:
   "riskFlag": "descrição do risco ou null"
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 900,
-      system: 'És um consultor de vendas de imobiliário de luxo em Portugal. Respondes APENAS com JSON válido, sem texto adicional.',
-      messages: [{ role: 'user', content: prompt }]
-    })
+    const response = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 900,
+        system: 'És um consultor de vendas de imobiliário de luxo em Portugal. Respondes APENAS com JSON válido, sem texto adicional.',
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      null,
+    )
+
+    if (response === null) {
+      return NextResponse.json(mockNextStep(contact))
+    }
 
     const raw = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -105,7 +116,7 @@ JSON de resposta:
       return NextResponse.json({ error: 'Parse failed', raw }, { status: 500 })
     }
   } catch (error) {
-    console.error('[next-step] Error:', error)
+    console.error('[next-step] Error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao gerar próxima acção' }, { status: 500 })
   }
 }

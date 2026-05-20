@@ -3,9 +3,10 @@
 // Called by agents/CRM when a deal is closed, lost, or goes stale.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { safeCompare }               from '@/lib/safeCompare'
+import { requireServiceAuth }        from '@/lib/auth/serviceAuth'
 import { getToken }                  from 'next-auth/jwt'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -26,9 +27,10 @@ interface FeedbackBody {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   // Auth: session token or internal service token
-  const internalToken = req.headers.get('x-internal-token')
-  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
+  const serviceCheck = await requireServiceAuth(req)
+  const isInternal   = serviceCheck.ok
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
       negotiation_delta_pct,
     })
   } catch (err) {
-    console.error('[scoring-feedback] error:', err)
+    console.error('[scoring-feedback] error:', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

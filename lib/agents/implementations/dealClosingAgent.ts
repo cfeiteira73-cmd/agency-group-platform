@@ -7,6 +7,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { BaseAgent } from '../base'
 import type { AgentConfig, AgentContext, AgentInsight, AgentAction } from '../types'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // Maximum days per stage before flagging closing-risk
 const CLOSING_SLA: Record<string, number> = {
@@ -63,7 +64,7 @@ export class DealClosingAgent extends BaseAgent {
 
         closingRiskCount++
         const valor        = (deal.valor as number | null) ?? 0
-        const commission   = valor * 0.05
+        const commission   = valor * COMMISSION_RATE
         totalAtRisk       += commission
 
         // Closing probability degrades 5% per day over SLA

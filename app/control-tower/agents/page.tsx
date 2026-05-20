@@ -1,6 +1,9 @@
 // AGENCY GROUP — SH-ROS Control Tower: Agents | AMI: 22506
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { StatusBadge } from '../_components/StatusBadge'
+
+export const revalidate = 30
 
 interface AgentHealth {
   agent_id: string
@@ -35,7 +38,27 @@ const STATUS_DOT: Record<string, string> = {
   idle:     'bg-slate-600',
 }
 
-export default async function AgentsPage() {
+function AgentsSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="text-center">
+            <div className="h-7 w-10 bg-[#1A1A24] rounded animate-pulse mb-1" />
+            <div className="h-3 w-14 bg-[#1A1A24] rounded animate-pulse" />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-40 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+async function AgentsContent() {
   const agents = await fetchAgents('default')
 
   const healthy  = agents.filter(a => a.status === 'healthy').length
@@ -44,28 +67,22 @@ export default async function AgentsPage() {
   const idle     = agents.filter(a => a.status === 'idle').length
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-100">Agent Fleet</h1>
-          <p className="text-xs text-slate-500 font-mono mt-0.5">{agents.length} agents registered</p>
-        </div>
-        {/* Fleet summary */}
-        <div className="flex items-center gap-4">
-          {[
-            { label: 'Healthy', count: healthy, color: 'text-green-400' },
-            { label: 'Degraded', count: degraded, color: 'text-amber-400' },
-            { label: 'Failed', count: failed, color: 'text-red-400' },
-            { label: 'Idle', count: idle, color: 'text-slate-500' },
-          ].map(({ label, count, color }) => (
-            <div key={label} className="text-center">
-              <p className={`text-xl font-bold font-mono ${color}`}>{count}</p>
-              <p className="text-[10px] text-slate-600 uppercase tracking-wider">{label}</p>
-            </div>
-          ))}
-        </div>
+    <>
+      {/* Fleet summary */}
+      <div className="flex items-center gap-4">
+        {[
+          { label: 'Healthy', count: healthy, color: 'text-green-400' },
+          { label: 'Degraded', count: degraded, color: 'text-amber-400' },
+          { label: 'Failed', count: failed, color: 'text-red-400' },
+          { label: 'Idle', count: idle, color: 'text-slate-500' },
+        ].map(({ label, count, color }) => (
+          <div key={label} className="text-center">
+            <p className={`text-xl font-bold font-mono ${color}`}>{count}</p>
+            <p className="text-[10px] text-slate-600 uppercase tracking-wider">{label}</p>
+          </div>
+        ))}
       </div>
+      <p className="text-xs text-slate-500 font-mono">{agents.length} agents registered</p>
 
       {agents.length === 0 ? (
         <div className="bg-[#111118] border border-slate-800 rounded-lg p-8 text-center">
@@ -130,6 +147,19 @@ export default async function AgentsPage() {
                     </span>
                   )}
                 </div>
+                {agent.economic_score_avg != null && (
+                  <div className="mt-2">
+                    <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          agent.economic_score_avg >= 0.8 ? 'bg-green-500' :
+                          agent.economic_score_avg >= 0.5 ? 'bg-amber-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${Math.round(agent.economic_score_avg * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Last error */}
                 {agent.last_error && (
@@ -137,11 +167,36 @@ export default async function AgentsPage() {
                     <p className="text-[10px] text-red-400 font-mono truncate">{agent.last_error}</p>
                   </div>
                 )}
+
+                {/* Causal trace link */}
+                <div className="mt-2 pt-2 border-t border-slate-800/50 flex items-center justify-between">
+                  <span className="text-[10px] text-slate-600 font-mono">causal trace</span>
+                  <a
+                    href={`/control-tower/events?agent_id=${encodeURIComponent(agent.agent_id)}`}
+                    className="text-[10px] text-blue-400 hover:text-blue-300 font-mono"
+                  >
+                    view events →
+                  </a>
+                </div>
               </div>
             </Link>
           ))}
         </div>
       )}
+    </>
+  )
+}
+
+export default function AgentsPage() {
+  return (
+    <div className="space-y-5">
+      {/* Static header */}
+      <div>
+        <h1 className="text-lg font-semibold text-slate-100">Agent Fleet</h1>
+      </div>
+      <Suspense fallback={<AgentsSkeleton />}>
+        <AgentsContent />
+      </Suspense>
     </div>
   )
 }

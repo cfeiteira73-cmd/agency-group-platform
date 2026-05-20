@@ -92,25 +92,76 @@ export class WorkflowROITracker {
     period_days: number
   ): Promise<WorkflowROIRecord[]> {
     const from = new Date(Date.now() - period_days * 86_400_000).toISOString()
-    const { data } = await sb
+
+    // Single aggregated query — one DB round-trip instead of 1 + 2×N
+    const { data: rows, error } = await sb
       .from('learning_events')
       .select('metadata')
       .eq('org_id', org_id)
       .eq('event_type', 'workflow_execution')
       .gte('created_at', from)
-      .limit(2000)
+      .limit(5000)
 
-    const names = new Set<string>(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (data ?? []).map((r: any) =>
-        ((r.metadata as Record<string, unknown>)?.['workflow_name'] as string) ?? 'unknown'
-      )
-    )
+    if (error) logger.error('[WorkflowROI] getRankedWorkflowROI query failed', { error, org_id })
+    if (!rows?.length) return []
+
+    // Aggregate in-memory: group by workflow_name
+    const byWorkflow = new Map<string, {
+      successful: number
+      total: number
+      total_duration_ms: number
+    }>()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const row of rows as any[]) {
+      const meta = (row.metadata as Record<string, unknown>) ?? {}
+      const name = ((meta['workflow_name'] as string) ?? 'unknown')
+      const entry = byWorkflow.get(name) ?? { successful: 0, total: 0, total_duration_ms: 0 }
+      entry.total++
+      if (meta['status'] === 'completed') entry.successful++
+      entry.total_duration_ms += (meta['duration_ms'] as number) ?? 500
+      byWorkflow.set(name, entry)
+    }
+
+    // Fetch org revenue once for all workflows
+    const { data: deals } = await sb
+      .from('deals')
+      .select('value_eur')
+      .eq('org_id', org_id)
+      .eq('status', 'closed_won')
+      .gte('updated_at', from)
+      .limit(500)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const total_org_revenue = (deals ?? []).reduce((s: number, d: any) =>
+      s + ((d.value_eur as number) ?? 0), 0)
 
     const records: WorkflowROIRecord[] = []
-    for (const name of names) {
-      records.push(await this.calculateWorkflowROI(name, org_id, period_days))
+    for (const [name, stats] of byWorkflow) {
+      if (stats.total === 0) continue
+      const revenue_generated_eur = total_org_revenue * 0.2
+      const estimated_cost_eur = stats.total_duration_ms * COST_PER_MS_EUR
+      const roi_multiplier = estimated_cost_eur > 0
+        ? Math.round((revenue_generated_eur / estimated_cost_eur) * 10) / 10 : 0
+      const roi_pct = estimated_cost_eur > 0
+        ? Math.round(((revenue_generated_eur - estimated_cost_eur) / estimated_cost_eur) * 1000) / 10 : 0
+      const avg_revenue_per_execution_eur = revenue_generated_eur / stats.total
+      const break_even_executions = avg_revenue_per_execution_eur > 0
+        ? Math.ceil(10 / avg_revenue_per_execution_eur) : 9999
+      records.push({
+        workflow_name: name,
+        org_id,
+        period_days,
+        executions: stats.total,
+        successful_executions: stats.successful,
+        revenue_generated_eur: Math.round(revenue_generated_eur * 100) / 100,
+        estimated_cost_eur: Math.round(estimated_cost_eur * 10000) / 10000,
+        roi_multiplier,
+        roi_pct,
+        avg_revenue_per_execution_eur: Math.round(avg_revenue_per_execution_eur * 100) / 100,
+        break_even_executions,
+      })
     }
+
     return records.sort((a, b) => b.roi_multiplier - a.roi_multiplier)
   }
 }

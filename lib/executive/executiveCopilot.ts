@@ -10,11 +10,11 @@ import { revenueNarrator } from './revenueNarrator'
 import { opportunityRadar } from './opportunityRadar'
 import { operationalSummarizer } from './operationalSummarizer'
 import { strategicForecastDigest } from './strategicForecastDigest'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const AVG_DEAL_VALUE = 320_000
-const COMMISSION_RATE = 0.05
 const MONTHLY_TARGET = 50_000
 const SESSION_TTL_MS = 30 * 60 * 1000  // 30 minutes
 

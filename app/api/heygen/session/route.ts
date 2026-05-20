@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ─── HeyGen Streaming Session Proxy ───────────────────────────────────────────
 // Keeps HEYGEN_API_KEY server-side only — never exposed to browser
@@ -38,6 +40,7 @@ async function checkHeygenSessionRateLimit(userId: string): Promise<{ allowed: b
 
 // POST /api/heygen/session — create a new streaming session
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -57,31 +60,39 @@ export async function POST(req: NextRequest) {
   try {
     const { avatarId, voiceId, quality } = await req.json().catch(() => ({}))
 
-    const res = await fetch(`${HEYGEN_API}/v1/streaming.new`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        quality: quality || 'medium',
-        avatar_id: avatarId || process.env.HEYGEN_AVATAR_ID || 'default',
-        voice: { voice_id: voiceId || process.env.HEYGEN_VOICE_ID || '' },
-        version: 'v2',
-        video_encoding: 'H264',
+    const heygenRes = await withCircuitBreaker<Response | null>(
+      'heygen-api',
+      () => fetch(`${HEYGEN_API}/v1/streaming.new`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+        body: JSON.stringify({
+          quality: quality || 'medium',
+          avatar_id: avatarId || process.env.HEYGEN_AVATAR_ID || 'default',
+          voice: { voice_id: voiceId || process.env.HEYGEN_VOICE_ID || '' },
+          version: 'v2',
+          video_encoding: 'H264',
+        }),
       }),
-    })
+      null,
+    )
 
-    if (!res.ok) {
-      const err = await res.text()
-      console.error('HeyGen session error:', err)
-      return NextResponse.json({ error: 'Erro ao criar sessão HeyGen' }, { status: res.status })
+    if (heygenRes === null) {
+      return NextResponse.json(
+        { error: 'HeyGen service temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      )
     }
 
-    const data = await res.json()
+    if (!heygenRes.ok) {
+      const err = await heygenRes.text()
+      console.error('HeyGen session error:', err, { corrId })
+      return NextResponse.json({ error: 'Erro ao criar sessão HeyGen' }, { status: heygenRes.status })
+    }
+
+    const data = await heygenRes.json()
     return NextResponse.json(data)
   } catch (err) {
-    console.error('HeyGen session error:', err)
+    console.error('HeyGen session error:', err, { corrId })
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
@@ -96,12 +107,25 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const { sessionId } = await req.json()
-    const res = await fetch(`${HEYGEN_API}/v1/streaming.stop`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
-      body: JSON.stringify({ session_id: sessionId }),
-    })
-    const data = await res.json()
+
+    const stopRes = await withCircuitBreaker<Response | null>(
+      'heygen-api',
+      () => fetch(`${HEYGEN_API}/v1/streaming.stop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+        body: JSON.stringify({ session_id: sessionId }),
+      }),
+      null,
+    )
+
+    if (stopRes === null) {
+      return NextResponse.json(
+        { error: 'HeyGen service temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      )
+    }
+
+    const data = await stopRes.json()
     return NextResponse.json(data)
   } catch {
     return NextResponse.json({ error: 'Erro ao fechar sessão' }, { status: 500 })

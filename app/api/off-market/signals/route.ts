@@ -7,7 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
-import { safeCompare } from '@/lib/safeCompare'
+import { requireServiceAuth } from '@/lib/auth/serviceAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -444,19 +445,11 @@ const MOCK_DR_SIGNALS: ParsedSignal[] = [
 // Main GET handler
 // ---------------------------------------------------------------------------
 
-// Portal agents + internal tools (CRON_SECRET / PORTAL_API_SECRET) may call this
-function hasBearerToken(req: NextRequest): boolean {
-  const authHeader = req.headers.get('authorization') ?? ''
-  return (
-    safeCompare(authHeader, `Bearer ${process.env.PORTAL_API_SECRET ?? ''}`) ||
-    safeCompare(authHeader, `Bearer ${process.env.CRON_SECRET ?? ''}`) ||
-    safeCompare(authHeader, `Bearer ${process.env.ADMIN_SECRET ?? ''}`)
-  )
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   const session = await auth()
-  if (!session?.user && !hasBearerToken(request)) {
+  const serviceCheck = await requireServiceAuth(request)
+  if (!session?.user && !serviceCheck.ok) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
   }
 
@@ -532,7 +525,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       next_refresh_at: new Date(_cache.fetched_at + CACHE_TTL_MS).toISOString(),
     })
   } catch (error) {
-    console.error('[dr-parser] Unexpected error:', error)
+    console.error('[dr-parser] Unexpected error:', error, { corrId })
 
     // Last resort: return mock data
     return NextResponse.json({

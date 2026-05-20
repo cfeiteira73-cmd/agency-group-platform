@@ -3,10 +3,12 @@ import * as OTPAuth from 'otpauth'
 import QRCode from 'qrcode'
 import { auth } from '@/auth'
 import { createClient } from '@/lib/supabase/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
-export async function POST(_req: NextRequest) {
+export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -42,7 +44,7 @@ export async function POST(_req: NextRequest) {
       .eq('id', session.user.id)
 
     if (error) {
-      console.error('setup-2fa DB error:', error)
+      console.error('setup-2fa DB error:', error, { corrId })
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
@@ -52,7 +54,7 @@ export async function POST(_req: NextRequest) {
       uri,
     })
   } catch (error) {
-    console.error('setup-2fa error:', error)
+    console.error('setup-2fa error:', error, { corrId })
     return NextResponse.json({ error: 'Failed to generate 2FA secret' }, { status: 500 })
   }
 }

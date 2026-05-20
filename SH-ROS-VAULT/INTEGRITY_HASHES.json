@@ -1,0 +1,7 @@
+{
+  "generated_at": "2026-05-19T00:00:00.000Z",
+  "vault_version": "1.0.0",
+  "files": {},
+  "overall_score": 0,
+  "note": "Run /api/cron/vault-integrity to populate"
+}

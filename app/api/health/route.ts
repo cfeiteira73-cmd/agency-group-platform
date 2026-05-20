@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { safeCompare } from '@/lib/safeCompare'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -36,8 +37,12 @@ interface HealthReport {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const monitoringSecret = process.env.HEALTH_CHECK_SECRET
   const reqSecret = request.headers.get('x-health-secret')
-  if (!monitoringSecret || reqSecret !== monitoringSecret) {
-    return NextResponse.json({ status: 'ok', timestamp: new Date().toISOString() }, { status: 200 })
+  // Fail closed: if secret not configured, reject rather than open-access
+  if (!monitoringSecret) {
+    return NextResponse.json({ error: 'Health check not configured' }, { status: 503 })
+  }
+  if (!safeCompare(reqSecret ?? '', monitoringSecret)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   // Full response continues below for authenticated monitoring...
 

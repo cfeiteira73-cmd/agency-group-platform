@@ -7,11 +7,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const revalidate = 0
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -107,7 +109,7 @@ export async function GET(req: NextRequest) {
     }, { status: 200 })
 
   } catch (err) {
-    console.error('[GET /api/control-tower/queue]', err)
+    console.error('[GET /api/control-tower/queue]', err, { corrId })
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

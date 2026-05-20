@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 45
@@ -29,6 +31,7 @@ const MACRO = {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const { zona, force } = await req.json()
 
@@ -94,11 +97,19 @@ Gera o Market Pulse diário da Agency Group em JSON em português europeu formal
   "riskAlert": "risco de mercado actual a monitorizar (ou null se não houver)"
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 1200,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const response = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null,
+    )
+
+    if (response === null) {
+      return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -115,7 +126,7 @@ Gera o Market Pulse diário da Agency Group em JSON em português europeu formal
     pulseCache = { data: result, ts: Date.now() }
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
-    console.error('[Market Pulse] Error:', error)
+    console.error('[Market Pulse] Error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao gerar Market Pulse' }, { status: 500 })
   }
 }

@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -31,6 +32,7 @@ function isAuthorized(req: NextRequest): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest) {
         console.warn('[alert-check-sent] property_alert_sent table missing — run migration 040')
         return NextResponse.json({ sent: false, status: 'table_missing' })
       }
-      console.error('[alert-check-sent] insert error:', error.message)
+      console.error('[alert-check-sent] insert error:', error.message, { corrId })
       // On unexpected errors: allow the send (fail-open to avoid blocking emails)
       return NextResponse.json({ sent: false, status: 'error', error: error.message })
     }
@@ -78,7 +80,7 @@ export async function POST(req: NextRequest) {
     // Successfully inserted → first time for this email×property combo → send the email
     return NextResponse.json({ sent: false, status: 'ok', email, property_id: propertyId })
   } catch (err) {
-    console.error('[alert-check-sent] error:', err)
+    console.error('[alert-check-sent] error:', err, { corrId })
     // Fail-open: if endpoint crashes, allow n8n to send (better than silent block)
     return NextResponse.json({ sent: false, status: 'exception' }, { status: 200 })
   }

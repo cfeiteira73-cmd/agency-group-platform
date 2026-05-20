@@ -17,6 +17,7 @@
 
 import type { ScoredDeal } from '../dealScoring'
 import { parsePTValue } from '../../utils/format'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Public Types ─────────────────────────────────────────────────────────────
 
@@ -50,8 +51,6 @@ export interface ForecastOutput {
 }
 
 // ─── Internal Constants ────────────────────────────────────────────────────────
-
-const COMMISSION_RATE = 0.05
 
 // Fases that are treated as late-stage (included in monthly even without a date)
 const LATE_STAGES_FOR_MONTHLY = new Set([

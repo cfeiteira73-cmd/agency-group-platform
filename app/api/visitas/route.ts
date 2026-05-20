@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { isPortalAuth } from '@/lib/portalAuth';
+import { withAI } from '@/lib/ops/withAI';
+import { getRequestCorrelationId } from '@/lib/observability/correlation';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -21,6 +23,7 @@ interface SimpleActionRequest {
 type VisitasRequest = SuggestFeedbackRequest | SimpleActionRequest;
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
@@ -62,11 +65,19 @@ Responde APENAS com um objeto JSON válido, em português europeu, sem markdown 
   "timeToDecision": "estimativa do tempo até decisão e razão"
 }`;
 
-      const response = await client.messages.create({
-        model: 'claude-opus-4-5',
-        max_tokens: 400,
-        messages: [{ role: 'user', content: prompt }],
-      });
+      const response = await withAI(
+        'anthropic-opus',
+        () => client.messages.create({
+          model: 'claude-opus-4-5',
+          max_tokens: 400,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        null,
+      );
+
+      if (response === null) {
+        return NextResponse.json({ success: false, error: 'AI service temporarily unavailable.' }, { status: 503 });
+      }
 
       const rawText = response.content[0].type === 'text' ? response.content[0].text : '';
       const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -89,7 +100,7 @@ Responde APENAS com um objeto JSON válido, em português europeu, sem markdown 
 
     return NextResponse.json({ success: false, error: `Ação desconhecida: ${action}` }, { status: 400 });
   } catch (error) {
-    console.error('[Visitas] Error:', error);
+    console.error('[Visitas] Error:', error, { corrId });
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 });
   }
 }

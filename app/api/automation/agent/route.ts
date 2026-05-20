@@ -10,6 +10,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { auth } from '@/auth'
+import { withAI } from '@/lib/ops/withAI'
+import { LEAD_SCORING_WEIGHTS } from '@/lib/constants/pipeline'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { recordCausalStep } from '@/lib/observability/causalTrace'
+import { buildAgentEnvelope } from '@/lib/ai/contracts'
+
+const MAX_BODY_BYTES = 64 * 1024  // 64 KB
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -175,10 +182,10 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
 
     case 'score_lead': {
       const score = Math.round(
-        (input.engagement_score as number) * 0.3 +
-        (input.budget_fit as number) * 0.3 +
-        (input.timeline_urgency as number) * 0.25 +
-        (input.profile_completeness as number) * 0.15
+        (input.engagement_score as number) * LEAD_SCORING_WEIGHTS.engagement +
+        (input.budget_fit as number) * LEAD_SCORING_WEIGHTS.budget_fit +
+        (input.timeline_urgency as number) * LEAD_SCORING_WEIGHTS.timeline_urgency +
+        (input.profile_completeness as number) * LEAD_SCORING_WEIGHTS.profile_completeness
       )
       const { error } = await (supabase as any)
         .from('deals')
@@ -207,12 +214,14 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       const dealData = deal as Record<string, unknown>
       const propertiesData = dealData.properties as Record<string, unknown> | null
 
-      const completion = await anthropic.messages.create({
-        model: 'claude-opus-4-5',
-        max_tokens: 500,
-        messages: [{
-          role: 'user',
-          content: `${langInstructions[input.language as string] ?? langInstructions.en}.
+      const completion = await withAI(
+        'anthropic-opus',
+        () => anthropic.messages.create({
+          model: 'claude-opus-4-5',
+          max_tokens: 500,
+          messages: [{
+            role: 'user',
+            content: `${langInstructions[input.language as string] ?? langInstructions.en}.
 
 Generate a ${input.channel} follow-up message for:
 - Client: ${dealData.contact_name}
@@ -225,8 +234,14 @@ Generate a ${input.channel} follow-up message for:
 Agency: Agency Group | AMI 22506 | +351 919 948 986
 Tone: Professional luxury real estate, not pushy. Max ${input.channel === 'whatsapp' ? '3 paragraphs' : '4 paragraphs'}.
 Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
-        }],
-      })
+          }],
+        }),
+        null,
+      )
+
+      if (completion === null) {
+        return { message: '', deal_id: input.deal_id, channel: input.channel }
+      }
 
       const message = completion.content[0].type === 'text' ? completion.content[0].text : ''
 
@@ -311,8 +326,19 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
 // ─── Agentic Loop ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
+  const tenantId = req.headers.get('x-tenant-id') ?? 'agency-group'
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // ── Content-length guard ──────────────────────────────────────────────────
+  const contentLen = req.headers.get('content-length')
+  if (contentLen !== null) {
+    const byteLen = parseInt(contentLen, 10)
+    if (!isNaN(byteLen) && byteLen > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+    }
+  }
 
   const body = await req.json().catch(() => ({})) as Record<string, unknown>
   const task = (body.task as string) || 'analyze_stalled_deals'
@@ -348,13 +374,25 @@ Always be strategic. Quality over quantity. Max 10 deals per run.`
     while (iterations < MAX_ITERATIONS) {
       iterations++
 
-      const response = await anthropic.messages.create({
-        model: 'claude-opus-4-5',
-        max_tokens: 4096,
-        system: systemPrompt,
-        tools: CRM_TOOLS,
-        messages,
-      })
+      const response = await withAI(
+        'anthropic-opus',
+        () => anthropic.messages.create({
+          model: 'claude-opus-4-5',
+          max_tokens: 4096,
+          system: systemPrompt,
+          tools: CRM_TOOLS,
+          messages,
+        }),
+        null,
+      )
+
+      if (response === null) {
+        console.warn('[automation/agent] Anthropic circuit breaker OPEN — aborting agent loop')
+        return NextResponse.json(
+          { error: 'AI service temporarily unavailable' },
+          { status: 503, headers: { 'Retry-After': '60' } },
+        )
+      }
 
       // Add assistant response to messages
       messages.push({ role: 'assistant', content: response.content })
@@ -384,6 +422,29 @@ Always be strategic. Quality over quantity. Max 10 deals per run.`
         // Stop if complete_analysis was called
         if (block.name === 'complete_analysis') {
           messages.push(toolResults)
+          const r = result as Record<string, unknown>
+          void recordCausalStep({
+            correlation_id: corrId ?? 'crm-agent',
+            tenant_id: tenantId,
+            step_type: 'ai_decision',
+            agent_id: 'crm-orchestrator',
+            action: 'crm_analysis_complete',
+            success: true,
+            metadata: { iterations, deals_processed: r.deals_processed, tasks_created: r.tasks_created },
+          })
+          void Promise.resolve().then(() => {
+            try {
+              buildAgentEnvelope({
+                correlation_id: corrId ?? 'crm-agent',
+                agent_id:       'crm-orchestrator',
+                tenant_id:      tenantId,
+                decision:       `CRM analysis complete: ${iterations} iterations, ${r.deals_processed ?? 0} deals`,
+                fallback_used:  false,
+                latency_ms:     0,
+                output:         { iterations, deals_processed: r.deals_processed, tasks_created: r.tasks_created },
+              })
+            } catch { /* non-critical */ }
+          })
           return NextResponse.json({ success: true, iterations, results, summary: result })
         }
       }

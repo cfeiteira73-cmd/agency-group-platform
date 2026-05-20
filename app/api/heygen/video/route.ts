@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import Anthropic from '@anthropic-ai/sdk'
+import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
+import { withAnthropicRetry } from '@/lib/ops/withRetry'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const client = new Anthropic()
 
@@ -24,7 +27,8 @@ async function generateVideoScript(
   property: PropertyData,
   lang: 'pt' | 'en' = 'pt',
 ): Promise<string> {
-  const response = await client.messages.create({
+  // withAnthropicRetry: 3 attempts + backoff; circuit breaker applied at call site
+  const response = await withAnthropicRetry(() => client.messages.create({
     model: 'claude-opus-4-5',
     max_tokens: 500,
     system:
@@ -68,7 +72,7 @@ Script should: introduce enthusiastically, highlight 2-3 unique points, \
 mention location, end with Agency Group CTA.`,
       },
     ],
-  })
+  }))  // closes client.messages.create({}) and withAnthropicRetry(() => ...)
 
   return response.content[0].type === 'text' ? response.content[0].text : ''
 }
@@ -162,6 +166,7 @@ async function getVideoStatus(videoId: string): Promise<{
 // Body: { property: PropertyData, lang?: 'pt' | 'en', generateScriptOnly?: boolean }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
@@ -179,8 +184,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Property data required' }, { status: 400 })
     }
 
-    // Step 1 — generate AI script with Claude Opus
-    const script = await generateVideoScript(property, lang)
+    // Step 1 — generate AI script with Claude Opus (circuit-breaker guarded)
+    const script = await withCircuitBreaker<string | null>(
+      'anthropic-vision',
+      () => generateVideoScript(property, lang),
+      null,  // fallback: circuit OPEN → 503 below
+    )
+
+    if (script === null) {
+      return NextResponse.json(
+        { error: 'Script generation temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      )
+    }
 
     const heyGenKey = process.env.HEYGEN_API_KEY
     const avatarId  = process.env.HEYGEN_AVATAR_ID ?? 'default'
@@ -202,20 +218,39 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Step 2 — create HeyGen video
-    const videoResult = await createHeyGenVideo(script, avatarId, voiceId)
+    // Step 2 — create HeyGen video (circuit-breaker guarded)
+    const videoResult = await withCircuitBreaker<{ videoId: string; status: string } | null>(
+      'heygen-api',
+      () => createHeyGenVideo(script, avatarId, voiceId),
+      null,  // fallback: HeyGen circuit OPEN → 503 below
+    )
+
+    if (videoResult === null) {
+      // Script was generated — return it so caller can retry video creation later
+      return NextResponse.json(
+        {
+          script,
+          videoId: null,
+          status: 'service_unavailable',
+          error: 'HeyGen service temporarily unavailable. Script is available; retry video creation shortly.',
+          wordCount,
+          estimatedDuration,
+        },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      )
+    }
 
     return NextResponse.json({
       script,
-      videoId: videoResult.videoId,
-      status: videoResult.status,
-      message: 'Video generation started. Poll /api/heygen/video?id=[videoId] for status.',
-      estimatedTime: '2-5 minutes',
+      videoId:           videoResult.videoId,
+      status:            videoResult.status,
+      message:           'Video generation started. Poll /api/heygen/video?id=[videoId] for status.',
+      estimatedTime:     '2-5 minutes',
       wordCount,
       estimatedDuration,
     })
   } catch (error) {
-    console.error('[heygen/video POST]', error)
+    console.error('[heygen/video POST]', error, { corrId })
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Video generation failed' },
       { status: 500 },
@@ -227,6 +262,7 @@ export async function POST(req: NextRequest) {
 // Polls HeyGen for completion status of a previously created video.
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
@@ -238,10 +274,22 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const status = await getVideoStatus(videoId)
-    return NextResponse.json(status)
+    const statusResult = await withCircuitBreaker<
+      { status: string; videoUrl?: string; thumbnailUrl?: string } | null
+    >(
+      'heygen-api',
+      () => getVideoStatus(videoId),
+      null,
+    )
+    if (statusResult === null) {
+      return NextResponse.json(
+        { error: 'HeyGen status check temporarily unavailable.' },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      )
+    }
+    return NextResponse.json(statusResult)
   } catch (error) {
-    console.error('[heygen/video GET]', error)
+    console.error('[heygen/video GET]', error, { corrId })
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Status check failed' },
       { status: 500 },

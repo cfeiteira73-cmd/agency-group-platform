@@ -1,4 +1,7 @@
 // AGENCY GROUP — SH-ROS Control Tower: Queue | AMI: 22506
+export const revalidate = 30
+
+import { Suspense } from 'react'
 import { StatusBadge } from '../_components/StatusBadge'
 import { SparklineBar } from '../_components/SparklineBar'
 
@@ -40,19 +43,15 @@ const PRIORITY_COLORS: Record<string, string> = {
   low:      'bg-slate-600',
 }
 
-export default async function QueuePage() {
+async function QueueContent() {
   const data = await fetchQueueData('default')
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
+    <>
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-100">Queue Health</h1>
-          <p className="text-xs text-slate-500 font-mono mt-0.5">
-            Provider: <span className="text-blue-400">{data?.provider ?? 'unknown'}</span>
-          </p>
-        </div>
+        <p className="text-xs text-slate-500 font-mono">
+          Provider: <span className="text-blue-400">{data?.provider ?? 'unknown'}</span>
+        </p>
         {data?.health && (
           <StatusBadge variant={data.health as 'healthy' | 'degraded' | 'critical'} />
         )}
@@ -168,6 +167,45 @@ export default async function QueuePage() {
           )}
         </>
       )}
+    </>
+  )
+}
+
+function QueueSkeleton() {
+  return (
+    <>
+      <div className="grid grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-20 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="h-40 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        <div className="h-40 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+      </div>
+      <div className="space-y-2">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="h-10 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+    </>
+  )
+}
+
+export default function QueuePage() {
+  return (
+    <div className="space-y-5">
+      {/* Header — renders immediately */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-100">Queue Health</h1>
+        </div>
+      </div>
+
+      {/* Data streams in */}
+      <Suspense fallback={<QueueSkeleton />}>
+        <QueueContent />
+      </Suspense>
     </div>
   )
 }

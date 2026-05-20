@@ -7,8 +7,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
@@ -144,7 +147,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         commission_forecast_eur: (() => {
           const all = [...(r_p0.data ?? []), ...(r_p1.data ?? []), ...(r_preclose.data ?? [])]
           return Math.round(all.reduce((sum: number, l: Record<string, unknown>) =>
-            sum + ((l.revenue_per_lead_estimate as number) ?? ((l.price_ask as number ?? 0) * 0.05)), 0))
+            sum + ((l.revenue_per_lead_estimate as number) ?? ((l.price_ask as number ?? 0) * COMMISSION_RATE)), 0))
         })(),
         realistic_cpcv_count: (() => {
           const all = [...(r_p0.data ?? []), ...(r_p1.data ?? []), ...(r_preclose.data ?? [])]
@@ -224,7 +227,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       sla_breaches:          r_sla_breach.data ?? [],
     })
   } catch (err) {
-    console.error('[reporting/daily]', err)
+    console.error('[reporting/daily]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

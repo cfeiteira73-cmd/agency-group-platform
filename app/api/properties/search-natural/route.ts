@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Generate embedding via OpenAI text-embedding-3-small
 async function generateQueryEmbedding(query: string): Promise<number[] | null> {
@@ -35,12 +31,14 @@ async function generateQueryEmbedding(query: string): Promise<number[] | null> {
 }
 
 // Keyword fallback — searches nome, zona, descricao
-async function keywordSearch(query: string, limit: number, filters?: Record<string, unknown>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function keywordSearch(supabase: any, query: string, limit: number, filters?: Record<string, unknown>) {
+  const safeQuery = String(query).replace(/[%(),']/g, '').slice(0, 200)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = supabase
     .from('properties')
     .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, gradient')
-    .or(`nome.ilike.%${query}%,zona.ilike.%${query}%,descricao.ilike.%${query}%`)
+    .or(`nome.ilike.%${safeQuery}%,zona.ilike.%${safeQuery}%,descricao.ilike.%${safeQuery}%`)
 
   if (filters?.status) {
     q = q.eq('status', filters.status)
@@ -59,6 +57,7 @@ async function keywordSearch(query: string, limit: number, filters?: Record<stri
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const body = await req.json() as {
       query?: unknown
@@ -74,6 +73,7 @@ export async function POST(req: NextRequest) {
     }
 
     const safeLimit = Math.min(Math.max(Number(limit) || 10, 1), 50)
+    const supabase = await createClient()
 
     // 1. Try semantic search with pgvector
     const queryEmbedding = await generateQueryEmbedding(query)
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Keyword fallback
-    const keywordResults = await keywordSearch(query, safeLimit, filters)
+    const keywordResults = await keywordSearch(supabase, query, safeLimit, filters)
 
     if (keywordResults.length > 0) {
       return NextResponse.json({
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
       lang: lang ?? 'pt',
     })
   } catch (err) {
-    console.error('[search-natural] Error:', err)
+    console.error('[search-natural] Error:', err, { corrId })
     return NextResponse.json({ error: 'Search failed' }, { status: 500 })
   }
 }

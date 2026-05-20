@@ -7,6 +7,7 @@ import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { recordCommission, computeCommission } from '@/lib/commercial/revenueAttribution'
 import { supabaseAdmin }             from '@/lib/supabase'
 import { logAction }                 from '@/lib/auth/auditLog'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const breakdown = computeCommission(body.sale_price, body.commission_rate ?? 0.05, body.split_pct ?? 100)
+    const breakdown = computeCommission(body.sale_price, body.commission_rate ?? COMMISSION_RATE, body.split_pct ?? 100)
     const id = await recordCommission(
       body.property_id,
       body.agent_email,

@@ -5,15 +5,16 @@ import { NextRequest, NextResponse }   from 'next/server'
 import { supabaseAdmin }               from '@/lib/supabase'
 import { refreshRecipientProfile }     from '@/lib/intelligence/distributionOutcomes'
 import { withCronLock }                from '@/lib/ops/cronLock'
+import { safeCompare }                 from '@/lib/safeCompare'
 import { cronCorrelationId }           from '@/lib/observability/correlation'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 120
 
 export async function GET(req: NextRequest) {
-  const cronSecret   = req.headers.get('authorization')?.replace('Bearer ', '')
+  const cronSecret   = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
   const cronExpected = process.env.CRON_SECRET
-  if (!cronExpected || !cronSecret || cronSecret !== cronExpected) {
+  if (!cronExpected || !cronSecret || !safeCompare(cronSecret, cronExpected)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

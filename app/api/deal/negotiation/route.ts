@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
-import { safeCompare } from '@/lib/safeCompare'
+import { requireServiceAuth } from '@/lib/auth/serviceAuth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const NegotiationSchema = z.object({
   deal: z.object({
@@ -29,10 +31,9 @@ export const maxDuration = 30
 const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')
-  const secret = process.env.PORTAL_API_SECRET
-  if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
-  if (!safeCompare(authHeader ?? '', `Bearer ${secret}`)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const corrId = getRequestCorrelationId(req)
+  const authCheck = await requireServiceAuth(req)
+  if (!authCheck.ok) return authCheck.response
 
   try {
     const raw = await req.json()
@@ -70,11 +71,16 @@ Responde em JSON:
   "priceGuidance": "Preço alvo e margem máxima de desconto em %"
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 600,
-      messages: [{ role: 'user', content: prompt }]
-    })
+    const response = await withAI('anthropic-opus', () =>
+      client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      null
+    )
+
+    if (!response) return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503, headers: { 'Retry-After': '60' } })
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -86,7 +92,7 @@ Responde em JSON:
       return NextResponse.json({ error: 'Parse error', raw: text }, { status: 500 })
     }
   } catch (error) {
-    console.error('Negotiation error:', error)
+    console.error('Negotiation error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao gerar estratégia' }, { status: 500 })
   }
 }

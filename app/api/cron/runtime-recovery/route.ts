@@ -8,19 +8,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { orchestrator } from '@/lib/runtime'
 import type { RuntimeEvent } from '@/lib/runtime'
+import { withCronLock } from '@/lib/ops/cronLock'
+import { safeCompare } from '@/lib/safeCompare'
 
 export const runtime = 'nodejs'
 
 // Events stuck in 'processing' for > 5 minutes are considered orphaned
 const ORPHAN_THRESHOLD_MS = 5 * 60 * 1000
 
+// Maximum number of recovery re-dispatches before an event is moved to DLQ
+const MAX_RETRIES = 5
+
 export async function GET(req: NextRequest) {
   // Auth: CRON_SECRET or INTERNAL_API_TOKEN
   const secret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  if (secret !== process.env.CRON_SECRET && secret !== process.env.INTERNAL_API_TOKEN) {
+  if (!safeCompare(secret ?? '', process.env.CRON_SECRET ?? '') && !safeCompare(secret ?? '', process.env.INTERNAL_API_TOKEN ?? '')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lockResult = await withCronLock('runtime-recovery', 2, async () => {
   const cutoff = new Date(Date.now() - ORPHAN_THRESHOLD_MS).toISOString()
 
   // Find orphaned events
@@ -43,6 +49,18 @@ export async function GET(req: NextRequest) {
 
   for (const orphan of orphans) {
     try {
+      // Retry cap: events that have already been re-dispatched MAX_RETRIES times
+      // are moved to DLQ instead of being re-dispatched again.
+      if ((orphan.retry_count ?? 0) >= MAX_RETRIES) {
+        console.warn(`[runtime-recovery] event ${orphan.event_id} exceeded MAX_RETRIES, moving to DLQ`)
+        await supabaseAdmin
+          .from('runtime_events')
+          .update({ status: 'dlq', result: { error: 'max_retries_exceeded', moved_to_dlq_at: new Date().toISOString() } })
+          .eq('event_id', orphan.event_id)
+        results.push({ event_id: orphan.event_id, status: 'dlq' })
+        continue
+      }
+
       // Mark original as failed before re-queuing
       await supabaseAdmin
         .from('runtime_events')
@@ -83,4 +101,10 @@ export async function GET(req: NextRequest) {
     results,
     cutoff,
   })
+  }) // end withCronLock
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return lockResult
 }

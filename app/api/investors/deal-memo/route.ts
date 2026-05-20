@@ -1,23 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { isPortalAuth } from '@/lib/portalAuth'
-
-// ─── Rate Limiting (in-memory, resets on server restart) ──────────────────────
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT = 10
-const RATE_WINDOW_MS = 60 * 60 * 1000 // 1 hour
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(ip)
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
-    return true
-  }
-  if (entry.count >= RATE_LIMIT) return false
-  entry.count++
-  return true
-}
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { rateLimit } from '@/lib/rateLimit'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(n: number): string {
@@ -171,14 +157,14 @@ Calculate realistic financials. IRR should account for yield + capital appreciat
 
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   // Rate limit
-  const forwarded = req.headers.get('x-forwarded-for')
-  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown'
-
-  if (!checkRateLimit(ip)) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = await rateLimit(`investors-deal-memo:${ip}`, { maxAttempts: 10, windowMs: 60 * 60 * 1000 })
+  if (!rl.success) {
     return NextResponse.json(
       { error: 'Rate limit exceeded. Maximum 10 memos per hour.' },
       { status: 429 }
@@ -217,17 +203,26 @@ export async function POST(req: NextRequest) {
   try {
     const client = new Anthropic({ apiKey })
 
-    const message = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 2048,
-      system: buildSystemPrompt(language ?? 'PT'),
-      messages: [
-        {
-          role: 'user',
-          content: buildUserPrompt(investor, property, dealType ?? 'Buy & Hold', additionalData ?? {}),
-        },
-      ],
-    })
+    const message = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 2048,
+        system: buildSystemPrompt(language ?? 'PT'),
+        messages: [
+          {
+            role: 'user',
+            content: buildUserPrompt(investor, property, dealType ?? 'Buy & Hold', additionalData ?? {}),
+          },
+        ],
+      }),
+      null,
+    )
+
+    if (message === null) {
+      const fallback = buildFallbackMemo(investor, property, dealType ?? 'Buy & Hold', additionalData ?? {})
+      return NextResponse.json(fallback)
+    }
 
     // Extract text content
     const rawText = message.content
@@ -248,7 +243,7 @@ export async function POST(req: NextRequest) {
       raw: rawText,
     })
   } catch (err) {
-    console.error('[deal-memo] AI generation failed:', err)
+    console.error('[deal-memo] AI generation failed:', err, { corrId })
 
     // Return structured fallback on any AI error
     const fallback = buildFallbackMemo(investor, property, dealType ?? 'Buy & Hold', additionalData ?? {})
@@ -262,7 +257,7 @@ export async function GET() {
     status: 'ok',
     endpoint: 'POST /api/investors/deal-memo',
     model: 'claude-opus-4-5',
-    rateLimit: `${RATE_LIMIT} requests/hour per IP`,
+    rateLimit: `10 requests/hour per IP`,
     requiredBody: {
       investor: 'Investor object',
       property: 'Property object',

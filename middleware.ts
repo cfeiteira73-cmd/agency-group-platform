@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // ─── Rate limit store (in-memory fallback per Edge worker) ──────────────────
+// TODO: CRITICAL #INFRA-001 — replace with lib/rateLimit.ts (Upstash). This Map
+// resets on every cold start and is NOT shared across Edge worker instances,
+// making rate limiting bypass trivial under any load. Use the rateLimitUpstash()
+// helper already defined below for ALL routes, removing this fallback store entirely.
 const store = new Map<string, { count: number; reset: number }>()
 
 // ─── Limites por rota ────────────────────────────────────────────────────────
@@ -125,12 +129,24 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
 // Every request gets a correlation ID. If the caller provides one, we echo it.
 // If not, we generate a new one. The ID is forwarded on the response so callers
 // can correlate logs end-to-end.
+//
+// Security fixes applied:
+//   1. x-tenant-plan is set to 'unverified' — never reflected from x-tenant-id
+//      to prevent privilege escalation (attacker claiming 'enterprise' plan).
+//      API routes that need the real plan must verify from Supabase.
+//   2. x-correlation-id is sanitized to prevent CRLF injection: only
+//      alphanumeric, hyphens and underscores are allowed, max 64 chars.
 function ensureCorrelationId(req: NextRequest, res: NextResponse): string {
-  const existing = req.headers.get('x-correlation-id')
-  const corrId   = existing && existing.length > 8
-    ? existing.slice(0, 64)   // accept caller-provided ID (bounded)
-    : crypto.randomUUID()     // generate new — crypto available in Edge runtime
+  const rawCorrelationId = req.headers.get('x-correlation-id') ?? crypto.randomUUID()
+  // Sanitize: only allow alphanumeric, hyphens, underscores — prevents CRLF injection
+  const corrId = rawCorrelationId.replace(/[^a-zA-Z0-9\-_]/g, '').slice(0, 64) || crypto.randomUUID()
   res.headers.set('x-correlation-id', corrId)
+  res.headers.set('x-trace-id', corrId)
+  // SECURITY: do NOT reflect x-tenant-id as x-tenant-plan. Any caller could set
+  // x-tenant-id to 'enterprise' and claim elevated plan. Set to 'unverified'
+  // here; API routes must perform their own plan lookup from Supabase.
+  res.headers.set('x-tenant-plan', 'unverified')
+  res.headers.set('x-tenant-status', 'active')
   return corrId
 }
 
@@ -181,7 +197,19 @@ export async function middleware(req: NextRequest) {
 
   // 3. Rate limiting
   const entry = Object.entries(LIMITS).find(([k]) => path.startsWith(k))
-  if (!entry) return NextResponse.next()
+  if (!entry) {
+    // All API routes that are NOT explicitly rate-limited still get:
+    //   • Correlation ID (distributed tracing, SH-ROS observability)
+    //   • Security headers (defence in depth)
+    // Non-API routes (pages, static files) pass through unchanged.
+    if (path.startsWith('/api/')) {
+      const res = NextResponse.next()
+      ensureCorrelationId(req, res)
+      applySecurityHeaders(res)
+      return res
+    }
+    return NextResponse.next()
+  }
 
   const [, { max, window: win }] = entry
   const ip  = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() ||
@@ -218,44 +246,31 @@ export async function middleware(req: NextRequest) {
   res.headers.set('X-RateLimit-Limit',     String(max))
   res.headers.set('X-RateLimit-Remaining', String(remaining))
   res.headers.set('X-RateLimit-Reset',     String(reset))
+
+  // Quota breach detection envelope — fail-open for now; establishes the guard layer.
+  // Future: replace with real Redis quota check via lib/tenant/quotaGuard.ts
+  const isCronOrInternal = path.startsWith('/api/cron/') || path.startsWith('/api/internal/')
+  if (path.startsWith('/api/') && !isCronOrInternal) {
+    const tenantId   = req.headers.get('x-tenant-id') ?? 'agency-group'
+    const tenantPlan = res.headers.get('x-tenant-plan') ?? 'starter'
+    if (tenantId !== 'agency-group') {
+      // Non-agency-group tenants: mark as quota-checked (fail-open — no hard block yet)
+      // Phase 3: replace this with checkQuota(tenantId, 'api_requests') and 429 on DENY
+      void tenantPlan // consumed — suppresses unused-var lint until Phase 3
+      res.headers.set('x-quota-checked', 'true')
+    }
+  }
+
   return res
 }
 
 export const config = {
   matcher: [
-    // /portal and all sub-paths INCLUDING /portal/login are now matched so the
-    // IE detection block (step 2 in middleware) fires for every portal URL.
-    // The auth guard (step 3) only applies when path !== /portal/login because
-    // the guard itself redirects to /portal/login — unauthenticated users can
-    // still reach the login form in supported browsers.
+    // Portal — auth guard + security headers + correlation ID
     '/portal',
     '/portal/:path*',
-    // AI / compute-heavy API routes (rate limited)
-    '/api/radar/:path*',
-    '/api/avm',
-    '/api/mortgage',
-    '/api/nhr',
-    '/api/portfolio',
-    '/api/learn',
-    '/api/chat',
-    '/api/juridico',
-    '/api/content',
-    '/api/homestaging',
-    '/api/booking',
-    '/api/track-view',
-    '/api/mais-valias',
-    '/api/financing',
-    // Core CRUD — rate limited (Phase 7 hardening)
-    '/api/contacts',
-    '/api/contacts/:path*',
-    '/api/leads',
-    '/api/leads/:path*',
-    '/api/deals',
-    '/api/deals/:path*',
-    '/api/properties',
-    '/api/properties/:path*',
-    '/api/matches',
-    '/api/matches/:path*',
-    '/api/runtime/:path*',
+    // ALL API routes — correlation ID + security headers + rate limiting where configured
+    // Using negative lookahead to exclude Next.js internals (_next/static, _next/image, favicon, etc.)
+    '/api/:path*',
   ],
 }

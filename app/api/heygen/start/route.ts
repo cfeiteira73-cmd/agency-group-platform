@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { withCircuitBreaker } from '@/lib/ops/circuitBreaker'
 
 const HEYGEN_API = 'https://api.heygen.com'
 
@@ -14,13 +15,26 @@ export async function POST(req: NextRequest) {
   try {
     const { sessionId, sdp } = await req.json()
 
-    const res = await fetch(`${HEYGEN_API}/v1/streaming.start`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
-      body: JSON.stringify({ session_id: sessionId, sdp }),
-    })
+    // withCircuitBreaker: prevents hammering HeyGen when their API is down.
+    // Opens after 5 consecutive failures; probes again after 60s.
+    const heygenRes = await withCircuitBreaker<Response | null>(
+      'heygen-api',
+      () => fetch(`${HEYGEN_API}/v1/streaming.start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
+        body: JSON.stringify({ session_id: sessionId, sdp }),
+      }),
+      null,  // fallback: circuit OPEN → 503 below
+    )
 
-    const data = await res.json()
+    if (heygenRes === null) {
+      return NextResponse.json(
+        { error: 'HeyGen service temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: { 'Retry-After': '60' } },
+      )
+    }
+
+    const data = await heygenRes.json()
     return NextResponse.json(data)
   } catch {
     return NextResponse.json({ error: 'Erro ao iniciar sessão WebRTC' }, { status: 500 })

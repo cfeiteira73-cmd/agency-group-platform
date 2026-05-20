@@ -1,4 +1,5 @@
 ﻿// AGENCY GROUP — SH-ROS Omega Control Tower: Forensics | AMI: 22506
+import { Suspense } from "react"
 import { frictionDetector } from "@/lib/operations/frictionDetector"
 import { bottleneckPredictor } from "@/lib/operations/bottleneckPredictor"
 import { operationalAnomalyDetector } from "@/lib/operations/operationalAnomaly"
@@ -9,7 +10,22 @@ export const revalidate = 30
 
 const ORG_ID = process.env.DEFAULT_ORG_ID ?? "default"
 
-export default async function ForensicsPage() {
+function ForensicsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-20 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="h-36 bg-[#1A1A24] rounded-xl border border-slate-800 animate-pulse" />
+      ))}
+    </div>
+  )
+}
+
+async function ForensicsContent() {
   const [anomalyReport, frictions, bottlenecks] = await Promise.allSettled([
     operationalAnomalyDetector.generateAnomalyReport(ORG_ID),
     frictionDetector.detectFrictionPoints(ORG_ID, 60),
@@ -28,11 +44,7 @@ export default async function ForensicsPage() {
   const urgentBP = bp.filter((b) => b.predicted_onset_days < 14 && b.probability > 0.6)
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Forensics &amp; Operational Intelligence</h1>
-        <p className="text-slate-400 text-sm mt-1">Anomaly detection / friction points / bottleneck predictions</p>
-      </div>
+    <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard title="Critical Anomalies" value={String(ar.critical)} sub="require immediate action" color={ar.critical > 0 ? "red" : "green"} />
         <KPICard title="High Anomalies" value={String(ar.high)} sub="elevated risk" color={ar.high > 2 ? "amber" : "green"} />
@@ -110,8 +122,21 @@ export default async function ForensicsPage() {
           <div className="text-slate-600 text-sm mt-1">System operating within normal parameters.</div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
+export default function ForensicsPage() {
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Forensics &amp; Operational Intelligence</h1>
+        <p className="text-slate-400 text-sm mt-1">Anomaly detection / friction points / bottleneck predictions</p>
+      </div>
+      <Suspense fallback={<ForensicsSkeleton />}>
+        <ForensicsContent />
+      </Suspense>
+    </div>
+  )
+}
 

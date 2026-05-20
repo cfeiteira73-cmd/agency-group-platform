@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse }    from 'next/server'
 import { auth }                         from '@/auth'
-import { safeCompare }                  from '@/lib/safeCompare'
+import { requireServiceAuth }           from '@/lib/auth/serviceAuth'
 import { getAdminRole, hasPermission }  from '@/lib/auth/adminAuth'
 import {
   buildRejectionRecord,
@@ -51,9 +51,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-  const isService  = safeCompare(authHeader ?? '', process.env.CRON_SECRET ?? '')
-  let actorEmail   = 'service'
+  const serviceCheck = await requireServiceAuth(req)
+  const isService    = serviceCheck.ok
+  let actorEmail     = 'service'
 
   if (!isService) {
     const session = await auth()

@@ -1,5 +1,10 @@
 // AGENCY GROUP — SH-ROS | AMI: 22506
 
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
+
+// Portugal residential median DOM = 210 days ≈ 7 months → monthly close rate = 1/7
+const MONTHLY_CLOSE_RATE = 1 / 7  // ≈ 0.143
+
 export interface ListingRevenueSummary {
   property_id: string
   listing_price_eur: number
@@ -82,7 +87,7 @@ export function detectRevenueLeakage(
 
     // Overpriced: listing > avm * 1.1
     if (avm_base_eur > 0 && listing_price_eur > avm_base_eur * 1.1) {
-      const leakage = ((listing_price_eur - avm_base_eur * 1.05) * 0.05) / 12
+      const leakage = ((listing_price_eur - avm_base_eur * 1.05) * COMMISSION_RATE) / 12
       const rounded = Math.round(leakage)
       if (rounded > 0) {
         items.push({
@@ -97,7 +102,7 @@ export function detectRevenueLeakage(
 
     // Stale: DOM > 180
     if (days_on_market > 180) {
-      const leakage = Math.round((listing_price_eur * 0.05 * 0.1) / 12)
+      const leakage = Math.round((listing_price_eur * COMMISSION_RATE * 0.1) / 12)
       if (leakage > 0) {
         items.push({
           property_id,
@@ -111,7 +116,7 @@ export function detectRevenueLeakage(
 
     // Low demand: demand_score < 30
     if (demand_score < 30) {
-      const leakage = Math.round((listing_price_eur * 0.05 * 0.08) / 12)
+      const leakage = Math.round((listing_price_eur * COMMISSION_RATE * 0.08) / 12)
       if (leakage > 0) {
         items.push({
           property_id,
@@ -125,7 +130,7 @@ export function detectRevenueLeakage(
 
     // Missing photos: no inquiries after 14 days
     if (inquiry_count === 0 && days_on_market > 14) {
-      const leakage = Math.round((listing_price_eur * 0.05 * 0.05) / 12)
+      const leakage = Math.round((listing_price_eur * COMMISSION_RATE * 0.05) / 12)
       if (leakage > 0) {
         items.push({
           property_id,
@@ -201,8 +206,7 @@ export function predictRevenue(
   void agents // agents reserved for future calibration
 
   const monthly = listings.reduce((sum, l) => {
-    // 0.143 ≈ 1/7 months — correct monthly close rate for 210-day median DOM
-    return sum + l.listing_price_eur * 0.05 * (l.demand_score / 100) * 0.143
+    return sum + l.listing_price_eur * COMMISSION_RATE * (l.demand_score / 100) * MONTHLY_CLOSE_RATE
   }, 0)
 
   const quarterly = monthly * 3 * 0.85

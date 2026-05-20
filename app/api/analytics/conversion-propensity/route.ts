@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse }   from 'next/server'
 import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
+import { getRequestCorrelationId }     from '@/lib/observability/correlation'
 import {
   getRecipientSignalsForProperty,
   rankRecipientsByPropensity,
@@ -13,6 +14,7 @@ import {
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -80,7 +82,7 @@ export async function GET(req: NextRequest) {
       total_evaluated:   signals.length,
     })
   } catch (err) {
-    console.error('[conversion-propensity GET]', err)
+    console.error('[conversion-propensity GET]', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

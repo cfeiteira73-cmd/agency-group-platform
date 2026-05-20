@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const TABLE = 'offmarket_leads'
 
@@ -268,6 +269,7 @@ function scoreOffmarketLead(lead: OffmarketLead): {
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
@@ -330,13 +332,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       score_status: 'scored',
     })
   } catch (err) {
-    console.error('[offmarket-score POST]', err)
+    console.error('[offmarket-score POST]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // Batch scoring: GET ?limit=50&only_pending=true
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
@@ -393,7 +396,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     console.log(`[offmarket-score GET] Batch scored ${results.length} leads`)
     return NextResponse.json({ scored: results.length, results })
   } catch (err) {
-    console.error('[offmarket-score GET]', err)
+    console.error('[offmarket-score GET]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

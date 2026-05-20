@@ -5,6 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { withCronLock } from '@/lib/ops/cronLock'
+import { safeCompare } from '@/lib/safeCompare'
 import { logger } from '@/lib/observability/logger'
 import {
   getDefaultMarketState,
@@ -25,7 +27,7 @@ function isCronAuth(req: NextRequest): boolean {
   const incoming =
     req.headers.get('x-cron-secret') ??
     req.headers.get('authorization')?.replace('Bearer ', '')
-  return incoming === cronSecret
+  return !!incoming && safeCompare(incoming, cronSecret)
 }
 
 // ---------------------------------------------------------------------------
@@ -120,6 +122,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lockResult = await withCronLock('recalibrate-market', 2, async () => {
   const startedAt = Date.now()
   logger.info('[recalibrate-market] Starting daily market recalibration')
 
@@ -217,4 +220,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     duration_ms: durationMs,
     recalibrated_at: now,
   })
+  }) // end withCronLock
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return lockResult
 }

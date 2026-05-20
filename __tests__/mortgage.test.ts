@@ -1,6 +1,8 @@
 // ─── Unit tests: Mortgage / Investment calculations ──────────────────────────
 // These mirror the logic in ImovelClient.tsx calcInvestment()
 
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
+
 const ZONE_YIELDS: Record<string, { yield: number; yoy: number; preco: number }> = {
   'Lisboa':   { preco: 5000, yield: 3.2, yoy: 14 },
   'Cascais':  { preco: 4713, yield: 3.8, yoy: 12 },
@@ -123,7 +125,7 @@ describe('ZONE_YIELDS data integrity', () => {
 describe('Commission calculation (AMI 22506)', () => {
   test('5% commission on sale price', () => {
     const sale = 1_000_000
-    const commission = sale * 0.05
+    const commission = sale * COMMISSION_RATE
     expect(commission).toBe(50_000)
   })
 

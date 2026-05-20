@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const NOTION_TOKEN   = process.env.NOTION_TOKEN ?? ''
 const NOTION_DEALS   = process.env.NOTION_DEALS_DB ?? 'b5693a14ca8c43fa8645606363594662'
@@ -63,6 +64,7 @@ async function incrementViews(pageId: string): Promise<void> {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const { property_id } = await req.json()
     if (!property_id) return NextResponse.json({ ok: false }, { status: 400 })
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
     const pageId = await findDealPage(String(property_id))
     if (pageId) {
       incrementViews(pageId).catch(err =>
-        console.error('[track-view] Notion incrementViews failed:', err?.message ?? err)
+        console.error('[track-view] Notion incrementViews failed:', err?.message ?? err, { corrId })
       )
     }
 

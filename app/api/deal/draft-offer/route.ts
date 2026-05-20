@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
 import { safeCompare } from '@/lib/safeCompare'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const DraftOfferSchema = z.object({
   offerPrice: z.number().positive('Valor da proposta deve ser positivo'),
@@ -36,6 +38,7 @@ export const maxDuration = 30
 const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const authHeader = req.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -115,11 +118,19 @@ Gera em JSON com carta formal completa:
   ]
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 1500,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const response = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null,
+    )
+
+    if (response === null) {
+      return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -132,7 +143,7 @@ Gera em JSON com carta formal completa:
 
     return NextResponse.json({ success: true, offer: result })
   } catch (error) {
-    console.error('[Draft Offer] Error:', error)
+    console.error('[Draft Offer] Error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao redigir proposta' }, { status: 500 })
   }
 }

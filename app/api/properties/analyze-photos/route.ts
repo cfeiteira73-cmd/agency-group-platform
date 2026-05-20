@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 90
@@ -42,6 +44,7 @@ export interface PhotoAnalysis {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -68,19 +71,21 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const response = await client.messages.create({
-          model: 'claude-opus-4-5',
-          max_tokens: 1200,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: mediaType, data: base64Data }
-              },
-              {
-                type: 'text',
-                text: `You are the world's leading real estate photography analyst, trained on 10 million luxury property listings from Sotheby's, Christie's, and Compass.
+        const response = await withAI(
+          'anthropic-opus',
+          () => client.messages.create({
+            model: 'claude-opus-4-5',
+            max_tokens: 1200,
+            messages: [{
+              role: 'user',
+              content: [
+                {
+                  type: 'image',
+                  source: { type: 'base64', media_type: mediaType, data: base64Data }
+                },
+                {
+                  type: 'text',
+                  text: `You are the world's leading real estate photography analyst, trained on 10 million luxury property listings from Sotheby's, Christie's, and Compass.
 
 Analyze this real estate photo with maximum precision. Return ONLY valid JSON (no markdown, no explanation):
 
@@ -108,10 +113,27 @@ Analyze this real estate photo with maximum precision. Return ONLY valid JSON (n
   "descriptionPt": "2-3 sentence evocative description in luxury Portuguese, focusing on what makes this space special for a discerning buyer. Paint a mental picture.",
   "improvementTips": ["1-3 specific actionable tips to improve this photo's impact, empty [] if already excellent"]
 }`
-              }
-            ]
-          }]
-        })
+                }
+              ]
+            }]
+          }),
+          null,
+        )
+
+        if (response === null) {
+          // Circuit open — push default analysis and continue to next photo
+          analyses.push({
+            index: i, roomType: 'Espaço', roomTypeEn: 'Space', roomCategory: 'other' as const,
+            qualityScore: 5, heroScore: 5, compositionScore: 5, lightingScore: 5,
+            lightingType: 'unknown', timeOfDay: 'unknown',
+            furnishingLevel: 'furnished', stagingNeeded: false, suggestedStagingStyle: 'none',
+            conditionIssues: [], backgroundDistractions: [],
+            ambiance: 'Contemporâneo', colorPalette: [], luxuryIndicators: [],
+            sequenceOrder: i + 1, sequenceRole: 'detail' as const,
+            highlights: [], descriptionPt: 'Espaço com potencial.', improvementTips: []
+          })
+          continue
+        }
 
         const text = response.content[0].type === 'text' ? response.content[0].text : ''
         const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -167,7 +189,7 @@ Analyze this real estate photo with maximum precision. Return ONLY valid JSON (n
     })
 
   } catch (error) {
-    console.error('analyze-photos error:', error)
+    console.error('analyze-photos error:', error, { corrId })
     return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
   }
 }

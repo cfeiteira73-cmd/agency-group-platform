@@ -4,11 +4,11 @@
 // =============================================================================
 
 import { logger } from '@/lib/observability/logger'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const AVG_DEAL_VALUE = 320_000
-const COMMISSION_RATE = 0.05
 const CLOSE_RATE_BASELINE = 0.18
 const AVG_DAYS_TO_CLOSE = 210
 const MONTHLY_TARGET = 50_000

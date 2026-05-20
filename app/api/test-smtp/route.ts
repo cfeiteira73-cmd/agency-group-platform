@@ -52,14 +52,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (e: unknown) {
     const err = e as Error & { code?: string; command?: string; response?: string; responseCode?: number }
-    return NextResponse.json({
-      success: false,
-      error: err.message,
-      code: err.code,
-      command: err.command,
-      response: err.response,
-      responseCode: err.responseCode,
-      config: { host: smtpHost, port: smtpPort, secure: smtpSecure },
-    })
+    console.error('[test-smtp] SMTP test failed:', err)
+    return NextResponse.json({ success: false, error: 'SMTP test failed — check server logs' }, { status: 500 })
   }
 }

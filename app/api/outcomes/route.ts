@@ -3,10 +3,11 @@
 
 import { NextRequest, NextResponse }    from 'next/server'
 import { auth }                         from '@/auth'
-import { safeCompare }                  from '@/lib/safeCompare'
+import { requireServiceAuth }           from '@/lib/auth/serviceAuth'
 import { getAdminRole }                 from '@/lib/auth/adminAuth'
 import { hasPermission }                from '@/lib/auth/adminAuth'
 import { logAction, buildAuditEntry }   from '@/lib/auth/auditLog'
+import { getRequestCorrelationId }      from '@/lib/observability/correlation'
 import {
   buildTransactionOutcome,
   recordTransactionOutcome,
@@ -19,10 +20,9 @@ import type { ClosingFriction, OutcomeType } from '@/lib/intelligence/outcomeCap
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
-
-  // Accept service key (cron/automation) or admin user token
-  const isService = safeCompare(authHeader ?? '', process.env.CRON_SECRET ?? '')
+  const corrId = getRequestCorrelationId(req)
+  const serviceCheck = await requireServiceAuth(req)
+  const isService = serviceCheck.ok
   let actorEmail  = 'service'
 
   if (!isService) {
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, outcome_id: outcomeId, rejection_id: rejectionId ?? null })
   } catch (err) {
-    console.error('[outcomes] error:', err)
+    console.error('[outcomes] error:', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

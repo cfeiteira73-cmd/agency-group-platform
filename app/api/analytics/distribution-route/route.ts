@@ -4,7 +4,7 @@
 // Optionally persists the distribution event for audit trail.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { safeCompare }               from '@/lib/safeCompare'
+import { requireServiceAuth }        from '@/lib/auth/serviceAuth'
 import { getToken }                  from 'next-auth/jwt'
 import { routeDeal, persistDistributionEvent } from '@/lib/intelligence/distributionRouter'
 import type {
@@ -12,6 +12,7 @@ import type {
   AgentForRouting,
   InvestorForRouting,
 } from '@/lib/intelligence/distributionRouter'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -23,11 +24,10 @@ interface RouteBody {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   // Auth: session or internal token
-  const internalToken = req.headers.get('x-internal-token')
-  const bearer        = req.headers.get('authorization')?.replace('Bearer ', '')
-  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
-                     || safeCompare(bearer ?? '', process.env.CRON_SECRET ?? '')
+  const serviceCheck = await requireServiceAuth(req)
+  const isInternal   = serviceCheck.ok
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       generated_at: new Date().toISOString(),
     })
   } catch (err) {
-    console.error('[distribution-route] error:', err)
+    console.error('[distribution-route] error:', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

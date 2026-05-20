@@ -6,45 +6,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { buyerIntentProfiler } from '@/lib/buyer-intelligence/buyerIntentProfiler'
 import type { BuyerBehaviorEvent, BuyerEventType, BuyerIntentProfile } from '@/lib/buyer-intelligence/types'
+import { rateLimit } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 10
-
-// ---------------------------------------------------------------------------
-// Simple in-memory rate limiter — 60 req/min per IP
-// Uses a sliding window implemented as a rolling counter map.
-// ---------------------------------------------------------------------------
-
-interface RateLimitBucket {
-  count: number
-  windowStart: number
-}
-
-const ipBuckets = new Map<string, RateLimitBucket>()
-const RATE_WINDOW_MS = 60_000
-const RATE_MAX = 60
-
-function pruneRateLimitBuckets(): void {
-  const cutoff = Date.now() - RATE_WINDOW_MS
-  for (const [ip, bucket] of ipBuckets) {
-    if (bucket.windowStart < cutoff) ipBuckets.delete(ip)
-  }
-}
-
-function checkRateLimit(ip: string): boolean {
-  pruneRateLimitBuckets()
-  const now = Date.now()
-  const existing = ipBuckets.get(ip)
-
-  if (!existing || now - existing.windowStart >= RATE_WINDOW_MS) {
-    ipBuckets.set(ip, { count: 1, windowStart: now })
-    return true
-  }
-
-  if (existing.count >= RATE_MAX) return false
-  existing.count += 1
-  return true
-}
 
 // ---------------------------------------------------------------------------
 // Valid event types
@@ -82,9 +47,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     req.headers.get('x-real-ip') ??
-    '0.0.0.0'
+    'unknown'
 
-  if (!checkRateLimit(ip)) {
+  const rl = await rateLimit(`buyer-intelligence-track:${ip}`, { maxAttempts: 60, windowMs: 60_000 })
+  if (!rl.success) {
     // Still return 200 — fire-and-forget from client, never surface errors
     return NextResponse.json({ ok: false, reason: 'rate_limited' }, { status: 200 })
   }

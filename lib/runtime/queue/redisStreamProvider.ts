@@ -1,8 +1,12 @@
 // AGENCY GROUP — SH-ROS Queue: redisStreamProvider | AMI: 22506
 // Redis Streams implementation using ioredis.
 // Stream per org for tenant isolation. Consumer groups for agent coordination.
+// NOTE: ioredis is a peer-dependency — loaded lazily via require() so the
+// module compiles on Vercel/Turbopack even when ioredis is not installed.
+// The constructor will throw at runtime if REDIS_URL is set but ioredis is absent.
 
-import Redis from 'ioredis'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Redis = any
 import type { RuntimeEvent } from '@/lib/runtime/types'
 import { MAX_RETRIES } from '@/lib/runtime/types'
 import type {
@@ -73,7 +77,9 @@ export class RedisStreamProvider implements IQueueProvider {
       throw new Error('[RedisStreamProvider] REDIS_URL is not set')
     }
 
-    this.redis = new Redis(process.env.REDIS_URL, {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const RedisClass = require('ioredis') as new (url: string, opts: object) => Redis
+    this.redis = new RedisClass(process.env.REDIS_URL, {
       maxRetriesPerRequest: 3,
       enableReadyCheck: true,
       lazyConnect: true,

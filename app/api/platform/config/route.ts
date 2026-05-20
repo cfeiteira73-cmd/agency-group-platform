@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth as getSession }        from '@/auth'
 import { getAdminRole, isRoleAtLeast } from '@/lib/auth/adminAuth'
 import { getAllConfig, updateConfigValue, invalidateConfigCache } from '@/lib/platform/config'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -30,6 +31,7 @@ async function auth(_req: NextRequest) {
 // ---------------------------------------------------------------------------
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const actor = await auth(req)
   if (!actor) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
@@ -37,7 +39,7 @@ export async function GET(req: NextRequest) {
     const rows = await getAllConfig()
     return NextResponse.json({ rows, count: rows.length })
   } catch (err) {
-    console.error('[platform/config] GET error:', err)
+    console.error('[platform/config] GET error:', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -52,6 +54,7 @@ interface PutBody {
 }
 
 export async function PUT(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const actor = await auth(req)
   if (!actor) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
@@ -92,7 +95,7 @@ export async function PUT(req: NextRequest) {
       updated_at: new Date().toISOString(),
     })
   } catch (err) {
-    console.error('[platform/config] PUT error:', err)
+    console.error('[platform/config] PUT error:', err, { corrId })
     const msg = err instanceof Error ? err.message : 'Unknown error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }

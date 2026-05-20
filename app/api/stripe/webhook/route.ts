@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient } from '@supabase/supabase-js'
 import Stripe from 'stripe'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -11,6 +12,7 @@ const supabaseAdmin = createClient(
 )
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
 
@@ -20,28 +22,41 @@ export async function POST(req: NextRequest) {
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!webhookSecret || webhookSecret === 'whsec_PLACEHOLDER') {
-    console.warn('[webhook] STRIPE_WEBHOOK_SECRET not configured — skipping verification')
-    return NextResponse.json({ received: true })
+    console.error('[webhook] STRIPE_WEBHOOK_SECRET not configured — rejecting all webhook calls', { corrId })
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 })
   }
 
   let event: Stripe.Event
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
   } catch (err) {
-    console.error('[webhook] Signature verification failed:', err)
+    console.error('[webhook] Signature verification failed:', err, { corrId })
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  // ── Idempotency guard: reject duplicate Stripe event deliveries ─────────────
+  const { data: existing } = await supabaseAdmin
+    .from('learning_events')
+    .select('id')
+    .eq('event_type', `stripe:${event.id}`)
+    .maybeSingle()
+  if (existing) {
+    console.log(`[webhook] Duplicate event ${event.id} — already processed, skipping`)
+    return NextResponse.json({ received: true })
+  }
+
+  // Process business logic BEFORE recording idempotency key.
+  // This ensures: if the handler crashes, the next Stripe retry will retry correctly.
+  // Concurrent duplicate deliveries are handled by the SELECT check above (best-effort).
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        if (session.mode === 'subscription' && session.payment_status === 'paid') {
-          await activateSubscription(session)
-        }
-        // trial started — also activate access
-        if (session.mode === 'subscription' && session.status === 'complete') {
-          await activateSubscription(session)
+        if (session.mode === 'subscription') {
+          // Activate on paid completion OR trial start — mutually exclusive conditions
+          if (session.payment_status === 'paid' || session.status === 'complete') {
+            await activateSubscription(session)
+          }
         }
         break
       }
@@ -62,9 +77,14 @@ export async function POST(req: NextRequest) {
       }
     }
   } catch (err) {
-    console.error('[webhook] Handler error:', err)
+    console.error('[webhook] Handler error:', err, { corrId })
     return NextResponse.json({ error: 'Handler failed' }, { status: 500 })
   }
+
+  // Record idempotency AFTER successful processing — retry-safe
+  await supabaseAdmin
+    .from('learning_events')
+    .insert({ event_type: `stripe:${event.id}`, source_system: 'api' })
 
   return NextResponse.json({ received: true })
 }

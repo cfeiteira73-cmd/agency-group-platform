@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { auth } from '@/auth'
+import { withAIStream } from '@/lib/ops/withAI'
 
 export const runtime = 'nodejs'
 
@@ -104,14 +105,16 @@ Always end with Agency Group CTA (agencygroup.pt or AMI 22506).`
           // ─── 1. VIDEO SCRIPT ─────────────────────────────────────────────────
           send(controller, 'status', 'script')
 
-          const scriptStream = await client.messages.create({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 700,
-            stream: true,
-            system,
-            messages: [{
-              role: 'user',
-              content: `Write a premium video script for the Sofia presenter to read.
+          const scriptStream = await withAIStream(
+            'anthropic-opus',
+            () => client.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 700,
+              stream: true,
+              system,
+              messages: [{
+                role: 'user',
+                content: `Write a premium video script for the Sofia presenter to read.
 
 ${propertyCtx}
 
@@ -127,8 +130,15 @@ Requirements:
 — End with clear CTA: Agency Group, agencygroup.pt, AMI 22506
 — Teleprompter-ready: no stage directions, just the spoken words
 — Tone: premium, confident, personal — NOT corporate or stiff`
-            }]
-          })
+              }]
+            }),
+            null,
+          )
+
+          if (scriptStream === null) {
+            send(controller, 'error', 'AI service temporarily unavailable — please retry')
+            return  // finally block sends [DONE] and closes stream
+          }
 
           for await (const chunk of scriptStream) {
             if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
@@ -140,14 +150,16 @@ Requirements:
           // ─── 2. OPENING HOOKS ────────────────────────────────────────────────
           send(controller, 'status', 'hooks')
 
-          const hooksStream = await client.messages.create({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 600,
-            stream: true,
-            system,
-            messages: [{
-              role: 'user',
-              content: `Create 5 opening video hooks for this property. Language: ${langName}.
+          const hooksStream = await withAIStream(
+            'anthropic-opus',
+            () => client.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 600,
+              stream: true,
+              system,
+              messages: [{
+                role: 'user',
+                content: `Create 5 opening video hooks for this property. Language: ${langName}.
 
 ${propertyCtx}
 
@@ -166,8 +178,15 @@ Format:
 "Hook text here"
 
 No explanations. Just the 5 hooks.`
-            }]
-          })
+              }]
+            }),
+            null,
+          )
+
+          if (hooksStream === null) {
+            send(controller, 'error', 'AI service temporarily unavailable — please retry')
+            return
+          }
 
           for await (const chunk of hooksStream) {
             if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
@@ -179,14 +198,16 @@ No explanations. Just the 5 hooks.`
           // ─── 3. SOCIAL CAPTIONS ──────────────────────────────────────────────
           send(controller, 'status', 'captions')
 
-          const captionsStream = await client.messages.create({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 700,
-            stream: true,
-            system,
-            messages: [{
-              role: 'user',
-              content: `Create platform-optimised social captions for this property. Language: ${langName}.
+          const captionsStream = await withAIStream(
+            'anthropic-opus',
+            () => client.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 700,
+              stream: true,
+              system,
+              messages: [{
+                role: 'user',
+                content: `Create platform-optimised social captions for this property. Language: ${langName}.
 
 ${propertyCtx}
 
@@ -205,8 +226,15 @@ Title (max 60 chars, SEO-optimised) + Description (max 180 chars with keywords)
 Short conversational message (max 100 chars) for sending to leads. Informal, urgent.
 
 Each must include Agency Group mention and how to contact.`
-            }]
-          })
+              }]
+            }),
+            null,
+          )
+
+          if (captionsStream === null) {
+            send(controller, 'error', 'AI service temporarily unavailable — please retry')
+            return
+          }
 
           for await (const chunk of captionsStream) {
             if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
@@ -218,14 +246,16 @@ Each must include Agency Group mention and how to contact.`
           // ─── 4. SHOT LIST ────────────────────────────────────────────────────
           send(controller, 'status', 'shotlist')
 
-          const shotStream = await client.messages.create({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 500,
-            stream: true,
-            system,
-            messages: [{
-              role: 'user',
-              content: `Create a professional cinematic shot list for this property video. Language: ${langName}.
+          const shotStream = await withAIStream(
+            'anthropic-opus',
+            () => client.messages.create({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 500,
+              stream: true,
+              system,
+              messages: [{
+                role: 'user',
+                content: `Create a professional cinematic shot list for this property video. Language: ${langName}.
 
 ${propertyCtx}
 
@@ -241,8 +271,15 @@ Generate:
 — 1 AI tool recommendation for each: Runway ML image-to-video for exteriors, D-ID for avatar narration
 
 Format clearly with headers. Make it feel like a real production brief from a top agency.`
-            }]
-          })
+              }]
+            }),
+            null,
+          )
+
+          if (shotStream === null) {
+            send(controller, 'error', 'AI service temporarily unavailable — please retry')
+            return
+          }
 
           for await (const chunk of shotStream) {
             if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {

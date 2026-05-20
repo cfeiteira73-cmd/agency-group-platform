@@ -20,7 +20,7 @@ interface ActionBody {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   if (!token?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -28,7 +28,7 @@ export async function POST(
   const admin = await getAdminRole(token.email as string)
   if (!admin) return NextResponse.json({ error: 'Forbidden — no admin role' }, { status: 403 })
 
-  const reviewId = params.id
+  const { id: reviewId } = await params
 
   let body: ActionBody
   try {

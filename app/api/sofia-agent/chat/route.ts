@@ -1,8 +1,12 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
+import { withAIStream } from '@/lib/ops/withAI'
+import { buildAgentEnvelope } from '@/lib/ai/contracts'
 
 export const runtime = 'nodejs'
+
+const MAX_BODY_BYTES = 64 * 1024  // 64 KB
 
 // ─── Lazy client — never instantiate at module level ─────────────────────────
 // new Anthropic() throws synchronously if ANTHROPIC_API_KEY is absent.
@@ -98,6 +102,15 @@ Activate premium mode: off-market exclusives, direct partner introductions, disc
 - Always end multi-step conversations with a concrete next step`
 
 export async function POST(req: NextRequest) {
+  // ── Content-length guard ────────────────────────────────────────────────────
+  const contentLen = req.headers.get('content-length')
+  if (contentLen !== null) {
+    const byteLen = parseInt(contentLen, 10)
+    if (!isNaN(byteLen) && byteLen > MAX_BODY_BYTES) {
+      return new Response(JSON.stringify({ error: 'Payload too large' }), { status: 413 })
+    }
+  }
+
   // Rate limit: 5 Sofia messages per IP per minute (AI route — expensive)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const rl = await rateLimit(`sofia:${ip}`, { maxAttempts: 5, windowMs: 60_000 })
@@ -168,18 +181,31 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const res = await anthropic.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 500,
-          stream: true,
-          system: fullSystem,
-          messages: messages
-            .filter(m => m.content.trim())
-            .map(m => ({
-              role: m.role as 'user' | 'assistant',
-              content: m.content,
-            })),
-        })
+        const res = await withAIStream(
+          'anthropic-opus',
+          () => anthropic.messages.create({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 500,
+            stream: true,
+            system: fullSystem,
+            messages: messages
+              .filter(m => m.content.trim())
+              .map(m => ({
+                role: m.role as 'user' | 'assistant',
+                content: m.content,
+              })),
+          }),
+          null,
+        )
+
+        if (res === null) {
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ text: '\n\n_Serviço IA temporariamente indisponível. Contacte-nos: geral@agencygroup.pt ou +351 919 948 986_' })}\n\n`
+            )
+          )
+          return  // finally block closes stream
+        }
 
         for await (const chunk of res) {
           if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
@@ -196,6 +222,21 @@ export async function POST(req: NextRequest) {
         )
       } finally {
         controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+        // SH-ROS: Agent execution envelope (non-blocking)
+        void Promise.resolve().then(() => {
+          try {
+            const envelope = buildAgentEnvelope({
+              correlation_id: `sofia-chat-${Date.now()}`,
+              agent_id:       'sofia-chat',
+              tenant_id:      'agency-group',
+              decision:       'Sofia public chat response generated',
+              fallback_used:  false,
+              latency_ms:     0,
+              output:         null,
+            })
+            console.log('[sofia-agent] envelope:', JSON.stringify({ agent_id: envelope.agent_id, fallback_used: envelope.fallback_used }))
+          } catch { /* envelope logging is non-critical */ }
+        })
         controller.close()
       }
     },

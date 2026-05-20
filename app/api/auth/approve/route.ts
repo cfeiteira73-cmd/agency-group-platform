@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { Resend } from 'resend'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_URL || 'https://www.agencygroup.pt'
 const VERIFY_URL = BASE_URL + '/api/auth/verify'
@@ -45,6 +46,7 @@ function page(title: string, body: string, color: string) {
 }
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const SECRET = process.env.AUTH_SECRET!
   const resend = new Resend(process.env.RESEND_API_KEY)
   const token = req.nextUrl.searchParams.get('token')
@@ -88,7 +90,7 @@ export async function GET(req: NextRequest) {
       </body></html>
     `,
   })
-  if (sendErr) console.error('Resend approve email error:', sendErr)
+  if (sendErr) console.error('Resend approve email error:', sendErr, { corrId })
 
   // DO NOT redirect the admin to the magic link — that would consume the
   // one-time token from the admin's browser, leaving the agent with an

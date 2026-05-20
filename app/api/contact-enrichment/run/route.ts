@@ -29,6 +29,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -222,6 +223,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   // Auth: portal token OR CRON_SECRET
   const cronSecret = process.env.CRON_SECRET
   const incomingCron = req.headers.get('x-cron-secret')
@@ -288,7 +290,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 400 },
     )
   } catch (err) {
-    console.error('[contact-enrichment/run] Error:', err)
+    console.error('[contact-enrichment/run] Error:', err, { corrId })
     return NextResponse.json({ error: 'Internal error', details: String(err) }, { status: 500 })
   }
 }

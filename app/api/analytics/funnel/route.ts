@@ -2,17 +2,19 @@
 // Returns full conversion funnel metrics: ingested → scored → distributed → closed
 
 import { NextRequest, NextResponse } from 'next/server'
-import { safeCompare }               from '@/lib/safeCompare'
+import { requireServiceAuth }        from '@/lib/auth/serviceAuth'
 import { getToken }                  from 'next-auth/jwt'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { fetchFunnelCounts, computeFunnelConversions, computeGradeConversions } from '@/lib/analytics/funnelMetrics'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
-  const internalToken = req.headers.get('authorization')?.replace('Bearer ', '')
-  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
+  const corrId = getRequestCorrelationId(req)
+  const serviceCheck = await requireServiceAuth(req)
+  const isInternal   = serviceCheck.ok
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
@@ -72,7 +74,7 @@ export async function GET(req: NextRequest) {
       generated_at:      new Date().toISOString(),
     })
   } catch (err) {
-    console.error('[analytics/funnel] error:', err)
+    console.error('[analytics/funnel] error:', err, { corrId })
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal error' }, { status: 500 })
   }
 }

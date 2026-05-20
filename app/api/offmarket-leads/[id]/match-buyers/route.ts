@@ -376,6 +376,130 @@ function calcDealPriorityScore(
 }
 
 // ---------------------------------------------------------------------------
+// Exported batch function — same logic as POST, no auth check, no HTTP response
+// ---------------------------------------------------------------------------
+
+export async function runMatchBuyers(leadId: string, correlationId?: string): Promise<void> {
+  try {
+    const { data: lead, error: leadError } = await supabaseAdmin.from(TABLE)
+      .select('id, nome, tipo_ativo, cidade, localizacao, price_estimate, price_ask, area_m2, score, urgency, status')
+      .eq('id', leadId)
+      .single()
+
+    if (leadError || !lead) return
+
+    const { data: contacts, error: contactsError } = await supabaseAdmin
+      .from(CONTACTS_TABLE)
+      .select([
+        'id', 'full_name', 'email', 'phone', 'whatsapp',
+        'budget_min', 'budget_max',
+        'preferred_locations', 'typologies_wanted',
+        'status', 'lead_tier', 'lead_score',
+        'buyer_type', 'liquidity_profile', 'proof_of_funds_status',
+        'deals_closed_count', 'avg_close_days',
+        'reliability_score', 'response_rate', 'buyer_score', 'active_status',
+      ].join(', '))
+      .in('status', ['active', 'prospect', 'lead', 'qualified', 'negotiating', 'client', 'vip'])
+      .or('role.is.null,role.eq.buyer')
+      .order('lead_score', { ascending: false })
+      .limit(500)
+
+    if (contactsError) throw contactsError
+
+    const matches: BuyerMatchV2[] = []
+    for (const contact of (contacts ?? [])) {
+      const match = matchBuyerToLead(contact as unknown as Contact, lead as unknown as OffmarketLead)
+      if (match) matches.push(match)
+    }
+
+    matches.sort((a, b) =>
+      b.match_score !== a.match_score
+        ? b.match_score - a.match_score
+        : b.buyer_score - a.buyer_score
+    )
+
+    const top5 = matches.slice(0, 5)
+    const top3 = assignTriageRoles(top5.slice(0, 3))
+
+    const bestScore = top5[0]?.match_score ?? 0
+    const primary   = top3[0] ?? null
+    const secondary = top3[1] ?? null
+    const tertiary  = top3[2] ?? null
+
+    const buyerNotes = top5.length > 0
+      ? top5.slice(0, 3)
+          .map(m => `${m.name} (${m.match_score}/100 — ${m.budget_range} — Tier ${m.lead_tier})`)
+          .join(' | ')
+      : 'Sem compradores compatíveis encontrados'
+
+    const attackRec = generateAttackRecommendation(lead as OffmarketLead, primary ?? undefined)
+
+    const dealPriorityScore = calcDealPriorityScore(
+      lead.score,
+      bestScore,
+      primary?.lead_tier ?? null,
+      lead.urgency
+    )
+
+    const buyerTriadNotes = top3.length > 0
+      ? top3.map((b, i) =>
+          `${['A', 'B', 'C'][i]}: ${b.name} | ${b.match_score}/100 | Tier ${b.lead_tier} | ${b.liquidity_profile} | ${b.avg_close_days ? b.avg_close_days + 'd close' : '—'}`
+        ).join('\n')
+      : null
+
+    const updatePayload: Record<string, unknown> = {
+      matched_buyers_count:  matches.length,
+      best_buyer_match_score: bestScore,
+      buyer_match_notes:     buyerNotes,
+      matched_to_buyers:     matches.length > 0 && bestScore >= 60,
+      buyer_matched_at:      new Date().toISOString(),
+      attack_recommendation: attackRec,
+      deal_priority_score:   dealPriorityScore,
+      buyer_triad_notes:     buyerTriadNotes,
+    }
+
+    if (primary)   updatePayload.primary_buyer_id   = primary.contact_id
+    if (secondary) updatePayload.secondary_buyer_id = secondary.contact_id
+    if (tertiary)  updatePayload.tertiary_buyer_id  = tertiary.contact_id
+
+    const { error: updateError } = await supabaseAdmin.from(TABLE)
+      .update(updatePayload)
+      .eq('id', leadId)
+      .select('id, nome, score, matched_buyers_count, best_buyer_match_score, matched_to_buyers, preclose_candidate, outreach_ready, deal_priority_score')
+      .single()
+
+    if (updateError) {
+      await supabaseAdmin.from(TABLE)
+        .update({
+          matched_buyers_count:   matches.length,
+          best_buyer_match_score: bestScore,
+          buyer_match_notes:      buyerNotes,
+          matched_to_buyers:      matches.length > 0 && bestScore >= 60,
+          buyer_matched_at:       new Date().toISOString(),
+        })
+        .eq('id', leadId)
+      console.warn('[match-buyers] migration 007 columns not present — saved base fields only')
+    }
+
+    console.log(`[match-buyers v2.0] "${lead.nome}" — ${matches.length} matches, best=${bestScore}, DPS=${dealPriorityScore}`)
+
+    track.matchCreated({
+      lead_id:        leadId,
+      match_score:    bestScore,
+      correlation_id: correlationId ?? 'batch-eval',
+      source_system:  'api',
+      metadata: {
+        matched_buyers_count: matches.length,
+        deal_priority_score:  dealPriorityScore,
+        attack_recommendation: attackRec,
+      },
+    })
+  } catch (err) {
+    console.error('[match-buyers runMatchBuyers]', err)
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -8,6 +10,7 @@ export const maxDuration = 60
 const client = new Anthropic()
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -97,11 +100,19 @@ Gera o pitch em JSON com esta estrutura exacta:
   "disclaimer": "Disclaimer legal"
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }]
-    })
+    const response = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      null,
+    )
+
+    if (response === null) {
+      return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -113,7 +124,7 @@ Gera o pitch em JSON com esta estrutura exacta:
       return NextResponse.json({ error: 'Parse failed', raw: text }, { status: 500 })
     }
   } catch (error) {
-    console.error('investor-pitch error:', error)
+    console.error('investor-pitch error:', error, { corrId })
     return NextResponse.json({ error: 'Failed to generate pitch' }, { status: 500 })
   }
 }

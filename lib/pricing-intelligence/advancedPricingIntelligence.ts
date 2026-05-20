@@ -7,6 +7,7 @@
 
 import type { PricingIntelligenceCard, PricingInputs } from './index'
 import { computePricingIntelligence } from './index'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -225,7 +226,7 @@ function computeRevenueImpact(
 ): number {
   const current = listingPrice && listingPrice > 0 ? listingPrice : recommendedPrice
   const deltaPrice  = recommendedPrice - current
-  const commissionImpact = deltaPrice * 0.05
+  const commissionImpact = deltaPrice * COMMISSION_RATE
   // Expected impact = commission delta × probability of close
   return Math.round(commissionImpact * pCloseBase)
 }

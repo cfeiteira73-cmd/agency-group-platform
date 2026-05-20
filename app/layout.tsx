@@ -9,6 +9,7 @@ import SofiaWidgetWrapper from './components/SofiaWidgetWrapper'
 import { LanguageSwitcher } from './components/LanguageSwitcher'
 import UTMCapture from './components/UTMCapture'
 import StickyWhatsApp from './components/StickyWhatsApp'
+import CookieConsentBanner from './components/CookieConsentBanner'
 
 const cormorant = Cormorant({
   subsets: ['latin'],
@@ -420,6 +421,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* <PushNotificationSetup /> */}
         <BottomNav />
         <StickyWhatsApp />
+        {/* GDPR Art. 6(1)(a) — cookie consent banner. Sets ag_cookie_consent=granted|denied.
+            BuyerIntentTracker reads this before any tracking. */}
+        <CookieConsentBanner />
         <script dangerouslySetInnerHTML={{ __html: `
 (function() {
   // ── SELF-HEAL: detect old cached HTML (loader without display:none) ──────

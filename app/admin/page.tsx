@@ -31,16 +31,12 @@ const SUPABASE_EDITOR = SUPABASE_ORG
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-/** Mask an env-var value: show first 6 + *** + last 4, or "NOT SET" */
+/** Mask an env-var value: returns *** configured *** or NOT SET — never reveals partial secrets */
 function maskEnv(value: string | undefined): { masked: string; ok: boolean } {
   if (!value || value === 'PREENCHER' || value.trim() === '') {
     return { masked: 'NOT SET', ok: false }
   }
-  if (value.length <= 10) return { masked: '***', ok: true }
-  return {
-    masked: value.slice(0, 6) + '···' + value.slice(-4),
-    ok: true,
-  }
+  return { masked: '*** configured ***', ok: true }
 }
 
 // ─── Stat cards data ────────────────────────────────────────────────────────

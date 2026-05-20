@@ -7,8 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -47,7 +49,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ data: filtered, total: filtered.length })
   } catch (err) {
-    console.error('[risk-flags GET]', err)
+    console.error('[risk-flags GET]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -55,6 +57,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 // Fallback: compute risk flags from raw offmarket_leads if view doesn't exist yet
 // Uses a two-level fallback: try full column set (migrations 004+005), then minimal base columns
 async function computeRiskFlagsInline(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   const limit = Math.min(100, parseInt(req.nextUrl.searchParams.get('limit') ?? '50', 10))
 
   // Level 1: full column list (requires migrations 004 + 005)
@@ -92,7 +95,7 @@ async function computeRiskFlagsInline(req: NextRequest): Promise<NextResponse> {
       if (error) throw error
       leads = data ?? []
     } catch (err2) {
-      console.error('[risk-flags fallback L2]', err2)
+      console.error('[risk-flags fallback L2]', err2, { corrId })
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
   }

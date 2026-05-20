@@ -10,6 +10,7 @@ import { NextRequest } from 'next/server'
 import { auth } from '@/auth'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getStageProbability, COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 
@@ -67,21 +68,7 @@ const MOCK_SUMMARY: AnalyticsSummary = {
   source: 'mock',
 }
 
-// ---------------------------------------------------------------------------
-// Stage probability map for pipeline weighting
-// ---------------------------------------------------------------------------
-
-const STAGE_PROB: Record<string, number> = {
-  angariacao: 10, qualificacao: 20, qualificado: 20, visita: 40,
-  proposta: 60, negociacao: 70, cpcv: 85, escritura: 95, fechado: 100,
-}
-
-function stageProbability(stage: string): number {
-  const key = stage.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '')
-  return STAGE_PROB[key] ?? 30
-}
+// Stage probability \u2014 delegates to canonical lib/constants/pipeline
 
 // ---------------------------------------------------------------------------
 // GET /api/analytics/summary
@@ -123,7 +110,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const raw = typeof d.valor === 'number'
         ? d.valor
         : parseFloat(String(d.valor ?? '0').replace(/[^0-9.]/g, '')) || 0
-      return raw * 0.05
+      return raw * COMMISSION_RATE
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -140,7 +127,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         parseFloat(String(d.valor ?? '0').replace(/[^0-9.]/g, '')) || 0
       stageMap[stage].deals += 1
       stageMap[stage].valor += v
-      totalPipeline += v * (stageProbability(stage) / 100)
+      totalPipeline += v * getStageProbability(stage)
     }
 
     const STAGE_COLORS: Record<string, string> = {
@@ -152,7 +139,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       stage,
       deals: stats.deals,
       valor: stats.valor,
-      prob: stageProbability(stage),
+      prob: Math.round(getStageProbability(stage) * 100),
       color: STAGE_COLORS[stage] ?? '#2d6e52',
     }))
 

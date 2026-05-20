@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { randomUUID } from 'crypto'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Funnel Stage ─────────────────────────────────────────────────────────────
 
@@ -98,7 +99,7 @@ export function createEconomicEvent(params: {
 }): EconomicEvent {
   const probability_to_close = STAGE_WEIGHTS[params.stage]
   const property_value = params.property_value_eur ?? 0
-  const commission_rate = 0.05
+  const commission_rate = COMMISSION_RATE
 
   return {
     event_id: randomUUID(),
@@ -196,7 +197,7 @@ export function buildEventGraph(
 
   // Commission estimate at 5% on the highest-probability close value seen
   const close_probability = STAGE_WEIGHTS[current_stage]
-  const estimated_commission_eur = property_value_eur * 0.05 * close_probability
+  const estimated_commission_eur = property_value_eur * COMMISSION_RATE * close_probability
 
   // Total probabilistic economic value = sum of all event values
   const total_economic_value_eur = sorted.reduce(
@@ -247,7 +248,7 @@ export function advanceStage(
   const current_prob = STAGE_WEIGHTS[graph.current_stage]
   const implied_property_value =
     current_prob > 0
-      ? graph.estimated_commission_eur / (0.05 * current_prob)
+      ? graph.estimated_commission_eur / (COMMISSION_RATE * current_prob)
       : 0
 
   return buildEventGraph(updatedEvents, implied_property_value)

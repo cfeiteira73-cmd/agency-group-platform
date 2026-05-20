@@ -3,6 +3,8 @@
 // Calculates optimal pricing per segment, ROI proof, and expansion paths
 // =============================================================================
 
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface PricingTier {
@@ -265,8 +267,8 @@ export class PricingEngine {
     const current_deals         = deals_per_agent
     const projected_deals       = deals_per_agent * (projected_close_rate / params.current_close_rate)
 
-    const current_gci_per_agent  = current_deals * params.avg_deal_value * 0.05
-    const projected_gci_per_agent = projected_deals * projected_deal_value * 0.05
+    const current_gci_per_agent  = current_deals * params.avg_deal_value * COMMISSION_RATE
+    const projected_gci_per_agent = projected_deals * projected_deal_value * COMMISSION_RATE
 
     const current_annual_gci  = current_gci_per_agent * params.agents
     const projected_annual_gci = projected_gci_per_agent * params.agents

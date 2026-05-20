@@ -79,6 +79,13 @@ interface CacheEntry<T> {
   expires: number
 }
 
+// NOTE: MEDIUM risk. This 5-minute in-process config cache resets on cold starts,
+// causing a DB round-trip on first request per instance. This is acceptable
+// (config reads are cheap Supabase queries and the DB is the source of truth).
+// However, if config is updated it will not propagate across warm instances
+// until their individual TTLs expire. This is by design — call invalidateConfigCache()
+// after writes to clear the local instance's cache.
+// TODO (optional): move to Redis (Upstash) for cross-instance cache invalidation.
 const cache = new Map<string, CacheEntry<unknown>>()
 
 function getCached<T>(key: string): T | undefined {
@@ -126,7 +133,7 @@ export async function getLeakageThresholds(): Promise<LeakageThresholds> {
     humanFailureHours,
     cpvNoActionDays,
   ] = await Promise.all([
-    getConfigValue('scoring.qualification_threshold',  70),
+    getConfigValue('scoring.qualification_threshold',  80), // Canonical HIGH threshold — matches opportunityScore.ts:386
     getConfigValue('scoring.cpcv_readiness_threshold', 80),
     getConfigValue('scoring.cpcv_probability_min',     65),
     getConfigValue('distribution.score_decay_days',    14),

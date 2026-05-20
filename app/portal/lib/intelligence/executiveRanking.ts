@@ -15,6 +15,7 @@
 import type { ScoredContact } from '../leadScoring'
 import type { ScoredDeal } from '../dealScoring'
 import { parsePTValue } from '../../utils/format'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ export function rankContacts(contacts: ScoredContact[]): RankedContact[] {
   const mapped: RankedContact[] = contacts.map(({ contact, scoring }) => {
     const budgetMax = contact.budgetMax ?? 0
     const score = scoring.score ?? 0
-    const rawRevenueOpportunity = budgetMax * 0.05
+    const rawRevenueOpportunity = budgetMax * COMMISSION_RATE
     const revenueOpportunity = rawRevenueOpportunity * (score / 100)
     const isUrgent =
       scoring.band === 'A' ||
@@ -122,7 +123,7 @@ export function rankDeals(deals: ScoredDeal[]): RankedDeal[] {
   const active = deals.filter(({ deal }) => deal.fase !== 'Escritura Concluída')
 
   const mapped: RankedDeal[] = active.map(({ deal, scoring }) => {
-    const rawCommission = parsePTValue(deal.valor) * 0.05
+    const rawCommission = parsePTValue(deal.valor) * COMMISSION_RATE
     const expectedCommission = rawCommission * ((scoring.closurePct ?? 0) / 100)
 
     return {
@@ -179,12 +180,12 @@ export function computePortfolioHealth(
 
   // ── GCI totals ────────────────────────────────────────────────────────────
   const totalWeightedGCI = activeDeals.reduce(({ sum }, { deal, scoring }) => {
-    const commission = parsePTValue(deal.valor) * 0.05 * ((scoring.closurePct ?? 0) / 100)
+    const commission = parsePTValue(deal.valor) * COMMISSION_RATE * ((scoring.closurePct ?? 0) / 100)
     return { sum: sum + commission }
   }, { sum: 0 }).sum
 
   const totalRawGCI = activeDeals.reduce(({ sum }, { deal }) => {
-    return { sum: sum + parsePTValue(deal.valor) * 0.05 }
+    return { sum: sum + parsePTValue(deal.valor) * COMMISSION_RATE }
   }, { sum: 0 }).sum
 
   // ── Composite score ───────────────────────────────────────────────────────

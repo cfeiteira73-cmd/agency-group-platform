@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -41,6 +44,7 @@ function calcIRR(cashFlows: number[]): number {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -123,7 +127,7 @@ export async function POST(req: NextRequest) {
         yearlyFlows.push(netYearCF)
       }
 
-      const agentFee = propValue * 0.05
+      const agentFee = propValue * COMMISSION_RATE
       const maisValias = calcMaisValias(purchasePrice, propValue, currentYear, isHPP)
       const netSaleProceeds = propValue - agentFee - maisValias - Math.max(0, loanBalance)
       const totalProfit = cumCashFlow + netSaleProceeds
@@ -187,11 +191,19 @@ Responde em JSON compacto:
   "marketContext": "contexto actual do mercado ${zona || 'Portugal'} em 1 frase"
 }`
 
-    const aiRes = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 600,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const aiRes = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null,
+    )
+
+    if (aiRes === null) {
+      return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const aiText = aiRes.content[0].type === 'text' ? aiRes.content[0].text : '{}'
     const aiClean = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -213,7 +225,7 @@ Responde em JSON compacto:
       ai: aiAnalysis,
     })
   } catch (error) {
-    console.error('[Exit Simulator] Error:', error)
+    console.error('[Exit Simulator] Error:', error, { corrId })
     return NextResponse.json({ error: 'Erro na simulação de saída' }, { status: 500 })
   }
 }

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendToUser, notifications, type PushPayload } from '@/lib/push/notifications'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   // Internal endpoint — validate with a shared secret
   const authHeader = req.headers.get('x-internal-secret')
   const internalSecret = process.env.INTERNAL_API_SECRET
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
     await sendToUser(userId, payload)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[Push] Send route error:', error)
+    console.error('[Push] Send route error:', error, { corrId })
     return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 })
   }
 }

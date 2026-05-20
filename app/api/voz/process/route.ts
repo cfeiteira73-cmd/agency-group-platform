@@ -8,6 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -55,6 +57,7 @@ function fallbackProcess(text: string): AIProcessResult {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -73,14 +76,16 @@ export async function POST(req: NextRequest) {
 
     try {
       const client = new Anthropic({ apiKey })
-      const message = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 512,
-        system: SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: `Analisa esta nota de voz de um consultor imobiliário e responde em JSON com estes campos exactos:
+      const message = await withAI(
+        'anthropic-opus',
+        () => client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 512,
+          system: SYSTEM_PROMPT,
+          messages: [
+            {
+              role: 'user',
+              content: `Analisa esta nota de voz de um consultor imobiliário e responde em JSON com estes campos exactos:
 {
   "intent": "nota_visita|follow_up|proposta|tarefa|desconhecido",
   "summary": "resumo em 1-2 frases",
@@ -97,9 +102,15 @@ export async function POST(req: NextRequest) {
 
 Nota de voz:
 "${text}"`,
-          },
-        ],
-      })
+            },
+          ],
+        }),
+        null,
+      )
+
+      if (message === null) {
+        return NextResponse.json(fallbackProcess(text))
+      }
 
       const content = message.content[0]
       if (content.type === 'text') {
@@ -118,7 +129,7 @@ Nota de voz:
 
     return NextResponse.json(fallbackProcess(text))
   } catch (err) {
-    console.error('[voz/process]', err)
+    console.error('[voz/process]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

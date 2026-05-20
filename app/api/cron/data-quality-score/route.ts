@@ -6,6 +6,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { withCronLock } from '@/lib/ops/cronLock'
 import { safeCompare } from '@/lib/safeCompare'
 import { supabaseAdmin } from '@/lib/supabase'
 import { scoreContact, generateDataQualityReport } from '@/lib/commercial/dataQuality'
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lockResult = await withCronLock('data-quality-score', 2, async () => {
   const corrId    = cronCorrelationId('data-quality-score')
   const startedAt = new Date().toISOString()
 
@@ -123,4 +125,10 @@ export async function GET(req: NextRequest) {
     )
     return NextResponse.json({ error: 'Scoring failed', correlation_id: corrId }, { status: 500 })
   }
+  }) // end withCronLock
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return lockResult
 }

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { safeCompare } from '@/lib/safeCompare'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { COMMISSION_RATE, getStageProbability } from '@/lib/constants/pipeline'
 
 const DealSchema = z.object({
   valor:     z.string(),
@@ -20,18 +23,6 @@ export const maxDuration = 30;
 
 const client = new Anthropic();
 
-const STAGE_PCT: Record<string, number> = {
-  'Angariação': 10,
-  'Proposta Enviada': 20,
-  'Proposta Aceite': 35,
-  'Due Diligence': 50,
-  'CPCV Assinado': 70,
-  'Financiamento': 80,
-  'Escritura Marcada': 90,
-  'Escritura Concluída': 100,
-};
-
-const COMMISSION_RATE = 0.05;
 const IRS_WITHHOLDING = 0.25;
 
 interface Deal {
@@ -62,6 +53,7 @@ interface StageGroup {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const authHeader = req.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -85,12 +77,12 @@ export async function POST(req: NextRequest) {
     for (const deal of deals) {
       const valor = parseValor(deal.valor);
       const fase = deal.fase || 'Angariação';
-      const probability = (STAGE_PCT[fase] ?? 10) / 100;
+      const probability = getStageProbability(fase);
       const grossCommission = valor * COMMISSION_RATE;
       const weightedCommission = grossCommission * probability;
 
       if (!stageMap[fase]) {
-        stageMap[fase] = { stage: fase, deals: 0, value: 0, commission: 0, probability: (STAGE_PCT[fase] ?? 10) };
+        stageMap[fase] = { stage: fase, deals: 0, value: 0, commission: 0, probability: Math.round(probability * 100) };
       }
       stageMap[fase].deals += 1;
       stageMap[fase].value += valor;
@@ -108,7 +100,7 @@ export async function POST(req: NextRequest) {
     }
 
     const byStage: StageGroup[] = Object.values(stageMap).sort(
-      (a, b) => (STAGE_PCT[b.stage] ?? 0) - (STAGE_PCT[a.stage] ?? 0)
+      (a, b) => getStageProbability(b.stage) - getStageProbability(a.stage)
     );
 
     const expectedGross = realized + pipeline;
@@ -143,20 +135,27 @@ Responde APENAS com um objeto JSON válido, sem markdown nem explicações:
   "recommendations": ["recomendação 1", "recomendação 2"]
 }`;
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 500,
-      messages: [{ role: 'user', content: prompt }],
-    });
-
-    const rawText = response.content[0].type === 'text' ? response.content[0].text : '';
-    const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const response = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 500,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null,
+    );
 
     let aiAnalysis: { forecast?: Record<string, string>; insights?: string[]; recommendations?: string[] } = {};
-    try {
-      aiAnalysis = JSON.parse(cleaned);
-    } catch {
-      console.error('[Commission P&L] Failed to parse Claude response:', cleaned);
+    if (response !== null) {
+      const rawText = response.content[0].type === 'text' ? response.content[0].text : '';
+      const cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      try {
+        aiAnalysis = JSON.parse(cleaned);
+      } catch {
+        console.error('[Commission P&L] Failed to parse Claude response:', cleaned, { corrId });
+      }
+    } else {
+      console.warn('[Commission P&L] Anthropic circuit breaker OPEN — skipping AI forecast');
     }
 
     return NextResponse.json({
@@ -173,7 +172,7 @@ Responde APENAS com um objeto JSON válido, sem markdown nem explicações:
       topDeal,
     });
   } catch (error) {
-    console.error('[Commission P&L] Error:', error);
+    console.error('[Commission P&L] Error:', error, { corrId });
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 });
   }
 }

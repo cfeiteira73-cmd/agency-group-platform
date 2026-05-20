@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const MaisValiasSchema = z.object({
   preco_aquisicao:    z.number().positive('Preço de aquisição deve ser positivo'),
@@ -46,6 +47,7 @@ function calcIRS(rendimento: number): number {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const raw = await req.json()
     const parsed = MaisValiasSchema.safeParse(raw)
@@ -140,7 +142,7 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (err) {
-    console.error(err)
+    console.error(err, { corrId })
     return NextResponse.json({ error: 'Erro interno.' }, { status: 500 })
   }
 }

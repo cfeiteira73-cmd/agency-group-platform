@@ -22,6 +22,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { batchComputeAVM }           from '@/lib/valuation/avm'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { withCronLock }              from '@/lib/ops/cronLock'
+import { safeCompare }               from '@/lib/safeCompare'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
 
 export const runtime     = 'nodejs'
@@ -37,7 +39,7 @@ function authCheck(req: NextRequest): boolean {
   const token =
     req.headers.get('x-cron-secret') ??
     req.headers.get('authorization')?.replace('Bearer ', '').trim()
-  return token === secret
+  return !!token && safeCompare(token, secret)
 }
 
 // ---------------------------------------------------------------------------
@@ -49,50 +51,57 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const corrId = cronCorrelationId('avm-compute')
+  const lockResult = await withCronLock('avm-compute', 7, async () => {
+    const corrId = cronCorrelationId('avm-compute')
 
-  const startedAt = new Date().toISOString()
-  const t0        = Date.now()
+    const startedAt = new Date().toISOString()
+    const t0        = Date.now()
 
-  const { searchParams } = req.nextUrl
-  const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 50
+    const { searchParams } = req.nextUrl
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 50
 
-  try {
-    const { computed, errors } = await batchComputeAVM(limit)
-    const durationMs = Date.now() - t0
-
-    // Log to automations_log
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await supabaseAdmin
-        .from('automations_log')
-        .insert({
-          workflow_name: 'avm_compute_cron',
-          trigger_type:  'cron',
-          status:        errors.length === 0 ? 'success' : 'partial',
-          started_at:    startedAt,
-          completed_at:  new Date().toISOString(),
-          duration_ms:   durationMs,
-          outcome: { computed, errors_count: errors.length },
-          error_message: errors.length > 0 ? errors.slice(0, 5).join('; ') : null,
-        })
-    } catch { /* non-critical */ }
+      const { computed, errors } = await batchComputeAVM(limit)
+      const durationMs = Date.now() - t0
 
-    const res = NextResponse.json(
-      {
-        ok:             errors.length === 0,
-        computed,
-        errors_count:   errors.length,
-        duration_ms:    durationMs,
-        correlation_id: corrId,
-        ...(errors.length > 0 ? { errors: errors.slice(0, 10) } : {}),
-      },
-      { status: errors.length === 0 ? 200 : 207 },
-    )
-    res.headers.set('x-correlation-id', corrId)
-    return res
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    return NextResponse.json({ error: message }, { status: 500 })
+      // Log to automations_log
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await supabaseAdmin
+          .from('automations_log')
+          .insert({
+            workflow_name: 'avm_compute_cron',
+            trigger_type:  'cron',
+            status:        errors.length === 0 ? 'success' : 'partial',
+            started_at:    startedAt,
+            completed_at:  new Date().toISOString(),
+            duration_ms:   durationMs,
+            outcome: { computed, errors_count: errors.length },
+            error_message: errors.length > 0 ? errors.slice(0, 5).join('; ') : null,
+          })
+      } catch { /* non-critical */ }
+
+      const res = NextResponse.json(
+        {
+          ok:             errors.length === 0,
+          computed,
+          errors_count:   errors.length,
+          duration_ms:    durationMs,
+          correlation_id: corrId,
+          ...(errors.length > 0 ? { errors: errors.slice(0, 10) } : {}),
+        },
+        { status: errors.length === 0 ? 200 : 207 },
+      )
+      res.headers.set('x-correlation-id', corrId)
+      return res
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return NextResponse.json({ error: message }, { status: 500 })
+    }
+  })
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
   }
+  return lockResult
 }

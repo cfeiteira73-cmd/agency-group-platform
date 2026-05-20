@@ -314,6 +314,55 @@ async function calcPriceIntelligence(lead: OffmarketLeadPriceData): Promise<Pric
 }
 
 // ---------------------------------------------------------------------------
+// Exported batch function — same logic as POST, no auth check, no HTTP response
+// ---------------------------------------------------------------------------
+
+export async function runPriceIntel(leadId: string): Promise<void> {
+  try {
+    const { data: lead, error: fetchErr } = await supabaseAdmin.from(TABLE)
+      .select('id, nome, price_ask, area_m2, cidade, tipo_ativo, price_estimate, score_breakdown, price_opportunity_score')
+      .eq('id', leadId)
+      .single()
+
+    if (fetchErr || !lead) return
+
+    const intel = await calcPriceIntelligence(lead as OffmarketLeadPriceData)
+
+    const existingBreakdown = (lead.score_breakdown ?? {}) as Record<string, number>
+    const updatedBreakdown = {
+      ...existingBreakdown,
+      price_opportunity: intel.price_opportunity_score,
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      price_reason:                  intel.price_reason,
+      price_intelligence_updated_at: new Date().toISOString(),
+    }
+
+    if (intel.estimated_fair_value !== null)  updatePayload.estimated_fair_value   = intel.estimated_fair_value
+    if (intel.gross_discount_pct !== null)    updatePayload.gross_discount_pct     = intel.gross_discount_pct
+    if (intel.comp_confidence_score >= 0)     updatePayload.comp_confidence_score  = intel.comp_confidence_score
+    if (intel.price_opportunity_score >= 0)   updatePayload.price_opportunity_score = intel.price_opportunity_score
+
+    if (intel.has_sufficient_data) {
+      updatePayload.score_breakdown = updatedBreakdown
+    }
+
+    const { error: updateErr } = await supabaseAdmin.from(TABLE)
+      .update(updatePayload)
+      .eq('id', leadId)
+
+    if (updateErr) {
+      console.error('[price-intel] update error:', updateErr)
+    }
+
+    console.log(`[price-intel] "${lead.nome}" → discount: ${intel.gross_discount_pct?.toFixed(1)}% | confidence: ${intel.comp_confidence_score} | opp_score: ${intel.price_opportunity_score}`)
+  } catch (err) {
+    console.error('[price-intel runPriceIntel]', err)
+  }
+}
+
+// ---------------------------------------------------------------------------
 // POST — Calculate + persist price intelligence
 // ---------------------------------------------------------------------------
 

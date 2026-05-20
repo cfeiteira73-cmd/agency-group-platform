@@ -1,19 +1,20 @@
 import { describe, it, expect } from 'vitest'
+import { COMMISSION_RATE, getStageProbability } from '@/lib/constants/pipeline'
 
 // ─── Pure functions mirrored from app/api/deal/commission-pl/route.ts ────────
 
+// STAGE_PCT in percentage (0-100) — derived from canonical getStageProbability (0-1)
 const STAGE_PCT: Record<string, number> = {
-  'Angariação': 10,
-  'Proposta Enviada': 20,
-  'Proposta Aceite': 35,
-  'Due Diligence': 50,
-  'CPCV Assinado': 70,
-  'Financiamento': 80,
-  'Escritura Marcada': 90,
-  'Escritura Concluída': 100,
+  'Angariação': Math.round(getStageProbability('Angariação') * 100),
+  'Proposta Enviada': Math.round(getStageProbability('Proposta Enviada') * 100),
+  'Proposta Aceite': Math.round(getStageProbability('Proposta Aceite') * 100),
+  'Due Diligence': Math.round(getStageProbability('Due Diligence') * 100),
+  'CPCV Assinado': Math.round(getStageProbability('CPCV Assinado') * 100),
+  'Financiamento': Math.round(getStageProbability('Financiamento') * 100),
+  'Escritura Marcada': Math.round(getStageProbability('Escritura Marcada') * 100),
+  'Escritura Concluída': Math.round(getStageProbability('Escritura Concluída') * 100),
 }
 
-const COMMISSION_RATE = 0.05
 const IRS_WITHHOLDING = 0.25
 
 function parseValor(valor: string): number {
@@ -115,13 +116,13 @@ describe('Commission rate — 5% on deal value', () => {
 
 // ─── Stage Probabilities ─────────────────────────────────────────────────────
 
-describe('Stage probabilities', () => {
-  it('Angariação = 10%', () => {
-    expect(STAGE_PCT['Angariação']).toBe(10)
+describe('Stage probabilities (canonical — lib/constants/pipeline)', () => {
+  it('Angariação = 5% (canonical close probability for listing stage)', () => {
+    expect(STAGE_PCT['Angariação']).toBe(5)
   })
 
-  it('CPCV Assinado = 70%', () => {
-    expect(STAGE_PCT['CPCV Assinado']).toBe(70)
+  it('CPCV Assinado = 85% (canonical close probability)', () => {
+    expect(STAGE_PCT['CPCV Assinado']).toBe(85)
   })
 
   it('Escritura Concluída = 100%', () => {
@@ -129,11 +130,11 @@ describe('Stage probabilities', () => {
   })
 
   it('weighted commission for CPCV Assinado deal', () => {
-    // valor = €1M, commission = €50K, probability = 70%
-    // weighted = 50000 * 0.70 = 35000
+    // valor = €1M, commission = €50K, probability = 85%
+    // weighted = 50000 * 0.85 = 42500
     const gross = 1000000 * COMMISSION_RATE
     const weighted = gross * (STAGE_PCT['CPCV Assinado'] / 100)
-    expect(weighted).toBeCloseTo(35000, 2)
+    expect(weighted).toBeCloseTo(42500, 2)
   })
 })
 

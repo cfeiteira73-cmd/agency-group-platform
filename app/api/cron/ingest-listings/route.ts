@@ -25,6 +25,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { runIngestionPipeline }      from '@/lib/ingestion/pipeline'
 import type { ProviderFetchParams }  from '@/lib/ingestion/types'
 import { cronCorrelationId }         from '@/lib/observability/correlation'
+import { withCronLock }              from '@/lib/ops/withCronLock'
+import { safeCompare }               from '@/lib/safeCompare'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 300
@@ -39,7 +41,7 @@ function authCheck(req: NextRequest): boolean {
   const token =
     req.headers.get('x-cron-secret') ??
     req.headers.get('authorization')?.replace('Bearer ', '').trim()
-  return token === secret
+  return !!token && safeCompare(token, secret)
 }
 
 // ---------------------------------------------------------------------------
@@ -51,46 +53,53 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const corrId = cronCorrelationId('ingest-listings')
+  const result = await withCronLock('ingest-listings', 7, async () => {
+    const corrId = cronCorrelationId('ingest-listings')
 
-  const { searchParams } = req.nextUrl
+    const { searchParams } = req.nextUrl
 
-  // Optional query params for targeted runs
-  const params: ProviderFetchParams = {
-    city:     searchParams.get('city')      ?? undefined,
-    minPrice: searchParams.get('min_price') ? parseInt(searchParams.get('min_price')!, 10) : undefined,
-    maxPrice: searchParams.get('max_price') ? parseInt(searchParams.get('max_price')!, 10) : undefined,
-    limit:    searchParams.get('limit')     ? parseInt(searchParams.get('limit')!, 10)     : 200,
-  }
+    // Optional query params for targeted runs
+    const params: ProviderFetchParams = {
+      city:     searchParams.get('city')      ?? undefined,
+      minPrice: searchParams.get('min_price') ? parseInt(searchParams.get('min_price')!, 10) : undefined,
+      maxPrice: searchParams.get('max_price') ? parseInt(searchParams.get('max_price')!, 10) : undefined,
+      limit:    searchParams.get('limit')     ? parseInt(searchParams.get('limit')!, 10)     : 200,
+    }
 
-  const result = await runIngestionPipeline(params)
+    const result = await runIngestionPipeline(params)
 
-  const hasErrors = result.total_errors > 0
+    const hasErrors = result.total_errors > 0
 
-  const res = NextResponse.json(
-    {
-      ok:             !hasErrors,
-      run_id:         result.run_id,
-      summary: {
-        total_fetched:  result.total_fetched,
-        total_new:      result.total_new,
-        total_updated:  result.total_updated,
-        total_errors:   result.total_errors,
-        duration_ms:    result.duration_ms,
+    const res = NextResponse.json(
+      {
+        ok:             !hasErrors,
+        run_id:         result.run_id,
+        summary: {
+          total_fetched:  result.total_fetched,
+          total_new:      result.total_new,
+          total_updated:  result.total_updated,
+          total_errors:   result.total_errors,
+          duration_ms:    result.duration_ms,
+        },
+        providers:      result.providers.map(p => ({
+          name:     p.provider,
+          fetched:  p.fetched,
+          new:      p.new_listings,
+          updated:  p.updated,
+          skipped:  p.duplicates_skipped,
+          errors:   p.errors.length,
+        })),
+        correlation_id: corrId,
+        ...(hasErrors ? { warnings: result.warnings } : {}),
       },
-      providers:      result.providers.map(p => ({
-        name:     p.provider,
-        fetched:  p.fetched,
-        new:      p.new_listings,
-        updated:  p.updated,
-        skipped:  p.duplicates_skipped,
-        errors:   p.errors.length,
-      })),
-      correlation_id: corrId,
-      ...(hasErrors ? { warnings: result.warnings } : {}),
-    },
-    { status: hasErrors ? 207 : 200 },
-  )
-  res.headers.set('x-correlation-id', corrId)
-  return res
+      { status: hasErrors ? 207 : 200 },
+    )
+    res.headers.set('x-correlation-id', corrId)
+    return res
+  })
+
+  if (result === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' }, { status: 200 })
+  }
+  return result
 }

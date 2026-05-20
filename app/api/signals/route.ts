@@ -8,12 +8,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 function headers(): HeadersInit {
   return { 'Cache-Control': 'no-store' }
 }
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: headers() })
   }
@@ -40,18 +42,19 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query
 
     if (error || !data) {
-      console.error('[signals GET] Supabase error:', error)
+      console.error('[signals GET] Supabase error:', error, { corrId })
       return NextResponse.json({ data: [], source: 'error', error: error?.message }, { headers: headers() })
     }
 
     return NextResponse.json({ data, signals: data, total: data.length, source: 'supabase' }, { headers: headers() })
   } catch (err) {
-    console.error('[signals GET]', err)
+    console.error('[signals GET]', err, { corrId })
     return NextResponse.json({ data: [], source: 'error' }, { status: 500, headers: headers() })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: headers() })
   }
@@ -86,12 +89,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ data, source: 'supabase' }, { status: 201, headers: headers() })
   } catch (err) {
-    console.error('[signals POST]', err)
+    console.error('[signals POST]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: headers() })
   }
 }
 
 export async function PATCH(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: headers() })
   }
@@ -130,7 +134,7 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ data, source: 'supabase' }, { headers: headers() })
   } catch (err) {
-    console.error('[signals PATCH]', err)
+    console.error('[signals PATCH]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: headers() })
   }
 }

@@ -5,11 +5,11 @@
 
 import { logger } from '@/lib/observability/logger'
 import { randomUUID } from 'crypto'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const AVG_DEAL_VALUE = 320_000
-const COMMISSION_RATE = 0.05
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
 

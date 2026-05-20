@@ -3,20 +3,20 @@
 // Optionally triggers a fresh computation via ?recompute=true.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { safeCompare }               from '@/lib/safeCompare'
+import { requireServiceAuth }        from '@/lib/auth/serviceAuth'
 import { getToken }                  from 'next-auth/jwt'
 import { computeAndPersistDriftReport } from '@/lib/intelligence/driftDetector'
 import { supabaseAdmin }             from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime  = 'nodejs'
 export const maxDuration = 60
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   // Auth: session or cron token
-  const internalToken = req.headers.get('x-internal-token')
-  const bearer        = req.headers.get('authorization')?.replace('Bearer ', '')
-  const isInternal    = safeCompare(internalToken ?? '', process.env.CRON_SECRET ?? '')
-                     || safeCompare(bearer ?? '', process.env.CRON_SECRET ?? '')
+  const serviceCheck = await requireServiceAuth(req)
+  const isInternal   = serviceCheck.ok
 
   if (!isInternal) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ source: 'cached', report: data })
   } catch (err) {
-    console.error('[model-drift] error:', err)
+    console.error('[model-drift] error:', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

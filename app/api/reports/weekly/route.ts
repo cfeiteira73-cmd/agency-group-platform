@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { safeCompare } from '@/lib/safeCompare'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const BASE_URL    = process.env.NEXT_PUBLIC_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://agencygroup.pt'
@@ -39,10 +41,10 @@ interface RadarDeal {
 
 // ─── Auth: Bearer token against AUTH_SECRET ───────────────────────────────────
 function isAuthorized(req: NextRequest): boolean {
-  const auth   = req.headers.get('authorization') || ''
+  const token  = (req.headers.get('authorization') || '').replace('Bearer ', '')
   const secret = process.env.AUTH_SECRET
   if (!secret) return false
-  return auth === `Bearer ${secret}`
+  return safeCompare(token, secret)
 }
 
 // ─── Week date range helper ───────────────────────────────────────────────────
@@ -334,6 +336,7 @@ function buildWeeklyEmail(weekLabel: string, radarDeals: RadarDeal[]): string {
 
 // ─── GET handler ──────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   // Auth check
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -383,7 +386,7 @@ export async function GET(req: NextRequest) {
     })
 
     if (error) {
-      console.error('[weekly-report] Resend error:', error)
+      console.error('[weekly-report] Resend error:', error, { corrId })
       return NextResponse.json({ error: 'Falha ao enviar email', detail: error }, { status: 502 })
     }
 
@@ -396,7 +399,7 @@ export async function GET(req: NextRequest) {
       generated_at: now.toISOString(),
     })
   } catch (err) {
-    console.error('[weekly-report] Unexpected error:', err)
+    console.error('[weekly-report] Unexpected error:', err, { corrId })
     return NextResponse.json({ error: 'Erro interno. Tenta novamente.' }, { status: 500 })
   }
 }

@@ -41,8 +41,12 @@ export function generateCorrelationId(): string {
  * Extract the correlation ID from an inbound NextRequest.
  * The middleware injects `x-correlation-id` on every request.
  * Falls back to generating a new ID if the header is missing.
+ *
+ * @param req - The inbound NextRequest
+ * @param tenantId - Optional resolved tenant ID (see buildTraceEnvelope for extraction)
  */
-export function getRequestCorrelationId(req: NextRequest): string {
+export function getRequestCorrelationId(req: NextRequest, tenantId?: string): string {
+  void tenantId // reserved for future per-tenant ID namespacing
   return req.headers.get('x-correlation-id') || generateCorrelationId()
 }
 
@@ -113,6 +117,35 @@ export function withCorrelation(
 export function cronCorrelationId(jobName: string): string {
   const uuid = generateCorrelationId().replace(/-/g, '').slice(0, 8)
   return `cron_${jobName}_${uuid}`
+}
+
+// ---------------------------------------------------------------------------
+// Trace envelope — causal observability
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a full trace envelope for a request, including tenant ID and trace ID.
+ * The tenant ID is extracted from the `x-tenant-id` header; defaults to
+ * 'agency-group' for single-tenant deployments.
+ *
+ * The traceId format is `{correlationId}:{unix_ms}` — unique per request
+ * invocation, suitable for linking into the causal_trace table.
+ *
+ * Usage:
+ *   const envelope = buildTraceEnvelope(req)
+ *   await recordCausalStep({ ...envelope, step_type: 'event_received', ... })
+ */
+export function buildTraceEnvelope(req: NextRequest): {
+  correlationId: string
+  tenantId: string
+  traceId: string
+  timestamp: string
+} {
+  const correlationId = getRequestCorrelationId(req)
+  const tenantId = req.headers.get('x-tenant-id') ?? 'agency-group'
+  const traceId = `${correlationId}:${Date.now()}`
+  const timestamp = new Date().toISOString()
+  return { correlationId, tenantId, traceId, timestamp }
 }
 
 // ---------------------------------------------------------------------------

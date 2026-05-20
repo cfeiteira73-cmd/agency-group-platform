@@ -1,5 +1,6 @@
 // AGENCY GROUP — SH-ROS Control Tower: Layout | AMI: 22506
 import type { Metadata } from 'next'
+import { createClient } from '@supabase/supabase-js'
 import { SidebarNav } from './_components/SidebarNav'
 
 export const metadata: Metadata = {
@@ -7,7 +8,52 @@ export const metadata: Metadata = {
   description: 'SH-ROS Institutional Command Center',
 }
 
-export default function ControlTowerLayout({ children }: { children: React.ReactNode }) {
+export const revalidate = 15
+
+function getSupabaseAdmin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseKey) return null
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+async function getCriticalCount(): Promise<number> {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) return 0
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? 'agency-group'
+    const { count } = await supabaseAdmin
+      .from('incidents')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['open', 'investigating'])
+      .in('severity', ['P0', 'P1'])
+      .eq('tenant_id', tenantId)
+      .abortSignal(AbortSignal.timeout(2000))
+    return count ?? 0
+  } catch {
+    return 0
+  }
+}
+
+async function getDlqCount(): Promise<number> {
+  try {
+    const supabaseAdmin = getSupabaseAdmin()
+    if (!supabaseAdmin) return 0
+    const tenantId = process.env.DEFAULT_TENANT_ID ?? 'agency-group'
+    const { count } = await supabaseAdmin
+      .from('runtime_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'dlq')
+      .eq('org_id', tenantId)
+      .abortSignal(AbortSignal.timeout(2000))
+    return count ?? 0
+  } catch { return 0 }
+}
+
+export default async function ControlTowerLayout({ children }: { children: React.ReactNode }) {
+  const [criticalCount, dlqCount] = await Promise.all([getCriticalCount(), getDlqCount()])
   return (
     <div className="min-h-screen bg-[#0A0A0F] text-slate-100 flex">
       {/* Sidebar */}
@@ -25,7 +71,7 @@ export default function ControlTowerLayout({ children }: { children: React.React
           </div>
         </div>
 
-        <SidebarNav />
+        <SidebarNav criticalCount={criticalCount} dlqCount={dlqCount} />
 
         {/* Footer */}
         <div className="mt-auto px-4 py-3 border-t border-slate-800">

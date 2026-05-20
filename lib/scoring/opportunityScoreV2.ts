@@ -263,13 +263,35 @@ export function computeOpportunityScoreV2(input: PropertyInputV2): ScoreResultV2
     confidence_penalty,
   }
 
+  // Build V2 score_reason that reflects the POST-penalty score.
+  // V1's score_reason embeds the pre-penalty V1 score in the tier and number
+  // (e.g. "Score HIGH (75/100)"). After penalty the actual output may be 62,
+  // causing a visible mismatch for callers reading score_reason alongside
+  // opportunity_score. We reconstruct the reason string with the correct tier
+  // and final score while preserving V1's driver labels.
+  const v2Tier = score_confidence_adjusted >= 80 ? 'HIGH'
+               : score_confidence_adjusted >= 60 ? 'MEDIUM'
+               : 'LOW'
+
+  // Extract driver labels after the "—" separator, e.g. "preço abaixo da zona · yield 5.2%"
+  const dashIdx = v1.score_reason.indexOf('—')
+  const driversText = dashIdx >= 0 ? v1.score_reason.slice(dashIdx + 1).trim() : null
+
+  const penaltyAnnotation = confidence_penalty > 0
+    ? ` [−${confidence_penalty}pts confiança]`
+    : ''
+
+  const score_reason = driversText
+    ? `Score ${v2Tier} (${score_confidence_adjusted}/100) — ${driversText}${penaltyAnnotation}`
+    : `Score ${v2Tier} (${score_confidence_adjusted}/100) — potencial moderado${penaltyAnnotation}`
+
   return {
     // V1-compatible
     opportunity_score:         score_confidence_adjusted,  // the authoritative score
     estimated_rental_yield:    v1.estimated_rental_yield,
     estimated_cap_rate:        v1.estimated_cap_rate,
     investor_suitable:         v1.investor_suitable,
-    score_reason:              v1.score_reason,
+    score_reason,              // rebuilt from post-penalty score — NOT v1.score_reason
     zone_key,
     zone_data:                 zone,
     // V2-specific

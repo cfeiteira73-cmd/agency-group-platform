@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { auth } from '@/auth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -58,6 +60,7 @@ function fallbackNegotiation(deal: Record<string, unknown>): NegotiationResponse
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -86,13 +89,15 @@ Days in Negotiation: ${deal.days_in_stage || 0}
 Notes: ${deal.notas || deal.notes || 'none'}
 `.trim()
 
-      const message = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages: [
-          {
-            role: 'user',
-            content: `You are a master real estate negotiation coach for Agency Group Portugal (AMI 22506).
+      const message = await withAI(
+        'anthropic-opus',
+        () => client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          messages: [
+            {
+              role: 'user',
+              content: `You are a master real estate negotiation coach for Agency Group Portugal (AMI 22506).
 Create a negotiation playbook for this deal. Respond in JSON:
 {
   "strategy": "overall negotiation approach (2-3 sentences in Portuguese)",
@@ -108,9 +113,15 @@ Create a negotiation playbook for this deal. Respond in JSON:
 
 Deal:
 ${dealContext}`,
-          },
-        ],
-      })
+            },
+          ],
+        }),
+        null,
+      )
+
+      if (message === null) {
+        return NextResponse.json(fallbackNegotiation(deal))
+      }
 
       const content = message.content[0]
       if (content.type === 'text') {
@@ -127,7 +138,7 @@ ${dealContext}`,
 
     return NextResponse.json(fallbackNegotiation(deal))
   } catch (err) {
-    console.error('[negotiation]', err)
+    console.error('[negotiation]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

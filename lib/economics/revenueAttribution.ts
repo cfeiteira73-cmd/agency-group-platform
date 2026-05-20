@@ -46,6 +46,24 @@ export class RevenueAttributionEngine {
 
     if (!deal) return this._empty(deal_id, model)
 
+    const { data: events } = await sb
+      .from('learning_events')
+      .select('deal_id, metadata, created_at')
+      .eq('org_id', org_id)
+      .contains('metadata', { deal_id })
+      .order('created_at', { ascending: true })
+      .limit(100)
+
+    return this._attributeDealFromEvents(deal, events ?? [], model)
+  }
+
+  /**
+   * Pure helper: compute attribution from pre-fetched event rows.
+   * No DB calls — safe to call inside a map().
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private _attributeDealFromEvents(deal: any, events: any[], model: AttributionModel): RevenueAttributionReport {
+    const deal_id = deal.id as string
     const value_eur = (deal.value_eur as number) ?? 0
     const days_to_close = Math.max(
       0,
@@ -54,19 +72,10 @@ export class RevenueAttributionEngine {
         86_400_000
     )
 
-    const { data: events } = await sb
-      .from('learning_events')
-      .select('metadata, created_at')
-      .eq('org_id', org_id)
-      .contains('metadata', { deal_id })
-      .order('created_at', { ascending: true })
-      .limit(100)
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const evArr: any[] = events ?? []
-    const chain: AttributionNode[] = evArr.map((e: any, i: number) => {
+    const chain: AttributionNode[] = events.map((e: any, i: number) => {
       const meta = (e.metadata as Record<string, unknown>) ?? {}
-      const pct = this._contribution(model, i, evArr.length)
+      const pct = this._contribution(model, i, events.length)
       return {
         event_id: (meta['event_id'] as string) ?? `evt-${i}`,
         event_type: (meta['event_type'] as string) ?? 'unknown',
@@ -105,23 +114,55 @@ export class RevenueAttributionEngine {
     model: AttributionModel = 'linear'
   ): Promise<RevenueAttributionReport[]> {
     const from = new Date(Date.now() - period_days * 86_400_000).toISOString()
-    const { data, error } = await sb
+
+    // Query 1: fetch all closed deals in the period
+    const { data: dealsData, error } = await sb
       .from('deals')
-      .select('id')
+      .select('id, value_eur, source, assigned_to, status, created_at, updated_at')
       .eq('org_id', org_id)
       .eq('status', 'closed_won')
       .gte('updated_at', from)
       .limit(200)
 
-    if (error || !data) {
+    if (error || !dealsData) {
       logger.error('[RevenueAttribution] Batch query failed', { error, org_id })
       return []
     }
 
-    const results: RevenueAttributionReport[] = []
-    for (const { id } of data as Array<{ id: string }>) {
-      results.push(await this.attributeDeal(id, org_id, model))
+    const deals = dealsData as Array<{
+      id: string; value_eur: number; source: string
+      assigned_to: string; status: string; created_at: string; updated_at: string
+    }>
+
+    if (deals.length === 0) return []
+
+    // Query 2: fetch ALL learning_events for all deals in ONE query
+    const dealIds = deals.map(d => d.id)
+    const { data: allEvents } = await sb
+      .from('learning_events')
+      .select('deal_id, metadata, created_at')
+      .eq('org_id', org_id)
+      .in('deal_id', dealIds)
+      .order('created_at', { ascending: true })
+      .limit(2000)
+
+    // Build O(1) lookup map: deal_id → sorted event rows
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const eventsByDeal = new Map<string, any[]>()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const ev of (allEvents ?? []) as any[]) {
+      const did = ev.deal_id as string | undefined
+      if (!did) continue
+      const arr = eventsByDeal.get(did) ?? []
+      arr.push(ev)
+      eventsByDeal.set(did, arr)
     }
+
+    // Compute attribution per deal using in-memory map — no further DB calls
+    const results = deals.map(deal =>
+      this._attributeDealFromEvents(deal, eventsByDeal.get(deal.id) ?? [], model)
+    )
+
     logger.info('[RevenueAttribution] Batch done', { org_id, count: results.length })
     return results
   }

@@ -7,6 +7,7 @@ import { getRequestCorrelationId } from '@/lib/observability/correlation'
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -32,7 +33,10 @@ export async function GET(req: NextRequest) {
     }
 
     if (status && status !== 'all') query = query.eq('status', status)
-    if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+    if (search) {
+      const safeSearch = (search as string).replace(/[%(),']/g, '').slice(0, 100)
+      query = query.or(`full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,phone.ilike.%${safeSearch}%`)
+    }
 
     const { data, error, count } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -46,12 +50,13 @@ export async function GET(req: NextRequest) {
       pages: Math.ceil((count || 0) / limit),
     })
   } catch (error) {
-    console.error('GET /api/contacts error:', error)
+    console.error('GET /api/contacts error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -102,12 +107,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, contact: data }, { status: 201 })
   } catch (error) {
-    console.error('POST /api/contacts error:', error)
+    console.error('POST /api/contacts error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function PUT(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -162,12 +168,13 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true, contact: data })
   } catch (error) {
-    console.error('PUT /api/contacts error:', error)
+    console.error('PUT /api/contacts error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -199,7 +206,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Contact archived' })
   } catch (error) {
-    console.error('DELETE /api/contacts error:', error)
+    console.error('DELETE /api/contacts error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

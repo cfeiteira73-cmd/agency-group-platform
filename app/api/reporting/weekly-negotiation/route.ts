@@ -7,8 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
@@ -148,7 +150,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       top5_to_unlock:          top5Unlock,
     })
   } catch (err) {
-    console.error('[reporting/weekly-negotiation]', err)
+    console.error('[reporting/weekly-negotiation]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -1,4 +1,5 @@
-'use client'
+// Pure render component — no hooks/state, intentionally omits 'use client'
+// Renders server-side in RSC pages, avoiding unnecessary client hydration.
 
 type EventStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'dlq'
 type EventPriority = 'critical' | 'high' | 'medium' | 'low'

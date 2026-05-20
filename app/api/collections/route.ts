@@ -3,6 +3,8 @@ import { auth } from '@/auth'
 import Anthropic from '@anthropic-ai/sdk'
 import { randomBytes } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -41,11 +43,17 @@ interface Collection {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory fallback store (used when Supabase is not configured)
-// NOTE: This is ephemeral — data is lost on Vercel restarts.
-// Run 20260407_004_collections.sql migration to enable persistent Supabase storage.
+// In-memory fallback store (used ONLY when Supabase is not configured)
+// ⚠️  CRITICAL: This store is ephemeral — all data is lost on Vercel cold starts.
+// Supabase MUST be configured in production via migration 20260407_004_collections.sql
+// If this warning appears in production logs, the migration has not been applied.
 // ---------------------------------------------------------------------------
 const collectionsStore = new Map<string, Collection>()
+
+// Warn loudly at startup if falling back to in-memory (detectable in Vercel logs)
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  console.error('[collections] ⚠️  CRITICAL: Supabase not configured — using ephemeral in-memory store. Run migration 20260407_004_collections.sql immediately.')
+}
 
 // ---------------------------------------------------------------------------
 // Supabase helpers — graceful degradation if supabaseAdmin unavailable
@@ -204,6 +212,7 @@ export async function GET(req: NextRequest) {
 // POST /api/collections — all mutating actions
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -347,11 +356,19 @@ Responde em JSON:
   "engagementTip": "como envolver este cliente especificamente"
 }`
 
-        const response = await client.messages.create({
-          model: 'claude-opus-4-5',
-          max_tokens: 600,
-          messages: [{ role: 'user', content: prompt }],
-        })
+        const response = await withAI(
+          'anthropic-opus',
+          () => client.messages.create({
+            model: 'claude-opus-4-5',
+            max_tokens: 600,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+          null,
+        )
+
+        if (response === null) {
+          return NextResponse.json({ success: true, recommendations: [], clientProfile: '', nextStep: '' })
+        }
 
         const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
         const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -374,12 +391,18 @@ Responde em JSON:
         const { text, targetLang } = data
         const langNames: Record<string, string> = { pt: 'português europeu', en: 'English', fr: 'français', de: 'Deutsch', es: 'español', it: 'italiano', ar: 'العربية', zh: '中文' }
         const prompt = `Traduz este comentário sobre um imóvel para ${langNames[targetLang] || targetLang} de forma natural e profissional. Responde APENAS com a tradução, sem aspas nem explicação:\n\n${text}`
-        const response = await client.messages.create({
-          model: 'claude-opus-4-5',
-          max_tokens: 300,
-          messages: [{ role: 'user', content: prompt }],
-        })
-        const translated = response.content[0].type === 'text' ? response.content[0].text.trim() : text
+        const response = await withAI(
+          'anthropic-opus',
+          () => client.messages.create({
+            model: 'claude-opus-4-5',
+            max_tokens: 300,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+          null,
+        )
+        const translated = response !== null && response.content[0].type === 'text'
+          ? response.content[0].text.trim()
+          : text  // fallback: return original text if circuit open
         return NextResponse.json({ success: true, translated })
       }
 
@@ -400,7 +423,7 @@ Responde em JSON:
         return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
     }
   } catch (error) {
-    console.error('[Collections] Error:', error)
+    console.error('[Collections] Error:', error, { corrId })
     return NextResponse.json({ error: 'Erro na colecção' }, { status: 500 })
   }
 }

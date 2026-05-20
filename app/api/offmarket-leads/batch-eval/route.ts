@@ -16,6 +16,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { runPriceIntel } from '@/app/api/offmarket-leads/[id]/price-intel/route'
+import { runMatchBuyers } from '@/app/api/offmarket-leads/[id]/match-buyers/route'
+import { runDealEval } from '@/app/api/offmarket-leads/[id]/deal-eval/route'
 
 // ── Auth: CRON_SECRET (automated) OR portal session (manual trigger) ──────────
 async function isAuthorized(req: NextRequest): Promise<boolean> {
@@ -37,8 +40,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const minScore = Math.max(0, parseInt(sp.get('min_score') ?? '40', 10))
   const force    = sp.get('force') === 'true'
   const stage    = sp.get('stage') ?? 'eval' // 'all' | 'price' | 'match' | 'eval'
-
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.agencygroup.pt').replace(/\/$/, '')
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,12 +79,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     console.log(`[batch-eval] Processing ${leads.length} leads (stage=${stage}, force=${force})`)
 
-    const headers = {
-      'x-cron-secret': process.env.CRON_SECRET ?? '',
-      'Content-Type': 'application/json',
-      'User-Agent': 'AgencyGroup-BatchEval/1.0',
-    }
-
     // Process leads with concurrency control (max 5 concurrent)
     const results: Array<{
       id: string; nome: string; score: number
@@ -111,36 +106,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
           // Stage 1: Price Intel
           if (shouldRunPriceIntel) {
-            try {
-              await fetch(`${siteUrl}/api/offmarket-leads/${lead.id}/price-intel`, {
-                method: 'POST', headers,
-              })
-              stagesRun.push(needsPriceIntel ? 'price-intel(auto)' : 'price-intel')
-            } catch {
-              console.warn(`[batch-eval] price-intel failed for ${lead.id}`)
-            }
+            await runPriceIntel(lead.id)
+            stagesRun.push(needsPriceIntel ? 'price-intel(auto)' : 'price-intel')
           }
 
           // Stage 2: Buyer Match (if stage=all or stage=match)
           if (stage === 'all' || stage === 'match') {
-            try {
-              await fetch(`${siteUrl}/api/offmarket-leads/${lead.id}/match-buyers`, {
-                method: 'POST', headers,
-              })
-              stagesRun.push('match-buyers')
-            } catch {
-              console.warn(`[batch-eval] match-buyers failed for ${lead.id}`)
-            }
+            await runMatchBuyers(lead.id)
+            stagesRun.push('match-buyers')
           }
 
           // Stage 3: Deal Eval (always)
-          const evalResp = await fetch(`${siteUrl}/api/offmarket-leads/${lead.id}/deal-eval`, {
-            method: 'POST', headers,
-          })
-          if (!evalResp.ok) {
-            throw new Error(`deal-eval HTTP ${evalResp.status}`)
+          const dealResult = await runDealEval(lead.id)
+          if (!dealResult) {
+            throw new Error('deal-eval returned null')
           }
-          evalData = await evalResp.json() as Record<string, unknown>
+          evalData = dealResult as unknown as Record<string, unknown>
           stagesRun.push('deal-eval')
 
           return {

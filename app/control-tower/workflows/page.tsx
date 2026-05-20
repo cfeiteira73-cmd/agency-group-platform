@@ -1,4 +1,7 @@
 // AGENCY GROUP — SH-ROS Control Tower: Workflows | AMI: 22506
+export const revalidate = 30
+
+import { Suspense } from 'react'
 import { StatusBadge } from '../_components/StatusBadge'
 
 interface WorkflowRun {
@@ -38,18 +41,11 @@ async function fetchWorkflows(org_id: string): Promise<WorkflowSummary | null> {
   } catch { return null }
 }
 
-export default async function WorkflowsPage() {
+async function WorkflowsContent() {
   const data = await fetchWorkflows('default')
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-slate-100">Workflows</h1>
-          <p className="text-xs text-slate-500 font-mono mt-0.5">Temporal.io / DB-backed orchestration</p>
-        </div>
-      </div>
-
+    <>
       {!data ? (
         <div className="bg-[#111118] border border-slate-800 rounded-lg p-8 text-center">
           <p className="text-slate-500 text-sm">Workflow data unavailable</p>
@@ -149,6 +145,43 @@ export default async function WorkflowsPage() {
           )}
         </>
       )}
+    </>
+  )
+}
+
+function WorkflowsSkeleton() {
+  return (
+    <>
+      <div className="grid grid-cols-5 gap-3">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="h-20 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+      <div className="h-32 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+      <div className="space-y-2">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-10 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+    </>
+  )
+}
+
+export default function WorkflowsPage() {
+  return (
+    <div className="space-y-5">
+      {/* Header — renders immediately */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-slate-100">Workflows</h1>
+          <p className="text-xs text-slate-500 font-mono mt-0.5">Temporal.io / DB-backed orchestration</p>
+        </div>
+      </div>
+
+      {/* Data streams in */}
+      <Suspense fallback={<WorkflowsSkeleton />}>
+        <WorkflowsContent />
+      </Suspense>
     </div>
   )
 }

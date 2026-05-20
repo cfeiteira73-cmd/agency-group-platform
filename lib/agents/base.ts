@@ -13,7 +13,10 @@ import type {
 
 // ─── In-process rate limiter ──────────────────────────────────────────────────
 // Per-agent call log (timestamps). Not shared across serverless instances.
-// Sufficient for single-instance; Redis-backed in future.
+// TODO: CRITICAL #INFRA-011 — move to Supabase for multi-instance correctness.
+// This Map resets on cold starts and is not shared across concurrent serverless
+// instances, so agent rate limits are per-instance only. A parallel burst of
+// requests across instances bypasses all per-agent call throttles entirely.
 
 const _callLog = new Map<AgentId, number[]>()
 

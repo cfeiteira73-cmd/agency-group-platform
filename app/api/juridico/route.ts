@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/auth'
+import { withAI } from '@/lib/ops/withAI'
 
 const MessageParamSchema = z.object({
   role:    z.enum(['user', 'assistant']),
@@ -376,9 +377,20 @@ interface MessageParam {
   content: string
 }
 
+const MAX_BODY_BYTES = 64 * 1024  // 64 KB
+
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // ── Content-length guard ────────────────────────────────────────────────────
+  const contentLen = req.headers.get('content-length')
+  if (contentLen !== null) {
+    const byteLen = parseInt(contentLen, 10)
+    if (!isNaN(byteLen) && byteLen > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 })
+    }
+  }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
   const ip = req.headers.get('x-forwarded-for') || 'unknown'
@@ -412,18 +424,22 @@ export async function POST(req: NextRequest) {
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
       }
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY!,
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'web-search-2025-03-05,prompt-caching-2024-07-31',
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(58000),
-      })
+      const res = await withAI('anthropic-opus', () =>
+        fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': process.env.ANTHROPIC_API_KEY!,
+            'anthropic-version': '2023-06-01',
+            'anthropic-beta': 'web-search-2025-03-05,prompt-caching-2024-07-31',
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(58000),
+        }),
+        null
+      )
 
+      if (!res) return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503, headers: { 'Retry-After': '60' } })
       if (!res.ok) throw new Error(`API ${res.status}`)
       const data = await res.json() as { content: Array<{ type: string; text?: string }> }
 
@@ -437,18 +453,24 @@ export async function POST(req: NextRequest) {
     } else {
       // Prompt caching: cache_control on the long system prompt (~370 lines)
       // saves significant input token costs across repeated juridico queries.
-      const message = await client.messages.create({
-        model: 'claude-opus-4-5',
-        max_tokens: 4096,
-        system: [
-          {
-            type: 'text' as const,
-            text: SYSTEM,
-            cache_control: { type: 'ephemeral' as const },
-          },
-        ],
-        messages: msgSlice,
-      })
+      // withAnthropicRetry adds 3 attempts with 1s→2s backoff for transient 5xx/529 errors.
+      const message = await withAI('anthropic-opus', () =>
+        client.messages.create({
+          model: 'claude-opus-4-5',
+          max_tokens: 4096,
+          system: [
+            {
+              type: 'text' as const,
+              text: SYSTEM,
+              cache_control: { type: 'ephemeral' as const },
+            },
+          ],
+          messages: msgSlice,
+        }),
+        null
+      )
+
+      if (!message) return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503, headers: { 'Retry-After': '60' } })
 
       resposta = message.content
         .filter(b => b.type === 'text')

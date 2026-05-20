@@ -11,6 +11,8 @@ import { isPortalAuth } from '@/lib/portalAuth'
 import { getAdminRole } from '@/lib/auth/adminAuth'
 import { orchestrator, hotMemory, warmMemory } from '@/lib/runtime'
 import type { RuntimeEvent, RuntimeEventType } from '@/lib/runtime'
+import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -24,6 +26,7 @@ const VALID_PRIORITY = new Set(['low','medium','high','critical'] as const)
 // Performance budget: ingestion < 50ms, routing < 25ms, total < 2000ms
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const ingestion_start = Date.now()
 
   // AUTH
@@ -33,9 +36,10 @@ export async function POST(req: NextRequest) {
 
   // RBAC — only super_admin and ops_manager may POST events.
   // Service-to-service callers (CRON_SECRET / INTERNAL_API_TOKEN) bypass RBAC.
+  const serviceToken = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '') ?? ''
   const isServiceCall =
-    (process.env.CRON_SECRET     && (req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')) === process.env.CRON_SECRET) ||
-    (process.env.INTERNAL_API_TOKEN && (req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')) === process.env.INTERNAL_API_TOKEN)
+    (process.env.CRON_SECRET      && safeCompare(serviceToken, process.env.CRON_SECRET)) ||
+    (process.env.INTERNAL_API_TOKEN && safeCompare(serviceToken, process.env.INTERNAL_API_TOKEN))
 
   if (!isServiceCall) {
     // Extract email from the ag-auth-token cookie (base64url JSON payload before last '.')
@@ -141,7 +145,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     const isValidation = err instanceof Error && err.name === 'RuntimeValidationError'
-    console.error('[POST /api/runtime/events]', { message, event_id: event.event_id })
+    console.error('[POST /api/runtime/events]', { message, event_id: event.event_id, corrId })
     return NextResponse.json({ error: message }, { status: isValidation ? 400 : 500 })
   }
 }
@@ -154,6 +158,7 @@ export async function POST(req: NextRequest) {
 // ?source=  'cache' (default) | 'db' (queries Supabase directly)
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -187,7 +192,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ org_id, limit, source, count: events.length, events }, { status: 200 })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    console.error('[GET /api/runtime/events]', { message, org_id })
+    console.error('[GET /api/runtime/events]', { message, org_id, corrId })
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

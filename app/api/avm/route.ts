@@ -4,6 +4,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { avmCache, CacheKeys } from '@/lib/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { rateLimit } from '@/lib/rateLimit'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const AVMSchema = z.object({
   zona:       z.string().optional().default('Lisboa'),
@@ -48,16 +50,18 @@ async function scorePhotos(photos: string[]): Promise<PhotoQualityResult | null>
       source: { type: 'url' as const, url },
     }))
 
-    const response = await anthropicClient.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 400,
-      messages: [{
-        role: 'user',
-        content: [
-          ...imageContents,
-          {
-            type: 'text',
-            text: `You are a luxury real estate photography expert. Analyze these ${validUrls.length} property photos for the Portuguese luxury market.
+    const response = await withAI(
+      'anthropic-opus',
+      () => anthropicClient.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content: [
+            ...imageContents,
+            {
+              type: 'text',
+              text: `You are a luxury real estate photography expert. Analyze these ${validUrls.length} property photos for the Portuguese luxury market.
 
 Return ONLY valid JSON (no markdown):
 {"overall_score": 75, "value_impact_pct": 2.5, "grade": "B"}
@@ -65,10 +69,14 @@ Return ONLY valid JSON (no markdown):
 overall_score: 0-100 weighted quality score
 value_impact_pct: -5 to +8, impact on perceived property value vs average photos
 grade: A(90+), B(75-89), C(60-74), D(45-59), F(<45)`,
-          },
-        ],
-      }],
-    })
+            },
+          ],
+        }],
+      }),
+      null,
+    )
+
+    if (response === null) return null
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const jsonMatch = text.match(/\{[\s\S]*?\}/)
@@ -430,6 +438,7 @@ function methodMomentum(estimativaBase: number, trendYoy: number, trendQtq: numb
 // ─── POST handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   // Rate limit: 5 AVM valuations/minute per IP (expensive Claude Vision call)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
   const limited = await rateLimit(ip, { maxAttempts: 5, windowMs: 60 * 1000 })
@@ -729,7 +738,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(avmResult)
   } catch (e) {
-    console.error('[AVM] Internal error:', e)
+    console.error('[AVM] Internal error:', e, { corrId })
     return NextResponse.json({ error: 'Erro interno. Tenta novamente.' }, { status: 500 })
   }
 }

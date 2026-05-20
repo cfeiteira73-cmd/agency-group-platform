@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 90
@@ -20,6 +22,7 @@ const ZONE_DATA: Record<string, { avgPriceM2: number; appreciation5y: number; de
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -96,11 +99,16 @@ Gera copy completo. Responde APENAS com JSON válido sem markdown:
   "buyerPersonaMatch": "Para o perfil ${persona || 'HNWI Global'}: 60-80 palavras sobre porque este imóvel é perfeito para este perfil específico, incluindo ângulo fiscal/legal relevante"
 }`
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 4000,
-      messages: [{ role: 'user', content: prompt }]
-    })
+    const response = await withAI('anthropic-opus', () =>
+      client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      null
+    )
+
+    if (!response) return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503, headers: { 'Retry-After': '60' } })
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -122,7 +130,7 @@ Gera copy completo. Responde APENAS com JSON válido sem markdown:
       return NextResponse.json({ error: 'Failed to parse description', raw: text }, { status: 500 })
     }
   } catch (error) {
-    console.error('generate-description error:', error)
+    console.error('generate-description error:', error, { corrId })
     return NextResponse.json({ error: 'Generation failed' }, { status: 500 })
   }
 }

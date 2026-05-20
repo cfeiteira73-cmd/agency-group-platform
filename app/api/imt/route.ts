@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -60,6 +61,7 @@ function fmt(n: number): string {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   try {
     const raw = await req.json();
     const parsed = IMTSchema.safeParse(raw);
@@ -121,7 +123,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
-    console.error('[IMT] Error:', error);
+    console.error('[IMT] Error:', error, { corrId });
     return NextResponse.json({ success: false, error: 'Erro interno no servidor' }, { status: 500 });
   }
 }

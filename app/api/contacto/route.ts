@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { rateLimit } from '@/lib/rateLimit'
+import { withResend } from '@/lib/ops/withResend'
 
 const RESEND_KEY  = process.env.RESEND_API_KEY ?? ''
 const FROM_EMAIL  = 'Agency Group <geral@agencygroup.pt>'
@@ -83,13 +84,20 @@ export async function POST(req: NextRequest) {
 
     // Send admin notification if Resend is configured
     if (RESEND_KEY) {
+      const corrId = crypto.randomUUID()
       const resend = new Resend(RESEND_KEY)
-      await resend.emails.send({
-        from: FROM_EMAIL,
-        to: ADMIN_EMAIL,
-        subject: `📩 Novo Briefing — ${data.nome || 'Anónimo'} · ${data.zona || 'Zona n/d'}`,
-        html: buildAdminEmail(data),
-      })
+      const { error: sendErr } = await withResend(
+        () => resend.emails.send({
+          from: FROM_EMAIL,
+          to: ADMIN_EMAIL,
+          subject: `📩 Novo Briefing — ${data.nome || 'Anónimo'} · ${data.zona || 'Zona n/d'}`,
+          html: buildAdminEmail(data),
+        }),
+        corrId,
+      )
+      if (sendErr) {
+        console.error('[contacto] Resend error:', { corrId, error: sendErr })
+      }
     }
 
     return NextResponse.redirect(new URL('/contacto?obrigado=1', req.url))

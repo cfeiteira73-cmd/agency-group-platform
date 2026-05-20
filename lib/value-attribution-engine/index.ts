@@ -5,6 +5,7 @@
 // =============================================================================
 
 import { randomUUID } from 'crypto'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Action Types ─────────────────────────────────────────────────────────────
 
@@ -212,7 +213,7 @@ export function computeImpactCard(
   actionType: ActionType,
   propertyValueEur: number,
   currentCloseProbability: number,
-  commissionRate: number = 0.05,
+  commissionRate: number = COMMISSION_RATE,
   propertyId: string = '',
 ): RevenueImpactCard {
   const model = ACTION_MODELS[actionType]
@@ -293,7 +294,7 @@ export function getTopAction(
   propertyValueEur: number,
   closeProbability: number,
   availableActions: ActionType[],
-  commissionRate: number = 0.05,
+  commissionRate: number = COMMISSION_RATE,
   propertyId: string = '',
 ): RevenueImpactCard | null {
   if (availableActions.length === 0) return null

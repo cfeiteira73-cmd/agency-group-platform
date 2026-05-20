@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -17,6 +18,7 @@ function headers(): HeadersInit {
 }
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -44,8 +46,8 @@ export async function GET(req: NextRequest) {
     const { data, error, count } = await query
 
     if (error || !data) {
-      console.error('[activities GET] Supabase error:', error)
-      return NextResponse.json({ data: [], source: 'error', error: error?.message }, { headers: headers() })
+      console.error('[activities GET] Supabase error:', error, { corrId })
+      return NextResponse.json({ data: [], source: 'error', error: 'Internal server error' }, { headers: headers() })
     }
 
     return NextResponse.json({
@@ -57,12 +59,13 @@ export async function GET(req: NextRequest) {
       source:   'supabase',
     }, { headers: headers() })
   } catch (err) {
-    console.error('[activities GET]', err)
+    console.error('[activities GET]', err, { corrId })
     return NextResponse.json({ data: [], source: 'error' }, { status: 500, headers: headers() })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -90,12 +93,13 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500, headers: headers() })
+      console.error('[activities POST] Supabase error:', error, { corrId })
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: headers() })
     }
 
     return NextResponse.json({ data, source: 'supabase' }, { status: 201, headers: headers() })
   } catch (err) {
-    console.error('[activities POST]', err)
+    console.error('[activities POST]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: headers() })
   }
 }

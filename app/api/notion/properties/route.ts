@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const DB_ID = process.env.NOTION_PROPERTIES_DB || '98d82b2008eb437d84e4fda1af0ddf08'
 const TOKEN = process.env.NOTION_TOKEN
@@ -12,6 +13,7 @@ const headers = () => ({
 
 // GET — list properties, optional ?zona= ?estado= filters
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
@@ -67,7 +69,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ properties })
   } catch (error) {
-    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error', { corrId })
     return NextResponse.json(
       { error: 'Serviço temporariamente indisponível. Tente novamente.' },
       { status: 503 }
@@ -77,6 +79,7 @@ export async function GET(req: NextRequest) {
 
 // POST — create property
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
@@ -95,7 +98,7 @@ export async function POST(req: NextRequest) {
     if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
     return NextResponse.json({ success: true, notionId: data.id })
   } catch (error) {
-    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error', { corrId })
     return NextResponse.json(
       { error: 'Serviço temporariamente indisponível. Tente novamente.' },
       { status: 503 }
@@ -105,6 +108,7 @@ export async function POST(req: NextRequest) {
 
 // PATCH — update property
 export async function PATCH(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN) return NextResponse.json({ error: 'No Notion token' }, { status: 500 })
@@ -122,7 +126,7 @@ export async function PATCH(req: NextRequest) {
     if (!res.ok) return NextResponse.json({ error: data }, { status: 500 })
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error', { corrId })
     return NextResponse.json(
       { error: 'Serviço temporariamente indisponível. Tente novamente.' },
       { status: 503 }

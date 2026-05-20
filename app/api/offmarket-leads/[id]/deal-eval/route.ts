@@ -1218,6 +1218,264 @@ function calcRealisticCPCVForecastFlag(
 }
 
 // ---------------------------------------------------------------------------
+// Exported batch function — same logic as POST, no auth check, no HTTP response
+// ---------------------------------------------------------------------------
+
+export async function runDealEval(leadId: string): Promise<{
+  deal_evaluation_score: number
+  master_attack_rank: number
+  classification: string
+} | null> {
+  try {
+    const { data: lead, error: fetchError } = await supabaseAdmin
+      .from(TABLE)
+      .select(`id, nome, tipo_ativo, cidade, localizacao, area_m2, price_ask,
+               owner_type, urgency, contacto, source, score,
+               sla_breach, sla_contacted_at, created_at,
+               first_contact_at, last_contact_at, first_meeting_at, offer_date, cpcv_signed_at,
+               contact_attempts, last_attempt_channel, next_followup_at,
+               deal_priority_score, matched_buyers_count, best_buyer_match_score,
+               matched_to_buyers, preclose_candidate,
+               primary_buyer_id,
+               estimated_fair_value, gross_discount_pct, comp_confidence_score,
+               price_opportunity_score, deal_risk_level, legal_status, docs_pending,
+               negotiation_status`)
+      .eq('id', leadId)
+      .single()
+
+    if (fetchError || !lead) return null
+
+    let primaryBuyer: BuyerData | null = null
+    let primaryBuyerPressure: BuyerPressureData | null = null
+    if (lead.primary_buyer_id) {
+      const { data: buyer } = await supabaseAdmin
+        .from('contacts')
+        .select('name, buyer_score, active_status, liquidity_profile, deals_closed_count, avg_close_days, reliability_score, response_rate')
+        .eq('id', lead.primary_buyer_id)
+        .single()
+      if (buyer) {
+        primaryBuyer = buyer as BuyerData
+        primaryBuyerPressure = buyer as BuyerPressureData
+      }
+    }
+
+    const adjustedDiscountScore = calcAdjustedDiscountScore(
+      lead.gross_discount_pct, lead.comp_confidence_score
+    )
+
+    const { score: liquidityScore, reason: liquidityReason } = calcLiquidityScore(
+      lead.cidade, lead.localizacao, lead.tipo_ativo,
+      lead.price_ask, lead.matched_buyers_count, lead.best_buyer_match_score
+    )
+
+    const { score: executionProbability, reason: executionReason } = calcExecutionProbability(
+      lead.owner_type, lead.urgency, lead.contacto,
+      lead.preclose_candidate, lead.gross_discount_pct,
+      lead.matched_buyers_count, lead.negotiation_status
+    )
+
+    const { score: bestBuyerExecutionScore, reason: buyerExecutionReason } =
+      calcBuyerExecutionScore(primaryBuyer)
+
+    const {
+      upsideScore,
+      frictionPenalty,
+      riskAdjustedScore: riskAdjustedUpsideScore,
+      reason: upsideReason,
+    } = calcUpside(
+      lead.tipo_ativo, lead.cidade, lead.localizacao, lead.area_m2,
+      lead.gross_discount_pct, lead.deal_risk_level, lead.contacto,
+      lead.comp_confidence_score, lead.matched_buyers_count,
+      lead.docs_pending as unknown as string[] | null, lead.negotiation_status
+    )
+
+    const assetQualityScore = calcAssetQualityScore(
+      lead.tipo_ativo, lead.cidade, lead.localizacao,
+      lead.area_m2, lead.comp_confidence_score
+    )
+
+    const sourceQualityScore = calcSourceQualityScore(lead.source)
+
+    const dealEvaluationScore = calcDealEvaluationScore(
+      adjustedDiscountScore, liquidityScore,
+      riskAdjustedUpsideScore, assetQualityScore, sourceQualityScore
+    )
+
+    const masterAttackRank = calcMasterAttackRank(
+      dealEvaluationScore, executionProbability,
+      lead.deal_priority_score, bestBuyerExecutionScore
+    )
+
+    const classification = classifyDeal(masterAttackRank, executionProbability, adjustedDiscountScore)
+    const classificationNextAction = getNextAction(classification)
+
+    const { score: dataCompletenessScore, missing: dataMissing } = calcDataCompletenessScore(
+      lead.contacto, lead.area_m2, lead.gross_discount_pct,
+      lead.matched_buyers_count, sourceQualityScore
+    )
+
+    const priceIntelBlocked = !lead.area_m2 && lead.gross_discount_pct === null
+
+    const { score: dealVelocityScore, velocityReason } = calcDealVelocityScore(
+      lead.created_at, lead.first_contact_at, lead.sla_contacted_at,
+      lead.first_meeting_at, lead.offer_date, lead.cpcv_signed_at
+    )
+
+    const { score: buyerPressureScore, pressureClass: buyerPressureClass, reason: buyerPressureReason } =
+      calcBuyerPressureScore(primaryBuyerPressure)
+
+    const sellerPressureReason = calcSellerPressureReason(
+      lead.owner_type, lead.urgency, lead.gross_discount_pct,
+      lead.negotiation_status, lead.preclose_candidate
+    )
+
+    const { score: dealReadinessScore, readinessReason } = calcDealReadinessScore(
+      lead.contacto, lead.first_meeting_at, lead.preclose_candidate,
+      lead.best_buyer_match_score, lead.gross_discount_pct
+    )
+
+    const cpcvProbability = calcCPCVProbability(
+      dealEvaluationScore, buyerPressureScore, dealVelocityScore, dealReadinessScore
+    )
+
+    const dealKillFlag = calcDealKillFlag(
+      lead.contacto, lead.created_at, lead.score,
+      lead.matched_buyers_count, lead.area_m2, lead.price_ask
+    )
+
+    const buyerCompetitionFlag = calcBuyerCompetitionFlag(
+      lead.matched_buyers_count, buyerPressureScore
+    )
+
+    const moneyPriorityScore = calcMoneyPriorityScore(
+      cpcvProbability, dealVelocityScore, buyerPressureScore, lead.price_ask
+    )
+
+    const executionBlocker = getExecutionBlocker(
+      lead.contacto, lead.gross_discount_pct, lead.price_ask,
+      lead.area_m2, lead.matched_buyers_count,
+      lead.sla_breach, dataCompletenessScore,
+      lead.score, lead.first_meeting_at,
+      dealReadinessScore, buyerPressureClass, cpcvProbability,
+      dealKillFlag
+    )
+
+    const { score: executionDisciplineScore, disciplineReason } = calcExecutionDisciplineScore(
+      lead.created_at, lead.first_contact_at, lead.sla_contacted_at,
+      lead.first_meeting_at, lead.offer_date, lead.next_followup_at ?? null
+    )
+
+    const { score: closeWindowScore, windowReason } = calcCloseWindowScore(
+      lead.first_meeting_at, buyerPressureClass,
+      lead.owner_type, lead.urgency, lead.gross_discount_pct, lead.preclose_candidate
+    )
+
+    const { score: dealMomentumScore, momentumReason } = calcDealMomentumScore(
+      lead.first_contact_at, lead.sla_contacted_at, lead.last_contact_at ?? null,
+      lead.first_meeting_at, lead.offer_date, lead.negotiation_status, lead.contact_attempts
+    )
+
+    const humanFailureFlag = calcHumanFailureFlag(
+      lead.sla_breach, lead.contact_attempts, lead.first_contact_at, lead.sla_contacted_at,
+      lead.score, lead.first_meeting_at, lead.created_at,
+      lead.offer_date, lead.next_followup_at ?? null
+    )
+
+    const timeWasteFlag = calcTimeWasteFlag(
+      lead.contacto, lead.matched_buyers_count, lead.created_at,
+      lead.score, lead.contact_attempts, lead.first_meeting_at
+    )
+
+    const realisticCPCVForecastFlag = calcRealisticCPCVForecastFlag(
+      lead.first_meeting_at, buyerPressureClass, dealReadinessScore
+    )
+
+    const nextAction = buildNextAction2(
+      executionBlocker, classification,
+      buyerPressureClass, buyerPressureReason, sellerPressureReason,
+      cpcvProbability, dealReadinessScore,
+      buyerCompetitionFlag, lead.contact_attempts, lead.last_attempt_channel,
+      moneyPriorityScore
+    )
+
+    const dealEvaluationReason = [
+      `[${classification}]`,
+      `CPCV ${cpcvProbability}%`,
+      `Desconto adj.: ${adjustedDiscountScore}/100`,
+      `Liquidez: ${liquidityScore}/100`,
+      `Upside adj.: ${riskAdjustedUpsideScore}/100`,
+      `Readiness: ${dealReadinessScore}/100`,
+      `Velocity: ${dealVelocityScore}/100`,
+      `→ ${nextAction}`,
+    ].join(' · ')
+
+    const masterAttackRankReason = `Rank ${masterAttackRank}/100 — ${classification} · CPCV ${cpcvProbability}% · Readiness ${dealReadinessScore} · Buyer ${buyerPressureClass} · ${nextAction}`
+
+    const { error: updateError } = await supabaseAdmin
+      .from(TABLE)
+      .update({
+        adjusted_discount_score:    adjustedDiscountScore,
+        liquidity_score:            liquidityScore,
+        liquidity_reason:           liquidityReason,
+        execution_probability:      executionProbability,
+        execution_reason:           executionReason,
+        best_buyer_execution_score: bestBuyerExecutionScore,
+        buyer_execution_reason:     buyerExecutionReason,
+        upside_score:               upsideScore,
+        friction_penalty:           frictionPenalty,
+        risk_adjusted_upside_score: riskAdjustedUpsideScore,
+        upside_reason:              upsideReason,
+        asset_quality_score:        assetQualityScore,
+        source_quality_score:       sourceQualityScore,
+        deal_evaluation_score:      dealEvaluationScore,
+        deal_evaluation_reason:     dealEvaluationReason,
+        master_attack_rank:         masterAttackRank,
+        master_attack_reason:       masterAttackRankReason,
+        deal_evaluation_updated_at: new Date().toISOString(),
+        data_completeness_score:    dataCompletenessScore,
+        execution_blocker_reason:   executionBlocker,
+        price_intel_blocked:        priceIntelBlocked,
+        deal_velocity_score:        dealVelocityScore,
+        buyer_pressure_score:       buyerPressureScore,
+        buyer_pressure_class:       buyerPressureClass,
+        seller_pressure_reason:     sellerPressureReason,
+        buyer_pressure_reason:      buyerPressureReason,
+        deal_readiness_score:       dealReadinessScore,
+        cpcv_probability:           cpcvProbability,
+        money_priority_score:       moneyPriorityScore,
+        buyer_competition_flag:     buyerCompetitionFlag,
+        deal_kill_flag:             dealKillFlag,
+        execution_discipline_score:   executionDisciplineScore,
+        close_window_score:           closeWindowScore,
+        deal_momentum_score:          dealMomentumScore,
+        human_failure_flag:           humanFailureFlag,
+        time_waste_flag:              timeWasteFlag,
+        realistic_cpcv_forecast_flag: realisticCPCVForecastFlag,
+        ...(() => {
+          if (lead.sla_breach === true) return {}
+          if (lead.sla_contacted_at) return {}
+          const ageMs = Date.now() - new Date(lead.created_at ?? 0).getTime()
+          return ageMs > 24 * 60 * 60 * 1000 ? { sla_breach: true } : {}
+        })(),
+      })
+      .eq('id', leadId)
+
+    if (updateError) throw updateError
+
+    console.log(`[deal-eval] "${lead.nome}" rank=${masterAttackRank} CPCV=${cpcvProbability}% ready=${dealReadinessScore} [${classification}] blocker=${executionBlocker}`)
+
+    // Suppress unused variable warnings — these are computed but only used in the POST response
+    void velocityReason; void readinessReason; void disciplineReason
+    void windowReason; void momentumReason; void dataMissing; void classificationNextAction
+
+    return { deal_evaluation_score: dealEvaluationScore, master_attack_rank: masterAttackRank, classification }
+  } catch (err) {
+    console.error('[deal-eval runDealEval]', err)
+    return null
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Route handlers
 // ---------------------------------------------------------------------------
 

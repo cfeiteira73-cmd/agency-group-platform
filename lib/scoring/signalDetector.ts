@@ -17,6 +17,7 @@
 // =============================================================================
 
 import { ZoneMarket, getZone, resolvePropertyZone } from '@/lib/market/zones'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -80,7 +81,7 @@ const MIN_SIGNAL_PRICE          = 100_000   // Noise floor: ignore signals below
 // ---------------------------------------------------------------------------
 
 function estimateRevenueImpact(price: number, probability: number): number {
-  const commission = price * 0.05
+  const commission = price * COMMISSION_RATE
   return Math.round(commission * probability)
 }
 

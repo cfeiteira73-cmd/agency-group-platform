@@ -5,10 +5,12 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const body = await req.json().catch(() => ({})) as Record<string, unknown>
     const language = String(body.language || 'PT')
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     if (!res.ok) {
       const errText = await res.text()
-      console.error('[sofia/session] HeyGen error status:', res.status, 'body:', errText)
+      console.error('[sofia/session] HeyGen error status:', res.status, 'body:', errText, { corrId })
       let parsedErr: unknown = errText
       try { parsedErr = JSON.parse(errText) } catch { /* keep raw */ }
       return NextResponse.json({
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       language,
     })
   } catch (err) {
-    console.error('[sofia/session]', err)
+    console.error('[sofia/session]', err, { corrId })
     return NextResponse.json({
       session_id: `error-${Date.now()}`,
       status: 'error',
@@ -80,6 +82,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const body = await req.json().catch(() => ({})) as Record<string, unknown>
     const sessionId = String(body.session_id || '')
@@ -94,12 +97,12 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey },
       body: JSON.stringify({ session_id: sessionId }),
     }).catch(err =>
-      console.error('[sofia/session] HeyGen stop-session failed:', err?.message ?? err)
+      console.error('[sofia/session] HeyGen stop-session failed:', err?.message ?? err, { corrId })
     )
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('[sofia/session DELETE]', err)
+    console.error('[sofia/session DELETE]', err, { corrId })
     return NextResponse.json({ success: false }, { status: 500 })
   }
 }

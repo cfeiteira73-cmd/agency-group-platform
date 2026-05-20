@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { auth } from '@/auth'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -73,6 +75,7 @@ function fallbackRiskAnalysis(deal: Record<string, unknown>): DealRiskResponse {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -103,13 +106,15 @@ Escritura Date: ${deal.escrituraDate || deal.escritura_date || 'not set'}
 Notes: ${deal.notas || deal.notes || 'none'}
 `.trim()
 
-      const message = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 800,
-        messages: [
-          {
-            role: 'user',
-            content: `Analyse this real estate deal risk for Agency Group (AMI 22506, Portugal).
+      const message = await withAI(
+        'anthropic-opus',
+        () => client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 800,
+          messages: [
+            {
+              role: 'user',
+              content: `Analyse this real estate deal risk for Agency Group (AMI 22506, Portugal).
 Respond in JSON with this exact structure:
 {
   "overall_risk": "high|medium|low",
@@ -122,9 +127,15 @@ Respond in JSON with this exact structure:
 
 Deal context:
 ${dealContext}`,
-          },
-        ],
-      })
+            },
+          ],
+        }),
+        null,
+      )
+
+      if (message === null) {
+        return NextResponse.json(fallbackRiskAnalysis(deal))
+      }
 
       const content = message.content[0]
       if (content.type === 'text') {
@@ -141,7 +152,7 @@ ${dealContext}`,
 
     return NextResponse.json(fallbackRiskAnalysis(deal))
   } catch (err) {
-    console.error('[deal-risk]', err)
+    console.error('[deal-risk]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -3,10 +3,12 @@ import * as OTPAuth from 'otpauth'
 import { auth } from '@/auth'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const limit = await rateLimit(ip, { maxAttempts: 5, windowMs: 15 * 60 * 1000 })
   if (!limit.success) {
@@ -92,13 +94,13 @@ export async function POST(req: NextRequest) {
       .eq('id', session.user.id)
 
     if (error) {
-      console.error('verify-2fa DB error:', error)
+      console.error('verify-2fa DB error:', error, { corrId })
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, message: '2FA enabled successfully' })
   } catch (error) {
-    console.error('verify-2fa error:', error)
+    console.error('verify-2fa error:', error, { corrId })
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 }

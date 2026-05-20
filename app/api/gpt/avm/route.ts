@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rateLimit'
+import { safeCompare } from '@/lib/safeCompare'
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+function isAuthorized(req: NextRequest): boolean {
+  const token = (req.headers.get('authorization') ?? '').replace('Bearer ', '')
+  const s1    = process.env.INTERNAL_API_SECRET
+  const s2    = process.env.ADMIN_SECRET
+  return (!!s1 && safeCompare(token, s1)) || (!!s2 && safeCompare(token, s2))
+}
 
 const ZONES: Record<string, { pm2: number; yield: number; dom: number; trend: number }> = {
   'Lisboa': { pm2: 5000, yield: 0.044, dom: 45, trend: 0.22 },
@@ -14,6 +24,10 @@ const ZONES: Record<string, { pm2: number; yield: number; dom: number; trend: nu
 }
 
 export async function POST(req: NextRequest) {
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   // Rate limit: 5 req/min per IP (AI route)
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const rl = await rateLimit(`gpt-avm:${ip}`, { maxAttempts: 5, windowMs: 60_000 })

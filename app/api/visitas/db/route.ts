@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { createClient } from '@/lib/supabase/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -49,12 +51,13 @@ export async function GET(req: NextRequest) {
       pages: Math.ceil((count || 0) / limit),
     })
   } catch (error) {
-    console.error('GET /api/visitas/db error:', error)
+    console.error('GET /api/visitas/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -91,12 +94,13 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ success: true, visita: data }, { status: 201 })
   } catch (error) {
-    console.error('POST /api/visitas/db error:', error)
+    console.error('POST /api/visitas/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function PUT(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -133,12 +137,13 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true, visita: data })
   } catch (error) {
-    console.error('PUT /api/visitas/db error:', error)
+    console.error('PUT /api/visitas/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -170,7 +175,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Visita cancelled' })
   } catch (error) {
-    console.error('DELETE /api/visitas/db error:', error)
+    console.error('DELETE /api/visitas/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

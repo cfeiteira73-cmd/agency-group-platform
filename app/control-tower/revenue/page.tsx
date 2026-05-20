@@ -49,6 +49,11 @@ export default async function RevenuePage() {
   }
 
   return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
+        Loading revenue data…
+      </div>
+    }>
     <div className="space-y-6 p-6 min-h-screen bg-[#0A0A0F] text-slate-100">
 
       {/* Header */}
@@ -111,6 +116,14 @@ export default async function RevenuePage() {
             <p className="text-slate-500 text-xs mt-0.5">{kpi.sub}</p>
           </div>
         ))}
+      </div>
+
+      {/* Causal data lineage */}
+      <div className="text-[10px] text-slate-700 font-mono flex items-center gap-2 mt-1">
+        <span className="text-slate-600">source:</span>
+        <span>event_history → causal_trace → mv_agent_revenue</span>
+        <span className="text-slate-600">·</span>
+        <span>ISR 30s</span>
       </div>
 
       {/* Revenue Funnel */}
@@ -222,5 +235,6 @@ export default async function RevenuePage() {
         <strong className="text-slate-300">System summary:</strong> {decisions.summary}
       </div>
     </div>
+    </Suspense>
   )
 }

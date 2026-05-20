@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { rateLimit } from '@/lib/rateLimit'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 const ContentSchema = z.object({
   zona:         z.string().min(1, 'Zona é obrigatória'),
@@ -297,6 +300,7 @@ function generatePostingSchedule(): Record<string, { day: string; time: string; 
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -321,7 +325,7 @@ export async function POST(req: NextRequest) {
     const precoNum = Number(preco)
     const precoFormatado = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(precoNum)
     const precoM2 = area ? new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(precoNum / Number(area)) + '/m²' : null
-    const comissao5pct = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(precoNum * 0.05)
+    const comissao5pct = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(precoNum * COMMISSION_RATE)
     const rentaMensal_est = area ? new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(precoNum * 0.038 / 12) : null
 
     // Zona anchor
@@ -357,12 +361,18 @@ export async function POST(req: NextRequest) {
             }
           })
         ]
-        const visionResp = await client.messages.create({
-          model: 'claude-opus-4-6',
-          max_tokens: 1200,
-          messages: [{ role: 'user', content: visionContent }],
-        })
-        photoInsights = visionResp.content[0].type === 'text' ? visionResp.content[0].text : ''
+        const visionResp = await withAI(
+          'anthropic-opus',
+          () => client.messages.create({
+            model: 'claude-opus-4-6',
+            max_tokens: 1200,
+            messages: [{ role: 'user', content: visionContent }],
+          }),
+          null,
+        )
+        photoInsights = visionResp !== null && visionResp.content[0].type === 'text'
+          ? visionResp.content[0].text
+          : ''
       } catch {
         photoInsights = '' // non-blocking
       }
@@ -435,12 +445,20 @@ Retorna APENAS JSON válido com EXACTAMENTE esta estrutura (sem markdown, sem te
 }
 `
 
-    const message = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 8000,
-      system: NEUROMARKETING_SYSTEM,
-      messages: [{ role: 'user', content: userPrompt }],
-    })
+    const message = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-6',
+        max_tokens: 8000,
+        system: NEUROMARKETING_SYSTEM,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+      null,
+    )
+
+    if (message === null) {
+      return NextResponse.json({ success: false, error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const text = message.content[0].type === 'text' ? message.content[0].text : ''
 
@@ -488,7 +506,7 @@ Retorna APENAS JSON válido com EXACTAMENTE esta estrutura (sem markdown, sem te
     })
 
   } catch (err) {
-    console.error('Content API error:', err)
+    console.error('Content API error:', err, { corrId })
     return NextResponse.json({ success: false, error: 'Erro interno. Tenta novamente.' }, { status: 500 })
   }
 }

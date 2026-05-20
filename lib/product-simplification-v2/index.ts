@@ -1,5 +1,7 @@
 // AGENCY GROUP — SH-ROS | AMI: 22506
 
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
+
 export type UserRole = 'agent' | 'team_lead' | 'executive' | 'new_agent'
 
 export interface SimplifiedScreen {
@@ -63,8 +65,8 @@ function revenueContext(amount: number): string {
 // ── Role builders ─────────────────────────────────────────────────────────────
 
 function buildAgentScreens(ctx: DailyFocusContext): SimplifiedScreen[] {
-  const leadRevenue = ctx.hot_leads * 500_000 * 0.05 * 0.08
-  const offerRevenue = ctx.pending_offers * 500_000 * 0.05
+  const leadRevenue = ctx.hot_leads * 500_000 * COMMISSION_RATE * 0.08
+  const offerRevenue = ctx.pending_offers * 500_000 * COMMISSION_RATE
 
   // Primary: pending offers beat leads
   const hasPendingOffers = ctx.pending_offers > 0
@@ -151,7 +153,7 @@ function buildTeamLeadScreens(ctx: DailyFocusContext): SimplifiedScreen[] {
     id: 'team_opportunities',
     label: 'Oportunidades',
     description: `${ctx.hot_leads} lead(s) quente(s) disponíveis para distribuição à equipa.`,
-    estimated_revenue_impact_eur: ctx.hot_leads * 500_000 * 0.05 * 0.08,
+    estimated_revenue_impact_eur: ctx.hot_leads * 500_000 * COMMISSION_RATE * 0.08,
     time_to_complete: '2 min',
     urgency: 'esta_semana',
   }
@@ -191,7 +193,7 @@ function buildExecutiveScreens(ctx: DailyFocusContext): SimplifiedScreen[] {
     id: 'top_opportunities',
     label: 'Top Oportunidades',
     description: `${ctx.pending_offers} proposta(s) activa(s) e ${ctx.hot_leads} lead(s) de alto valor prontos para decisão.`,
-    estimated_revenue_impact_eur: ctx.pending_offers * 500_000 * 0.05,
+    estimated_revenue_impact_eur: ctx.pending_offers * 500_000 * COMMISSION_RATE,
     time_to_complete: '5 min',
     urgency: 'hoje',
   }

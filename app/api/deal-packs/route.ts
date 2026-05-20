@@ -7,10 +7,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
 import type { DealPackStatus } from '@/lib/database.types'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const auth = await portalAuthGate(req)
   if (!auth.authed) return auth.response
 
@@ -43,7 +45,7 @@ export async function GET(req: NextRequest) {
       if (error.code === '42P01') {
         return NextResponse.json({ deal_packs: [], total: 0, note: 'table_pending_migration' })
       }
-      console.error('[deal-packs GET] error:', error)
+      console.error('[deal-packs GET] error:', error, { corrId })
       return NextResponse.json({ error: 'Erro ao carregar deal packs' }, { status: 500 })
     }
 
@@ -54,7 +56,7 @@ export async function GET(req: NextRequest) {
       offset,
     })
   } catch (err) {
-    console.error('[deal-packs GET] error:', err)
+    console.error('[deal-packs GET] error:', err, { corrId })
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

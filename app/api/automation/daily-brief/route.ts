@@ -4,6 +4,9 @@ import { isPortalAuth } from '@/lib/portalAuth'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { safeCompare } from '@/lib/safeCompare'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 function isBearerAuthorized(req: NextRequest): boolean {
   const authHeader = req.headers.get('authorization') ?? ''
@@ -182,18 +185,23 @@ Regras:
 - Se não há dados suficientes, usa valores razoáveis baseados no mercado PT`
 
   try {
-    const message = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 1500,
-      system: [
-        {
-          type: 'text' as const,
-          text: BRIEF_SYSTEM_CACHED,
-          cache_control: { type: 'ephemeral' as const },
-        },
-      ],
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const message = await withAI('anthropic-opus', () =>
+      client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 1500,
+        system: [
+          {
+            type: 'text' as const,
+            text: BRIEF_SYSTEM_CACHED,
+            cache_control: { type: 'ephemeral' as const },
+          },
+        ],
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null
+    )
+
+    if (!message) return {}
 
     const text = message.content
       .filter(b => b.type === 'text')
@@ -268,6 +276,7 @@ function generateFallbackBrief(date: Date, marketInsight: string): DailyBrief {
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief | { error: string }>> {
+  const corrId = getRequestCorrelationId(request)
   // Accept: CRON/internal bearer token, NextAuth admin session, or portal magic-link cookie
   const bearerOk = isBearerAuthorized(request)
   if (!bearerOk) {
@@ -392,7 +401,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief
       return parseFloat(String(v ?? '0').replace(/[^0-9.]/g, '')) || 0
     }
     const totalWeightedGCI = activeDeals.reduce(
-      (sum, d) => sum + parseValorNum(d.valor) * 0.05 * (fasePct(d.fase) / 100),
+      (sum, d) => sum + parseValorNum(d.valor) * COMMISSION_RATE * (fasePct(d.fase) / 100),
       0
     )
 
@@ -431,7 +440,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<DailyBrief
       },
     })
   } catch (error) {
-    console.error('[daily-brief] Error:', error)
+    console.error('[daily-brief] Error:', error, { corrId })
     return NextResponse.json(
       { error: 'Erro interno ao gerar daily brief' },
       { status: 500 }

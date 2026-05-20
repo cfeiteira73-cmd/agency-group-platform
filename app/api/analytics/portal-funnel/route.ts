@@ -11,10 +11,12 @@ import {
   computeGradeConversions,
 }                                      from '@/lib/analytics/funnelMetrics'
 import { supabaseAdmin }               from '@/lib/supabase'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   void req
   const session = await auth()
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -160,7 +162,7 @@ export async function GET(req: NextRequest) {
       generated_at: new Date().toISOString(),
     })
   } catch (err) {
-    console.error('[portal-funnel] error:', err)
+    console.error('[portal-funnel] error:', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

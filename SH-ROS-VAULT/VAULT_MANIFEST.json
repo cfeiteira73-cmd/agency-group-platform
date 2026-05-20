@@ -1,0 +1,66 @@
+{
+  "vault_version": "1.0.0",
+  "created_at": "2026-05-19T00:00:00.000Z",
+  "tenant": "agency-group",
+  "system": "SH-ROS",
+  "project": "agencygroup.pt",
+  "supabase_project": "isbfiofwpxqqpgxoftph",
+  "vercel_project": "prj_gr2FFZaDEBrYL7AzJtoisGuLnrvV",
+  "files": {
+    "system_bible": "system-bible/SH-ROS_MASTER_BIBLE.md",
+    "vault_manifest": "VAULT_MANIFEST.json",
+    "integrity_hashes": "INTEGRITY_HASHES.json",
+    "layers": "architecture/layers.md",
+    "event_system": "architecture/event-system.md",
+    "causal_graph": "architecture/causal-graph.md",
+    "agent_registry": "agents/registry.md",
+    "supabase_schema": "schemas/supabase-schema.md",
+    "deal_flow": "revenue-engine/deal-flow.md",
+    "rbac": "security-model/rbac.md",
+    "stack": "infra/stack.md",
+    "system_prompts": "prompts/system-prompts.md",
+    "decision_log": "decisions/decision-log.md"
+  },
+  "directories": [
+    "system-bible",
+    "architecture",
+    "agents",
+    "prompts",
+    "events",
+    "decisions",
+    "schemas",
+    "revenue-engine",
+    "security-model",
+    "infra",
+    "replay-snapshots",
+    "ai-memory",
+    "backups"
+  ],
+  "rules": {
+    "append_only": [
+      "system-bible/SH-ROS_MASTER_BIBLE.md",
+      "decisions/decision-log.md"
+    ],
+    "never_delete": true,
+    "audit_all_changes": true,
+    "min_integrity_score": 95
+  },
+  "backup_schedule": "daily at 02:00 UTC",
+  "integrity_check_schedule": "daily at 02:00 UTC",
+  "reconstruction_guarantee": "48 hours",
+  "agents": [
+    "sofia-chat",
+    "crm-orchestrator",
+    "avm-engine",
+    "lead-scorer",
+    "followup-generator",
+    "deal-risk",
+    "legal-advisor",
+    "daily-brief",
+    "photo-scorer",
+    "heygen-script"
+  ],
+  "tables_count": 28,
+  "api_routes_count": 112,
+  "cron_jobs_count": 29
+}

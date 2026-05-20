@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { rateLimit } from '@/lib/rateLimit'
 
-// ─── Rate limit 10 searches/hour ──────────────────────────────────────────────
-const rateMap = new Map<string, { count: number; reset: number }>()
-function checkRate(ip: string): boolean {
-  const now = Date.now()
-  const e = rateMap.get(ip)
-  if (!e || now > e.reset) { rateMap.set(ip, { count: 1, reset: now + 3600000 }); return true }
-  if (e.count >= 10) return false
-  e.count++; return true
+// ─── SSRF allowlist ────────────────────────────────────────────────────────────
+const ALLOWED_SCRAPE_HOSTS = new Set([
+  'idealista.pt', 'idealista.com', 'imovirtual.com', 'casa.sapo.pt',
+  'remax.pt', 'century21.pt', 'era.pt', 'supercasa.pt', 'jll.pt',
+  'cushmanwakefield.com', 'savills.pt', 'knightfrank.com',
+  'bpiexpressoimobiliario.pt', 'portaldahabitacao.pt',
+])
+
+function isAllowedScrapeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') return false
+    const hostname = parsed.hostname.replace(/^www\./, '')
+    return ALLOWED_SCRAPE_HOSTS.has(hostname)
+  } catch {
+    return false
+  }
 }
 
 // ─── Zone market data ─────────────────────────────────────────────────────────
@@ -1172,6 +1182,10 @@ async function applyGeoToDeals(deals: Deal[]): Promise<void> {
 // Corre apenas para os top 5 por score — extrai descrição completa, orientação,
 // certificado energético completo, etc.
 async function enrichFromListingPage(deal: Deal): Promise<void> {
+  if (!isAllowedScrapeUrl(deal.url)) {
+    console.warn('[Radar/Search] Blocked SSRF attempt — deal.url not in allowlist:', deal.url.slice(0, 100))
+    return
+  }
   try {
     const res = await fetch(deal.url, {
       headers: { ...HEADERS, 'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8' },
@@ -2550,7 +2564,8 @@ function trackPriceHistory(deal: Deal, baseUrl: string): void {
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
-    if (!checkRate(ip)) {
+    const rl = await rateLimit(`radar-search:${ip}`, { maxAttempts: 10, windowMs: 3_600_000 })
+    if (!rl.success) {
       return NextResponse.json(
         { error: 'Rate limit: 10 buscas/hora. Aguarda ou usa o análise de URL.' },
         { status: 429 }

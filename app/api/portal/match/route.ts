@@ -7,11 +7,13 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   const gate = await portalAuthGate(req)
   if (!gate.authed) return gate.response
 
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const data = await res.json()
     return NextResponse.json(data, { status: res.status })
   } catch (err) {
-    console.error('[portal/match] Error:', err)
+    console.error('[portal/match] Error:', err, { corrId })
     return NextResponse.json({ error: 'Matching service unavailable' }, { status: 502 })
   }
 }

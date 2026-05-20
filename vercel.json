@@ -1,5 +1,6 @@
 {
   "installCommand": "pnpm install --no-frozen-lockfile",
+  "regions": ["cdg1"],
   "crons": [
     {
       "path": "/api/radar/digest",
@@ -27,7 +28,7 @@
     },
     {
       "path": "/api/buyers/score?limit=100",
-      "schedule": "0 6 * * 1-5"
+      "schedule": "15 6 * * 1-5"
     },
     {
       "path": "/api/offmarket-leads/batch-eval?stage=all&min_score=40",
@@ -91,7 +92,7 @@
     },
     {
       "path": "/api/cron/refresh-engagement-decay",
-      "schedule": "0 4 * * *"
+      "schedule": "15 4 * * *"
     },
     {
       "path": "/api/cron/refresh-market-segments",
@@ -100,6 +101,50 @@
     {
       "path": "/api/cron/data-quality-score",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/replay-dlq",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/runtime-recovery",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/recalibrate-market",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/revenue-leakage",
+      "schedule": "30 7 * * 1-5"
+    },
+    {
+      "path": "/api/cron/vault-integrity",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/worker-processor",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/refresh-graph-views",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/capture-drift-snapshot",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/detect-incidents",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/self-heal",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/anomaly-monitor",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

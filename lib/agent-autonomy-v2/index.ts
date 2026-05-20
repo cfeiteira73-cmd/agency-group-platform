@@ -1,6 +1,7 @@
 // AGENCY GROUP — SH-ROS | AMI: 22506
 
 import { randomUUID } from 'crypto'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export type SimulableAction =
   | 'adjust_price'
@@ -133,7 +134,6 @@ function resolveActionModel(
   }
 }
 
-const COMMISSION_RATE = 0.05
 const BASE_DAYS_TO_CLOSE = 210 // Portugal 2026 median
 
 function estimatedDaysToClose(closeProbability: number): number {

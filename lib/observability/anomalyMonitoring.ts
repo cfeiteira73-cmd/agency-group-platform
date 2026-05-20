@@ -14,6 +14,15 @@ export interface AnomalyCheck {
   description: string
 }
 
+export interface AnomalyRunSummary {
+  tenant_id: string
+  ran_at: string
+  total: number
+  critical: number
+  warning: number
+  checks: AnomalyCheck[]
+}
+
 type AnomalyCallback = (check: AnomalyCheck) => void
 
 interface BaselineRecord {
@@ -23,33 +32,38 @@ interface BaselineRecord {
 }
 
 export class AnomalyMonitor {
-  private _interval: ReturnType<typeof setInterval> | null = null
   private readonly _callbacks: AnomalyCallback[] = []
   private readonly _baselines: Map<string, BaselineRecord> = new Map()
   private readonly _dlqWindow: number[] = [] // timestamps of DLQ events
 
-  // Track recent event latencies per org for baseline
-  private readonly _latencies: Map<string, number[]> = new Map()
+  /**
+   * Run all anomaly checks for a single tenant/org and return a summary.
+   * Designed for cron invocation — no setInterval, stateless-compatible.
+   * Critical anomalies are also written to system_alerts in Supabase.
+   */
+  async runAnomalyCheck(tenantId: string): Promise<AnomalyRunSummary> {
+    const checks = await this.checkMetrics(tenantId)
 
-  startMonitoring(intervalMs = 60_000): void {
-    if (this._interval) return
-    this._interval = setInterval(async () => {
-      const checks = await this.checkMetrics()
-      for (const check of checks) {
-        if (check.severity === 'critical') {
-          await this._emitCriticalAlert(check)
-        }
-        for (const cb of this._callbacks) {
-          try { cb(check) } catch {}
-        }
+    const critical = checks.filter((c) => c.severity === 'critical')
+    const warning  = checks.filter((c) => c.severity === 'warning')
+
+    for (const check of critical) {
+      await this._emitCriticalAlert(check)
+    }
+
+    for (const check of checks) {
+      for (const cb of this._callbacks) {
+        try { cb(check) } catch {}
       }
-    }, intervalMs)
-  }
+    }
 
-  stopMonitoring(): void {
-    if (this._interval) {
-      clearInterval(this._interval)
-      this._interval = null
+    return {
+      tenant_id: tenantId,
+      ran_at:    new Date().toISOString(),
+      total:     checks.length,
+      critical:  critical.length,
+      warning:   warning.length,
+      checks,
     }
   }
 
@@ -212,3 +226,12 @@ export class AnomalyMonitor {
 }
 
 export const anomalyMonitor = new AnomalyMonitor()
+
+/**
+ * Standalone cron-compatible entry point.
+ * Runs all anomaly checks for a single tenant and returns a summary.
+ * Delegates to the singleton AnomalyMonitor instance.
+ */
+export async function runAnomalyCheck(tenantId: string): Promise<AnomalyRunSummary> {
+  return anomalyMonitor.runAnomalyCheck(tenantId)
+}

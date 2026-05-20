@@ -2,8 +2,7 @@
 
 import { logger } from '@/lib/observability/logger'
 import type { PropertyAnalysis, ZoneClassification } from '@/lib/property-ai/types'
-
-const PORTUGAL_COMMISSION = 0.05
+import { COMMISSION_RATE as PORTUGAL_COMMISSION } from '@/lib/constants/pipeline'
 const ZONE_PRICE_MAP: Record<string, number> = {
   Lisboa: 5000,
   Cascais: 4713,

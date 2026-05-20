@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { Resend } from 'resend'
+import { withResend } from '@/lib/ops/withResend'
 
 // NEXT_PUBLIC_BASE_URL = https://www.agencygroup.pt (produção, sempre correto)
 // NEXT_PUBLIC_URL pode estar definido como localhost no Vercel dev environment
@@ -45,6 +46,7 @@ async function checkRequestRateLimit(ip: string): Promise<{ allowed: boolean; re
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = crypto.randomUUID()
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const rl = await checkRequestRateLimit(ip)
   if (!rl.allowed) {
@@ -69,11 +71,12 @@ export async function POST(req: NextRequest) {
     if (ALLOWED.includes(email.toLowerCase())) {
       const magicToken = makeToken({ type: 'magic', email, exp: Date.now() + 24 * 60 * 60 * 1000 }, SECRET)
       const magicLink = `${BASE_URL}/api/auth/verify?token=${magicToken}`
-      const { data: magicData, error: magicErr } = await resend.emails.send({
-        from: FROM,
-        to: email,
-        subject: 'Acesso · Área de Agentes · Agency Group',
-        html: `
+      const { data: magicData, error: magicErr } = await withResend(
+        () => resend.emails.send({
+          from: FROM,
+          to: email,
+          subject: 'Acesso · Área de Agentes · Agency Group',
+          html: `
           <!DOCTYPE html><html><head><meta charset="utf-8"/></head>
           <body style="margin:0;padding:0;background:#f4f0e6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f0e6;padding:48px 20px">
@@ -98,12 +101,14 @@ export async function POST(req: NextRequest) {
             </table>
           </body></html>
         `,
-      })
+        }),
+        corrId,
+      )
       if (magicErr) {
-        console.error('Resend magic link error:', magicErr)
+        console.error('[auth/request] Resend magic link error:', { corrId, error: magicErr })
         return NextResponse.json({ error: 'Falha ao enviar email. Tenta novamente.' }, { status: 500 })
       }
-      console.log('Magic link sent ok, id:', magicData?.id)
+      console.log('[auth/request] Magic link sent ok, id:', magicData)
       return NextResponse.json({ ok: true })
     }
 
@@ -116,7 +121,8 @@ export async function POST(req: NextRequest) {
     const now = new Date().toLocaleString('pt-PT', { timeZone: 'Europe/Lisbon' })
 
     // Email para o admin
-    const { data: adminData, error: adminErr } = await resend.emails.send({
+    const { data: adminData, error: adminErr } = await withResend(
+      () => resend.emails.send({
       from: FROM,
       to: ADMIN_EMAIL,
       subject: `Pedido de Acesso Agentes · ${email}`,
@@ -155,19 +161,22 @@ export async function POST(req: NextRequest) {
           </table>
         </body></html>
       `,
-    })
+      }),
+      corrId,
+    )
     if (adminErr) {
-      console.error('Resend admin email error:', JSON.stringify(adminErr))
+      console.error('[auth/request] Resend admin email error:', { corrId, error: adminErr })
       return NextResponse.json({ error: 'Falha ao enviar email de aprovação. Tenta novamente.' }, { status: 500 })
     }
-    console.log('Admin approval email sent ok, resend_id:', adminData?.id)
+    console.log('[auth/request] Admin approval email sent ok, id:', adminData)
 
     // Confirmação para o agente
-    await resend.emails.send({
-      from: FROM,
-      to: email,
-      subject: 'Pedido Recebido · Agency Group',
-      html: `
+    await withResend(
+      () => resend.emails.send({
+        from: FROM,
+        to: email,
+        subject: 'Pedido Recebido · Agency Group',
+        html: `
         <!DOCTYPE html><html><head><meta charset="utf-8"/></head>
         <body style="margin:0;padding:0;background:#f4f0e6;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f0e6;padding:48px 20px">
@@ -188,7 +197,9 @@ export async function POST(req: NextRequest) {
           </table>
         </body></html>
       `,
-    })
+      }),
+      corrId,
+    )
 
     return NextResponse.json({ ok: true })
   } catch (err) {

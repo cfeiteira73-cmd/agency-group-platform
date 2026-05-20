@@ -7,6 +7,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 import { BaseAgent } from '../base'
 import type { AgentConfig, AgentContext, AgentInsight, AgentAction } from '../types'
+import { LEAD_SCORE_THRESHOLDS } from '@/lib/constants/pipeline'
 
 const HIGH_RISK_PHASES = ['CPCV', 'CPCV Assinado', 'Financiamento', 'Escritura Marcada']
 const INACTIVITY_DAYS  = 30
@@ -78,7 +79,7 @@ export class RiskGovernanceAgent extends BaseAgent {
         .select('id, full_name, email, lead_score, next_followup_at, status')
         .eq('status', 'lead')
         .lt('next_followup_at', now.toISOString())
-        .gte('lead_score', 70)
+        .gte('lead_score', LEAD_SCORE_THRESHOLDS.HIGH)
         .limit(20)
 
       const overdue               = overdueLeads ?? []

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 15
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ transcript: text, source: 'whisper' })
 
   } catch (error) {
-    console.error('Voice search error:', error)
+    console.error('Voice search error:', error, { corrId })
     return NextResponse.json({ error: 'Transcription failed' }, { status: 500 })
   }
 }

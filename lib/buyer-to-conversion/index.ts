@@ -5,6 +5,7 @@
 // =============================================================================
 
 import type { BuyerIntentProfile, BuyerIntent, UrgencyLevel } from '@/lib/buyer-intelligence/types'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,7 +161,7 @@ export function predictConversionFunnel(profile: BuyerIntentProfile): Conversion
   const probs = applyUrgencyMultiplier(base, profile.urgency)
 
   const estimated_budget_eur = estimateBudget(profile)
-  const estimated_commission_eur = Math.round(estimated_budget_eur * 0.05)
+  const estimated_commission_eur = Math.round(estimated_budget_eur * COMMISSION_RATE)
   const expected_value_eur = Math.round(probs.p_close * estimated_commission_eur)
 
   const next_best_action = getNextBestAction(profile)

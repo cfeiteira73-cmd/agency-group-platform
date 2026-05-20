@@ -4,7 +4,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/observability/logger'
 import { listingPerformanceTracker } from '@/lib/property-ai/learning'
 import type { DistributionChannel } from '@/lib/property-ai/types'
@@ -12,7 +12,7 @@ import { z } from 'zod'
 
 export const runtime = 'nodejs'
 
-const sb = supabaseAdmin as unknown as { from: (t: string) => unknown }
+const sb = supabase as unknown as { from: (t: string) => unknown }
 
 const VALID_CHANNELS: DistributionChannel[] = [
   'homepage','crm','email','instagram','facebook','tiktok','whatsapp','idealista','imovirtual','kyero'

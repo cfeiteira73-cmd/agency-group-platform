@@ -8,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { opportunityRadar } from '@/lib/executive/opportunityRadar'
 import { logger } from '@/lib/observability/logger'
 import { randomUUID } from 'crypto'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 export const maxDuration = 15
@@ -87,7 +88,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         const intel = sub.property_ai_intelligence
         const listing = sub.property_ai_listings
         const priceEur = listing?.estimated_price_eur ?? 320_000
-        const commission = priceEur * 0.05
+        const commission = priceEur * COMMISSION_RATE
 
         const createdAt = new Date(sub.created_at)
         const ageMs = Date.now() - createdAt.getTime()
@@ -178,7 +179,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
             title: `Follow-up pendente — ${contact.name ?? 'Comprador qualificado'}`,
             description: `Lead com score ${contact.score ?? '–'}/100 sem contacto há ${Math.round(daysSinceContact)} dias — janela de engagement a fechar.`,
             urgency: daysSinceContact > 14 ? 'hoje' : 'esta_semana',
-            impact_eur: formatImpact(budget * 0.05 * 0.3),
+            impact_eur: formatImpact(budget * COMMISSION_RATE * 0.3),
             contact_id: contact.id,
             cta_label: 'Contactar Agora',
             cta_href: `/dashboard/crm/${contact.id}`,
@@ -267,7 +268,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           title: `Deal parado — ${deal.title ?? deal.contact_name ?? 'Negócio em risco'}`,
           description: `Sem actividade há ${daysStale} dias em fase "${deal.stage ?? 'desconhecida'}" — risco de perda elevado.`,
           urgency: daysStale > 14 ? 'hoje' : 'esta_semana',
-          impact_eur: formatImpact(dealValue * 0.05 * 0.5),
+          impact_eur: formatImpact(dealValue * COMMISSION_RATE * 0.5),
           cta_label: 'Rever Deal',
           cta_href: `/dashboard/deals/${deal.id}`,
         })

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { supabaseAdmin } from '@/lib/supabase'
 import { rateLimit, getRetryAfterMinutes } from '@/lib/rateLimit'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -38,6 +39,7 @@ const LeadSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   // Rate limit: 5 leads per IP per hour
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const rl = await rateLimit(`leads:${ip}`, { maxAttempts: 5, windowMs: 3_600_000 })
@@ -163,7 +165,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (error) {
-      console.error('[leads] db error:', error)
+      console.error('[leads] db error:', error, { corrId })
       return NextResponse.json({ error: 'Erro ao guardar lead' }, { status: 500 })
     }
 
@@ -190,7 +192,7 @@ export async function POST(req: NextRequest) {
             nationality: nationality || undefined,
             timeline:    timeline    || undefined,
           }),
-        }).catch(err => console.error('[leads] scoring error:', err instanceof Error ? err.message : String(err)))
+        }).catch(err => console.error('[leads] scoring error:', err instanceof Error ? err.message : String(err), { corrId }))
       } else {
         console.warn('[leads] PORTAL_API_SECRET not configured — lead scoring skipped')
       }
@@ -236,7 +238,7 @@ export async function POST(req: NextRequest) {
             `,
           }),
         }).catch(err =>
-          console.error('[leads] Resend agent alert failed:', err?.message ?? err)
+          console.error('[leads] Resend agent alert failed:', err?.message ?? err, { corrId })
         )
       } else {
         console.warn('[leads] RESEND_API_KEY or AGENT_ALERT_EMAIL not set — email alert skipped')
@@ -263,7 +265,7 @@ export async function POST(req: NextRequest) {
           }),
           signal: AbortSignal.timeout(5000),
         }).catch(err =>
-          console.error('[leads] n8n lead-inbound webhook failed:', err?.message ?? err)
+          console.error('[leads] n8n lead-inbound webhook failed:', err?.message ?? err, { corrId })
         )
       }
     }
@@ -273,7 +275,7 @@ export async function POST(req: NextRequest) {
       id: data?.id,
     })
   } catch (err) {
-    console.error('[leads] error:', err)
+    console.error('[leads] error:', err, { corrId })
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

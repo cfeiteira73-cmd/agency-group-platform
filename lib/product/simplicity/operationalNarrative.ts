@@ -4,6 +4,7 @@
 // Portugal context: 18% close rate, 210-day avg cycle, €320K avg deal, 5% commission
 
 import logger from '@/lib/logger'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ class OperationalNarrativeEngine {
     const pipelineStr = this._formatEur(context.pipeline_value_eur)
     const closeRatePct = Math.round(context.close_rate * 100)
     const expectedDeals = Math.round(context.active_deals * context.close_rate)
-    const expectedRevenue = this._formatEur(expectedDeals * 320_000 * 0.05)
+    const expectedRevenue = this._formatEur(expectedDeals * 320_000 * COMMISSION_RATE)
 
     if (timeframe === 'daily') {
       return (

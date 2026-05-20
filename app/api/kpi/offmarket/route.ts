@@ -5,9 +5,10 @@
 // HARDENED: per-section try/catch — one failing table never kills the response
 // =============================================================================
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // Safe query wrapper — returns default on any Supabase error
 async function safeQuery<T>(
@@ -33,7 +34,8 @@ async function safeCount(fn: () => PromiseLike<{ count: number | null; error: un
   }
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -182,7 +184,7 @@ export async function GET(): Promise<NextResponse> {
       period: { week_ago: weekAgo, month_ago: monthAgo },
     })
   } catch (err) {
-    console.error('[kpi/offmarket]', err)
+    console.error('[kpi/offmarket]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

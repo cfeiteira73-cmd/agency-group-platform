@@ -3,6 +3,8 @@
 // Data-driven: market size × penetration × CAC efficiency per market
 // =============================================================================
 
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface MarketOpportunity {
@@ -55,7 +57,7 @@ export const MARKET_OPPORTUNITIES: MarketOpportunity[] = [
     sam:                840_000_000,     // agencies in our ICP band
     som_year_1:         2_400_000,       // 0.3% penetration year 1
     avg_deal_value:     1_200_000,
-    avg_commission_pct: 0.05,
+    avg_commission_pct: COMMISSION_RATE,
     agencies_count:     380,
     target_agencies:    80,
     entry_difficulty:   'low',
@@ -71,7 +73,7 @@ export const MARKET_OPPORTUNITIES: MarketOpportunity[] = [
     sam:                1_780_000_000,
     som_year_1:         3_600_000,
     avg_deal_value:     320_000,
-    avg_commission_pct: 0.05,
+    avg_commission_pct: COMMISSION_RATE,
     agencies_count:     1_200,
     target_agencies:    300,
     entry_difficulty:   'low',
@@ -87,7 +89,7 @@ export const MARKET_OPPORTUNITIES: MarketOpportunity[] = [
     sam:                2_400_000_000,
     som_year_1:         4_800_000,
     avg_deal_value:     1_500_000,
-    avg_commission_pct: 0.05,
+    avg_commission_pct: COMMISSION_RATE,
     agencies_count:     620,
     target_agencies:    120,
     entry_difficulty:   'medium',
@@ -103,7 +105,7 @@ export const MARKET_OPPORTUNITIES: MarketOpportunity[] = [
     sam:                96_000_000,
     som_year_1:         960_000,
     avg_deal_value:     350_000,
-    avg_commission_pct: 0.05,
+    avg_commission_pct: COMMISSION_RATE,
     agencies_count:     95,
     target_agencies:    30,
     entry_difficulty:   'low',

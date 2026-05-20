@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { safeCompare } from '@/lib/safeCompare'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { withAI } from '@/lib/ops/withAI'
 
 // ─── Mock fallback ────────────────────────────────────────────────────────────
 
@@ -83,14 +84,20 @@ IMÓVEL:
 
 A mensagem deve: mencionar zona e preço, transmitir que é oportunidade exclusiva, criar urgência real, convidar a contacto imediato.`
 
-    const msg = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
-      max_tokens: 200,
-      system: 'És um agente imobiliário de luxo em Portugal. Respondes APENAS com a mensagem de WhatsApp, sem aspas, sem JSON, sem explicações.',
-      messages: [{ role: 'user', content: prompt }]
-    })
+    const msg = await withAI(
+      'anthropic-haiku',
+      () => anthropic.messages.create({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 200,
+        system: 'És um agente imobiliário de luxo em Portugal. Respondes APENAS com a mensagem de WhatsApp, sem aspas, sem JSON, sem explicações.',
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      null,
+    )
 
-    const alertMessage = msg.content[0].type === 'text' ? msg.content[0].text.trim() : mockAlertMessage(property)
+    const alertMessage = msg !== null && msg.content[0].type === 'text'
+      ? msg.content[0].text.trim()
+      : mockAlertMessage(property)
 
     return NextResponse.json({
       ok: true,

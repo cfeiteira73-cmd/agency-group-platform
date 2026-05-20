@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse }   from 'next/server'
 import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
+import { getRequestCorrelationId }     from '@/lib/observability/correlation'
 import {
   createSimulation,
   completeSimulation,
@@ -58,6 +59,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -159,7 +161,7 @@ export async function POST(req: NextRequest) {
       grade_changes:  results.filter(r => r.grade_changed).length,
     })
   } catch (err) {
-    console.error('[simulation POST]', err)
+    console.error('[simulation POST]', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

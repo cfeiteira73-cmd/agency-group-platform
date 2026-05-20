@@ -5,6 +5,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase'
 import logger from '@/lib/logger'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,7 +134,7 @@ export class BusinessPrimitiveEngine {
       pipeline_value,
       expected_revenue,
       revenue_mtd,
-      commission_mtd:     revenue_mtd * 0.05,
+      commission_mtd:     revenue_mtd * COMMISSION_RATE,
       avg_days_to_close:  210,  // Portugal benchmark; would compute from closed deals
       close_rate_30d:     deals.length > 0
         ? deals_won_mtd.length / Math.max(1, deals.length) : 0.18,

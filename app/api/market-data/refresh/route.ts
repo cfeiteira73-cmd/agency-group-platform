@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { STATIC_FALLBACK, refreshZone } from '../route'
+import { safeCompare } from '@/lib/safeCompare'
 
 // ─── Auth helper ──────────────────────────────────────────────────────────────
 // SECURITY: x-vercel-cron header removed — not proof of authenticity.
@@ -8,7 +9,7 @@ function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
   if (!secret) return false
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
-  return token === secret
+  return safeCompare(token, secret)
 }
 
 // ─── GET /api/market-data/refresh (Vercel cron weekly) ───────────────────────
@@ -24,7 +25,8 @@ export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization') || ''
   const secret = process.env.CRON_SECRET
   if (!secret) return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 503 })
-  if (auth !== `Bearer ${secret}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
+  if (!safeCompare(token, secret)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   return runRefresh()
 }
 

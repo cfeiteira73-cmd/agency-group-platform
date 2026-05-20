@@ -1,25 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { auth } from '@/auth'
-
-// ─── RATE LIMIT ───────────────────────────────────────────────────────────────
-
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const HOUR = 3600_000
-  const LIMIT = 30
-
-  const entry = rateLimitMap.get(ip)
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + HOUR })
-    return true
-  }
-  if (entry.count >= LIMIT) return false
-  entry.count++
-  return true
-}
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { rateLimit } from '@/lib/rateLimit'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -210,12 +194,14 @@ Agency Group | AMI 22506`
 // ─── ROUTE HANDLER ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Rate limiting
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'anonymous'
-  if (!checkRateLimit(ip)) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown'
+  const rl = await rateLimit(`outbound-generate:${ip}`, { maxAttempts: 30, windowMs: 3_600_000 })
+  if (!rl.success) {
     return NextResponse.json(
       { error: 'Rate limit exceeded. Maximum 30 requests per hour.' },
       { status: 429 }
@@ -295,12 +281,17 @@ Generate only the message content. No explanations or meta-commentary.`
   try {
     const client = new Anthropic({ apiKey })
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-3-5',
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }]
-    })
+    const response = await withAI('anthropic-haiku', () =>
+      client.messages.create({
+        model: 'claude-haiku-3-5',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      }),
+      null
+    )
+
+    if (!response) return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503, headers: { 'Retry-After': '60' } })
 
     const raw = response.content[0]?.type === 'text' ? response.content[0].text : ''
 
@@ -320,7 +311,7 @@ Generate only the message content. No explanations or meta-commentary.`
 
     return NextResponse.json({ subject, message, messageType })
   } catch (err) {
-    console.error('[outbound/generate] Anthropic API error:', err)
+    console.error('[outbound/generate] Anthropic API error:', err, { corrId })
     // Graceful fallback — return a quality template
     return NextResponse.json(getFallbackTemplate(body))
   }

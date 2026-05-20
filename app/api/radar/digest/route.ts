@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { safeCompare } from '@/lib/safeCompare'
 
 // ─── Email sender: Resend → nodemailer SMTP fallback ──────────────────────────
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
@@ -90,7 +91,7 @@ function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
   if (!secret) return false
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
-  return token === secret
+  return safeCompare(token, secret)
 }
 
 // ─── Fetch deals for one zone ─────────────────────────────────────────────────
@@ -300,7 +301,8 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
     const auth = req.headers.get('authorization') || ''
     const secret = process.env.CRON_SECRET
-    if (secret && auth !== `Bearer ${secret}`) {
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : auth
+    if (secret && !safeCompare(token, secret)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     // Allow override of target email via POST body

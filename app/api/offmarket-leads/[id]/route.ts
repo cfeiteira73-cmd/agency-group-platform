@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const TABLE = 'offmarket_leads'
 
@@ -62,6 +63,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(_req)
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -76,7 +78,7 @@ export async function GET(
     if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(data)
   } catch (err) {
-    console.error('[offmarket-leads GET/:id]', err)
+    console.error('[offmarket-leads GET/:id]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -85,6 +87,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -116,7 +119,7 @@ export async function PATCH(
     if (error) throw error
     return NextResponse.json(data)
   } catch (err) {
-    console.error('[offmarket-leads PATCH/:id]', err)
+    console.error('[offmarket-leads PATCH/:id]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -125,6 +128,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(_req)
   try {
     const session = await auth()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -138,7 +142,7 @@ export async function DELETE(
     if (error) throw error
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('[offmarket-leads DELETE/:id]', err)
+    console.error('[offmarket-leads DELETE/:id]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

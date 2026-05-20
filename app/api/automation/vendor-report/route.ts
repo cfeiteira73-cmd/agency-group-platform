@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { safeCompare } from '@/lib/safeCompare'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -354,6 +355,7 @@ Agency Group | AMI 22506
 export async function POST(
   request: NextRequest
 ): Promise<NextResponse<VendorReportResponse | { error: string }>> {
+  const corrId = getRequestCorrelationId(request)
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -458,7 +460,7 @@ export async function POST(
 
     return NextResponse.json(response, { status: 200 })
   } catch (error) {
-    console.error('[vendor-report] Error:', error)
+    console.error('[vendor-report] Error:', error, { corrId })
     return NextResponse.json(
       { error: 'Erro interno ao gerar relatório de proprietário' },
       { status: 500 }

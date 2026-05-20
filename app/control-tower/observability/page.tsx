@@ -1,6 +1,7 @@
 // AGENCY GROUP — Control Tower: Observability | AMI: 22506
 // Phase Ω∞-7: p50/p95/p99 latency profiles + replay storm detection + heatmap
 
+import { Suspense } from 'react'
 import { KPICard } from '@/app/control-tower/_components/KPICard'
 import { StatusBadge } from '@/app/control-tower/_components/StatusBadge'
 import { latencyHeatmapEngine } from '@/lib/observability/latencyHeatmap'
@@ -21,7 +22,29 @@ async function getObservabilityData() {
   }
 }
 
-export default async function ObservabilityPage() {
+function ObservabilitySkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="h-20 bg-[#1A1A24] rounded-lg border border-slate-800 animate-pulse" />
+        ))}
+      </div>
+      <div className="bg-[#0F0F17] border border-slate-800 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-slate-800">
+          <div className="h-4 w-48 bg-[#1A1A24] rounded animate-pulse" />
+        </div>
+        <div className="space-y-0">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-10 border-b border-slate-800/30 bg-[#1A1A24] animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+async function ObservabilityContent() {
   const data = await getObservabilityData()
   const { latencyProfiles, replayStorm } = data
 
@@ -33,13 +56,7 @@ export default async function ObservabilityPage() {
   const worstP99 = latencyProfiles.length > 0 ? latencyProfiles[0].p99 : 0
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">Observability</h1>
-        <p className="text-slate-400 text-sm mt-1">p50/p95/p99 workflow latency · Replay storm detection · SLO compliance</p>
-      </div>
-
+    <>
       {/* Replay storm alert */}
       {replayStorm?.detected && (
         <div className="bg-red-900/30 border border-red-700 rounded-lg p-4">
@@ -54,11 +71,16 @@ export default async function ObservabilityPage() {
       )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <KPICard title="Workflows Tracked" value={totalWorkflows} color="blue" />
         <KPICard title="Avg p95 (ms)" value={avgP95.toLocaleString()} color="amber" />
         <KPICard title="Worst p99 (ms)" value={worstP99.toLocaleString()} color={worstP99 > 10000 ? 'red' : 'green'} />
         <KPICard title="Degraded" value={`${degradedWorkflows}/${totalWorkflows}`} color={degradedWorkflows > 0 ? 'red' : 'green'} />
+        <KPICard
+          title="SLO Compliance"
+          value={`${totalWorkflows > 0 ? Math.round(((totalWorkflows - degradedWorkflows) / totalWorkflows) * 100) : 100}%`}
+          color={degradedWorkflows === 0 ? 'green' : degradedWorkflows < totalWorkflows / 4 ? 'amber' : 'red'}
+        />
       </div>
 
       {/* Latency profiles table */}
@@ -97,6 +119,14 @@ export default async function ObservabilityPage() {
                     <td className="px-4 py-2.5 text-right text-slate-300">{profile.p95}ms</td>
                     <td className={`px-4 py-2.5 text-right font-medium ${profile.p99 > 5000 ? 'text-red-400' : 'text-slate-200'}`}>
                       {profile.p99}ms
+                      {profile.p99 > 5000 && (
+                        <a
+                          href={`/control-tower/events?workflow=${encodeURIComponent(profile.workflow_id)}`}
+                          className="text-[10px] text-amber-400 hover:text-amber-300 font-mono ml-2"
+                        >
+                          trace
+                        </a>
+                      )}
                     </td>
                     <td className={`px-4 py-2.5 text-right ${profile.p999 > 10000 ? 'text-red-500' : 'text-slate-400'}`}>
                       {profile.p999}ms
@@ -131,6 +161,21 @@ export default async function ObservabilityPage() {
           </div>
         </div>
       )}
+    </>
+  )
+}
+
+export default function ObservabilityPage() {
+  return (
+    <div className="space-y-8">
+      {/* Static header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-100">Observability</h1>
+        <p className="text-slate-400 text-sm mt-1">p50/p95/p99 workflow latency · Replay storm detection · SLO compliance</p>
+      </div>
+      <Suspense fallback={<ObservabilitySkeleton />}>
+        <ObservabilityContent />
+      </Suspense>
     </div>
   )
 }

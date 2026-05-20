@@ -2,8 +2,12 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
+import { withAIStream } from '@/lib/ops/withAI'
+import { buildAgentEnvelope } from '@/lib/ai/contracts'
 
 export const runtime = 'nodejs'
+
+const MAX_BODY_BYTES = 64 * 1024  // 64 KB — AI chat payloads should never exceed this
 
 // ─── Rate limiting (Upstash Redis, serverless-safe) ───────────────────────────
 // Public tier:  30 req/hour per IP
@@ -99,6 +103,15 @@ interface ChatRequestBody {
 // ─── POST Handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // ── Content-length guard ────────────────────────────────────────────────────
+  const contentLen = req.headers.get('content-length')
+  if (contentLen !== null) {
+    const byteLen = parseInt(contentLen, 10)
+    if (!isNaN(byteLen) && byteLen > MAX_BODY_BYTES) {
+      return new Response(JSON.stringify({ error: 'Payload too large' }), { status: 413 })
+    }
+  }
+
   // ── Tiered auth + rate limiting ────────────────────────────────────────────
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
            ?? req.headers.get('x-real-ip')
@@ -247,21 +260,44 @@ export async function POST(req: NextRequest) {
     // Use create() with stream:true — AsyncIterable approach works in edge runtime
     // Prompt caching: cache_control on system prompt saves ~30% input token costs
     // when the same system prompt is reused across requests (5-min ephemeral cache).
-    const stream = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      stream: true,
-      system: [
-        {
-          type: 'text' as const,
-          text: systemPrompt,
-          cache_control: { type: 'ephemeral' as const },
-        },
-      ],
-      messages: validMessages,
-    })
+    const stream = await withAIStream(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        stream: true,
+        system: [
+          {
+            type: 'text' as const,
+            text: systemPrompt,
+            cache_control: { type: 'ephemeral' as const },
+          },
+        ],
+        messages: validMessages,
+      }),
+      null,
+    )
 
     const encoder = new TextEncoder()
+
+    if (stream === null) {
+      const cbFallback = new ReadableStream({
+        start(controller) {
+          const payload = JSON.stringify({ error: 'Serviço IA temporariamente indisponível. Tente novamente em breve.' })
+          controller.enqueue(encoder.encode(`data: ${payload}\n\n`))
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+          controller.close()
+        },
+      })
+      return new Response(cbFallback, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-transform',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
+      })
+    }
 
     const readable = new ReadableStream({
       async start(controller) {
@@ -278,6 +314,22 @@ export async function POST(req: NextRequest) {
             }
           }
           controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+
+          // SH-ROS: Agent execution envelope (non-blocking)
+          void Promise.resolve().then(() => {
+            try {
+              const envelope = buildAgentEnvelope({
+                correlation_id: `sofia-portal-${sessionId}`,
+                agent_id:       'sofia-portal',
+                tenant_id:      'agency-group',
+                decision:       'Sofia portal chat response generated',
+                fallback_used:  false,
+                latency_ms:     0,
+                output:         null,
+              })
+              console.log('[sofia-portal] envelope:', JSON.stringify({ agent_id: envelope.agent_id, fallback_used: envelope.fallback_used }))
+            } catch { /* envelope logging is non-critical */ }
+          })
 
           // Persist conversation to Supabase (non-blocking — fires after stream completes)
           const assistantMessage = assistantChunks.join('').slice(0, 4000)

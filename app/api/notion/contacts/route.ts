@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { safeCompare } from '@/lib/safeCompare'
 import { auth } from '@/auth'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 const DB_ID = process.env.NOTION_CRM_DB
 const TOKEN = process.env.NOTION_TOKEN
@@ -45,6 +46,7 @@ function validateMagicToken(req: NextRequest): boolean {
 
 // GET — list contacts, optional ?agent= filter (not supported in this DB, returns all)
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN || !DB_ID) return NextResponse.json({ contacts: [] })
@@ -92,7 +94,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ contacts })
   } catch (error) {
-    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error', { corrId })
     return NextResponse.json(
       { error: 'Serviço temporariamente indisponível. Tente novamente.' },
       { status: 503 }
@@ -102,6 +104,7 @@ export async function GET(req: NextRequest) {
 
 // POST — create contact
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!validateMagicToken(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   try {
@@ -119,7 +122,7 @@ export async function POST(req: NextRequest) {
     if (!res.ok) return NextResponse.json({ error: 'Failed to create contact' }, { status: 500 })
     return NextResponse.json({ success: true, notionId: data.id })
   } catch (error) {
-    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error', { corrId })
     return NextResponse.json(
       { error: 'Serviço temporariamente indisponível. Tente novamente.' },
       { status: 503 }
@@ -129,6 +132,7 @@ export async function POST(req: NextRequest) {
 
 // PATCH — update contact by notionId
 export async function PATCH(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   if (!validateMagicToken(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (!TOKEN || !DB_ID) return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   try {
@@ -145,7 +149,7 @@ export async function PATCH(req: NextRequest) {
     if (!res.ok) return NextResponse.json({ error: 'Failed to update contact' }, { status: 500 })
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('[Notion API Error]:', error instanceof Error ? error.message : 'Unknown error', { corrId })
     return NextResponse.json(
       { error: 'Serviço temporariamente indisponível. Tente novamente.' },
       { status: 503 }

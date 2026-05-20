@@ -13,7 +13,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth }                      from '@/auth'
 import { detectRevenueLeakage, summariseLeakage } from '@/lib/commercial/revenueLeakage'
 import { getAdminRole, isRoleAtLeast } from '@/lib/auth/adminAuth'
-import { cronCorrelationId } from '@/lib/observability/correlation'
+import { withCronLock }              from '@/lib/ops/cronLock'
+import { safeCompare }               from '@/lib/safeCompare'
+import { cronCorrelationId }         from '@/lib/observability/correlation'
 import log from '@/lib/logger'
 
 export const runtime = 'nodejs'
@@ -28,7 +30,7 @@ function isCronAuthorized(req: NextRequest): boolean {
   if (!secret) return false
   const incoming = req.headers.get('x-cron-secret')
     ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  return incoming === secret
+  return !!incoming && safeCompare(incoming, secret)
 }
 
 async function isPortalAuthorized(_req: NextRequest): Promise<boolean> {
@@ -118,6 +120,8 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const lockResult = await withCronLock('revenue-leakage', 2, async () => {
+
   log.info('[revenue-leakage] scan started', { correlation_id: corrId, dry_run: dryRun })
 
   try {
@@ -152,6 +156,12 @@ async function handler(req: NextRequest) {
     })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+  }) // end withCronLock
+
+  if (lockResult === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running' })
+  }
+  return lockResult
 }
 
 export const GET  = handler

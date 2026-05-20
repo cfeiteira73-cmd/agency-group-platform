@@ -15,6 +15,7 @@ import type { Database } from '@/lib/database.types'
 import type { CRMContact } from '@/app/portal/components/types'
 import { safeCompare } from '@/lib/safeCompare'
 import track from '@/lib/trackLearningEvent'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 // Typed shorthand for contacts table operations
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -290,6 +291,7 @@ const MOCK_CONTACTS: ContactRow[] = ([
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   // Accept NextAuth session (admin) OR portal magic-link cookie (agents)
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(request))) {
@@ -423,7 +425,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       source: 'mock',
     }, { headers: rateLimitHeaders() })
   } catch (error) {
-    console.error('[CRM GET]', error)
+    console.error('[CRM GET]', error, { corrId })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: rateLimitHeaders() }
@@ -436,6 +438,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -578,7 +581,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 201, headers: rateLimitHeaders() }
     )
   } catch (error) {
-    console.error('[CRM POST]', error)
+    console.error('[CRM POST]', error, { corrId })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: rateLimitHeaders() }
@@ -591,6 +594,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   const authHeader = request.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -727,7 +731,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       { headers: rateLimitHeaders() }
     )
   } catch (error) {
-    console.error('[CRM PATCH]', error)
+    console.error('[CRM PATCH]', error, { corrId })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: rateLimitHeaders() }
@@ -742,6 +746,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 // ---------------------------------------------------------------------------
 
 export async function DELETE(request: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(request)
   const authCheck = await requirePortalAuth(request)
   if (!authCheck.ok) return authCheck.response
 
@@ -789,7 +794,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       .eq('id', id)
 
     if (error) {
-      console.error('[CRM DELETE] Supabase error:', error.message)
+      console.error('[CRM DELETE] Supabase error:', error.message, { corrId })
       return NextResponse.json(
         { error: error.message },
         { status: 500, headers: rateLimitHeaders() }
@@ -801,7 +806,7 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       { headers: rateLimitHeaders() }
     )
   } catch (error) {
-    console.error('[CRM DELETE]', error)
+    console.error('[CRM DELETE]', error, { corrId })
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500, headers: rateLimitHeaders() }

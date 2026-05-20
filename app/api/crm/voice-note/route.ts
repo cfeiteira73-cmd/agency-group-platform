@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { safeCompare } from '@/lib/safeCompare'
+import { withAI } from '@/lib/ops/withAI'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const authHeader = req.headers.get('authorization')
   const secret = process.env.PORTAL_API_SECRET
   if (!secret) return NextResponse.json({ error: 'API not configured' }, { status: 503 })
@@ -93,12 +96,20 @@ Extrai e estrutura toda a informação em JSON rigoroso. Não inventes dados que
     const { default: Anthropic } = await import('@anthropic-ai/sdk')
     const client = new Anthropic()
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 900,
-      system: 'És um agente imobiliário sénior a estruturar notas de reunião. Respondes APENAS com JSON válido, sem texto adicional.',
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const response = await withAI(
+      'anthropic-opus',
+      () => client.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 900,
+        system: 'És um agente imobiliário sénior a estruturar notas de reunião. Respondes APENAS com JSON válido, sem texto adicional.',
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      null,
+    )
+
+    if (response === null) {
+      return NextResponse.json({ error: 'AI service temporarily unavailable.' }, { status: 503 })
+    }
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
@@ -106,7 +117,7 @@ Extrai e estrutura toda a informação em JSON rigoroso. Não inventes dados que
 
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
-    console.error('[Voice Note] Error:', error)
+    console.error('[Voice Note] Error:', error, { corrId })
     return NextResponse.json({ error: 'Erro ao processar nota de voz' }, { status: 500 })
   }
 }

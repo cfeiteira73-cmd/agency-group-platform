@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { generateCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
@@ -23,6 +24,7 @@ interface MetaPhoneNumberResponse {
 }
 
 export async function GET() {
+  const corrId = generateCorrelationId()
   const phoneNumberId  = process.env.WHATSAPP_PHONE_NUMBER_ID
   const accessToken    = process.env.WHATSAPP_ACCESS_TOKEN
   const businessId     = process.env.WHATSAPP_BUSINESS_ID
@@ -84,7 +86,7 @@ export async function GET() {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[WhatsApp] Status check error:', message)
+    console.error('[WhatsApp] Status check error:', message, { corrId })
     return NextResponse.json({
       connected: false,
       phone_number_id: phoneNumberId,

@@ -5,10 +5,12 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const corrId = getRequestCorrelationId(req)
   try {
     const body = await req.json() as {
       sessionId?: string
@@ -52,14 +54,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     if (!res.ok) {
       const errText = await res.text()
-      console.error('[sofia/speak] HeyGen error:', errText)
+      console.error('[sofia/speak] HeyGen error:', errText, { corrId })
       return NextResponse.json({ error: 'Failed to send speech task', detail: errText }, { status: 500 })
     }
 
     const data = await res.json()
     return NextResponse.json({ success: true, task_id: data.data?.task_id, status: 'sent' })
   } catch (err) {
-    console.error('[sofia/speak]', err)
+    console.error('[sofia/speak]', err, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

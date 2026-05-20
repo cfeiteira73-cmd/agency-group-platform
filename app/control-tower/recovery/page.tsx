@@ -1,4 +1,6 @@
 // AGENCY GROUP — SH-ROS Control Tower: Recovery | AMI: 22506
+export const revalidate = 30
+
 import { StatusBadge } from '../_components/StatusBadge'
 
 interface RecoveryData {
@@ -39,7 +41,7 @@ async function fetchRecoveryData(org_id: string): Promise<RecoveryData | null> {
 }
 
 export default async function RecoveryPage() {
-  const data = await fetchRecoveryData('default')
+  const data = await fetchRecoveryData(process.env.DEFAULT_TENANT_ID ?? 'agency-group')
 
   return (
     <div className="space-y-5">

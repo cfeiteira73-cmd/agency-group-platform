@@ -13,7 +13,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { safeCompare }               from '@/lib/safeCompare'
+import { requireServiceAuth }        from '@/lib/auth/serviceAuth'
 import { createClient } from '@supabase/supabase-js'
 
 export const runtime    = 'nodejs'
@@ -25,19 +25,12 @@ const supabase = createClient(
 )
 
 // ---------------------------------------------------------------------------
-// Auth: accept both legacy x-internal-token and new Authorization: Bearer CRON_SECRET
+// Auth: accept both legacy x-internal-token (INTERNAL_API_TOKEN) and Authorization: Bearer CRON_SECRET
 // ---------------------------------------------------------------------------
 
-function isAuthorized(req: NextRequest): boolean {
-  // Legacy internal token path
-  const internalToken = req.headers.get('x-internal-token')
-  if (safeCompare(internalToken ?? '', process.env.INTERNAL_API_TOKEN ?? '')) return true
-
-  // Cron secret path (used by sync-listings cron)
-  const bearer = req.headers.get('authorization')?.replace('Bearer ', '').trim()
-  if (safeCompare(bearer ?? '', process.env.CRON_SECRET ?? '')) return true
-
-  return false
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const check = await requireServiceAuth(req)
+  return check.ok
 }
 
 // ---------------------------------------------------------------------------
@@ -107,7 +100,7 @@ async function generateEmbedding(text: string): Promise<{ embedding: number[] | 
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  if (!isAuthorized(req)) {
+  if (!await isAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

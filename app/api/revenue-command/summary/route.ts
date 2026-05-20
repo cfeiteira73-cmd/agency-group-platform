@@ -21,6 +21,7 @@ import {
   type RevenueImpactCard,
   type ActionType,
 } from '@/lib/value-attribution-engine'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 export const runtime = 'nodejs'
 export const maxDuration = 15
@@ -189,7 +190,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const live_count = liveSubmissions.length
 
   const pipeline_value_eur = liveSubmissions.reduce((sum, s) => sum + (s.listing_price ?? 0), 0)
-  const commission_potential_eur = Math.round(pipeline_value_eur * 0.05)
+  const commission_potential_eur = Math.round(pipeline_value_eur * COMMISSION_RATE)
 
   const withDemand = liveSubmissions
     .map(s => intelMap.get(s.submission_id)?.demand_score ?? null)

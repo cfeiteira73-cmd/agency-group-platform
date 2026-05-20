@@ -5,6 +5,7 @@ import { NextRequest, NextResponse }   from 'next/server'
 import { auth }                        from '@/auth'
 import { getAdminRole, hasPermission } from '@/lib/auth/adminAuth'
 import { logAction, buildAuditEntry }  from '@/lib/auth/auditLog'
+import { getRequestCorrelationId }      from '@/lib/observability/correlation'
 import {
   getActiveRecommendations,
   applyRecommendation,
@@ -16,6 +17,7 @@ import {
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -46,7 +48,7 @@ export async function GET(req: NextRequest) {
     const recs = await getActiveRecommendations()
     return NextResponse.json({ source: 'cached', recommendations: recs })
   } catch (err) {
-    console.error('[calibration GET]', err)
+    console.error('[calibration GET]', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },
@@ -55,6 +57,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const corrId = getRequestCorrelationId(req)
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -99,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, id, action })
   } catch (err) {
-    console.error('[calibration POST]', err)
+    console.error('[calibration POST]', err, { corrId })
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Internal error' },
       { status: 500 },

@@ -18,6 +18,7 @@
 // =============================================================================
 
 import { supabaseAdmin } from '@/lib/supabase'
+import { COMMISSION_RATE } from '@/lib/constants/pipeline'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,7 +56,7 @@ export interface AttributionRecord {
 
 export function computeCommission(
   salePrice:     number,
-  commissionRate = 0.05,   // AMI 22506 standard: 5%
+  commissionRate = COMMISSION_RATE,   // AMI 22506 standard: 5%
   splitPct       = 100,    // % of commission going to primary agent
 ): CommissionBreakdown {
   const commission_total  = parseFloat((salePrice * commissionRate).toFixed(2))
@@ -107,7 +108,7 @@ export function buildAttributionRecord(
     closedAt?:           string
   } = {},
 ): AttributionRecord {
-  const commissionRate = opts.commissionRate ?? 0.05
+  const commissionRate = opts.commissionRate ?? COMMISSION_RATE
   const commission_total = opts.salePrice
     ? parseFloat((opts.salePrice * commissionRate).toFixed(2))
     : undefined
@@ -176,7 +177,7 @@ export async function recordCommission(
     commissionRate?:        number
   } = {},
 ): Promise<string> {
-  const breakdown = computeCommission(salePrice, opts.commissionRate ?? 0.05, splitPct)
+  const breakdown = computeCommission(salePrice, opts.commissionRate ?? COMMISSION_RATE, splitPct)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await supabaseAdmin
