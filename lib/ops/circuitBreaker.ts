@@ -26,6 +26,7 @@
 
 import { classifyCircuitState } from './selfHealing'
 import type { CircuitState }    from './selfHealing'
+import { emit }                 from '@/lib/events/producers'
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -224,6 +225,17 @@ export async function recordSuccess(component: string): Promise<void> {
     } else {
       memSet(component, updated)
     }
+
+    // Emit recovery event when circuit transitions to closed (fire-and-forget)
+    if (updated.state === 'closed' && current.state !== 'closed') {
+      void emit.systemRecovery({
+        failure_event_id: null,
+        component,
+        recovery_type:    'circuit_reset',
+        recovery_time_ms: current.opened_at !== null ? Date.now() - current.opened_at : null,
+        recovered_at:     new Date().toISOString(),
+      })
+    }
   } catch (err) {
     // Never throw — log and continue
     console.warn('[circuitBreaker] recordSuccess error:', err instanceof Error ? err.message : String(err))
@@ -262,6 +274,18 @@ export async function recordFailure(component: string): Promise<void> {
       redisSet(redisKey(component), updated)
     } else {
       memSet(component, updated)
+    }
+
+    // Emit failure event when circuit transitions to open (fire-and-forget)
+    if (updated.state === 'open' && current.state !== 'open') {
+      void emit.systemFailure({
+        failure_type:            'circuit_opened',
+        component,
+        severity:                'P1',
+        error_message:           `Circuit breaker opened for "${component}" after ${failures} consecutive failures`,
+        error_code:              'CIRCUIT_OPEN',
+        auto_recovery_attempted: false,
+      })
     }
   } catch (err) {
     console.warn('[circuitBreaker] recordFailure error:', err instanceof Error ? err.message : String(err))

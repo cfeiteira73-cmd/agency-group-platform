@@ -264,7 +264,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
 export async function PUT(req: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(req)
-  const tenantId = req.headers.get('x-tenant-id') ?? 'agency-group'
+  const tenantId = req.headers.get('x-tenant-id') ?? process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -294,17 +294,17 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabaseAdmin.from('deals') as any).update(updateData)
       if (id && typeof id === 'string') {
-        query = query.eq('id', id)
+        query = query.eq('id', id).eq('tenant_id', tenantId)
       } else if (ref && typeof ref === 'string') {
-        query = query.eq('ref', ref)
+        query = query.eq('ref', ref).eq('tenant_id', tenantId)
       }
       const { data, error } = await query.select().single()
       if (!error && data) {
+        const dealId     = (id ?? ref ?? (data as Record<string, unknown>)?.id) as string | undefined
+        const agentEmail = (session?.user?.email ?? null) as string | null
         // ── Learning events on stage transitions ─────────────────────────────
         if (typeof updates.fase === 'string') {
           const fase   = updates.fase as string
-          const dealId = (id ?? ref ?? data?.id) as string | undefined
-          const agentEmail = (session?.user?.email ?? null) as string | null
           const basePayload = {
             deal_id:     dealId ?? null,
             agent_email: agentEmail,
@@ -362,6 +362,20 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               { correlation_id: corrId, source_system: 'api' },
             )
           }
+        }
+        // ── Emit dealUpdated for non-stage field changes (fire-and-forget) ──
+        const nonStageFields = Object.keys(updateData).filter(k => k !== 'updated_at' && k !== 'fase')
+        if (nonStageFields.length > 0) {
+          void emit.dealUpdated(
+            {
+              deal_id:       dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+              field_changed: nonStageFields.join(','),
+              old_value:     null,
+              new_value:     nonStageFields.reduce<Record<string, unknown>>((acc, k) => { acc[k] = updateData[k]; return acc }, {}),
+              updated_by:    agentEmail,
+            },
+            { correlation_id: corrId, source_system: 'api' },
+          )
         }
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
       }
