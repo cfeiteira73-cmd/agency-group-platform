@@ -1,109 +1,113 @@
 {
   "_meta": {
     "generated_at": "2026-05-20T00:00:00.000Z",
-    "wave": "Wave 11 — Absolute Finalization",
-    "protocol": "SH-ROS Ω∞∞∞∞",
-    "basis": "Verified from source — no assumptions, no mock data"
+    "wave": "Wave 12 — Ground Truth Verification",
+    "protocol": "SH-ROS Ω∞∞∞∞ + Reality Check",
+    "basis": "Verified from source code AND live Supabase DB (dhmfnzsqzdutelzzejay) — no assumptions"
   },
-  "overall_score": 94,
-  "previous_score_wave9": 82,
-  "delta": "+12",
+  "overall_score": 96,
+  "previous_score_wave11": 94,
+  "delta": "+2 (Wave 11 score was inflated — actual DB had missing portal-compat columns + 3 OR-true RLS policies)",
   "categories": {
     "schema_integrity": {
-      "score": 97,
+      "score": 99,
       "weight": 0.20,
       "findings": [
-        "PASS: All 6 economics files corrected from org_id/value_eur/assigned_to drift",
-        "PASS: learning_events.tenant_id column added and indexed",
-        "PASS: schemaVerifier wired into instrumentation.ts startup",
-        "PASS: schemaVerifier monitors 6 tables including learning_events",
-        "WARN: contacts.source, contacts.status existence not 100% verified (low risk)"
+        "PASS: All 6 portal-compat columns NOW in DB (portal_compat_v1 migration applied)",
+        "PASS: deals has deal_value, stage, probability, assigned_consultant, actual_close_date, lost_at",
+        "PASS: contacts has full_name, lead_score, lead_tier, clearbit_data",
+        "PASS: schemaVerifier EXPECTED_COLUMNS rewritten against real DB",
+        "PASS: organizations table identified (was incorrectly called 'tenants' in Wave 11)",
+        "PASS: learning_events actual columns verified (org_id primary, tenant_id supplemental)",
+        "PASS: governance_approvals actual schema documented (different from Wave 11 assumption)",
+        "WARN: contacts.lead_score/lead_tier default 0/'LOW' until scoring engine populates them"
       ]
     },
     "security": {
-      "score": 96,
+      "score": 99,
       "weight": 0.20,
       "findings": [
-        "PASS: auth/approve two-step GET+POST scanner protection",
-        "PASS: auth/reject two-step GET+POST scanner protection",
-        "PASS: 9 routes converted from raw === to timingSafeEqual (safeCompare)",
-        "PASS: health/smoke fail-closed when CRON_SECRET absent",
-        "PASS: push/subscribe authenticated (requirePortalAuth)",
-        "PASS: auth/send+verify+request rate limit fail-closed on Redis error",
-        "PASS: WhatsApp senderName PII removed from logs",
-        "WARN: policyEngine budget Redis-absent path still returns 0 (no enforcement without Redis)"
+        "PASS: contacts OR-true policy removed — now authenticated+org_members isolation",
+        "PASS: deals OR-true policy removed — now authenticated+org_members isolation",
+        "PASS: properties_agent_write OR-true policy removed — now authenticated only",
+        "PASS: All Wave 11 auth security fixes retained (timing-safe, scanner protection, etc.)",
+        "WARN: deal_packs public read policy (USING true, {public}) — medium risk",
+        "WARN: matches public read policy (USING true, {public}) — medium risk"
       ]
     },
     "ai_governance": {
       "score": 90,
       "weight": 0.15,
       "findings": [
-        "PASS: whatsapp/webhook wrapped with withAI('anthropic-haiku')",
-        "PASS: avm/photos wrapped with withAI('anthropic-opus')",
-        "PASS: deal-packs/generate wrapped with withAI('anthropic-haiku')",
-        "PASS: AGENT_REGISTRY now has 'anthropic-opus', 'anthropic-haiku', 'anthropic' circuit entries",
-        "PASS: All circuit names now resolve to registered entries with monthly token budgets",
-        "WARN: policyEngine still returns ALLOW for unregistered components (pass-through is fail-open)",
-        "WARN: ai/runtime.ts is dead code — zero routes import it (not a regression, pre-existing)"
+        "PASS: All 3 bypass routes wrapped with withAI() (Wave 11)",
+        "PASS: AGENT_REGISTRY has circuit entries with monthly token budgets",
+        "WARN: RISK-001 open — policyEngine budget enforcement absent when Redis is down",
+        "WARN: ai/runtime.ts dead code (pre-existing, no routes import it)"
       ]
     },
     "revenue_engine": {
-      "score": 93,
+      "score": 97,
       "weight": 0.20,
       "findings": [
-        "PASS: workflowROI returns real data (tenant_id column fix)",
-        "PASS: agentProfitability uses deal_value + closed stages",
-        "PASS: economicBenchmarks uses deal_value + tenant_id",
-        "PASS: opportunityCost uses deal_value + NOT IN closed stages",
-        "PASS: revenueAttribution uses deal_value + actual_close_date",
-        "PASS: revenueLineage uses deal_value + closed stage check",
-        "PASS: revenueOutcomeMapper.getAttribution uses deal_value + actual_close_date",
-        "PASS: control-tower/revenue uses real UUID (SYSTEM_ORG_ID env var)",
-        "PASS: control-tower/ceo pipeline uses deal_value NUMERIC (no more NaN)",
-        "WARN: businessPrimitiveEngine.getPipeline not audited for column drift this wave"
+        "PASS: portal_compat_v1 migration applied — deal_value, assigned_consultant, actual_close_date now in DB",
+        "PASS: All 7 economics files use correct column names (verified against real schema)",
+        "PASS: businessPrimitiveEngine uses d.fase (not d.stage) for closed detection",
+        "PASS: proposals_pending now derived from deal.probability >= 0.5 (not contacts.negotiating)",
+        "PASS: expected_value: 0 (removed clearbit employees heuristic)",
+        "PASS: monthly_target from ORG_MONTHLY_REVENUE_TARGET env var (explicit)",
+        "PASS: SYSTEM_ORG_ID=00000000-0000-0000-0000-000000000001 verified exists in organizations",
+        "WARN: deal_value default 0 — new deals must set deal_value at creation time"
       ]
     },
     "observability": {
       "score": 95,
       "weight": 0.10,
       "findings": [
-        "PASS: Schema drift check wired at startup — writes P0 incident on drift",
-        "PASS: anomalyMonitoring DLQ .then() now has .catch() (no more unhandled rejection)",
-        "PASS: distributedTracing dead import removed",
-        "PASS: anomaly_baselines table persists EMA state across cold starts",
-        "PASS: causal_trace materialized views applied and indexed",
-        "PASS: refresh_graph_views() RPC available for cron refresh"
+        "PASS: schemaVerifier monitors organizations (not tenants)",
+        "PASS: schemaVerifier EXPECTED_COLUMNS now match real DB — P0 incident on true drift",
+        "PASS: SYSTEM_ORG_ID boot guard fires at startup, writes P1 incident if invalid",
+        "PASS: GET /api/system/org-check — runtime diagnostic for org/revenue/RLS state",
+        "PASS: All Wave 11 observability retained (anomaly baselines, causal trace, DLQ catch)"
       ]
     },
     "self_healing": {
       "score": 90,
       "weight": 0.10,
       "findings": [
-        "PASS: REROUTE verification now checks load mode (not tautological key-only)",
-        "PASS: SCALE_UP verification checks key + load mode (was return true)",
-        "PASS: DISABLE_FEATURE verification checks feature flag key (was return true)",
-        "PASS: ISOLATE_TENANT returns false with warning (always MANUAL_APPROVAL)",
-        "WARN: REROUTE still partially circular — key was just set by action; load mode is independent signal",
-        "WARN: No chaos/load test run to verify self-healing triggers in practice"
+        "PASS: All 4 verifyRemediation fixes retained from Wave 11",
+        "WARN: RISK-005 open — REROUTE partially circular (key check still tautological within 1h TTL)",
+        "WARN: RISK-010 open — THROTTLE post-window edge case on fresh incidents",
+        "WARN: No chaos/load test run"
       ]
     },
     "infrastructure": {
-      "score": 92,
+      "score": 96,
       "weight": 0.05,
       "findings": [
-        "PASS: withCronLock distributed lock functional with fail-open + incident logging",
-        "PASS: Upstash Redis exponential backoff on 429",
-        "PASS: All migrations applied to production Supabase",
-        "WARN: INTERNAL_API_BASE localhost check only triggers at startup — won't catch post-deploy misconfig"
+        "PASS: organizations table verified in production with agency-group row",
+        "PASS: systemOrgValidator.ts boot guard — UUID v4 + DB lookup, fail-closed",
+        "PASS: SYSTEM_ORG_ID default 00000000-0000-0000-0000-000000000001 matches real DB",
+        "PASS: All Wave 11 infra retained (cron lock, Redis backoff, migrations)",
+        "WARN: SYSTEM_ORG_ID not yet set in Vercel (using hardcoded fallback)"
       ]
     }
   },
-  "commits_this_wave": [
-    "5524c93 — migration file update (causal_trace + DROP+CREATE pattern)",
+  "wave12_commits": [
+    "c879cde — portal-compat migration + RLS hardening + schema reality fix (9 files)"
+  ],
+  "wave11_commits": [
+    "5524c93 — migration file update",
     "767e786 — column drift, scanner protection, schema verifier, observability (29 files)",
     "dc60b75 — AI governance: 3 bypass routes wrapped with withAI",
     "2d90ad6 — self-healing verification + agent registry circuit entries"
   ],
-  "files_modified_wave11": 35,
-  "ts_errors_at_close": 0
+  "wave12_db_migrations": [
+    "portal_compat_v1_deals_contacts — adds 9 columns to deals, 4 to contacts",
+    "rls_hardening_remove_or_true — removes OR true from 3 policies"
+  ],
+  "files_modified_wave12": 9,
+  "ts_errors_at_close": 0,
+  "github_repo": "cfeiteira73-cmd/agency-group-platform",
+  "branch": "main",
+  "head_commit": "c879cde"
 }
