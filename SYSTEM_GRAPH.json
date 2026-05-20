@@ -1,0 +1,111 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-20T00:00:00.000Z",
+    "wave": "Wave 14 — Global Audit",
+    "basis": "Source code scan + live Supabase DB verification",
+    "github_repo": "cfeiteira73-cmd/agency-group-platform",
+    "branch": "main",
+    "head_commit": "e1618d1",
+    "supabase_project": "dhmfnzsqzdutelzzejay"
+  },
+  "layers": {
+    "edge": {
+      "description": "Vercel Edge + Node.js runtime, Next.js App Router",
+      "components": [
+        "app/ (Next.js App Router — RSC + client components)",
+        "app/api/ (~280 route handlers)",
+        "middleware.ts (auth gate for portal routes)",
+        "instrumentation.ts (boot validation + schema drift check)"
+      ]
+    },
+    "api": {
+      "description": "API route groups",
+      "groups": {
+        "analytics":          ["app/api/analytics/*"],
+        "deals":              ["app/api/deals/*", "app/api/deal/*"],
+        "contacts":           ["app/api/contacts/*", "app/api/contact-enrichment/*"],
+        "properties":         ["app/api/properties/*"],
+        "matches":            ["app/api/matches/*"],
+        "deal_packs":         ["app/api/deal-packs/*"],
+        "priority":           ["app/api/priority/*"],
+        "partners":           ["app/api/partners/*"],
+        "market":             ["app/api/market/*"],
+        "agents":             ["app/api/agent/*"],
+        "auth":               ["app/api/auth/*"],
+        "system":             ["app/api/system/*"],
+        "executive":          ["app/api/executive/*"],
+        "cron":               ["app/api/cron/* (28 cron jobs)"]
+      }
+    },
+    "lib": {
+      "description": "Core library modules",
+      "modules": {
+        "ai_governance":      ["lib/ai/policyEngine.ts", "lib/ai/agentRegistry.ts", "lib/ops/withAI.ts"],
+        "revenue_engine":     ["lib/product/businessPrimitiveEngine.ts", "lib/product/revenueOutcomeMapper.ts"],
+        "economics":          ["lib/economics/workflowROI.ts", "lib/economics/opportunityCost.ts", "lib/economics/agentProfitability.ts"],
+        "bootstrap":          ["lib/bootstrap/systemOrgValidator.ts"],
+        "observability":      ["lib/observability/anomalyMonitoring.ts", "lib/observability/metricsRegistry.ts", "lib/observability/distributedTracing.ts"],
+        "self_healing":       ["lib/healing/*"],
+        "tracking":           ["lib/trackLearningEvent.ts"],
+        "db":                 ["lib/db/schemaVerifier.ts", "lib/supabase.ts"],
+        "auth":               ["lib/requirePortalAuth.ts"],
+        "compliance":         ["lib/compliance/soc2Evidence.ts"]
+      }
+    },
+    "database": {
+      "description": "Supabase PostgreSQL (eu-north-1, ACTIVE_HEALTHY)",
+      "tables": {
+        "organizations":      {"rls": true,  "tenant_col": "id",        "rows": 1},
+        "contacts":           {"rls": true,  "tenant_col": "tenant_id", "rows": 0},
+        "deals":              {"rls": true,  "tenant_col": "tenant_id", "rows": 0},
+        "properties":         {"rls": true,  "tenant_col": "tenant_id", "rows": 0},
+        "matches":            {"rls": true,  "tenant_col": "tenant_id", "rows": 0},
+        "deal_packs":         {"rls": true,  "tenant_col": "tenant_id", "rows": 0},
+        "priority_items":     {"rls": true,  "tenant_col": "org_id",    "rows": 0, "note": "Wave 14: org_id added + RLS enabled"},
+        "learning_events":    {"rls": true,  "tenant_col": "org_id",    "rows": 0},
+        "incidents":          {"rls": true,  "tenant_col": "tenant_id", "rows": 0},
+        "governance_approvals":{"rls": true, "tenant_col": "tenant_id", "rows": 0},
+        "kpi_snapshots":      {"rls": true,  "tenant_col": "tenant_id", "rows": 0},
+        "runtime_events_warm":{"rls": "unverified","tenant_col": "org_id", "rows": 0},
+        "runtime_events_dlq": {"rls": "unverified","tenant_col": "org_id", "rows": 0}
+      },
+      "migrations_total": 14,
+      "migration_history": [
+        "10 original portal migrations",
+        "Wave 12: portal_compat_v1_deals_contacts",
+        "Wave 12: rls_hardening_remove_or_true",
+        "Wave 13: rls_deal_packs_matches_tenant_isolation",
+        "Wave 14: priority_items_add_org_id_and_rls"
+      ]
+    },
+    "cache": {
+      "description": "Upstash Redis (REST API)",
+      "uses": [
+        "Rate limiting (auth routes)",
+        "AI token budget tracking (policyEngine)",
+        "Alert deduplication (anomalyMonitoring)",
+        "Cron distributed locks (withCronLock)"
+      ],
+      "fail_mode": "fail-closed for AI budget (policyEngine DENY when null); fail-open for alert dedup (Wave 14 fix)"
+    },
+    "external": {
+      "ai":          "Anthropic API (claude-opus-4-5, claude-haiku-4-5) via withAI() → policyEngine",
+      "email":       "Resend (transactional + magic link auth)",
+      "automation":  "n8n (webhook-based workflow triggers)",
+      "video":       "HeyGen (agent video generation)",
+      "analytics":   "Google Tag Manager"
+    }
+  },
+  "critical_paths": {
+    "revenue_flow":     "contact_created → lead_scored → match_created → deal_pack_sent → proposal_sent → cpcv_signed → escritura_completed",
+    "auth_flow":        "magic_link_request → OTP_verify → session_cookie → portal_access",
+    "ai_governance":    "API route → withAI() → policyEngine → circuit_breaker → Anthropic → audit_log",
+    "boot_sequence":    "instrumentation.ts → env_validation → SYSTEM_ORG_ID_check → schema_drift_check → INTERNAL_API_BASE_check"
+  },
+  "agent_registry": {
+    "sofia-chat":        {"budget": true, "risk": "low"},
+    "crm-orchestrator":  {"budget": true, "risk": "medium"},
+    "anthropic-opus":    {"budget": true, "risk": "medium"},
+    "anthropic-haiku":   {"budget": true, "risk": "low"}
+  }
+}

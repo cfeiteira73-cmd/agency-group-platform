@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-20T00:00:00.000Z",
+    "wave": "Wave 14 — Global Audit",
+    "basis": "Source code + live Supabase DB verification",
+    "principle": "Every revenue figure must trace to a real DB column. Fabricated defaults documented explicitly."
+  },
+
+  "db_truth": {
+    "closed_stages": ["post_sale", "escritura", "escritura_sell"],
+    "closed_stage_column": "fase",
+    "deal_value_column": "deal_value",
+    "deal_value_type": "NUMERIC",
+    "probability_column": "probability",
+    "actual_close_column": "actual_close_date",
+    "tenant_column": "tenant_id",
+    "org_id": "00000000-0000-0000-0000-000000000001",
+    "commission_rate": 0.05,
+    "commission_rate_source": "lib/constants/pipeline.ts → COMMISSION_RATE"
+  },
+
+  "files": {
+    "lib/product/businessPrimitiveEngine.ts": {
+      "status": "VERIFIED",
+      "columns_used": ["deal_value", "fase", "stage", "probability", "actual_close_date", "lost_at"],
+      "tenant_isolation": "eq('tenant_id', orgId)",
+      "closed_detection": "CLOSED_STAGES.includes(d.fase ?? d.stage ?? '')",
+      "pipeline_value": "SUM(deal_value) WHERE fase NOT IN closed_stages",
+      "revenue_mtd": "SUM(deal_value) WHERE fase IN closed_stages AND actual_close_date >= month_start",
+      "fabricated_defaults": {
+        "monthly_target": "process.env.ORG_MONTHLY_REVENUE_TARGET ?? 2_000_000",
+        "note": "Target from env — not hardcoded"
+      }
+    },
+
+    "lib/product/revenueOutcomeMapper.ts": {
+      "status": "FIXED (Wave 14)",
+      "changes": [
+        "MONTHLY_TARGET: was 50_000 hardcoded → now process.env.ORG_MONTHLY_REVENUE_TARGET ?? '50000'",
+        "gross_value ?? 500_000 → gross_value ?? 0 (no fabricated default)",
+        "buildFunnel: hardcoded × 500_000/700_000/650_000 → dynamic avg_deal_value from pipeline",
+        "getDailyTarget: proposals_pending × 650_000 → dynamic avg_deal_value_target"
+      ],
+      "fabricated_defaults": {
+        "avg_deal_value": "pipeline.pipeline_value / pipeline.deals_in_progress OR process.env.ORG_AVG_DEAL_VALUE ?? '500000'",
+        "note": "Fallback only when no deals in progress — labeled as estimate"
+      },
+      "getAttribution": "REAL DATA — queries deals WHERE fase IN closed_stages AND actual_close_date >= since_ts"
+    },
+
+    "lib/economics/workflowROI.ts": {
+      "status": "FIXED (Wave 14)",
+      "change": ".in('stage', [...]) → .in('fase', [...]) — was causing ROI = 0 always",
+      "columns_used": ["deal_value", "fase", "actual_close_date", "tenant_id"],
+      "revenue_attribution": "even split among active workflows (capped 20% each)"
+    },
+
+    "lib/economics/opportunityCost.ts": {
+      "status": "FIXED (Wave 14)",
+      "change": "sort by b.value_eur → b.deal_value (value_eur doesn't exist in DB)",
+      "columns_used": ["deal_value", "fase", "assigned_consultant", "updated_at", "created_at"]
+    },
+
+    "lib/economics/agentProfitability.ts": {
+      "status": "VERIFIED",
+      "columns_used": ["deal_value", "fase", "assigned_consultant", "actual_close_date"]
+    },
+
+    "lib/economics/economicBenchmarks.ts": {
+      "status": "VERIFIED",
+      "columns_used": ["deal_value", "fase", "actual_close_date", "stage", "probability"]
+    },
+
+    "lib/economics/revenueAttribution.ts": {
+      "status": "VERIFIED",
+      "columns_used": ["deal_value", "fase", "actual_close_date"]
+    },
+
+    "lib/economics/revenueLineage.ts": {
+      "status": "VERIFIED",
+      "columns_used": ["deal_value", "fase"]
+    }
+  },
+
+  "fabricated_defaults_register": [
+    {
+      "file": "lib/product/revenueOutcomeMapper.ts",
+      "field": "avg_deal_value in buildFunnel/getDailyTarget",
+      "formula": "pipeline.pipeline_value / pipeline.deals_in_progress",
+      "fallback": "process.env.ORG_AVG_DEAL_VALUE ?? 500_000",
+      "risk": "LOW — only used when pipeline is empty; labeled as estimate"
+    },
+    {
+      "file": "lib/product/revenueOutcomeMapper.ts",
+      "field": "MONTHLY_TARGET",
+      "formula": "process.env.ORG_MONTHLY_REVENUE_TARGET ?? 50_000",
+      "risk": "LOW — configurable via env"
+    },
+    {
+      "file": "app/control-tower/ceo/page.tsx",
+      "field": "avg_commission in AI ROI formula",
+      "formula": "process.env.ORG_AVG_COMMISSION_EUR ?? 25_000",
+      "risk": "LOW — configurable via env; display metric only"
+    }
+  ],
+
+  "env_vars_required_for_revenue_accuracy": [
+    {"key": "ORG_MONTHLY_REVENUE_TARGET", "default": "50000", "unit": "EUR/month commission target"},
+    {"key": "ORG_AVG_DEAL_VALUE",          "default": "500000","unit": "EUR average deal value"},
+    {"key": "ORG_AVG_COMMISSION_EUR",       "default": "25000", "unit": "EUR average commission per closed deal"}
+  ]
+}
