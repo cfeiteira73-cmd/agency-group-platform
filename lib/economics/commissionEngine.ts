@@ -116,6 +116,9 @@ export async function calculateAndPersistCommission(
 
   if (error) {
     console.error('[CommissionEngine] persist failed:', error.message)
+    // Re-throw so the worker can fail the job and trigger a retry.
+    // Commission MUST be persisted — silent swallow = untracked revenue.
+    throw new Error(`Commission persist failed for deal ${input.deal_id}: ${error.message}`)
   }
 
   return result

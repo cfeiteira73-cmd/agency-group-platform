@@ -47,7 +47,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           liquidity_ratio:   snap.liquidity_ratio,
         }
       } catch (e) {
-        results[`liquidity_${country}`] = { ok: false, error: (e as Error).message }
+        results[`liquidity_${country}`] = { ok: false, error: e instanceof Error ? e.message : String(e) }
       }
     }
 
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           total_deals:      dealCount ?? 0,
         }
       } catch (e) {
-        results.revenue_snapshot = { ok: false, error: (e as Error).message }
+        results.revenue_snapshot = { ok: false, error: e instanceof Error ? e.message : String(e) }
       }
     }
 

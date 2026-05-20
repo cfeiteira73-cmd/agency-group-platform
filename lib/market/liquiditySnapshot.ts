@@ -148,6 +148,8 @@ export async function persistLiquiditySnapshot(
 
   if (error) {
     console.error('[LiquiditySnapshot] persist failed:', error.message)
+    // Re-throw so callers (cron, handler) know the snapshot was NOT saved.
+    throw new Error(`LiquiditySnapshot persist failed: ${error.message}`)
   }
 }
 
