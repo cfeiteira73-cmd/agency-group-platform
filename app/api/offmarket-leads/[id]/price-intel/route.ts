@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
+import { safeCompare } from '@/lib/safeCompare'
 
 const TABLE = 'offmarket_leads'
 const REFS_TABLE = 'market_price_refs'
@@ -373,7 +374,7 @@ export async function POST(
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-    const isCron = cronSecret && incomingSecret === cronSecret
+    const isCron = !!cronSecret && !!incomingSecret && safeCompare(incomingSecret, cronSecret)
     if (!isCron) {
       const session = await auth()
       if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -475,7 +476,7 @@ export async function GET(
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-    const isCron = cronSecret && incomingSecret === cronSecret
+    const isCron = !!cronSecret && !!incomingSecret && safeCompare(incomingSecret, cronSecret)
     if (!isCron) {
       const session = await auth()
       if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

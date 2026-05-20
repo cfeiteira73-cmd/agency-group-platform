@@ -77,7 +77,7 @@ export class OpportunityCostAnalyzer {
           deal_id: d.id as string,
           recommended_action: this._recommendAction(d.stage as string, stall_days),
           urgency,
-          estimated_recovery_eur: Math.round(val * (1 - stall_days * DAILY_PROBABILITY_DECAY) * 100) / 100,
+          estimated_recovery_eur: Math.round(Math.max(0, val * (1 - stall_days * DAILY_PROBABILITY_DECAY)) * 100) / 100,
         }
       })
 

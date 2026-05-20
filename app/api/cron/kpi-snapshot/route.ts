@@ -14,11 +14,6 @@ import { safeCompare } from '@/lib/safeCompare'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 // ---------------------------------------------------------------------------
 // Auth — CRON_SECRET only (Vercel cron)
 // ---------------------------------------------------------------------------
@@ -36,8 +31,11 @@ function authCheck(req: NextRequest): boolean {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function countTable(table: string, filter?: Record<string, unknown>): Promise<number> {
-  let q = supabase.from(table).select('*', { count: 'exact', head: true })
+// countTable is called inside the GET handler where `supabase` is in scope
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function countTable(sb: any, table: string, filter?: Record<string, unknown>): Promise<number> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let q = (sb as any).from(table).select('*', { count: 'exact', head: true })
   if (filter) {
     for (const [col, val] of Object.entries(filter)) {
       q = q.eq(col, val as string | number | boolean)
@@ -56,6 +54,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Guard env vars before creating client (prevents cold-start crash with non-null assertions)
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
+  }
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
+
   const lockResult = await withCronLock('kpi-snapshot', 3, async () => {
     const corrId = cronCorrelationId('kpi-snapshot')
     const tenantId = process.env.DEFAULT_TENANT_ID ?? 'agency-group'
@@ -73,15 +80,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         activeLeads,
         vipLeads,
       ] = await Promise.all([
-        countTable('contacts', { tenant_id: tenantId }),
+        countTable(supabase, 'contacts', { tenant_id: tenantId }),
         supabase
           .from('contacts')
           .select('*', { count: 'exact', head: true })
           .eq('tenant_id', tenantId)
           .gte('created_at', startOfDay)
           .then(({ count }) => count ?? 0),
-        countTable('contacts', { tenant_id: tenantId, status: 'lead' }),
-        countTable('contacts', { tenant_id: tenantId, status: 'vip' }),
+        countTable(supabase, 'contacts', { tenant_id: tenantId, status: 'lead' }),
+        countTable(supabase, 'contacts', { tenant_id: tenantId, status: 'vip' }),
       ])
 
       // Leads by status breakdown
@@ -116,8 +123,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       // ── Property metrics ──────────────────────────────────────────────────────
       const [totalProperties, activeProperties] = await Promise.all([
-        countTable('properties', { tenant_id: tenantId }),
-        countTable('properties', { tenant_id: tenantId, status: 'active' }),
+        countTable(supabase, 'properties', { tenant_id: tenantId }),
+        countTable(supabase, 'properties', { tenant_id: tenantId, status: 'active' }),
       ])
 
       // Exclusive + off-market
@@ -190,9 +197,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       try {
         const [gen, sent, viewed] = await Promise.all([
-          countTable('deal_packs', { tenant_id: tenantId }),
-          countTable('deal_packs', { tenant_id: tenantId, status: 'sent' }),
-          countTable('deal_packs', { tenant_id: tenantId, status: 'viewed' }),
+          countTable(supabase, 'deal_packs', { tenant_id: tenantId }),
+          countTable(supabase, 'deal_packs', { tenant_id: tenantId, status: 'sent' }),
+          countTable(supabase, 'deal_packs', { tenant_id: tenantId, status: 'viewed' }),
         ])
         dealPacksGenerated = gen
         dealPacksSent      = sent

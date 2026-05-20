@@ -15,6 +15,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare } from '@/lib/safeCompare'
 import {
   simulateCostExplosion,
   simulateMarginCollapse,
@@ -36,7 +37,7 @@ function isAuthorized(req: NextRequest): boolean {
 
   const auth = req.headers.get('authorization') ?? ''
   const [scheme, token] = auth.split(' ')
-  return scheme === 'Bearer' && token === secret
+  return scheme === 'Bearer' && !!token && safeCompare(token, secret)
 }
 
 // ─── GET handler ──────────────────────────────────────────────────────────────

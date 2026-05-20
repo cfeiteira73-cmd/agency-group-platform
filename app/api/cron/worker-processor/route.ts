@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processAllQueues } from '@/lib/workers/processor'
 import { safeCompare } from '@/lib/safeCompare'
+import { withCronLock } from '@/lib/ops/withCronLock'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -17,15 +18,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const start = Date.now()
-  try {
+
+  // Concurrency protection: prevent overlapping 5-minute cron invocations
+  const result = await withCronLock('worker-processor', 6, async () => {
     await processAllQueues()
     return NextResponse.json({
       ok: true,
       processed: true,
       latency_ms: Date.now() - start,
     })
-  } catch (err) {
-    console.error('[WorkerProcessor] cron error:', err)
-    return NextResponse.json({ ok: false, error: String(err), latency_ms: Date.now() - start }, { status: 500 })
+  })
+
+  if (result === null) {
+    return NextResponse.json({ skipped: true, reason: 'already_running', latency_ms: Date.now() - start })
   }
+
+  return result as NextResponse
 }

@@ -192,7 +192,14 @@ export class RevenueAttributionEngine {
   private _contribution(model: AttributionModel, i: number, total: number): number {
     if (total <= 1) return 100
     switch (model) {
-      case 'linear': return Math.round((100 / total) * 10) / 10
+      case 'linear': {
+        const base = Math.round((100 / total) * 10) / 10
+        // Last element absorbs rounding remainder so all nodes always sum to 100%
+        if (i === total - 1) {
+          return Math.round((100 - base * (total - 1)) * 10) / 10
+        }
+        return base
+      }
       case 'first_touch': return i === 0 ? 100 : 0
       case 'last_touch': return i === total - 1 ? 100 : 0
       case 'time_decay': {

@@ -38,7 +38,18 @@ function pct(value: number): string {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function RevenuePage() {
-  const { dashboard, funnel, daily_target } = await getRevenueData()
+  let revenueData: Awaited<ReturnType<typeof getRevenueData>> | null = null
+  try {
+    revenueData = await getRevenueData()
+  } catch (err) {
+    console.error('[Control Tower] Revenue data unavailable:', err)
+    return (
+      <div className="p-6 text-slate-500 text-sm">
+        Revenue data temporarily unavailable — retry in a few seconds.
+      </div>
+    )
+  }
+  const { dashboard, funnel, daily_target } = revenueData
   const { pipeline, top_leads, decisions } = dashboard
 
   const health_color: Record<typeof decisions.pipeline_health, string> = {

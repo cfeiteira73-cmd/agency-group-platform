@@ -26,6 +26,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin }                  from '@/lib/supabase'
 import type { IncidentRow }               from '@/lib/incidents/incidentIngestor'
+import { safeCompare }                    from '@/lib/safeCompare'
 
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
@@ -42,7 +43,7 @@ function verifyBearer(request: NextRequest): boolean {
   if (!secret) return false
   const authHeader = request.headers.get('authorization') ?? ''
   const [scheme, token] = authHeader.split(' ')
-  return scheme === 'Bearer' && token === secret
+  return scheme === 'Bearer' && !!token && safeCompare(token, secret)
 }
 
 // ─── Stats response type ──────────────────────────────────────────────────────

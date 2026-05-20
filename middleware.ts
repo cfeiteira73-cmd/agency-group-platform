@@ -219,7 +219,7 @@ export async function middleware(req: NextRequest) {
 
   // Try Upstash first, fall back to in-memory
   const upstash    = await rateLimitUpstash(key, max, Math.floor(win / 1000))
-  const useUpstash = process.env.UPSTASH_REDIS_REST_URL && upstash.remaining <= max
+  const useUpstash = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 
   const { limited, remaining, reset } = useUpstash
     ? upstash

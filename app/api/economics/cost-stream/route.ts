@@ -18,6 +18,7 @@ import {
   getInstantMargin,
   type RollingCostWindow,
 } from '@/lib/economics/costStreamEngine'
+import { safeCompare } from '@/lib/safeCompare'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +30,7 @@ function isAuthorized(req: NextRequest): boolean {
 
   const auth = req.headers.get('authorization') ?? ''
   const [scheme, token] = auth.split(' ')
-  return scheme === 'Bearer' && token === secret
+  return scheme === 'Bearer' && !!token && safeCompare(token, secret)
 }
 
 // ─── GET handler ──────────────────────────────────────────────────────────────

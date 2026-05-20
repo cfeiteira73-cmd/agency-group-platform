@@ -363,6 +363,27 @@ export async function verifyRemediation(
  * Never throws — all errors are caught per-stage and surfaced via stage status.
  */
 export async function runHealingCycle(incidentId: string): Promise<HealingCycleResult> {
+  // Global kill switch — set SELF_HEAL_ENABLED=true to activate self-healing
+  if (process.env.SELF_HEAL_ENABLED !== 'true') {
+    return {
+      cycle_id: `cycle_disabled_${randomUUID()}`,
+      incident_id: incidentId,
+      tenant_id: 'unknown',
+      started_at: new Date().toISOString(),
+      completed_at: new Date().toISOString(),
+      duration_ms: 0,
+      healed: false,
+      escalated: false,
+      approval_id: null,
+      decision: null,
+      action_taken: null,
+      stages: {
+        ingestion: 'skipped', causal: 'skipped', impact: 'skipped',
+        decision: 'skipped', remediation: 'skipped', verification: 'skipped', learning: 'skipped',
+      },
+    }
+  }
+
   const cycleId   = `cycle_${randomUUID()}`
   const startedAt = new Date().toISOString()
   const startMs   = Date.now()

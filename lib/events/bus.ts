@@ -189,8 +189,9 @@ class EventBus {
       if (isDup) return
       this.persistToHistory(event)
       void this.adapter.publish(event)
-    } catch {
-      // Absolute safety — never propagate
+    } catch (err) {
+      // Absolute safety — never propagate, but log so silent drops are visible
+      console.warn('[EventBus] publish error (event dropped):', err instanceof Error ? err.message : err)
     }
   }
 

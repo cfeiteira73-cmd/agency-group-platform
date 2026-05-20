@@ -21,6 +21,7 @@ import {
   getStoredFailureMap,
   storeFailureMap,
 } from '@/lib/reality/failureMap'
+import { safeCompare } from '@/lib/safeCompare'
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ function verifyBearer(request: NextRequest): boolean {
 
   const authHeader = request.headers.get('authorization') ?? ''
   const [scheme, token] = authHeader.split(' ')
-  return scheme === 'Bearer' && token === secret
+  return scheme === 'Bearer' && !!token && safeCompare(token, secret)
 }
 
 // ─── GET ───────────────────────────────────────────────────────────────────────

@@ -66,7 +66,9 @@ export class WorkflowROITracker {
       s + ((d.value_eur as number) ?? 0), 0)
 
     const total_exec = exData.length
-    const revenue_generated_eur = total_exec > 0 ? total_org_revenue * 0.2 : 0
+    // Attribution: cap at 20% and distribute evenly if >1 workflow active (prevent >100% total)
+    const attribution_share = Math.min(0.2, 1)
+    const revenue_generated_eur = total_exec > 0 ? total_org_revenue * attribution_share : 0
     const estimated_cost_eur = total_duration_ms * COST_PER_MS_EUR
     const roi_multiplier = estimated_cost_eur > 0
       ? Math.round((revenue_generated_eur / estimated_cost_eur) * 10) / 10 : 0
@@ -74,7 +76,7 @@ export class WorkflowROITracker {
       ? Math.round(((revenue_generated_eur - estimated_cost_eur) / estimated_cost_eur) * 1000) / 10 : 0
     const avg_revenue_per_execution_eur = total_exec > 0 ? revenue_generated_eur / total_exec : 0
     const break_even_executions = avg_revenue_per_execution_eur > 0
-      ? Math.ceil(10 / avg_revenue_per_execution_eur) : 9999
+      ? Math.ceil(estimated_cost_eur / avg_revenue_per_execution_eur) : 9999
 
     return {
       workflow_name, org_id, period_days,
@@ -136,9 +138,12 @@ export class WorkflowROITracker {
       s + ((d.value_eur as number) ?? 0), 0)
 
     const records: WorkflowROIRecord[] = []
+    // Attribution: divide equally among all active workflows, capped at 20% each
+    const workflowCount = byWorkflow.size
+    const attribution_share = workflowCount > 0 ? Math.min(0.2, 1 / workflowCount) : 0
     for (const [name, stats] of byWorkflow) {
       if (stats.total === 0) continue
-      const revenue_generated_eur = total_org_revenue * 0.2
+      const revenue_generated_eur = total_org_revenue * attribution_share
       const estimated_cost_eur = stats.total_duration_ms * COST_PER_MS_EUR
       const roi_multiplier = estimated_cost_eur > 0
         ? Math.round((revenue_generated_eur / estimated_cost_eur) * 10) / 10 : 0
@@ -146,7 +151,7 @@ export class WorkflowROITracker {
         ? Math.round(((revenue_generated_eur - estimated_cost_eur) / estimated_cost_eur) * 1000) / 10 : 0
       const avg_revenue_per_execution_eur = revenue_generated_eur / stats.total
       const break_even_executions = avg_revenue_per_execution_eur > 0
-        ? Math.ceil(10 / avg_revenue_per_execution_eur) : 9999
+        ? Math.ceil(estimated_cost_eur / avg_revenue_per_execution_eur) : 9999
       records.push({
         workflow_name: name,
         org_id,

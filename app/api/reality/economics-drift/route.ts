@@ -11,6 +11,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server'
 import { getEconomicDriftProfile }        from '@/lib/reality/economicsDriftEngine'
+import { safeCompare }                    from '@/lib/safeCompare'
 
 function unauthorized(): NextResponse {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -26,7 +27,7 @@ function verifyBearer(request: NextRequest): boolean {
 
   const authHeader = request.headers.get('authorization') ?? ''
   const [scheme, token] = authHeader.split(' ')
-  return scheme === 'Bearer' && token === secret
+  return scheme === 'Bearer' && !!token && safeCompare(token, secret)
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {

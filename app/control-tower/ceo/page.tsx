@@ -430,7 +430,7 @@ async function CEOContent() {
         <StatCard
           label="Pipeline Value"
           value={pipelineValue}
-          trend="+17.6% YoY"
+          trend="Pipeline total"
           trendDir="up"
           color="green"
         />
@@ -518,7 +518,7 @@ async function CEOContent() {
           </div>
           <div className="mt-4 pt-3 border-t border-slate-800">
             <p className="text-xs text-slate-500">
-              0 circuit breaker trips in last 24h · OWASP 86/100 · GDPR compliant
+              AI governance active · GDPR Art.17+20 compliant · audit log live
             </p>
           </div>
         </div>
@@ -529,23 +529,9 @@ async function CEOContent() {
         <h2 className="text-sm font-semibold text-slate-200 mb-4">Top Alerts</h2>
         <div className="grid grid-cols-1 gap-3">
           {useStaticAlerts ? (
-            <>
-              <AlertCard
-                severity="warning"
-                message="Lead scoring threshold may benefit from tuning — 12 high-revenue leads scored <80 this week"
-                timestamp="Hoje"
-              />
-              <AlertCard
-                severity="success"
-                message="System healthy — 0 circuit breaker trips in last 24h"
-                timestamp="Hoje"
-              />
-              <AlertCard
-                severity="info"
-                message="Revenue leak detected — 3 WhatsApp inbound leads without followup (est. €15K exposure)"
-                timestamp="Hoje"
-              />
-            </>
+            <div className="text-center py-6 text-slate-500 text-sm">
+              Sem alertas activos — todos os sistemas operacionais
+            </div>
           ) : (
             incidents.map((inc, idx) => (
               <AlertCard

@@ -22,6 +22,7 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeCompare } from '@/lib/safeCompare'
 import { supabaseAdmin } from '@/lib/supabase'
 import { sendWhatsApp } from '@/lib/whatsapp/client'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
@@ -35,7 +36,7 @@ function isAuthorized(req: NextRequest): boolean {
   if (!secret) return false
   const incoming = req.headers.get('x-cron-secret')
     ?? req.headers.get('authorization')?.replace('Bearer ', '')
-  return incoming === secret
+  return !!incoming && safeCompare(incoming, secret)
 }
 
 // ── Email sender (Resend) ────────────────────────────────────────────────────

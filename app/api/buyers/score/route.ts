@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { auth } from '@/auth'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { safeCompare } from '@/lib/safeCompare'
 
 const TABLE = 'contacts'
 
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-    const isCron = cronSecret && incomingSecret === cronSecret
+    const isCron = !!cronSecret && !!incomingSecret && safeCompare(incomingSecret, cronSecret)
     if (!isCron) {
       const session = await auth()
       if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -135,7 +136,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     const cronSecret = process.env.CRON_SECRET
     const incomingSecret = req.headers.get('x-cron-secret') ?? req.headers.get('authorization')?.replace('Bearer ', '')
-    const isCron = cronSecret && incomingSecret === cronSecret
+    const isCron = !!cronSecret && !!incomingSecret && safeCompare(incomingSecret, cronSecret)
     if (!isCron) {
       const session = await auth()
       if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

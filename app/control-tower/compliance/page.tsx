@@ -78,7 +78,7 @@ async function ComplianceContent() {
           <p className="text-xs text-slate-500">13 controls monitored · CC6, CC7, CC8, CC9, A1 families</p>
         </div>
         <div className="ml-auto text-right">
-          <p className="text-xs text-slate-500 font-mono">Last audit: {new Date().toISOString().slice(0, 10)}</p>
+          <p className="text-xs text-slate-500 font-mono">Last audit: {data?.gdpr?.last_audit ? new Date(data.gdpr.last_audit).toISOString().slice(0, 10) : '—'}</p>
         </div>
       </div>
 

@@ -141,7 +141,7 @@ export default function SettingsPage() {
           {[
             { label: 'Version', value: 'Ω∞ vFINAL' },
             { label: 'AMI', value: '22506' },
-            { label: 'Stack', value: 'Next.js 14 + Supabase + n8n' },
+            { label: 'Stack', value: 'Next.js 15 + Supabase + n8n' },
             { label: 'Queue', value: process.env.QUEUE_PROVIDER ?? 'db (fallback)' },
             { label: 'Workflow Engine', value: process.env.TEMPORAL_ADDRESS ? 'Temporal.io' : 'DB-backed' },
             { label: 'Memory', value: 'HOT (LRU) → WARM (90d) → COLD (∞)' },
