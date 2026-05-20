@@ -112,7 +112,7 @@ export async function register() {
           // Write P0 incident — pipeline is broken if columns are missing
           const { supabaseAdmin } = await import('@/lib/supabase')
           await supabaseAdmin.from('incidents').insert({
-            tenant_id:        'agency-group',
+            tenant_id:        process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
             severity:         'P0',
             subsystem:        'database',
             raw_error:        `Schema drift detected at startup: ${driftSummary}`,
@@ -146,7 +146,7 @@ export async function register() {
           try {
             const { supabaseAdmin } = await import('@/lib/supabase')
             await supabaseAdmin.from('incidents').insert({
-              tenant_id:   'agency-group',
+              tenant_id:   process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
               severity:    'P0',
               subsystem:   'api',
               raw_error:   `INTERNAL_API_BASE misconfiguration: ${internalApiBase} — all Control Tower panels will return empty data`,
