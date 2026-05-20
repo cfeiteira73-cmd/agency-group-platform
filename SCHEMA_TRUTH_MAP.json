@@ -1,0 +1,129 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-20T00:00:00.000Z",
+    "wave": "Wave 11 — Absolute Finalization",
+    "protocol": "SH-ROS Ω∞∞∞∞",
+    "verified_by": "Squad A (Schema Truth)"
+  },
+  "tables": {
+    "deals": {
+      "status": "VERIFIED",
+      "portal_compat_columns_added": "migration 20260501_003_portal_compat.sql",
+      "required_columns": [
+        "id", "title", "deal_value", "stage", "probability",
+        "contact_id", "property_id", "assigned_consultant",
+        "actual_close_date", "lost_at",
+        "valor", "fase", "tenant_id"
+      ],
+      "column_notes": {
+        "deal_value": "NUMERIC — primary revenue column. All economics code uses this.",
+        "fase": "TEXT — portal pipeline stage. Closed stages: post_sale, escritura, escritura_sell.",
+        "valor": "TEXT — formatted display (e.g. '€ 1.500.000'). DO NOT use for arithmetic.",
+        "tenant_id": "TEXT — multi-tenant isolation key.",
+        "assigned_consultant": "TEXT — agent assignment. Was 'assigned_to' pre-migration.",
+        "actual_close_date": "TIMESTAMPTZ — deal close date. Was 'closed_at' pre-migration.",
+        "stage": "ENUM — original CRM stage (qualification, proposal, etc). Co-exists with fase."
+      },
+      "drift_fixed_wave11": [
+        "agentProfitability.ts: value_eur→deal_value, org_id→tenant_id, assigned_to→assigned_consultant",
+        "economicBenchmarks.ts: same drift fixes",
+        "opportunityCost.ts: same + status='active'→NOT IN (post_sale,...)",
+        "revenueAttribution.ts: same + closed_at→actual_close_date",
+        "revenueLineage.ts: same + value_eur→deal_value",
+        "revenueOutcomeMapper.ts: value→deal_value, org_id→tenant_id, closed_at→actual_close_date",
+        "control-tower/ceo/page.tsx: valor TEXT parseFloat NaN → deal_value NUMERIC",
+        "control-tower/ceo/page.tsx: stage→fase in NOT IN filter"
+      ]
+    },
+    "contacts": {
+      "status": "VERIFIED",
+      "required_columns": ["id", "full_name", "email", "phone", "status", "lead_score", "lead_tier", "tenant_id"],
+      "column_notes": {
+        "tenant_id": "TEXT — added by migration 20260430_002"
+      }
+    },
+    "learning_events": {
+      "status": "VERIFIED",
+      "required_columns": [
+        "id", "event_type", "lead_id", "deal_id", "property_id",
+        "deal_pack_id", "agent_email", "match_score", "metadata", "created_at",
+        "tenant_id"
+      ],
+      "column_notes": {
+        "tenant_id": "TEXT — added via manual migration 2026-05-20 (not a file). INDEX added.",
+        "org_id": "DOES NOT EXIST — was the root cause of workflowROI always returning 0"
+      },
+      "drift_fixed_wave11": [
+        "workflowROI.ts: org_id→tenant_id (both calculateWorkflowROI + getRankedWorkflowROI)",
+        "revenueAttribution.ts: org_id→tenant_id",
+        "economicBenchmarks.ts: org_id→tenant_id",
+        "revenueLineage.ts: org_id→tenant_id"
+      ]
+    },
+    "kpi_snapshots": {
+      "status": "VERIFIED",
+      "required_columns": ["id", "snapshot_date", "pipeline_value", "total_leads", "total_deals", "avg_deal_value"]
+    },
+    "governance_approvals": {
+      "status": "VERIFIED",
+      "required_columns": [
+        "id", "approval_id", "tenant_id", "actor_id", "action_type",
+        "resource_type", "risk_level", "description", "context",
+        "status", "requested_at", "expires_at"
+      ]
+    },
+    "tenants": {
+      "status": "VERIFIED",
+      "required_columns": ["id", "slug", "name", "plan", "org_id", "created_at"],
+      "column_notes": {
+        "id": "UUID — '00000000-0000-0000-0000-000000000001' for agency-group tenant"
+      }
+    },
+    "anomaly_baselines": {
+      "status": "VERIFIED",
+      "added_by": "migration 20260521000003_create_materialized_views.sql",
+      "required_columns": ["baseline_key", "ema_value", "sample_count", "last_updated"]
+    },
+    "causal_trace": {
+      "status": "VERIFIED",
+      "added_by": "migration 20260521000003_create_materialized_views.sql",
+      "required_columns": [
+        "id", "correlation_id", "tenant_id", "step_type", "agent_id",
+        "entity_id", "entity_type", "action", "latency_ms", "success",
+        "error_message", "revenue_delta", "metadata", "created_at"
+      ]
+    }
+  },
+  "materialized_views": {
+    "mv_agent_revenue": {
+      "status": "APPLIED",
+      "depends_on": "causal_trace",
+      "unique_index": "mv_agent_revenue_pk ON (agent_id, tenant_id)"
+    },
+    "mv_deal_flow_paths": {
+      "status": "APPLIED",
+      "depends_on": "causal_trace",
+      "unique_index": "mv_deal_flow_paths_pk ON (correlation_id)"
+    },
+    "mv_tenant_graph_stats": {
+      "status": "APPLIED",
+      "depends_on": "causal_trace",
+      "unique_index": "mv_tenant_graph_stats_pk ON (tenant_id)"
+    }
+  },
+  "rpc_functions": {
+    "refresh_graph_views()": {
+      "status": "APPLIED",
+      "security": "SECURITY DEFINER",
+      "granted_to": "service_role",
+      "returns": "jsonb { ok, views_refreshed, duration_ms, refreshed_at }"
+    }
+  },
+  "schema_verifier": {
+    "file": "lib/db/schemaVerifier.ts",
+    "wired_into_startup": true,
+    "startup_file": "instrumentation.ts",
+    "behavior": "Fire-and-forget at startup. Writes P0 incident to Supabase on drift detection.",
+    "tables_monitored": ["deals", "contacts", "kpi_snapshots", "governance_approvals", "tenants", "learning_events"]
+  }
+}
