@@ -318,14 +318,33 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 
           if (['Proposta Enviada', 'Proposta'].includes(fase)) {
             track.proposalSent(basePayload)
+            void emit.proposalSent(
+              { deal_id: dealId ?? null, agent_email: agentEmail, deal_ref: typeof ref === 'string' ? ref : null, fase },
+              { correlation_id: corrId, source_system: 'api' },
+            )
           } else if (['CPCV Assinado', 'CPCV', 'CPCV_assinado'].includes(fase)) {
             track.cpcvSigned(basePayload)
+            void emit.cpcvSigned(
+              {
+                deal_id:    dealId ?? null,
+                agent_email: agentEmail,
+                deal_ref:   typeof ref === 'string' ? ref : null,
+                deal_value: typeof (data as Record<string, unknown>)?.deal_value === 'number'
+                  ? (data as Record<string, unknown>).deal_value as number
+                  : null,
+              },
+              { correlation_id: corrId, source_system: 'api' },
+            )
           } else if (['Escritura Concluída', 'pos_venda'].includes(fase)) {
             track.closed(basePayload)
           } else if (['Perdido', 'Rejeitado', 'lost', 'rejected'].includes(fase)) {
             track.rejected(basePayload)
           } else if (['Visita', 'visita_agendada', 'Visita Agendada'].includes(fase)) {
             track.callBooked(basePayload)
+            void emit.callBooked(
+              { deal_id: dealId ?? null, agent_email: agentEmail, deal_ref: typeof ref === 'string' ? ref : null, fase },
+              { correlation_id: corrId, source_system: 'api' },
+            )
           }
 
           void recordCausalStep({
