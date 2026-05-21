@@ -369,3 +369,192 @@ export class ActiveActiveCoordinator {
 }
 
 export const activeActive = new ActiveActiveCoordinator()
+
+// ─── Region Latency Tracking ──────────────────────────────────────────────────
+
+// In-memory latency samples: Map<region, number[]> (rolling 100-sample window)
+const regionLatencySamples = new Map<string, number[]>()
+const regionErrorCounts    = new Map<string, { errors: number; total: number }>()
+
+function computePercentile(sortedSamples: number[], pct: number): number {
+  if (sortedSamples.length === 0) return 0
+  const idx = Math.ceil(sortedSamples.length * pct / 100) - 1
+  return sortedSamples[Math.max(0, idx)] ?? 0
+}
+
+export async function updateRegionLatency(
+  region: string,
+  latencyMs: number,
+  isError: boolean,
+): Promise<void> {
+  // Update samples (rolling 100-sample window)
+  const samples = regionLatencySamples.get(region) ?? []
+  samples.push(latencyMs)
+  if (samples.length > 100) samples.shift()
+  regionLatencySamples.set(region, samples)
+
+  // Update error counts
+  const counts = regionErrorCounts.get(region) ?? { errors: 0, total: 0 }
+  counts.total += 1
+  if (isError) counts.errors += 1
+  regionErrorCounts.set(region, counts)
+
+  // Every 10th update: persist to region_latency_metrics
+  if (counts.total % 10 === 0) {
+    const sorted = [...samples].sort((a, b) => a - b)
+    const p50 = computePercentile(sorted, 50)
+    const p95 = computePercentile(sorted, 95)
+    const p99 = computePercentile(sorted, 99)
+    const error_rate_pct = counts.total > 0 ? (counts.errors / counts.total) * 100 : 0
+
+    try {
+      await (supabaseAdmin as any)
+        .from('region_latency_metrics')
+        .insert({
+          region,
+          p50_latency_ms:  p50,
+          p95_latency_ms:  p95,
+          p99_latency_ms:  p99,
+          error_rate_pct,
+          sample_count:    samples.length,
+          recorded_at:     new Date().toISOString(),
+        })
+    } catch (err) {
+      log.warn('[ActiveActive] updateRegionLatency persist failed', {
+        region,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+  }
+}
+
+export function getRegionLatencySnapshot(region: string): {
+  p50_latency_ms: number
+  p95_latency_ms: number
+  p99_latency_ms: number
+  error_rate_pct: number
+  sample_count: number
+} | null {
+  const samples = regionLatencySamples.get(region)
+  if (!samples || samples.length === 0) return null
+
+  const sorted = [...samples].sort((a, b) => a - b)
+  const counts = regionErrorCounts.get(region) ?? { errors: 0, total: 0 }
+
+  return {
+    p50_latency_ms:  computePercentile(sorted, 50),
+    p95_latency_ms:  computePercentile(sorted, 95),
+    p99_latency_ms:  computePercentile(sorted, 99),
+    error_rate_pct:  counts.total > 0 ? (counts.errors / counts.total) * 100 : 0,
+    sample_count:    samples.length,
+  }
+}
+
+export function selectOptimalRegion(
+  countryCode: string,
+  options?: { prefer_lowest_latency?: boolean },
+): string {
+  const ALL_REGIONS: Region[] = ['eu-west-1', 'eu-south-1', 'eu-central-1']
+
+  // 1. Use existing country→region mapping
+  const mapped: Region | undefined = COUNTRY_TO_REGION[countryCode.toUpperCase()]
+  const primary = mapped ?? ('eu-west-1' as Region)
+
+  // Collect snapshots for healthy regions
+  const regionSnapshots: Array<{ region: Region; p50: number; p95: number }> = []
+  for (const r of ALL_REGIONS) {
+    const snap = getRegionLatencySnapshot(r)
+    if (snap) {
+      regionSnapshots.push({ region: r, p50: snap.p50_latency_ms, p95: snap.p95_latency_ms })
+    }
+  }
+
+  // 2. If prefer_lowest_latency=true: pick region with lowest p50 among those with data
+  if (options?.prefer_lowest_latency && regionSnapshots.length > 0) {
+    const sorted = [...regionSnapshots].sort((a, b) => a.p50 - b.p50)
+    return sorted[0].region
+  }
+
+  // 3. If primary region's p95 > 500ms: pick lowest-p50 among regions with data
+  const primarySnap = regionSnapshots.find(r => r.region === primary)
+  if (primarySnap && primarySnap.p95 > 500 && regionSnapshots.length > 0) {
+    const sorted = [...regionSnapshots].sort((a, b) => a.p50 - b.p50)
+    return sorted[0].region
+  }
+
+  // 4. Return primary region
+  return primary
+}
+
+// ─── Failover Detection ───────────────────────────────────────────────────────
+
+export async function detectAndTriggerFailover(region: string): Promise<{
+  region: string
+  trigger_reason: 'high_error_rate' | 'high_latency' | 'health_check_failed' | 'manual'
+  triggered_at: string
+  traffic_migrated_to: string
+} | null> {
+  const snap = getRegionLatencySnapshot(region)
+  if (!snap) return null
+
+  const ALL_REGIONS: Region[] = ['eu-west-1', 'eu-south-1', 'eu-central-1']
+
+  let trigger_reason: 'high_error_rate' | 'high_latency' | null = null
+
+  if (snap.error_rate_pct > 10) {
+    trigger_reason = 'high_error_rate'
+  } else if (snap.p95_latency_ms > 2000) {
+    trigger_reason = 'high_latency'
+  }
+
+  if (!trigger_reason) return null
+
+  // Round-robin to next healthy region
+  const currentIdx = ALL_REGIONS.indexOf(region as Region)
+  let traffic_migrated_to = ALL_REGIONS[(currentIdx + 1) % ALL_REGIONS.length]
+  // Try to find one that isn't also degraded
+  for (let i = 1; i <= ALL_REGIONS.length; i++) {
+    const candidate = ALL_REGIONS[(currentIdx + i) % ALL_REGIONS.length]
+    if (candidate !== region) {
+      traffic_migrated_to = candidate
+      break
+    }
+  }
+
+  const triggered_at = new Date().toISOString()
+
+  try {
+    // Update region_status to degraded
+    await (supabaseAdmin as any)
+      .from('region_status')
+      .upsert({ region, status: 'degraded', computed_at: triggered_at }, { onConflict: 'region' })
+
+    // Log to recovery_timelines
+    await (supabaseAdmin as any)
+      .from('recovery_timelines')
+      .insert({
+        incident_id: `auto-failover-${region}-${Date.now()}`,
+        event_type:  'mitigation_started',
+        service:     `region:${region}`,
+        region,
+        description: `Automatic failover triggered: ${trigger_reason}. Traffic migrating to ${traffic_migrated_to}.`,
+        automated:   true,
+        metadata:    { trigger_reason, traffic_migrated_to, snap },
+        occurred_at: triggered_at,
+      })
+  } catch (err) {
+    log.warn('[ActiveActive] detectAndTriggerFailover persist failed', {
+      region,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+
+  log.warn('[ActiveActive] failover triggered', { region, trigger_reason, traffic_migrated_to })
+
+  return {
+    region,
+    trigger_reason,
+    triggered_at,
+    traffic_migrated_to,
+  }
+}

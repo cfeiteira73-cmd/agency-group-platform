@@ -78,6 +78,35 @@ export async function recordDealOutcome(outcome: DealOutcome): Promise<void> {
     } catch (snapErr) {
       log.error('[feedbackLoop] recordDealOutcome — closure snapshot failed (non-critical)', snapErr instanceof Error ? snapErr : undefined, { error: snapErr instanceof Error ? snapErr.message : String(snapErr), deal_id: outcome.dealId })
     }
+
+    // Generate profit label (fire-and-forget, non-critical)
+    if (outcome.outcome === 'closed_won' && outcome.dealValueEur) {
+      const { generateProfitLabel } = await import('@/lib/ml/profitLabels')
+      void generateProfitLabel(outcome.tenantId, outcome.dealId, {
+        gross_deal_value_eur:   outcome.dealValueEur,
+        commission_rate_pct:    outcome.dealValueEur >= 5_000_000 ? 4 : outcome.dealValueEur >= 1_000_000 ? 4.5 : 5,
+        days_to_close:          outcome.daysInPipeline ?? 90,
+        days_on_market:         null,
+        competing_bids_count:   0,
+        final_price_eur:        outcome.dealValueEur,
+        ask_price_eur:          null,
+      }).catch((e: unknown) => log.warn('[feedbackLoop] profitLabel generation failed', { error: e instanceof Error ? e.message : String(e) } as any))
+    }
+
+    // Record RL reward signal (fire-and-forget, non-critical)
+    const { recordReward } = await import('@/lib/ml/rewardFunction')
+    void recordReward(
+      outcome.dealId,
+      '',
+      outcome.tenantId,
+      {
+        won:                          outcome.outcome === 'closed_won',
+        actual_profit_eur:            outcome.dealValueEur ? outcome.dealValueEur * 0.05 : 0,
+        time_to_close_days:           outcome.daysInPipeline ?? 90,
+        expected_time_to_close_days:  90,
+        max_possible_profit_eur:      outcome.dealValueEur ? outcome.dealValueEur * 0.05 : 50_000,
+      }
+    ).catch(() => {})
   } catch (err) {
     log.error('[feedbackLoop] recordDealOutcome — unexpected error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), deal_id: outcome.dealId })
   }

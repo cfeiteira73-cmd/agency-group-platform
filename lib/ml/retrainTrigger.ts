@@ -22,6 +22,7 @@ import { getOrCreateExperiment } from '@/lib/ml/abTestFramework'
 import type { ModelObjective } from '@/lib/ml/modelRegistry'
 import log from '@/lib/logger'
 import { randomUUID } from 'crypto'
+import { getProfitLabelsForTraining } from '@/lib/ml/profitLabels'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -595,4 +596,65 @@ async function _emitRetrainEvent(
       },
       decided_at: new Date().toISOString(),
     })
+}
+
+// ---------------------------------------------------------------------------
+// trainWithProfitLabels
+// Profit-accuracy training: uses label_value (0-1 profit quality) instead of binary win/loss
+// ---------------------------------------------------------------------------
+
+export async function trainWithProfitLabels(
+  tenantId: string,
+  objective: string,
+): Promise<{ weights: Record<string, number>; profit_accuracy: number; trained_on_n: number } | null> {
+  try {
+    const labels = await getProfitLabelsForTraining(tenantId)
+    if (labels.length < 10) {
+      log.warn('[retrainTrigger] trainWithProfitLabels — insufficient profit labels', { count: labels.length, tenantId } as any)
+      return null
+    }
+
+    // Build feature vectors from profit labels
+    const trainingData = labels.map(l => ({
+      features: {
+        profit_margin_pct:          l.profit_margin_pct / 10,   // normalize to ~[0,1]
+        time_efficiency_score:      l.time_efficiency_score / 100,
+        liquidity_efficiency_score: l.liquidity_efficiency_score / 100,
+        competing_bids_count:       Math.min(1, l.competing_bids_count / 10),
+        final_price_vs_ask_pct:     (l.final_price_vs_ask_pct + 20) / 40,  // normalize [-20,20] → [0,1]
+      },
+      label: l.label_value,  // continuous 0-1 target
+    }))
+
+    // Use existing trainInProcess with the profit feature set
+    const result = await trainInProcess(tenantId, `${objective}_profit` as ModelObjective, trainingData.map(d => ({
+      features: d.features,
+      label: d.label >= 0.5 ? 1 : 0,  // binarize for logistic regression
+    })))
+    if (!result) return null
+
+    // Compute profit accuracy (mean absolute error on continuous labels)
+    // Use trained weights to predict, measure MAE against label_value
+    let maeSum = 0
+    for (const d of trainingData) {
+      const featureValues = Object.values(d.features)
+      const featureKeys   = Object.keys(d.features)
+      let logit = result.weights['__bias__'] ?? 0
+      for (let i = 0; i < featureKeys.length; i++) {
+        logit += (result.weights[featureKeys[i]] ?? 0) * (featureValues[i] as number)
+      }
+      const predicted = 1 / (1 + Math.exp(-logit))
+      maeSum += Math.abs(predicted - d.label)
+    }
+    const profit_accuracy = 1 - (maeSum / trainingData.length)  // higher = better
+
+    return {
+      weights:         result.weights,
+      profit_accuracy: Math.max(0, profit_accuracy),
+      trained_on_n:    trainingData.length,
+    }
+  } catch (err) {
+    log.error('[retrainTrigger] trainWithProfitLabels failed', err instanceof Error ? err : undefined, { tenantId } as any)
+    return null
+  }
 }

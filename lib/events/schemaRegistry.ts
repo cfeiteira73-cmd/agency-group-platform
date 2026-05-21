@@ -602,3 +602,130 @@ reg('intelligence-events', 'market_snapshot_generated', {
   'payload.snapshot_date':      { type: 'string',  required: true },
   'payload.tenant_id':          { type: 'string',  required: true },
 })
+
+// =============================================================================
+// Schema evolution — backward compatibility, evolution rules, and stats
+// =============================================================================
+
+// ─── SCHEMA_REGISTRY flat map for event_type → latest EventSchema ─────────────
+// Built lazily from globalSchemaRegistry for O(1) lookups by event_type alone.
+
+function buildEventTypeIndex(): Map<string, EventSchema> {
+  const idx = new Map<string, EventSchema>()
+  for (const schema of globalSchemaRegistry.export()) {
+    const existing = idx.get(schema.event_type)
+    if (!existing || schema.version > existing.version) {
+      idx.set(schema.event_type, schema)
+    }
+  }
+  return idx
+}
+
+// ─── Export 1: validateBackwardCompatibility ─────────────────────────────────
+
+export function validateBackwardCompatibility(
+  eventType: string,
+  incomingPayload: Record<string, unknown>,
+): {
+  compatible:             boolean
+  breaking_changes:       string[]
+  missing_required_fields: string[]
+  extra_fields:           string[]
+} {
+  const idx    = buildEventTypeIndex()
+  const schema = idx.get(eventType)
+
+  if (!schema) {
+    return {
+      compatible:              true,
+      breaking_changes:        [],
+      missing_required_fields: [],
+      extra_fields:            [],
+    }
+  }
+
+  const knownFields      = Object.keys(schema.fields)
+  const requiredFields   = knownFields.filter((k) => schema.fields[k].required)
+
+  const missing_required_fields: string[] = []
+  const breaking_changes:        string[] = []
+
+  for (const field of requiredFields) {
+    const val = incomingPayload[field]
+    if (val === undefined || val === null) {
+      missing_required_fields.push(field)
+      breaking_changes.push(`Required field "${field}" is absent — breaking change`)
+    }
+  }
+
+  const extra_fields = Object.keys(incomingPayload).filter(
+    (k) => !knownFields.includes(k),
+  )
+
+  return {
+    compatible: breaking_changes.length === 0,
+    breaking_changes,
+    missing_required_fields,
+    extra_fields,
+  }
+}
+
+// ─── Export 2: Schema evolution registry ─────────────────────────────────────
+
+interface EvolutionRule {
+  eventType:     string
+  fromVersion:   string
+  toVersion:     string
+  migration:     (payload: Record<string, unknown>) => Record<string, unknown>
+  breakingChange: boolean
+  registeredAt:  string
+}
+
+// In-memory store for evolution rules
+// Key = `${eventType}::${fromVersion}::${toVersion}`
+const evolutionRules = new Map<string, EvolutionRule>()
+
+export function registerSchemaEvolution(
+  eventType:     string,
+  fromVersion:   string,
+  toVersion:     string,
+  migration:     (payload: Record<string, unknown>) => Record<string, unknown>,
+  breakingChange: boolean,
+): void {
+  const key = `${eventType}::${fromVersion}::${toVersion}`
+  evolutionRules.set(key, {
+    eventType,
+    fromVersion,
+    toVersion,
+    migration,
+    breakingChange,
+    registeredAt: new Date().toISOString(),
+  })
+}
+
+export function migratePayload(
+  eventType:   string,
+  fromVersion: string,
+  toVersion:   string,
+  payload:     Record<string, unknown>,
+): Record<string, unknown> {
+  const key  = `${eventType}::${fromVersion}::${toVersion}`
+  const rule = evolutionRules.get(key)
+  if (!rule) return payload
+  return rule.migration(payload)
+}
+
+// ─── Export 3: getSchemaStats ─────────────────────────────────────────────────
+
+export function getSchemaStats(): {
+  total_event_types:    number
+  evolution_rules_count: number
+  registered_at:        string
+} {
+  const idx = buildEventTypeIndex()
+  return {
+    total_event_types:    idx.size,
+    evolution_rules_count: evolutionRules.size,
+    registered_at:        new Date().toISOString(),
+  }
+}

@@ -1,0 +1,53 @@
+# Agency Group — Multi-Cluster Federation Configuration
+# Regions: eu-west-1 (primary), eu-south-1 (secondary), eu-central-1 (tertiary)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: federation-config
+  namespace: ag-federation
+  labels:
+    app: agency-group
+    component: federation
+data:
+  clusters.json: |
+    {
+      "clusters": [
+        {
+          "name": "ag-eu-west-1",
+          "region": "eu-west-1",
+          "role": "primary",
+          "endpoint": "https://api.eu-west-1.ag-cluster.internal",
+          "health_check_interval_seconds": 30,
+          "failover_priority": 1
+        },
+        {
+          "name": "ag-eu-south-1",
+          "region": "eu-south-1",
+          "role": "secondary",
+          "endpoint": "https://api.eu-south-1.ag-cluster.internal",
+          "health_check_interval_seconds": 30,
+          "failover_priority": 2
+        },
+        {
+          "name": "ag-eu-central-1",
+          "region": "eu-central-1",
+          "role": "tertiary",
+          "endpoint": "https://api.eu-central-1.ag-cluster.internal",
+          "health_check_interval_seconds": 30,
+          "failover_priority": 3
+        }
+      ],
+      "federation": {
+        "workload_redistribution": true,
+        "health_sync_interval_seconds": 30,
+        "failover_timeout_seconds": 10,
+        "min_healthy_clusters": 2
+      }
+    }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ag-federation
+  labels:
+    app: agency-group
