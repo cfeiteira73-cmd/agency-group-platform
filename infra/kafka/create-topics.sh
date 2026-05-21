@@ -145,6 +145,55 @@ create_dlq "ai.executed"
 create_dlq "system.failure"
 
 echo ""
+
+# ─── Canonical event topics (master spec) ────────────────────────────────────
+# These are the canonical dot-notation topics from the platform master spec.
+# All use 6 partitions and 30-day retention unless already defined above.
+# DLQ companions added for financial-critical topics.
+
+echo "--- Canonical master-spec topics ---"
+
+# Asset lifecycle
+create_topic "asset.listed"           6  2592000000
+create_topic "asset.normalized"       6  2592000000
+create_topic "asset.scored"           6  2592000000
+create_topic "asset.enriched"         6  2592000000
+
+# Capital / bid book
+create_topic "capital.bid.created"    6  2592000000
+create_topic "capital.bid.updated"    6  2592000000
+create_topic "capital.bid.cancelled"  6  2592000000
+
+# Match lifecycle
+create_topic "match.created"          6  2592000000
+create_topic "match.updated"          6  2592000000
+create_topic "match.executed"         6  2592000000
+
+# Liquidity / price discovery
+create_topic "liquidity.updated"      6  2592000000
+create_topic "price.discovery.updated" 6 2592000000
+
+# Investor lifecycle
+create_topic "investor.registered"    6  2592000000
+create_topic "investor.updated"       6  2592000000
+
+# Revenue
+create_topic "revenue.recognized"     6  2592000000  # already defined above — idempotent
+
+# ML lifecycle
+create_topic "ml.training.started"    3  604800000
+create_topic "ml.training.completed"  3  604800000
+create_topic "ml.model.promoted"      3  604800000
+
+echo ""
+
+# ─── DLQs for canonical financial-critical topics ─────────────────────────────
+echo "--- Canonical DLQ topics ---"
+create_dlq "capital.bid.created"
+create_dlq "deal.closed"           # already created above — idempotent
+create_dlq "revenue.recognized"    # already created above — idempotent
+
+echo ""
 echo "==================================================================="
 echo " All topics created successfully."
 echo " Run: docker exec redpanda-0 rpk topic list --brokers ${BROKER}"
