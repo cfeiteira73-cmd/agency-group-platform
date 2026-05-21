@@ -153,6 +153,14 @@
     {
       "path": "/api/cron/ml-training-sync",
       "schedule": "0 1 * * 0"
+    },
+    {
+      "path": "/api/cron/ingestion-decay",
+      "schedule": "0 4 * * 1"
+    },
+    {
+      "path": "/api/sre/self-heal",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
