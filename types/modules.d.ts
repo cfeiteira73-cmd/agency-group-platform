@@ -119,3 +119,24 @@ declare module '@opentelemetry/exporter-trace-otlp-http' {
     constructor(options?: { url?: string; headers?: Record<string, string> })
   }
 }
+
+declare module 'uuid' {
+  export function v4(): string
+  export function v1(): string
+  export function v3(name: string | Uint8Array, namespace: string | Uint8Array): string
+  export function v5(name: string | Uint8Array, namespace: string | Uint8Array): string
+  export function validate(uuid: string): boolean
+  export function version(uuid: string): number
+  export function parse(uuid: string): Uint8Array
+  export function stringify(arr: Uint8Array): string
+  export const NIL: string
+}
+
+// twilio — optional peer dep (graceful no-op when not installed)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare module 'twilio' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const Twilio: any
+  export default Twilio
+  export = Twilio
+}
