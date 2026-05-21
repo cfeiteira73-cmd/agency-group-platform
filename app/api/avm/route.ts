@@ -7,6 +7,7 @@ import { rateLimit } from '@/lib/rateLimit'
 import { withAI } from '@/lib/ops/withAI'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { isPortalAuth } from '@/lib/portalAuth'
+import { trackAICall } from '@/lib/observability/telemetry'
 
 const AVMSchema = z.object({
   zona:       z.string().optional().default('Lisboa'),
@@ -39,10 +40,13 @@ interface PhotoQualityResult {
   grade: 'A' | 'B' | 'C' | 'D' | 'F'
 }
 
-async function scorePhotos(photos: string[]): Promise<PhotoQualityResult | null> {
+async function scorePhotos(photos: string[], corrId?: string): Promise<PhotoQualityResult | null> {
   if (!photos || photos.length === 0) return null
   const validUrls = photos.filter(u => u.startsWith('http')).slice(0, 8)
   if (validUrls.length === 0) return null
+
+  // --- trackAICall: record start time before the photo scoring AI call ---
+  const _photoAIStart = Date.now()
 
   try {
     const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -77,7 +81,13 @@ grade: A(90+), B(75-89), C(60-74), D(45-59), F(<45)`,
       null,
     )
 
-    if (response === null) return null
+    if (response === null) {
+      void trackAICall('claude-opus-4-5', 0, Date.now() - _photoAIStart, false, corrId)
+      return null
+    }
+
+    const tokens = (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0)
+    void trackAICall('claude-opus-4-5', tokens, Date.now() - _photoAIStart, true, corrId)
 
     const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
     const jsonMatch = text.match(/\{[\s\S]*?\}/)
@@ -88,6 +98,7 @@ grade: A(90+), B(75-89), C(60-74), D(45-59), F(<45)`,
       grade: (['A', 'B', 'C', 'D', 'F'].includes(parsed.grade ?? '') ? parsed.grade : 'C') as PhotoQualityResult['grade'],
     }
   } catch {
+    void trackAICall('claude-opus-4-5', 0, Date.now() - _photoAIStart, false, corrId)
     return null
   }
 }
@@ -575,7 +586,7 @@ export async function POST(req: NextRequest) {
 
     // ── Photo quality scoring (optional — only if photos passed) ──
     const photoResult = body.photos && body.photos.length > 0
-      ? await scorePhotos(body.photos)
+      ? await scorePhotos(body.photos, corrId)
       : null
 
     if (photoResult && photoResult.value_impact_pct !== 0) {

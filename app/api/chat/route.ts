@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { withAIStream } from '@/lib/ops/withAI'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { detectPromptInjection } from '@/lib/security/intrusionDetection'
+import { trackAICall } from '@/lib/observability/telemetry'
 
 export const runtime = 'edge'
 
@@ -353,6 +354,9 @@ export async function POST(req: NextRequest) {
 
     const fullSystemPrompt = BASE_SYSTEM_PROMPT + propertyContext + memoryContext + langHint
 
+    // --- trackAICall: record start time before the AI call ---
+    const _aiCallStart = Date.now()
+
     const stream = await withAIStream(
       'anthropic-opus',
       () => client.messages.create({
@@ -368,6 +372,15 @@ export async function POST(req: NextRequest) {
     const encoder = new TextEncoder()
 
     if (stream === null) {
+      // Circuit breaker fired — record failed AI call
+      void trackAICall(
+        'claude-opus-4-6',
+        0,
+        Date.now() - _aiCallStart,
+        false,
+        corrId,
+      )
+
       const cbFallback = new ReadableStream({
         start(controller) {
           const payload = JSON.stringify({ delta: { text: '\n\n_Serviço IA temporariamente indisponível. Por favor tente novamente em breve._' } })
@@ -394,15 +407,43 @@ export async function POST(req: NextRequest) {
           const sessionData = JSON.stringify({ sessionId })
           controller.enqueue(encoder.encode(`data: ${sessionData}\n\n`))
 
+          let totalInputTokens = 0
+          let totalOutputTokens = 0
+
           for await (const event of stream) {
             if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
               const data = JSON.stringify({ delta: { text: event.delta.text } })
               controller.enqueue(encoder.encode(`data: ${data}\n\n`))
             }
+            // Capture token counts from the message_delta event (stream end)
+            if (event.type === 'message_start' && event.message?.usage) {
+              totalInputTokens = event.message.usage.input_tokens ?? 0
+            }
+            if (event.type === 'message_delta' && event.usage) {
+              totalOutputTokens = event.usage.output_tokens ?? 0
+            }
           }
+
+          // Fire-and-forget AI call telemetry — recorded after stream fully consumed
+          void trackAICall(
+            'claude-opus-4-6',
+            totalInputTokens + totalOutputTokens,
+            Date.now() - _aiCallStart,
+            true,
+            corrId,
+          )
+
           controller.enqueue(encoder.encode('data: [DONE]\n\n'))
           controller.close()
         } catch {
+          // Record failed AI call if stream errors mid-flight
+          void trackAICall(
+            'claude-opus-4-6',
+            0,
+            Date.now() - _aiCallStart,
+            false,
+            corrId,
+          )
           controller.error(new Error('Stream error'))
         }
       }

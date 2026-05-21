@@ -11,3 +11,26 @@ export type { RevenueLineageGraph, LineageNode, LineageEdge } from './revenueLin
 export type { AgentProfitabilityScore } from './agentProfitability'
 export type { OpportunityCostEstimate } from './opportunityCost'
 export type { OrgEconomicBenchmark, ExecutionValueBenchmark } from './economicBenchmarks'
+// Wave 26 — Immutable Financial Audit Ledger + Capital Pipeline Trace
+export {
+  appendEntry,
+  getDealLedger,
+  verifyLedgerIntegrity,
+  computeRevenueReconciliation,
+} from './auditLedger'
+export type {
+  LedgerEntry,
+  LedgerEntryType,
+  AppendEntryInput,
+  RevenueReconciliation,
+  LedgerIntegrityReport,
+} from './auditLedger'
+export {
+  buildPipelineTrace,
+  getConversionFunnelMetrics,
+} from './capitalPipeline'
+export type {
+  CapitalPipelineTrace,
+  PipelineStep,
+  ConversionFunnelMetrics,
+} from './capitalPipeline'

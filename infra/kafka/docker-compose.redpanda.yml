@@ -1,0 +1,175 @@
+version: "3.8"
+name: agency-group-kafka
+
+# =============================================================================
+# Agency Group — 3-Node Redpanda Cluster (KRaft, no Zookeeper)
+# infra/kafka/docker-compose.redpanda.yml
+#
+# Port map:
+#   redpanda-0: Kafka ext 19092 | HTTP Proxy ext 18082 | Schema Registry ext 18081 | Admin 19644
+#   redpanda-1: Kafka ext 19093 | HTTP Proxy ext 18083
+#   redpanda-2: Kafka ext 19094 | HTTP Proxy ext 18084
+#   redpanda-console: http://localhost:8080
+#
+# Replication factor : 3
+# Min ISR            : 2  (set per topic via create-topics.sh)
+# Idempotent produce : enabled
+# Transactions       : enabled
+#
+# Usage:
+#   docker compose -f infra/kafka/docker-compose.redpanda.yml up -d
+#   bash infra/kafka/create-topics.sh
+# =============================================================================
+
+networks:
+  redpanda_network:
+    driver: bridge
+
+volumes:
+  redpanda-0: {}
+  redpanda-1: {}
+  redpanda-2: {}
+
+services:
+
+  # ── Broker 0 — seed / controller node ────────────────────────────────────────
+  redpanda-0:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.11
+    container_name: redpanda-0
+    hostname: redpanda-0
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda-0:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda-0:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda-0:33145
+      - --advertise-rpc-addr redpanda-0:33145
+      - --mode dev-container
+      - --smp 1
+      - --memory 1G
+      - --overprovisioned
+      - --default-log-level=info
+      - --set redpanda.enable_transactions=true
+      - --set redpanda.enable_idempotence=true
+      - --set redpanda.auto_create_topics_enabled=false
+    volumes:
+      - redpanda-0:/var/lib/redpanda/data
+    networks:
+      - redpanda_network
+    ports:
+      - "18081:18081"   # Schema Registry (external)
+      - "18082:18082"   # HTTP Proxy (external)
+      - "19092:19092"   # Kafka API (external) — use in KAFKA_BROKERS=localhost:19092
+      - "19644:9644"    # Admin API
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --brokers localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Broker 1 ──────────────────────────────────────────────────────────────────
+  redpanda-1:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.11
+    container_name: redpanda-1
+    hostname: redpanda-1
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19093
+      - --advertise-kafka-addr internal://redpanda-1:9092,external://localhost:19093
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18083
+      - --advertise-pandaproxy-addr internal://redpanda-1:8082,external://localhost:18083
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18083
+      - --rpc-addr redpanda-1:33145
+      - --advertise-rpc-addr redpanda-1:33145
+      - --seeds redpanda-0:33145
+      - --mode dev-container
+      - --smp 1
+      - --memory 1G
+      - --overprovisioned
+      - --default-log-level=info
+      - --set redpanda.enable_transactions=true
+      - --set redpanda.enable_idempotence=true
+      - --set redpanda.auto_create_topics_enabled=false
+    volumes:
+      - redpanda-1:/var/lib/redpanda/data
+    networks:
+      - redpanda_network
+    ports:
+      - "18083:18083"   # HTTP Proxy (external)
+      - "19093:19093"   # Kafka API (external)
+    depends_on:
+      redpanda-0:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --brokers localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+
+  # ── Broker 2 ──────────────────────────────────────────────────────────────────
+  redpanda-2:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.11
+    container_name: redpanda-2
+    hostname: redpanda-2
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19094
+      - --advertise-kafka-addr internal://redpanda-2:9092,external://localhost:19094
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18084
+      - --advertise-pandaproxy-addr internal://redpanda-2:8082,external://localhost:18084
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18084
+      - --rpc-addr redpanda-2:33145
+      - --advertise-rpc-addr redpanda-2:33145
+      - --seeds redpanda-0:33145
+      - --mode dev-container
+      - --smp 1
+      - --memory 1G
+      - --overprovisioned
+      - --default-log-level=info
+      - --set redpanda.enable_transactions=true
+      - --set redpanda.enable_idempotence=true
+      - --set redpanda.auto_create_topics_enabled=false
+    volumes:
+      - redpanda-2:/var/lib/redpanda/data
+    networks:
+      - redpanda_network
+    ports:
+      - "18084:18084"   # HTTP Proxy (external)
+      - "19094:19094"   # Kafka API (external)
+    depends_on:
+      redpanda-0:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --brokers localhost:9092 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+
+  # ── Redpanda Console — http://localhost:8080 ──────────────────────────────────
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.4.5
+    container_name: redpanda-console
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+    volumes:
+      - ./redpanda-console-config.yaml:/tmp/config.yml:ro
+    networks:
+      - redpanda_network
+    ports:
+      - "8080:8080"
+    depends_on:
+      redpanda-0:
+        condition: service_healthy
+      redpanda-1:
+        condition: service_healthy
+      redpanda-2:
+        condition: service_healthy
+    restart: on-failure

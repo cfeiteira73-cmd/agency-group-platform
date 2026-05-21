@@ -19,6 +19,7 @@ import { WON_STAGES } from '@/lib/constants/pipeline'
 import { getQueueAdapter } from '@/lib/queue/adapter'
 import { recordDealOutcome } from '@/lib/ml/feedbackLoop'
 import { recordRequest as sloRecordRequest } from '@/lib/sre/sloTracker'
+import { appendEntry } from '@/lib/economics/auditLedger'
 
 export const runtime = 'nodejs'
 
@@ -391,6 +392,63 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
             { correlation_id: corrId, source_system: 'api' },
           )
 
+          // ── Immutable audit ledger — stage advanced (fire-and-forget, non-critical) ──
+          void appendEntry({
+            tenant_id:                 tenantId,
+            entry_type:                'deal_stage_advanced',
+            deal_id:                   dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+            property_id:               null,
+            investor_id:               null,
+            lead_id:                   null,
+            agent_id:                  agentEmail,
+            gross_value_eur:           typeof (data as Record<string, unknown>)?.deal_value === 'number'
+              ? (data as Record<string, unknown>).deal_value as number : null,
+            commission_rate_pct:       null,
+            commission_gross_eur:      null,
+            vat_eur:                   null,
+            commission_net_eur:        null,
+            agent_split_eur:           null,
+            agency_split_eur:          null,
+            recognition_pct:           null,
+            cumulative_recognized_pct: null,
+            previous_entry_id:         null,
+            correlation_id:            corrId,
+            recorded_by:               agentEmail ?? 'system',
+            notes:                     `Stage: ${previousFase ?? 'unknown'} → ${fase}`,
+          }).catch((e: unknown) => {
+            console.warn('[deals] ledger stage_advanced entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+          })
+
+          // ── CPCV stage — 50% revenue recognition ──────────────────────────────────
+          if (['CPCV', 'CPCV Assinado', 'CPCV_assinado', 'cpcv_signed', 'Promessa'].includes(fase)) {
+            const cpcvDealValue = typeof (data as Record<string, unknown>)?.deal_value === 'number'
+              ? (data as Record<string, unknown>).deal_value as number : null
+            void appendEntry({
+              tenant_id:                 tenantId,
+              entry_type:                'cpcv_signed',
+              deal_id:                   dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+              property_id:               null,
+              investor_id:               null,
+              lead_id:                   null,
+              agent_id:                  agentEmail,
+              gross_value_eur:           cpcvDealValue,
+              commission_rate_pct:       null,
+              commission_gross_eur:      null,
+              vat_eur:                   null,
+              commission_net_eur:        null,
+              agent_split_eur:           null,
+              agency_split_eur:          null,
+              recognition_pct:           50,
+              cumulative_recognized_pct: 50,
+              previous_entry_id:         null,
+              correlation_id:            corrId,
+              recorded_by:               agentEmail ?? 'system',
+              notes:                     'CPCV signed — 50% revenue recognition',
+            }).catch((e: unknown) => {
+              console.warn('[deals] ledger cpcv_signed entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+            })
+          }
+
           // Shared dealValue used by both WON and LOST outcome branches
           const dealValue = typeof (data as Record<string, unknown>)?.deal_value === 'number'
             ? (data as Record<string, unknown>).deal_value as number
@@ -448,6 +506,67 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               agentEmail:      agentEmail,
               closedAt:        new Date().toISOString(),
             }).catch((e: unknown) => console.warn('[deals] recordDealOutcome failed:', e instanceof Error ? e.message : String(e)))
+
+            // ── Immutable audit ledger — escritura completed (fire-and-forget) ─────────
+            // Tier-based commission rates: standard 5% (<1M), premium 4.5% (1M–5M), institutional 4% (≥5M)
+            const tierRate = dealValue >= 5_000_000 ? 0.040 : dealValue >= 1_000_000 ? 0.045 : 0.050
+            const commGross  = Math.round(dealValue * tierRate * 100) / 100
+            const vatAmt     = Math.round(commGross * 0.23 * 100) / 100
+            const commNet    = Math.round((commGross - vatAmt) * 100) / 100
+            const agencyPct  = dealValue >= 5_000_000 ? 0.60 : dealValue >= 1_000_000 ? 0.55 : 0.50
+            const agencySplit = Math.round(commNet * agencyPct * 100) / 100
+            const agentSplit  = Math.round((commNet - agencySplit) * 100) / 100
+
+            void appendEntry({
+              tenant_id:                 tenantId,
+              entry_type:                'escritura_completed',
+              deal_id:                   dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+              property_id:               null,
+              investor_id:               null,
+              lead_id:                   null,
+              agent_id:                  agentEmail,
+              gross_value_eur:           dealValue,
+              commission_rate_pct:       tierRate * 100,
+              commission_gross_eur:      commGross,
+              vat_eur:                   vatAmt,
+              commission_net_eur:        commNet,
+              agent_split_eur:           agentSplit,
+              agency_split_eur:          agencySplit,
+              recognition_pct:           50,
+              cumulative_recognized_pct: 100,
+              previous_entry_id:         null,
+              correlation_id:            corrId,
+              recorded_by:               agentEmail ?? 'system',
+              notes:                     `Escritura completed — 50% revenue recognition. Stage: ${fase}`,
+            }).catch((e: unknown) => {
+              console.warn('[deals] ledger escritura_completed entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+            })
+
+            // ── Immutable audit ledger — commission calculated (fire-and-forget) ──────
+            void appendEntry({
+              tenant_id:                 tenantId,
+              entry_type:                'commission_calculated',
+              deal_id:                   dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+              property_id:               null,
+              investor_id:               null,
+              lead_id:                   null,
+              agent_id:                  agentEmail,
+              gross_value_eur:           dealValue,
+              commission_rate_pct:       tierRate * 100,
+              commission_gross_eur:      commGross,
+              vat_eur:                   vatAmt,
+              commission_net_eur:        commNet,
+              agent_split_eur:           agentSplit,
+              agency_split_eur:          agencySplit,
+              recognition_pct:           null,
+              cumulative_recognized_pct: 100,
+              previous_entry_id:         null,
+              correlation_id:            corrId,
+              recorded_by:               'system',
+              notes:                     `Commission calculated: ${tierRate * 100}% tier. Gross: €${commGross}. Net: €${commNet}`,
+            }).catch((e: unknown) => {
+              console.warn('[deals] ledger commission_calculated entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+            })
           }
 
           // Emit dealRejected when deal is lost (fire-and-forget)
@@ -471,6 +590,32 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               agentEmail:      agentEmail,
               closedAt:        new Date().toISOString(),
             }).catch((e: unknown) => console.warn('[deals] recordDealOutcome failed:', e instanceof Error ? e.message : String(e)))
+
+            // ── Immutable audit ledger — deal lost / opportunity cost (fire-and-forget) ─
+            void appendEntry({
+              tenant_id:                 tenantId,
+              entry_type:                'deal_lost',
+              deal_id:                   dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+              property_id:               null,
+              investor_id:               null,
+              lead_id:                   null,
+              agent_id:                  agentEmail,
+              gross_value_eur:           dealValue,
+              commission_rate_pct:       null,
+              commission_gross_eur:      null,
+              vat_eur:                   null,
+              commission_net_eur:        null,
+              agent_split_eur:           null,
+              agency_split_eur:          null,
+              recognition_pct:           null,
+              cumulative_recognized_pct: null,
+              previous_entry_id:         null,
+              correlation_id:            corrId,
+              recorded_by:               agentEmail ?? 'system',
+              notes:                     `Deal lost at stage: ${fase}. Lost opportunity value: €${dealValue}`,
+            }).catch((e: unknown) => {
+              console.warn('[deals] ledger deal_lost entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+            })
           }
         }
         // ── Emit dealUpdated for non-stage field changes (fire-and-forget) ──

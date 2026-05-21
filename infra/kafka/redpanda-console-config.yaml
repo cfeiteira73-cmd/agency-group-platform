@@ -1,0 +1,32 @@
+# =============================================================================
+# Redpanda Console Configuration
+# infra/kafka/redpanda-console-config.yaml
+#
+# Mounted into the redpanda-console container at /tmp/config.yml
+# All broker addresses use Docker internal network hostnames.
+# =============================================================================
+
+kafka:
+  brokers:
+    - redpanda-0:9092
+    - redpanda-1:9092
+    - redpanda-2:9092
+  schemaRegistry:
+    enabled: true
+    urls:
+      - "http://redpanda-0:8081"
+
+redpanda:
+  adminApi:
+    enabled: true
+    urls:
+      - "http://redpanda-0:9644"
+      - "http://redpanda-1:9644"
+      - "http://redpanda-2:9644"
+
+# Consumer group lag monitoring
+console:
+  topicDocumentation:
+    enabled: true
+  # Enable extended Redpanda features (transactions, idempotent producers)
+  maxDeserializationPayloadSize: 20000

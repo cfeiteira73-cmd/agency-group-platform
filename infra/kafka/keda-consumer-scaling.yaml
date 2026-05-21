@@ -1,0 +1,164 @@
+# =============================================================================
+# Agency Group — KEDA ScaledObject for Kafka consumer auto-scaling
+# infra/kafka/keda-consumer-scaling.yaml
+#
+# Scales the agency-group-workers Deployment based on Kafka consumer group lag.
+# Requires: KEDA v2.x installed in the cluster, TriggerAuthentication with
+#           Redpanda credentials (or open listeners for internal cluster traffic).
+#
+# Deploy:
+#   kubectl apply -f infra/kafka/keda-consumer-scaling.yaml
+#
+# Prerequisites:
+#   kubectl apply -f https://github.com/kedacore/keda/releases/download/v2.13.1/keda-2.13.1.yaml
+# =============================================================================
+
+---
+# TriggerAuthentication: Kafka broker connection credentials
+# For a cluster without SASL, omit secretTargetRef entries and set no auth.
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: agency-group-kafka-auth
+  namespace: default
+spec:
+  # No SASL required for Redpanda dev-container mode.
+  # Add secretTargetRef entries here for production SASL/SCRAM.
+  # Example:
+  #   secretTargetRef:
+  #     - parameter: sasl
+  #       name: kafka-credentials
+  #       key: sasl_mechanism
+  #     - parameter: username
+  #       name: kafka-credentials
+  #       key: username
+  #     - parameter: password
+  #       name: kafka-credentials
+  #       key: password
+  podIdentity:
+    provider: none
+
+---
+# ScaledObject: revenue-consumers — scale on deal-events lag
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: revenue-consumers-scaler
+  namespace: default
+  labels:
+    app: agency-group-workers
+    consumer-group: revenue-consumers
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agency-group-workers
+  pollingInterval: 30        # seconds between lag checks
+  cooldownPeriod:  300       # seconds to wait after scale-down
+  idleReplicaCount: 0        # scale to 0 when no lag (optional: comment out for always-on)
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  fallback:
+    failureThreshold: 3
+    replicas: 2              # safe fallback replica count on KEDA failure
+  triggers:
+    - type: kafka
+      authenticationRef:
+        name: agency-group-kafka-auth
+      metadata:
+        bootstrapServers: "redpanda-0:9092,redpanda-1:9092,redpanda-2:9092"
+        consumerGroup: revenue-consumers
+        topic: deal-events
+        lagThreshold: "100"        # scale-up when lag > 100 messages per partition
+        activationLagThreshold: "10"
+        offsetResetPolicy: latest
+
+    - type: kafka
+      authenticationRef:
+        name: agency-group-kafka-auth
+      metadata:
+        bootstrapServers: "redpanda-0:9092,redpanda-1:9092,redpanda-2:9092"
+        consumerGroup: revenue-consumers
+        topic: revenue-events
+        lagThreshold: "50"         # stricter — revenue events are high-value
+        activationLagThreshold: "5"
+        offsetResetPolicy: latest
+
+---
+# ScaledObject: scoring-consumers — scale on property-events lag
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: scoring-consumers-scaler
+  namespace: default
+  labels:
+    app: agency-group-workers
+    consumer-group: scoring-consumers
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agency-group-workers
+  pollingInterval: 30
+  cooldownPeriod:  300
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  fallback:
+    failureThreshold: 3
+    replicas: 2
+  triggers:
+    - type: kafka
+      authenticationRef:
+        name: agency-group-kafka-auth
+      metadata:
+        bootstrapServers: "redpanda-0:9092,redpanda-1:9092,redpanda-2:9092"
+        consumerGroup: scoring-consumers
+        topic: property-events
+        lagThreshold: "500"        # property is high-volume, more tolerance
+        activationLagThreshold: "50"
+        offsetResetPolicy: latest
+
+    - type: kafka
+      authenticationRef:
+        name: agency-group-kafka-auth
+      metadata:
+        bootstrapServers: "redpanda-0:9092,redpanda-1:9092,redpanda-2:9092"
+        consumerGroup: scoring-consumers
+        topic: investor-events
+        lagThreshold: "200"
+        activationLagThreshold: "20"
+        offsetResetPolicy: latest
+
+---
+# ScaledObject: ingestion-consumers — scale on lead-events and property ingestion lag
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ingestion-consumers-scaler
+  namespace: default
+  labels:
+    app: agency-group-workers
+    consumer-group: ingestion-consumers
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agency-group-workers
+  pollingInterval: 30
+  cooldownPeriod:  300
+  minReplicaCount: 1
+  maxReplicaCount: 8
+  fallback:
+    failureThreshold: 3
+    replicas: 2
+  triggers:
+    - type: kafka
+      authenticationRef:
+        name: agency-group-kafka-auth
+      metadata:
+        bootstrapServers: "redpanda-0:9092,redpanda-1:9092,redpanda-2:9092"
+        consumerGroup: ingestion-consumers
+        topic: lead-events
+        lagThreshold: "200"
+        activationLagThreshold: "20"
+        offsetResetPolicy: latest

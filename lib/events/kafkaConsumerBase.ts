@@ -10,6 +10,9 @@
 // TypeScript strict — 0 errors
 // =============================================================================
 
+import { dlqProducer, DLQProducer } from './dlqProducer'
+import log from '@/lib/logger'
+
 // ─── Public interfaces ────────────────────────────────────────────────────────
 
 export interface ConsumerConfig {
@@ -176,15 +179,21 @@ export abstract class KafkaConsumerBase {
             )
 
             if (!result.success && !result.retryable) {
-              await this.routeToDlq(topic, key, value, result.error ?? 'non-retryable failure')
+              await this.routeToDlq(
+                topic, partition, message.offset, key, value,
+                result.error ?? 'non-retryable failure', 0,
+              )
             }
           } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err)
-            console.error(
-              `[KafkaConsumer:${this.config.groupId}] unhandled processMessage error:`,
-              errMsg,
+            log.error(
+              `[KafkaConsumer:${this.config.groupId}] unhandled processMessage error`,
+              err instanceof Error ? err : undefined,
+              { topic, partition, offset: message.offset, error: errMsg },
             )
-            await this.routeToDlq(topic, key, value, errMsg)
+            await this.routeToDlq(
+              topic, partition, message.offset, key, value, errMsg, 0,
+            )
           }
         },
       })
@@ -225,30 +234,34 @@ export abstract class KafkaConsumerBase {
   /**
    * Routes a failed message to its DLQ topic (`{originalTopic}.dlq`).
    *
-   * Production note: replace the console.error with a real producer.send() call
-   * to the DLQ topic so messages are durably stored for investigation and replay.
-   * The current implementation logs so no message is silently lost during
-   * early development.
+   * Publishes via dlqProducer (KafkaJS → Supabase fallback).
+   * Never throws — a secondary error during DLQ routing is logged and swallowed
+   * so the consumer offset is still committed and processing continues.
    */
   protected async routeToDlq(
-    topic: string,
-    key: string | null,
-    value: unknown,
-    error: string,
+    topic:     string,
+    partition: number,
+    offset:    string,
+    key:       string | null,
+    value:     unknown,
+    error:     string,
+    retryCount: number,
   ): Promise<void> {
-    const dlqTopic  = `${topic}.dlq`
-    const dlqRecord = JSON.stringify({
-      originalTopic: topic,
-      key,
+    const dlqMsg = DLQProducer.buildDLQMessage(
+      topic,
+      partition,
+      offset,
+      this.config.groupId,
       value,
-      error,
-      failedAt: new Date().toISOString(),
-    })
-
-    console.warn(
-      `[KafkaConsumer:${this.config.groupId}] routing failed message to DLQ → ${dlqTopic}: ${error}`,
+      new Error(error),
+      retryCount,
     )
-    // Durable DLQ record — replace with producer.send() in production
-    console.error(`[DLQ:${dlqTopic}]`, dlqRecord)
+
+    await dlqProducer.publish(dlqMsg)
+      .catch(e => log.error(
+        '[consumer] DLQ publish failed',
+        e instanceof Error ? e : undefined,
+        { topic, event_id: dlqMsg.event_id },
+      ))
   }
 }

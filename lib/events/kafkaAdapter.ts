@@ -14,6 +14,7 @@
 
 import type { AnyPlatformEvent, EventType } from './types'
 import log from '@/lib/logger'
+import { buildEntityPartitionKey, assignPartition, PARTITION_COUNTS } from './partitionStrategy'
 
 // ─── Adapter interface (mirrors bus.ts internal) ──────────────────────────────
 
@@ -121,15 +122,24 @@ export class KafkaEventBusAdapter implements EventBusAdapter {
     if (!this.ready || !this.producer) return
 
     const topic        = eventToTopic(event.event_type)
-    const partitionKey = `${event.tenant_id}:${event.event_id}`
+    const partitionKey = buildEntityPartitionKey(event)
+
+    // Resolve explicit partition number when the topic has a known partition count.
+    // Passing `partition` to KafkaJS bypasses the default murmur2 partitioner and
+    // guarantees entity ordering is consistent with the rest of the platform.
+    const partitionCount = PARTITION_COUNTS[topic]
+    const partition      = partitionCount !== undefined
+      ? assignPartition(partitionKey, partitionCount)
+      : undefined
 
     try {
       await this.producer.send({
         topic,
         messages: [
           {
-            key:     partitionKey,
-            value:   JSON.stringify(event),
+            key:       partitionKey,
+            value:     JSON.stringify(event),
+            partition,
             headers: {
               'event-type':     event.event_type,
               'tenant-id':      event.tenant_id,
