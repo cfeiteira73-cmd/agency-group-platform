@@ -1,0 +1,151 @@
+name: SH-ROS Autonomous Validation
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'   # Daily at 02:00 UTC
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [staging, production]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  typecheck:
+    name: TypeScript Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: node node_modules/typescript/bin/tsc --noEmit
+      - name: Report TS status
+        if: failure()
+        run: echo "::error::TypeScript strict check failed — 0 errors required"
+
+  system-validation:
+    name: Full System Validation
+    runs-on: ubuntu-latest
+    needs: typecheck
+    if: github.ref == 'refs/heads/main' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      - name: Run Full Validation Scan
+        env:
+          INTERNAL_API_SECRET: ${{ secrets.INTERNAL_API_SECRET }}
+          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000' }}
+        run: |
+          curl -f -X POST \
+            -H "x-service-auth: $INTERNAL_API_SECRET" \
+            -H "Content-Type: application/json" \
+            "$NEXT_PUBLIC_BASE_URL/api/validation/full-scan" \
+            | tee /tmp/validation-report.json
+
+          # Extract overall score
+          SCORE=$(cat /tmp/validation-report.json | node -e "
+            const r = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+            const report = r.report || r;
+            process.stdout.write(String(report.overall_score || 0));
+          ")
+
+          echo "Validation Score: $SCORE"
+
+          # Fail if score < 60
+          if [ $(echo "$SCORE < 60" | bc -l) -eq 1 ]; then
+            echo "::error::System validation score $SCORE < 60 — system not validated"
+            exit 1
+          fi
+
+          echo "::notice::System validation score: $SCORE/100"
+
+      - name: Upload Validation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report-${{ github.run_number }}
+          path: /tmp/validation-report.json
+          retention-days: 30
+
+  architecture-lint:
+    name: Architecture Consistency
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      - name: Check for circular dependencies
+        run: |
+          # Check for obvious circular import patterns using grep
+          echo "Scanning for potential circular imports..."
+          # Look for lib/capital importing from lib/market AND lib/market importing from lib/capital
+          CAPITAL_IMPORTS_MARKET=$(grep -r "from '@/lib/market" lib/capital/ --include="*.ts" | wc -l)
+          MARKET_IMPORTS_CAPITAL=$(grep -r "from '@/lib/capital" lib/market/ --include="*.ts" | wc -l)
+          echo "Capital→Market imports: $CAPITAL_IMPORTS_MARKET"
+          echo "Market→Capital imports: $MARKET_IMPORTS_CAPITAL"
+          if [ $CAPITAL_IMPORTS_MARKET -gt 0 ] && [ $MARKET_IMPORTS_CAPITAL -gt 0 ]; then
+            echo "::warning::Potential circular dependency between lib/capital and lib/market"
+          fi
+
+      - name: Verify migration sequence
+        run: |
+          MIGRATIONS=$(ls supabase/migrations/*.sql 2>/dev/null | grep -E '[0-9]{18}' | sort | wc -l)
+          echo "Found $MIGRATIONS numbered migrations"
+          echo "::notice::Migration count: $MIGRATIONS"
+
+  security-scan:
+    name: Security Hardening Check
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for secret patterns in code
+        run: |
+          # Check for hardcoded secrets (not in .env files)
+          echo "Scanning TypeScript files for hardcoded secrets..."
+          # Look for patterns like apiKey = "sk-" or token = "re_" etc.
+          HARDCODED=$(grep -rn --include="*.ts" \
+            -E '(apiKey|api_key|secret|password|token)\s*=\s*"[a-zA-Z0-9_\-]{20,}"' \
+            app/ lib/ \
+            | grep -v "test\|spec\|mock\|example\|placeholder\|PREENCHER" \
+            | grep -v "\.env" | wc -l)
+
+          if [ $HARDCODED -gt 0 ]; then
+            echo "::error::Found $HARDCODED potential hardcoded secrets in TypeScript files"
+            exit 1
+          fi
+          echo "::notice::No hardcoded secrets detected"
+
+      - name: Verify RLS enforcement
+        run: |
+          # Count SQL files that create tables without RLS
+          RLS_MISSING=$(grep -L "ENABLE ROW LEVEL SECURITY" supabase/migrations/*.sql 2>/dev/null | wc -l)
+          if [ $RLS_MISSING -gt 0 ]; then
+            echo "::warning::$RLS_MISSING migration files may be missing RLS — review manually"
+          else
+            echo "::notice::All migration files include RLS statements"
+          fi
