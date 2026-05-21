@@ -9,6 +9,7 @@ import { NextRequest, NextResponse }   from 'next/server'
 import { timingSafeEqual }             from 'crypto'
 import { processNetworkFeedback }      from '@/lib/investors/networkFeedbackProcessor'
 import { computeTopDemandProperties }  from '@/lib/investors/demandScoreEngine'
+import { computeHeatmap, persistHeatmap } from '@/lib/investors/heatmapEngine'
 
 export const runtime = 'nodejs'
 
@@ -66,12 +67,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     demand_tier:  p.demand_tier,
   })))
 
-  // ── 4. Return result ──────────────────────────────────────────────────────────
+  // ── 4. Compute and persist heatmap ───────────────────────────────────────────
+  let heatmapZones = 0
+  try {
+    const heatmapData = await computeHeatmap(tenantId)
+    if (heatmapData.length > 0) {
+      await persistHeatmap(tenantId, heatmapData)
+      heatmapZones = heatmapData.length
+      console.log(`[cron/network-feedback] heatmap computed and persisted — ${heatmapZones} zones`)
+    }
+  } catch (heatmapErr) {
+    // Non-fatal: heatmap failure must not fail the cron
+    console.warn('[cron/network-feedback] heatmap computation failed (non-fatal):', heatmapErr instanceof Error ? heatmapErr.message : String(heatmapErr))
+  }
+
+  // ── 5. Return result ──────────────────────────────────────────────────────────
   return NextResponse.json({
     ok:                    true,
     tenant_id:             tenantId,
     network_feedback:      feedbackResult,
     top_demand_properties: top5,
+    heatmap_zones_updated: heatmapZones,
     duration_ms:           Date.now() - start,
     ran_at:                new Date().toISOString(),
   })

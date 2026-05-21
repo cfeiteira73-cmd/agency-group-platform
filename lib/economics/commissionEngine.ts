@@ -96,24 +96,28 @@ export async function calculateAndPersistCommission(
 ): Promise<CommissionResult> {
   const result = calculateCommission(input)
 
+  const commissionData = {
+    id:                   result.commission_id,
+    tenant_id:            input.tenant_id,
+    deal_id:              input.deal_id,
+    deal_ref:             input.deal_ref ?? null,
+    gross_commission_eur: result.gross_commission_eur,
+    net_commission_eur:   result.net_commission_eur,
+    agency_split_eur:     result.agency_split_eur,
+    agent_split_eur:      result.agent_split_eur,
+    commission_rate:      result.commission_rate,
+    tier:                 result.tier,
+    agent_email:          input.agent_email ?? null,
+    zone:                 input.zone ?? null,
+    status:               'pending',
+    revenue_event_id:     input.correlation_id,
+  }
+
+  // Upsert with ignoreDuplicates — prevents infinite retry loop when duplicate job arrives.
+  // deal_id is the idempotency key: one commission record per deal.
   const { error } = await (supabaseAdmin as any)
     .from('commission_events')
-    .insert({
-      id:                   result.commission_id,
-      tenant_id:            input.tenant_id,
-      deal_id:              input.deal_id,
-      deal_ref:             input.deal_ref ?? null,
-      gross_commission_eur: result.gross_commission_eur,
-      net_commission_eur:   result.net_commission_eur,
-      agency_split_eur:     result.agency_split_eur,
-      agent_split_eur:      result.agent_split_eur,
-      commission_rate:      result.commission_rate,
-      tier:                 result.tier,
-      agent_email:          input.agent_email ?? null,
-      zone:                 input.zone ?? null,
-      status:               'pending',
-      revenue_event_id:     input.correlation_id,
-    })
+    .upsert(commissionData, { onConflict: 'deal_id', ignoreDuplicates: true })
 
   if (error) {
     log.error('[CommissionEngine] persist failed', undefined, { deal_id: input.deal_id, error: error.message })

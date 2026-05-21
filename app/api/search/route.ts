@@ -51,6 +51,7 @@ async function semanticSearch(query: string, filters: SemanticFilters): Promise<
     })
     if (!embRes.ok) return []
     const embData = await embRes.json() as { data: Array<{ embedding: number[] }> }
+    if (!embData?.data?.length) return []
     const embedding = embData.data[0].embedding
 
     const serviceClient = createClient(

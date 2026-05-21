@@ -89,6 +89,7 @@ async function generateEmbedding(text: string): Promise<{ embedding: number[] | 
     }
 
     const data = await res.json() as { data: Array<{ embedding: number[] }> }
+    if (!data?.data?.length) return { embedding: null, error: 'empty embedding response from OpenAI' }
     return { embedding: data.data[0].embedding }
   } catch (e) {
     return { embedding: null, error: e instanceof Error ? e.message : 'unknown error' }

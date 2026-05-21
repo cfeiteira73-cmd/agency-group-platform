@@ -103,6 +103,7 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
     })
     if (!res.ok) return null
     const data = await res.json() as { data: Array<{ embedding: number[] }> }
+    if (!data?.data?.length) return null
     return data.data[0].embedding
   } catch {
     return null

@@ -10,14 +10,15 @@
 // TypeScript strict — 0 errors
 // =============================================================================
 
-import { IdempotentKafkaConsumer }       from '@/lib/events/idempotentConsumer'
-import { type ConsumeResult }            from '@/lib/events/kafkaConsumerBase'
-import { KAFKA_TOPICS, CONSUMER_GROUPS } from '@/lib/events/kafkaTopics'
-import { computePropertyDemandScore }    from '@/lib/investors/demandScoreEngine'
+import { IdempotentKafkaConsumer }                  from '@/lib/events/idempotentConsumer'
+import { type ConsumeResult }                       from '@/lib/events/kafkaConsumerBase'
+import { KAFKA_DOMAIN_TOPICS, CONSUMER_GROUPS }     from '@/lib/events/kafkaTopics'
+import { computePropertyDemandScore }               from '@/lib/investors/demandScoreEngine'
 
-// ─── Expected message shape for property.scored ───────────────────────────────
+// ─── Expected message shape for property_scored events on property-events topic ─
 
 interface PropertyScoredPayload {
+  event_type:  string
   property_id: string
   tenant_id:   string
   score:       number
@@ -39,7 +40,8 @@ export class PropertyEventConsumer extends IdempotentKafkaConsumer {
   constructor() {
     super({
       groupId:  CONSUMER_GROUPS.SCORING,
-      topics:   [KAFKA_TOPICS.PROPERTY_SCORED],
+      // Subscribe to the domain topic that producers actually emit to
+      topics:   [KAFKA_DOMAIN_TOPICS.PROPERTY_EVENTS],
       fromBeginning: false,
       maxRetries: 3,
     })
@@ -52,6 +54,15 @@ export class PropertyEventConsumer extends IdempotentKafkaConsumer {
     _key:      string | null,
     value:     unknown,
   ): Promise<ConsumeResult> {
+    // ── 0. Filter: only process property_scored events ────────────────────────
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !['property_scored', 'property.scored'].includes((value as Record<string, unknown>)['event_type'] as string)
+    ) {
+      return { success: true, retryable: false }
+    }
+
     // ── 1. Schema validation ─────────────────────────────────────────────────
     if (!isPropertyScoredPayload(value)) {
       console.warn(

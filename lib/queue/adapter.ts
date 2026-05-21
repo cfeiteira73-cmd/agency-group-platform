@@ -132,32 +132,30 @@ export class SupabaseQueueAdapter implements QueueAdapter {
   }
 
   /**
-   * SELECT pending messages (scheduled_at <= now()), atomically mark as processing.
+   * Atomically claim pending messages by issuing a single UPDATE ... RETURNING.
+   * Postgres UPDATE acquires row locks, so concurrent callers will claim
+   * non-overlapping sets of rows rather than both claiming the same rows.
    * Returns up to `limit` messages (default 10).
    */
   async dequeue(queue: string, limit = 10): Promise<QueueMessage[]> {
     const now = new Date().toISOString()
 
-    // Read pending messages
-    const { data: rows, error } = await this.db
+    // Atomic claim: UPDATE status → 'running' WHERE status = 'pending', RETURNING *
+    // Two concurrent calls will receive disjoint sets because Postgres row-level
+    // locks prevent both UPDATE statements from touching the same row simultaneously.
+    const { data: claimed, error: claimErr } = await (this.db as any)
       .from('job_queue')
-      .select('*')
+      .update({ status: 'running', started_at: now })
       .eq('job_type', queue)
       .eq('status', 'pending')
       .lte('scheduled_at', now)
       .order('scheduled_at', { ascending: true })
       .limit(limit)
+      .select()
 
-    if (error || !rows || rows.length === 0) return []
+    if (claimErr || !claimed || claimed.length === 0) return []
 
-    const castRows = rows as JobQueueRow[]
-    const ids = castRows.map(r => r.id)
-
-    // Mark as running
-    await this.db
-      .from('job_queue')
-      .update({ status: 'running' })
-      .in('id', ids)
+    const castRows = claimed as JobQueueRow[]
 
     return castRows.map(r => ({
       id: r.id,

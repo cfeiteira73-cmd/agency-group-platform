@@ -22,7 +22,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const sp = req.nextUrl.searchParams
-  const tenantId = sp.get('tenant_id') ?? req.headers.get('x-tenant-id') ?? 'agency-group'
+  const tenantId = sp.get('tenant_id') ?? process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
 
   const filter: AuditQueryFilter = {
     tenant_id:     tenantId,

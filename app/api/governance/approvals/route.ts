@@ -75,7 +75,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const tenantId = req.nextUrl.searchParams.get('tenant_id')
-    ?? req.headers.get('x-tenant-id')
+    ?? process.env.DEFAULT_TENANT_ID
+    ?? process.env.SYSTEM_ORG_ID
     ?? 'agency-group'
 
   const limitParam = req.nextUrl.searchParams.get('limit')

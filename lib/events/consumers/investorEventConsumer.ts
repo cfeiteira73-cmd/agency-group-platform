@@ -9,14 +9,15 @@
 // TypeScript strict — 0 errors
 // =============================================================================
 
-import { IdempotentKafkaConsumer }       from '@/lib/events/idempotentConsumer'
-import { type ConsumeResult }            from '@/lib/events/kafkaConsumerBase'
-import { KAFKA_TOPICS, CONSUMER_GROUPS } from '@/lib/events/kafkaTopics'
-import { recordEngagement }              from '@/lib/investors/watchlistService'
+import { IdempotentKafkaConsumer }                  from '@/lib/events/idempotentConsumer'
+import { type ConsumeResult }                       from '@/lib/events/kafkaConsumerBase'
+import { KAFKA_DOMAIN_TOPICS, CONSUMER_GROUPS }     from '@/lib/events/kafkaTopics'
+import { recordEngagement }                         from '@/lib/investors/watchlistService'
 
-// ─── Expected message shape for investor.matched ──────────────────────────────
+// ─── Expected message shape for investor_matched events on investor-events topic ─
 
 interface InvestorMatchedPayload {
+  event_type:   string
   investor_id:  string
   property_id:  string
   tenant_id:    string
@@ -40,7 +41,8 @@ export class InvestorEventConsumer extends IdempotentKafkaConsumer {
   constructor() {
     super({
       groupId:  CONSUMER_GROUPS.MATCHING,
-      topics:   [KAFKA_TOPICS.INVESTOR_MATCHED],
+      // Subscribe to the domain topic that producers actually emit to
+      topics:   [KAFKA_DOMAIN_TOPICS.INVESTOR_EVENTS],
       fromBeginning: false,
       maxRetries: 5,
     })
@@ -53,6 +55,15 @@ export class InvestorEventConsumer extends IdempotentKafkaConsumer {
     _key:      string | null,
     value:     unknown,
   ): Promise<ConsumeResult> {
+    // ── 0. Filter: only process investor_matched / match_created events ───────
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !['investor_matched', 'investor.matched', 'match_created'].includes((value as Record<string, unknown>)['event_type'] as string)
+    ) {
+      return { success: true, retryable: false }
+    }
+
     // ── 1. Schema validation ─────────────────────────────────────────────────
     if (!isInvestorMatchedPayload(value)) {
       console.warn(

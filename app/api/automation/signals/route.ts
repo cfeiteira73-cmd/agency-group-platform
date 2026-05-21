@@ -503,6 +503,9 @@ const MOCK_SIGNALS: Signal[] = [
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(request)
+  // Auth: require service token (same pattern as POST)
+  const authCheck = await requireServiceAuth(request)
+  if (!authCheck.ok) return authCheck.response
   try {
     const { searchParams } = new URL(request.url)
     const statusFilter   = searchParams.get('status') as SignalStatus | null

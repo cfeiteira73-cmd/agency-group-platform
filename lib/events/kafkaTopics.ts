@@ -39,6 +39,26 @@ export const KAFKA_TOPICS = {
   SYSTEM_RECOVERY:         'system.recovery',
 } as const
 
+// ─── Domain-level topic names (match producer EVENT_TOPIC_MAP in kafkaAdapter.ts) ─
+// Consumers MUST subscribe to these topics — they are what producers actually emit to.
+// The dot-notation names above are per-event-type names used only in TOPIC_CONFIGS for
+// Redpanda/Kafka configuration; producers route all events to domain-level topics.
+
+export const KAFKA_DOMAIN_TOPICS = {
+  DEAL_EVENTS:        'deal-events',
+  REVENUE_EVENTS:     'revenue-events',
+  PROPERTY_EVENTS:    'property-events',
+  INVESTOR_EVENTS:    'investor-events',
+  LEAD_EVENTS:        'lead-events',
+  AI_EVENTS:          'ai-events',
+  SYSTEM_EVENTS:      'system-events',
+  GOVERNANCE_EVENTS:  'governance-events',
+  INTELLIGENCE_EVENTS: 'intelligence-events',
+  PLATFORM_EVENTS:    'platform-events',
+} as const
+
+export type KafkaDomainTopic = typeof KAFKA_DOMAIN_TOPICS[keyof typeof KAFKA_DOMAIN_TOPICS]
+
 export type KafkaTopic = typeof KAFKA_TOPICS[keyof typeof KAFKA_TOPICS]
 
 // ─── Per-topic configuration ──────────────────────────────────────────────────

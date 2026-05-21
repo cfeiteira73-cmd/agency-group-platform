@@ -32,7 +32,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ summaries, count: summaries.length })
     }
 
-    const tid = tenantId ?? req.headers.get('x-tenant-id') ?? 'agency-group'
+    const tid = tenantId ?? process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
     const summary = await aggregateTenantUsage(tid, from, to)
     return NextResponse.json({ summary })
   } catch (err) {

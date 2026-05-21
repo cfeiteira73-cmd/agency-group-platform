@@ -10,12 +10,13 @@
 
 import { IdempotentKafkaConsumer } from '@/lib/events/idempotentConsumer'
 import { type ConsumeResult }       from '@/lib/events/kafkaConsumerBase'
-import { KAFKA_TOPICS, CONSUMER_GROUPS } from '@/lib/events/kafkaTopics'
+import { KAFKA_DOMAIN_TOPICS, CONSUMER_GROUPS } from '@/lib/events/kafkaTopics'
 import { recordDealOutcome }        from '@/lib/ml/feedbackLoop'
 
-// ─── Expected message shape for deal.closed ───────────────────────────────────
+// ─── Expected message shape for deal_closed events on deal-events topic ──────
 
 interface DealClosedPayload {
+  event_type:     string
   deal_id:        string
   tenant_id:      string
   deal_value_eur: number | null
@@ -37,7 +38,8 @@ export class DealEventConsumer extends IdempotentKafkaConsumer {
   constructor() {
     super({
       groupId:  CONSUMER_GROUPS.REVENUE,
-      topics:   [KAFKA_TOPICS.DEAL_CLOSED],
+      // Subscribe to the domain topic that producers actually emit to
+      topics:   [KAFKA_DOMAIN_TOPICS.DEAL_EVENTS],
       fromBeginning: false,
       maxRetries: 3,
     })
@@ -50,6 +52,16 @@ export class DealEventConsumer extends IdempotentKafkaConsumer {
     _key:      string | null,
     value:     unknown,
   ): Promise<ConsumeResult> {
+    // ── 0. Filter: only process deal_closed events ────────────────────────────
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      !['deal_closed', 'deal.closed'].includes((value as Record<string, unknown>)['event_type'] as string)
+    ) {
+      // Not a deal_closed event — skip silently (other event types on this topic)
+      return { success: true, retryable: false }
+    }
+
     // ── 1. Schema validation ─────────────────────────────────────────────────
     if (!isDealClosedPayload(value)) {
       console.warn(

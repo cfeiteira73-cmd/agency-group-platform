@@ -80,8 +80,10 @@ export async function recordRequest(
 
   requestBuffer.set(key, buf)
 
-  // Flush to DB every 100 requests (fire-and-forget)
-  if (buf.length % 100 === 0) {
+  const bufLen = buf.length
+
+  // Flush '1m' window to DB every 100 requests (fire-and-forget)
+  if (bufLen % 100 === 0) {
     const now = new Date()
     const windowStart = new Date(now.getTime() - 60_000)
     const windowSamples = buf.filter(s => s.timestamp >= windowStart.getTime())
@@ -99,7 +101,49 @@ export async function recordRequest(
       p50LatencyMs: computePercentile(latencies, 50),
       p95LatencyMs: computePercentile(latencies, 95),
       p99LatencyMs: computePercentile(latencies, 99),
-    }).catch(err => log.warn('[SloTracker] persist failed', { error: err instanceof Error ? err.message : String(err) }))
+    }).catch(err => log.warn('[SloTracker] 1m persist failed', { error: err instanceof Error ? err.message : String(err) }))
+  }
+
+  // Flush '24h' window to DB every 500 requests (fire-and-forget)
+  // This ensures 7d/30d aggregations have fresh 24h data to roll up from.
+  if (bufLen % 500 === 0) {
+    const now = new Date()
+    const windowStart24h = new Date(now.getTime() - 24 * 60 * 60_000)
+    const samples24h = buf.filter(s => s.timestamp >= windowStart24h.getTime())
+    const success24h = samples24h.filter(s => s.success).length
+    const latencies24h = samples24h.map(s => s.latencyMs)
+
+    void persistSloMeasurement(tenantId, {
+      service,
+      windowType: '24h',
+      windowStart: windowStart24h,
+      windowEnd: now,
+      totalRequests: samples24h.length,
+      successfulRequests: success24h,
+      errorRequests: samples24h.length - success24h,
+      p50LatencyMs: computePercentile(latencies24h, 50),
+      p95LatencyMs: computePercentile(latencies24h, 95),
+      p99LatencyMs: computePercentile(latencies24h, 99),
+    }).catch(err => log.warn('[SloTracker] 24h persist failed', { error: err instanceof Error ? err.message : String(err) }))
+
+    // Also flush '7d' window from the full buffer (capped at MAX_BUFFER = 1000 samples)
+    const windowStart7d = new Date(now.getTime() - 7 * 24 * 60 * 60_000)
+    const samples7d = buf.filter(s => s.timestamp >= windowStart7d.getTime())
+    const success7d = samples7d.filter(s => s.success).length
+    const latencies7d = samples7d.map(s => s.latencyMs)
+
+    void persistSloMeasurement(tenantId, {
+      service,
+      windowType: '7d',
+      windowStart: windowStart7d,
+      windowEnd: now,
+      totalRequests: samples7d.length,
+      successfulRequests: success7d,
+      errorRequests: samples7d.length - success7d,
+      p50LatencyMs: computePercentile(latencies7d, 50),
+      p95LatencyMs: computePercentile(latencies7d, 95),
+      p99LatencyMs: computePercentile(latencies7d, 99),
+    }).catch(err => log.warn('[SloTracker] 7d persist failed', { error: err instanceof Error ? err.message : String(err) }))
   }
 }
 

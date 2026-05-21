@@ -59,8 +59,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const provider: Provider = rawProvider
 
   // ── Coerce other fields ───────────────────────────────────────────────────────
-  const limit    = typeof body.limit     === 'number' ? body.limit     : 50
-  const tenantId = typeof body.tenant_id === 'string' ? body.tenant_id : 'agency-group'
+  const limit    = typeof body.limit === 'number' ? body.limit : 50
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
 
   // ── Build run ID ──────────────────────────────────────────────────────────────
   const runId  = `ingest-${Date.now()}`

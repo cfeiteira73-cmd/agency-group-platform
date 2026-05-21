@@ -9,6 +9,7 @@
 // =============================================================================
 
 import { supabaseAdmin } from '@/lib/supabase'
+import { recordInvestorOutcome } from '@/lib/ml/feedbackLoop'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -156,6 +157,23 @@ export async function recordEngagement(event: EngagementEvent): Promise<void> {
       investorId: event.investorId,
       eventType:  event.eventType,
     })
+  }
+
+  // Wire recordInvestorOutcome for high-value engagement events (offer_made / deal_closed)
+  // Fire-and-forget: failure must not block the primary engagement recording
+  if (['offer_made', 'deal_closed'].includes(event.eventType) && event.propertyId) {
+    void recordInvestorOutcome({
+      investorId:         event.investorId,
+      propertyId:         event.propertyId,
+      tenantId:           event.tenantId,
+      outcome:            event.eventType === 'deal_closed' ? 'closed_won' : 'converted',
+      matchScore:         event.matchScore ?? 0,
+      responseTimeHours:  event.responseTimeHours ?? null,
+      occurredAt:         new Date().toISOString(),
+    }).catch((e: unknown) => console.warn(
+      '[WatchlistService] recordInvestorOutcome failed:',
+      e instanceof Error ? e.message : String(e),
+    ))
   }
 }
 

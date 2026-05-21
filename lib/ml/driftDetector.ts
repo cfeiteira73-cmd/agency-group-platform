@@ -148,11 +148,11 @@ export async function detectDrift(
     // Fetch baseline window: 30d ago → 7d ago
     const { data: baselineData, error: baselineErr } = await (supabaseAdmin as any)
       .from('ml_predictions')
-      .select('score, created_at')
+      .select('score, predicted_at')
       .eq('tenant_id', tenantId)
       .eq('prediction_type', predictionType)
-      .gte('created_at', thirtyDaysAgo)
-      .lt('created_at', sevenDaysAgo)
+      .gte('predicted_at', thirtyDaysAgo)
+      .lt('predicted_at', sevenDaysAgo)
       .limit(5000)
 
     if (baselineErr) {
@@ -163,10 +163,10 @@ export async function detectDrift(
     // Fetch current window: last 7 days
     const { data: currentData, error: currentErr } = await (supabaseAdmin as any)
       .from('ml_predictions')
-      .select('score, created_at')
+      .select('score, predicted_at')
       .eq('tenant_id', tenantId)
       .eq('prediction_type', predictionType)
-      .gte('created_at', sevenDaysAgo)
+      .gte('predicted_at', sevenDaysAgo)
       .limit(5000)
 
     if (currentErr) {
@@ -174,8 +174,8 @@ export async function detectDrift(
       return insufficientResult
     }
 
-    const baselineRows: { score: number; created_at: string }[] = baselineData ?? []
-    const currentRows:  { score: number; created_at: string }[] = currentData  ?? []
+    const baselineRows: { score: number; predicted_at: string }[] = baselineData ?? []
+    const currentRows:  { score: number; predicted_at: string }[] = currentData  ?? []
 
     // Require at least 10 records in each window
     if (baselineRows.length < 10 || currentRows.length < 10) {

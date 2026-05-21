@@ -56,7 +56,7 @@ const VALID_FASES = [
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const corrId    = getRequestCorrelationId(req)
-  const tenantId  = req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+  const tenantId  = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const _sloStart = Date.now()
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
@@ -156,7 +156,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(req)
   const _sloStartPost = Date.now()
-  const _sloTenantPost = req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+  const _sloTenantPost = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -211,7 +211,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           property_id: typeof body.property_id === 'string' ? body.property_id : null,
           agent_id:    typeof body.agent_id === 'string'    ? body.agent_id     : null,
           // Economics-critical columns
-          tenant_id:            req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
+          tenant_id:            _sloTenantPost,
           assigned_consultant:  (session?.user as { email?: string })?.email ?? null,
           probability:          STAGE_PROBABILITY[faseStr] ?? 0.05,
           actual_close_date:    CLOSED_FASE_VALUES.includes(faseStr) ? new Date().toISOString() : null,
@@ -233,7 +233,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         // Causal trace step for deal creation
         recordCausalStep({
           correlation_id: corrId2,
-          tenant_id:      req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
+          tenant_id:      _sloTenantPost,
           step_type:      'db_mutation',
           entity_type:    'deal',
           entity_id:      data.id ?? undefined,
@@ -280,7 +280,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
 export async function PUT(req: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(req)
-  const tenantId = req.headers.get('x-tenant-id') ?? process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -381,7 +381,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
           void emit.dealStageAdvanced(
             {
               deal_id:     dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
-              from_stage:  null,  // previous stage not fetched before update — omitted intentionally
+              from_stage:  previousFase ?? null,
               to_stage:    fase,
               agent_email: agentEmail,
               deal_value:  typeof (data as Record<string, unknown>)?.deal_value === 'number'
@@ -532,7 +532,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       // Supabase unavailable
     }
 
-    return NextResponse.json({ success: true, message: 'Deal deleted (mock)', source: 'mock' }, { headers: rateLimitHeaders() })
+    return NextResponse.json({ error: 'Service unavailable — deal not deleted' }, { status: 503, headers: rateLimitHeaders() })
   } catch (error) {
     console.error('[deals DELETE]', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
