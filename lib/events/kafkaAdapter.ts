@@ -13,6 +13,7 @@
 // =============================================================================
 
 import type { AnyPlatformEvent, EventType } from './types'
+import log from '@/lib/logger'
 
 // ─── Adapter interface (mirrors bus.ts internal) ──────────────────────────────
 
@@ -109,10 +110,10 @@ export class KafkaEventBusAdapter implements EventBusAdapter {
       })
       await this.producer.connect()
       this.ready = true
-      console.log(`[KafkaAdapter] connected to ${this.brokers.join(',')}`)
+      log.info(`[KafkaAdapter] connected to ${this.brokers.join(',')}`)
     } catch (err) {
       // Non-fatal: event bus degrades to in-memory/Supabase
-      console.error('[KafkaAdapter] connection failed — events will not reach Kafka:', err instanceof Error ? err.message : String(err))
+      log.error('[KafkaAdapter] connection failed — events will not reach Kafka', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), brokers: this.brokers.join(',') })
     }
   }
 
@@ -140,10 +141,11 @@ export class KafkaEventBusAdapter implements EventBusAdapter {
       })
     } catch (err) {
       // Fire-and-forget: never propagate Kafka errors to callers
-      console.error('[KafkaAdapter] publish error', {
+      log.error('[KafkaAdapter] publish error', err instanceof Error ? err : undefined, {
         topic,
-        event_type: event.event_type,
-        err: err instanceof Error ? err.message : String(err),
+        event_type:    event.event_type,
+        correlation_id: event.correlation_id,
+        error:         err instanceof Error ? err.message : String(err),
       })
     }
   }

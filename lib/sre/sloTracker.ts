@@ -3,6 +3,7 @@
 // TypeScript strict — 0 errors
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 // ─── In-memory ring buffer per service ───────────────────────────────────────
 
@@ -98,7 +99,7 @@ export async function recordRequest(
       p50LatencyMs: computePercentile(latencies, 50),
       p95LatencyMs: computePercentile(latencies, 95),
       p99LatencyMs: computePercentile(latencies, 99),
-    }).catch(err => console.warn('[SloTracker] persist failed:', err instanceof Error ? err.message : String(err)))
+    }).catch(err => log.warn('[SloTracker] persist failed', { error: err instanceof Error ? err.message : String(err) }))
   }
 }
 
@@ -229,9 +230,9 @@ export async function persistSloMeasurement(
       })
 
     if (error) {
-      console.warn('[SloTracker] persistSloMeasurement error:', error.message)
+      log.warn('[SloTracker] persistSloMeasurement error', { error: error.message, service: measurement.service })
     }
   } catch (err) {
-    console.warn('[SloTracker] persistSloMeasurement threw:', err instanceof Error ? err.message : String(err))
+    log.warn('[SloTracker] persistSloMeasurement threw', { error: err instanceof Error ? err.message : String(err), service: measurement.service })
   }
 }

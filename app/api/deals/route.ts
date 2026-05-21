@@ -18,6 +18,7 @@ import { recordCausalStep } from '@/lib/observability/causalTrace'
 import { WON_STAGES } from '@/lib/constants/pipeline'
 import { getQueueAdapter } from '@/lib/queue/adapter'
 import { recordDealOutcome } from '@/lib/ml/feedbackLoop'
+import { recordRequest as sloRecordRequest } from '@/lib/sre/sloTracker'
 
 export const runtime = 'nodejs'
 
@@ -56,6 +57,7 @@ const VALID_FASES = [
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const corrId    = getRequestCorrelationId(req)
   const tenantId  = req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+  const _sloStart = Date.now()
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -114,7 +116,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           propertyId: row.property_id || null,
         }))
 
-        return NextResponse.json({
+        const _dealGetResponse = NextResponse.json({
           data:   mapped,
           total:  count ?? mapped.length,
           page,
@@ -122,6 +124,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           pages:  Math.ceil((count ?? mapped.length) / limit),
           source: 'supabase',
         }, { headers: rateLimitHeaders() })
+        void sloRecordRequest(tenantId, 'api', true, Date.now() - _sloStart).catch(() => {})
+        return _dealGetResponse
       }
     } catch {
       // Supabase unavailable — fall through to mock
@@ -140,6 +144,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }, { status: 200, headers: rateLimitHeaders() })
   } catch (error) {
     console.error('[deals GET]', error, { corrId })
+    void sloRecordRequest(tenantId, 'api', false, Date.now() - _sloStart).catch(() => {})
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
 }
@@ -150,6 +155,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(req)
+  const _sloStartPost = Date.now()
+  const _sloTenantPost = req.headers.get('x-tenant-id') ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -246,6 +253,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           },
           { correlation_id: corrId2, source_system: 'api' },
         )
+        void sloRecordRequest(_sloTenantPost, 'api', true, Date.now() - _sloStartPost).catch(() => {})
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { status: 201, headers: rateLimitHeaders() })
       }
       if (error) console.warn('[deals POST] Supabase error:', error.message)
@@ -261,6 +269,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     )
   } catch (error) {
     console.error('[deals POST]', error, { corrId })
+    void sloRecordRequest(_sloTenantPost, 'api', false, Date.now() - _sloStartPost).catch(() => {})
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
 }

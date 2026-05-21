@@ -3,6 +3,7 @@
 // TypeScript strict — 0 errors
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -345,10 +346,10 @@ export async function logRecoveryEvent(
       })
 
     if (error) {
-      console.error('[DR] logRecoveryEvent error:', error.message)
+      log.error('[DR] logRecoveryEvent error', undefined, { error: error.message, incident_id: event.incidentId, service: event.service })
     }
   } catch (err) {
-    console.error('[DR] logRecoveryEvent threw:', err instanceof Error ? err.message : String(err))
+    log.error('[DR] logRecoveryEvent threw', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), incident_id: event.incidentId, service: event.service })
   }
 }
 
@@ -411,7 +412,7 @@ export async function getRecoveryTimeline(
 
     return { incidentId, events, totalRecoveryMs }
   } catch (err) {
-    console.error('[DR] getRecoveryTimeline error:', err instanceof Error ? err.message : String(err))
+    log.error('[DR] getRecoveryTimeline error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), incident_id: incidentId })
     return { incidentId, events: [], totalRecoveryMs: null }
   }
 }

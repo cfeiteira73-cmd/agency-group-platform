@@ -11,6 +11,7 @@ import { randomUUID } from 'crypto'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 import type { AnyPlatformEvent, BaseEvent, EventType } from './types'
 
 // ─── Poison-event guard ───────────────────────────────────────────────────────
@@ -65,20 +66,18 @@ async function dlqPush(event: AnyPlatformEvent, originalError: string): Promise<
         created_at: event.occurred_at,
       })
     if (dlqError) {
-      // DLQ write also failed — last resort: structured console log
-      console.error('[EventBus][DLQ] failed to write DLQ entry', {
+      // DLQ write also failed — last resort: structured log
+      log.error('[EventBus][DLQ] failed to write DLQ entry', undefined, {
         event_type:     event.event_type,
-        event_id:       event.event_id,
         dlq_error:      dlqError.message,
         original_error: originalError,
       })
     }
   } catch (err) {
     // Absolute safety — never propagate from DLQ path
-    console.error('[EventBus][DLQ] unexpected error', {
+    log.error('[EventBus][DLQ] unexpected error', err instanceof Error ? err : undefined, {
       event_type:     event.event_type,
-      event_id:       event.event_id,
-      err:            err instanceof Error ? err.message : String(err),
+      error:          err instanceof Error ? err.message : String(err),
       original_error: originalError,
     })
   }
@@ -104,7 +103,7 @@ class SupabaseEventAdapter implements EventBusAdapter {
       })
     if (error) {
       // Structured error — never throw, never block
-      console.error('[EventBus] publish failed', { event_type: event.event_type, error: error.message })
+      log.error('[EventBus] publish failed', undefined, { event_type: event.event_type, correlation_id: event.correlation_id, error: error.message })
       // DLQ: store failed event for manual replay or automated retry
       void dlqPush(event, error.message)
     }
@@ -176,9 +175,8 @@ class EventBus {
     try {
       // Poison-event guard — skip publishing and log, never throw
       if (isEventPoisoned(event)) {
-        console.warn('[EventBus] poisoned event dropped', {
+        log.warn('[EventBus] poisoned event dropped', {
           event_type: (event as Partial<AnyPlatformEvent>).event_type ?? 'unknown',
-          event_id:   (event as Partial<AnyPlatformEvent>).event_id   ?? 'unknown',
         })
         return
       }
@@ -191,7 +189,7 @@ class EventBus {
       void this.adapter.publish(event)
     } catch (err) {
       // Absolute safety — never propagate, but log so silent drops are visible
-      console.warn('[EventBus] publish error (event dropped):', err instanceof Error ? err.message : err)
+      log.warn('[EventBus] publish error (event dropped)', { error: err instanceof Error ? err.message : String(err) })
     }
   }
 
@@ -238,7 +236,7 @@ class EventBus {
         published_at:    event.occurred_at ?? new Date().toISOString(),
       })
       .then(({ error }: { error: { message: string } | null }) => {
-        if (error) console.warn('[event-bus] event_history insert failed:', error.message)
+        if (error) log.warn('[event-bus] event_history insert failed', { error: error.message })
       })
   }
 

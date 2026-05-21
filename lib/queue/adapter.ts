@@ -38,36 +38,39 @@ export interface QueueAdapter {
   getQueueDepth(queue: string): Promise<number>
 }
 
-// ─── DDL Reference (apply via Supabase migration) ────────────────────────────
+// ─── DDL Reference (migration 20260502_004_production_hardening.sql) ─────────
 //
 // CREATE TABLE job_queue (
 //   id uuid primary key default gen_random_uuid(),
-//   queue text not null,
+//   job_type text not null,
 //   payload jsonb not null,
 //   tenant_id text not null default 'agency-group',
 //   correlation_id text,
-//   attempt int not null default 1,
+//   attempts int not null default 0,
 //   max_attempts int not null default 3,
-//   status text not null default 'pending', -- pending|processing|done|failed
+//   status text not null default 'pending', -- pending/running/completed/failed/dead
 //   error text,
+//   next_retry_at timestamptz,
 //   scheduled_at timestamptz not null default now(),
 //   processed_at timestamptz,
 //   created_at timestamptz not null default now()
 // );
-// CREATE INDEX idx_job_queue_pending ON job_queue(queue, scheduled_at) WHERE status = 'pending';
+// CREATE INDEX idx_jq_status_retry ON job_queue(status, next_retry_at ASC) WHERE status IN ('pending','failed');
+// CREATE INDEX idx_jq_job_type ON job_queue(job_type, created_at DESC);
 
 // ─── Row shape matching the DDL above ─────────────────────────────────────────
 
 interface JobQueueRow {
   id: string
-  queue: string
+  job_type: string
   payload: unknown
   tenant_id: string
   correlation_id: string | null
-  attempt: number
+  attempts: number
   max_attempts: number
-  status: 'pending' | 'processing' | 'done' | 'failed'
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'dead'
   error: string | null
+  next_retry_at: string | null
   scheduled_at: string
   processed_at: string | null
   created_at: string
@@ -106,7 +109,7 @@ export class SupabaseQueueAdapter implements QueueAdapter {
       : new Date().toISOString()
 
     const row = {
-      queue,
+      job_type: queue,
       payload: payload as Record<string, unknown>,
       tenant_id: options.tenant_id ?? process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
       correlation_id: options.correlation_id ?? null,
@@ -139,7 +142,7 @@ export class SupabaseQueueAdapter implements QueueAdapter {
     const { data: rows, error } = await this.db
       .from('job_queue')
       .select('*')
-      .eq('queue', queue)
+      .eq('job_type', queue)
       .eq('status', 'pending')
       .lte('scheduled_at', now)
       .order('scheduled_at', { ascending: true })
@@ -150,19 +153,19 @@ export class SupabaseQueueAdapter implements QueueAdapter {
     const castRows = rows as JobQueueRow[]
     const ids = castRows.map(r => r.id)
 
-    // Mark as processing
+    // Mark as running
     await this.db
       .from('job_queue')
-      .update({ status: 'processing' })
+      .update({ status: 'running' })
       .in('id', ids)
 
     return castRows.map(r => ({
       id: r.id,
-      queue: r.queue,
+      queue: r.job_type,
       payload: r.payload,
       tenant_id: r.tenant_id,
       correlation_id: r.correlation_id ?? '',
-      attempt: r.attempt,
+      attempt: r.attempts,
       max_attempts: r.max_attempts,
       scheduled_at: r.scheduled_at,
       created_at: r.created_at,
@@ -175,7 +178,7 @@ export class SupabaseQueueAdapter implements QueueAdapter {
   async ack(messageId: string): Promise<void> {
     const { error } = await this.db
       .from('job_queue')
-      .update({ status: 'done', processed_at: new Date().toISOString() })
+      .update({ status: 'completed', processed_at: new Date().toISOString() })
       .eq('id', messageId)
 
     if (error) {
@@ -192,7 +195,7 @@ export class SupabaseQueueAdapter implements QueueAdapter {
     // Fetch current state
     const { data: row, error: fetchErr } = await this.db
       .from('job_queue')
-      .select('attempt, max_attempts')
+      .select('attempts, max_attempts')
       .eq('id', messageId)
       .single()
 
@@ -200,17 +203,17 @@ export class SupabaseQueueAdapter implements QueueAdapter {
       throw new Error(`SupabaseQueueAdapter.nack — could not fetch row ${messageId}: ${fetchErr?.message ?? 'no data'}`)
     }
 
-    const castRow = row as Pick<JobQueueRow, 'attempt' | 'max_attempts'>
-    const nextAttempt = castRow.attempt + 1
+    const castRow = row as Pick<JobQueueRow, 'attempts' | 'max_attempts'>
+    const nextAttempt = castRow.attempts + 1
     const canRetry = nextAttempt <= castRow.max_attempts
 
     if (canRetry) {
-      // Exponential back-off: 2^attempt × 5s
-      const delayMs = Math.pow(2, castRow.attempt) * 5000
+      // Exponential back-off: 2^attempts × 5s
+      const delayMs = Math.pow(2, castRow.attempts) * 5000
       const retryAt = new Date(Date.now() + delayMs).toISOString()
       await this.db
         .from('job_queue')
-        .update({ status: 'pending', attempt: nextAttempt, scheduled_at: retryAt, error: error ?? null })
+        .update({ status: 'pending', attempts: nextAttempt, next_retry_at: retryAt, error: error ?? null })
         .eq('id', messageId)
     } else {
       await this.db
@@ -227,7 +230,7 @@ export class SupabaseQueueAdapter implements QueueAdapter {
     const { count, error } = await this.db
       .from('job_queue')
       .select('id', { count: 'exact', head: true })
-      .eq('queue', queue)
+      .eq('job_type', queue)
       .eq('status', 'pending')
 
     if (error) return 0

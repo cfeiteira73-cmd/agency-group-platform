@@ -7,6 +7,7 @@
 // Higher demand = higher priority in routing = reduces days-to-match.
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -63,7 +64,7 @@ export async function computePropertyDemandScore(
       .eq('tenant_id', tenantId)
 
     if (wErr) {
-      console.error('[DemandScoreEngine] watchlist count error:', wErr.message, { propertyId })
+      log.error('[DemandScoreEngine] watchlist count error', undefined, { error: wErr.message, property_id: propertyId })
     }
 
     // ── 2. Match view count ────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ export async function computePropertyDemandScore(
       .eq('tenant_id', tenantId)
 
     if (mvErr) {
-      console.error('[DemandScoreEngine] match_view count error:', mvErr.message, { propertyId })
+      log.error('[DemandScoreEngine] match_view count error', undefined, { error: mvErr.message, property_id: propertyId })
     }
 
     // ── 3. Offer count ─────────────────────────────────────────────────────────
@@ -87,7 +88,7 @@ export async function computePropertyDemandScore(
       .eq('tenant_id', tenantId)
 
     if (oErr) {
-      console.error('[DemandScoreEngine] offer count error:', oErr.message, { propertyId })
+      log.error('[DemandScoreEngine] offer count error', undefined, { error: oErr.message, property_id: propertyId })
     }
 
     // ── 4. Zone heat index ─────────────────────────────────────────────────────
@@ -150,7 +151,7 @@ export async function computePropertyDemandScore(
       computed_at:      new Date().toISOString(),
     }
   } catch (err) {
-    console.error('[DemandScoreEngine] computePropertyDemandScore exception:', err, { propertyId, tenantId })
+    log.error('[DemandScoreEngine] computePropertyDemandScore exception', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), property_id: propertyId })
     return blank
   }
 }
@@ -176,7 +177,7 @@ export async function computeTopDemandProperties(
       .limit(500)
 
     if (propErr) {
-      console.error('[DemandScoreEngine] failed to load properties:', propErr.message, { tenantId })
+      log.error('[DemandScoreEngine] failed to load properties', undefined, { error: propErr.message })
       return []
     }
 
@@ -200,7 +201,7 @@ export async function computeTopDemandProperties(
       .sort((a, b) => b.demand_score - a.demand_score)
       .slice(0, 50)
   } catch (err) {
-    console.error('[DemandScoreEngine] computeTopDemandProperties exception:', err, { tenantId })
+    log.error('[DemandScoreEngine] computeTopDemandProperties exception', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err) })
     return []
   }
 }

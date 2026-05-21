@@ -7,6 +7,7 @@
 // Uses Population Stability Index (PSI) as the drift metric.
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 export interface DistributionWindow {
   mean: number
@@ -155,7 +156,7 @@ export async function detectDrift(
       .limit(5000)
 
     if (baselineErr) {
-      console.error('[driftDetector] detectDrift — baseline query failed:', baselineErr.message)
+      log.error('[driftDetector] detectDrift — baseline query failed', undefined, { error: baselineErr.message, prediction_type: predictionType })
       return insufficientResult
     }
 
@@ -169,7 +170,7 @@ export async function detectDrift(
       .limit(5000)
 
     if (currentErr) {
-      console.error('[driftDetector] detectDrift — current query failed:', currentErr.message)
+      log.error('[driftDetector] detectDrift — current query failed', undefined, { error: currentErr.message, prediction_type: predictionType })
       return insufficientResult
     }
 
@@ -215,7 +216,7 @@ export async function detectDrift(
       checked_at:       checkedAt,
     }
   } catch (err) {
-    console.error('[driftDetector] detectDrift — unexpected error:', err instanceof Error ? err.message : String(err))
+    log.error('[driftDetector] detectDrift — unexpected error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), prediction_type: predictionType })
     return insufficientResult
   }
 }
@@ -235,7 +236,7 @@ export async function runDriftCheck(tenantId: string): Promise<DriftResult[]> {
       .limit(1000)
 
     if (error) {
-      console.error('[driftDetector] runDriftCheck — discovery query failed:', error.message)
+      log.error('[driftDetector] runDriftCheck — discovery query failed', undefined, { error: error.message })
       return []
     }
 
@@ -253,7 +254,7 @@ export async function runDriftCheck(tenantId: string): Promise<DriftResult[]> {
 
     return results
   } catch (err) {
-    console.error('[driftDetector] runDriftCheck — unexpected error:', err instanceof Error ? err.message : String(err))
+    log.error('[driftDetector] runDriftCheck — unexpected error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err) })
     return []
   }
 }

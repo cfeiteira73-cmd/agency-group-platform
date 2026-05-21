@@ -3,6 +3,7 @@
 // TypeScript strict — 0 errors
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -159,10 +160,10 @@ export async function persistChaosResult(
       })
 
     if (error) {
-      console.error('[ChaosEngine] persistChaosResult error:', error.message)
+      log.error('[ChaosEngine] persistChaosResult error', undefined, { error: error.message, test_name: result.definition.name })
     }
   } catch (err) {
-    console.error('[ChaosEngine] persistChaosResult threw:', err instanceof Error ? err.message : String(err))
+    log.error('[ChaosEngine] persistChaosResult threw', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), test_name: result.definition.name })
   }
 }
 
@@ -211,7 +212,7 @@ export async function getChaosHistory(
       }
     })
   } catch (err) {
-    console.error('[ChaosEngine] getChaosHistory error:', err instanceof Error ? err.message : String(err))
+    log.error('[ChaosEngine] getChaosHistory error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err) })
     return []
   }
 }

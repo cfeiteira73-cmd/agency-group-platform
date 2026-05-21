@@ -102,6 +102,13 @@ export async function withAI<T>(
   outputSchema?: ZodSchema,
   tenantId?: string,  // Wave 19: per-tenant budget enforcement + cost attribution
 ): Promise<T> {
+  // ── DR mode: AI_FALLBACK_MODE=heuristic bypasses all AI calls immediately ──
+  // Set this env var during an AI provider outage to engage heuristic mode.
+  // All withAI calls return their fallback value without hitting Anthropic.
+  if (process.env.AI_FALLBACK_MODE === 'heuristic' && fallback !== undefined) {
+    return fallback
+  }
+
   const correlationId = generateCorrelationId()
   const start = Date.now()
 
@@ -346,6 +353,11 @@ export async function withAIStream<T>(
   revenueContext?: string,
   tenantId?: string,  // Wave 19: per-tenant budget enforcement
 ): Promise<T> {
+  // ── DR mode: AI_FALLBACK_MODE=heuristic bypasses all streaming AI calls ──
+  if (process.env.AI_FALLBACK_MODE === 'heuristic') {
+    return fallback
+  }
+
   // No retry for streams — retrying a stream would result in partial/duplicate output
   const correlationId = generateCorrelationId()
   const start = Date.now()

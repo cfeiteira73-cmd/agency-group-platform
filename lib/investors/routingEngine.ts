@@ -9,6 +9,7 @@
 // =============================================================================
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 import type { InvestorProfile, InvestorMatchResult } from './types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ export async function routeProperty(
       .limit(500)
 
     if (error) {
-      console.error('[RoutingEngine] failed to load engagement events:', error.message)
+      log.error('[RoutingEngine] failed to load engagement events', undefined, { error: error.message, property_id: propertyId })
     } else {
       engagementRows = (data ?? []) as EngagementRow[]
     }

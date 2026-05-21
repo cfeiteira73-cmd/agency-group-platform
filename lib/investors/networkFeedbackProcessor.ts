@@ -8,6 +8,7 @@
 // This is the learning loop: network improves with each deal closed or lost.
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,7 @@ export async function computeInvestorNetworkStats(
       .order('occurred_at', { ascending: false })
 
     if (error) {
-      console.error('[NetworkFeedbackProcessor] computeInvestorNetworkStats query error:', error.message, { investorId, tenantId })
+      log.error('[NetworkFeedbackProcessor] computeInvestorNetworkStats query error', undefined, { error: error.message, lead_id: investorId })
       return blank
     }
 
@@ -161,7 +162,7 @@ export async function computeInvestorNetworkStats(
       routing_tier,
     }
   } catch (err) {
-    console.error('[NetworkFeedbackProcessor] computeInvestorNetworkStats exception:', err, { investorId, tenantId })
+    log.error('[NetworkFeedbackProcessor] computeInvestorNetworkStats exception', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), lead_id: investorId })
     return blank
   }
 }
@@ -208,7 +209,7 @@ async function updateEdgeWeights(
         )
 
       if (matchErr) {
-        console.error('[NetworkFeedbackProcessor] upsert match edge failed:', matchErr.message, { investorId: stats.investor_id })
+        log.error('[NetworkFeedbackProcessor] upsert match edge failed', undefined, { error: matchErr.message, lead_id: stats.investor_id })
       } else {
         updated++
       }
@@ -238,13 +239,13 @@ async function updateEdgeWeights(
           )
 
         if (dealErr) {
-          console.error('[NetworkFeedbackProcessor] upsert deal edge failed:', dealErr.message, { investorId: stats.investor_id })
+          log.error('[NetworkFeedbackProcessor] upsert deal edge failed', undefined, { error: dealErr.message, lead_id: stats.investor_id })
         } else {
           updated++
         }
       }
     } catch (err) {
-      console.error('[NetworkFeedbackProcessor] updateEdgeWeights exception for investor:', stats.investor_id, err)
+      log.error('[NetworkFeedbackProcessor] updateEdgeWeights exception for investor', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), lead_id: stats.investor_id })
     }
   }
 
@@ -280,13 +281,13 @@ export async function processNetworkFeedback(
       .eq('status', 'active')
 
     if (investorErr) {
-      console.error('[NetworkFeedbackProcessor] failed to load investors:', investorErr.message, { tenantId })
+      log.error('[NetworkFeedbackProcessor] failed to load investors', undefined, { error: investorErr.message })
       return empty
     }
 
     const investorRows = (investorData ?? []) as { id: string }[]
     if (investorRows.length === 0) {
-      console.log('[NetworkFeedbackProcessor] no active investors for tenant:', tenantId)
+      log.info('[NetworkFeedbackProcessor] no active investors for tenant')
       return empty
     }
 
@@ -327,7 +328,7 @@ export async function processNetworkFeedback(
       processed_at:        new Date().toISOString(),
     }
   } catch (err) {
-    console.error('[NetworkFeedbackProcessor] processNetworkFeedback exception:', err, { tenantId })
+    log.error('[NetworkFeedbackProcessor] processNetworkFeedback exception', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err) })
     return empty
   }
 }

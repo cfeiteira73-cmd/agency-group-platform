@@ -109,6 +109,31 @@ export async function register() {
         if (adapter) {
           eventBus.setAdapter(adapter)
           console.log('[AG] ✓ Kafka event bus adapter wired')
+
+          // Start Kafka consumers — only when KAFKA_BROKERS is configured.
+          // Each consumer.start() is fire-and-forget so a single bad consumer
+          // cannot block the remaining ones or the overall server startup.
+          if (process.env.KAFKA_BROKERS) {
+            const { DealEventConsumer }     = await import('@/lib/events/consumers/dealEventConsumer')
+            const { RevenueEventConsumer }  = await import('@/lib/events/consumers/revenueEventConsumer')
+            const { PropertyEventConsumer } = await import('@/lib/events/consumers/propertyEventConsumer')
+            const { InvestorEventConsumer } = await import('@/lib/events/consumers/investorEventConsumer')
+
+            const consumers = [
+              new DealEventConsumer(),
+              new RevenueEventConsumer(),
+              new PropertyEventConsumer(),
+              new InvestorEventConsumer(),
+            ]
+
+            for (const consumer of consumers) {
+              void consumer.start().catch(err =>
+                console.error('[Instrumentation] consumer start failed:', err),
+              )
+            }
+
+            console.log('[AG] ✓ Kafka consumers starting (4 consumers)')
+          }
         } else {
           console.log('[AG] ⚠ KAFKA_BROKERS not set — event bus using in-memory adapter')
         }

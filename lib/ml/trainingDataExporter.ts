@@ -7,6 +7,7 @@
 // Does NOT train models — exports data for external training job.
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 export interface TrainingRecord {
   id: string
@@ -64,7 +65,7 @@ export async function exportTrainingData(tenantId: string, fromDate?: string): P
     const { data, error } = await query
 
     if (error) {
-      console.error('[trainingDataExporter] exportTrainingData — query failed:', error.message)
+      log.error('[trainingDataExporter] exportTrainingData — query failed', undefined, { error: error.message })
       return emptyResult
     }
 
@@ -111,7 +112,7 @@ export async function exportTrainingData(tenantId: string, fromDate?: string): P
       jsonl:            jsonlLines.join('\n'),
     }
   } catch (err) {
-    console.error('[trainingDataExporter] exportTrainingData — unexpected error:', err instanceof Error ? err.message : String(err))
+    log.error('[trainingDataExporter] exportTrainingData — unexpected error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err) })
     return emptyResult
   }
 }
@@ -147,7 +148,7 @@ export async function getExportStats(tenantId: string): Promise<{
       .not('label_outcome', 'is', null)
 
     if (labeledErr) {
-      console.error('[trainingDataExporter] getExportStats — labeled count failed:', labeledErr.message)
+      log.error('[trainingDataExporter] getExportStats — labeled count failed', undefined, { error: labeledErr.message })
       return empty
     }
 
@@ -159,7 +160,7 @@ export async function getExportStats(tenantId: string): Promise<{
       .is('label_outcome', null)
 
     if (unlabeledErr) {
-      console.error('[trainingDataExporter] getExportStats — unlabeled count failed:', unlabeledErr.message)
+      log.error('[trainingDataExporter] getExportStats — unlabeled count failed', undefined, { error: unlabeledErr.message })
     }
 
     // Entity breakdown (labeled only)
@@ -171,7 +172,7 @@ export async function getExportStats(tenantId: string): Promise<{
       .limit(10000)
 
     if (breakdownErr) {
-      console.error('[trainingDataExporter] getExportStats — breakdown query failed:', breakdownErr.message)
+      log.error('[trainingDataExporter] getExportStats — breakdown query failed', undefined, { error: breakdownErr.message })
     }
 
     const entity_breakdown: Record<string, number> = {}
@@ -190,7 +191,7 @@ export async function getExportStats(tenantId: string): Promise<{
       min_records_needed: MIN_RECORDS,
     }
   } catch (err) {
-    console.error('[trainingDataExporter] getExportStats — unexpected error:', err instanceof Error ? err.message : String(err))
+    log.error('[trainingDataExporter] getExportStats — unexpected error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err) })
     return empty
   }
 }

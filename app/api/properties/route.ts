@@ -11,6 +11,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { z } from 'zod'
 import { rateLimit } from '@/lib/rateLimit'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import { recordRequest as sloRecordRequest } from '@/lib/sre/sloTracker'
 
 const PartnerSubmissionSchema = z.object({
   // Agency details
@@ -155,6 +156,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(request)
+  const _sloStart = Date.now()
+  const _sloTenant = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
   const session = await auth()
   if (!session?.user && !(await isPortalAuth(request))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -211,6 +214,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           gradient:   row.gradient   || 'from-slate-800 to-gray-900',
         }))
 
+        void sloRecordRequest(_sloTenant, 'api', true, Date.now() - _sloStart).catch(() => {})
         return NextResponse.json({ data: mapped, total: mapped.length, source: 'supabase' })
       }
     } catch {
@@ -253,6 +257,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         }))
         .filter((p: { nome: string }) => p.nome)
 
+        void sloRecordRequest(_sloTenant, 'api', true, Date.now() - _sloStart).catch(() => {})
         return NextResponse.json({ data: mapped, total: mapped.length, source: 'supabase' })
       }
     } catch {
@@ -263,6 +268,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ data: [], total: 0, source: 'empty' })
   } catch (error) {
     console.error('[properties GET]', error, { corrId })
+    void sloRecordRequest(_sloTenant, 'api', false, Date.now() - _sloStart).catch(() => {})
     return NextResponse.json({ error: 'Internal server error', data: [], source: 'error' }, { status: 500 })
   }
 }

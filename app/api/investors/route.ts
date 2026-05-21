@@ -14,6 +14,7 @@ import { CANONICAL_TENANT_UUID } from '@/lib/constants/pipeline'
 import { createInvestor, getInvestors } from '@/lib/investors/investorService'
 import { emit } from '@/lib/events/producers'
 import type { RiskTolerance, InvestorStatus } from '@/lib/investors/types'
+import { recordRequest as sloRecordRequest } from '@/lib/sre/sloTracker'
 
 export const runtime = 'nodejs'
 
@@ -35,6 +36,7 @@ function resolveTenantId(): string {
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(req)
+  const _sloStart = Date.now()
 
   const auth = await requirePortalAuth(req)
   if (!auth.ok) return auth.response
@@ -56,6 +58,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       offset,
     })
 
+    void sloRecordRequest(tenantId, 'api', true, Date.now() - _sloStart).catch(() => {})
     return NextResponse.json({
       investors,
       count:  investors.length,
@@ -64,6 +67,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     })
   } catch (err) {
     console.error('[GET /api/investors]', err, { corrId, tenant_id: tenantId })
+    void sloRecordRequest(tenantId, 'api', false, Date.now() - _sloStart).catch(() => {})
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -74,6 +78,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(req)
+  const _sloStartPost = Date.now()
 
   const auth = await requirePortalAuth(req)
   if (!auth.ok) return auth.response
@@ -172,9 +177,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { correlation_id: corrId, source_system: 'api' },
     )
 
+    void sloRecordRequest(tenantId, 'api', true, Date.now() - _sloStartPost).catch(() => {})
     return NextResponse.json({ investor }, { status: 201 })
   } catch (err) {
     console.error('[POST /api/investors]', err, { corrId, tenant_id: tenantId })
+    void sloRecordRequest(tenantId, 'api', false, Date.now() - _sloStartPost).catch(() => {})
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

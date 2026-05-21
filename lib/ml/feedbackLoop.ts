@@ -7,6 +7,7 @@
 // Weekly retraining job exports this data for Python/XGBoost training.
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 import { snapshotFeatures, extractDealFeatures, extractInvestorFeatures } from '@/lib/ml/featureExtractor'
 
 export type OutcomeLabel = 'converted' | 'closed_won' | 'closed_lost' | 'expired' | 'rejected'
@@ -53,7 +54,7 @@ export async function recordDealOutcome(outcome: DealOutcome): Promise<void> {
       .eq('tenant_id', outcome.tenantId)
 
     if (updateErr) {
-      console.error('[feedbackLoop] recordDealOutcome — update snapshots failed:', updateErr.message)
+      log.error('[feedbackLoop] recordDealOutcome — update snapshots failed', undefined, { error: updateErr.message, deal_id: outcome.dealId })
     }
 
     // 2. Snapshot current deal features at close time, labeled with outcome
@@ -75,10 +76,10 @@ export async function recordDealOutcome(outcome: DealOutcome): Promise<void> {
         labelValue,
       )
     } catch (snapErr) {
-      console.error('[feedbackLoop] recordDealOutcome — closure snapshot failed (non-critical):', snapErr instanceof Error ? snapErr.message : String(snapErr))
+      log.error('[feedbackLoop] recordDealOutcome — closure snapshot failed (non-critical)', snapErr instanceof Error ? snapErr : undefined, { error: snapErr instanceof Error ? snapErr.message : String(snapErr), deal_id: outcome.dealId })
     }
   } catch (err) {
-    console.error('[feedbackLoop] recordDealOutcome — unexpected error:', err instanceof Error ? err.message : String(err))
+    log.error('[feedbackLoop] recordDealOutcome — unexpected error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), deal_id: outcome.dealId })
   }
 }
 
@@ -104,7 +105,7 @@ export async function recordInvestorOutcome(outcome: InvestorOutcome): Promise<v
       .eq('tenant_id', outcome.tenantId)
 
     if (invUpdateErr) {
-      console.error('[feedbackLoop] recordInvestorOutcome — update investor snapshots failed:', invUpdateErr.message)
+      log.error('[feedbackLoop] recordInvestorOutcome — update investor snapshots failed', undefined, { error: invUpdateErr.message, lead_id: outcome.investorId })
     }
 
     // 2. Update existing feature snapshots for the property involved
@@ -119,7 +120,7 @@ export async function recordInvestorOutcome(outcome: InvestorOutcome): Promise<v
       .eq('tenant_id', outcome.tenantId)
 
     if (propUpdateErr) {
-      console.error('[feedbackLoop] recordInvestorOutcome — update property snapshots failed:', propUpdateErr.message)
+      log.error('[feedbackLoop] recordInvestorOutcome — update property snapshots failed', undefined, { error: propUpdateErr.message, property_id: outcome.propertyId })
     }
 
     // 3. Snapshot current investor features at outcome time
@@ -141,10 +142,10 @@ export async function recordInvestorOutcome(outcome: InvestorOutcome): Promise<v
         labelValue,
       )
     } catch (snapErr) {
-      console.error('[feedbackLoop] recordInvestorOutcome — investor snapshot failed (non-critical):', snapErr instanceof Error ? snapErr.message : String(snapErr))
+      log.error('[feedbackLoop] recordInvestorOutcome — investor snapshot failed (non-critical)', snapErr instanceof Error ? snapErr : undefined, { error: snapErr instanceof Error ? snapErr.message : String(snapErr), lead_id: outcome.investorId })
     }
   } catch (err) {
-    console.error('[feedbackLoop] recordInvestorOutcome — unexpected error:', err instanceof Error ? err.message : String(err))
+    log.error('[feedbackLoop] recordInvestorOutcome — unexpected error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), lead_id: outcome.investorId })
   }
 }
 
@@ -179,7 +180,7 @@ export async function getLabeledCount(tenantId: string): Promise<{
       .limit(10000)
 
     if (error) {
-      console.error('[feedbackLoop] getLabeledCount — query failed:', error.message)
+      log.error('[feedbackLoop] getLabeledCount — query failed', undefined, { error: error.message })
       return empty
     }
 
@@ -203,7 +204,7 @@ export async function getLabeledCount(tenantId: string): Promise<{
       newest_label:   rows[rows.length - 1]?.computed_at ?? null,
     }
   } catch (err) {
-    console.error('[feedbackLoop] getLabeledCount — unexpected error:', err instanceof Error ? err.message : String(err))
+    log.error('[feedbackLoop] getLabeledCount — unexpected error', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err) })
     return empty
   }
 }

@@ -3,6 +3,7 @@
 // TypeScript strict — 0 errors
 
 import { supabaseAdmin } from '@/lib/supabase'
+import { detectConsumerLag } from '@/lib/events/lagDetector'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -10,6 +11,10 @@ export interface HealthStatus {
   ok: boolean
   latency_ms: number
   error?: string
+}
+
+export interface KafkaHealthStatus extends HealthStatus {
+  lag_total?: number
 }
 
 export interface DeepHealthResult {
@@ -21,6 +26,7 @@ export interface DeepHealthResult {
     ai_provider: HealthStatus
     queue: HealthStatus
     event_bus: HealthStatus
+    kafka: KafkaHealthStatus
   }
   degraded: string[]
   failed: string[]
@@ -154,6 +160,24 @@ export async function checkEventBus(_timeoutMs = 1000): Promise<HealthStatus> {
   }
 }
 
+export async function checkKafka(): Promise<KafkaHealthStatus> {
+  if (!process.env.KAFKA_BROKERS) {
+    return { ok: true, latency_ms: 0, error: 'not_configured' }
+  }
+  const t0 = Date.now()
+  try {
+    const groups = await detectConsumerLag()
+    const lag_total = groups.reduce((sum, g) => sum + g.totalLag, 0)
+    return { ok: true, latency_ms: Date.now() - t0, lag_total }
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Kafka check failed',
+      latency_ms: Date.now() - t0,
+    }
+  }
+}
+
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 
 const DEGRADED_THRESHOLDS: Record<string, number> = {
@@ -162,6 +186,7 @@ const DEGRADED_THRESHOLDS: Record<string, number> = {
   ai_provider: 2000,
   queue:      500,
   event_bus:  200,
+  kafka:      3000,
 }
 
 export async function runDeepHealthCheck(_options?: Record<string, unknown>): Promise<DeepHealthResult> {
@@ -173,12 +198,13 @@ export async function runDeepHealthCheck(_options?: Record<string, unknown>): Pr
     error: `${name} timeout`,
   })
 
-  const [dbResult, redisResult, aiResult, queueResult, busResult] = await Promise.allSettled([
+  const [dbResult, redisResult, aiResult, queueResult, busResult, kafkaResult] = await Promise.allSettled([
     withTimeout(checkDatabase(3000),    3100, timeoutFallback('database', 3000)),
     withTimeout(checkRedis(1000),       1100, timeoutFallback('redis', 1000)),
     withTimeout(checkAiProvider(5000),  5100, timeoutFallback('ai_provider', 5000)),
     withTimeout(checkQueue(2000),       2100, timeoutFallback('queue', 2000)),
     withTimeout(checkEventBus(1000),    1100, timeoutFallback('event_bus', 1000)),
+    withTimeout(checkKafka(),           8100, timeoutFallback('kafka', 8000)),
   ])
 
   const unwrap = (r: PromiseSettledResult<HealthStatus>, name: string): HealthStatus =>
@@ -190,6 +216,7 @@ export async function runDeepHealthCheck(_options?: Record<string, unknown>): Pr
     ai_provider: unwrap(aiResult,   'ai_provider'),
     queue:      unwrap(queueResult, 'queue'),
     event_bus:  unwrap(busResult,   'event_bus'),
+    kafka:      unwrap(kafkaResult, 'kafka') as KafkaHealthStatus,
   }
 
   const failed: string[] = []

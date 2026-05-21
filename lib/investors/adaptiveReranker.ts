@@ -8,6 +8,7 @@
 // than one who has never responded, even if their raw match scores are equal.
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 import type { RoutingScore } from './routingEngine'
 import { computePropertyDemandScore } from './demandScoreEngine'
 
@@ -112,7 +113,7 @@ export async function loadAdaptiveSignals(
         .in('from_id', investorIds)
 
       if (edgeErr) {
-        console.error('[AdaptiveReranker] failed to load graph edges:', edgeErr.message, { tenantId })
+        log.error('[AdaptiveReranker] failed to load graph edges', undefined, { error: edgeErr.message })
       } else {
         const rows = (edgeData ?? []) as {
           from_id:  string
@@ -128,7 +129,7 @@ export async function loadAdaptiveSignals(
       }
     }
   } catch (err) {
-    console.error('[AdaptiveReranker] loadAdaptiveSignals edge query exception:', err)
+    log.error('[AdaptiveReranker] loadAdaptiveSignals edge query exception', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err) })
   }
 
   // ── 2. Get property demand score ───────────────────────────────────────────────
@@ -164,7 +165,7 @@ export async function loadAdaptiveSignals(
       }
     }
   } catch (err) {
-    console.error('[AdaptiveReranker] loadAdaptiveSignals demand/heat exception:', err, { propertyId })
+    log.error('[AdaptiveReranker] loadAdaptiveSignals demand/heat exception', err instanceof Error ? err : undefined, { error: err instanceof Error ? err.message : String(err), property_id: propertyId })
   }
 
   return {
