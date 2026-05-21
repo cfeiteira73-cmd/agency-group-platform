@@ -12,6 +12,7 @@
 
 import { dlqProducer, DLQProducer } from './dlqProducer'
 import log from '@/lib/logger'
+import { supabaseAdmin } from '@/lib/supabase'
 
 // ─── Public interfaces ────────────────────────────────────────────────────────
 
@@ -111,8 +112,9 @@ export abstract class KafkaConsumerBase {
   async start(): Promise<void> {
     const brokersEnv = process.env.KAFKA_BROKERS
     if (!brokersEnv) {
-      console.warn(
+      log.warn(
         `[KafkaConsumer:${this.config.groupId}] KAFKA_BROKERS not set — consumer not started`,
+        { group_id: this.config.groupId },
       )
       return
     }
@@ -123,8 +125,9 @@ export abstract class KafkaConsumerBase {
       .filter(Boolean)
 
     if (brokers.length === 0) {
-      console.warn(
+      log.warn(
         `[KafkaConsumer:${this.config.groupId}] KAFKA_BROKERS is empty — consumer not started`,
+        { group_id: this.config.groupId },
       )
       return
     }
@@ -154,8 +157,9 @@ export abstract class KafkaConsumerBase {
       })
 
       this.running = true
-      console.log(
+      log.info(
         `[KafkaConsumer:${this.config.groupId}] started — topics: ${this.config.topics.join(', ')}`,
+        { group_id: this.config.groupId, topics: this.config.topics },
       )
 
       await this.consumer.run({
@@ -198,10 +202,23 @@ export abstract class KafkaConsumerBase {
         },
       })
     } catch (err) {
-      console.error(
-        `[KafkaConsumer:${this.config.groupId}] start failed:`,
-        err instanceof Error ? err.message : String(err),
+      log.error(
+        `[KafkaConsumer:${this.config.groupId}] start failed — consumer is DEAD`,
+        err instanceof Error ? err : undefined,
+        { group_id: this.config.groupId, error: err instanceof Error ? err.message : String(err) },
       )
+      // Persist a durable signal so monitoring can detect silent consumer death
+      void (supabaseAdmin as any)
+        .from('system_health_alerts')
+        .insert({
+          alert_type:  'kafka_consumer_start_failure',
+          service:     `kafka-consumer-${this.config.groupId}`,
+          message:     `Consumer failed to start: ${err instanceof Error ? err.message : String(err)}`,
+          severity:    'critical',
+          metadata:    { group_id: this.config.groupId, topics: this.config.topics },
+          occurred_at: new Date().toISOString(),
+        })
+        .catch(() => { /* best-effort */ })
     }
   }
 
@@ -214,11 +231,11 @@ export abstract class KafkaConsumerBase {
     if (this.consumer) {
       try {
         await this.consumer.disconnect()
-        console.log(`[KafkaConsumer:${this.config.groupId}] stopped`)
+        log.info(`[KafkaConsumer:${this.config.groupId}] stopped`, { group_id: this.config.groupId })
       } catch (err) {
-        console.warn(
-          `[KafkaConsumer:${this.config.groupId}] stop error:`,
-          err instanceof Error ? err.message : String(err),
+        log.warn(
+          `[KafkaConsumer:${this.config.groupId}] stop error`,
+          { group_id: this.config.groupId, error: err instanceof Error ? err.message : String(err) },
         )
       } finally {
         this.consumer = null

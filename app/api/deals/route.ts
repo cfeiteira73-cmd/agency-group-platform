@@ -20,6 +20,7 @@ import { getQueueAdapter } from '@/lib/queue/adapter'
 import { recordDealOutcome } from '@/lib/ml/feedbackLoop'
 import { recordRequest as sloRecordRequest } from '@/lib/sre/sloTracker'
 import { appendEntry } from '@/lib/economics/auditLedger'
+import log from '@/lib/logger'
 
 export const runtime = 'nodejs'
 
@@ -133,7 +134,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     // Supabase unavailable — return empty result with explicit note (no mock data)
-    console.error('[deals GET] Supabase unavailable after retry', { corrId })
+    log.error('[deals GET] Supabase unavailable after retry', undefined, { corrId })
     return NextResponse.json({
       data:    [],
       total:   0,
@@ -144,7 +145,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       message: 'Base de dados temporariamente indisponível. Tente novamente.',
     }, { status: 200, headers: rateLimitHeaders() })
   } catch (error) {
-    console.error('[deals GET]', error, { corrId })
+    log.error('[deals GET] unexpected error', error instanceof Error ? error : undefined, { corrId })
     void sloRecordRequest(tenantId, 'api', false, Date.now() - _sloStart).catch(() => {})
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
@@ -257,19 +258,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         void sloRecordRequest(_sloTenantPost, 'api', true, Date.now() - _sloStartPost).catch(() => {})
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { status: 201, headers: rateLimitHeaders() })
       }
-      if (error) console.warn('[deals POST] Supabase error:', error.message)
+      if (error) log.warn('[deals POST] Supabase error', { error: error.message, corrId })
     } catch {
       // Supabase unavailable
     }
 
     // Supabase unavailable — cannot persist deal, return 503
-    console.error('[deals POST] Supabase unavailable — deal not created', { corrId })
+    log.error('[deals POST] Supabase unavailable — deal not created', undefined, { corrId })
     return NextResponse.json(
       { error: 'Serviço indisponível. Deal não foi guardado. Tente novamente.' },
       { status: 503, headers: rateLimitHeaders() }
     )
   } catch (error) {
-    console.error('[deals POST]', error, { corrId })
+    log.error('[deals POST] unexpected error', error instanceof Error ? error : undefined, { corrId })
     void sloRecordRequest(_sloTenantPost, 'api', false, Date.now() - _sloStartPost).catch(() => {})
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
@@ -416,7 +417,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
             recorded_by:               agentEmail ?? 'system',
             notes:                     `Stage: ${previousFase ?? 'unknown'} → ${fase}`,
           }).catch((e: unknown) => {
-            console.warn('[deals] ledger stage_advanced entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+            log.error('[deals] ledger stage_advanced entry failed', e instanceof Error ? e : undefined, { corrId, deal_id: dealId })
           })
 
           // ── CPCV stage — 50% revenue recognition ──────────────────────────────────
@@ -445,7 +446,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               recorded_by:               agentEmail ?? 'system',
               notes:                     'CPCV signed — 50% revenue recognition',
             }).catch((e: unknown) => {
-              console.warn('[deals] ledger cpcv_signed entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+              log.error('[deals] ledger cpcv_signed entry failed', e instanceof Error ? e : undefined, { corrId, deal_id: dealId })
             })
           }
 
@@ -494,7 +495,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               },
               { tenant_id: tenantId },
             ).catch((e: unknown) => {
-              console.warn('[deals PUT] commission job enqueue failed:', e instanceof Error ? e.message : String(e))
+              log.error('[deals PUT] commission job enqueue failed', e instanceof Error ? e : undefined, { corrId, deal_id: dealId })
             })
             // ML feedback loop — record closed_won outcome (fire-and-forget)
             void recordDealOutcome({
@@ -505,7 +506,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               daysInPipeline:  null,
               agentEmail:      agentEmail,
               closedAt:        new Date().toISOString(),
-            }).catch((e: unknown) => console.warn('[deals] recordDealOutcome failed:', e instanceof Error ? e.message : String(e)))
+            }).catch((e: unknown) => log.error('[deals] recordDealOutcome failed', e instanceof Error ? e : undefined, { corrId, deal_id: dealId }))
 
             // ── Immutable audit ledger — escritura completed (fire-and-forget) ─────────
             // Tier-based commission rates: standard 5% (<1M), premium 4.5% (1M–5M), institutional 4% (≥5M)
@@ -539,7 +540,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               recorded_by:               agentEmail ?? 'system',
               notes:                     `Escritura completed — 50% revenue recognition. Stage: ${fase}`,
             }).catch((e: unknown) => {
-              console.warn('[deals] ledger escritura_completed entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+              log.error('[deals] ledger escritura_completed entry failed', e instanceof Error ? e : undefined, { corrId, deal_id: dealId })
             })
 
             // ── Immutable audit ledger — commission calculated (fire-and-forget) ──────
@@ -565,7 +566,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               recorded_by:               'system',
               notes:                     `Commission calculated: ${tierRate * 100}% tier. Gross: €${commGross}. Net: €${commNet}`,
             }).catch((e: unknown) => {
-              console.warn('[deals] ledger commission_calculated entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+              log.error('[deals] ledger commission_calculated entry failed', e instanceof Error ? e : undefined, { corrId, deal_id: dealId })
             })
           }
 
@@ -589,7 +590,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               daysInPipeline:  null,
               agentEmail:      agentEmail,
               closedAt:        new Date().toISOString(),
-            }).catch((e: unknown) => console.warn('[deals] recordDealOutcome failed:', e instanceof Error ? e.message : String(e)))
+            }).catch((e: unknown) => log.error('[deals] recordDealOutcome failed', e instanceof Error ? e : undefined, { corrId, deal_id: dealId }))
 
             // ── Immutable audit ledger — deal lost / opportunity cost (fire-and-forget) ─
             void appendEntry({
@@ -614,7 +615,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               recorded_by:               agentEmail ?? 'system',
               notes:                     `Deal lost at stage: ${fase}. Lost opportunity value: €${dealValue}`,
             }).catch((e: unknown) => {
-              console.warn('[deals] ledger deal_lost entry failed (non-critical)', e instanceof Error ? e.message : String(e))
+              log.error('[deals] ledger deal_lost entry failed', e instanceof Error ? e : undefined, { corrId, deal_id: dealId })
             })
           }
         }
@@ -634,19 +635,19 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
         }
         return NextResponse.json({ success: true, deal: data, source: 'supabase' }, { headers: rateLimitHeaders() })
       }
-      if (error) console.warn('[deals PUT] Supabase error:', error.message)
+      if (error) log.warn('[deals PUT] Supabase error', { error: error.message, corrId })
     } catch {
       // Supabase unavailable
     }
 
     // Supabase unavailable — cannot update deal
-    console.error('[deals PUT] Supabase unavailable — deal not updated', { corrId })
+    log.error('[deals PUT] Supabase unavailable — deal not updated', undefined, { corrId })
     return NextResponse.json(
       { error: 'Serviço indisponível. Alteração não foi guardada. Tente novamente.' },
       { status: 503, headers: rateLimitHeaders() }
     )
   } catch (error) {
-    console.error('[deals PUT]', error, { corrId })
+    log.error('[deals PUT] unexpected error', error instanceof Error ? error : undefined, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
 }
@@ -672,14 +673,14 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     try {
       const { error } = await (supabaseAdmin as any).from('deals').delete().eq('id', id)
       if (!error) return NextResponse.json({ success: true, message: 'Deal deleted' }, { headers: rateLimitHeaders() })
-      console.warn('[deals DELETE] Supabase error:', error.message)
+      log.warn('[deals DELETE] Supabase error', { error: error.message, corrId })
     } catch {
       // Supabase unavailable
     }
 
     return NextResponse.json({ error: 'Service unavailable — deal not deleted' }, { status: 503, headers: rateLimitHeaders() })
   } catch (error) {
-    console.error('[deals DELETE]', error, { corrId })
+    log.error('[deals DELETE] unexpected error', error instanceof Error ? error : undefined, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: rateLimitHeaders() })
   }
 }
