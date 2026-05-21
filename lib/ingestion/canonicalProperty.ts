@@ -153,7 +153,7 @@ export async function resolveOrCreateCanonical(
   rawData:   Record<string, unknown>,
 ): Promise<ResolveResult> {
   // ── Step 1: Look up by source_id ─────────────────────────────────────────────
-  const { data: existing } = await supabaseAdmin
+  const { data: existing } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('canonical_id, source_ids')
     .eq('tenant_id', tenantId)
@@ -171,7 +171,7 @@ export async function resolveOrCreateCanonical(
       listing_status:      normalized.listing_status,
     })
 
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from('canonical_properties')
       .update({
         ...normalized,
@@ -214,7 +214,7 @@ export async function resolveOrCreateCanonical(
     const confidence = dedupResult.best_match.similarity_score
 
     // Add source_id mapping to the existing canonical
-    const { data: target } = await supabaseAdmin
+    const { data: target } = await (supabaseAdmin as any)
       .from('canonical_properties')
       .select('source_ids')
       .eq('canonical_id', targetId)
@@ -234,7 +234,7 @@ export async function resolveOrCreateCanonical(
       listing_status:      normalized.listing_status,
     })
 
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from('canonical_properties')
       .update({
         source_ids:      updatedSourceIds,
@@ -245,7 +245,7 @@ export async function resolveOrCreateCanonical(
       .eq('tenant_id', tenantId)
 
     // Record in ingestion_log for audit trail (incoming absorbed without creating a new canonical)
-    void supabaseAdmin.from('ingestion_log').upsert(
+    void (supabaseAdmin as any).from('ingestion_log').upsert(
       {
         run_id:       `dedup-${Date.now()}`,
         provider:     source,
@@ -292,7 +292,7 @@ export async function resolveOrCreateCanonical(
     computed_at:       new Date().toISOString(),
   }
 
-  const { data: inserted, error: insertErr } = await supabaseAdmin
+  const { data: inserted, error: insertErr } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .insert(newRecord)
     .select('canonical_id')
@@ -304,7 +304,7 @@ export async function resolveOrCreateCanonical(
 
   // If dedup found candidates just below threshold, queue for review
   if (dedupResult.best_match && dedupResult.best_match.similarity_score >= 0.70) {
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from('dedup_candidates')
       .upsert(
         {
@@ -342,13 +342,13 @@ export async function mergeCanonicals(
 ): Promise<void> {
   // Load both records
   const [{ data: primary }, { data: duplicate }] = await Promise.all([
-    supabaseAdmin
+    (supabaseAdmin as any)
       .from('canonical_properties')
       .select('source_ids, merged_from')
       .eq('canonical_id', primaryId)
       .eq('tenant_id', tenantId)
       .single(),
-    supabaseAdmin
+    (supabaseAdmin as any)
       .from('canonical_properties')
       .select('source_ids, merged_from')
       .eq('canonical_id', duplicateId)
@@ -371,7 +371,7 @@ export async function mergeCanonicals(
   const now = new Date().toISOString()
 
   // Update primary: absorb source_ids and merged_from history
-  await supabaseAdmin
+  await (supabaseAdmin as any)
     .from('canonical_properties')
     .update({
       source_ids:  mergedSourceIds,
@@ -382,7 +382,7 @@ export async function mergeCanonicals(
     .eq('tenant_id', tenantId)
 
   // Mark duplicate as non-canonical (do NOT delete — preserve history)
-  await supabaseAdmin
+  await (supabaseAdmin as any)
     .from('canonical_properties')
     .update({
       is_canonical:   false,
@@ -393,7 +393,7 @@ export async function mergeCanonicals(
     .eq('tenant_id', tenantId)
 
   // Update dedup_candidates record — match rows that reference either ID on either side
-  await supabaseAdmin
+  await (supabaseAdmin as any)
     .from('dedup_candidates')
     .update({ status: 'merged', reviewed_at: now })
     .eq('tenant_id', tenantId)
@@ -403,7 +403,7 @@ export async function mergeCanonicals(
     )
 
   // Emit event
-  void supabaseAdmin.from('runtime_events').insert({
+  void (supabaseAdmin as any).from('runtime_events').insert({
     org_id:  tenantId,
     type:    'property.canonicals_merged',
     status:  'completed',
@@ -428,7 +428,7 @@ async function emitCanonicalResolved(
   confidence:  number,
 ): Promise<void> {
   try {
-    await supabaseAdmin.from('runtime_events').insert({
+    await (supabaseAdmin as any).from('runtime_events').insert({
       org_id:  tenantId,
       type:    'property.canonical_resolved',
       status:  'completed',

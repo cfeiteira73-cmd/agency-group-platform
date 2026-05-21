@@ -670,7 +670,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     }
 
     try {
-      const { error } = await supabaseAdmin.from('deals').delete().eq('id', id)
+      const { error } = await (supabaseAdmin as any).from('deals').delete().eq('id', id)
       if (!error) return NextResponse.json({ success: true, message: 'Deal deleted' }, { headers: rateLimitHeaders() })
       console.warn('[deals DELETE] Supabase error:', error.message)
     } catch {

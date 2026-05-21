@@ -246,7 +246,8 @@ export function normalizeFromCasafari(raw: Record<string, unknown>): NormalizedP
 //   exterior, hasLift, parkingSpace
 
 export function normalizeFromIdealista(raw: Record<string, unknown>): NormalizedProperty {
-  const priceEur    = num(raw.price ?? raw.priceInfo?.amount ?? 0, 0)
+  const priceInfoObj = raw.priceInfo as Record<string, unknown> | undefined
+  const priceEur    = num(raw.price ?? priceInfoObj?.amount ?? 0, 0)
   const areaM2      = num(raw.size ?? raw.area_m2, 0)
   const pricePerM2  = optNum(raw.priceByArea) ?? (areaM2 > 0 ? Math.round((priceEur / areaM2) * 100) / 100 : 0)
 
@@ -282,10 +283,12 @@ export function normalizeFromIdealista(raw: Record<string, unknown>): Normalized
 
   // Energy from nested energy object
   const energyObj = raw.energy as Record<string, unknown> | undefined
+  const energyConsumptionObj = energyObj?.energyConsumption as Record<string, unknown> | undefined
+  const energyEmissionsObj   = energyObj?.greenhouseEmissions as Record<string, unknown> | undefined
   const energyRating = optStr(
     raw.energy_rating ??
-    energyObj?.energyConsumption?.rating ??
-    energyObj?.greenhouseEmissions?.rating,
+    energyConsumptionObj?.rating ??
+    energyEmissionsObj?.rating,
   )
 
   // Title: use suggestedTexts or construct

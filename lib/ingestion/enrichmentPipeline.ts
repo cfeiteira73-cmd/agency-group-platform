@@ -124,7 +124,7 @@ export async function enrichProperty(
   const enrichedAt = new Date().toISOString()
 
   // 1. Load canonical property
-  const { data: canonical, error: canonicalErr } = await supabaseAdmin
+  const { data: canonical, error: canonicalErr } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select(
       'canonical_id, city, zone, country, price_eur, area_m2, property_type, listed_at, listing_status',
@@ -144,7 +144,7 @@ export async function enrichProperty(
   const daysListed = Math.max(0, (Date.now() - listedAt.getTime()) / 86_400_000)
 
   // 2. Fetch liquidity_heatmap for zone/city context
-  const { data: heatmap } = await supabaseAdmin
+  const { data: heatmap } = await (supabaseAdmin as any)
     .from('liquidity_heatmap')
     .select('demand_score, supply_score, heat_index, active_listings')
     .eq('tenant_id', tenantId)
@@ -158,7 +158,7 @@ export async function enrichProperty(
   const activeListings = heatmap?.active_listings ? Number(heatmap.active_listings) : 0
 
   // 3. Compute market median from canonical_properties in same zone
-  const { data: zonePrices } = await supabaseAdmin
+  const { data: zonePrices } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('price_eur, area_m2')
     .eq('tenant_id', tenantId)
@@ -193,7 +193,7 @@ export async function enrichProperty(
   // 5. Count similar properties listed vs sold in last 90d
   const ninetyDaysAgo = new Date(Date.now() - 90 * 86_400_000).toISOString()
 
-  const { count: similarListed } = await supabaseAdmin
+  const { count: similarListed } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('canonical_id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId)
@@ -201,7 +201,7 @@ export async function enrichProperty(
     .eq('property_type', canonical.property_type)
     .eq('listing_status', 'active')
 
-  const { count: similarSold90d } = await supabaseAdmin
+  const { count: similarSold90d } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('canonical_id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId)
@@ -211,7 +211,7 @@ export async function enrichProperty(
     .gte('computed_at', ninetyDaysAgo)
 
   // 6. Watchlist/match demand signals from matches table
-  const { count: matchCount } = await supabaseAdmin
+  const { count: matchCount } = await (supabaseAdmin as any)
     .from('matches')
     .select('id', { count: 'exact', head: true })
     .eq('property_id', canonicalId)
@@ -223,7 +223,7 @@ export async function enrichProperty(
   )
 
   // 7. Check for price drop in history
-  const { data: priceHistory } = await supabaseAdmin
+  const { data: priceHistory } = await (supabaseAdmin as any)
     .from('price_history')
     .select('price')
     .eq('property_id', canonicalId)
@@ -269,7 +269,7 @@ export async function enrichProperty(
   }
 
   // 10. Upsert enrichment record
-  const { error: upsertErr } = await supabaseAdmin
+  const { error: upsertErr } = await (supabaseAdmin as any)
     .from('property_enrichments')
     .upsert(
       {
@@ -294,14 +294,14 @@ export async function enrichProperty(
   }
 
   // 11. Also update price_per_m2 on canonical record
-  void supabaseAdmin
+  void (supabaseAdmin as any)
     .from('canonical_properties')
     .update({ price_per_m2: pricePerM2, computed_at: enrichedAt })
     .eq('canonical_id', canonicalId)
     .eq('tenant_id', tenantId)
 
   // 12. Emit property.enriched event (fire-and-forget)
-  void supabaseAdmin.from('runtime_events').insert({
+  void (supabaseAdmin as any).from('runtime_events').insert({
     org_id:          tenantId,
     type:            'property.enriched',
     status:          'completed',

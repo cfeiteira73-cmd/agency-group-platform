@@ -55,7 +55,7 @@ function authCheck(req: NextRequest): boolean {
 
 async function getLastIngestedAt(tenantId: string): Promise<string> {
   // Check ingestion_runs for last completed delta
-  const { data } = await supabaseAdmin
+  const { data } = await (supabaseAdmin as any)
     .from('ingestion_runs')
     .select('last_source_timestamp, completed_at')
     .eq('tenant_id', tenantId)
@@ -71,7 +71,7 @@ async function getLastIngestedAt(tenantId: string): Promise<string> {
   }
 
   // Fallback: also check legacy ingestion_log for migration compatibility
-  const { data: legacyLog } = await supabaseAdmin
+  const { data: legacyLog } = await (supabaseAdmin as any)
     .from('ingestion_log')
     .select('started_at')
     .order('started_at', { ascending: false })
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // ── Update ingestion_log on success ───────────────────────────────────────
   if (runStatus === 'success') {
     try {
-      await supabaseAdmin
+      await (supabaseAdmin as any)
         .from('ingestion_log')
         .insert({
           run_id:       `delta-${Date.now()}`,
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // ── Log to automations_log ─────────────────────────────────────────────────
-  void supabaseAdmin
+  void (supabaseAdmin as any)
     .from('automations_log')
     .insert({
       workflow_name: 'delta_ingestion',
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       },
       error_message: errorMessage,
     })
-    .then(({ error }) => {
+    .then(({ error }: { error: { message: string } | null }) => {
       if (error) console.warn('[delta-ingestion] automations_log insert error:', error.message)
     })
 

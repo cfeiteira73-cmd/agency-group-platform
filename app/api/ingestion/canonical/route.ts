@@ -106,7 +106,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // Fetch updated freshness_score from canonical record
-    const { data: updated } = await supabaseAdmin
+    const { data: updated } = await (supabaseAdmin as any)
       .from('canonical_properties')
       .select('freshness_score')
       .eq('canonical_id', canonical_id)
@@ -152,7 +152,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     '00000000-0000-0000-0000-000000000001'
 
   // ── Fetch canonical ───────────────────────────────────────────────────────────
-  const { data: canonical, error: canonErr } = await supabaseAdmin
+  const { data: canonical, error: canonErr } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('*')
     .eq('canonical_id', canonicalId)
@@ -167,7 +167,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   // ── Fetch enrichment ──────────────────────────────────────────────────────────
-  const { data: enrichment } = await supabaseAdmin
+  const { data: enrichment } = await (supabaseAdmin as any)
     .from('property_enrichments')
     .select('*')
     .eq('canonical_id', canonicalId)

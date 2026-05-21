@@ -97,7 +97,7 @@ export class BackpressureBuffer {
    */
   async enqueue(job: IngestionJob): Promise<EnqueueResult> {
     // ── Idempotency check ────────────────────────────────────────────────────
-    const { data: existing } = await supabaseAdmin
+    const { data: existing } = await (supabaseAdmin as any)
       .from('ingestion_idempotency')
       .select('id')
       .eq('tenant_id', job.tenant_id)
@@ -128,7 +128,7 @@ export class BackpressureBuffer {
       idempotency_key: job.idempotency_key,
     }
 
-    const { error: queueErr } = await supabaseAdmin
+    const { error: queueErr } = await (supabaseAdmin as any)
       .from('job_queue')
       .insert({
         queue:          'ingestion',
@@ -151,7 +151,7 @@ export class BackpressureBuffer {
 
     // ── Record idempotency key ────────────────────────────────────────────────
     // Non-blocking — failure here doesn't fail the enqueue
-    void supabaseAdmin
+    void (supabaseAdmin as any)
       .from('ingestion_idempotency')
       .upsert(
         {
@@ -194,7 +194,7 @@ export class BackpressureBuffer {
       // Claim a batch atomically: mark as 'processing' before reading
       // Use a SELECT FOR UPDATE SKIP LOCKED pattern via Supabase RPC when available,
       // otherwise fall back to optimistic status update
-      const { data: jobs, error: fetchErr } = await supabaseAdmin
+      const { data: jobs, error: fetchErr } = await (supabaseAdmin as any)
         .from('job_queue')
         .select('id, payload, attempt, max_attempts, tenant_id, correlation_id')
         .eq('queue', 'ingestion')
@@ -213,8 +213,8 @@ export class BackpressureBuffer {
       }
 
       // Mark all as 'processing' atomically
-      const jobIds = jobs.map((j) => j.id as string)
-      await supabaseAdmin
+      const jobIds = jobs.map((j: Record<string, unknown>) => j.id as string)
+      await (supabaseAdmin as any)
         .from('job_queue')
         .update({ status: 'processing' })
         .in('id', jobIds)
@@ -270,7 +270,7 @@ export class BackpressureBuffer {
           }
 
           // Mark done
-          await supabaseAdmin
+          await (supabaseAdmin as any)
             .from('job_queue')
             .update({
               status:       'done',
@@ -288,7 +288,7 @@ export class BackpressureBuffer {
           if (attempt < maxAttempts) {
             // Re-enqueue with backoff delay
             const retryDelay = Math.pow(2, attempt) * 5_000  // 10s, 20s, 40s
-            await supabaseAdmin
+            await (supabaseAdmin as any)
               .from('job_queue')
               .update({
                 status:       'pending',
@@ -299,7 +299,7 @@ export class BackpressureBuffer {
               .eq('id', jobId)
           } else {
             // DLQ: max attempts exhausted
-            await supabaseAdmin
+            await (supabaseAdmin as any)
               .from('job_queue')
               .update({
                 status:       'failed',
@@ -334,25 +334,25 @@ export class BackpressureBuffer {
     const oneHourAgo = new Date(Date.now() - 3_600_000).toISOString()
 
     const [pendingRes, runningRes, failedRes, doneRes] = await Promise.allSettled([
-      supabaseAdmin
+      (supabaseAdmin as any)
         .from('job_queue')
         .select('id', { count: 'exact', head: true })
         .eq('queue', 'ingestion')
         .eq('status', 'pending'),
 
-      supabaseAdmin
+      (supabaseAdmin as any)
         .from('job_queue')
         .select('id', { count: 'exact', head: true })
         .eq('queue', 'ingestion')
         .eq('status', 'processing'),
 
-      supabaseAdmin
+      (supabaseAdmin as any)
         .from('job_queue')
         .select('id', { count: 'exact', head: true })
         .eq('queue', 'ingestion')
         .eq('status', 'failed'),
 
-      supabaseAdmin
+      (supabaseAdmin as any)
         .from('job_queue')
         .select('id', { count: 'exact', head: true })
         .eq('queue', 'ingestion')
@@ -377,7 +377,7 @@ export class BackpressureBuffer {
   // ─── Private ───────────────────────────────────────────────────────────────
 
   private async getPendingCount(tenantId: string): Promise<number> {
-    const { count } = await supabaseAdmin
+    const { count } = await (supabaseAdmin as any)
       .from('job_queue')
       .select('id', { count: 'exact', head: true })
       .eq('queue', 'ingestion')

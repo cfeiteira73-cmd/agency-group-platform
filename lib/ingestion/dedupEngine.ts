@@ -235,7 +235,7 @@ export async function findDuplicates(
   const areaMin  = property.area_m2   * 0.75
   const areaMax  = property.area_m2   * 1.25
 
-  const { data: rows, error } = await supabaseAdmin
+  const { data: rows, error } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select(
       'canonical_id, title, address, city, price_eur, area_m2, property_type, latitude, longitude',

@@ -272,7 +272,7 @@ export async function runDeltaIngestion(
   const runId = crypto.randomUUID()
 
   // Insert run record
-  await supabaseAdmin
+  await (supabaseAdmin as any)
     .from('ingestion_runs')
     .insert({
       id:         runId,
@@ -358,7 +358,7 @@ export async function runDeltaIngestion(
   }
 
   // Update run record
-  await supabaseAdmin
+  await (supabaseAdmin as any)
     .from('ingestion_runs')
     .update({
       completed_at:         new Date().toISOString(),
@@ -383,13 +383,13 @@ async function getCanonicalCounts(
   tenantId: string,
 ): Promise<{ total: number; flagged: number }> {
   const [totalRes, flaggedRes] = await Promise.allSettled([
-    supabaseAdmin
+    (supabaseAdmin as any)
       .from('canonical_properties')
       .select('canonical_id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
       .eq('listing_status', 'active'),
 
-    supabaseAdmin
+    (supabaseAdmin as any)
       .from('canonical_properties')
       .select('canonical_id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)

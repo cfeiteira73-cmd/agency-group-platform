@@ -32,14 +32,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   console.log('[ingestion-decay] Starting decay cron at', startedAt)
 
   // ── Fetch all active tenants ──────────────────────────────────────────────────
-  const { data: tenants, error: tenantsErr } = await supabaseAdmin
+  const { data: tenants, error: tenantsErr } = await (supabaseAdmin as any)
     .from('organizations')
     .select('id, name, slug')
     .eq('plan', 'starter') // placeholder — all plans
     .order('created_at', { ascending: true })
 
   // Also fetch tenants that might not filter by plan
-  const { data: allTenants } = await supabaseAdmin
+  const { data: allTenants } = await (supabaseAdmin as any)
     .from('organizations')
     .select('id, name, slug')
     .order('created_at', { ascending: true })
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const totalDurationMs = new Date(finishedAt).getTime() - new Date(startedAt).getTime()
 
   // ── Emit cron completion event ────────────────────────────────────────────────
-  void supabaseAdmin.from('runtime_events').insert({
+  void (supabaseAdmin as any).from('runtime_events').insert({
     org_id:  tenantList[0]?.id ?? '00000000-0000-0000-0000-000000000001',
     type:    'cron.ingestion_decay.completed',
     status:  'completed',

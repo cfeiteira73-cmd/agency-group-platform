@@ -54,7 +54,7 @@ async function detectDuplicateInjection(
   tenantId: string,
 ): Promise<FraudSignal | null> {
   // Check if same property_source_id was listed, closed, then relisted within 30 days
-  const { data: canonical } = await supabaseAdmin
+  const { data: canonical } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('source_ids, listed_at, city, property_type, price_eur, area_m2')
     .eq('canonical_id', canonicalId)
@@ -71,7 +71,7 @@ async function detectDuplicateInjection(
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString()
 
   for (const providerId of providerIds) {
-    const { data: raw } = await supabaseAdmin
+    const { data: raw } = await (supabaseAdmin as any)
       .from('properties_raw')
       .select('ingested_at, provider_listing_id')
       .eq('provider_listing_id', providerId)
@@ -104,7 +104,7 @@ async function detectPriceManipulation(
   // Check price history for > 30% change within 7 days
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString()
 
-  const { data: history } = await supabaseAdmin
+  const { data: history } = await (supabaseAdmin as any)
     .from('price_history')
     .select('price, recorded_at')
     .eq('property_id', canonicalId)
@@ -144,7 +144,7 @@ async function detectFakeListing(
   canonicalId: string,
   tenantId: string,
 ): Promise<FraudSignal | null> {
-  const { data: canonical } = await supabaseAdmin
+  const { data: canonical } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('city, property_type, price_eur, area_m2, zone')
     .eq('canonical_id', canonicalId)
@@ -159,7 +159,7 @@ async function detectFakeListing(
 
   // Fetch zone median from liquidity_heatmap (uses demand_score as proxy)
   // and from property_enrichments if available
-  const { data: enrichment } = await supabaseAdmin
+  const { data: enrichment } = await (supabaseAdmin as any)
     .from('property_enrichments')
     .select('market_median_price_per_m2')
     .eq('canonical_id', canonicalId)
@@ -178,7 +178,7 @@ async function detectFakeListing(
   if (!isUnderpriced) return null
 
   // Only flag if area is also above city average (outlier detection)
-  const { data: avgArea } = await supabaseAdmin
+  const { data: avgArea } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('area_m2')
     .eq('tenant_id', tenantId)
@@ -216,7 +216,7 @@ async function detectStaleRepost(
   canonicalId: string,
   tenantId: string,
 ): Promise<FraudSignal | null> {
-  const { data: canonical } = await supabaseAdmin
+  const { data: canonical } = await (supabaseAdmin as any)
     .from('canonical_properties')
     .select('source_ids')
     .eq('canonical_id', canonicalId)
@@ -231,7 +231,7 @@ async function detectStaleRepost(
 
   let maxReposts = 0
   for (const providerId of providerIds) {
-    const { count } = await supabaseAdmin
+    const { count } = await (supabaseAdmin as any)
       .from('properties_raw')
       .select('id', { count: 'exact', head: true })
       .eq('provider_listing_id', providerId)
@@ -307,7 +307,7 @@ export async function assessFraudRisk(
 
   // Write to security_events (fire-and-forget)
   if (signals.length > 0) {
-    void supabaseAdmin.from('security_events').insert({
+    void (supabaseAdmin as any).from('security_events').insert({
       event_type:    'fraud_assessment',
       severity:      recommendation === 'block' ? 'critical' : recommendation === 'flag' ? 'warning' : 'info',
       tenant_id:     tenantId,
@@ -324,7 +324,7 @@ export async function assessFraudRisk(
   }
 
   // Also update fraud_risk_score on the canonical record
-  void supabaseAdmin
+  void (supabaseAdmin as any)
     .from('canonical_properties')
     .update({ fraud_risk_score: fraudRiskScore, computed_at: assessedAt })
     .eq('canonical_id', canonicalId)

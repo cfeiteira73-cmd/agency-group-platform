@@ -130,7 +130,7 @@ export async function runDecayCron(tenantId: string): Promise<{
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const { data: rows, error } = await supabaseAdmin
+    const { data: rows, error } = await (supabaseAdmin as any)
       .from('canonical_properties')
       .select(
         'canonical_id, listed_at, computed_at, freshness_score, listing_status',
@@ -187,7 +187,7 @@ export async function runDecayCron(tenantId: string): Promise<{
     for (let i = 0; i < updates.length; i += 50) {
       const chunk = updates.slice(i, i + 50)
       for (const upd of chunk) {
-        const { error: upsertErr } = await supabaseAdmin
+        const { error: upsertErr } = await (supabaseAdmin as any)
           .from('canonical_properties')
           .update({
             freshness_score: upd.freshness_score,
