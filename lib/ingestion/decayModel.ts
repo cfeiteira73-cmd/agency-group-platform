@@ -1,26 +1,23 @@
+// TypeScript strict — 0 errors
 // =============================================================================
-// Agency Group — Freshness Decay Model
+// Agency Group — Freshness Decay Model + Wave-32 Asset Decay
 // lib/ingestion/decayModel.ts
 //
-// Computes a 0–100 freshness score for each active property listing.
-// Score decays over time; price changes and listing updates partially reset it.
+// ── SECTION 1 (pre-existing): Freshness score for canonical_properties ────────
+//    computeFreshnessScore() + runDecayCron() — used by the weekly cron
+//    /api/cron/ingestion-decay.
 //
-// Decay curve:
-//   days  0–30:   100 → 85   (linear, -0.5/day)
-//   days 30–90:   85  → 60   (linear, -0.417/day)
-//   days 90–180:  60  → 30   (logarithmic)
-//   days 180+:    30  → 5    (exponential)
-//
-// Resets:
-//   Price change  → +15 pts  (capped at 100)
-//   Any update    → +5 pts   (capped at 100)
-//
-// TypeScript strict — 0 errors
+// ── SECTION 2 (Wave 32): Asset decay model for the ingestion pipeline ─────────
+//    computeDecay() + applyDecay() — used by the hourly asset-ingestion cron.
+//    Stages: fresh 0–30d / aging 31–90d / stale 91–180d / critical 181+d
 // =============================================================================
 
 import { supabaseAdmin } from '@/lib/supabase'
+import type { CanonicalPropertyInput } from '@/lib/ingestion/normalizationPipeline'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// =============================================================================
+// SECTION 1 — Freshness score (canonical_properties cron)
+// =============================================================================
 
 export type DecayStage = 'fresh' | 'aging' | 'stale' | 'expired'
 
@@ -33,8 +30,6 @@ export interface FreshnessScore {
   decay_stage: DecayStage
   should_delist: boolean
 }
-
-// ─── Pure Decay Computation ───────────────────────────────────────────────────
 
 /**
  * Computes freshness score for a property from its timestamps.
@@ -79,7 +74,6 @@ export function computeFreshnessScore(property: {
   // Partial resets
   let resetBonus = 0
   if (daysPriceChange != null && daysPriceChange < daysListed) {
-    // Price change happened after listing — apply bonus scaled by recency
     const recencyFactor = Math.max(0, 1 - daysPriceChange / 90)
     resetBonus += 15 * recencyFactor
   }
@@ -107,8 +101,6 @@ export function computeFreshnessScore(property: {
     should_delist:         freshnessScore < 5 || property.listing_status === 'expired',
   }
 }
-
-// ─── Batch Cron Runner ────────────────────────────────────────────────────────
 
 const BATCH_SIZE = 200
 
@@ -166,7 +158,7 @@ export async function runDecayCron(tenantId: string): Promise<{
       const result = computeFreshnessScore({
         canonical_id:        row.canonical_id,
         listed_at:           row.listed_at,
-        last_updated_at:     row.computed_at, // use computed_at as proxy for last update
+        last_updated_at:     row.computed_at,
         last_price_change_at: null,
         listing_status:      row.listing_status,
       })
@@ -183,7 +175,6 @@ export async function runDecayCron(tenantId: string): Promise<{
       if (result.should_delist) totalDelisted++
     }
 
-    // Batch upsert in chunks to avoid payload limits
     for (let i = 0; i < updates.length; i += 50) {
       const chunk = updates.slice(i, i + 50)
       for (const upd of chunk) {
@@ -219,3 +210,71 @@ export async function runDecayCron(tenantId: string): Promise<{
     avg_freshness_after:  avg(freshnessAfterAll),
   }
 }
+
+// =============================================================================
+// SECTION 2 — Wave-32 Asset Decay (canonical_assets ingestion pipeline)
+// =============================================================================
+
+export interface AssetDecayResult {
+  original_price: number
+  adjusted_price: number
+  decay_factor: number      // 0.0–1.0 (1.0 = no decay)
+  days_on_market: number
+  decay_stage: 'fresh' | 'aging' | 'stale' | 'critical'
+}
+
+/**
+ * Computes the financial decay factor for a canonical asset.
+ * Pure function — no DB access.
+ *
+ *   fresh    0–30 days   factor = 1.00
+ *   aging   31–90 days   factor = 0.97
+ *   stale   91–180 days  factor = 0.93
+ *   critical 181+ days   factor = 0.85
+ */
+export function computeDecay(
+  item: CanonicalPropertyInput,
+  referenceDate?: Date,
+): AssetDecayResult {
+  const ref    = referenceDate ?? new Date()
+  const listed = new Date(item.listed_at).getTime()
+  const days   = Math.max(0, (ref.getTime() - listed) / 86_400_000)
+
+  let decay_factor: number
+  let decay_stage: AssetDecayResult['decay_stage']
+
+  if (days <= 30) {
+    decay_stage  = 'fresh'
+    decay_factor = 1.00
+  } else if (days <= 90) {
+    decay_stage  = 'aging'
+    decay_factor = 0.97
+  } else if (days <= 180) {
+    decay_stage  = 'stale'
+    decay_factor = 0.93
+  } else {
+    decay_stage  = 'critical'
+    decay_factor = 0.85
+  }
+
+  return {
+    original_price: item.price_eur,
+    adjusted_price: Math.round(item.price_eur * decay_factor * 100) / 100,
+    decay_factor,
+    days_on_market: Math.round(days),
+    decay_stage,
+  }
+}
+
+export function applyDecay(
+  items: CanonicalPropertyInput[],
+  referenceDate?: Date,
+): Array<CanonicalPropertyInput & { decay: AssetDecayResult }> {
+  return items.map((item) => ({
+    ...item,
+    decay: computeDecay(item, referenceDate),
+  }))
+}
+
+// Re-export AssetDecayResult as DecayResult for convenience
+export type { AssetDecayResult as DecayResult }
