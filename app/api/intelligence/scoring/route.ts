@@ -18,10 +18,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   if (!check.ok) return check.response
 
   const corrId   = getRequestCorrelationId(req)
-  const tenantId = req.headers.get('x-tenant-id')
-    ?? process.env.DEFAULT_TENANT_ID
-    ?? process.env.SYSTEM_ORG_ID
-    ?? '00000000-0000-0000-0000-000000000001'
+  // x-tenant-id header is untrusted (IDOR risk) — source tenant_id from env only
+  const tenantId =
+    process.env.DEFAULT_TENANT_ID ??
+    process.env.SYSTEM_ORG_ID ??
+    '00000000-0000-0000-0000-000000000001'
 
   const { searchParams } = new URL(req.url)
   const grade = searchParams.get('grade')

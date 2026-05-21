@@ -205,6 +205,7 @@ export async function extractInvestorFeatures(
       .from('commission_events')
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
+      .eq('investor_id', investorId)
 
     if (dealErr) {
       console.error('[featureExtractor] extractInvestorFeatures — deal count failed:', dealErr.message)

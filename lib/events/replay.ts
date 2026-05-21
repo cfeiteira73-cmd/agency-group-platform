@@ -225,7 +225,7 @@ async function rebuildPropertyScores(
 
     const { error: upsertErr } = await (supabaseAdmin as any)
       .from('property_scores')
-      .upsert(upsertRows, { onConflict: 'property_id,tenant_id' })
+      .upsert(upsertRows, { onConflict: 'property_id' })
 
     if (upsertErr) {
       throw new Error(`rebuildPropertyScores: upsert failed at offset ${offset} — ${upsertErr.message}`)

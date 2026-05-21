@@ -186,6 +186,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if ((event_ids as string[]).length > 100) {
       return NextResponse.json({ error: 'Maximum 100 event_ids per replay request' }, { status: 400 })
     }
+    if ((event_ids as string[]).length === 0) {
+      return NextResponse.json({ error: 'event_ids must not be empty' }, { status: 400 })
+    }
     dlqQuery = dlqQuery.in('id', event_ids as string[])
   }
 

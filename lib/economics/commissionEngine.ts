@@ -11,6 +11,7 @@
 // =============================================================================
 
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,7 +116,7 @@ export async function calculateAndPersistCommission(
     })
 
   if (error) {
-    console.error('[CommissionEngine] persist failed:', error.message)
+    log.error('[CommissionEngine] persist failed', undefined, { deal_id: input.deal_id, error: error.message })
     // Re-throw so the worker can fail the job and trigger a retry.
     // Commission MUST be persisted — silent swallow = untracked revenue.
     throw new Error(`Commission persist failed for deal ${input.deal_id}: ${error.message}`)

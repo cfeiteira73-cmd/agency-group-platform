@@ -17,6 +17,7 @@ import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { recordCausalStep } from '@/lib/observability/causalTrace'
 import { WON_STAGES } from '@/lib/constants/pipeline'
 import { getQueueAdapter } from '@/lib/queue/adapter'
+import { recordDealOutcome } from '@/lib/ml/feedbackLoop'
 
 export const runtime = 'nodejs'
 
@@ -296,6 +297,15 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
         if (key in updates) updateData[key] = updates[key]
       }
 
+      // Fetch current stage BEFORE update to detect won-stage transitions
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: currentDeal } = await (supabaseAdmin.from('deals') as any)
+        .select('fase')
+        .eq(id && typeof id === 'string' ? 'id' : 'ref', id && typeof id === 'string' ? id : ref)
+        .eq('tenant_id', tenantId)
+        .single()
+      const previousFase = (currentDeal as { fase?: string } | null)?.fase ?? null
+
       // Support both UUID id and ref-based lookups
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabaseAdmin.from('deals') as any).update(updateData)
@@ -372,11 +382,14 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
             { correlation_id: corrId, source_system: 'api' },
           )
 
+          // Shared dealValue used by both WON and LOST outcome branches
+          const dealValue = typeof (data as Record<string, unknown>)?.deal_value === 'number'
+            ? (data as Record<string, unknown>).deal_value as number
+            : 0
+
           // Emit dealClosed + revenueRecognized when deal reaches a won/revenue stage
-          if ((WON_STAGES as readonly string[]).includes(fase)) {
-            const dealValue = typeof (data as Record<string, unknown>)?.deal_value === 'number'
-              ? (data as Record<string, unknown>).deal_value as number
-              : 0
+          // Guard: only fire if transitioning FROM a non-won stage to a won stage (prevents double-fire)
+          if ((WON_STAGES as readonly string[]).includes(fase) && !(WON_STAGES as readonly string[]).includes(previousFase ?? '')) {
             void emit.dealClosed(
               {
                 deal_id:     dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
@@ -390,7 +403,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               {
                 deal_id:        dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
                 amount_eur:     dealValue,
-                commission_eur: dealValue * 0.05,   // 5% commission
+                commission_eur: null,   // authoritative value computed by commissionEngine (tier-based 4–5%)
                 agent_email:    agentEmail,
                 zona:           typeof (data as Record<string, unknown>)?.zona === 'string'
                   ? (data as Record<string, unknown>).zona as string
@@ -416,6 +429,16 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
             ).catch((e: unknown) => {
               console.warn('[deals PUT] commission job enqueue failed:', e instanceof Error ? e.message : String(e))
             })
+            // ML feedback loop — record closed_won outcome (fire-and-forget)
+            void recordDealOutcome({
+              dealId:          dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+              tenantId:        tenantId,
+              outcome:         'closed_won',
+              dealValueEur:    dealValue,
+              daysInPipeline:  null,
+              agentEmail:      agentEmail,
+              closedAt:        new Date().toISOString(),
+            }).catch((e: unknown) => console.warn('[deals] recordDealOutcome failed:', e instanceof Error ? e.message : String(e)))
           }
 
           // Emit dealRejected when deal is lost (fire-and-forget)
@@ -429,6 +452,16 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
               },
               { correlation_id: corrId, source_system: 'api' },
             )
+            // ML feedback loop — record closed_lost outcome (fire-and-forget)
+            void recordDealOutcome({
+              dealId:          dealId ?? String((data as Record<string, unknown>)?.id ?? ''),
+              tenantId:        tenantId,
+              outcome:         'closed_lost',
+              dealValueEur:    dealValue,
+              daysInPipeline:  null,
+              agentEmail:      agentEmail,
+              closedAt:        new Date().toISOString(),
+            }).catch((e: unknown) => console.warn('[deals] recordDealOutcome failed:', e instanceof Error ? e.message : String(e)))
           }
         }
         // ── Emit dealUpdated for non-stage field changes (fire-and-forget) ──

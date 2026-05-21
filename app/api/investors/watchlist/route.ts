@@ -14,6 +14,7 @@ import {
   addToWatchlist,
   removeFromWatchlist,
   getInvestorWatchlist,
+  recordEngagement,
 } from '@/lib/investors/watchlistService'
 
 export const runtime = 'nodejs'
@@ -99,6 +100,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const notes = typeof body.notes === 'string' ? body.notes.trim() : undefined
 
     await addToWatchlist(investorId, propertyId, tenantId, priority, notes)
+
+    void recordEngagement({ tenantId, investorId, eventType: 'property_saved', propertyId })
+      .catch((e: unknown) => console.warn('[watchlist] recordEngagement failed:', e instanceof Error ? e.message : String(e)))
 
     return NextResponse.json(
       { message: 'Property added to watchlist', investor_id: investorId, property_id: propertyId },

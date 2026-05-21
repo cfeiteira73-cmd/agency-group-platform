@@ -13,6 +13,7 @@ import type { ConversionPrediction } from './models/conversionPredictor'
 import { predictYield } from './models/yieldPredictor'
 import { predictConversion } from './models/conversionPredictor'
 import { extractPropertyFeatures, extractInvestorFeatures } from './featureExtractor'
+import { getOrLoadModel, scoreWithWeights } from '@/lib/ml/modelLoader'
 import { supabaseAdmin } from '@/lib/supabase'
 
 // ---------------------------------------------------------------------------
@@ -179,6 +180,9 @@ export async function runScoringPipeline(input: PipelineInput): Promise<Pipeline
   // 3. Resolve active model from registry
   const modelId = await resolveActiveModelId(tenantId)
 
+  // Try to load trained model weights; fall back to heuristic if unavailable
+  const trainedWeights = modelId ? await getOrLoadModel(modelId).catch(() => null) : null
+
   // 4. Run yield predictor
   const yieldPrediction = predictYield(propertyFeatures)
 
@@ -189,10 +193,30 @@ export async function runScoringPipeline(input: PipelineInput): Promise<Pipeline
   }
 
   // 6. Compute composite opportunity score
-  const opportunityScore = computeOpportunityScore(
-    yieldPrediction.estimated_yield_pct,
-    conversionPrediction,
-  )
+  // If a trained model is loaded (and not a heuristic stub), use its score directly;
+  // otherwise fall back to the heuristic computeOpportunityScore.
+  let opportunityScore: number
+  if (trainedWeights !== null) {
+    const featureMap: Record<string, number | null> = {
+      price_eur:         propertyFeatures.price_eur,
+      price_per_m2:      propertyFeatures.price_per_m2,
+      area_m2:           propertyFeatures.area_m2,
+      days_listed:       propertyFeatures.days_listed,
+      match_count:       propertyFeatures.match_count,
+      avg_match_score:   propertyFeatures.avg_match_score,
+      estimated_yield:   yieldPrediction.estimated_yield_pct,
+    }
+    const modelResult = scoreWithWeights(featureMap, trainedWeights)
+    // scoreWithWeights signals heuristic fallback via fallback_used; respect it
+    opportunityScore = modelResult.fallback_used
+      ? computeOpportunityScore(yieldPrediction.estimated_yield_pct, conversionPrediction)
+      : modelResult.score
+  } else {
+    opportunityScore = computeOpportunityScore(
+      yieldPrediction.estimated_yield_pct,
+      conversionPrediction,
+    )
+  }
 
   // 7. Derive investment grade
   const investmentGrade = deriveInvestmentGrade(opportunityScore)

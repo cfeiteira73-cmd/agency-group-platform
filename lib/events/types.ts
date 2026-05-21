@@ -351,7 +351,7 @@ export interface RevenueRecognizedEvent extends BaseEvent {
   payload: {
     deal_id: string | null
     amount_eur: number
-    commission_eur: number
+    commission_eur: number | null  // null = deferred to commissionEngine (authoritative tier-based source)
     agent_email: string | null
     zona: string | null
     recognized_at: string

@@ -209,7 +209,7 @@ export async function detectDrift(
       baseline_window:  baselineDist,
       current_window:   currentDist,
       psi,
-      drift_detected:   psi > 0.1,
+      drift_detected:   psi >= 0.1,
       drift_severity,
       recommendation,
       checked_at:       checkedAt,

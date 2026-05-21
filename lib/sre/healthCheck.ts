@@ -138,9 +138,8 @@ export async function checkQueue(timeoutMs = 2000): Promise<HealthStatus> {
       )
     }
     return { ok: true, latency_ms: Date.now() - t0 }
-  } catch {
-    // Never throw from a health check
-    return { ok: true, latency_ms: Date.now() - t0 }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Queue check failed', latency_ms: Date.now() - t0 }
   }
 }
 
@@ -150,8 +149,8 @@ export async function checkEventBus(_timeoutMs = 1000): Promise<HealthStatus> {
     const { eventBus } = await import('@/lib/events/bus')
     const ok = typeof (eventBus as any).publish === 'function'
     return { ok, latency_ms: Date.now() - t0 }
-  } catch {
-    return { ok: true, latency_ms: Date.now() - t0 }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'EventBus check failed', latency_ms: Date.now() - t0 }
   }
 }
 

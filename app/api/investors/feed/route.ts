@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { routeProperty } from '@/lib/investors/routingEngine'
+import { applyAdaptiveReranking, loadAdaptiveSignals } from '@/lib/investors/adaptiveReranker'
 import type { InvestorMatchResult } from '@/lib/investors/types'
 
 export const runtime = 'nodejs'
@@ -183,7 +184,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     try {
       const routingResult = await routeProperty(anchorPropertyId, tenantId, baseMatches)
-      sortedRoutes = routingResult.routes.map(r => ({
+
+      // Adaptive re-ranking: boost routes using network feedback signals
+      let rerankedRoutes = routingResult.routes
+      try {
+        const investorIds = routingResult.routes.map(r => r.investor_id)
+        const adaptiveSignals = await loadAdaptiveSignals(investorIds, anchorPropertyId, tenantId)
+        rerankedRoutes = applyAdaptiveReranking(routingResult.routes, adaptiveSignals)
+      } catch (e) {
+        // Non-critical: fall back to base routing if adaptive signals fail
+        console.warn('[feed] adaptive reranking failed, using base routing:', e instanceof Error ? e.message : String(e))
+      }
+
+      sortedRoutes = rerankedRoutes.map(r => ({
         investor_id:          r.investor_id,
         final_routing_score:  r.final_routing_score,
         routing_tier:         r.routing_tier,

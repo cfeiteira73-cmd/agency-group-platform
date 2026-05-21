@@ -130,7 +130,7 @@ export async function scoringHandler(
 
     const { error: upsertErr } = await (supabaseAdmin as any)
       .from('property_scores')
-      .upsert(upsertRow, { onConflict: 'property_id,tenant_id' })
+      .upsert(upsertRow, { onConflict: 'property_id' })
 
     if (upsertErr) {
       console.error(`[scoringHandler] upsert failed for ${property_id}:`, upsertErr.message)

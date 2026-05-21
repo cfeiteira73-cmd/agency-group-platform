@@ -145,6 +145,14 @@
     {
       "path": "/api/cron/anomaly-monitor",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/network-feedback",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/ml-training-sync",
+      "schedule": "0 1 * * 0"
     }
   ]
 }
