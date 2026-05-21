@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { safeCompare } from '@/lib/safeCompare'
 import { getExportStats, exportTrainingData } from '@/lib/ml/trainingDataExporter'
 import { runDriftCheck } from '@/lib/ml/driftDetector'
+import { bootstrapNamedModels } from '@/lib/ml/modelBootstrap'
+import { ensureStorageBuckets } from '@/lib/storage/buckets'
 
 export const runtime     = 'nodejs'
 export const maxDuration = 45
@@ -42,6 +44,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   )
   const startedAt  = Date.now()
   const exportedAt = new Date().toISOString()
+
+  // 0a. Ensure storage buckets exist (idempotent — creates ml-training-data + ml-models)
+  try {
+    const buckets = await ensureStorageBuckets()
+    console.log('[ml-training-sync] storage buckets:', JSON.stringify(buckets))
+  } catch (err) {
+    console.warn('[ml-training-sync] ensureStorageBuckets (non-fatal):', err instanceof Error ? err.message : String(err))
+  }
+
+  // 0b. Bootstrap named models (idempotent — seeds 4 canonical models if not present)
+  try {
+    const bootstrapResult = await bootstrapNamedModels(tenantId)
+    console.log('[ml-training-sync] bootstrapNamedModels:', JSON.stringify(bootstrapResult))
+  } catch (err) {
+    console.warn('[ml-training-sync] bootstrapNamedModels (non-fatal):', err instanceof Error ? err.message : String(err))
+  }
 
   // 1. Get export stats
   const stats = await getExportStats(tenantId)

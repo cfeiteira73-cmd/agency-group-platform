@@ -1,14 +1,16 @@
-import Anthropic from '@anthropic-ai/sdk'
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages/messages'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { withAIStream } from '@/lib/ops/withAI'
+import { _anthropicClient } from '@/lib/ai/gateway'
+import { computeAICost }    from '@/lib/ai/costTracker'
+import { recordSpend }      from '@/lib/ai/budgetEnforcer'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 import { detectPromptInjection } from '@/lib/security/intrusionDetection'
 import { trackAICall } from '@/lib/observability/telemetry'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 // ─── Rate limiting (Upstash Redis, serverless-safe) ───────────────────────────
 // Uses Upstash REST API directly — no SDK required, works on Vercel Edge runtime.
@@ -46,10 +48,11 @@ async function checkRateLimit(ip: string): Promise<{ allowed: boolean }> {
   return { allowed: true }
 }
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY ?? '',
-  dangerouslyAllowBrowser: true, // required for Next.js Edge Runtime
-})
+// Canonical tenant ID — used for budget enforcement + ai_usage_log attribution
+const TENANT_ID =
+  process.env.DEFAULT_TENANT_ID ??
+  process.env.SYSTEM_ORG_ID ??
+  '00000000-0000-0000-0000-000000000001'
 
 // Lazy Supabase client — only initialised if env vars are present
 function getSupabaseClient() {
@@ -359,7 +362,7 @@ export async function POST(req: NextRequest) {
 
     const stream = await withAIStream(
       'anthropic-opus',
-      () => client.messages.create({
+      () => _anthropicClient.messages.create({
         model: 'claude-opus-4-6',
         max_tokens: 600,
         stream: true,
@@ -367,6 +370,8 @@ export async function POST(req: NextRequest) {
         messages: validMessages,
       }),
       null,
+      'sofia_chat',
+      TENANT_ID,
     )
 
     const encoder = new TextEncoder()
@@ -432,6 +437,18 @@ export async function POST(req: NextRequest) {
             true,
             corrId,
           )
+
+          // ai_usage_log: persist to budget accounting audit trail (fire-and-forget)
+          if (totalInputTokens + totalOutputTokens > 0) {
+            const { total_cost_usd } = computeAICost('claude-opus-4-6', totalInputTokens, totalOutputTokens)
+            void recordSpend(TENANT_ID, total_cost_usd, 'claude-opus-4-6', 'sofia_chat', {
+              input_tokens:   totalInputTokens,
+              output_tokens:  totalOutputTokens,
+              latency_ms:     Date.now() - _aiCallStart,
+              success:        true,
+              correlation_id: corrId,
+            }).catch(() => { /* non-blocking */ })
+          }
 
           controller.enqueue(encoder.encode('data: [DONE]\n\n'))
           controller.close()

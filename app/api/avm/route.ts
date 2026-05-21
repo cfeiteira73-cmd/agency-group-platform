@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import Anthropic from '@anthropic-ai/sdk'
+import { _anthropicClient } from '@/lib/ai/gateway'
 import { avmCache, CacheKeys } from '@/lib/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { rateLimit } from '@/lib/rateLimit'
@@ -49,7 +50,7 @@ async function scorePhotos(photos: string[], corrId?: string): Promise<PhotoQual
   const _photoAIStart = Date.now()
 
   try {
-    const anthropicClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const anthropicClient = _anthropicClient  // gateway singleton — no duplicate instantiation
     const imageContents: Anthropic.ImageBlockParam[] = validUrls.map(url => ({
       type: 'image' as const,
       source: { type: 'url' as const, url },
@@ -79,6 +80,9 @@ grade: A(90+), B(75-89), C(60-74), D(45-59), F(<45)`,
         }],
       }),
       null,
+      'avm_photo_scoring',
+      undefined,
+      process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001',
     )
 
     if (response === null) {

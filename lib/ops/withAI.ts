@@ -42,6 +42,7 @@ import { checkPolicy, trackTokensUsed } from '@/lib/ai/policyEngine'
 import { validateAgentOutput }        from '@/lib/ai/contracts'
 import { emit }                       from '@/lib/events/producers'
 import type { ZodSchema }             from 'zod'
+import { checkBudget, recordSpend }   from '@/lib/ai/budgetEnforcer'
 
 // ---------------------------------------------------------------------------
 // Component names — export for type safety at call sites
@@ -170,6 +171,15 @@ export async function withAI<T>(
     // Continue execution but log prominently
   }
 
+  // ── Budget gate (ai_budgets table — hard_block stops call; soft limit warns) ─
+  try {
+    const budget = await checkBudget(resolvedTenant, 0)
+    if (!budget.allowed) {
+      console.warn(`[withAI] Budget blocked tenant=${resolvedTenant} component=${component}: ${budget.reason ?? 'limit_exceeded'}`)
+      return fallback
+    }
+  } catch (_budgetErr) { /* budget infra unavailable — fail open and continue */ }
+
   // Detect an open circuit before attempting (circuit breaker returns fallback
   // without throwing, so we probe the state up-front for the audit log).
   const circuitOpen = await isOpen(component)
@@ -283,6 +293,17 @@ export async function withAI<T>(
       )
     }
 
+    // ── ai_usage_log: persist spend for budget accounting (fire-and-forget) ─
+    if (cost_usd !== undefined && cost_usd > 0) {
+      void recordSpend(resolvedTenant, cost_usd, component, revenueContext ?? 'ops', {
+        input_tokens:   inputTokens,
+        output_tokens:  outputTokens,
+        latency_ms:     Date.now() - start,
+        success:        true,
+        correlation_id: correlationId,
+      }).catch(() => { /* non-blocking */ })
+    }
+
     return result
   } catch (err) {
     const errorType =
@@ -319,6 +340,15 @@ export async function withAI<T>(
       },
       { correlation_id: correlationId, source_system: 'api' },
     )
+
+    // ── ai_usage_log: record failure for budget accounting (fire-and-forget) ─
+    void recordSpend(resolvedTenant, 0, component, revenueContext ?? 'ops', {
+      input_tokens:   0,
+      output_tokens:  0,
+      latency_ms:     Date.now() - start,
+      success:        false,
+      correlation_id: correlationId,
+    }).catch(() => { /* non-blocking */ })
 
     throw err
   }
@@ -418,6 +448,15 @@ export async function withAIStream<T>(
     console.warn(`[withAIStream] Policy ESCALATE for ${component}: ${policy.reason} — proceeding with caution`)
     // Continue execution but log prominently
   }
+
+  // ── Budget gate ────────────────────────────────────────────────────────────
+  try {
+    const budget = await checkBudget(resolvedTenant, 0)
+    if (!budget.allowed) {
+      console.warn(`[withAIStream] Budget blocked tenant=${resolvedTenant} component=${component}: ${budget.reason ?? 'limit_exceeded'}`)
+      return fallback
+    }
+  } catch (_budgetErr) { /* budget infra unavailable — fail open */ }
 
   const circuitOpen = await isOpen(component)
 
