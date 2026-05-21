@@ -16,7 +16,6 @@
 
 import {
   CHAOS_TEST_LIBRARY,
-  persistChaosResult,
   type ChaosTestResult,
 } from './chaosEngine'
 import { checkRedis, checkDatabase } from './healthCheck'
@@ -83,8 +82,7 @@ export async function executeChaosTests(
   for (const def of candidates) {
     const result = await executeSingleTest(def.name, options.tenantId, options.dryRun ?? false)
     results.push(result)
-    // Persist each result (fire-and-forget — errors are swallowed inside)
-    await persistChaosResult(options.tenantId, result)
+    // Note: persistence is handled by runChaosGauntlet in chaosEngine.ts
   }
 
   // Count non-automatable tests that were implicitly skipped when a testName was given
