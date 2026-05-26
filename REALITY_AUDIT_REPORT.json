@@ -1,0 +1,88 @@
+{
+  "report_meta": {
+    "title": "REALITY AUDIT REPORT — WAVE 47 GAP 1",
+    "generated_at": "2026-05-26T00:00:00.000Z",
+    "platform": "Agency Group SH-ROS v47.0",
+    "module": "lib/reality/externalRealityValidator.ts",
+    "api_endpoint": "GET /api/reality/validate"
+  },
+  "overall_reality_score": 0,
+  "system_reality_state": "ARCHITECTURE_ONLY",
+  "note": "Score is 0/100 because no provider API credentials are configured. Code is fully wired — credentials are the only missing step.",
+  "sources": [
+    {
+      "source": "IDEALISTA",
+      "status": "NOT_CONFIGURED",
+      "reality_score": 0,
+      "configured": false,
+      "env_var_required": "IDEALISTA_API_KEY",
+      "sla_minutes": 5,
+      "weight": 3,
+      "issue": "IDEALISTA_API_KEY not configured — set env var to activate real data ingestion"
+    },
+    {
+      "source": "CASAFARI",
+      "status": "NOT_CONFIGURED",
+      "reality_score": 0,
+      "configured": false,
+      "env_var_required": "CASAFARI_API_KEY",
+      "sla_minutes": 5,
+      "weight": 2,
+      "issue": "CASAFARI_API_KEY not configured"
+    },
+    {
+      "source": "CITIUS_AUCTIONS",
+      "status": "NOT_CONFIGURED",
+      "reality_score": 0,
+      "configured": false,
+      "env_var_required": "CITIUS_PARTNER_KEY",
+      "sla_minutes": 5,
+      "weight": 2,
+      "issue": "CITIUS_PARTNER_KEY not configured"
+    },
+    {
+      "source": "SALTEDGE_PSD2",
+      "status": "NOT_CONFIGURED",
+      "reality_score": 0,
+      "configured": false,
+      "env_var_required": "SALTEDGE_APP_ID + SALTEDGE_SECRET",
+      "sla_minutes": 300,
+      "weight": 2,
+      "issue": "SALTEDGE_APP_ID + SALTEDGE_SECRET not configured"
+    },
+    {
+      "source": "BANK_NPL_FEEDS",
+      "status": "NOT_CONFIGURED",
+      "reality_score": 0,
+      "configured": false,
+      "env_var_required": "NOVOBANCO_NPL_API_KEY",
+      "sla_minutes": 60,
+      "weight": 1,
+      "issue": "NOVOBANCO_NPL_API_KEY not configured"
+    }
+  ],
+  "simulation_flags": [
+    "IDEALISTA: DATA UNCONFIRMED EXTERNALLY — last sync NEVER",
+    "CASAFARI: DATA UNCONFIRMED EXTERNALLY — last sync NEVER",
+    "CITIUS_AUCTIONS: DATA UNCONFIRMED EXTERNALLY — last sync NEVER",
+    "SALTEDGE_PSD2: DATA UNCONFIRMED EXTERNALLY — last sync NEVER",
+    "BANK_NPL_FEEDS: DATA UNCONFIRMED EXTERNALLY — last sync NEVER"
+  ],
+  "fallback_log": [],
+  "recommendation": "Configure provider credentials to enable real data ingestion. See INSTITUTIONAL_CERTIFICATION_REPORT.md for required env vars.",
+  "reality_state_legend": {
+    "REAL_SYSTEM": "overall_score >= 80 — all sources fresh and externally verified",
+    "PARTIALLY_REAL": "overall_score 50-79 — some sources real, some stale/fallback",
+    "SIMULATION_RISK": "overall_score < 50 with >= 3 simulation flags",
+    "ARCHITECTURE_ONLY": "all sources NOT_CONFIGURED — code wired, credentials needed"
+  },
+  "activation_checklist": [
+    "Set IDEALISTA_API_KEY + IDEALISTA_API_SECRET (https://developers.idealista.com)",
+    "Set CASAFARI_API_KEY (https://casafari.com/api)",
+    "Set CITIUS_PARTNER_KEY (formal MJ Portugal agreement)",
+    "Set SALTEDGE_APP_ID + SALTEDGE_SECRET (SaltEdge dashboard)",
+    "Set NOVOBANCO_NPL_API_KEY",
+    "Apply migration 000104_reality_validation.sql",
+    "Call GET /api/reality/validate to verify after each credential is added"
+  ]
+}

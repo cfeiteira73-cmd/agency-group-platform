@@ -1,0 +1,122 @@
+{
+  "report_meta": {
+    "title": "CHAOS RESILIENCE REPORT — WAVE 47 GAP 5",
+    "generated_at": "2026-05-26T00:00:00.000Z",
+    "platform": "Agency Group SH-ROS v47.0",
+    "module": "lib/resilience/resilienceTruthEngine.ts",
+    "api_endpoint_report": "GET /api/resilience/chaos",
+    "api_endpoint_run": "POST /api/resilience/chaos"
+  },
+  "rto_rpo_targets": {
+    "rto_target": "< 10 minutes (600 seconds)",
+    "rpo_target": "0 seconds (event replay closes backup-to-now gap)",
+    "rto_current_status": "UNVERIFIED — DR tables not yet populated",
+    "rpo_current_status": "UNVERIFIED — replayable_events table not yet receiving events"
+  },
+  "dr_truth_checks": [
+    {
+      "check_id": "DR-001-DB-RESTORE",
+      "name": "Database Restore Verification",
+      "status": "UNVERIFIED",
+      "finding": "No DAILY_SNAPSHOT backup found — Supabase PITR not configured",
+      "activation": "Enable Supabase PITR in project settings → enables backup_records population"
+    },
+    {
+      "check_id": "DR-002-REGION-FAILOVER",
+      "name": "Region Failover Capability",
+      "status": "UNVERIFIED",
+      "finding": "No region health data — configure region health checks",
+      "activation": "Set up EU_WEST + EU_CENTRAL cross-region replication → enables region_health_checks"
+    },
+    {
+      "check_id": "DR-003-EVENT-REPLAY",
+      "name": "Event Replay — RPO=0 Verification",
+      "status": "UNVERIFIED",
+      "finding": "No replayable events — event sourcing not active",
+      "activation": "Verify replayable_events table is receiving events on each transaction"
+    },
+    {
+      "check_id": "DR-004-TEST-RECORD",
+      "name": "DR Test Execution Record",
+      "status": "UNVERIFIED",
+      "finding": "No PASSED DR test found — run POST /api/dr/simulate to execute DR test",
+      "activation": "Run POST /api/dr/simulate to generate first DR simulation run"
+    }
+  ],
+  "chaos_scenarios": [
+    {
+      "scenario_id": "network-partition-eu-west",
+      "failure_mode": "network_partition",
+      "rto_target_seconds": 90,
+      "expected_grade": "pass_with_warnings",
+      "self_healing": true,
+      "blast_radius": "partial_system"
+    },
+    {
+      "scenario_id": "db-primary-failure",
+      "failure_mode": "db_primary_failure",
+      "rto_target_seconds": 300,
+      "expected_grade": "pass_with_warnings",
+      "self_healing": false,
+      "blast_radius": "partial_system",
+      "note": "Requires manual intervention — PITR restore needed"
+    },
+    {
+      "scenario_id": "kafka-broker-loss",
+      "failure_mode": "kafka_broker_loss",
+      "rto_target_seconds": 600,
+      "expected_grade": "pass",
+      "self_healing": true,
+      "blast_radius": "single_service"
+    },
+    {
+      "scenario_id": "ai-provider-outage",
+      "failure_mode": "ai_provider_outage",
+      "rto_target_seconds": 30,
+      "expected_grade": "pass",
+      "self_healing": true,
+      "blast_radius": "single_service",
+      "fallback": "Heuristic fallback activates within 30s"
+    },
+    {
+      "scenario_id": "redis-eviction",
+      "failure_mode": "redis_eviction",
+      "rto_target_seconds": 180,
+      "expected_grade": "pass",
+      "self_healing": true,
+      "blast_radius": "single_service",
+      "fallback": "In-memory rate limiting fallback"
+    },
+    {
+      "scenario_id": "cpu-saturation",
+      "failure_mode": "cpu_saturation",
+      "rto_target_seconds": 60,
+      "expected_grade": "pass_with_warnings",
+      "self_healing": true,
+      "blast_radius": "single_service"
+    },
+    {
+      "scenario_id": "memory-pressure",
+      "failure_mode": "memory_pressure",
+      "rto_target_seconds": 45,
+      "expected_grade": "pass",
+      "self_healing": true,
+      "blast_radius": "single_service"
+    }
+  ],
+  "resilience_grade": "F",
+  "resilience_score": 0,
+  "resilience_grade_note": "Grade F because DR infrastructure not yet configured. Code is fully wired — infrastructure is the only missing step.",
+  "expected_grade_after_activation": "B",
+  "activation_checklist": [
+    "Apply migration 000108_resilience_truth.sql",
+    "Enable Supabase PITR (Point-in-Time Recovery) in project settings",
+    "Configure S3 bucket with Object Lock (WORM) for backup storage",
+    "Set up cross-region replication: EU_WEST + EU_CENTRAL",
+    "Run POST /api/dr/simulate to execute first DR simulation (creates dr_simulation_runs entry)",
+    "Run POST /api/resilience/chaos to execute full chaos gauntlet (dry-run safe)",
+    "Set CHAOS_TESTING_ENABLED=true for non-dry-run chaos (staging only)",
+    "Monitor replayable_events table for RPO=0 verification",
+    "Expected post-activation grade: B (≥80 resilience score)"
+  ]
+}

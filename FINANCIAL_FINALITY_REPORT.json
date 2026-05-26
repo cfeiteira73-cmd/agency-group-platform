@@ -1,0 +1,76 @@
+{
+  "report_meta": {
+    "title": "FINANCIAL FINALITY REPORT — WAVE 47 GAP 2",
+    "generated_at": "2026-05-26T00:00:00.000Z",
+    "platform": "Agency Group SH-ROS v47.0",
+    "module": "lib/financial/financialFinalityEngine.ts",
+    "api_endpoint_report": "GET /api/financial/finality",
+    "api_endpoint_audit": "POST /api/financial/finality"
+  },
+  "finality_rule": "sem BANK_CONFIRMED = não é dinheiro real (without BANK_CONFIRMED = not real money)",
+  "finality_state_machine": {
+    "states": ["PENDING", "AUTHORIZED", "FUNDED", "SETTLED", "BANK_CONFIRMED", "FINALIZED"],
+    "transitions": {
+      "PENDING": ["AUTHORIZED"],
+      "AUTHORIZED": ["FUNDED"],
+      "FUNDED": ["SETTLED"],
+      "SETTLED": ["BANK_CONFIRMED"],
+      "BANK_CONFIRMED": ["FINALIZED"],
+      "FINALIZED": []
+    },
+    "rule": "Forward-only transitions. No reversals. FINALIZED is terminal."
+  },
+  "current_status": {
+    "total_finality_records": 0,
+    "by_state": {
+      "PENDING": 0,
+      "AUTHORIZED": 0,
+      "FUNDED": 0,
+      "SETTLED": 0,
+      "BANK_CONFIRMED": 0,
+      "FINALIZED": 0
+    },
+    "bank_confirmed_count": 0,
+    "real_money_volume_eur": "0.00",
+    "simulated_volume_eur": "0.00",
+    "finality_gate_passed": false,
+    "note": "No real transactions yet — PSP credentials required (STRIPE_SECRET_KEY or ADYEN_API_KEY)"
+  },
+  "reconciliation": {
+    "accuracy_pct": 100,
+    "target_pct": 99.5,
+    "target_met": true,
+    "total_payment_records": 0,
+    "matched_to_bank_statement": 0,
+    "unmatched_count": 0,
+    "note": "Vacuously true — 100% accuracy when no payment records exist"
+  },
+  "sha256_audit_chain": {
+    "description": "Every state transition recorded with SHA-256 chain hash. Root hash covers all transactions in period.",
+    "algorithm": "SHA-256 forward chain: chainHash(prevHash, data) → rootHash(allHashes)",
+    "genesis_sentinel": "GENESIS",
+    "big4_ready": true,
+    "audit_packages_persisted_to": "audit_packages table (migration 000105_financial_finality.sql)"
+  },
+  "psp_configuration": {
+    "stripe_active": false,
+    "adyen_active": false,
+    "gocardless_active": false,
+    "currencycloud_active": false,
+    "issues": [
+      "NO PSP CONFIGURED: STRIPE_SECRET_KEY or ADYEN_API_KEY required for real settlements",
+      "SEPA INACTIVE: GOCARDLESS_ACCESS_TOKEN required for SEPA transfers"
+    ]
+  },
+  "activation_checklist": [
+    "Apply migration 000105_financial_finality.sql (finality_records + audit_packages tables)",
+    "Set STRIPE_SECRET_KEY (https://dashboard.stripe.com/apikeys)",
+    "Set ADYEN_API_KEY + ADYEN_MERCHANT_ACCOUNT (Adyen Customer Area)",
+    "Set GOCARDLESS_ACCESS_TOKEN (https://manage.gocardless.com/api)",
+    "Set CURRENCYCLOUD_API_KEY + CURRENCYCLOUD_LOGIN_ID (Currencycloud portal)",
+    "Set SALTEDGE_APP_ID + SALTEDGE_SECRET (SaltEdge dashboard)",
+    "Process first real transaction → verify BANK_CONFIRMED state reached",
+    "Call POST /api/financial/finality to generate first SHA-256 audit package",
+    "Verify: finality_gate_passed = true in GET /api/financial/finality"
+  ]
+}

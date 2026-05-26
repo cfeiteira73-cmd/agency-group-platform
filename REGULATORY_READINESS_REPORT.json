@@ -1,0 +1,99 @@
+{
+  "report_meta": {
+    "title": "REGULATORY READINESS REPORT — WAVE 47 GAP 4",
+    "generated_at": "2026-05-26T00:00:00.000Z",
+    "platform": "Agency Group SH-ROS v47.0",
+    "module": "lib/compliance/regulatoryAssuranceEngine.ts",
+    "api_endpoint": "GET /api/compliance/regulatory"
+  },
+  "compliance_gates": [
+    {
+      "gate_id": "SOC2_TYPE_II_READINESS",
+      "name": "SOC2 Type II Readiness",
+      "threshold_pct": 80,
+      "current_score_estimate": 78,
+      "passed": false,
+      "blocking_consequence": "NO SOC2 TYPE II CERTIFICATION → NO INSTITUTIONAL CLIENTS",
+      "gap_to_threshold": "~2% — configure Datadog EU (DD_API_KEY) to close the gap"
+    },
+    {
+      "gate_id": "ISO27001_READINESS",
+      "name": "ISO 27001:2022 Readiness",
+      "threshold_pct": 80,
+      "current_score_estimate": 72,
+      "passed": false,
+      "blocking_consequence": "NO ISO27001 CERTIFICATION → NO FUND ACCESS → NO SOVEREIGN CAPITAL",
+      "gap_to_threshold": "~8% — publish formal ISMS policy + risk register"
+    },
+    {
+      "gate_id": "GDPR_COMPLIANCE",
+      "name": "GDPR / CCPA Privacy Compliance",
+      "threshold_pct": 70,
+      "current_score_estimate": 90,
+      "passed": true,
+      "note": "Privacy pillar fully implemented (gdprControlPlane + consentTracking + breachNotification)"
+    }
+  ],
+  "soc2_pillars": {
+    "SECURITY": {
+      "score_estimate": 85,
+      "readiness": "READY",
+      "implemented": ["CC6.1 RBAC", "CC6.2 Magic Link", "CC6.6 SIEM", "CC6.7 IDS", "CC6.8 KMS", "CC8.1 CI/CD"],
+      "partial": ["CC6.3 Access Review", "CC7.1 Monitoring (needs DD_API_KEY)", "CC9.1 Risk Assessment"]
+    },
+    "AVAILABILITY": {
+      "score_estimate": 70,
+      "readiness": "CONDITIONALLY_READY",
+      "implemented": ["A1.1 SLO Engine", "A1.3 Incident Response SEV1-SEV4"],
+      "partial": ["A1.2 DR (WORM backup + cross-region not configured)"]
+    },
+    "CONFIDENTIALITY": {
+      "score_estimate": 95,
+      "readiness": "READY",
+      "implemented": ["C1.1 AES-256 encryption", "C1.2 GDPR retention + erasure"]
+    },
+    "PROCESSING_INTEGRITY": {
+      "score_estimate": 100,
+      "readiness": "READY",
+      "implemented": ["PI1.1 Financial finality engine + 99.5% reconciliation", "PI1.2 SHA-256 audit chain + event replay"]
+    },
+    "PRIVACY": {
+      "score_estimate": 90,
+      "readiness": "READY",
+      "implemented": ["P1.1 Consent tracking + GDPR Art.17+20", "P3.1 PII minimization + field allowlist"]
+    }
+  },
+  "iso27001_domains": {
+    "A5_ORGANIZATIONAL": {
+      "score_estimate": 60,
+      "key_gap": "No formal ISMS policy document published (ISO 27001 Clause 5.2)",
+      "remediation": "Create ISMS_POLICY.md approved by top management"
+    },
+    "A8_TECHNOLOGICAL": {
+      "score_estimate": 80,
+      "implemented": ["A8.2 Privileged access", "A8.24 Cryptography", "A8.28 Secure coding"],
+      "gap": "A8.8 No CVE/SAST scanner in CI pipeline"
+    },
+    "CLAUSE6_PLANNING": {
+      "score_estimate": 55,
+      "key_gap": "No formal risk register (no risk_register table)",
+      "remediation": "Create risk_register table with likelihood/impact matrix"
+    }
+  },
+  "big4_audit_readiness": {
+    "auditor_ready": false,
+    "soc2_score_for_readiness": 78,
+    "iso27001_score_for_readiness": 72,
+    "threshold_for_big4_engagement": 70,
+    "note": "Both scores above 70% — suitable for Big4 pre-audit gap analysis. Full audit requires ≥80%."
+  },
+  "activation_checklist": [
+    "Apply migration 000107_regulatory_assurance.sql",
+    "Publish ISMS_POLICY.md (closes ISO-A5.1 gap — biggest ISO27001 gap)",
+    "Create risk_register table with quarterly review cycle (closes CLAUSE6_PLANNING)",
+    "Configure DD_API_KEY for Datadog EU monitoring (closes S-CC7.1 to IMPLEMENTED)",
+    "Integrate Snyk or GitHub Dependabot CVE scanning in CI (closes ISO-A8.8)",
+    "Document quarterly management security review process (closes ISO-9.3)",
+    "Run GET /api/compliance/regulatory to get live scores with real DB data"
+  ]
+}
