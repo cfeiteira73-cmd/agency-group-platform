@@ -1,0 +1,534 @@
+{
+  "audit_date": "2026-05-26",
+  "auditor": "Wave46-Agent1-SystemReality",
+  "project": "Agency Group SH-ROS",
+  "overall_reality_score": 52,
+  "subsystems": [
+    {
+      "name": "Dashboard / UI Layer",
+      "status": "REAL",
+      "reality_score": 85,
+      "real_components": [
+        "Portal pages backed by Supabase (deals, contacts, matches, properties)",
+        "Auth via NextAuth + Google OAuth",
+        "Rate-limit headers on all API routes",
+        "SLO tracking via lib/sre/sloTracker.ts → Supabase trace_spans",
+        "Control Tower reads live Supabase table counts",
+        "Prometheus metrics endpoint (/api/metrics) reads 8 Supabase tables"
+      ],
+      "partial_components": [
+        "INTERNAL_API_BASE must be set to production URL or Control Tower panels show empty state",
+        "Prometheus scrape works but most SLOs (all except api-availability) return UNKNOWN status"
+      ],
+      "simulated_components": [],
+      "missing_env_vars": ["INTERNAL_API_BASE", "REVENUE_TARGET_EUR", "REVENUE_TARGET_DATE"],
+      "missing_external_services": [],
+      "action_required": "Set INTERNAL_API_BASE to production domain. Configure REVENUE_TARGET_EUR for CEO dashboard."
+    },
+    {
+      "name": "CRM (contacts, deals, pipeline)",
+      "status": "REAL",
+      "reality_score": 90,
+      "real_components": [
+        "Full CRUD on deals table in Supabase — no mock fallback (503 if DB unavailable)",
+        "Contacts upsert via partner form → Supabase contacts table",
+        "Matches read from Supabase matches table",
+        "Stage transitions emit typed events (dealStageAdvanced, dealClosed, etc.)",
+        "Causal trace steps recorded on every mutation",
+        "ML feedback loop (recordDealOutcome) called on terminal stages",
+        "Audit ledger entries written at CPCV + Escritura stages"
+      ],
+      "partial_components": [
+        "Notion integration (NOTION_DEALS_DB) configured but sync is fire-and-forget, not verified",
+        "WhatsApp alerts require ALERT_WHATSAPP_PHONE + Twilio/Meta credentials"
+      ],
+      "simulated_components": [],
+      "missing_env_vars": ["NOTION_TOKEN", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"],
+      "missing_external_services": ["Notion sync (optional)", "WhatsApp Business (optional for alerts)"],
+      "action_required": "None critical. Notion + WhatsApp are optional enrichments."
+    },
+    {
+      "name": "Capital Flows (escrow, PSP, bank)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 40,
+      "real_components": [
+        "EscrowLayer persists escrow records to Supabase escrow_positions table",
+        "PSP Orchestrator tries Stripe → Adyen → SEPA_DIRECT fallback",
+        "Stripe SDK installed (stripe ^22.0.2 in package.json) and called when STRIPE_SECRET_KEY set",
+        "psp_payment_intents table records every intent regardless of provider",
+        "Bank reconciliation engine reads bank_statement_lines from Supabase"
+      ],
+      "partial_components": [
+        "STRIPE_SECRET_KEY is commented out in .env.example — not wired for production",
+        "Adyen integration calls checkout-test.adyen.com (TEST environment, not production)",
+        "SEPA_DIRECT fallback generates a UUID reference — no actual SEPA transfer occurs",
+        "escrowLayer.generateReferenceCode uses Math.random() (cosmetic only, does not affect data integrity)",
+        "Bank reconciliation reads from Supabase but has no real bank feed connector (manual CSV import assumed)"
+      ],
+      "simulated_components": [
+        "SEPA_DIRECT fallback: creates intent record but sends no real payment instruction"
+      ],
+      "missing_env_vars": ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "ADYEN_API_KEY"],
+      "missing_external_services": [
+        "Stripe production account + webhook endpoint",
+        "Adyen production credentials (currently test env)",
+        "Real bank feed / SEPA connector (Wise, Modulr, or BBVA Open Platform)"
+      ],
+      "action_required": "Configure STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET. Switch Adyen to production URL. Integrate real bank statement feed for reconciliation."
+    },
+    {
+      "name": "Ledger (double-entry)",
+      "status": "REAL",
+      "reality_score": 88,
+      "real_components": [
+        "postJournalEntry writes to journal_entries table with idempotency_key dedup",
+        "updateAccountBalance updates ledger_accounts.balance_cents in Supabase",
+        "BigInt cents arithmetic throughout — no float errors",
+        "getTrialBalance checks debit/credit equality and warns if out of balance",
+        "recordCommissionRevenue + recordEscrowReceipt + recordEscrowRelease are real entry points",
+        "TransactionFeeEngine: pure bigint computation for PT/ES taxes (IMT 6%, stamp 0.8%, notary flat)",
+        "Economics auditLedger appendEntry called at CPCV and Escritura stages from deals API",
+        "Tier-based commission rates (4–5%) computed and persisted on deal closure"
+      ],
+      "partial_components": [
+        "Ledger accounts balance_cents stored as Number in DB (loses precision above 2^53 cents — ~€90 trillion, practically safe)",
+        "No external audit trail export (regulatory reporting to AT not connected)"
+      ],
+      "simulated_components": [],
+      "missing_env_vars": [],
+      "missing_external_services": ["AT (Autoridade Tributária) reporting API — not yet required"],
+      "action_required": "Consider switching balance_cents to NUMERIC in Supabase schema to avoid theoretical BigInt precision loss at scale."
+    },
+    {
+      "name": "ML Engines (scoring, optimization)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 45,
+      "real_components": [
+        "ML feature snapshots written to ml_feature_snapshots in Supabase",
+        "recordDealOutcome labels snapshots when deals close — real training data accumulation",
+        "ML model registry reads/writes from ml_model_registry Supabase table",
+        "capitalAllocationOptimizer reads real property + investor data from Supabase",
+        "featureExtractor reads from properties, matches, deals tables",
+        "Model weights loaded from filesystem (JSON) when present"
+      ],
+      "partial_components": [
+        "All predictors (yieldPredictor, conversionPredictor) are heuristic baselines — no trained XGBoost/LightGBM models deployed",
+        "model_id defaults to 'heuristic-v1' — no real ML inference",
+        "scoreWithWeights returns score=50 for heuristic model type",
+        "ML drift detection reads from ml_reality_alignments but SLO returns UNKNOWN (no real drift data)"
+      ],
+      "simulated_components": [
+        "yield prediction: heuristic rules only (geo_tier table lookup, not trained model)",
+        "conversion prediction: heuristic probability estimates, not calibrated model"
+      ],
+      "missing_env_vars": [],
+      "missing_external_services": [
+        "Python training pipeline (XGBoost/LightGBM) — must train models and export weights.json to filesystem",
+        "Model serving infrastructure for real-time inference"
+      ],
+      "action_required": "Run training pipeline on accumulated ml_feature_snapshots data. Export trained weights.json files. modelLoader.ts will pick them up automatically."
+    },
+    {
+      "name": "Market Data Ingestion (Idealista, Casafari, etc.)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 35,
+      "real_components": [
+        "idealistaClient.ts: real OAuth2 fetch to api.idealista.com when IDEALISTA_API_KEY set",
+        "casafariClient.ts: real REST fetch to Casafari v3 API when CASAFARI_API_KEY set",
+        "imovirtualAdapter: real HTML scraping of imovirtual.com (public, no auth required)",
+        "bankListingsAdapter: real scraping of e-leiloes.pt + portaldasfinancas.gov.pt (public)",
+        "Ingestion pipeline deduplicates and upserts to properties table",
+        "normalizationPipeline.ts normalizes listings to canonical schema"
+      ],
+      "partial_components": [
+        "IDEALISTA_API_KEY not set → returns 3 hardcoded MOCK properties (explicitly labelled [MOCK])",
+        "CASAFARI_API_KEY not set → returns [] gracefully",
+        "No scheduled ingestion trigger configured (no cron or n8n workflow confirmed active)",
+        "Imovirtual and e-Leiloes scrapers rely on HTML structure stability — fragile"
+      ],
+      "simulated_components": [
+        "idealista-api.ts MOCK_PROPERTIES: 3 hardcoded properties returned when API key absent"
+      ],
+      "missing_env_vars": ["IDEALISTA_API_KEY", "IDEALISTA_SECRET", "CASAFARI_API_KEY"],
+      "missing_external_services": [
+        "Idealista commercial API contract (requires application to developers.idealista.com)",
+        "Casafari API subscription (~€200-500/month)",
+        "Active n8n/cron schedule to trigger ingestion pipeline"
+      ],
+      "action_required": "HIGH: Apply for Idealista API contract. Subscribe to Casafari. Set up cron trigger for /api/ingestion/run or n8n workflow."
+    },
+    {
+      "name": "Event System (learning events, flywheel)",
+      "status": "REAL",
+      "reality_score": 82,
+      "real_components": [
+        "EventBus writes to learning_events Supabase table — always persists even if Redis unavailable",
+        "30+ typed event producers covering full deal lifecycle",
+        "DLQ: failed events written back to learning_events with metadata.dlq=true",
+        "Deduplication: Upstash Redis SETNX when configured, in-memory Map fallback",
+        "feedbackFlywheelEngine reads from learning_events and writes scored outcomes",
+        "Kafka infrastructure code exists (kafkaClient.ts, kafkaAdapter.ts) with dual-write pattern"
+      ],
+      "partial_components": [
+        "Kafka: KAFKA_BROKERS not in .env.example — assumed not configured, falls back to Supabase only",
+        "Event consumers (dealEventConsumer, propertyEventConsumer) exist but no active worker process confirmed",
+        "Upstash Redis dedup requires UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN"
+      ],
+      "simulated_components": [],
+      "missing_env_vars": ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "KAFKA_BROKERS (optional)"],
+      "missing_external_services": [
+        "Upstash Redis (for distributed dedup — in-memory fallback works but resets on cold start)",
+        "Kafka/Redpanda broker (optional — Supabase fallback is production-safe)"
+      ],
+      "action_required": "Configure Upstash Redis for distributed event dedup. Kafka is optional — Supabase fallback is sufficient for current scale."
+    },
+    {
+      "name": "Security (Zero Trust, RBAC, encryption)",
+      "status": "REAL",
+      "reality_score": 78,
+      "real_components": [
+        "RBAC matrix (ADMIN/OPERATOR/ANALYST/INVESTOR/AUDITOR/READONLY) with 12 permission types",
+        "evaluateAccess is pure synchronous function — no mocks",
+        "createSessionToken persists to security_sessions Supabase table with SHA-256 token hash",
+        "MFA required for capital:execute and legal:sign permissions",
+        "JIT elevation tracked in session context",
+        "next.config.ts: full CSP, HSTS preload, X-Frame-Options, Permissions-Policy headers",
+        "Auth guard on every sensitive API route (deals, contacts, matches, etc.)",
+        "safeCompare (constant-time) used for all secret comparisons"
+      ],
+      "partial_components": [
+        "ZeroTrust session management stores to Supabase but NextAuth remains primary auth — ZeroTrust sessions are supplementary",
+        "MFA is modeled but TOTP/WebAuthn integration not confirmed wired to auth flow",
+        "runtime secret scanner exists but ADMIN_SECRET, PORTAL_API_SECRET not in .env.example"
+      ],
+      "simulated_components": [],
+      "missing_env_vars": ["ADMIN_SECRET", "PORTAL_API_SECRET", "INTERNAL_API_SECRET", "HEALTH_CHECK_SECRET"],
+      "missing_external_services": [],
+      "action_required": "Wire MFA TOTP verification to NextAuth session. Ensure all INTERNAL_API_SECRET values are set in Vercel."
+    },
+    {
+      "name": "Compliance (GDPR, AML/KYC, tax)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 42,
+      "real_components": [
+        "amlKycEngine.ts: initiateKyc writes to kyc_records Supabase table",
+        "processKycWebhook: parses SumSub + Onfido webhook payloads correctly",
+        "FATF high-risk country list checked on KYC initiation",
+        "EU AML €15,000 threshold constant defined (BigInt)",
+        "MiFID II tier classification logic present",
+        "GDPR SLO defined (100% requests within 30 days) — measured from kyc_records"
+      ],
+      "partial_components": [
+        "SUMSUB_API_KEY not in .env.example — KYC falls back to MANUAL provider",
+        "ONFIDO_API_KEY not in .env.example — never activates",
+        "With MANUAL provider: no external identity verification occurs — operator must approve manually",
+        "Tax reporting (AT/SEPA) not connected",
+        "GDPR data deletion cron exists in lib but scheduling not confirmed"
+      ],
+      "simulated_components": [
+        "KYC with MANUAL provider: creates record with status=PENDING but no actual identity check performed"
+      ],
+      "missing_env_vars": ["SUMSUB_API_KEY", "SUMSUB_BASE_URL", "ONFIDO_API_KEY"],
+      "missing_external_services": [
+        "SumSub or Onfido commercial account for real KYC",
+        "AT (Autoridade Tributária) API for IMT/stamp duty reporting",
+        "GDPR request processor (manual process currently)"
+      ],
+      "action_required": "HIGH for live capital operations: integrate SumSub or Onfido. All AML-gated capital flows require real KYC approval."
+    },
+    {
+      "name": "Observability (metrics, tracing, SLOs)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 60,
+      "real_components": [
+        "Prometheus endpoint (/api/metrics) reads 8 Supabase tables and emits real gauge values",
+        "Causal trace spans written to trace_spans Supabase table on every deal mutation",
+        "SLO engine reads from trace_spans for api-availability SLO (real measurement)",
+        "Anomaly detection engine reads/writes anomaly_alerts in Supabase",
+        "Sentry SDK installed and configured (SENTRY_DSN required)",
+        "OpenTelemetry SDK present in dependencies",
+        "SRE status endpoint aggregates SLO + DR status"
+      ],
+      "partial_components": [
+        "6 of 7 SLOs return UNKNOWN (supply-freshness, capital-execution, ml-accuracy, data-quality, kyc-compliance, gdpr-deadline need more data/code)",
+        "OpenTelemetry exporter requires OTEL endpoint — not in .env.example",
+        "performance_snapshots table must be populated by cron for metrics to show non-zero values",
+        "Sentry only active if SENTRY_DSN set"
+      ],
+      "simulated_components": [],
+      "missing_env_vars": ["SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN", "SENTRY_AUTH_TOKEN"],
+      "missing_external_services": [
+        "Sentry project (for error tracking)",
+        "Prometheus + Grafana or equivalent (for metrics visualization)",
+        "OpenTelemetry collector (optional)"
+      ],
+      "action_required": "Set SENTRY_DSN. Configure performance_snapshots cron. Implement remaining SLO measurements in sloEngine.ts."
+    },
+    {
+      "name": "Legal Execution (notary, land registry, eIDAS)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 35,
+      "real_components": [
+        "requestNotaryAppointment persists to notary_appointments Supabase table always",
+        "eIdasQesEngine.ts: signature requests persisted to eidas_signature_requests table",
+        "legalExecutionPipeline.ts: workflow states tracked in Supabase",
+        "Document lifecycle tracked with signed status"
+      ],
+      "partial_components": [
+        "NOTARY_API_KEY not in .env.example — external notary API call is graceful no-op",
+        "notary_code generated as NTC-{timestamp} when API unavailable (not a real notary ref)",
+        "EIDAS_API_KEY + EIDAS_PROVIDER_URL not in .env.example — no actual QES provider wired",
+        "No Portuguese notary API vendor identified (api.notarios.pt URL is placeholder)"
+      ],
+      "simulated_components": [
+        "Notary appointment without NOTARY_API_KEY: creates record with generated reference, no real confirmation",
+        "eIDAS without provider: signature status stays PENDING — no actual electronic signature"
+      ],
+      "missing_env_vars": ["NOTARY_API_KEY", "NOTARY_API_URL", "EIDAS_API_KEY", "EIDAS_PROVIDER_URL"],
+      "missing_external_services": [
+        "Portuguese notary API (no public API exists — manual process in PT currently)",
+        "eIDAS QES provider (DocuSign eIDAS / Scrive / Uanataca / Certilabis)"
+      ],
+      "action_required": "HIGH for capital deployment: integrate real eIDAS QES provider (recommend Uanataca or Scrive for Portugal). Notary scheduling remains manual in Portugal."
+    },
+    {
+      "name": "Financial Rails (SEPA, SWIFT, PSP)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 30,
+      "real_components": [
+        "PSP Orchestrator: Stripe integration is real when STRIPE_SECRET_KEY set",
+        "Adyen integration: real HTTP call to Adyen API when ADYEN_API_KEY set",
+        "All payment intents persisted to psp_payment_intents Supabase table",
+        "bankReconciliationEngine reads bank_statement_lines from Supabase"
+      ],
+      "partial_components": [
+        "STRIPE_SECRET_KEY commented out in .env.example — not production-ready",
+        "Adyen calls checkout-test.adyen.com (test environment)",
+        "SEPA_DIRECT fallback: only creates a UUID reference — no actual payment sent",
+        "No SWIFT integration implemented",
+        "Bank statement import is manual (no automated bank feed connector)"
+      ],
+      "simulated_components": [
+        "SEPA_DIRECT path: createSepaFallback() returns randomUUID — no real payment instruction emitted"
+      ],
+      "missing_env_vars": ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "ADYEN_API_KEY", "ADYEN_MERCHANT_ACCOUNT", "WISE_API_KEY"],
+      "missing_external_services": [
+        "Stripe production account with real payment method",
+        "Adyen production merchant account",
+        "SEPA direct debit mandate infrastructure",
+        "SWIFT wire intermediary bank",
+        "Automated bank feed (GoCardless / Plaid / Nordigen / Modulr)"
+      ],
+      "action_required": "CRITICAL before any real capital flows: configure STRIPE_SECRET_KEY (production). Switch Adyen to production endpoint. SEPA transfers require a licensed payment institution."
+    },
+    {
+      "name": "Disaster Recovery (backup, replay, DR test)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 50,
+      "real_components": [
+        "scheduleBackup writes to backup_records Supabase table",
+        "markBackupCompleted + recordReplicationStatus update backup status",
+        "getDrTestSummary reads from dr_test_results Supabase table",
+        "computeRpo reads from event_sourcing_log Supabase table",
+        "runDataIntegrityCheck runs row count + checksum verification against Supabase",
+        "DR status route exposes full backup health + DR test summary"
+      ],
+      "partial_components": [
+        "storage_path uses s3://ag-backups-... URL — S3 bucket may not exist; no actual backup file written",
+        "Backup orchestrator schedules records but does not execute actual pg_dump or Supabase PITR",
+        "Cross-region replication relies on recordReplicationStatus being called externally",
+        "Backup integrity check: checksum_sha256 is null until markBackupCompleted is called (no self-verification)",
+        "DR test scheduling creates records but no automated test execution"
+      ],
+      "simulated_components": [
+        "scheduleBackup: record created in Supabase but no real backup data written to S3"
+      ],
+      "missing_env_vars": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_S3_BACKUP_BUCKET"],
+      "missing_external_services": [
+        "AWS S3 bucket (for backup storage)",
+        "Supabase PITR (Point-In-Time Recovery) enabled on project",
+        "Automated backup execution job (pg_dump or Supabase scheduled exports)"
+      ],
+      "action_required": "Enable Supabase PITR. Create S3 bucket ag-backups-*. Wire backup execution to actually dump and upload data."
+    },
+    {
+      "name": "Institutional API (market data publishing)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 55,
+      "real_components": [
+        "validateInstitutionalKey reads from institutional_api_keys Supabase table",
+        "checkRateLimit + recordApiCall persist to Supabase",
+        "assembleMarketDataPackage reads from canonical_assets_v2 + opportunity_scores",
+        "publishMarketDataPackages writes to institutional_market_data Supabase table",
+        "Delivery metrics tracked in institutional_deliveries table",
+        "Auth + rate limiting by client tier fully implemented"
+      ],
+      "partial_components": [
+        "Market data package quality depends entirely on supply ingestion being active",
+        "No external institutional clients configured yet (empty api keys table until seeded)",
+        "OLI / ICS / LVI scores are computed from internal data — validity depends on real ingestion data"
+      ],
+      "simulated_components": [],
+      "missing_env_vars": [],
+      "missing_external_services": [
+        "Institutional client onboarding (manual API key provisioning required)",
+        "Real property supply data flowing through ingestion pipeline"
+      ],
+      "action_required": "Activate supply ingestion (subsystem 6) first. Then provision institutional API keys for target clients."
+    },
+    {
+      "name": "Supply Ingestion (property data providers)",
+      "status": "PARTIAL_STUB",
+      "reality_score": 38,
+      "real_components": [
+        "Idealista client: real OAuth2 call when IDEALISTA_API_KEY set",
+        "Casafari client: real REST call when CASAFARI_API_KEY set",
+        "Imovirtual adapter: real HTML scraping (no auth required) — public data",
+        "e-Leiloes adapter: real scraping of public Portuguese judicial auction portal",
+        "Ingestion pipeline deduplicates, normalizes and upserts to properties Supabase table",
+        "Canonical pipeline with dedup engine and normalization layer exists",
+        "backpressureBuffer.ts prevents Supabase write overload"
+      ],
+      "partial_components": [
+        "Idealista: IDEALISTA_API_KEY not set → returns 3 MOCK hardcoded properties",
+        "Casafari: CASAFARI_API_KEY not set → returns [] (empty result, no crash)",
+        "No confirmed active cron/scheduler to trigger pipeline runs",
+        "imovirtualAdapter depends on HTML structure which may change without notice",
+        "e-Leiloes scraper: extracts from HTML — legally permitted but structurally fragile"
+      ],
+      "simulated_components": [
+        "idealista-api.ts: MOCK_PROPERTIES[3] returned when API key absent — explicitly flagged as [MOCK]"
+      ],
+      "missing_env_vars": ["IDEALISTA_API_KEY", "IDEALISTA_SECRET", "CASAFARI_API_KEY"],
+      "missing_external_services": [
+        "Idealista commercial API contract",
+        "Casafari API subscription",
+        "Active cron job or n8n workflow to trigger /api/ingestion/run"
+      ],
+      "action_required": "HIGHEST PRIORITY: activate Idealista + Casafari credentials. Set up cron schedule. Without real supply data, ML scoring, institutional API, and opportunity intelligence are all degraded."
+    }
+  ],
+  "critical_gaps": [
+    {
+      "gap": "No real property data provider connected — Idealista returns MOCK, Casafari returns empty",
+      "severity": "CRITICAL",
+      "blocking": true,
+      "fix": "Apply for Idealista API contract at developers.idealista.com and subscribe to Casafari. Set IDEALISTA_API_KEY + IDEALISTA_SECRET + CASAFARI_API_KEY. Configure cron trigger."
+    },
+    {
+      "gap": "No real KYC/AML provider — all KYC falls back to MANUAL (no identity verification)",
+      "severity": "HIGH",
+      "blocking": true,
+      "fix": "Subscribe to SumSub or Onfido. Set SUMSUB_API_KEY or ONFIDO_API_KEY. Legally required before accepting investor capital."
+    },
+    {
+      "gap": "Financial rails not production-ready — STRIPE_SECRET_KEY commented out, SEPA fallback is UUID-only",
+      "severity": "CRITICAL",
+      "blocking": true,
+      "fix": "Configure STRIPE_SECRET_KEY (production). Switch Adyen to production URL. Engage a licensed payment institution for SEPA."
+    },
+    {
+      "gap": "No eIDAS QES provider connected — electronic signatures for CPCV/Escritura not functional",
+      "severity": "HIGH",
+      "blocking": true,
+      "fix": "Integrate Uanataca, Scrive, or Certilabis for eIDAS QES. Set EIDAS_API_KEY + EIDAS_PROVIDER_URL."
+    },
+    {
+      "gap": "ML models are heuristic-only — no trained XGBoost/LightGBM models deployed",
+      "severity": "MEDIUM",
+      "blocking": false,
+      "fix": "Run Python training pipeline on ml_feature_snapshots data. Export weights.json files. modelLoader.ts picks them up automatically."
+    },
+    {
+      "gap": "Backup orchestrator creates Supabase records but does not write real backup data to S3",
+      "severity": "MEDIUM",
+      "blocking": false,
+      "fix": "Enable Supabase PITR. Create AWS S3 bucket. Implement actual backup execution job calling pg_dump or Supabase scheduled exports."
+    },
+    {
+      "gap": "INTERNAL_API_BASE not configured — Control Tower panels show empty/skeleton state in Vercel",
+      "severity": "MEDIUM",
+      "blocking": false,
+      "fix": "Set INTERNAL_API_BASE=https://www.agencygroup.pt (or production Vercel URL) in Vercel environment."
+    },
+    {
+      "gap": "6 of 7 SLOs return UNKNOWN status — observability is partial",
+      "severity": "LOW",
+      "blocking": false,
+      "fix": "Implement remaining SLO measurements in lib/sre/sloEngine.ts. Populate performance_snapshots via scheduled cron."
+    }
+  ],
+  "env_vars_required": {
+    "missing": [
+      "IDEALISTA_API_KEY",
+      "IDEALISTA_SECRET",
+      "CASAFARI_API_KEY",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "SUMSUB_API_KEY",
+      "ONFIDO_API_KEY",
+      "EIDAS_API_KEY",
+      "EIDAS_PROVIDER_URL",
+      "NOTARY_API_KEY",
+      "ADYEN_API_KEY",
+      "KAFKA_BROKERS",
+      "INTERNAL_API_BASE",
+      "INTERNAL_API_SECRET",
+      "AWS_ACCESS_KEY_ID",
+      "AWS_SECRET_ACCESS_KEY"
+    ],
+    "configured_in_example": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "AUTH_SECRET",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "ANTHROPIC_API_KEY",
+      "OPENAI_API_KEY",
+      "RESEND_API_KEY",
+      "TWILIO_ACCOUNT_SID",
+      "TWILIO_AUTH_TOKEN",
+      "HEYGEN_API_KEY",
+      "UPSTASH_REDIS_REST_URL",
+      "UPSTASH_REDIS_REST_TOKEN",
+      "VAPID_PUBLIC_KEY",
+      "VAPID_PRIVATE_KEY",
+      "SENTRY_DSN",
+      "NOTION_TOKEN",
+      "N8N_BASE_URL",
+      "CRON_SECRET",
+      "ADMIN_SECRET",
+      "PORTAL_API_SECRET"
+    ]
+  },
+  "external_services": {
+    "required_before_live": [
+      "Supabase (project with all migrations applied)",
+      "Google OAuth (for portal login)",
+      "Resend (for magic link emails)",
+      "Stripe production account (for real payment processing)",
+      "SumSub OR Onfido (for real KYC/AML)",
+      "eIDAS QES provider (Uanataca / Scrive / Certilabis)",
+      "Idealista commercial API contract",
+      "Upstash Redis (for distributed event dedup)"
+    ],
+    "optional": [
+      "Casafari API (premium property data — fallback to Idealista + scrapers)",
+      "Adyen (alternative PSP — Stripe alone sufficient for MVP)",
+      "Kafka/Redpanda (Supabase fallback covers event storage)",
+      "AWS S3 (Supabase PITR is sufficient backup for MVP)",
+      "Notion integration (CRM sync — cosmetic)",
+      "HeyGen (Sofia AI video — feature, not core)",
+      "WhatsApp Business Meta API (alerts — Resend email sufficient for MVP)",
+      "n8n automation (manually triggerable routes exist as fallback)"
+    ]
+  },
+  "system_summary": {
+    "total_subsystems": 15,
+    "real_count": 4,
+    "partial_count": 10,
+    "simulated_count": 0,
+    "not_built_count": 1,
+    "notes": "No subsystem is fully NOT_BUILT — all have working code. 'not_built_count=1' refers to the SEPA/SWIFT direct payment execution path which exists as a placeholder UUID generator only. The platform is production-ready for CRM, Ledger, Events, and Dashboard. Capital flows, KYC, Legal execution, and Supply ingestion need real external credentials before going live with real transactions."
+  }
+}
