@@ -1,0 +1,87 @@
+{
+  "report": "FINAL_TRUTH_GATE_REPORT",
+  "wave": 48,
+  "gap": "GAP_6_LIVE_INSTITUTIONAL_TRUTH_GATE",
+  "module": "lib/certification/liveInstitutionalTruthGate.ts",
+  "api_routes": {
+    "GET": "GET /api/system/go-live — full report",
+    "POST": "POST /api/system/go-live — summary with certification hash"
+  },
+  "migration": "000115_go_live_gate.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "15-condition live institutional truth gate. Issues TRUTH_CERTIFICATION_HASH valid for 90 days. Gate target: FULLY_OPERATIONAL_INSTITUTIONAL_EUROPEAN_REAL_ESTATE_CAPITAL_OPERATING_SYSTEM",
+  "wave47_gate_conditions": [
+    "GATE_01: REAL_BANK_SETTLEMENT — finality records with bank_confirmed_at",
+    "GATE_02: AUDIT_PACKAGE_GENERATED — regulatory assurance report exists",
+    "GATE_03: SIEM_ACTIVE — SIEM integration configured",
+    "GATE_04: FALLBACK_TESTED — fallback events exist in provider_fallback_events",
+    "GATE_05: DR_TEST_PASSED — DR simulation completed successfully",
+    "GATE_06: RECONCILIATION_99PCT — reconciliation rate >= 99%",
+    "GATE_07: ZERO_SIMULATION_IN_FINANCIAL — no SIMULATED finality records",
+    "GATE_08: SOC2_READINESS_80PCT — SOC2 readiness >= 80%",
+    "GATE_09: ISO27001_READINESS_80PCT — ISO 27001 readiness >= 80%"
+  ],
+  "wave48_gate_conditions": [
+    "GATE_10: LIVE_PROVIDER_REALITY_INDEX_60 — system reality index >= 60",
+    "GATE_11: BANK_CONFIRMED_SETTLEMENT_50PCT — bank confirmed settlements >= 50%",
+    "GATE_12: SOC_OPERATIONAL — live SOC operational status not OFFLINE",
+    "GATE_13: OWASP_COVERAGE_80PCT — OWASP coverage >= 80%",
+    "GATE_14: NO_CRITICAL_VULNERABILITIES — zero open critical vulnerabilities",
+    "GATE_15: CHAOS_READINESS_NOT_FAILED — chaos readiness not FAILED/UNKNOWN"
+  ],
+  "certification": {
+    "algorithm": "SHA-256",
+    "validity_days": 90,
+    "covers": "tenant_id + certification_date + all 24 gate verdicts (Wave47 + Wave48)",
+    "issued_by": "INSTITUTIONAL_TRUTH_ENGINE_v2",
+    "stored_in": "truth_certifications"
+  },
+  "system_live_status_levels": {
+    "FULLY_OPERATIONAL_INSTITUTIONAL_REAL_ESTATE_PLATFORM": "All 15 gates pass",
+    "CONDITIONALLY_OPERATIONAL": ">=12 gates pass, 0 blocking failures",
+    "OPERATIONAL_WITH_GAPS": ">=9 gates pass",
+    "PRE_OPERATIONAL": ">=6 gates pass",
+    "INSTITUTIONAL_BLOCKED": "<6 gates pass or any critical blocker"
+  },
+  "tables_created": [
+    "truth_certifications",
+    "institutional_go_live_reports"
+  ],
+  "wave48_modules_complete": [
+    "lib/reality/liveRealityBoundaryEngine.ts",
+    "lib/financial/liveSettlementRealityEngine.ts",
+    "lib/security/liveSecurityOperationsCenter.ts",
+    "lib/compliance/institutionalAuditRealityLayer.ts",
+    "lib/resilience/liveInstitutionalChaosEngine.ts",
+    "lib/certification/liveInstitutionalTruthGate.ts"
+  ],
+  "api_routes_complete": [
+    "GET|POST /api/reality/boundary",
+    "GET|POST /api/financial/settlement",
+    "GET|POST /api/security/live-soc",
+    "GET|POST /api/compliance/audit",
+    "GET|POST /api/resilience/live-chaos",
+    "GET|POST /api/system/go-live"
+  ],
+  "migrations_complete": [
+    "000110_live_reality_boundary.sql",
+    "000111_live_settlement.sql",
+    "000112_live_soc.sql",
+    "000113_institutional_audit.sql",
+    "000114_live_chaos.sql",
+    "000115_go_live_gate.sql"
+  ],
+  "absolute_rules_enforced": [
+    "NEVER REBUILD FROM SCRATCH",
+    "NEVER REMOVE EXISTING ARCHITECTURE",
+    "NEVER fake production readiness",
+    "NEVER mark simulated flows as REAL",
+    "NEVER bypass reconciliation",
+    "NEVER allow silent provider failure",
+    "NEVER allow mutable audit trails",
+    "NEVER allow unverified capital settlement",
+    "TypeScript errors MUST remain zero",
+    "Supabase = SINGLE SOURCE OF TRUTH"
+  ],
+  "status": "ARCHITECTURE_READY — configure env vars to achieve FULLY_OPERATIONAL status"
+}

@@ -1,0 +1,47 @@
+{
+  "report": "INSTITUTIONAL_AUDIT_REPORT",
+  "wave": 48,
+  "gap": "GAP_4_OWASP_PENTEST_EVIDENCE_CHAIN",
+  "module": "lib/compliance/institutionalAuditRealityLayer.ts",
+  "api_route": "GET /api/compliance/audit",
+  "migration": "000113_institutional_audit.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "OWASP Top 10 2021 coverage map, pentest readiness scoring, signed evidence chain with SHA-256 chain-of-custody",
+  "owasp_top10_2021": {
+    "A01_BROKEN_ACCESS_CONTROL": "COVERED — NextAuth + Bearer + RLS",
+    "A02_CRYPTOGRAPHIC_FAILURES": "COVERED — bcrypt + timingSafeEqual + HTTPS",
+    "A03_INJECTION": "COVERED — Parameterized Supabase queries + Zod",
+    "A04_INSECURE_DESIGN": "COVERED — Threat modelling in architecture",
+    "A05_SECURITY_MISCONFIGURATION": "COVERED — Env var validation at startup",
+    "A06_VULNERABLE_COMPONENTS": "NOT_TESTED — synthetic HIGH vuln generated",
+    "A07_AUTH_FAILURES": "COVERED — Magic link one-time-use + rate limiting",
+    "A08_DATA_INTEGRITY_FAILURES": "COVERED — DB constraints + SHA-256 audit chains",
+    "A09_LOGGING_FAILURES": "COVERED — Structured logs + SIEM integration",
+    "A10_SSRF": "COVERED — SSRF allowlist in API layer"
+  },
+  "coverage": "9/10 OWASP categories covered (A06 needs dependency scan)",
+  "pentest_vulnerability_sla": {
+    "CRITICAL": "0 days (immediate BLOCKER)",
+    "HIGH": "30 days",
+    "MEDIUM": "90 days",
+    "LOW": "180 days"
+  },
+  "evidence_chain": {
+    "algorithm": "SHA-256",
+    "chain_type": "sequential_hash_chain",
+    "immutable": true,
+    "chain_of_custody": "SHA-256 over ordered evidence fingerprints"
+  },
+  "tables_created": [
+    "institutional_audit_reports",
+    "audit_evidence_chain",
+    "pentest_vulnerabilities"
+  ],
+  "rules": [
+    "NEVER allow mutable audit trails",
+    "A06 NOT_TESTED generates synthetic HIGH vulnerability automatically",
+    "CRITICAL vuln = immediate blocker regardless of other scores",
+    "Evidence chain is append-only — no deletions permitted"
+  ],
+  "status": "ARCHITECTURE_READY — A06 synthetic HIGH vuln requires dependency scanning to clear"
+}

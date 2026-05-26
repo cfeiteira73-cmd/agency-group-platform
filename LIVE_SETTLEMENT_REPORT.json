@@ -1,0 +1,42 @@
+{
+  "report": "LIVE_SETTLEMENT_REPORT",
+  "wave": 48,
+  "gap": "GAP_2_BANK_STATEMENT_RECONCILIATION",
+  "module": "lib/financial/liveSettlementRealityEngine.ts",
+  "api_route": "GET /api/financial/settlement",
+  "migration": "000111_live_settlement.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Live bank statement ingestion, mismatch detection, orphan capital tracking, chargeback monitoring",
+  "reconciliation_rules": {
+    "mismatch_tolerance_euros": 0.01,
+    "mismatch_tolerance_cents": 1,
+    "orphan_capital_age_hours": 24,
+    "bank_confirmed_required_for_real_money": true
+  },
+  "consistency_grades": {
+    "CLEAN": "0 mismatches",
+    "ACCEPTABLE": "<=2 mismatches, all below tolerance",
+    "DRIFTING": "3-5 mismatches or 1 above tolerance",
+    "CRITICAL": ">5 mismatches or any critical type",
+    "NO_DATA": "No settlement data found"
+  },
+  "mismatch_types": [
+    "SHORTFALL",
+    "OVERPAYMENT",
+    "MISSING_BANK_RECORD",
+    "MISSING_SYSTEM_RECORD"
+  ],
+  "tables_created": [
+    "live_settlement_reports",
+    "reconciliation_drift_log",
+    "payment_chargebacks"
+  ],
+  "finality_constraint": "is_real_money = true ONLY when bank_confirmed_at IS NOT NULL",
+  "rules": [
+    "NEVER allow unverified capital settlement",
+    "NEVER bypass reconciliation",
+    "sem BANK_CONFIRMED = não é dinheiro real",
+    "All mismatches logged to reconciliation_drift_log"
+  ],
+  "status": "ARCHITECTURE_READY — awaiting BANK_STATEMENT_WEBHOOK_SECRET env var"
+}

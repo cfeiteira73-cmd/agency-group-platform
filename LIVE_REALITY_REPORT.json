@@ -1,0 +1,46 @@
+{
+  "report": "LIVE_REALITY_REPORT",
+  "wave": 48,
+  "gap": "GAP_1_PROVIDER_HEARTBEAT_AND_TRUST_DECAY",
+  "module": "lib/reality/liveRealityBoundaryEngine.ts",
+  "api_route": "GET /api/reality/boundary",
+  "migration": "000110_live_reality_boundary.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Live provider heartbeat monitoring with trust decay model and SLA verification",
+  "trust_decay_model": {
+    "rate_per_critical_heartbeat": 0.85,
+    "recovery_per_alive_heartbeat": 5,
+    "minimum_trust_floor": 5,
+    "sla_warning_minutes": 5,
+    "sla_critical_minutes": 15
+  },
+  "provider_registry": [
+    "SUPABASE_URL",
+    "STRIPE_SECRET_KEY",
+    "ANTHROPIC_API_KEY",
+    "RESEND_API_KEY",
+    "PAGERDUTY_ROUTING_KEY",
+    "OPENAI_API_KEY",
+    "N8N_WEBHOOK_URL"
+  ],
+  "tables_created": [
+    "provider_trust_scores",
+    "provider_sla_breaches",
+    "provider_fallback_events",
+    "live_reality_reports"
+  ],
+  "reality_index_labels": {
+    "90_100": "OPERATIONAL",
+    "70_89": "DEGRADED",
+    "40_69": "CRITICAL",
+    "1_39": "OFFLINE",
+    "0": "ARCHITECTURE_ONLY"
+  },
+  "rules": [
+    "NEVER allow silent provider failure",
+    "SLA breach must be logged before fallback",
+    "Trust score persisted per provider per tenant",
+    "Fire-and-forget heartbeat — non-blocking"
+  ],
+  "status": "ARCHITECTURE_READY — awaiting live provider env vars"
+}

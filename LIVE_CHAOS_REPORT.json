@@ -1,0 +1,38 @@
+{
+  "report": "LIVE_CHAOS_REPORT",
+  "wave": 48,
+  "gap": "GAP_5_PRODUCTION_SAFE_CHAOS_ENGINEERING",
+  "module": "lib/resilience/liveInstitutionalChaosEngine.ts",
+  "api_routes": {
+    "GET": "GET /api/resilience/live-chaos — dry-run only",
+    "POST": "POST /api/resilience/live-chaos — optional chaos injection"
+  },
+  "migration": "000114_live_chaos.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Production-safe chaos engineering with blast radius control, rollback validation, RTO/RPO truth verification",
+  "blast_radius_levels": {
+    "SAFE_DRY_RUN": "Default — no actual chaos injected, simulates scenarios",
+    "SINGLE_SERVICE": "Requires CHAOS_TESTING_ENABLED=true — targets one service",
+    "PARTIAL_SYSTEM": "Requires CHAOS_TESTING_ENABLED=true — targets subsystem",
+    "FULL_REGION": "Requires CHAOS_TESTING_ENABLED=true — full regional failover"
+  },
+  "rto_rpo_targets": {
+    "RTO_API_LAYER_SECONDS": 30,
+    "RTO_DATABASE_SECONDS": 60,
+    "RTO_FULL_SYSTEM_SECONDS": 300,
+    "RPO_CRITICAL_DATA_SECONDS": 60,
+    "RPO_FINANCIAL_DATA_SECONDS": 30,
+    "RPO_AUDIT_TRAIL_SECONDS": 0
+  },
+  "safety_rules": [
+    "Default blast radius is SAFE_DRY_RUN — no production impact",
+    "CHAOS_TESTING_ENABLED env var required for any non-dry-run",
+    "Rollback must be validated before chaos window is marked complete",
+    "RPO_AUDIT_TRAIL = 0 seconds — audit trail can never be lost"
+  ],
+  "tables_created": [
+    "chaos_windows",
+    "live_chaos_reports"
+  ],
+  "status": "ARCHITECTURE_READY — set CHAOS_TESTING_ENABLED=true to enable live chaos injection"
+}

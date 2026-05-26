@@ -1,0 +1,39 @@
+{
+  "report": "SOC_OPERATIONAL_REPORT",
+  "wave": 48,
+  "gap": "GAP_3_LIVE_SECURITY_OPERATIONS",
+  "module": "lib/security/liveSecurityOperationsCenter.ts",
+  "api_route": "GET /api/security/live-soc",
+  "migration": "000112_live_soc.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Live SOC with PagerDuty/Opsgenie routing, impossible-travel detection, abnormal capital alerts, key rotation enforcement",
+  "detection_thresholds": {
+    "impossible_travel_kmh": 800,
+    "abnormal_capital_multiplier": 3,
+    "key_rotation_days": 90,
+    "forensic_snapshot_on_sev1_sev2": true
+  },
+  "severity_matrix": {
+    "SEV1": "Data exfiltration / tenant leakage / >€50K anomaly → IMMEDIATE PagerDuty",
+    "SEV2": "Auth anomaly / key overdue >30d / impossible travel → PagerDuty",
+    "SEV3": "Abnormal capital 2-3x / key rotation due → Slack alert",
+    "SEV4": "Low-risk observations → log only"
+  },
+  "pagerduty_endpoint": "https://events.pagerduty.com/v2/enqueue",
+  "required_env_vars": [
+    "PAGERDUTY_ROUTING_KEY",
+    "SLACK_SOC_WEBHOOK_URL",
+    "INTERNAL_API_SECRET"
+  ],
+  "tables_created": [
+    "live_soc_reports",
+    "forensic_snapshots"
+  ],
+  "rules": [
+    "Forensic snapshots are immutable — no updates after creation",
+    "SEV1 always triggers PagerDuty regardless of business hours",
+    "Impossible travel >800km/h triggers forensic snapshot + alert",
+    "Key rotation >90 days = automatic SEV2"
+  ],
+  "status": "ARCHITECTURE_READY — awaiting PAGERDUTY_ROUTING_KEY and SLACK_SOC_WEBHOOK_URL"
+}
