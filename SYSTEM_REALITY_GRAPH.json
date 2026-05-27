@@ -1,0 +1,94 @@
+{
+  "report": "SYSTEM_REALITY_GRAPH",
+  "wave": 51,
+  "phase": "PHASE_1_FULL_SYSTEM_REALITY_AUDIT",
+  "module": "lib/audit/fullSystemRealityAudit.ts",
+  "api_route": "GET|POST /api/audit/system-reality",
+  "migration": "000130_system_reality_audit.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Full dependency graph of all 10 domain layers — nodes, edges, criticality, simulated vs real classification",
+  "domains": {
+    "production": {
+      "modules": ["liveProductionActivationEngine", "liveProviderOperationsMesh", "providerRealityHardening"],
+      "wave": "50-51",
+      "reality_tag": "REQUIRES_EXTERNAL_PROVIDER_CREDENTIALS",
+      "criticality": "CRITICAL"
+    },
+    "financial": {
+      "modules": ["liveMoneyRealityEngine", "liveInstitutionalSettlementCore", "capitalExecutionHardening"],
+      "wave": "50-51",
+      "reality_tag": "REQUIRES_REAL_BANK_WEBHOOKS",
+      "criticality": "CRITICAL"
+    },
+    "security": {
+      "modules": ["liveOperationalSocReality", "liveInstitutionalSocGrid", "liveSecurityHardening"],
+      "wave": "50-51",
+      "reality_tag": "REQUIRES_SIEM_CONFIGURATION",
+      "criticality": "CRITICAL"
+    },
+    "compliance": {
+      "modules": ["externalInstitutionalAuditEngine", "institutionalRegulatoryRealitySystem", "complianceEvidenceHardening"],
+      "wave": "50-51",
+      "reality_tag": "REQUIRES_EVIDENCE_CHAIN",
+      "criticality": "HIGH"
+    },
+    "resilience": {
+      "modules": ["liveFailureRealityGrid", "liveProductionChaosGrid", "drChaosTruth"],
+      "wave": "50-51",
+      "reality_tag": "REQUIRES_CHAOS_TESTING_ENABLED",
+      "criticality": "HIGH"
+    },
+    "ml": {
+      "modules": ["driftDetector", "modelRegistry", "mlDataTruthHardening"],
+      "wave": "existing-51",
+      "reality_tag": "REQUIRES_TRAINING_DATA",
+      "criticality": "HIGH"
+    },
+    "operations": {
+      "modules": ["liveInstitutionalRealityCenter", "liveInstitutionalCommandCenter", "fullSystemOperationalCommandCenter"],
+      "wave": "50-51",
+      "reality_tag": "AGGREGATOR",
+      "criticality": "HIGH"
+    },
+    "certification": {
+      "modules": ["absoluteInstitutionalRealityGate", "finalInstitutionalGoLiveGate", "finalAbsoluteCertificationGate"],
+      "wave": "50-51",
+      "reality_tag": "GATE",
+      "criticality": "CRITICAL"
+    },
+    "capital": {
+      "modules": ["settlementStateMachine", "escrowLayer", "investorLedger", "capitalExecutionHardening"],
+      "wave": "existing-51",
+      "reality_tag": "REQUIRES_REAL_FUNDS",
+      "criticality": "CRITICAL"
+    },
+    "dashboard": {
+      "modules": ["absoluteDashboardHardening", "systemHealthMap"],
+      "wave": "51",
+      "reality_tag": "PRESENTATION",
+      "criticality": "MEDIUM"
+    }
+  },
+  "dependency_edges": [
+    {"from": "certification", "to": "operations", "type": "AGGREGATES"},
+    {"from": "certification", "to": "production", "type": "VALIDATES"},
+    {"from": "certification", "to": "financial", "type": "VALIDATES"},
+    {"from": "certification", "to": "security", "type": "VALIDATES"},
+    {"from": "certification", "to": "compliance", "type": "VALIDATES"},
+    {"from": "certification", "to": "resilience", "type": "VALIDATES"},
+    {"from": "operations", "to": "production", "type": "MONITORS"},
+    {"from": "operations", "to": "financial", "type": "MONITORS"},
+    {"from": "operations", "to": "security", "type": "MONITORS"},
+    {"from": "operations", "to": "compliance", "type": "MONITORS"},
+    {"from": "operations", "to": "resilience", "type": "MONITORS"},
+    {"from": "financial", "to": "capital", "type": "DEPENDS_ON"},
+    {"from": "operations", "to": "ml", "type": "MONITORS"},
+    {"from": "dashboard", "to": "operations", "type": "PRESENTS"},
+    {"from": "dashboard", "to": "certification", "type": "PRESENTS"}
+  ],
+  "total_modules": 28,
+  "critical_path_modules": 12,
+  "simulated_components": ["DRY_RUN chaos scenarios when CHAOS_TESTING_ENABLED=false"],
+  "real_components": ["All financial flows require bank_confirmed_at proof", "All provider calls require live credentials", "All SOC events require SIEM platform"],
+  "status": "ARCHITECTURE_MAPPED — all domain dependencies documented, simulated vs real explicitly tagged"
+}

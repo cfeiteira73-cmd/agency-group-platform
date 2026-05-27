@@ -1,0 +1,156 @@
+{
+  "report": "FAILURE_SURFACE_MAP",
+  "wave": 51,
+  "phase": "PHASE_1_FULL_SYSTEM_REALITY_AUDIT",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Complete failure surface analysis — all failure modes, blast radii, and containment strategies",
+  "failure_surfaces": {
+    "INFRASTRUCTURE": [
+      {
+        "id": "INF-001",
+        "name": "REGION_FAILOVER",
+        "probability": "LOW",
+        "impact": "CATASTROPHIC",
+        "rto_target_seconds": 300,
+        "rpo_target_seconds": 0,
+        "containment": "MULTI_REGION_VERCEL_EDGE",
+        "detection": "SYNTHETIC_MONITORING",
+        "test_mode": "CHAOS_TESTING_ENABLED=true required"
+      },
+      {
+        "id": "INF-002",
+        "name": "DB_FAILOVER",
+        "probability": "LOW",
+        "impact": "CATASTROPHIC",
+        "rto_target_seconds": 60,
+        "rpo_target_seconds": 0,
+        "containment": "SUPABASE_AUTO_FAILOVER + READ_REPLICA",
+        "detection": "SUPABASE_HEALTH_CHECK",
+        "test_mode": "CHAOS_TESTING_ENABLED=true required"
+      }
+    ],
+    "PROVIDER": [
+      {
+        "id": "PRV-001",
+        "name": "PSP_OUTAGE",
+        "probability": "MEDIUM",
+        "impact": "HIGH",
+        "rto_target_seconds": 30,
+        "rpo_target_seconds": 0,
+        "containment": "CIRCUIT_BREAKER + FALLBACK_PSP",
+        "detection": "HEARTBEAT_MONITOR",
+        "test_mode": "SAFE_DRY_RUN"
+      },
+      {
+        "id": "PRV-002",
+        "name": "PROVIDER_BLACKOUT",
+        "probability": "MEDIUM",
+        "impact": "MEDIUM",
+        "rto_target_seconds": 120,
+        "rpo_target_seconds": 0,
+        "containment": "PROVIDER_FALLBACK_MAP",
+        "detection": "LATENCY_ANOMALY_DETECTION",
+        "test_mode": "SAFE_DRY_RUN"
+      }
+    ],
+    "FINANCIAL": [
+      {
+        "id": "FIN-001",
+        "name": "RECONCILIATION_DRIFT",
+        "probability": "LOW",
+        "impact": "CRITICAL",
+        "rto_target_seconds": 0,
+        "rpo_target_seconds": 0,
+        "containment": "IMMUTABLE_AUDIT + MANUAL_REVIEW_REQUIRED",
+        "detection": "99.9PCT_RECONCILIATION_GATE",
+        "test_mode": "ALWAYS_MONITORED"
+      },
+      {
+        "id": "FIN-002",
+        "name": "ORPHAN_CAPITAL",
+        "probability": "LOW",
+        "impact": "HIGH",
+        "rto_target_seconds": 0,
+        "rpo_target_seconds": 0,
+        "containment": "FLAG_FOR_MANUAL_REVIEW — never auto-resolve",
+        "detection": "24H_SWEEP_JOB",
+        "test_mode": "ALWAYS_MONITORED"
+      },
+      {
+        "id": "FIN-003",
+        "name": "DUPLICATE_SETTLEMENT",
+        "probability": "LOW",
+        "impact": "CRITICAL",
+        "rto_target_seconds": 0,
+        "rpo_target_seconds": 0,
+        "containment": "IDEMPOTENCY_KEY + SETTLEMENT_CHAIN_HASH",
+        "detection": "DUPLICATE_DETECTION_ENGINE",
+        "test_mode": "ALWAYS_MONITORED"
+      }
+    ],
+    "SECURITY": [
+      {
+        "id": "SEC-001",
+        "name": "RANSOMWARE_SIM",
+        "probability": "VERY_LOW",
+        "impact": "CATASTROPHIC",
+        "rto_target_seconds": 600,
+        "rpo_target_seconds": 0,
+        "containment": "IMMUTABLE_BACKUPS + ISOLATED_RECOVERY",
+        "detection": "BEHAVIORAL_ANOMALY_SIEM",
+        "test_mode": "CHAOS_TESTING_ENABLED=true required"
+      },
+      {
+        "id": "SEC-002",
+        "name": "CREDENTIAL_ABUSE",
+        "probability": "MEDIUM",
+        "impact": "HIGH",
+        "rto_target_seconds": 15,
+        "rpo_target_seconds": 0,
+        "containment": "IMPOSSIBLE_TRAVEL_DETECTION + KEY_ROTATION",
+        "detection": "SIEM_THREAT_INTELLIGENCE",
+        "test_mode": "ALWAYS_MONITORED"
+      }
+    ],
+    "ML": [
+      {
+        "id": "ML-001",
+        "name": "MODEL_DRIFT",
+        "probability": "MEDIUM",
+        "impact": "MEDIUM",
+        "rto_target_seconds": 3600,
+        "rpo_target_seconds": 0,
+        "containment": "SHADOW_MODEL_PROMOTION",
+        "detection": "PSI_DRIFT_MONITOR",
+        "test_mode": "ALWAYS_MONITORED"
+      }
+    ],
+    "QUEUE": [
+      {
+        "id": "QUE-001",
+        "name": "QUEUE_SATURATION",
+        "probability": "MEDIUM",
+        "impact": "MEDIUM",
+        "rto_target_seconds": 120,
+        "rpo_target_seconds": 0,
+        "containment": "BACKPRESSURE + DEAD_LETTER_QUEUE",
+        "detection": "QUEUE_DEPTH_MONITOR",
+        "test_mode": "CHAOS_TESTING_ENABLED=true required"
+      }
+    ]
+  },
+  "total_failure_surfaces": 9,
+  "critical_surfaces": 3,
+  "high_surfaces": 3,
+  "medium_surfaces": 3,
+  "blast_radius_default": "SAFE_DRY_RUN — CHAOS_TESTING_ENABLED=true required for live execution",
+  "containment_principles": [
+    "NEVER auto-resolve financial inconsistencies",
+    "NEVER suppress critical security alerts",
+    "NEVER mark simulated as real",
+    "ALWAYS require external proof for real flows",
+    "ALWAYS bounded retries with exponential backoff",
+    "ALWAYS idempotent financial operations"
+  ],
+  "status": "FAILURE_SURFACE_MAPPED — all failure modes classified with containment strategies"
+}

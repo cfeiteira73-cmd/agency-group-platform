@@ -1,0 +1,80 @@
+{
+  "report": "CAPITAL_FLOW_GRAPH",
+  "wave": 51,
+  "phase": "PHASE_1_FULL_SYSTEM_REALITY_AUDIT",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "End-to-end capital flow graph from investor deposit through settlement to transfer",
+  "flow_stages": [
+    {
+      "stage": 1,
+      "name": "INVESTOR_DEPOSIT",
+      "table": "finality_records",
+      "state": "INTENT",
+      "reality_requirement": "REAL_BANK_TRANSFER or PSP_DEPOSIT",
+      "reconciliation": "bank_confirmed_at must NOT be null for REAL designation",
+      "failure_mode": "ORPHAN_CAPITAL if not matched within 24h",
+      "audit_hash": "SHA-256 over settlement_id + amount + timestamp"
+    },
+    {
+      "stage": 2,
+      "name": "CAPITAL_LOCK",
+      "table": "liquidity_locks",
+      "state": "LOCKED",
+      "reality_requirement": "lock_amount_eur_cents confirmed by settlement machine",
+      "reconciliation": "lock_hash verified against finality_records",
+      "failure_mode": "DUPLICATE_LOCK if idempotency key missing",
+      "audit_hash": "SHA-256 over lock_id + finality_id + lock_amount"
+    },
+    {
+      "stage": 3,
+      "name": "ESCROW_HOLD",
+      "table": "escrow_accounts",
+      "state": "CONTRACTED",
+      "reality_requirement": "CPCV signed + legal signature hash stored",
+      "reconciliation": "escrow_amount matches 50% of agreed_price",
+      "failure_mode": "ESCROW_TIMEOUT if not released within 72h of completion",
+      "audit_hash": "SHA-256 over escrow_id + contract_hash + parties"
+    },
+    {
+      "stage": 4,
+      "name": "NOTARY_SETTLEMENT",
+      "table": "finality_records",
+      "state": "NOTARIZED",
+      "reality_requirement": "notary_signature + escritura document hash",
+      "reconciliation": "full amount verified: deposit + CPCV + completion",
+      "failure_mode": "SETTLEMENT_MISMATCH triggers reconciliation alert",
+      "audit_hash": "SHA-256 over notary_id + settlement_chain"
+    },
+    {
+      "stage": 5,
+      "name": "FINAL_TRANSFER",
+      "table": "finality_records",
+      "state": "TRANSFERRED",
+      "reality_requirement": "bank_confirmed_at on ALL legs",
+      "reconciliation": "99.9% accuracy target — any mismatch is BLOCKER",
+      "failure_mode": "ORPHAN_CAPITAL_CRITICAL triggers immediate SEV1",
+      "audit_hash": "SHA-256 over full settlement chain — immutable"
+    }
+  ],
+  "commission_flow": {
+    "rate": "5%",
+    "split": "50% on CPCV + 50% on ESCRITURA",
+    "table": "commission_records",
+    "audit": "immutable_audit_log entry per commission event",
+    "reality_requirement": "linked to notarized settlement"
+  },
+  "escrow_rules": {
+    "max_hold_hours": 72,
+    "release_requires": "both buyer + seller confirmation OR notary_instruction",
+    "auto_alert_at_hours": 48,
+    "blocker_at_hours": 72
+  },
+  "orphan_capital_rules": {
+    "detection_hours": 24,
+    "alert_threshold": 1,
+    "blocker_threshold": 1,
+    "sweep_action": "FLAG_FOR_MANUAL_REVIEW — never auto-resolve"
+  },
+  "replay_safety": "All capital events are idempotent — duplicate PSP webhooks detected via idempotency_key",
+  "status": "CAPITAL_FLOW_MAPPED — all 5 stages documented with reality requirements and failure modes"
+}

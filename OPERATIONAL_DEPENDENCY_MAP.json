@@ -1,0 +1,106 @@
+{
+  "report": "OPERATIONAL_DEPENDENCY_MAP",
+  "wave": 51,
+  "phase": "PHASE_1_FULL_SYSTEM_REALITY_AUDIT",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Runtime service dependency map with failure propagation paths and isolation boundaries",
+  "services": {
+    "supabase_db": {
+      "type": "DATA_STORE",
+      "reality": "REAL",
+      "failure_impact": "CATASTROPHIC",
+      "dependent_domains": ["ALL"],
+      "isolation_strategy": "READ_REPLICA_FAILOVER",
+      "rpo_seconds": 0,
+      "rto_seconds": 60
+    },
+    "stripe": {
+      "type": "PAYMENT_PROVIDER",
+      "reality": "REAL_REQUIRES_CREDENTIALS",
+      "failure_impact": "HIGH",
+      "dependent_domains": ["financial", "capital"],
+      "fallback": "ADYEN",
+      "isolation_strategy": "CIRCUIT_BREAKER",
+      "rto_seconds": 30
+    },
+    "adyen": {
+      "type": "PAYMENT_PROVIDER",
+      "reality": "REAL_REQUIRES_CREDENTIALS",
+      "failure_impact": "HIGH",
+      "dependent_domains": ["financial", "capital"],
+      "fallback": "STRIPE",
+      "isolation_strategy": "CIRCUIT_BREAKER",
+      "rto_seconds": 30
+    },
+    "idealista": {
+      "type": "PROPERTY_DATA_PROVIDER",
+      "reality": "REAL_REQUIRES_CREDENTIALS",
+      "failure_impact": "MEDIUM",
+      "dependent_domains": ["production", "ml"],
+      "fallback": "CASAFARI",
+      "isolation_strategy": "GRACEFUL_DEGRADATION",
+      "rto_seconds": 120
+    },
+    "casafari": {
+      "type": "PROPERTY_DATA_PROVIDER",
+      "reality": "REAL_REQUIRES_CREDENTIALS",
+      "failure_impact": "MEDIUM",
+      "dependent_domains": ["production", "ml"],
+      "fallback": "IDEALISTA",
+      "isolation_strategy": "GRACEFUL_DEGRADATION",
+      "rto_seconds": 120
+    },
+    "saltedge": {
+      "type": "BANKING_INTEGRATION",
+      "reality": "REAL_REQUIRES_CREDENTIALS",
+      "failure_impact": "HIGH",
+      "dependent_domains": ["financial"],
+      "fallback": "MANUAL_RECONCILIATION",
+      "isolation_strategy": "QUEUE_BUFFER",
+      "rto_seconds": 300
+    },
+    "datadog": {
+      "type": "SIEM_PLATFORM",
+      "reality": "REAL_REQUIRES_CREDENTIALS",
+      "failure_impact": "MEDIUM",
+      "dependent_domains": ["security"],
+      "fallback": "MICROSOFT_SENTINEL",
+      "isolation_strategy": "MULTI_SIEM_FANOUT",
+      "rto_seconds": 60
+    },
+    "pagerduty": {
+      "type": "INCIDENT_ESCALATION",
+      "reality": "REAL_REQUIRES_CREDENTIALS",
+      "failure_impact": "MEDIUM",
+      "dependent_domains": ["security", "operations"],
+      "fallback": "OPSGENIE",
+      "isolation_strategy": "DUAL_ROUTING",
+      "rto_seconds": 30
+    },
+    "anthropic_api": {
+      "type": "AI_INFERENCE",
+      "reality": "REAL_REQUIRES_CREDENTIALS",
+      "failure_impact": "LOW",
+      "dependent_domains": ["ml", "operations"],
+      "fallback": "CACHED_RESPONSES",
+      "isolation_strategy": "GRACEFUL_DEGRADATION",
+      "rto_seconds": 60
+    },
+    "vercel": {
+      "type": "HOSTING_PLATFORM",
+      "reality": "REAL",
+      "failure_impact": "CATASTROPHIC",
+      "dependent_domains": ["ALL"],
+      "isolation_strategy": "MULTI_REGION_EDGE",
+      "rto_seconds": 120
+    }
+  },
+  "critical_paths": [
+    {"path": "CLIENT → VERCEL → SUPABASE → STRIPE", "risk": "SETTLEMENT_FAILURE"},
+    {"path": "BANK_WEBHOOK → SALTEDGE → SUPABASE → RECONCILIATION", "risk": "RECONCILIATION_DRIFT"},
+    {"path": "SIEM_EVENT → DATADOG → PAGERDUTY → ONCALL", "risk": "UNDETECTED_BREACH"},
+    {"path": "ML_PREDICTION → SUPABASE → DECISION_ENGINE → DEAL", "risk": "REVENUE_LEAKAGE"}
+  ],
+  "isolation_boundaries": ["CIRCUIT_BREAKER per external provider", "QUEUE_BUFFER for async flows", "READ_REPLICA for read-heavy paths", "TENANT_ISOLATION via RLS"],
+  "status": "DEPENDENCY_MAP_COMPLETE — all runtime services classified, failure paths documented"
+}
