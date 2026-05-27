@@ -1,0 +1,31 @@
+{
+  "report": "LIVE_SETTLEMENT_AUDIT",
+  "wave": 49,
+  "phase": "PHASE_2_LIVE_BANKING_FINALITY",
+  "module": "lib/banking/liveInstitutionalSettlementCore.ts",
+  "api_route": "GET|POST /api/banking/settlement-core",
+  "migration": "000117_settlement_core.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Live bank settlement verification with duplicate prevention, liquidity lock protection, chargeback lifecycle",
+  "payment_rails": ["SEPA_INSTANT", "SWIFT", "STRIPE", "ADYEN", "GOCARDLESS", "CURRENCYCLOUD", "SALTEDGE_PSD2"],
+  "financial_truth_grades": {
+    "CERTIFIED": "reconciliation >= 99%",
+    "VERIFIED": "reconciliation >= 95%",
+    "ACCEPTABLE": "reconciliation >= 90%",
+    "DRIFTING": "reconciliation >= 70%",
+    "CRITICAL": "reconciliation < 70%",
+    "NO_DATA": "no settlement data"
+  },
+  "rules": [
+    "settlement not REAL before BANK_CONFIRMED (is_real_money = true requires bank_confirmed_at)",
+    "reconciliation target: 99.5%",
+    "mismatch tolerance: ≤€0.01 (1 cent)",
+    "orphan capital (FUNDED >24h without SETTLED) = CRITICAL",
+    "settlement chain hash = SHA-256 over all transaction states",
+    "duplicate detection via transaction_ref deduplication"
+  ],
+  "extends": "liveSettlementRealityEngine.ts — Wave 48 engine preserved and extended",
+  "tables_created": ["settlement_core_reports"],
+  "FINANCIAL_TRUTH_SCORE": "0-100 composite: reconciliation accuracy - orphan penalty - duplicate penalty",
+  "status": "ARCHITECTURE_READY — configure BANK_STATEMENT_WEBHOOK_SECRET for live statement ingestion"
+}

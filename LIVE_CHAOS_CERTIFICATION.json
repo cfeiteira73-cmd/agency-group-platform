@@ -1,0 +1,25 @@
+{
+  "report": "LIVE_CHAOS_CERTIFICATION",
+  "wave": 49,
+  "phase": "PHASE_5_LIVE_CHAOS_STRESS_VALIDATION",
+  "module": "lib/resilience/liveProductionChaosGrid.ts",
+  "api_route": "GET|POST /api/resilience/chaos-grid",
+  "migration": "000120_production_chaos.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "11 chaos scenarios with blast radius control, RTO/RPO truth, multi-region validation, rollback proof",
+  "scenarios": ["REGION_FAILOVER", "DB_FAILOVER", "QUEUE_SATURATION", "PROVIDER_BLACKOUT", "PSP_OUTAGE", "KAFKA_OUTAGE", "RANSOMWARE_SIM", "PARTIAL_CORRUPTION", "TRAFFIC_SPIKE", "NETWORK_PARTITION", "DEGRADED_STORM"],
+  "chaos_grid_status_levels": {
+    "CERTIFIED_RESILIENT": "score >=90 AND ransomware passed",
+    "RESILIENT_WITH_GAPS": "score >=75",
+    "PARTIAL_RESILIENCE": "score >=50",
+    "NOT_TESTED": "score = 0",
+    "FAILED": "score > 0 but failing"
+  },
+  "rto_rpo_targets": { "RTO_hard_limit_seconds": 600, "RPO_hard_limit_seconds": 0 },
+  "blast_radius": { "SAFE_DRY_RUN": "default — no production impact", "SINGLE_SERVICE": "requires CHAOS_TESTING_ENABLED=true", "PARTIAL_SYSTEM": "requires CHAOS_TESTING_ENABLED=true", "FULL_REGION": "requires CHAOS_TESTING_ENABLED=true" },
+  "certification_hash": "SHA-256 over tenant + score + all scenario outcomes",
+  "extends": "liveInstitutionalChaosEngine.ts — Wave 48 chaos engine preserved and extended",
+  "tables_created": ["production_chaos_reports"],
+  "rules": ["RTO < 10min", "RPO = 0", "failed recovery = BLOCKER", "ransomware_sim must PASS for CERTIFIED_RESILIENT"],
+  "status": "DRY_RUN mode — set CHAOS_TESTING_ENABLED=true for live scenario execution"
+}

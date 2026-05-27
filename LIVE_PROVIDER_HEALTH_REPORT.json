@@ -1,0 +1,29 @@
+{
+  "report": "LIVE_PROVIDER_HEALTH_REPORT",
+  "wave": 49,
+  "phase": "PHASE_1_LIVE_PROVIDER_OPERATIONS",
+  "module": "lib/providers/liveProviderOperationsMesh.ts",
+  "api_route": "GET|POST /api/providers/mesh",
+  "migration": "000116_provider_mesh.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Live operational mesh for 10 providers with P50/P95/P99 latency tracking, trust decay, auto-isolation, fallback routing",
+  "providers_in_registry": ["STRIPE", "IDEALISTA", "SALTEDGE", "CASAFARI", "ADYEN", "GOCARDLESS", "SEPA_RAIL", "CITIUS", "BANK_NPL", "CURRENCYCLOUD"],
+  "provider_weights": {
+    "STRIPE": 20, "IDEALISTA": 15, "SALTEDGE": 15, "CASAFARI": 10, "ADYEN": 10,
+    "GOCARDLESS": 10, "SEPA_RAIL": 10, "CITIUS": 5, "BANK_NPL": 3, "CURRENCYCLOUD": 2
+  },
+  "health_decay_model": { "rate_per_critical_breach": 0.80, "isolation_threshold": 20, "min_health_floor": 5 },
+  "sla_thresholds": { "warning_minutes": 5, "critical_minutes": 15 },
+  "latency_anomaly_detection": { "multiplier": 3, "description": "last_sample > 3× p95 = anomaly" },
+  "provider_truth_labels": { "FULLY_LIVE": ">=90", "MOSTLY_LIVE": ">=70", "DEGRADED": ">=40", "CRITICAL": ">0", "UNCONFIGURED": "0" },
+  "extends": "providerHealthCheck.ts — base check preserved and integrated",
+  "tables_created": ["provider_mesh_reports", "provider_latency_samples", "provider_integrity_checks"],
+  "rules": [
+    "stale >5min = WARNING",
+    "stale >15min = CRITICAL",
+    "invalid payload = reject immediately",
+    "fallback execution mandatory when health < 20",
+    "PROVIDER_TRUTH_INDEX = weighted composite score"
+  ],
+  "status": "ARCHITECTURE_READY — configure provider API keys to reach FULLY_LIVE"
+}

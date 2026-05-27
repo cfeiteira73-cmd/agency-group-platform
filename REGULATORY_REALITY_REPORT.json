@@ -1,0 +1,23 @@
+{
+  "report": "REGULATORY_REALITY_REPORT",
+  "wave": 49,
+  "phase": "PHASE_4_EXTERNAL_AUDIT_REGULATORY",
+  "module": "lib/compliance/institutionalRegulatoryRealitySystem.ts",
+  "api_route": "GET|POST /api/compliance/regulatory-reality",
+  "migration": "000119_regulatory_reality.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "SOC2 Type II tracker, ISO27001:2022 engine, Big4 export system, GDPR/PSD2/DORA governance, pentest management",
+  "frameworks_tracked": ["SOC2_TYPE_II", "ISO27001_2022", "GDPR", "PSD2", "DORA"],
+  "compliance_targets": { "SOC2_TYPE_II": "90%", "ISO27001_2022": "90%", "GDPR": "80%", "PSD2": "80%", "DORA": "80%" },
+  "pentest_sla": { "CRITICAL": "0 days (immediate BLOCKER)", "HIGH": "30 days", "MEDIUM": "90 days", "LOW": "180 days" },
+  "big4_export": {
+    "format": "JSON",
+    "chain_of_custody": "SHA-256 sequential hash chain",
+    "requires_for_big4_ready": "SOC2 >=90% AND ISO27001 >=90% AND evidence_items > 10"
+  },
+  "evidence_continuity": { "INTACT": "evidence chain with items", "UNVERIFIED": "audit ready but no items", "GAP_DETECTED": "no evidence" },
+  "readiness_levels": { "READY": "score >=90, no critical vulns", "CONDITIONALLY_READY": "score >=70", "NOT_READY": "score <70", "BLOCKED": "critical vuln open" },
+  "extends": "institutionalAuditRealityLayer.ts — Wave 48 audit engine preserved and extended",
+  "tables_created": ["regulatory_reality_reports"],
+  "status": "ARCHITECTURE_READY — address SOC2/ISO27001 gaps to reach READY status"
+}

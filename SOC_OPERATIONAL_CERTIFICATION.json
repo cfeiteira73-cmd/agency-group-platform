@@ -1,0 +1,30 @@
+{
+  "report": "SOC_OPERATIONAL_CERTIFICATION",
+  "wave": 49,
+  "phase": "PHASE_3_LIVE_SECURITY_OPERATIONS",
+  "module": "lib/security/liveInstitutionalSocGrid.ts",
+  "api_route": "GET|POST /api/security/soc-grid",
+  "migration": "000118_soc_grid.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "True operational SOC with SIEM fan-out, threat signal detection, secret rotation audit, escalation matrix",
+  "siem_platforms": ["DATADOG", "MICROSOFT_SENTINEL", "SPLUNK", "SUMO_LOGIC"],
+  "escalation_channels": ["PAGERDUTY", "OPSGENIE", "SLACK_SOC"],
+  "threat_signal_types": ["IMPOSSIBLE_TRAVEL", "CREDENTIAL_ABUSE", "INSIDER_THREAT", "ABNORMAL_CAPITAL", "API_ABUSE", "BRUTE_FORCE", "RANSOMWARE_SIGNAL", "PRIVILEGED_ACTION", "PLAINTEXT_SECRET"],
+  "secret_rotation_policy": { "max_days": 90, "warn_days": 75, "overdue_is_blocker": true },
+  "sla_enforcement": {
+    "SEV1_unresolved": "15 minutes — CRITICAL",
+    "high_vuln_unresolved": "24 hours — CRITICAL",
+    "plaintext_secret_exposure": "0 minutes — IMMEDIATE"
+  },
+  "soc_grid_scores": { "FULLY_OPERATIONAL": ">=80 + escalation + SIEM", "PARTIALLY_OPERATIONAL": ">=60", "DEGRADED": ">0", "NOT_CONFIGURED": "0" },
+  "certification_hash": "SHA-256 over tenant + score + SIEM count + escalation + rotation + SEV1 status",
+  "extends": "liveSecurityOperationsCenter.ts — Wave 48 SOC preserved and extended",
+  "tables_created": ["soc_grid_reports", "secret_rotation_log"],
+  "rules": [
+    "plaintext secret exposure = CRITICAL — immediate response",
+    "unresolved SEV1 > 15min = CRITICAL",
+    "unresolved HIGH vuln > 24h = CRITICAL",
+    "key rotation > 90d = OVERDUE = blocker"
+  ],
+  "status": "ARCHITECTURE_READY — configure DATADOG_API_KEY + PAGERDUTY_ROUTING_KEY for FULLY_OPERATIONAL"
+}
