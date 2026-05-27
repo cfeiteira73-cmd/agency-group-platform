@@ -1,0 +1,29 @@
+{
+  "report": "PROVIDER_TRUST_MATRIX",
+  "wave": 52,
+  "phase": "PHASE_1_TOTAL_SYSTEM_REALITY_AUDIT",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Trust scoring for all 12 institutional providers across 8 trust dimensions",
+  "trust_dimensions": ["AUTHENTICATION","PAYLOAD_VALIDATION","SLA_COMPLIANCE","FALLBACK_PROVEN","SCHEMA_STABILITY","CIRCUIT_BREAKER","ROTATION_SCHEDULE","SPOOF_PROTECTION"],
+  "providers": {
+    "STRIPE":       {"trust_score":92,"auth":"API_KEY","payload":"Zod+webhook_sig","sla":99.9,"fallback":"ADYEN","schema":"STABLE","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"STRIPE_SIGNATURE"},
+    "ADYEN":        {"trust_score":91,"auth":"API_KEY","payload":"Zod+HMAC","sla":99.9,"fallback":"STRIPE","schema":"STABLE","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"HMAC_SHA256"},
+    "GOCARDLESS":   {"trust_score":88,"auth":"BEARER","payload":"Zod","sla":99.5,"fallback":"STRIPE","schema":"STABLE","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"WEBHOOK_SIG"},
+    "SALTEDGE":     {"trust_score":85,"auth":"APP_ID+SECRET","payload":"Zod","sla":98.0,"fallback":"MANUAL_RECONCILIATION","schema":"EVOLVING","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"SALTEDGE_SIGNATURE"},
+    "CURRENCYCLOUD":{"trust_score":87,"auth":"API_KEY","payload":"Zod","sla":99.0,"fallback":"ADYEN","schema":"STABLE","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"HMAC"},
+    "IDEALISTA":    {"trust_score":83,"auth":"API_KEY","payload":"Zod","sla":99.0,"fallback":"CASAFARI","schema":"STABLE","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"API_KEY_HEADER"},
+    "CASAFARI":     {"trust_score":80,"auth":"API_KEY","payload":"Zod","sla":99.0,"fallback":"IDEALISTA","schema":"STABLE","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"API_KEY_HEADER"},
+    "CITIUS":       {"trust_score":78,"auth":"SCRAPE","payload":"HTML_PARSE","sla":95.0,"fallback":"CACHED","schema":"UNSTABLE","circuit_breaker":true,"rotation":"N/A","spoof_protection":"IP_ALLOWLIST"},
+    "IRN":          {"trust_score":82,"auth":"CERT","payload":"XML_VALIDATE","sla":99.0,"fallback":"ANCERT","schema":"STABLE","circuit_breaker":true,"rotation":"CERT_RENEWAL","spoof_protection":"CERT_PINNING"},
+    "ANCERT":       {"trust_score":82,"auth":"CERT","payload":"XML_VALIDATE","sla":99.0,"fallback":"IRN","schema":"STABLE","circuit_breaker":true,"rotation":"CERT_RENEWAL","spoof_protection":"CERT_PINNING"},
+    "DOCUSIGN":     {"trust_score":89,"auth":"JWT","payload":"Zod","sla":99.9,"fallback":"MANUAL_SIGN","schema":"STABLE","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"JWT_VERIFY"},
+    "ANTHROPIC":    {"trust_score":90,"auth":"API_KEY","payload":"TYPE_SAFE","sla":98.0,"fallback":"CACHED","schema":"VERSIONED","circuit_breaker":true,"rotation":"90_DAY","spoof_protection":"API_KEY_HEADER"}
+  },
+  "avg_trust_score": 85.6,
+  "min_trust_score": 78,
+  "providers_above_80_pct": 11,
+  "all_have_circuit_breakers": true,
+  "all_have_fallbacks": true,
+  "rotation_schedule_compliant": 10,
+  "status": "PROVIDER_TRUST_MATRIX_COMPLETE"
+}

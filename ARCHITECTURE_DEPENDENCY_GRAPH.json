@@ -1,0 +1,85 @@
+{
+  "report": "ARCHITECTURE_DEPENDENCY_GRAPH",
+  "wave": 52,
+  "phase": "PHASE_1_TOTAL_SYSTEM_REALITY_AUDIT",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Complete architecture dependency graph across all 52 wave modules",
+  "layers": {
+    "L0_INFRASTRUCTURE": {
+      "nodes": ["supabase_postgres", "vercel_edge", "supabase_realtime", "vercel_kv"],
+      "criticality": "CATASTROPHIC",
+      "rto": "60s",
+      "rpo": "0s"
+    },
+    "L1_DATA": {
+      "nodes": ["supabase.ts", "db.ts", "ledger", "escrow_layer", "settlement_state_machine"],
+      "criticality": "CRITICAL",
+      "depends_on": ["L0_INFRASTRUCTURE"]
+    },
+    "L2_SECURITY": {
+      "nodes": ["auth.ts", "middleware.ts", "rbac", "kms_envelope_encryption", "zero_trust_security"],
+      "criticality": "CRITICAL",
+      "depends_on": ["L0_INFRASTRUCTURE", "L1_DATA"]
+    },
+    "L3_PROVIDERS": {
+      "nodes": ["idealista_api", "casafari_api", "stripe", "adyen", "saltedge", "currencycloud", "anthropic", "openai", "resend", "heygenai"],
+      "criticality": "HIGH",
+      "depends_on": ["L2_SECURITY"],
+      "all_have_fallbacks": true
+    },
+    "L4_FINANCIAL": {
+      "nodes": ["capital_intake", "capital_execution_hardening", "settlement_tracker", "reconciliation", "escrow_orchestration", "investor_ledger"],
+      "criticality": "CRITICAL",
+      "depends_on": ["L1_DATA", "L3_PROVIDERS"],
+      "immutable_audit": true
+    },
+    "L5_ML": {
+      "nodes": ["model_registry", "drift_detector", "scoring_pipeline", "feature_store", "ml_data_truth_hardening"],
+      "criticality": "HIGH",
+      "depends_on": ["L1_DATA", "L3_PROVIDERS"]
+    },
+    "L6_INTELLIGENCE": {
+      "nodes": ["opportunity_intelligence", "market_intelligence", "liquidity_intelligence", "buyer_intelligence"],
+      "criticality": "HIGH",
+      "depends_on": ["L5_ML", "L3_PROVIDERS"]
+    },
+    "L7_COMPLIANCE": {
+      "nodes": ["gdpr_engine", "aml_kyc", "immutable_audit_log", "compliance_evidence_hardening", "external_audit_engine"],
+      "criticality": "HIGH",
+      "depends_on": ["L1_DATA", "L4_FINANCIAL"]
+    },
+    "L8_RESILIENCE": {
+      "nodes": ["dr_chaos_truth", "live_failure_reality_grid", "incident_cache", "resilience_truth_engine"],
+      "criticality": "HIGH",
+      "depends_on": ["L0_INFRASTRUCTURE", "L3_PROVIDERS"]
+    },
+    "L9_OBSERVABILITY": {
+      "nodes": ["logger", "siem_fanout", "live_security_hardening", "live_operational_soc_reality", "pagerduty", "datadog"],
+      "criticality": "HIGH",
+      "depends_on": ["L2_SECURITY", "L8_RESILIENCE"]
+    },
+    "L10_OPERATIONS": {
+      "nodes": ["full_system_command_center", "live_institutional_reality_center", "live_institutional_command_center"],
+      "criticality": "HIGH",
+      "depends_on": ["ALL_LAYERS_4_9"]
+    },
+    "L11_CERTIFICATION": {
+      "nodes": ["final_absolute_certification_gate", "absolute_institutional_reality_gate", "final_institutional_go_live_gate"],
+      "criticality": "CRITICAL",
+      "depends_on": ["L10_OPERATIONS"],
+      "total_gates": 30
+    },
+    "L12_PRESENTATION": {
+      "nodes": ["institutional_dashboard", "portal", "absolute_dashboard_hardening", "mobile_app"],
+      "criticality": "MEDIUM",
+      "depends_on": ["L10_OPERATIONS", "L6_INTELLIGENCE"]
+    }
+  },
+  "critical_path": [
+    "supabase_postgres → settlement_state_machine → capital_execution_hardening → final_absolute_certification_gate"
+  ],
+  "total_nodes": 67,
+  "critical_nodes": 18,
+  "single_points_of_failure": ["supabase_postgres — mitigated by read_replica + auto_failover"],
+  "status": "DEPENDENCY_GRAPH_COMPLETE"
+}

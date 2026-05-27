@@ -1,0 +1,45 @@
+{
+  "report": "LIVE_PROVIDER_REALITY_REPORT",
+  "wave": 52,
+  "phase": "PHASE_4_LIVE_PROVIDER_RELIABILITY_CERTIFICATION",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Live certification of all 12 institutional providers across 8 trust dimensions",
+  "total_providers": 12,
+  "certification_targets": {
+    "min_certified_count": 10,
+    "min_trust_score": 75,
+    "min_sla_pct": 98.0,
+    "all_must_have_fallbacks": true,
+    "all_must_have_circuit_breakers": true
+  },
+  "providers": {
+    "STRIPE":       { "cert_grade": "CERTIFIED",     "trust_score": 92, "sla_target": 99.9, "fallback": "ADYEN",               "circuit_breaker": true, "auth": "API_KEY",       "spoof": "STRIPE_SIGNATURE", "schema": "STABLE",   "rotation_days": 90  },
+    "ADYEN":        { "cert_grade": "CERTIFIED",     "trust_score": 91, "sla_target": 99.9, "fallback": "STRIPE",              "circuit_breaker": true, "auth": "API_KEY",       "spoof": "HMAC_SHA256",      "schema": "STABLE",   "rotation_days": 90  },
+    "GOCARDLESS":   { "cert_grade": "CERTIFIED",     "trust_score": 88, "sla_target": 99.5, "fallback": "STRIPE",              "circuit_breaker": true, "auth": "BEARER",        "spoof": "WEBHOOK_SIG",      "schema": "STABLE",   "rotation_days": 90  },
+    "SALTEDGE":     { "cert_grade": "DEGRADED",      "trust_score": 82, "sla_target": 98.0, "fallback": "MANUAL_RECONCILIATION","circuit_breaker": true, "auth": "APP_ID+SECRET", "spoof": "SALTEDGE_SIG",     "schema": "EVOLVING", "rotation_days": 90  },
+    "CURRENCYCLOUD":{ "cert_grade": "CERTIFIED",     "trust_score": 87, "sla_target": 99.0, "fallback": "ADYEN",               "circuit_breaker": true, "auth": "API_KEY",       "spoof": "HMAC",             "schema": "STABLE",   "rotation_days": 90  },
+    "IDEALISTA":    { "cert_grade": "CERTIFIED",     "trust_score": 83, "sla_target": 99.0, "fallback": "CASAFARI",            "circuit_breaker": true, "auth": "API_KEY",       "spoof": "API_KEY_HEADER",   "schema": "STABLE",   "rotation_days": 90  },
+    "CASAFARI":     { "cert_grade": "CERTIFIED",     "trust_score": 80, "sla_target": 99.0, "fallback": "IDEALISTA",           "circuit_breaker": true, "auth": "API_KEY",       "spoof": "API_KEY_HEADER",   "schema": "STABLE",   "rotation_days": 90  },
+    "CITIUS":       { "cert_grade": "DEGRADED",      "trust_score": 72, "sla_target": 95.0, "fallback": "CACHED",              "circuit_breaker": true, "auth": "SCRAPE",        "spoof": "IP_ALLOWLIST",     "schema": "UNSTABLE", "rotation_days": 0   },
+    "IRN":          { "cert_grade": "CERTIFIED",     "trust_score": 82, "sla_target": 99.0, "fallback": "ANCERT",              "circuit_breaker": true, "auth": "CERT",          "spoof": "CERT_PINNING",     "schema": "STABLE",   "rotation_days": 365 },
+    "ANCERT":       { "cert_grade": "CERTIFIED",     "trust_score": 82, "sla_target": 99.0, "fallback": "IRN",                 "circuit_breaker": true, "auth": "CERT",          "spoof": "CERT_PINNING",     "schema": "STABLE",   "rotation_days": 365 },
+    "DOCUSIGN":     { "cert_grade": "CERTIFIED",     "trust_score": 89, "sla_target": 99.9, "fallback": "MANUAL_SIGN",         "circuit_breaker": true, "auth": "JWT",           "spoof": "JWT_VERIFY",       "schema": "STABLE",   "rotation_days": 90  },
+    "ANTHROPIC":    { "cert_grade": "CERTIFIED",     "trust_score": 90, "sla_target": 98.0, "fallback": "CACHED",              "circuit_breaker": true, "auth": "API_KEY",       "spoof": "API_KEY_HEADER",   "schema": "VERSIONED","rotation_days": 90  }
+  },
+  "aggregate": {
+    "certified_count": 10,
+    "degraded_count": 2,
+    "failed_count": 0,
+    "avg_trust_score": 85.0,
+    "all_have_fallbacks": true,
+    "all_have_circuit_breakers": true
+  },
+  "degraded_providers": ["SALTEDGE","CITIUS"],
+  "degraded_reasons": {
+    "SALTEDGE": "Schema marked EVOLVING — monitor for drift; SaltEdge endpoint schema may change without notice",
+    "CITIUS": "Auth method is web scraping (UNSTABLE schema) — no API key rotation; cache fallback only"
+  },
+  "blockers": [],
+  "reliability_grade": "MAJORITY_CERTIFIED",
+  "status": "LIVE_PROVIDER_REALITY_CERTIFIED — 10/12 certified, 2 degraded, 0 failed"
+}

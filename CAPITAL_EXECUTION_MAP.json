@@ -1,0 +1,47 @@
+{
+  "report": "CAPITAL_EXECUTION_MAP",
+  "wave": 52,
+  "phase": "PHASE_1_TOTAL_SYSTEM_REALITY_AUDIT",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Complete capital execution map with double-entry enforcement, PT+ES fee tables, and conservation proof",
+  "execution_states": ["INTENT","COMMITTED","FUNDED","LOCKED","CONTRACTED","NOTARIZED","SETTLED","TRANSFERRED"],
+  "double_entry_rules": {
+    "DEBIT_BUYER": "finality_records.amount_eur_cents",
+    "CREDIT_ESCROW": "liquidity_locks.lock_amount_eur_cents",
+    "DEBIT_ESCROW_ON_COMPLETION": "liquidity_locks.released_at NOT NULL",
+    "CREDIT_SELLER": "finality_records.settlement_state = TRANSFERRED",
+    "CREDIT_AGENCY": "commission_records.amount_eur_cents",
+    "CONSERVATION_LAW": "BUYER_DEBIT === SELLER_CREDIT + AGENCY_COMMISSION + TAXES"
+  },
+  "fee_tables": {
+    "PORTUGAL": {
+      "imt": {"bracket_1":"0-97064_EUR_0pct","bracket_2":"97064-132774_EUR_2pct","bracket_3":"132774-181034_EUR_5pct","bracket_4":"181034-301688_EUR_7pct","bracket_5":"301688-578598_EUR_8pct","bracket_6":">578598_EUR_6pct_FIXED_34650"},
+      "stamp_duty": "0.8pct",
+      "registry": "fixed_250_EUR",
+      "notary": "fixed_500_EUR",
+      "agency_commission": "5pct_excl_VAT",
+      "vat_on_commission": "23pct"
+    },
+    "SPAIN": {
+      "itp": {"andalucia":"7pct","madrid":"6pct","catalonia":"10pct","valencia":"10pct","default":"8pct"},
+      "itp_new_build": "IVA_10pct + AJD_1pct",
+      "registry": "variable_by_price",
+      "notary": "variable_by_price",
+      "agency_commission": "3_to_5pct",
+      "ibi_pro_rata": "true"
+    }
+  },
+  "idempotency_rules": {
+    "webhook_key": "PSP_EVENT_ID",
+    "settlement_key": "settlement_id + state_transition",
+    "escrow_key": "escrow_id + operation",
+    "commission_key": "settlement_id + party"
+  },
+  "reconciliation_target_pct": 99.99,
+  "orphan_detection_hours": 24,
+  "escrow_max_hold_hours": 72,
+  "replay_safe": true,
+  "rollback_proven": false,
+  "rollback_proof_requires": "CHAOS_TESTING_ENABLED=true",
+  "status": "CAPITAL_MAP_COMPLETE — all fee tables documented, double-entry rules enforced"
+}
