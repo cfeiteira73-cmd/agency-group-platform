@@ -1,0 +1,28 @@
+{
+  "report": "GLOBAL_OPERATIONAL_REALITY_REPORT",
+  "wave": 50,
+  "phase": "PHASE_6_LIVE_OPERATIONS_COMMAND_CENTER",
+  "module": "lib/operations/liveInstitutionalRealityCenter.ts",
+  "api_route": "GET|POST /api/operations/reality-center",
+  "migration": "000128_reality_center.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Executive + SOC + treasury + liquidity dashboards aggregating all Wave 50 domain reports",
+  "dashboards": ["EXECUTIVE", "SOC", "TREASURY", "LIQUIDITY"],
+  "domain_scores": {
+    "provider_activation": "weight 20%",
+    "money_reality": "weight 30%",
+    "soc_reality": "weight 25%",
+    "external_audit": "weight 15%",
+    "failure_resilience": "weight 10%"
+  },
+  "global_score_formula": "money(30%) + soc(25%) + provider(20%) + compliance(15%) + resilience(10%) blended 80%W50 + 20%W49",
+  "reality_center_states": {
+    "HEALTHY": "score >=80, no blockers",
+    "DEGRADED": "score >=60",
+    "CRITICAL": "blockers present",
+    "OFFLINE": "score <60"
+  },
+  "extends": "liveInstitutionalCommandCenter.ts — Wave 49 command center preserved and extended",
+  "tables_created": ["reality_center_reports"],
+  "status": "ARCHITECTURE_READY — configure all domain services for HEALTHY status"
+}

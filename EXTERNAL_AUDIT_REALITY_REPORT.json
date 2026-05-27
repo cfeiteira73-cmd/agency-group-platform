@@ -1,0 +1,24 @@
+{
+  "report": "EXTERNAL_AUDIT_REALITY_REPORT",
+  "wave": 50,
+  "phase": "PHASE_4_EXTERNAL_AUDIT_EXECUTION",
+  "module": "lib/compliance/externalInstitutionalAuditEngine.ts",
+  "api_route": "GET|POST /api/compliance/external-audit",
+  "migration": "000126_external_audit.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "SOC2 Type II controls, ISO27001:2022 Annex A/Clauses 4-10, Big4 evidence package, OWASP Top 10 attack surface",
+  "soc2_target_pct": 95,
+  "iso27001_target_pct": 95,
+  "evidence_minimum": 15,
+  "pentest_sla": {
+    "CRITICAL": "0 days — immediate BLOCKER",
+    "HIGH": "30 days",
+    "MEDIUM": "90 days",
+    "LOW": "180 days"
+  },
+  "big4_readiness_requires": "SOC2 >=95% AND ISO27001 >=95% AND evidence_items >= 15",
+  "owasp_top10_tracked": ["A01_BROKEN_ACCESS", "A02_CRYPTO_FAILURES", "A03_INJECTION", "A04_INSECURE_DESIGN", "A05_SECURITY_MISCONFIG", "A06_VULNERABLE_COMPONENTS", "A07_AUTH_FAILURES", "A08_DATA_INTEGRITY", "A09_LOGGING_FAILURES", "A10_SSRF"],
+  "extends": "institutionalRegulatoryRealitySystem.ts — Wave 49 regulatory system preserved and extended",
+  "tables_created": ["external_audit_reports"],
+  "status": "ARCHITECTURE_READY — address SOC2/ISO27001 gaps and collect evidence for Big4 readiness"
+}

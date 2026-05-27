@@ -1,0 +1,29 @@
+{
+  "report": "SOC_REALITY_REPORT",
+  "wave": 50,
+  "phase": "PHASE_3_LIVE_SOC_OPERATIONS",
+  "module": "lib/security/liveOperationalSocReality.ts",
+  "api_route": "GET|POST /api/security/soc-reality",
+  "migration": "000125_soc_reality.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Live alert routing, incident escalation, threat detection, key rotation for all secret categories",
+  "platforms": ["DATADOG", "MICROSOFT_SENTINEL", "PAGERDUTY", "OPSGENIE", "SLACK_SOC"],
+  "rotation_categories": ["WEBHOOK_SECRET", "PSP_CREDENTIAL", "PROVIDER_TOKEN", "KMS_KEY", "API_KEY"],
+  "threat_detections": ["IMPOSSIBLE_TRAVEL", "CREDENTIAL_ABUSE", "RANSOMWARE_SIGNAL", "FINANCIAL_ANOMALY", "API_ABUSE"],
+  "soc_reality_states": {
+    "LIVE_OPERATIONAL": "score >=90, zero SEV1, zero overdue rotations",
+    "OPERATIONAL_WITH_GAPS": "score >=70",
+    "DEGRADED_DEFENSE": "score >0",
+    "NOT_OPERATIONAL": "score = 0"
+  },
+  "rules": [
+    "unresolved SEV1 >15min = CRITICAL",
+    "plaintext secret = BLOCKER",
+    "failed rotation = HIGH",
+    "rotation_max_days = 90",
+    "rotation_warn_days = 75"
+  ],
+  "extends": "liveInstitutionalSocGrid.ts — Wave 49 SOC preserved and extended",
+  "tables_created": ["soc_reality_reports", "key_rotation_schedules"],
+  "status": "ARCHITECTURE_READY — configure DATADOG_API_KEY + PAGERDUTY_ROUTING_KEY for LIVE_OPERATIONAL"
+}

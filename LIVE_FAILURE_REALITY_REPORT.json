@@ -1,0 +1,30 @@
+{
+  "report": "LIVE_FAILURE_REALITY_REPORT",
+  "wave": 50,
+  "phase": "PHASE_5_LIVE_FAILURE_CHAOS_PROOF",
+  "module": "lib/resilience/liveFailureRealityGrid.ts",
+  "api_route": "GET|POST /api/resilience/failure-grid",
+  "migration": "000127_failure_grid.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "11 failure scenarios with blast radius containment, event replay proof, rollback verification, multi-region validation",
+  "scenarios": ["REGION_FAILOVER", "DB_FAILOVER", "QUEUE_SATURATION", "PROVIDER_BLACKOUT", "PSP_OUTAGE", "KAFKA_OUTAGE", "RANSOMWARE_SIM", "PARTIAL_CORRUPTION", "TRAFFIC_SPIKE", "NETWORK_PARTITION", "DEGRADED_STORM"],
+  "failure_reality_grades": {
+    "FAILURE_CERTIFIED": "all recovery proven, RTO/RPO met",
+    "FAILURE_RESILIENT": "score >=75",
+    "PARTIAL_RESILIENCE": "score >=50",
+    "NOT_PROVEN": "dry-run only",
+    "RECOVERY_FAILED": "actual failure in recovery — BLOCKER"
+  },
+  "rto_hard_limit_seconds": 600,
+  "rpo_hard_limit_seconds": 0,
+  "blast_radius_modes": {
+    "SAFE_DRY_RUN": "default — no production impact",
+    "SINGLE_SERVICE": "requires CHAOS_TESTING_ENABLED=true",
+    "PARTIAL_SYSTEM": "requires CHAOS_TESTING_ENABLED=true",
+    "FULL_REGION": "requires CHAOS_TESTING_ENABLED=true"
+  },
+  "rules": ["RTO <10min", "RPO = 0", "failed recovery = BLOCKER", "blast radius must be contained"],
+  "extends": "liveProductionChaosGrid.ts — Wave 49 chaos grid preserved and extended",
+  "tables_created": ["failure_reality_reports"],
+  "status": "DRY_RUN mode — set CHAOS_TESTING_ENABLED=true for live failure execution"
+}

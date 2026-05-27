@@ -19,6 +19,8 @@ import {
   type LiveChaosReport,
 } from './liveInstitutionalChaosEngine'
 
+export type { BlastRadius }
+
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const TENANT_ID =

@@ -1,0 +1,29 @@
+{
+  "report": "LIVE_FINANCIAL_REALITY_REPORT",
+  "wave": 50,
+  "phase": "PHASE_2_REAL_MONEY_EXECUTION_FINALITY",
+  "module": "lib/financial/liveMoneyRealityEngine.ts",
+  "api_route": "GET|POST /api/financial/money-reality",
+  "migration": "000124_money_reality.sql",
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "description": "Deposits, withdrawals, settlements, reconciliations, chargebacks, reversals, escrow release, settlement replay verification",
+  "money_reality_grades": {
+    "REAL_MONEY_CERTIFIED": "reconciliation >=99.9%, no orphans, no duplicates",
+    "REAL_MONEY_VERIFIED": "reconciliation >=99%",
+    "REAL_MONEY_ACCEPTABLE": "reconciliation >=95%",
+    "FINANCIAL_DRIFT": "reconciliation >=70%",
+    "FINANCIAL_CRITICAL": "reconciliation <70% or orphans",
+    "NO_REAL_MONEY_DATA": "no bank-confirmed data"
+  },
+  "rules": [
+    "NO simulated money may be marked REAL",
+    "reconciliation target >=99.9%",
+    "orphan capital = CRITICAL",
+    "mismatch >€0.01 = BLOCKER",
+    "bank_confirmed_at REQUIRED for is_real_money=true"
+  ],
+  "escrow_release_max_hours": 72,
+  "extends": "liveInstitutionalSettlementCore.ts — Wave 49 settlement preserved and extended",
+  "tables_created": ["money_reality_reports"],
+  "status": "ARCHITECTURE_READY — configure BANK_STATEMENT_WEBHOOK_SECRET for live ingestion"
+}
