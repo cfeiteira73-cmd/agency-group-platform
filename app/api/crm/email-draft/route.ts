@@ -39,7 +39,7 @@ function mockDraft(contact: Record<string, unknown>, purpose: string, agentName:
       greeting: `Dear ${firstName},`,
       body: `I hope this message finds you well. Following our recent conversation, I wanted to share a selection of properties that closely match your criteria.\n\nOur current portfolio includes several exclusive opportunities in your areas of interest, within ${budgetLabel}. These properties are not widely advertised and represent genuine value in the current market.\n\nI would be delighted to arrange viewings at your convenience and provide a comprehensive market analysis to support your decision.`,
       cta: `Please let me know your availability for a call or visit this week.`,
-      signature: `Kind regards,\n${agentName}\nAgency Group | AMI 22506\n+351 XXX XXX XXX`,
+      signature: `Kind regards,\n${agentName}\nAgency Group | AMI 22506\n${process.env.ADMIN_PHONE ?? process.env.WHATSAPP_PHONE_NUMBER ?? '+351 919 948 986'}`,
     }
   }
 
@@ -48,7 +48,7 @@ function mockDraft(contact: Record<string, unknown>, purpose: string, agentName:
     greeting: `Caro/a ${firstName},`,
     body: `Espero que esteja bem. Na sequência da nossa conversa, preparei uma selecção de imóveis que correspondem ao seu perfil e budget (${budgetLabel}).\n\nTemos em carteira algumas oportunidades exclusivas nas zonas do seu interesse, algumas delas não publicitadas nos portais. O mercado está activo e os imóveis mais bem posicionados saem rapidamente.\n\nEstaria disponível para uma visita esta semana? Posso organizar um roteiro de 2-3 imóveis num só período.`,
     cta: `Diga-me a sua disponibilidade e trato de tudo.`,
-    signature: `Com os melhores cumprimentos,\n${agentName}\nAgency Group | AMI 22506\n+351 XXX XXX XXX`,
+    signature: `Com os melhores cumprimentos,\n${agentName}\nAgency Group | AMI 22506\n${process.env.ADMIN_PHONE ?? process.env.WHATSAPP_PHONE_NUMBER ?? '+351 919 948 986'}`,
   }
 }
 

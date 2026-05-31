@@ -6,19 +6,17 @@
 
 import { randomUUID } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase'
+import log from '@/lib/logger'
+import { rateLimit } from '@/lib/rateLimit'
 import type {
   AgentId, AgentConfig, AgentContext, AgentResult,
   AgentInsight, AgentAction, AgentStatus, AgentOutputContract,
 } from './types'
 
-// ─── In-process rate limiter ──────────────────────────────────────────────────
-// Per-agent call log (timestamps). Not shared across serverless instances.
-// TODO: CRITICAL #INFRA-011 — move to Supabase for multi-instance correctness.
-// This Map resets on cold starts and is not shared across concurrent serverless
-// instances, so agent rate limits are per-instance only. A parallel burst of
-// requests across instances bypasses all per-agent call throttles entirely.
-
-const _callLog = new Map<AgentId, number[]>()
+// ─── Distributed rate limiter via Upstash Redis (multi-instance safe) ────────
+// Uses lib/rateLimit.ts which routes through Upstash when configured.
+// Keyed by agent_id + org_id so limits are per-agent per-organisation.
+// Falls back to in-memory only in local dev (Upstash not configured).
 
 export abstract class BaseAgent {
   abstract readonly id: AgentId
@@ -39,8 +37,8 @@ export abstract class BaseAgent {
     const started_at = new Date().toISOString()
     const start_ms   = Date.now()
 
-    // Rate limit check
-    if (!this._checkRateLimit()) {
+    // Rate limit check — distributed via Upstash
+    if (!(await this._checkRateLimit(ctx.org_id))) {
       return this._errorResult(ctx, started_at, 'Rate limit exceeded')
     }
 
@@ -76,7 +74,7 @@ export abstract class BaseAgent {
     } catch (err) {
       status = 'failed'
       error  = err instanceof Error ? err.message : String(err)
-      console.error(`[Agent:${this.id}]`, { error, correlation_id: ctx.correlation_id, org_id: ctx.org_id })
+      log.error(`[Agent:${this.id}] execution failed`, { error, correlation_id: ctx.correlation_id, org_id: ctx.org_id })
     }
 
     const result: AgentResult = {
@@ -101,15 +99,14 @@ export abstract class BaseAgent {
     return result
   }
 
-  // ─── PRIVATE: rate limit ─────────────────────────────────────────────────────
+  // ─── PRIVATE: rate limit (Upstash-backed, multi-instance safe) ──────────────
 
-  private _checkRateLimit(): boolean {
-    const now       = Date.now()
-    const window_ms = 3_600_000 // 1 hour
-    const calls     = (_callLog.get(this.id) ?? []).filter(t => now - t < window_ms)
-    if (calls.length >= this.config.rate_limit_per_hour) return false
-    _callLog.set(this.id, [...calls, now])
-    return true
+  private async _checkRateLimit(orgId: string): Promise<boolean> {
+    const result = await rateLimit(`agent:${this.id}:${orgId}`, {
+      maxAttempts: this.config.rate_limit_per_hour,
+      windowMs:    3_600_000,  // 1 hour
+    })
+    return result.success
   }
 
   // ─── PRIVATE: execute action ─────────────────────────────────────────────────
@@ -126,7 +123,7 @@ export abstract class BaseAgent {
             entity_id:   action.entity_id,
             metadata:    { ...action.payload, agent_id: this.id, correlation_id: ctx.correlation_id, org_id: ctx.org_id },
           })
-          if (error) console.warn(`[Agent:${this.id}] create_task failed:`, error.message)
+          if (error) log.warn(`[Agent:${this.id}] create_task failed`, { error: error.message })
           break
         }
 
@@ -145,7 +142,7 @@ export abstract class BaseAgent {
               org_id:          ctx.org_id,
             },
           })
-          if (error) console.warn(`[Agent:${this.id}] log_insight failed:`, error.message)
+          if (error) log.warn(`[Agent:${this.id}] log_insight failed`, { error: error.message })
           break
         }
 
@@ -166,7 +163,7 @@ export abstract class BaseAgent {
               ...action.payload,
             },
           })
-          if (error) console.warn(`[Agent:${this.id}] send_notification failed:`, error.message)
+          if (error) log.warn(`[Agent:${this.id}] send_notification failed`, { error: error.message })
           break
         }
 
@@ -176,14 +173,14 @@ export abstract class BaseAgent {
           const SAFE_TABLES = new Set(['contacts', 'deals', 'properties', 'operator_tasks'])
           const table = action.entity_type?.toLowerCase()
           if (!table || !SAFE_TABLES.has(table) || !action.entity_id) {
-            console.warn(`[Agent:${this.id}] update_record: unsafe target '${table}'`)
+            log.warn(`[Agent:${this.id}] update_record: unsafe target`, { table })
             break
           }
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { error } = await (supabaseAdmin.from(table as any) as any)
             .update({ ...action.payload, updated_at: new Date().toISOString() })
             .eq('id', action.entity_id)
-          if (error) console.warn(`[Agent:${this.id}] update_record failed:`, error.message)
+          if (error) log.warn(`[Agent:${this.id}] update_record failed`, { error: error.message })
           break
         }
 
@@ -214,7 +211,7 @@ export abstract class BaseAgent {
             }),
           ]).then(results => {
             for (const { error } of results) {
-              if (error) console.warn(`[Agent:${this.id}] escalate_human partial error:`, error.message)
+              if (error) log.warn(`[Agent:${this.id}] escalate_human partial error`, { error: error.message })
             }
           })
           break
@@ -235,16 +232,16 @@ export abstract class BaseAgent {
               org_id:         ctx.org_id,
             },
           })
-          if (error) console.warn(`[Agent:${this.id}] trigger_workflow failed:`, error.message)
+          if (error) log.warn(`[Agent:${this.id}] trigger_workflow failed`, { error: error.message })
           break
         }
 
         default: {
-          console.warn(`[Agent:${this.id}] unknown action type:`, (action as { type: string }).type)
+          log.warn(`[Agent:${this.id}] unknown action type`, { type: (action as { type: string }).type })
         }
       }
     } catch (err) {
-      console.error(`[Agent:${this.id}] _executeAction error`, { type: action.type, error: err instanceof Error ? err.message : String(err) })
+      log.error(`[Agent:${this.id}] _executeAction error`, { type: action.type, error: err instanceof Error ? err.message : String(err) })
     }
   }
 
@@ -273,10 +270,10 @@ export abstract class BaseAgent {
       })
       if (error) {
         // automations_log insert failed — log to console but never throw
-        console.warn(`[Agent:${this.id}] _logExecution: automations_log insert failed:`, error.message)
+        log.warn(`[Agent:${this.id}] _logExecution: automations_log insert failed`, { error: error.message })
       }
     } catch (err) {
-      console.warn(`[Agent:${this.id}] _logExecution: unexpected error:`, err instanceof Error ? err.message : String(err))
+      log.warn(`[Agent:${this.id}] _logExecution: unexpected error`, { error: err instanceof Error ? err.message : String(err) })
     }
   }
 

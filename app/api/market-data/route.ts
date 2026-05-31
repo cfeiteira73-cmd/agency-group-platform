@@ -10,6 +10,42 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isPortalAuth } from '@/lib/portalAuth'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
+import log from '@/lib/logger'
+
+// ─── Upstash Redis cache helpers (survives cold starts, shared across instances) ──
+const CACHE_KEY_PREFIX = 'market-data:'
+const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60  // 7 days
+
+async function cacheGet(key: string): Promise<unknown | null> {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const tok = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !tok) return null
+  try {
+    const res = await fetch(`${url}/get/${CACHE_KEY_PREFIX}${key}`, {
+      headers: { Authorization: `Bearer ${tok}` },
+      signal: AbortSignal.timeout(3000),
+    })
+    if (!res.ok) return null
+    const body = await res.json() as { result: string | null }
+    return body.result ? JSON.parse(body.result) : null
+  } catch { return null }
+}
+
+async function cacheSet(key: string, value: unknown): Promise<void> {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const tok = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url || !tok) return
+  try {
+    await fetch(`${url}/setex/${CACHE_KEY_PREFIX}${key}/${CACHE_TTL_SECONDS}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(JSON.stringify(value)),
+      signal: AbortSignal.timeout(3000),
+    })
+  } catch (e: unknown) {
+    log.warn('[market-data] Redis cache write failed', { e: String(e) })
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -83,13 +119,9 @@ const MARKET_DATA_UPDATED_AT = '2026-Q1'
 // In-memory cache (7 days TTL for scraped data)
 // ---------------------------------------------------------------------------
 
-const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
-// TODO: CRITICAL — move to Redis (Upstash). This 7-day cache resets on every cold
-// start, causing repeated live Idealista scraping per instance. This defeats the
-// 7-day TTL entirely and may trigger scraper bans from excessive requests.
-// Store in Upstash with SETEX 604800 (7 days) so scrape results survive restarts.
-// GitHub Issue: market-data cache lost on cold starts — repeated Idealista scraping (#INFRA-010)
-const marketCache = new Map<string, CacheEntry>()
+// Cache is now backed by Upstash Redis (see cacheGet/cacheSet above).
+// Falls back gracefully when Upstash is not configured (local dev).
+const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000  // kept for in-process freshness guard
 
 // ---------------------------------------------------------------------------
 // 2026 Comprehensive Zone Data
@@ -304,12 +336,14 @@ async function refreshZone(zona: string): Promise<ZoneMarketData> {
     fetched_at:  new Date().toISOString(),
   }
 
-  marketCache.set(zona, { data: result, expires_at: Date.now() + CACHE_TTL_MS })
+  // Persist to Upstash (distributed, survives cold starts)
+  void cacheSet(zona, { data: result, expires_at: Date.now() + CACHE_TTL_MS })
   return result
 }
 
 async function getZoneData(zona: string): Promise<ZoneMarketData> {
-  const cached = marketCache.get(zona)
+  // Check Upstash first (shared across instances)
+  const cached = await cacheGet(zona) as { data: ZoneMarketData; expires_at: number } | null
   if (cached && Date.now() < cached.expires_at) return cached.data
   return refreshZone(zona)
 }
@@ -446,4 +480,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 
 // Export for use in other routes
-export { refreshZone, getZoneData, STATIC_FALLBACK, marketCache }
+export { refreshZone, getZoneData, STATIC_FALLBACK }

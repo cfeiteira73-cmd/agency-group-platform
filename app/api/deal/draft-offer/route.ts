@@ -66,7 +66,7 @@ DADOS DA TRANSACÇÃO:
 - Área: ${property?.area || '—'}m²
 - Quartos: T${property?.quartos || '—'}
 - Preço de Pedido: ${deal?.valor || (property?.preco ? `€${Number(property.preco).toLocaleString('pt-PT')}` : '—')}
-- Referência Agency Group: ${deal?.ref || 'AG-2026-XXX'}
+- Referência Agency Group: ${deal?.ref || `AG-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`}
 
 PROPONENTE:
 - Nome: ${contact?.name || deal?.comprador || '—'}

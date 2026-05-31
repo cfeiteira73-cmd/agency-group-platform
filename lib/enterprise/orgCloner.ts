@@ -30,14 +30,15 @@ export interface CloneResult {
   cloned_at: Date
 }
 
-// Simulated source org item counts — production would query DB
-const MOCK_SOURCE_COUNTS: Record<CloneScope, number> = {
-  workflows: 24,
-  templates: 18,
-  settings: 42,
-  defaults: 15,
-  team_structure: 8,
-  integrations: 6,
+// Default zero counts — real counts populated when clone methods query DB.
+// dryRun() returns 0 until real count queries are implemented per scope.
+const DEFAULT_ZERO_COUNTS: Record<CloneScope, number> = {
+  workflows:      0,
+  templates:      0,
+  settings:       0,
+  defaults:       0,
+  team_structure: 0,
+  integrations:   0,
 }
 
 class OrgCloner {
@@ -88,7 +89,7 @@ class OrgCloner {
             count = this.cloneTemplates(spec.source_org_id, spec.target_org_id)
             break
           default:
-            count = MOCK_SOURCE_COUNTS[scope] ?? 0
+            count = DEFAULT_ZERO_COUNTS[scope] ?? 0
         }
         clonedItems[scope] = count
       } catch (err) {
@@ -124,17 +125,17 @@ class OrgCloner {
   cloneWorkflows(sourceOrgId: string, targetOrgId: string): number {
     logger.info('[OrgCloner] cloning workflows', { sourceOrgId, targetOrgId })
     // Real implementation would read workflows from DB and insert for target org
-    return MOCK_SOURCE_COUNTS['workflows']
+    return DEFAULT_ZERO_COUNTS['workflows']
   }
 
   cloneSettings(sourceOrgId: string, targetOrgId: string): number {
     logger.info('[OrgCloner] cloning settings', { sourceOrgId, targetOrgId })
-    return MOCK_SOURCE_COUNTS['settings']
+    return DEFAULT_ZERO_COUNTS['settings']
   }
 
   cloneTemplates(sourceOrgId: string, targetOrgId: string): number {
     logger.info('[OrgCloner] cloning templates', { sourceOrgId, targetOrgId })
-    return MOCK_SOURCE_COUNTS['templates']
+    return DEFAULT_ZERO_COUNTS['templates']
   }
 
   validateCloneSpec(spec: CloneSpec): string[] {
@@ -162,7 +163,7 @@ class OrgCloner {
     const cloneId = `dryrun_${Date.now()}`
 
     const clonedItems = spec.clone_scope.reduce<Record<CloneScope, number>>(
-      (acc, s) => ({ ...acc, [s]: MOCK_SOURCE_COUNTS[s] ?? 0 }),
+      (acc, s) => ({ ...acc, [s]: DEFAULT_ZERO_COUNTS[s] ?? 0 }),
       {} as Record<CloneScope, number>
     )
 

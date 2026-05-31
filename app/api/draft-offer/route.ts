@@ -39,19 +39,15 @@ const DraftOfferSchema = z.object({
   amiNumber: z.string().optional().default('22506'),
 })
 
-// ─── Rate limiting ─────────────────────────────────────────────────────────────
-// TODO: CRITICAL — move to Redis (Upstash). This Map resets on every cold start
-// and allows unlimited AI calls (expensive: ~€0.015/call) on each new serverless
-// instance. Replace with lib/rateLimit.ts (already Upstash-backed).
-// GitHub Issue: draft-offer AI endpoint rate limit bypassed on cold starts (#INFRA-003)
+// ─── Rate limiting — Upstash Redis (distributed, survives cold starts) ──────────
+import { rateLimit } from '@/lib/rateLimit'
 
-const rateMap = new Map<string, { count: number; reset: number }>()
-function checkRate(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateMap.get(ip)
-  if (!entry || now > entry.reset) { rateMap.set(ip, { count: 1, reset: now + 3_600_000 }); return true }
-  if (entry.count >= 20) return false
-  entry.count++; return true
+async function checkRate(ip: string): Promise<boolean> {
+  const result = await rateLimit(`draft-offer:${ip}`, {
+    maxAttempts: 20,
+    windowMs:    3_600_000,  // 1 hour
+  })
+  return result.success
 }
 
 // ─── System Prompt ─────────────────────────────────────────────────────────────
@@ -96,7 +92,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown'
-  if (!checkRate(ip)) {
+  if (!(await checkRate(ip))) {
     return NextResponse.json({ error: 'Rate limit — máximo 20 propostas/hora por IP' }, { status: 429 })
   }
 
