@@ -139,6 +139,55 @@ function checkCriticalProviders(): HealthIssue[] {
   return issues
 }
 
+// ── Slack alert ────────────────────────────────────────────────────────────────
+
+async function sendSlackAlert(issues: HealthIssue[]): Promise<void> {
+  const slackUrl = process.env.SLACK_SOC_WEBHOOK_URL ?? process.env.SLACK_SECURITY_WEBHOOK
+  if (!slackUrl) return
+
+  const p0 = issues.filter(i => i.severity === 'P0_CRITICAL')
+  const p1  = issues.filter(i => i.severity === 'P1_HIGH')
+  const icon = p0.length > 0 ? '🚨' : '⚠️'
+  const color = p0.length > 0 ? '#dc2626' : '#d97706'
+
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: `${icon} Agency Group — System Health Alert` },
+    },
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*${p0.length} P0 CRITICAL* | *${p1.length} P1 HIGH* | ${issues.length} total issues\n<${APP_URL}/api/system/health|View Health Dashboard>`,
+      },
+    },
+    { type: 'divider' },
+    ...issues.slice(0, 6).map(issue => ({
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*[${issue.severity}] ${issue.component}*\n${issue.message}\n_Fix: ${issue.fix}_`,
+      },
+    })),
+  ]
+
+  try {
+    const resp = await fetch(slackUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: `${icon} Agency Group Health Alert: ${issues.length} issue(s)`, attachments: [{ color, blocks }] }),
+    })
+    if (resp.ok) {
+      log.info('[CriticalHealthMonitor] Slack alert sent', { issues: issues.length })
+    } else {
+      log.warn('[CriticalHealthMonitor] Slack alert failed', { status: resp.status })
+    }
+  } catch (e: unknown) {
+    log.warn('[CriticalHealthMonitor] Slack send exception', { e: String(e) })
+  }
+}
+
 // ── Resend email alert ─────────────────────────────────────────────────────────
 
 async function sendHealthAlert(issues: HealthIssue[]): Promise<void> {
@@ -239,10 +288,13 @@ export async function runCriticalHealthMonitor(
     log[level](`[CriticalHealthMonitor] [${issue.severity}] ${issue.component}: ${issue.message}`)
   }
 
-  // Send alert if there are P0 or P1 issues (and requested or on startup)
+  // Send alerts if there are P0 or P1 issues (and requested or on startup)
   if ((opts.sendAlert || p0Count > 0) && (p0Count > 0 || p1Count > 0)) {
     void sendHealthAlert(issues).catch((e: unknown) =>
-      log.warn('[CriticalHealthMonitor] Alert send failed', { e: String(e) })
+      log.warn('[CriticalHealthMonitor] Email alert send failed', { e: String(e) })
+    )
+    void sendSlackAlert(issues).catch((e: unknown) =>
+      log.warn('[CriticalHealthMonitor] Slack alert send failed', { e: String(e) })
     )
   }
 
