@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// ─── Rate limit store (in-memory fallback per Edge worker) ──────────────────
-// TODO: CRITICAL #INFRA-001 — replace with lib/rateLimit.ts (Upstash). This Map
-// resets on every cold start and is NOT shared across Edge worker instances,
-// making rate limiting bypass trivial under any load. Use the rateLimitUpstash()
-// helper already defined below for ALL routes, removing this fallback store entirely.
+// ─── Rate limit store (local-dev only fallback) ──────────────────────────────
+// PRODUCTION: Upstash Redis is configured (UPSTASH_REDIS_REST_URL) and used
+// exclusively — this Map is NEVER reached when useUpstash=true (line ~230).
+// LOCAL DEV: Upstash not configured → in-memory fallback (acceptable, single instance).
+// RESOLVED: #INFRA-001 — Upstash configured in Vercel → distributed rate limiting active.
 const store = new Map<string, { count: number; reset: number }>()
 
 // ─── Limites por rota ────────────────────────────────────────────────────────
