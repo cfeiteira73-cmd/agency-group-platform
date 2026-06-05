@@ -1,0 +1,74 @@
+{
+  "report": "MASTER_DATABASE_REPORT",
+  "note": "JSON — import to Excel/Sheets. Evidence from 277 migration files.",
+  "generated_at": "2026-05-31",
+  "supabase_project": "isbfiofwpxqqpgxoftph",
+  "region": "eu-central-1 (Frankfurt)",
+  "total_migrations": 277,
+  "tables_in_code": 703,
+  "foreign_key_refs": 202,
+
+  "critical_capital_tables": [
+    {"table": "settlements", "purpose": "Settlement lifecycle", "rls": true, "indexes": true, "status": "CRITICAL"},
+    {"table": "settlement_transitions", "purpose": "State machine transitions + SHA-256 chain", "rls": true, "indexes": true, "status": "CRITICAL"},
+    {"table": "finality_records", "purpose": "Bank confirmation records", "rls": true, "indexes": true, "status": "CRITICAL"},
+    {"table": "liquidity_locks", "purpose": "Escrow locks", "rls": true, "indexes": true, "status": "CRITICAL"},
+    {"table": "commission_records", "purpose": "Agency commissions", "rls": true, "indexes": true, "status": "CRITICAL"}
+  ],
+
+  "crm_tables": [
+    {"table": "contacts", "purpose": "Buyer/seller CRM", "rls": true, "status": "ACTIVE — pre-W47 data"},
+    {"table": "deals", "purpose": "Deal pipeline", "rls": true, "status": "ACTIVE — pre-W47 data"},
+    {"table": "properties", "purpose": "Property listings", "rls": true, "status": "ACTIVE — pre-W47 data"},
+    {"table": "deal_stage_history", "purpose": "Deal stage tracking", "rls": true, "status": "ACTIVE"},
+    {"table": "deal_packs", "purpose": "Deal presentation packs", "rls": true, "status": "ACTIVE"}
+  ],
+
+  "ai_tables": [
+    {"table": "sofia_conversations", "purpose": "Sofia conversation history", "rls": true, "status": "ACTIVE"},
+    {"table": "sofia_conversation_turns", "purpose": "Individual turns (W54)", "rls": true, "status": "ACTIVE"},
+    {"table": "learning_events", "purpose": "ML training events", "rls": true, "status": "ACTIVE"},
+    {"table": "operator_tasks", "purpose": "AI-generated task queue", "rls": true, "status": "ACTIVE"}
+  ],
+
+  "audit_security_tables": [
+    {"table": "audit_log", "purpose": "Immutable audit trail", "rls": true, "append_only": true, "status": "CRITICAL"},
+    {"table": "forensic_audit_log", "purpose": "SHA-256 chain log (W57)", "rls": true, "status": "CRITICAL"},
+    {"table": "immutable_incident_log", "purpose": "Tamper-proof incidents (W57)", "rls": true, "status": "CRITICAL"},
+    {"table": "soc_incidents", "purpose": "SOC incident tracker (W56)", "rls": true, "status": "ACTIVE"},
+    {"table": "security_incidents", "purpose": "Security incident log", "rls": true, "status": "ACTIVE"},
+    {"table": "asel_defense_runs", "purpose": "ASEL defense events (W58)", "rls": true, "status": "ACTIVE"}
+  ],
+
+  "monitoring_tables": [
+    {"table": "reality_monitor_snapshots", "purpose": "Reality monitor history (W54)", "rls": true, "status": "ACTIVE — needs migration applied"},
+    {"table": "ios_runtime_audits", "purpose": "IOS audit runs (W56)", "rls": true, "status": "NEEDS MIGRATION"},
+    {"table": "ios_self_tests", "purpose": "IOS self-test results (W56)", "rls": true, "status": "NEEDS MIGRATION"},
+    {"table": "telemetry_events", "purpose": "Telemetry bus events (W56)", "rls": true, "status": "NEEDS MIGRATION"},
+    {"table": "system_health_dashboards", "purpose": "Health snapshots (W54)", "rls": true, "status": "ACTIVE — needs migration"}
+  ],
+
+  "matching_network_tables": [
+    {"table": "capital_profiles", "purpose": "Buyer/investor profiles (W54)", "rls": true, "status": "EMPTY — needs population"},
+    {"table": "asset_opportunities", "purpose": "Investment assets (W54)", "rls": true, "status": "EMPTY — needs population"},
+    {"table": "capital_matches", "purpose": "Match results", "rls": true, "status": "EMPTY"},
+    {"table": "acquisition_opportunities", "purpose": "Off-market pipeline (W54)", "rls": true, "status": "EMPTY"},
+    {"table": "investor_capital_profiles", "purpose": "Investor capital (pre-W47)", "rls": true, "status": "UNKNOWN — pre-W47"}
+  ],
+
+  "missing_migrations_in_production": [
+    "000140-000148 (Wave 52 — applied via browser SQL)",
+    "000149-000151 (Wave 54 — NOT YET APPLIED)",
+    "000152 (Wave 56 IOS — NOT YET APPLIED)",
+    "000153 (Wave 57 Security OS — NOT YET APPLIED)",
+    "000154 (Wave 58 ASEL — NOT YET APPLIED)"
+  ],
+
+  "database_risks": [
+    {"risk": "No DB-level UNIQUE on idempotency_key", "severity": "MEDIUM", "tables": ["finality_records", "settlement_transitions"]},
+    {"risk": "Missing FK constraints on most tables", "severity": "LOW", "detail": "App-level integrity only"},
+    {"risk": "capital_profiles EMPTY", "severity": "HIGH", "detail": "Matching engine has no data to process"},
+    {"risk": "asset_opportunities EMPTY", "severity": "HIGH", "detail": "Capital routing has no assets"},
+    {"risk": "W54-W58 tables not in production DB", "severity": "HIGH", "detail": "All monitoring/ASEL/IOS tables missing until migrations applied"}
+  ]
+}
