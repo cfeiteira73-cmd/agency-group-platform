@@ -116,7 +116,7 @@ async function importCRM() {
     const { error, count } = await supabase
       .from('capital_profiles')
       .upsert(records, { onConflict: 'profile_id', ignoreDuplicates: true })
-      .select('profile_id', { count: 'exact' })
+      .select('profile_id')
 
     const inserted = count || 0
     const skipped  = batch.length - inserted
