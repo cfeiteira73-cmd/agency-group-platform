@@ -80,22 +80,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         activeLeads,
         vipLeads,
       ] = await Promise.all([
-        countTable(supabase, 'contacts', { tenant_id: tenantId }),
+        countTable(supabase, 'contacts'),
         supabase
           .from('contacts')
           .select('*', { count: 'exact', head: true })
-          .eq('tenant_id', tenantId)
           .gte('created_at', startOfDay)
           .then(({ count }) => count ?? 0),
-        countTable(supabase, 'contacts', { tenant_id: tenantId, status: 'lead' }),
-        countTable(supabase, 'contacts', { tenant_id: tenantId, status: 'vip' }),
+        countTable(supabase, 'contacts', { status: 'lead' }),
+        countTable(supabase, 'contacts', { status: 'vip' }),
       ])
 
       // Leads by status breakdown
       const { data: leadsByStatusRaw } = await supabase
         .from('contacts')
         .select('status')
-        .eq('tenant_id', tenantId)
 
       const leadsByStatus: Record<string, number> = {}
       for (const row of leadsByStatusRaw ?? []) {
@@ -109,15 +107,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // CLOSED_STAGES must match businessPrimitiveEngine.ts and revenueAttribution.ts.
       const CLOSED_STAGES = ['Escritura Concluída', 'Escritura', 'fechado', 'pos_venda', 'post_sale', 'Perdido', 'Rejeitado', 'escritura_sell']
 
+      // NOTE: deals table uses 'valor' not 'deal_value', and has no tenant_id column
       const { data: allDeals } = await supabase
         .from('deals')
-        .select('fase, deal_value')
-        .eq('tenant_id', tenantId)
+        .select('fase, valor')
 
       const totalDeals    = allDeals?.length ?? 0
       const activeDeals   = allDeals?.filter(d => !CLOSED_STAGES.includes((d as { fase: string }).fase ?? '')) ?? []
       const pipelineValue = activeDeals.reduce(
-        (sum, d) => sum + (Number((d as { deal_value: string | number }).deal_value) || 0), 0
+        (sum, d) => sum + (Number((d as { valor: string | number }).valor) || 0), 0
       )
       const avgDealValue  = activeDeals.length > 0 ? Math.round(pipelineValue / activeDeals.length) : 0
 
@@ -129,8 +127,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       // ── Property metrics ──────────────────────────────────────────────────────
       const [totalProperties, activeProperties] = await Promise.all([
-        countTable(supabase, 'properties', { tenant_id: tenantId }),
-        countTable(supabase, 'properties', { tenant_id: tenantId, status: 'active' }),
+        countTable(supabase, 'properties'),
+        countTable(supabase, 'properties', { status: 'active' }),
       ])
 
       // Exclusive + off-market
