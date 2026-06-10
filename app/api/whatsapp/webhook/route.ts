@@ -77,10 +77,10 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Bad Request', { status: 400 })
   }
 
-  if (mode === 'subscribe' && timingSafeEqual(
-    Buffer.from(token ?? ''),
-    Buffer.from(process.env.WHATSAPP_VERIFY_TOKEN ?? '')
-  )) {
+  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN ?? ''
+  const tokenBuf = Buffer.from(token ?? '')
+  const expectedBuf = Buffer.from(verifyToken)
+  if (mode === 'subscribe' && verifyToken.length > 0 && tokenBuf.length === expectedBuf.length && timingSafeEqual(tokenBuf, expectedBuf)) {
     console.log('[WhatsApp] Webhook verified')
     return new NextResponse(challenge, { status: 200 })
   }

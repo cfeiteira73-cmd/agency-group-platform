@@ -178,20 +178,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Tenant scope — property reads must never leak cross-tenant listings
     const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
-    // Try with portal-compat columns (migration 003)
+    // Query using actual schema: Portuguese column names (nome, zona, preco, etc.)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- properties legacy select uses Portuguese aliases mapped in JS below
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabaseAdmin as any)
         .from('properties')
-        .select('id, title, zone, type, price, area_m2, bedrooms, bathrooms, energy_certificate, status, description, features')
-        .eq('tenant_id', tenantId)  // TENANT FIX: scope to current org
-        .not('title', 'is', null)  // Only portal-populated rows
+        .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, gradient, badge, lifestyle_tags, images, matterport_url, youtube_url')
+        .not('nome', 'is', null)
         .limit(limit)
 
       if (status && status !== 'all') query = query.eq('status', status as string)
-      if (zona)     query = query.eq('zone', zona)
-      if (tipo)     query = query.eq('type', tipo)
-      if (maxPreco) query = query.lte('price', maxPreco)
+      if (zona)     query = query.eq('zona', zona)
+      if (tipo)     query = query.eq('tipo', tipo)
+      if (maxPreco) query = query.lte('preco', maxPreco)
 
       const { data, error } = await query
 
@@ -212,56 +211,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           descricao:  row.descricao  || '',
           features:   Array.isArray(row.features) ? row.features : [],
           gradient:   row.gradient   || 'from-slate-800 to-gray-900',
+          badge:      row.badge      || undefined,
+          lifestyleTags: Array.isArray(row.lifestyle_tags) ? row.lifestyle_tags : [],
+          imagens:    Array.isArray(row.images) ? row.images : [],
+          matterportUrl: row.matterport_url || undefined,
+          youtubeUrl: row.youtube_url || undefined,
         }))
 
         void sloRecordRequest(_sloTenant, 'api', true, Date.now() - _sloStart).catch(() => {})
         return NextResponse.json({ data: mapped, total: mapped.length, source: 'supabase' })
       }
     } catch {
-      // Portal-compat columns might not exist yet (pre-migration 003)
-      // Fall through to complex schema attempt
-    }
-
-    // Try with complex Supabase schema (migration 001)
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query = supabaseAdmin
-        .from('properties')
-        .select('id, title, zone, city, type, price, area_m2, bedrooms, bathrooms, energy_certificate, status, description, features')
-        .limit(limit)
-
-      if (status && status !== 'all') query = query.eq('status', status as import('@/lib/database.types').PropertyStatus)
-      if (zona)     query = query.eq('zone', zona)
-      if (tipo)     query = query.eq('type', tipo as import('@/lib/database.types').PropertyType)
-      if (maxPreco) query = query.lte('price', maxPreco)
-
-      const { data, error } = await query
-
-      if (!error && data && data.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mapped = (data as any[]).map((row) => ({
-          id:         row.id,
-          nome:       row.title      || '',
-          zona:       row.zone       || row.city || '',
-          bairro:     '',
-          tipo:       row.type       || '',
-          preco:      row.price      || 0,
-          area:       row.area_m2    || 0,
-          quartos:    row.bedrooms   || 0,
-          casasBanho: row.bathrooms  || 0,
-          energia:    row.energy_certificate || '',
-          status:     row.status     || 'active',
-          descricao:  row.description || '',
-          features:   Array.isArray(row.features) ? row.features : [],
-          gradient:   'from-slate-800 to-gray-900',
-        }))
-        .filter((p: { nome: string }) => p.nome)
-
-        void sloRecordRequest(_sloTenant, 'api', true, Date.now() - _sloStart).catch(() => {})
-        return NextResponse.json({ data: mapped, total: mapped.length, source: 'supabase' })
-      }
-    } catch {
-      // Supabase unavailable or schema mismatch
+      // Supabase unavailable — return empty, component uses PORTAL_PROPERTIES fallback
     }
 
     // Return empty — component will use PORTAL_PROPERTIES fallback
