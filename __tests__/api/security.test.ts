@@ -17,6 +17,26 @@ vi.mock('@/lib/supabase', () => {
   return { supabaseAdmin, supabase }
 })
 
+// @anthropic-ai/sdk refuses to initialise in browser-like (jsdom) environments.
+// Stub the gateway and all next-auth / next/server dependents so AVM route tests work.
+vi.mock('@/lib/ai/gateway', () => ({
+  _anthropicClient: {},
+  withAI: () => Promise.resolve({ content: [{ type: 'text', text: '{}' }] }),
+  withAIStream: () => Promise.resolve(new ReadableStream()),
+}))
+
+// @/auth imports next-auth which imports next/server — not resolvable in vitest/jsdom
+vi.mock('@/auth', () => ({ auth: () => Promise.resolve(null) }))
+
+// @/lib/portalAuth uses @/auth and next/headers — stub to allow through (focus on input validation)
+vi.mock('@/lib/portalAuth', () => ({ isPortalAuth: () => Promise.resolve(true) }))
+
+// @/lib/rateLimit uses Upstash Redis — stub to always allow (route checks .success)
+vi.mock('@/lib/rateLimit', () => ({ rateLimit: () => Promise.resolve({ success: true, remaining: 99 }) }))
+
+// @/lib/ops/withAI wraps circuit breaker + Anthropic retry — stub to call fn directly
+vi.mock('@/lib/ops/withAI', () => ({ withAI: (_name: string, fn: () => unknown) => fn() }))
+
 // ─── Security posture: public vs. protected API routes ───────────────────────
 //
 // The Agency Group portal has two classes of API routes:

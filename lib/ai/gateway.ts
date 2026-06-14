@@ -27,8 +27,16 @@ import log from '@/lib/logger'
 
 // Export for cases where the raw client is needed (e.g. embeddings, non-completion APIs).
 // Always prefer withAI() for message completions.
-export const _anthropicClient = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+// Lazy-initialized to avoid browser-environment errors during test imports.
+let _anthropicClientInstance: Anthropic | null = null
+export const _anthropicClient = new Proxy({} as Anthropic, {
+  get(_, prop) {
+    if (!_anthropicClientInstance) {
+      _anthropicClientInstance = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    }
+    const val = (_anthropicClientInstance as unknown as Record<string, unknown>)[prop as string]
+    return typeof val === 'function' ? val.bind(_anthropicClientInstance) : val
+  },
 })
 
 // ---------------------------------------------------------------------------

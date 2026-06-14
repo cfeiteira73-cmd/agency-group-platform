@@ -117,12 +117,12 @@ describe('Commission rate — 5% on deal value', () => {
 // ─── Stage Probabilities ─────────────────────────────────────────────────────
 
 describe('Stage probabilities (canonical — lib/constants/pipeline)', () => {
-  it('Angariação = 5% (canonical close probability for listing stage)', () => {
-    expect(STAGE_PCT['Angariação']).toBe(5)
+  it('Angariação = 10% (canonical close probability for listing stage)', () => {
+    expect(STAGE_PCT['Angariação']).toBe(10)
   })
 
-  it('CPCV Assinado = 85% (canonical close probability)', () => {
-    expect(STAGE_PCT['CPCV Assinado']).toBe(85)
+  it('CPCV Assinado = 70% (canonical close probability)', () => {
+    expect(STAGE_PCT['CPCV Assinado']).toBe(70)
   })
 
   it('Escritura Concluída = 100%', () => {
@@ -130,11 +130,11 @@ describe('Stage probabilities (canonical — lib/constants/pipeline)', () => {
   })
 
   it('weighted commission for CPCV Assinado deal', () => {
-    // valor = €1M, commission = €50K, probability = 85%
-    // weighted = 50000 * 0.85 = 42500
+    // valor = €1M, commission = €50K, probability = 70%
+    // weighted = 50000 * 0.70 = 35000
     const gross = 1000000 * COMMISSION_RATE
     const weighted = gross * (STAGE_PCT['CPCV Assinado'] / 100)
-    expect(weighted).toBeCloseTo(42500, 2)
+    expect(weighted).toBeCloseTo(35000, 2)
   })
 })
 
