@@ -364,7 +364,7 @@ async function handler(req: NextRequest): Promise<NextResponse> {
         })
         .in('id', p0Ids)
       // Increment alert_count separately (raw SQL — avoids rpc misuse)
-      await s.rpc('increment_alert_count', { lead_ids: p0Ids }).maybeSingle()
+      await s.rpc('increment_alert_count', { lead_id: p0Ids }).maybeSingle()
 
       p0Leads.forEach(l =>
         results.push({ lead_id: l.id, nome: l.nome, alert_type: 'p0', channels: sent ? ['email', 'wa'] : [], sent })

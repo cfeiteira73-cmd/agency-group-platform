@@ -17,7 +17,7 @@ const AGENTS: Record<string, {
     ami: 'AMI 22506',
     telefone: '+351 919 948 986',
     email: 'geral@agencygroup.pt',
-    stats: { vendidos: '€45M+', transacoes: '127', anos: '11', rating: '4.9★' },
+    stats: { vendidos: 'Segment', transacoes: '€500K–€3M', anos: 'AMI 22506', rating: '★★★★★' },
     especialidades: [
       'Lisboa Prime (Príncipe Real · Chiado · Belém)',
       'Cascais & Estoril (Quinta da Marinha)',
@@ -26,22 +26,8 @@ const AGENTS: Record<string, {
       'Madeira (Funchal · Câmara de Lobos)',
       'Sintra & Serra de Sintra',
     ],
-    track_record: [
-      { nome: 'Penthouse Príncipe Real', preco: '€2.85M', ano: '2026', zona: 'Lisboa' },
-      { nome: 'Villa Quinta da Marinha', preco: '€3.8M', ano: '2026', zona: 'Cascais' },
-      { nome: 'Herdade Comporta Exclusiva', preco: '€6.5M', ano: '2025', zona: 'Comporta' },
-      { nome: 'Apartamento Chiado Premium', preco: '€1.45M', ano: '2025', zona: 'Lisboa' },
-      { nome: 'Villa Vale do Lobo Golf', preco: '€4.2M', ano: '2025', zona: 'Algarve' },
-      { nome: 'Quinta Histórica Sintra', preco: '€2.8M', ano: '2024', zona: 'Sintra' },
-    ],
-    testemunhos: [
-      { autor: 'James & Sarah Mitchell', pais: 'United Kingdom', flag: '🇬🇧', data: 'Janeiro 2026',
-        texto: 'Carlos found our dream villa in Cascais in under 3 weeks. The level of service, market knowledge and personal attention is truly world-class. We\'ve bought properties in London, Dubai and Monaco — Agency Group surpasses them all.' },
-      { autor: 'Mohammed Al-Rashidi', pais: 'Dubai, UAE', flag: '🇦🇪', data: 'Dezembro 2025',
-        texto: 'The Comporta herdade acquisition was seamlessly executed. Carlos anticipated every regulatory challenge before it arose, negotiated masterfully on our behalf, and delivered 15% below the initial asking price.' },
-      { autor: 'Chen Wei', pais: 'Hong Kong', flag: '🇨🇳', data: 'Novembro 2025',
-        texto: 'As overseas buyers navigating Portuguese law for the first time, we needed an advisor we could trust completely. Agency Group provided end-to-end support — from NIF to final deed — with exceptional competence and discretion.' },
-    ],
+    track_record: [],
+    testemunhos: [],
     servicos: [
       'Compra e Venda de Imóvel',
       'Valorização AVM Gratuita',
@@ -50,7 +36,7 @@ const AGENTS: Record<string, {
       'Apoio Fiscal (NHR/IFICI)',
       'Coordenação Jurídica',
     ],
-    bio: 'Com mais de 11 anos de experiência exclusiva no segmento de luxo em Portugal, Carlos Feiteira é reconhecido como um dos consultores imobiliários mais bem posicionados do mercado ibérico. Formado em Economia pela Nova SBE e com MBA em Real Estate pela INSEAD, combina rigor analítico com um profundo conhecimento dos mercados de Lisboa, Cascais, Comporta e Algarve. Fluente em português, inglês e francês, trabalha com compradores de 30+ nacionalidades e é especialista em transacções de €1M a €10M.',
+    bio: 'Carlos Feiteira é consultor de imobiliário de luxo em Portugal, com especialização no segmento premium €500K–€3M. Com profundo conhecimento dos mercados de Lisboa, Cascais, Comporta e Algarve, trabalha com compradores internacionais das principais geografias de capital — EUA, Reino Unido, França, Emirados e Brasil. Fluente em português, inglês e francês. AMI 22506.',
   }
 }
 
@@ -62,14 +48,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const agent = AGENTS[slug]
   if (!agent) return {}
-  const ogImgUrl = `https://www.agencygroup.pt/api/og?title=${encodeURIComponent(agent.nome)}&subtitle=${encodeURIComponent(agent.titulo + ' · ' + agent.stats.vendidos + ' vendidos')}`
+  const ogImgUrl = `https://www.agencygroup.pt/api/og?title=${encodeURIComponent(agent.nome)}&subtitle=${encodeURIComponent(agent.titulo)}`
   return {
     title: `${agent.nome} · Consultor Luxury Real Estate · Agency Group`,
-    description: `Consultor sénior de imobiliário de luxo em Portugal. ${agent.stats.vendidos} vendidos. Lisboa, Cascais, Comporta, Algarve. ${agent.ami}.`,
+    description: `Consultor de imobiliário de luxo em Portugal. Lisboa, Cascais, Comporta, Algarve. ${agent.ami}.`,
     alternates: { canonical: `https://www.agencygroup.pt/agente/${slug}` },
     openGraph: {
       title: `${agent.nome} · Agency Group`,
-      description: `${agent.titulo} · ${agent.stats.vendidos} vendidos · Lisboa, Cascais, Algarve. ${agent.ami}.`,
+      description: `${agent.titulo} · Lisboa, Cascais, Algarve. ${agent.ami}.`,
       type: 'profile',
       url: `https://www.agencygroup.pt/agente/${slug}`,
       siteName: 'Agency Group',
@@ -78,7 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     twitter: {
       card: 'summary_large_image',
       title: `${agent.nome} · Agency Group`,
-      description: `${agent.titulo} · ${agent.stats.vendidos} vendidos · AMI 22506.`,
+      description: `${agent.titulo} · AMI 22506.`,
       images: [ogImgUrl],
     },
   }
@@ -163,13 +149,13 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
               ))}
             </div>
 
-            {/* Stats */}
+            {/* Credenciais */}
             <div style={{ display: 'flex', gap: '0', borderTop: '1px solid rgba(201,169,110,.1)', paddingTop: '24px' }}>
               {[
-                ['Volume Vendas', agent.stats.vendidos],
-                ['Transacções', agent.stats.transacoes],
-                ['Anos Exp.', agent.stats.anos],
-                ['Rating', agent.stats.rating],
+                ['Licença', agent.ami],
+                ['Segmento', agent.stats.transacoes],
+                ['Mercados', 'PT · ES · Madeira'],
+                ['Idiomas', 'PT · EN · FR'],
               ].map(([label, val], i) => (
                 <div key={label} style={{ paddingRight: '32px', marginRight: '32px', borderRight: i < 3 ? '1px solid rgba(201,169,110,.1)' : 'none' }}>
                   <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.14em', color: 'rgba(244,240,230,.3)', textTransform: 'uppercase', marginBottom: '4px' }}>{label}</div>
@@ -202,7 +188,8 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
         </div>
       </div>
 
-      {/* TRACK RECORD */}
+      {/* TRACK RECORD — only render when real mandates exist */}
+      {agent.track_record.length > 0 && (
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 60px 0' }}>
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
           Track Record · Selecção de Transacções
@@ -218,8 +205,10 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
           ))}
         </div>
       </div>
+      )}
 
-      {/* TESTEMUNHOS */}
+      {/* TESTEMUNHOS — only render when real testimonials exist */}
+      {agent.testemunhos.length > 0 && (
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 60px 0' }}>
         <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '.52rem', letterSpacing: '.24em', color: 'rgba(201,169,110,.6)', textTransform: 'uppercase', marginBottom: '32px' }}>
           Testemunhos de Clientes
@@ -240,6 +229,7 @@ export default async function AgentePage({ params }: { params: Promise<{ slug: s
           ))}
         </div>
       </div>
+      )}
 
       {/* SERVIÇOS */}
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 60px 0' }}>
