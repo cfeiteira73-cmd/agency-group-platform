@@ -1,0 +1,43 @@
+DIMENSION,AGENCY_GROUP,COMPASS,CBRE_PORTUGAL,JLL_PORTUGAL,SAVILLS,KNIGHT_FRANK,REMAX_PT,KW_PORTUGAL,EXP_REALTY,IDEALISTA
+SCORES (0-10),,,,,,,,,,
+Technology,9,10,4,4,5,5,3,4,5,7
+CRM system,3,9,7,7,8,8,6,7,6,5
+AI / Sofia equivalent,9,8,2,2,2,2,0,0,1,3
+Automation,4,8,4,3,3,3,2,3,4,5
+Inventory - Portugal,0,0,7,8,7,8,9,9,8,10
+Capital network,8,5,6,7,7,8,3,3,3,2
+Operations active,1,9,8,8,8,8,7,7,7,8
+Execution (deals closed),0,10,9,9,9,9,7,8,7,9
+Brand authority,2,9,9,9,9,9,7,7,6,9
+Scale (transactions/year),0,10,8,8,7,8,9,8,7,10
+,,,,,,,,,,,
+AVERAGES,3.6,7.8,6.4,6.5,6.5,6.8,5.3,5.6,5.4,6.8
+,,,,,,,,,,,
+NOTES,,,,,,,,,,
+Technology notes,Next.js 16 AI-native,Best-in-class US,Legacy CMS,Legacy CMS,Legacy,Legacy,Basic,Basic,Cloud-native,Modern marketplace
+CRM notes,28 contacts (demo),Full Salesforce,Enterprise CRM,Enterprise CRM,Bespoke CRM,Bespoke,Top Producer,kvCORE,CAPS cloud,Limited
+AI notes,Sofia (0 users yet),Robin AI agent,None,None,Limited,Some AI search,None,Basic,Limited,Basic
+Automation notes,21 n8n workflows (undeployed),Full Compass Flow,Basic email,Basic email,Some,Some,RE/MAX university,Basic,Some,Email alerts
+Inventory notes,0 real (55 demo),100K+ US,500+ PT,200+ PT,Global luxury,Global luxury,50K+ PT,50K+ PT,Global,300K+ PT
+Capital network notes,7342 institutional profiles,Partnerships,Corporate,Corporate,HNWI focus,HNWI focus,Mass market,Mass market,Mass market,Mass market
+Operations notes,0 active deals,Massive ops,Full teams,Full teams,Full teams,Full teams,100s agents,100s agents,1000s agents,Self-service
+,,,,,,,,,,,
+WHERE AGENCY GROUP WINS,,,,,,,,,,
+AI capability,CLEAR ADVANTAGE vs all Portuguese competitors,Compass is the only comparable globally,,,,,,,,
+Capital network data,7342 institutional profiles is unusual for single agency,,,,,,,,
+Technology stack,Next.js 16 + Anthropic + pgvector ahead of ALL local competitors,,,,,,,,
+Cost per lead potential,When automated: fraction of competitor cost per qualified lead,,,,,,,,
+Multi-language depth,6 languages with hreflang ahead of most Portuguese agencies,,,,,,,,
+,,,,,,,,,,,
+WHERE AGENCY GROUP LOSES,,,,,,,,,,
+Inventory,0 real properties vs thousands for every competitor = CRITICAL GAP,,,,,,,,
+Operational execution,0 deals closed vs thousands per year for top competitors,,,,,,,,
+Brand authority,0 real reviews + 0 sold properties vs decades of competitors,,,,,,,,
+Team size,1 person vs hundreds for top competitors,,,,,,,,
+Marketing reach,0 social media vs active multi-channel for all competitors,,,,,,,,
+,,,,,,,,,,,
+THE STRATEGIC POSITION,,,,,,,,,,
+Agency Group has built the technology of a top-5 global platform,,,,,,,,
+But operates at the commercial level of a startup that hasn't made its first sale,,,,,,,,
+The gap is not technology — it is inventory + transactions,,,,,,,,
+Fixing inventory takes 1 phone call. Fixing transactions starts with 1 email.,,,,,,,,

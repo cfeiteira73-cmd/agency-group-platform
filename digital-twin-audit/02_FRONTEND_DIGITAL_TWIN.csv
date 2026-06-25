@@ -1,0 +1,132 @@
+SECTION,ROUTE,AUTH,LANGUAGE,PURPOSE,DATA_SOURCE,STATUS,TRAFFIC_CAPABLE,COMMERCIAL_VALUE
+HOMEPAGE,/,PUBLIC,all,Main landing + lead capture,Static + Sofia AI,LIVE,YES - entry point for all buyers,HIGH
+,,,,,,,,,
+PROPERTIES,/imoveis,PUBLIC,pt,Property listings,DB properties table (55 demo),LIVE - API fixed 1760efe,YES,HIGH - main conversion page
+PROPERTIES,/imoveis/[id],PUBLIC,pt,Property detail,DB properties table,LIVE,YES,HIGH
+PROPERTIES,/imoveis/premium/[id],PUBLIC,pt,Premium property detail,DB premium properties,LIVE,YES,HIGH
+PROPERTIES,/off-market,PUBLIC,pt,Off-market exclusives,offmarket_leads table,LIVE,YES,HIGH
+PROPERTIES,/off-market-portugal,PUBLIC,pt,Off-market Portugal SEO,Static + DB,LIVE,YES,HIGH
+PROPERTIES,/collection,PUBLIC,pt,Property collections,property_collections table,LIVE,YES,MEDIUM
+,,,,,,,,,
+INVESTMENT,/investir,PUBLIC,pt,Invest in Portugal page,Static content,LIVE,YES,HIGH
+INVESTMENT,/invest-in-portugal-real-estate,PUBLIC,en,EN investment guide,Static content,LIVE,YES,HIGH
+INVESTMENT,/investor-intelligence,REQUIRED,pt,Institutional buyer intel,capital_profiles DB,LIVE,YES,HIGH
+INVESTMENT,/investor-intelligence/(sub),REQUIRED,pt,Investor sub-pages (2),capital_profiles DB,LIVE,YES,HIGH
+,,,,,,,,,
+SELL,/vender,PUBLIC,pt,Seller intake,Form → CRM,LIVE,YES,HIGH
+SELL,/vender-imovel-portugal,PUBLIC,pt,Sell property guide SEO,Static,LIVE,YES,HIGH
+SELL,/vender-imovel-portugal-2026,PUBLIC,pt,2026 seller guide (blog),Static,LIVE,YES,MEDIUM
+,,,,,,,,,
+AVM,/avm,PUBLIC,pt,Automated valuation tool,Anthropic AI,LIVE,YES,HIGH - lead gen
+,,,,,,,,,
+DASHBOARD,/dashboard,REQUIRED,pt,Portal home,DB KPIs,LIVE,CARLOS ONLY,OPERATIONAL
+DASHBOARD,/dashboard/executive,REQUIRED,pt,Executive KPI dashboard,kpi_snapshots table,LIVE,CARLOS ONLY,OPERATIONAL
+DASHBOARD,/dashboard/properties,REQUIRED,pt,Property management,properties table,LIVE,CARLOS ONLY,OPERATIONAL
+DASHBOARD,/dashboard/properties/new,REQUIRED,pt,Add new property,Form → DB,LIVE,CARLOS ONLY,OPERATIONAL
+DASHBOARD,/dashboard/simulations,REQUIRED,pt,Commission calculator,Math + DB,LIVE,CARLOS ONLY,OPERATIONAL
+DASHBOARD,/dashboard/(other 5),REQUIRED,pt,Dashboard sub-pages,Various,LIVE,CARLOS ONLY,OPERATIONAL
+,,,,,,,,,
+PORTAL,/portal/crm/contacts,REQUIRED,pt,CRM contacts (28),contacts table,LIVE,CARLOS ONLY,OPERATIONAL
+PORTAL,/portal/crm/deals,REQUIRED,pt,CRM deals (8 demo),deals table,LIVE,CARLOS ONLY,OPERATIONAL
+PORTAL,/portal/analytics,REQUIRED,pt,Analytics dashboard,analytics_events,LIVE,CARLOS ONLY,OPERATIONAL
+PORTAL,/portal/lead-engine,REQUIRED,pt,Lead management,leads table 18042,LIVE,CARLOS ONLY,HIGH VALUE
+PORTAL,/portal/capital-network,REQUIRED,pt,Investor management,capital_profiles 7342,LIVE,CARLOS ONLY,HIGH VALUE
+PORTAL,/portal/(other 5),REQUIRED,pt,Portal sub-pages,Various,LIVE,CARLOS ONLY,OPERATIONAL
+,,,,,,,,,
+CONTROL TOWER,/control-tower (30 pages),REQUIRED,pt,Admin operations,All DB tables,LIVE,CARLOS ONLY,OPERATIONAL
+,,,,,,,,,
+EXPERIENCE,/experience (5 pages),PUBLIC,pt,User experience pages,Static/DB,LIVE,YES,MEDIUM
+,,,,,,,,,
+BLOG EN,/blog/buying-property-portugal-2026,PUBLIC,en,Buyer guide Portugal,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/nhr-portugal-2026-guide,PUBLIC,en,NHR tax guide,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/golden-visa-portugal-alternatives-2026,PUBLIC,en,Golden visa guide,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/golden-coast-portugal-estoril,PUBLIC,en,Estoril guide,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/luxury-villas-algarve-2026,PUBLIC,en,Algarve luxury,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/luxury-property-lisbon,PUBLIC,en,Lisbon luxury,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/lisbon-vs-porto-investment-2026,PUBLIC,en,Market comparison,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/algarve-golden-triangle-2026,PUBLIC,en,Algarve market,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/buying-property-portugal-guide-2026,PUBLIC,en,Buying guide 2026,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/buy-property-cascais,PUBLIC,en,Cascais guide,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/luxury-apartments-porto-foz,PUBLIC,en,Porto Foz,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/madeira-island-property-investment,PUBLIC,en,Madeira guide,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/sintra-luxury-property-2026,PUBLIC,en,Sintra guide,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/comporta-portugal-luxury-market,PUBLIC,en,Comporta guide,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/property-investment-portugal-returns,PUBLIC,en,Investment returns,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/american-buyers-guide-portugal-2026,PUBLIC,en,US buyers guide,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/portugal-residency-investment-2026,PUBLIC,en,Residency guide,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/portugal-retirement-haven-2026,PUBLIC,en,Retirement guide,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/portugal-vs-spain-property-2026,PUBLIC,en,PT vs ES market,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/portugal-vs-spain-tax-residency-2026,PUBLIC,en,PT vs ES tax,Static,LIVE,YES - SEO,MEDIUM
+BLOG EN,/blog/capital-gains-property-portugal-2026,PUBLIC,en,Capital gains tax,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/taxes-imt-portugal-2026,PUBLIC,en,IMT tax guide,Static,LIVE,YES - SEO,HIGH
+BLOG EN,/blog/vat-exemption-portugal-property,PUBLIC,en,VAT guide,Static,LIVE,YES - SEO,MEDIUM
+BLOG FR,/blog/acheter-appartement-lisbonne-guide,PUBLIC,fr,Buy apt Lisbon FR,Static,LIVE,YES - SEO,HIGH
+BLOG FR,/blog/acheter-appartement-porto-france,PUBLIC,fr,Buy apt Porto FR,Static,LIVE,YES - SEO,MEDIUM
+BLOG FR,/blog/acheter-maison-cascais-portugal,PUBLIC,fr,Buy Cascais FR,Static,LIVE,YES - SEO,MEDIUM
+BLOG FR,/blog/acheter-villa-algarve-2026,PUBLIC,fr,Buy Algarve FR,Static,LIVE,YES - SEO,MEDIUM
+BLOG FR,/blog/investir-immobilier-algarve-2026,PUBLIC,fr,Invest Algarve FR,Static,LIVE,YES - SEO,HIGH
+BLOG FR,/blog/regime-ifici-nhr-france-portugal,PUBLIC,fr,NHR for French,Static,LIVE,YES - SEO,HIGH
+BLOG FR,/blog/vendre-bien-portugal-guide,PUBLIC,fr,Sell in Portugal FR,Static,LIVE,YES - SEO,MEDIUM
+BLOG PT,/blog/comprar-casa-portugal-2026,PUBLIC,pt,Buy house PT,Static,LIVE,YES - SEO,HIGH
+BLOG PT,/blog/investir-imoveis-comporta-2026,PUBLIC,pt,Invest Comporta PT,Static,LIVE,YES - SEO,MEDIUM
+BLOG PT,/blog/investir-imoveis-portugal,PUBLIC,pt,Invest Portugal PT,Static,LIVE,YES - SEO,HIGH
+BLOG PT,/blog/investir-madeira-2026,PUBLIC,pt,Invest Madeira PT,Static,LIVE,YES - SEO,MEDIUM
+BLOG PT,/blog/mercado-imoveis-abril-2026,PUBLIC,pt,Market April 2026,Static,LIVE,YES - SEO,MEDIUM
+BLOG PT,/blog/mercado-imoveis-porto-2026,PUBLIC,pt,Porto market 2026,Static,LIVE,YES - SEO,MEDIUM
+BLOG PT,/blog/mercado-luxo-portugal-2026,PUBLIC,pt,Luxury market 2026,Static,LIVE,YES - SEO,HIGH
+BLOG PT,/blog/nhr-ifici-2026-guia-completo,PUBLIC,pt,NHR complete guide PT,Static,LIVE,YES - SEO,HIGH
+BLOG PT,/blog/nhr-ifici-guia-completo,PUBLIC,pt,NHR guide PT v2,Static,LIVE,YES - SEO,HIGH
+BLOG PT,/blog/propriedades-luxo-lisboa-2026,PUBLIC,pt,Luxury Lisboa PT,Static,LIVE,YES - SEO,HIGH
+BLOG PT,/blog/primeira-casa-lisboa-guia-2026,PUBLIC,pt,First home Lisboa PT,Static,LIVE,YES - SEO,MEDIUM
+BLOG PT,/blog/vender-imovel-portugal-2026,PUBLIC,pt,Sell property PT,Static,LIVE,YES - SEO,MEDIUM
+BLOG MIXED,/blog/acores-imoveis-investimento,PUBLIC,pt,Azores PT,Static,LIVE,YES - SEO,MEDIUM
+BLOG MIXED,/blog/acores-investimento-imobiliario-2026,PUBLIC,pt,Azores invest 2026,Static,LIVE,YES - SEO,MEDIUM
+BLOG MIXED,/blog/apartamentos-luxo-cascais-comprar,PUBLIC,pt,Luxury Cascais PT,Static,LIVE,YES - SEO,MEDIUM
+BLOG MIXED,/blog/credito-habitacao-estrangeiros-portugal,PUBLIC,pt,Mortgage foreigners,Static,LIVE,YES - SEO,HIGH
+BLOG MIXED,/blog/imt-impostos-portugal-2026,PUBLIC,pt,IMT taxes 2026,Static,LIVE,YES - SEO,HIGH
+BLOG MIXED,/blog/mais-valias-imoveis-portugal-2026,PUBLIC,pt,Capital gains PT,Static,LIVE,YES - SEO,HIGH
+BLOG MIXED,/blog/comprare-casa-portogallo-guida,PUBLIC,it,Buy in Portugal IT,Static,LIVE,YES - SEO,MEDIUM
+BLOG MIXED,/blog/investimento-madeira-2026,PUBLIC,pt,Madeira invest 2026,Static,LIVE,YES - SEO,MEDIUM
+BLOG DYNAMIC,/blog/[slug],PUBLIC,all,Dynamic blog catch-all,Static,LIVE,YES,MEDIUM
+,,,,,,,,,
+AUTH,/login,PUBLIC,all,Magic link + Google OAuth,NextAuth,LIVE,YES,OPERATIONAL
+AUTH,/auth/(3 more pages),PUBLIC,all,Auth flow,NextAuth,LIVE,YES,OPERATIONAL
+,,,,,,,,,
+SEO PAGES,/faq,PUBLIC,all,FAQ with JSON-LD,Static,LIVE,YES - SEO,MEDIUM
+SEO PAGES,/buy-property-portugal,PUBLIC,en,Buy property guide,Static,LIVE,YES - SEO,HIGH
+SEO PAGES,/concierge-estrangeiros,PUBLIC,pt,Concierge service,Static,LIVE,YES,MEDIUM
+SEO PAGES,/casos-de-sucesso,PUBLIC,pt,Case studies,Static (0 real cases),LIVE,YES,MEDIUM
+SEO PAGES,/imprensa,PUBLIC,pt,Press page,Static,LIVE,YES,LOW
+SEO PAGES,/contacto,PUBLIC,pt,Contact page,Form → CRM,LIVE,YES,HIGH
+,,,,,,,,,
+TEAM,/equipa,PUBLIC,pt,Team page (0 real agents),Static placeholder,LIVE,YES,LOW
+TEAM,/agente/[slug],PUBLIC,pt,Agent profiles (dynamic),profiles table (0 rows),LIVE - code only,Theoretical,LOW - no agents
+,,,,,,,,,
+PARTNERS,/parceiros,PUBLIC,pt,Partner page,Static,LIVE,YES,MEDIUM
+PARTNERS,/white-label,PUBLIC,pt,White-label offer,Static,LIVE,YES,MEDIUM
+,,,,,,,,,
+ZONES,/zonas/[zona] (2),PUBLIC,pt,Neighborhood intel (6 zones),Static + DB,LIVE,YES,MEDIUM
+,,,,,,,,,
+DEAL,/deal,PUBLIC,pt,Deal presentation page,deals table,LIVE,YES,HIGH
+,,,,,,,,,
+OTHER,/onboarding,REQUIRED,pt,User onboarding,DB,LIVE,YES,MEDIUM
+OTHER,/reports,REQUIRED,pt,Reports page,kpi_snapshots,LIVE,CARLOS ONLY,MEDIUM
+OTHER,/relatorio-2026,PUBLIC,pt,2026 market report,Static,LIVE,YES,MEDIUM
+OTHER,/vendidos,PUBLIC,pt,Sold properties (0 real),Properties DB,LIVE,YES,LOW - no sold
+OTHER,/privacidade,PUBLIC,all,Privacy policy,Static,LIVE,YES,OPERATIONAL
+OTHER,/unsupported-browser,PUBLIC,all,Browser warning,Static,LIVE,Rare,LOW
+OTHER,/admin,REQUIRED,pt,Admin area,All DB,LIVE,CARLOS ONLY,OPERATIONAL
+,,,,,,,,,
+INTERNATIONAL,/en (2 pages),PUBLIC,en,English routes,Static,LIVE,YES,HIGH
+INTERNATIONAL,/fr (1 page),PUBLIC,fr,French routes,Static,LIVE,YES,HIGH
+INTERNATIONAL,/de (1 page),PUBLIC,de,German routes,Static,LIVE,YES,MEDIUM
+INTERNATIONAL,/ar (1 page),PUBLIC,ar,Arabic routes,Static,LIVE,YES,MEDIUM
+INTERNATIONAL,/zh (1 page),PUBLIC,zh,Chinese routes,Static,LIVE,YES,MEDIUM
+,,,,,,,,,
+SUMMARY,Total pages confirmed,155,page.tsx count PowerShell,2026-06-25
+SUMMARY,Public-facing buyer pages,~90,,
+SUMMARY,Admin/portal pages,~65,,
+SUMMARY,Blog articles,55,In app/blog/ with page.tsx,2026-06-25
+SUMMARY,Languages,6,en pt fr de ar zh+it,2026-06-25
+SUMMARY,Pages with real data,~20,kpi/contacts/leads/properties,2026-06-25
+SUMMARY,Pages with demo/empty data,~135,,2026-06-25

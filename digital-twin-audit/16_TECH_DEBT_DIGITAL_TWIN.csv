@@ -1,0 +1,62 @@
+CATEGORY,ITEM,SEVERITY,EFFORT,EVIDENCE,STATUS
+,,,,,
+OPEN BUGS,,,,
+BUG,Chaos test supabase mock missing (dbOutage.spec.ts),LOW,30 min,tests/chaos/dbOutage.spec.ts,OPEN - low priority
+BUG,Chaos test supabase mock missing (queueOutage.spec.ts),LOW,30 min,tests/chaos/queueOutage.spec.ts,OPEN - low priority
+BUG,Local .env.local service key corrupted (41 chars),LOW,30 min,Get key from Vercel + paste locally,OPEN - local dev only
+BUG,WHATSAPP_ACCESS_TOKEN = PREENCHER,MEDIUM,3-4 hours,Vercel env,OPEN - blocks WhatsApp
+,,,,,
+MISSING DB TABLES (unconfirmed),,,,
+MISSING TABLE,partners (institutional co-agency),MEDIUM,25 min SQL,Migration may not have run,UNVERIFIED
+MISSING TABLE,campanhas_crm (CRM campaigns),MEDIUM,25 min SQL,Migration status unknown,UNVERIFIED
+MISSING TABLE,sellers (property seller profiles),MEDIUM,25 min SQL,Migration status unknown,UNVERIFIED
+MISSING TABLE,buyers (dedicated buyer profiles),MEDIUM,25 min SQL,Migration status unknown,UNVERIFIED
+MISSING TABLE,investment_portfolios (investor portfolios),LOW,25 min SQL,Migration status unknown,UNVERIFIED
+,,,,,
+DISCONNECTED SYSTEMS,,,,
+DISCONNECTED,n8n workflows ↔ production,HIGH,4h Railway deploy,21 workflows built not deployed,OPEN - blocks automation
+DISCONNECTED,outreach_queue ↔ email delivery,HIGH,After n8n deploy,3164 contacts waiting,OPEN - blocked by n8n
+DISCONNECTED,leads (18042) ↔ CRM contacts (28),MEDIUM,30 min SQL,RUN_CRM_IMPORT.sql exists,OPEN - easy fix
+DISCONNECTED,Apollo enrichment ↔ leads,HIGH,30 min + $49,Key present not run,OPEN - blocks email coverage
+DISCONNECTED,WhatsApp ↔ Sofia,MEDIUM,3-4h,Token placeholder,OPEN - blocks inbound channel
+DISCONNECTED,capital_profiles ↔ outreach,HIGH,n8n needed,67 emails untouched,OPEN - manual or n8n
+DISCONNECTED,offmarket_leads ↔ CRM,MEDIUM,Manual process,14 developer contacts unused,OPEN - manual
+,,,,,
+ASPIRATIONAL CODE (may not be production-ready),,,,
+ASPIRATIONAL,lib/ml/ (27 files) - ML models,MEDIUM,Unknown,Code exists - no verified usage,UNVERIFIED usage
+ASPIRATIONAL,lib/events/ (30 files) - Event bus,MEDIUM,Unknown,Kafka-like design - no Kafka deployed,UNVERIFIED usage
+ASPIRATIONAL,lib/sre/ (26 files) - SRE system,LOW,Unknown,SRE patterns - no incidents reported,UNVERIFIED usage
+ASPIRATIONAL,lib/compliance/ (32 files),LOW,Unknown,Compliance framework - unverified,UNVERIFIED usage
+ASPIRATIONAL,lib/go-to-market/ (13 files),LOW,Unknown,GTM analytics code,UNVERIFIED usage
+ASPIRATIONAL,lib/economics/ (18 files),LOW,Unknown,Economic models,UNVERIFIED usage
+ASPIRATIONAL,lib/ingestion/ (22 files),LOW,Unknown,Data ingestion,UNVERIFIED usage
+ASPIRATIONAL,100+ lib/ subdirs total,MEDIUM,Audit needed,Many may be unused/aspirational,RECOMMEND AUDIT
+,,,,,
+DEAD CODE (suspected),,,,
+DEAD CODE,ranking-engine-v3,LOW,Unknown,lib/ranking-engine-v3,May be superseded
+DEAD CODE,economic-closed-loop-v2,LOW,Unknown,lib/economic-closed-loop-v2,Version suffixes suggest iteration
+DEAD CODE,distribution-v2 / discovery-v2,LOW,Unknown,lib/ versioned subdirs,May be superseded
+DEAD CODE,market-learning-v2,LOW,Unknown,lib/ versioned subdirs,May be superseded
+DEAD CODE,product-simplification-v2,LOW,Unknown,lib/ versioned subdirs,May be superseded
+,,,,,
+INCOMPLETE INTEGRATIONS,,,,
+INCOMPLETE,HeyGen integration,LOW,Unknown,5 routes coded - no production usage,CODED NOT ACTIVE
+INCOMPLETE,Casafari property data,MEDIUM,Unknown,Key configured - usage unverified,UNVERIFIED
+INCOMPLETE,Idealista listing API,MEDIUM,Unknown,Key configured - usage unverified,UNVERIFIED
+INCOMPLETE,Stripe subscription system,LOW,N/A,Configured - not needed for current model,FUTURE
+,,,,,
+NO CI/CD,,,,
+PROCESS,No automated pre-deploy TypeScript check,MEDIUM,4h,Direct git push → deploy,OPEN
+PROCESS,No automated pre-deploy test run,MEDIUM,4h,Tests run manually,OPEN
+PROCESS,No staging environment,LOW,4h,Solo dev - low risk now,FUTURE
+PROCESS,No rollback procedure documented,MEDIUM,2h,No formal runbook,OPEN
+,,,,,
+PREVIOUSLY FIXED (reference),,,,
+FIXED,Magic link NOT NULL (95235ec),CLOSED,,Commit 95235ec,RESOLVED
+FIXED,Properties API column names (1760efe),CLOSED,,Commit 1760efe,RESOLVED
+FIXED,WhatsApp timingSafeEqual (1760efe),CLOSED,,Commit 1760efe,RESOLVED
+FIXED,Pipeline stage probabilities (8aa4f63),CLOSED,,Commit 8aa4f63,RESOLVED
+FIXED,Anthropic lazy proxy (8aa4f63),CLOSED,,Commit 8aa4f63,RESOLVED
+FIXED,Security test mocks (8aa4f63),CLOSED,,Commit 8aa4f63,RESOLVED
+FIXED,Commission PL assertions (8aa4f63),CLOSED,,Commit 8aa4f63,RESOLVED
+FIXED,Alerts push RPC parameter (472a95e),CLOSED,,Commit 472a95e,RESOLVED

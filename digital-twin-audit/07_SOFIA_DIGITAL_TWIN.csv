@@ -1,0 +1,69 @@
+DIMENSION,DETAIL,STATUS,EVIDENCE
+ARCHITECTURE,Sofia is a multi-role AI agent,BUILT,lib/ai/gateway.ts + app/api/sofia/
+ARCHITECTURE,Model used,claude-sonnet-4-6,gateway.ts
+ARCHITECTURE,Lazy proxy pattern,FIXED,commit 8aa4f63 - prevents jsdom error in tests
+ARCHITECTURE,Max tokens per call,~4096,Standard Anthropic config
+,,,
+ROLES (7 total),sales_agent,BUILT,Main buyer qualification
+ROLES (7 total),qualifier,BUILT,Identify buyer intent + budget
+ROLES (7 total),scheduler,BUILT,Book property visits
+ROLES (7 total),researcher,BUILT,Market intel for buyers
+ROLES (7 total),analyst,BUILT,Investment analysis
+ROLES (7 total),negotiator,BUILT,Offer negotiation support
+ROLES (7 total),post_sales,BUILT,After CPCV support
+,,,
+TOOLS (8 total),search_properties,BUILT,Queries properties table
+TOOLS (8 total),check_availability,BUILT,Property calendar check
+TOOLS (8 total),schedule_visit,BUILT,Books showing
+TOOLS (8 total),calculate_mortgage,BUILT,Mortgage calculator
+TOOLS (8 total),avm_valuation,BUILT,Property valuation tool
+TOOLS (8 total),create_contact,BUILT,Writes to contacts table
+TOOLS (8 total),create_deal,BUILT,Creates CRM deal
+TOOLS (8 total),send_email,BUILT,Via Resend
+,,,
+CHANNELS (4),Web widget (/sofia or embedded),LIVE,SofiaAgentWidget.tsx
+CHANNELS (4),WhatsApp Business,CODED NOT ACTIVE,Token = PREENCHER in Vercel
+CHANNELS (4),Email (async),CODED READY,Via Resend
+CHANNELS (4),Portal chat (Carlos),LIVE,/dashboard chat
+,,,
+MEMORY,sofia_conversations table,EXISTS - EMPTY,0 rows confirmed 2026-06-24
+MEMORY,sofia_conversation_turns table,EXISTS - EMPTY,0 rows confirmed 2026-06-24
+MEMORY,Conversation history,CODED,Per-session storage ready
+MEMORY,Cross-session memory,CODED,Not yet tested with real users
+,,,
+CRM INTEGRATION,create_contact tool,BUILT,Writes directly to contacts table
+CRM INTEGRATION,create_deal tool,BUILT,Creates deal in pipeline
+CRM INTEGRATION,Sofia follow-up cron,BUILT,/api/cron/sofia-followup
+CRM INTEGRATION,CRM follow-up,0 executions,No conversations to follow up
+,,,
+ESCALATION,Human escalation trigger,BUILT,Routes to Carlos notification
+ESCALATION,WhatsApp escalation,CODED,Pending activation
+ESCALATION,Email escalation,BUILT,Via Resend
+ESCALATION,Urgent lead alert,BUILT,/api/alerts/push
+,,,
+REAL USAGE,sofia_conversations,0 rows,0 real buyer conversations ever
+REAL USAGE,sofia_conversation_turns,0 rows,0 real buyer messages ever
+REAL USAGE,Portal chat (Carlos),Unknown,Only Carlos uses portal
+REAL USAGE,Web widget visitors,Unknown,Analytics capture events but no sofia rows
+,,,
+WHATSAPP BLOCKER,WHATSAPP_ACTIVE env var,NOT SET,Code checks this before accepting messages
+WHATSAPP BLOCKER,WHATSAPP_ACCESS_TOKEN,PREENCHER,Placeholder not real token
+WHATSAPP BLOCKER,Fix required,Set real Meta Business token,3-4 hours total
+WHATSAPP BLOCKER,Expected impact when fixed,Inbound buyer channel,Buyers can message on WhatsApp
+,,,
+SOFIA VALUE PROPOSITION,,,
+VALUE,24/7 buyer qualification,READY,No Carlos time needed
+VALUE,Instant property presentation,READY,Queries all 55 demo properties
+VALUE,Automatic lead capture,READY,Creates CRM contacts
+VALUE,Multi-language (6 languages),READY,i18n configured
+VALUE,Mortgage simulation,READY,Real calculator
+VALUE,AVM on demand,READY,Anthropic powered
+VALUE,Deal creation,READY,Full CRM integration
+VALUE,WhatsApp scale,BLOCKED,Token needed
+,,,
+COMPETITIVE BENCHMARK,,,
+COMPASS (US),Sofia equivalent,YES,Compass has AI chat
+IDEALISTA (ES),Sofia equivalent,NO,No AI agent
+JLL Portugal,Sofia equivalent,NO,No AI agent
+CBRE Portugal,Sofia equivalent,NO,No AI agent
+Agency Group,Sofia capability,YES - not activated,Technically ahead of local competitors

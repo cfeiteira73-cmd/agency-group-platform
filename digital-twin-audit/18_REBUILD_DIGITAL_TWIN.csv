@@ -1,0 +1,56 @@
+REBUILD SCENARIO,WHAT IT BUYS,SENIOR DEVS NEEDED,TIME,COST,NOTES
+,,,,,
+€10K budget,,,,
+€10K at €800/day senior,12.5 dev days,1 senior,2.5 weeks,€10000,Buy: auth system + basic CRUD + simple frontend
+What you get for €10K,1 working page + DB + login,,,,Not a competitive product
+,,,,,
+€50K budget,,,,
+€50K at €800/day senior,62.5 dev days,2 seniors,1.5 months,€50000,
+What you get for €50K,Full Next.js app ~50 pages + auth + basic DB,,,,No AI no automations no lead database
+,,,,,
+€100K budget,,,,
+€100K at €800/day senior,125 dev days,2 seniors,3 months,€100000,
+What you get for €100K,Full frontend + backend APIs + DB + auth + basic security,,,,No AI no lead database no n8n
+,,,,,
+€250K budget,,,,
+€250K at €800/day senior,312 dev days,3 seniors,4 months,€250000,
+What you get for €250K,CLOSE TO CURRENT CODEBASE: full platform + AI + security + automations,,,,No lead database no data
+What you CANNOT rebuild for €250K,25384 buyer/lead database - takes 6 months to scrape,,,,
+What you CANNOT rebuild for €250K,62 days of SEO indexing - Google needs time,,,,
+What you CANNOT rebuild for €250K,AMI 22506 - registration takes months,,,,
+,,,,,
+€500K budget,,,,
+€500K at €800/day senior,625 dev days,4 seniors,5 months,€500000,
+What you get for €500K,Full platform + agency team + marketing launch + initial outreach,,,,
+What you CANNOT rebuild for €500K,25K buyer database (takes time not money),,,,
+,,,,,
+€1M budget,,,,
+What you get for €1M,Full platform + team of 5 agents + 12 months of operations,,,,
+Equivalent to,Agency Group platform + what it should have done commercially for 62 days,,,,
+,,,,,
+WHAT MAKES AGENCY GROUP UNIQUELY VALUABLE (Cannot be bought),,,,
+DATA: 25384 buyer profiles (6 months to rebuild),€80K+ in scraping costs,6 months scraping,€80K-€120K,Time + money
+SEO: 62 days indexed blog,€20K content value,Cannot be accelerated,€20K,Google takes time
+AMI: Real estate license,3-6 months bureaucracy,Cannot be bought,€5K fees,Legal process
+Architecture: Working at launch,Immediate readiness,No debug time,€0 extra,Already done
+,,,,,
+COMPONENT-BY-COMPONENT REBUILD COST,,,,
+PLATFORM (code only),See Phase 14 value analysis,~1170 dev days,€936K senior,€936000,Code + architecture
+DATA (buyer database),25384 profiles,6 months scraping,€120K Apify+time,€120000,Cannot shortcut
+CONTENT (55 blog articles),Research + writing + SEO,~55 articles x 3h each,€8250 at €50/h,€8250,
+LEGAL (AMI + compliance),Registration + GDPR,Months of process,€5K-€15K,€10000,
+INFRASTRUCTURE (first year),Vercel + Supabase + services,Setup + config,€3600 annual,€3600,
+TOTAL FULL REBUILD,,,>€1M,€1077850,Code + data + content + legal + infra
+,,,,,
+MARKET COMPARABLES (what platforms sold for),,,,
+Compass (Series A 2013),Raised $25M for similar tech,Institutional backing,Series A,€25M,Totally different scale
+Casafari,Raised €60M,PE-backed,Funded,€60M,Portugal/Spain data
+Idealista,Sold to EQT for €1.3B 2020,Market leader,M&A,€1.3B,Massive scale
+Agency Group today,€0 revenue startup,Bootstrap,Self-funded,€0,Stage 0
+Agency Group potential (5yr),If executes commercially,€500K-€5M revenue run rate,Series A viable,€5M-€50M,Pure speculation
+,,,,,
+HONEST CURRENT VALUE,,,,
+As code asset (if sold today),€80K-€150K,Technical buyer might pay for platform,Bare minimum,€80K,Low - no revenue
+As going concern (0 revenue),€20K-€50K,Just the AMI + data,Distressed sale,€20K,Very low - no traction
+As platform with first €75K deal,€250K-€500K,Proves commercial viability,Angel/seed possible,€250K,First deal changes everything
+As platform with €500K ARR,€2M-€5M,5-10x revenue,Institutional possible,€3M,Needs execution

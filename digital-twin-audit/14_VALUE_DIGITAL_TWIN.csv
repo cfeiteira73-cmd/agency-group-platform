@@ -1,0 +1,74 @@
+COMPONENT,LOC/HOURS,JUNIOR_RATE,MID_RATE,SENIOR_RATE,TEAM_RATE,AGENCY_RATE,REBUILD_COST
+,Daily rates €,250,500,800,3000/day 4ppl,1500,
+,,,,,,,
+FRONTEND (Next.js 16 App Router),,,,,,
+155 pages + layouts,~200 days,€50000,€100000,€160000,€180000,€300000,€160K senior
+542 API routes,~200 days,€50000,€100000,€160000,€240000,€300000,€160K senior
+Component library,~20 days,€5000,€10000,€16000,€24000,€30000,€16K senior
+i18n 6 languages,~30 days,€7500,€15000,€24000,€36000,€45000,€24K senior
+FRONTEND TOTAL,~450 days,€112500,€225000,€360000,€480000,€675000,€360K senior
+,,,,,,,
+BACKEND (Node.js/TypeScript),,,,,,
+542 API routes full implementation,~200 days,€50000,€100000,€160000,€240000,€300000,€160K senior
+Auth system (magic link + OAuth),~20 days,€5000,€10000,€16000,€24000,€30000,€16K senior
+Sofia AI agent (7 roles 8 tools),~40 days,€10000,€20000,€32000,€48000,€60000,€32K senior
+Commission + deal system,~20 days,€5000,€10000,€16000,€24000,€30000,€16K senior
+Lead scoring engine,~15 days,€3750,€7500,€12000,€18000,€22500,€12K senior
+AVM (AI valuation),~10 days,€2500,€5000,€8000,€12000,€15000,€8K senior
+Legal AI (Juridico 10 areas),~10 days,€2500,€5000,€8000,€12000,€15000,€8K senior
+BACKEND TOTAL,~315 days,€78750,€157500,€252000,€378000,€472500,€252K senior
+,,,,,,,
+DATABASE,,,,,,
+278 migrations,~60 days,€15000,€30000,€48000,€72000,€90000,€48K senior
+Schema design + RLS,~20 days,€5000,€10000,€16000,€24000,€30000,€16K senior
+pgvector semantic search,~5 days,€1250,€2500,€4000,€6000,€7500,€4K senior
+DATABASE TOTAL,~85 days,€21250,€42500,€68000,€102000,€127500,€68K senior
+,,,,,,,
+AUTOMATION,,,,,,
+21 n8n workflows,~30 days,€7500,€15000,€24000,€36000,€45000,€24K senior
+41 Vercel crons,~10 days,€2500,€5000,€8000,€12000,€15000,€8K senior
+AUTOMATION TOTAL,~40 days,€10000,€20000,€32000,€48000,€60000,€32K senior
+,,,,,,,
+SECURITY,,,,,,
+OWASP 87/100 implementation,~40 days,€10000,€20000,€32000,€48000,€60000,€32K senior
+GDPR compliance,~10 days,€2500,€5000,€8000,€12000,€15000,€8K senior
+SECURITY TOTAL,~50 days,€12500,€25000,€40000,€60000,€75000,€40K senior
+,,,,,,,
+CONTENT,,,,,,
+55 blog articles (6 languages SEO),~55 articles x €200,€11000,€11000,€11000,€11000,€22000,€11K standard
+Technical SEO implementation,~10 days,€2500,€5000,€8000,€12000,€15000,€8K senior
+CONTENT TOTAL,~,€13500,€16000,€19000,€23000,€37000,€19K
+,,,,,,,
+TESTING,,,,,,
+2222 tests (103 files),~30 days,€7500,€15000,€24000,€36000,€45000,€24K senior
+,,,,,,,
+DATA,,,,,,
+18042 lead records (scraping + scoring),~60 days equiv,€15000,€30000,€48000,€72000,€90000,€48K senior
+7342 capital profiles (sourcing + scoring),~40 days equiv,€10000,€20000,€32000,€48000,€60000,€32K senior
+DATA TOTAL,~100 days,€25000,€50000,€80000,€120000,€150000,€80K senior
+,,,,,,,
+PROJECT MANAGEMENT,,,,,,
+PM + Architecture (10% overhead),~100 days,€25000,€50000,€80000,€120000,€150000,€80K senior
+,,,,,,,
+GRAND TOTAL REBUILD COST,,,,,,
+Junior (€250/day),~1170 days,€292500,,,,
+Mid (€500/day),~1170 days,,€585000,,,
+Senior (€800/day),~1170 days,,,€936000,,
+Team (4ppl €3K/day),~1170 days,,,,€1053000,
+Agency (€1500/day),~1170 days,,,,,€1755000
+,,,,,,,
+ACTUAL COSTS SPENT,,,,,,,
+Anthropic API (estimate),€3000-8000,,,,Claude API calls,
+Carlos time (estimate),500+ hours,At €100/h,€50000+,,,Carlos's value
+Total actual investment,€53K-€58K estimate,,,,Vs €250K-€1.75M rebuild cost,
+,,,,,,,
+VALUE MULTIPLIER,,,,,,
+vs Junior rebuild,5x,,,,,
+vs Senior rebuild,17x,,,,,
+vs Agency rebuild,32x,,,,,
+,,,,,,,
+UNIQUE VALUE (NOT REBUILDABLE FROM SCRATCH),,,,,,
+25384 buyer/lead database,€80K data acquisition value,Would take 6 months to rebuild,,,,
+Market positioning (SEO),€20K SEO work,62 days of indexed content,,,,
+AMI license + compliance,€5K legal,Already registered and legal,,,,
+TOTAL UNIQUE VALUE (beyond code),~€105K,Cannot be rebuilt by spending money alone,,,,

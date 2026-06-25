@@ -1,0 +1,59 @@
+REVENUE PATH,CURRENT STATUS,DEPENDENCIES,BLOCKERS,EXPECTED ECONOMICS,TIMELINE
+,,,,,
+RESIDENTIAL SALES (€500K-€3M),,,,,
+Residential → Buyer finds via website,ACTIVE - 55 demo properties shown,Real mandates needed,0 real mandates,5% of sale price = €25K-€150K,After first mandate
+Residential → Buyer contacts via Sofia web,ACTIVE - Sofia live,Real buyer needed,0 conversations,Same,When first buyer arrives
+Residential → Buyer on WhatsApp,BLOCKED,WHATSAPP_ACCESS_TOKEN,3-4h fix,Same,When WhatsApp activated
+Residential → Outreach to 67 emails,NOT STARTED,Carlos action,90 min,1 meeting = 1 deal = €75K average,This week
+Residential → Automated n8n sequences,BLOCKED,n8n not deployed,4h Railway deploy,Scale: 3164 sequences,When Railway deployed
+,,,,,
+LUXURY SEGMENT (€3M+),,,,,
+HNWI €3M+,POSSIBLE - capital_profiles has US/UAE HNWI,Off-market deals needed,No real inventory,5% of €3M+ = €150K+,After first inventory
+Family offices,POSSIBLE - 3010 US profiles,Real deal flow,No outreach sent,Large commissions,Medium term
+Middle East HNWI,POSSIBLE - 504 UAE profiles,Arabic content + WhatsApp,WhatsApp blocked,€100K-€300K commissions,Medium term
+,,,,,
+BUDGET SEGMENT (€100K-€500K),,,,,
+Portuguese domestic,POSSIBLE - leads table,Local inventory needed,0 local mandates,5% = €5K-€25K,Lower priority
+Brazilian buyers,POSSIBLE - ~2500 leads,Portuguese content strong,No outreach,5% = €5K-€25K,Medium priority
+,,,,,
+COMMERCIAL REAL ESTATE,,,,,
+Commercial,NOT STARTED,Network + mandates,Not built out,5% varies by deal,Long term
+Hotels,NOT STARTED,Specialized network,Not built,Higher % possible,Long term
+Land,NOT STARTED,Developer network,Not built,2-3%,Medium term
+,,,,,
+OFF-MARKET,,,,,
+Off-market exclusive deals,14 developer contacts in DB,Co-agency calls,0 calls made,5% on premium prices,This week
+Off-market co-agency,BUILT - /off-market page,Developer call,3 calls needed,50% split of commission,2-4 weeks
+,,,,,
+INVESTMENT DEALS,,,,,
+Investment properties,BUILT - investor-intelligence,Real deals needed,0 inventory,5% + referral,Medium term
+Referral to international buyers,BUILT - deal pack system,Referral network,Not activated,1-2% referral fee,Long term
+,,,,,
+DIGITAL REVENUE (non-commission),,,,,
+Platform subscription (white-label),BUILT - /white-label page,Agency partners,0 partners signed,€2K-€10K/month/agency,Long term
+AVM subscription,BUILT - /avm,External demand,Not marketed,€99-€499/month,Long term
+Lead database license,TECHNICALLY POSSIBLE,Legal + privacy,GDPR constraints,€X/K contacts,Long term
+,,,,,
+REVENUE SYSTEM COMPONENTS,,,,,
+Commission calculator,OPERATIONAL,deal data,None,Works with any deal,NOW
+Deal tracking,OPERATIONAL,real deals,None,Works when deal exists,NOW
+Expected fee tracking,OPERATIONAL,real deals,None,deals.expected_fee column,NOW
+KPI dashboard,OPERATIONAL,real data,None,kpi_snapshots 62+ rows,NOW
+CPCV tracking,OPERATIONAL,real CPCV,None,Stage 70% probability,NOW
+Escritura tracking,OPERATIONAL,real Escritura,None,Stage 100%,NOW
+IRS withholding (25%),OPERATIONAL,real deal,None,Calculated automatically,NOW
+Pipeline value calculator,OPERATIONAL,real deals,None,Fixed commit 8aa4f63,NOW
+Reporting,OPERATIONAL,real data,None,/api/reporting/daily,NOW
+,,,,,
+REVENUE MATH (Conservative),,,,,
+Scenario A: 67 emails this week,1 meeting → 1 deal → €75K,90 min,€0 cost,ROI = ∞ (no cost),Day 1-90
+Scenario B: Apollo $49 + n8n €15/mo,10x emails → 3 deals → €225K,5h,€64,ROI = 3516x,Months 1-6
+Scenario C: Full activation,50 deals/year → €3.75M,Full team,€5K/mo infra,ROI = 750x,Year 1-2
+,,,,,
+REAL REVENUE HISTORY,,,,,
+Total revenue since launch (62 days),€0,,,NO EXCEPTIONS,2026-06-25
+Deals closed,0,,,,
+CPCVs signed,0,,,,
+Showings done,0,,,,
+Meetings held (from platform),0,,,,
+Emails sent (from platform),0,,,,

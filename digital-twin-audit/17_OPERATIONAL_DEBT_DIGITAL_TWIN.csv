@@ -1,0 +1,52 @@
+OPERATIONAL DEBT CATEGORY,ITEM,IMPACT,FIX,EFFORT,COST,PRIORITY
+,,,,,
+MISSING INVENTORY,,,,
+INVENTORY,0 real mandates signed,CRITICAL - nothing to sell,Call 3 developers from offmarket_leads,3 phone calls,€0,P0 TODAY
+INVENTORY,0 co-agency agreements,CRITICAL,Use 14 developer contacts in DB,1 meeting per developer,€0-500 legal,P0 TODAY
+INVENTORY,offmarket_leads contacted = 0,HIGH - path to mandates exists,Carlos calls 14 leads,14 calls,€0,P0 TODAY
+INVENTORY,0 seller intake forms received,MEDIUM,/vender page live - not marketed,SEO + outreach,€0,P1
+INVENTORY,Demo properties not disclosed as demo,MEDIUM - brand credibility,Add disclaimer or replace with real,1 mandate needed,€0,P1
+,,,,,
+MISSING OUTREACH,,,,
+OUTREACH,0 emails sent to 67 capital_profiles contacts,CRITICAL - best leads untouched,Carlos writes 1 email,90 minutes,€0,P0 TODAY
+OUTREACH,0 emails sent to 117 lead emails,HIGH - lead engine unused,Apollo enrichment + n8n,4h + $49,€15/mo,P1
+OUTREACH,Apollo enrichment not run,HIGH - 0.65% email coverage,Buy Apollo $49,30 min,€49,P1
+OUTREACH,n8n not deployed,HIGH - 3164 sequences idle,Railway deploy,4 hours,€15/mo,P1
+OUTREACH,Smartlead sequences not active,HIGH - email automation blocked,Configure after n8n,2 hours,Subscription,P1
+OUTREACH,0 WhatsApp messages sent,MEDIUM - inbound blocked,Activate WhatsApp token,3-4 hours,€0,P1
+,,,,,
+MISSING CRM USAGE,,,,
+CRM,leads not imported to contacts,HIGH - CRM disconnected from leads,Run RUN_CRM_IMPORT.sql,30 minutes,€0,P1
+CRM,0 follow-up activities logged,MEDIUM - no CRM usage history,Start using CRM when first deal,0 - starts naturally,,P2
+CRM,0 real deals in pipeline,CRITICAL - no revenue tracking,First deal needed,Commercial action,€0 code,P0
+CRM,0 meeting records,HIGH - sales process not tracked,Start logging,Manual for now,,P2
+CRM,Only 1 real contact,HIGH - CRM empty,Import leads + start outreach,SQL + email,€0,P1
+,,,,,
+MISSING MEETINGS,,,,
+MEETINGS,0 buyer meetings from platform,CRITICAL,Email 67 contacts → reply → meeting,90 min email,€0,P0 TODAY
+MEETINGS,0 developer meetings for inventory,CRITICAL,Call 3 from offmarket_leads,3 calls,€0,P0 TODAY
+MEETINGS,0 partner/co-agency meetings,HIGH,Call developers,3 calls,€0,P0 TODAY
+MEETINGS,0 showing visits scheduled,HIGH - Sofia scheduler unused,Depends on inventory + meeting,After mandate,€0,P1
+,,,,,
+MISSING EMAILS,,,,
+EMAILS,0 outreach emails sent (62 days),CRITICAL,Carlos sends first batch manually,90 min,€0,P0 TODAY
+EMAILS,n8n email sequences = 0 active,HIGH,Deploy Railway,4 hours,€15/mo,P1
+EMAILS,Resend magic link = only emails sent,LOW - confirmation only,Not a problem,N/A,N/A,N/A
+EMAILS,Deal pack emails = 0 sent,MEDIUM - deal flow incomplete,Needs first real deal,After deal,€0,P2
+EMAILS,Daily digest = 0 sent,LOW - Carlos operating blind,Deploy n8n,4 hours,€15/mo,P2
+,,,,,
+MISSING OPERATIONS,,,,
+OPERATIONS,No team (0 agents),HIGH - single point of failure,Recruit after first €75K commission,After revenue,Revenue-funded,P3
+OPERATIONS,No partner network,HIGH - limited deal sourcing,Activate /parceiros + calls,Networking,€0,P2
+OPERATIONS,No defined sales process,MEDIUM - process is in code,Document sequence,2 hours,€0,P2
+OPERATIONS,No Google Search Console,MEDIUM - blind to organic traffic,Verify domain in GSC,30 min,€0,P2
+OPERATIONS,0 press coverage,LOW,Write press releases after deals,After revenue,€0,P3
+OPERATIONS,No social media,LOW - brand gap,Create IG + LinkedIn,2 hours setup,€0,P3
+OPERATIONS,n8n credentials not configured,HIGH - n8n unusable without creds,Add real credentials to n8n .env,30 min,€0,P1
+OPERATIONS,Railway account not created,HIGH - blocks n8n,Create Railway account,20 min,€15/mo,P1
+,,,,,
+PRIORITY SUMMARY,,,,
+P0 - DO TODAY (0 cost 5h total):,Email 67 contacts (90min),Call 3 developers (3h),Set WhatsApp token (1h),,
+P1 - THIS WEEK ($64 + 10h total):,Apollo $49,Deploy n8n Railway €15,CRM import SQL (30min),,
+P2 - THIS MONTH (free):,GSC verify,Partner outreach,First mandate,,
+P3 - POST REVENUE:,Hire agent,Social media,Press,,

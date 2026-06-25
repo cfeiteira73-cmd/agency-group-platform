@@ -1,0 +1,65 @@
+DOMAIN,COMPONENT,STATUS,SCORE,EVIDENCE,NOTES
+OVERALL,OWASP Score,87/100,87,Multiple security waves,After 7 security fix rounds
+,,,,,
+AUTHENTICATION,Magic link (SHA-256 hashed),LIVE,HIGH,app/api/auth/send verify,One-time-use SHA-256 blocklist
+AUTHENTICATION,Token 15-min TTL,LIVE,HIGH,used_magic_tokens table,Expires enforced
+AUTHENTICATION,Google OAuth,LIVE,HIGH,NextAuth Google provider,Works in production
+AUTHENTICATION,Session management (JWT),LIVE,HIGH,NextAuth JWT,Secure config
+AUTHENTICATION,Rate limiting (login),LIVE,HIGH,Upstash Redis on send+verify,Prevents brute force
+AUTHENTICATION,Portal auth (isPortalAuth),LIVE,HIGH,middleware.ts,Extra portal gate
+AUTHENTICATION,Admin routes auth guard,LIVE,HIGH,middleware.ts,All admin gated
+,,,,,
+API SECURITY,NextAuth session check,LIVE - most routes,HIGH,app/api/* auth() calls,Sofia contacts deals CRM
+API SECURITY,Bearer token (PORTAL_API_SECRET),LIVE - portal routes,HIGH,Bearer header check,Portal API routes
+API SECURITY,CRON_SECRET,LIVE - all 41 crons,HIGH,vercel.json + route checks,Prevents unauthorized cron calls
+API SECURITY,Upstash rate limiting,LIVE - auth+avm,HIGH,@upstash/ratelimit,auth/send auth/verify avm
+API SECURITY,Input validation (Zod),LIVE - key routes,MEDIUM,Zod schemas,Key form routes
+API SECURITY,SSRF allowlist,LIVE,HIGH,lib/security/,Outbound request whitelist
+API SECURITY,CSRF protection,LIVE,MEDIUM,NextAuth CSRF,State-changing routes
+API SECURITY,Field allowlist (investidores),LIVE,HIGH,commit b04a4ad,Mass assignment prevention
+API SECURITY,Ownership check (collections),LIVE,HIGH,commit b04a4ad,Cross-user data prevention
+API SECURITY,timingSafeEqual (22 routes),LIVE,HIGH,commit 9e51c2b,Constant-time comparison
+API SECURITY,timingSafeEqual length guard (WA),LIVE,HIGH,commit 1760efe,WhatsApp webhook fix
+,,,,,
+DATABASE SECURITY,RLS on all tables,LIVE,CRITICAL,Supabase RLS enabled,All production tables
+DATABASE SECURITY,Tenant isolation,LIVE,HIGH,RLS policies,Multi-tenant ready
+DATABASE SECURITY,Service role key (server-only),LIVE,HIGH,Vercel only,Not in client code
+DATABASE SECURITY,ANON key (client-safe),LIVE,HIGH,NEXT_PUBLIC_ prefix,Read-only access
+,,,,,
+GDPR COMPLIANCE,Right to erasure (Art.17),LIVE,COMPLIANT,gdpr-purge cron 03:00 UTC,Daily purge
+GDPR COMPLIANCE,Data portability (Art.20),LIVE,COMPLIANT,Export API,Users can export
+GDPR COMPLIANCE,Cookie consent,LIVE,COMPLIANT,Cookie banner,Standard implementation
+GDPR COMPLIANCE,Privacy policy,LIVE,COMPLIANT,/privacidade page,In Portuguese + EN
+GDPR COMPLIANCE,Data processing notice,LIVE,COMPLIANT,Privacy policy,Documented
+,,,,,
+SECRETS MANAGEMENT,ANTHROPIC_API_KEY,Vercel env only,HIGH,Not in client code,Never exposed
+SECRETS MANAGEMENT,SUPABASE_SERVICE_ROLE_KEY,Vercel only,HIGH,Local key corrupt (41 chars),Production key secure
+SECRETS MANAGEMENT,STRIPE_SECRET_KEY,Vercel env,HIGH,Server-side only,Not used in current model
+SECRETS MANAGEMENT,RESEND_API_KEY,Vercel env,HIGH,Key rotated 2026-04-13,Server-side only
+SECRETS MANAGEMENT,WHATSAPP_ACCESS_TOKEN,Vercel (PREENCHER),MEDIUM,Placeholder not real token,Security neutral (inactive)
+SECRETS MANAGEMENT,AUTH_SECRET,Vercel,HIGH,NextAuth requirement,Secure
+SECRETS MANAGEMENT,CRON_SECRET,Vercel,HIGH,All cron authentication,32+ chars
+SECRETS MANAGEMENT,.env.local,LOCAL ONLY,HIGH,Corrupt service key,Not committed to git
+SECRETS MANAGEMENT,git history,Clean,HIGH,No secrets in commits,Verified
+,,,,,
+LEGAL FIXES APPLIED,Fake AggregateRating 4.8 schema,REMOVED,COMPLIANT,Commit ~6d8a959,Schema manipulation risk gone
+LEGAL FIXES APPLIED,Invented testimonials,REMOVED,COMPLIANT,Commit ~6d8a959,False advertising risk gone
+LEGAL FIXES APPLIED,False transaction stats,REMOVED,COMPLIANT,Commit ~6d8a959,Consumer protection
+LEGAL FIXES APPLIED,Fake agent count claims,REMOVED,COMPLIANT,Commit ~6d8a959,Misrepresentation risk gone
+LEGAL FIXES APPLIED,Schema.org review markup,REMOVED,COMPLIANT,Commit ~6d8a959,Without real reviews
+,,,,,
+ADVANCED SECURITY,Zero Trust Engine,CODED,MEDIUM,lib/security/zeroTrustEngine.ts,Behavioral anomaly detection
+ADVANCED SECURITY,Session recording,CODED,MEDIUM,lib/security/,Per-session audit trail
+ADVANCED SECURITY,Request tracing,CODED,MEDIUM,lib/observability/,Correlation IDs
+ADVANCED SECURITY,Sentry error tracking,CONFIGURED,MEDIUM,SENTRY_DSN set in Vercel,Usage unverified
+,,,,,
+SECURITY GAPS (13/100 missing),,,,,
+GAP,A4: Ownership check - some routes missing,MEDIUM,Known,Fix when relevant,
+GAP,Not SOC2 certified,LOW,N/A,Post-€500K revenue,
+GAP,WHATSAPP_ACCESS_TOKEN placeholder,MEDIUM,Active,Fix when activating WA,
+GAP,Local .env.local key corrupt,LOW,Only local dev affected,Fix for local development,
+GAP,No security incident response plan,LOW,Process gap,Document when team grows,
+,,,,,
+AMI LEGAL STATUS,AMI 22506,REGISTERED,LEGAL,Real estate license,Can legally transact in Portugal
+AMI LEGAL STATUS,Commission rate,5%,LEGAL,Standard Portuguese market,50/50 CPCV+Escritura
+AMI LEGAL STATUS,IRS withholding,25%,LEGAL,Calculated automatically,Portuguese law

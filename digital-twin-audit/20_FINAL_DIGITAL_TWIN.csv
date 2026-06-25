@@ -1,0 +1,77 @@
+CATEGORY,DIMENSION,ITEM,EXACT_VALUE,STATUS,OPERATIONAL,REVENUE_RELEVANT,UNIQUE,MISSING,REBUILD_COST,NOTES
+,,,,,,,,,,,
+EVERYTHING BUILT,,,,,,,,,,
+PLATFORM,Code,Total files,2978,EXISTS,YES - deployed,FOUNDATION,YES - full stack,NO,€936K+,Confirmed 2026-06-25
+PLATFORM,Code,TypeScript files (ts+tsx),2003,EXISTS,YES,FOUNDATION,YES,NO,Included above,
+PLATFORM,Code,Lines of code (TS/TSX),437753,EXISTS,YES,FOUNDATION,YES - volume,NO,Included above,
+PLATFORM,Code,API routes,542,EXISTS,YES - all deployed,HIGH,YES,NO,€252K senior,Exact from PowerShell
+PLATFORM,Code,Frontend pages,155,EXISTS,YES - all live,HIGH,YES,NO,€160K senior,
+PLATFORM,Code,Blog articles,55,EXISTS,YES - indexed,HIGH,YES,NO,€11K,55 page.tsx files
+PLATFORM,Code,Languages,6,EXISTS,YES - all routes live,HIGH,YES,NO,€24K,en pt fr de ar zh
+PLATFORM,Code,Security (OWASP),87/100,EXISTS,YES,HIGH,YES,NO,€40K,7 security waves
+PLATFORM,Code,Tests,2222 passing,EXISTS,YES - all pass,MEDIUM,YES,NO,€24K,103 test files
+PLATFORM,Code,TypeScript errors,0,EXISTS,YES,HIGH,YES,NO,€0,Confirmed 2026-06-25
+,,,,,,,,,,,
+AI,Sofia AI agent,7 roles 8 tools,EXISTS,BUILT,0 real users,CRITICAL,YES - Portugal first?,WA activation,€32K,Unique AI agent for PT market
+AI,Sofia AI agent,Web widget,LIVE,OPERATIONAL,0 conversations,HIGH,YES,NO,Included,
+AI,Sofia AI agent,WhatsApp channel,CODED,NOT ACTIVE,0 messages,HIGH,YES,Token,€0 more,Needs WHATSAPP_ACCESS_TOKEN
+AI,AVM Valuation,Anthropic-powered,LIVE,OPERATIONAL,Carlos only,HIGH,YES,Real data,Included,
+AI,Juridico AI,10 legal areas,LIVE,OPERATIONAL,Carlos only,MEDIUM,YES,NO,Included,
+AI,Computer Vision,Photo scoring,LIVE,OPERATIONAL,Carlos only,MEDIUM,YES,NO,Included,
+AI,Semantic Search,pgvector,LIVE,OPERATIONAL,0 real searches,MEDIUM,YES,NO,Included,
+,,,,,,,,,,,
+DATA,Lead Engine,Total leads,18042,EXISTS,YES - queryable,CRITICAL,YES,Email enrichment,$80K data,6 months to rebuild
+DATA,Lead Engine,With email,117,EXISTS,YES,CRITICAL,YES,Apollo enrichment,Included,Immediately contactable
+DATA,Capital Network,Total profiles,7342,EXISTS,YES - queryable,CRITICAL,YES,Email enrichment,$80K data,Institutional buyers
+DATA,Capital Network,With email,67,EXISTS,YES,CRITICAL,YES,NO,Included,Immediately contactable
+DATA,Capital Network,US profiles,3010,EXISTS,YES,CRITICAL,YES,NO,Included,HNWI family offices
+DATA,Outreach Queue,Total contacts,3164,EXISTS,YES,HIGH,YES,n8n deploy,Included,Pre-qualified
+DATA,KPI Snapshots,Daily data points,62+ rows,EXISTS,YES - cron running,MEDIUM,YES,NO,Included,
+DATA,Properties DB,Demo properties,55,EXISTS,YES,HIGH,NO - demo,Real mandates,€0 (data entry),All demo/seeded
+DATA,Properties DB,Real mandates,0,MISSING,NO,CRITICAL,NO,MANDATE,€0 (commercial),Biggest commercial gap
+,,,,,,,,,,,
+AUTOMATION,Vercel Crons,Total active,41,EXISTS,YES - all running,MEDIUM,YES,Real data,€8K,All deployed
+AUTOMATION,n8n Workflows,Total built,21,EXISTS,NOT DEPLOYED,HIGH,YES,Railway deploy,€24K,4h to deploy
+AUTOMATION,n8n Workflows,Railway infra,FULLY CONFIGURED,EXISTS - NOT DEPLOYED,NO,HIGH,YES,Create Railway acct,€0 more,15 min + €15/mo
+AUTOMATION,Apollo Enrichment,Config,KEY PRESENT NOT RUN,EXISTS,NO,HIGH,NO,Run $49,€0 more,30 min + $49
+,,,,,,,,,,,
+CRM,Contacts,Real external,1,EXISTS,YES,LOW,NO,Import leads,€0,ISABELGRILO
+CRM,Contacts,Demo/seeded,27,EXISTS,YES,LOW,NO,Replace with real,€0,
+CRM,Contacts,Importable,18042+7342,AVAILABLE,NOT DONE,CRITICAL,NO,Run SQL,€0,RUN_CRM_IMPORT.sql
+CRM,Deals,Real deals,0,MISSING,NO,CRITICAL,NO,Commercial action,€0,
+CRM,Deals,Demo deals,8,EXISTS,YES,LOW,NO,Replace with real,€0,
+CRM,Pipeline,Stages configured,5,EXISTS,YES,HIGH,YES,Real deals,€0,Full Angariação→Escritura
+CRM,Sofia conversations,Total,0,MISSING,NO,CRITICAL,NO,Buyers arrive,€0,No real buyer has used Sofia
+,,,,,,,,,,,
+OPERATIONS,Revenue,Total since launch,€0,FACT,NO REVENUE,CRITICAL,NO,Commercial action,€0 more,62 days live
+OPERATIONS,Team,Agents,0,MISSING,NO,HIGH,NO,Post revenue hire,Revenue funded,Solo founder
+OPERATIONS,Partners,Co-agency signed,0,MISSING,NO,HIGH,NO,3 developer calls,€0,offmarket_leads have 14
+OPERATIONS,Outreach,Emails sent,0,MISSING,NO,CRITICAL,NO,90 minutes,€0,67 emails available today
+OPERATIONS,License,AMI 22506,REGISTERED,EXISTS,YES,CRITICAL,YES (scarcity),NO,€5K + 6 months,Legal to transact
+,,,,,,,,,,,
+BRAND,Website,agencygroup.pt,LIVE,OPERATIONAL,Unknown visitors,HIGH,YES,NO,,
+BRAND,SEO,62 days indexed,EXISTS,YES,YES,HIGH,YES,NO,$20K content,Google needs time to rebuild
+BRAND,Blog,55 articles 6 languages,EXISTS,YES,YES,HIGH,YES,NO,$11K,
+BRAND,Reviews,Real reviews,0,MISSING,NO,HIGH,NO,After first deal,€0,Ask after each transaction
+BRAND,Social media,Instagram/LinkedIn,NOT BUILT,MISSING,NO,MEDIUM,NO,2h setup,€0,
+,,,,,,,,,,,
+SECURITY,OWASP Score,87/100,EXISTS,YES,YES,HIGH,YES,13 points,€40K to rebuild,
+SECURITY,AMI Legal Compliance,Full,EXISTS,YES,YES,HIGH,YES,NO,€5K + time,
+SECURITY,GDPR Art.17+20,COMPLIANT,EXISTS,YES,YES,HIGH,YES,NO,Included,
+,,,,,,,,,,,
+INFRASTRUCTURE,Vercel,LIVE Paris cdg1,EXISTS,OPERATIONAL,YES,CRITICAL,NO,NO,€3.6K/yr,
+INFRASTRUCTURE,Supabase,Frankfurt eu-central-1,EXISTS,OPERATIONAL,YES,CRITICAL,NO,NO,€0-300/yr,
+INFRASTRUCTURE,Railway n8n,CONFIGURED NOT DEPLOYED,EXISTS,NOT LIVE,NO,HIGH,NO,Create account,€180/yr,
+,,,,,,,,,,,
+VERDICT SUMMARY,,,,,,,,,,
+EVERYTHING BUILT,~€936K in code alone,EXISTS,YES - 437K LOC,TECHNICALLY STRONG,YES - rebuildable,€936K code + €200K data + €30K content = €1.16M,
+EVERYTHING OPERATIONAL,~50 routes producing real output,PARTIAL,YES - 41 crons live,TECHNICALLY READY,YES,kpi snapshots analytics auth,
+EVERYTHING NON-OPERATIONAL,3164 sequences | 21 n8n workflows | WhatsApp | CRM | Sofia convos,CODED,BLOCKED,TECHNICALLY READY - COMMERCIALLY BLOCKED,Minimal investment to activate,€64 + 10h to unlock most,
+EVERYTHING VALUABLE,Data (25K buyers) + Platform (€936K code) + License (AMI) + SEO (62 days),EXISTS,YES,€1.16M+ total value,YES - unique combination,Cannot be replicated quickly,
+EVERYTHING MONETIZABLE,All of it — if commercial activity begins,PENDING,0 REVENUE,WAITING FOR TRIGGER,YES,First email → first meeting → first deal → €75K,
+EVERYTHING UNIQUE,HNWI buyer database + AI agent + AMI + Portugal positioning + i18n depth,EXISTS,YES,NO EQUIVALENT IN PORTUGAL,YES,Combination is unique,
+EVERYTHING MISSING,Real mandates | Email outreach | n8n deployed | Apollo enrichment | WhatsApp token,NOT DONE,COMMERCIALLY DORMANT,NOT TECHNICAL GAPS,Commercial + activation gaps,10h + €64 to fix most,
+TOTAL REPLACEMENT COST,€1.16M minimum,12 months minimum,Cannot shortcut data + SEO + legal,REPLACE FOR €1M+,YES,€936K code + €120K data + €30K content + €10K legal + €60K infra year 1,
+COMMERCIAL READINESS,3/100,62 days live,€0 revenue,NOT COMMERCIALLY ACTIVE,NO,0 mandates 0 deals 0 outreach,
+TECHNICAL READINESS,87/100,2978 files,437K LOC,TECHNICALLY STRONG,YES,0 errors 2222 tests OWASP 87,
+EXACT NEXT ACTIONS,1 Email 67 contacts (90min 0 cost) | 2 Call 3 developers (3h 0 cost) | 3 Deploy n8n Railway (4h 15eur/mo) | 4 Apollo $49 (30min) | 5 WhatsApp token (1h 0 cost),,,,,ALL ACTIONS CARLOS-OWNED,

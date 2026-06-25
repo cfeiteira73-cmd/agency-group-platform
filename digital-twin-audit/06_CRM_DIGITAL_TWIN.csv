@@ -1,0 +1,57 @@
+ENTITY,METRIC,VALUE,NOTES,CAN_RUN_REAL_SALES_TODAY
+CONTACTS,Total rows,28,27 demo + 1 real external,
+CONTACTS,Real external contacts,1,ISABELGRILO@GMAIL.COM,
+CONTACTS,Demo/seeded,27,From Wave imports,
+CONTACTS,With email,~28,All have email in demo,
+CONTACTS,Importable from leads,18042,RUN_CRM_IMPORT.sql available,
+CONTACTS,Importable from capital_profiles,7342,Export available,
+,,,,,
+DEALS,Total rows,8,ALL demo,
+DEALS,Real deals,0,None,
+DEALS,Stages present,Full pipeline coded,Angariação → Escritura,
+DEALS,Expected fee (real),€0,,
+DEALS,Expected fee (demo total),~€9.44M,Demo calculated value,
+,,,,,
+COMPANIES/PROFILES,Total rows,0,profiles table empty,
+COMPANIES/PROFILES,Real companies tracked,0,,
+,,,,,
+TASKS,Exists?,Unknown,tasks table - migration status unknown,
+ACTIVITIES,Exists?,Unknown,activities table - migration status unknown,
+OWNERS,System,Carlos only,1 user (all 38 magic link tokens),
+PIPELINES,Count,1 (built),Full Angariação→Escritura pipeline,
+STAGES,Count,5,Angariação Proposta CPCV Pré-Escritura Escritura,
+STAGE PROBABILITIES,Angariação,10%,Fixed commit 8aa4f63,
+STAGE PROBABILITIES,Proposta Enviada,20%,Fixed commit 8aa4f63,
+STAGE PROBABILITIES,CPCV Assinado,70%,Fixed commit 8aa4f63,
+STAGE PROBABILITIES,Pré-Escritura,85%,Fixed commit 8aa4f63,
+STAGE PROBABILITIES,Escritura Concluída,100%,Fixed commit 8aa4f63,
+,,,,,
+CAN AGENCY GROUP RUN A REAL SALES PROCESS TODAY?,,,,,
+ANSWER: TECHNICALLY YES - COMMERCIALLY REQUIRES ACTIVATION,,,,,
+,,,,
+CAPABILITY,STATUS,BLOCKER,FIX,TIME
+Create a contact,YES - form exists,,/contacto + manual portal,0
+Add contact from lead,YES - SQL ready,RUN_CRM_IMPORT.sql not run,Run SQL,30 min
+Create a deal,YES - portal exists,Need real contact first,Create contact first,0 after contact
+Add property to deal,YES - deal flow coded,Need real property,Co-agency first,After mandate
+Generate deal pack,YES - AI powered,,/api/deal-packs,0
+Email deal pack to buyer,YES - Resend ready,,/api/deals/[id]/send,0
+Track CPCV progress,YES - pipeline coded,,Dashboard,0
+Calculate commission,YES - calculator works,,/dashboard/simulations,0
+Follow up automatically,NO - n8n not deployed,Railway not set up,Deploy n8n,4 hours
+Send outreach at scale,NO - 0 emails sent,,Email 67 contacts manually,90 min
+,,,,,
+SALES PROCESS READINESS,,,,,
+MANUAL SALES (1 deal at a time),READY TODAY,Just start,No tech needed,
+AUTOMATED SALES (sequences),BLOCKED,n8n not deployed,4 hours Railway,
+AT SCALE (hundreds/month),BLOCKED,Apollo + n8n needed,$49 + 4h,
+,,,,,
+CRM ACTIVATION SEQUENCE,,,,,
+STEP 1: Email 67 capital_profiles,1 day,Carlos action,90 min,
+STEP 2: Import leads to CRM,1 day,Run SQL file,30 min,
+STEP 3: First reply → create CRM deal,Same day as reply,,0 min (manual),
+STEP 4: Schedule showing,Days 3-7,Carlos calls,,
+STEP 5: Add real property to DB,After co-agency,,0 min (form),
+STEP 6: Deal pack generated + sent,After property + buyer match,,0 min (AI),
+STEP 7: CPCV signed,Weeks 4-8,Carlos negotiates,,
+STEP 8: Escritura,Months 2-6,Notary schedules,,

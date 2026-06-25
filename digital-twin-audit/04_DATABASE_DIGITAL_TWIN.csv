@@ -1,0 +1,41 @@
+TABLE,ROWS,CONFIDENCE,PURPOSE,USED_BY,ORPHAN,REVENUE_RELEVANCE,BUSINESS_RELEVANCE,DATA_SOURCE
+leads,18042,HIGH,Lead Engine - sourced companies with buyer potential,/api/leads portal/lead-engine,NO,HIGH - outreach targets,HIGH - 117 emails contactable,2026-06-24 audit
+capital_profiles,7342,HIGH,Capital Network - institutional buyers HNWI,/api/investidores investor-intelligence,NO,CRITICAL - 67 emails right now,CRITICAL - best leads available,2026-06-24 audit
+outreach_queue,3164,HIGH,Pre-qualified contacts for n8n sequences,n8n workflows (NOT DEPLOYED),NO,HIGH - ready when n8n deploys,HIGH,2026-06-24 audit
+contacts,28,HIGH,CRM contacts (27 demo + 1 real),/api/contacts portal/crm,NO,LOW - only 1 real contact,LOW currently - needs import,2026-06-24 audit
+deals,8,HIGH,CRM deals (all demo),/api/deals portal/crm,NO,LOW - all demo,LOW - no real deals,2026-06-24 audit
+properties,~55,MEDIUM,Property listings (all seeded/demo),/api/properties /imoveis,NO,MEDIUM - API fixed needs real inventory,HIGH when real mandates exist,2026-06-24 audit
+offmarket_leads,14,HIGH,Developer/vendor contacts for co-agency,/api/offmarket-leads,NO,HIGH - path to first mandate,HIGH - first real property,2026-06-24 audit
+profiles,0,HIGH,Agent profiles,/api/auth /dashboard,NO - empty,LOW currently,HIGH when agents hired,2026-06-24 audit
+sofia_conversations,0,HIGH,AI chat conversation history,/api/sofia,NO - empty,MEDIUM,HIGH when buyers arrive,2026-06-24 audit
+sofia_conversation_turns,0,HIGH,Individual conversation messages,/api/sofia,NO - empty,MEDIUM,HIGH when buyers arrive,2026-06-24 audit
+kpi_snapshots,62+,HIGH,Daily KPI data points,/api/cron/kpi-snapshot /dashboard/executive,NO,MEDIUM - tracks health,HIGH - operational intelligence,Cron since 2026-04-24
+used_magic_tokens,38,HIGH,Login token blocklist,/api/auth/verify,NO,LOW,CRITICAL - security,2026-06-24 audit
+analytics_events,Unknown,LOW,Visitor tracking events,/api/analytics,NO,MEDIUM,MEDIUM,Unverified
+priority_items,Unknown,LOW,Priority task queue,/api/priority? control-tower,Unknown,LOW,MEDIUM,Migration 20260426 applied
+collections,Unknown,LOW,Property collections saved by users,/collection,Unknown,LOW - no buyers,MEDIUM,Unverified
+price_history,Unknown,LOW,Property price change log,/api/properties,Unknown,LOW currently,MEDIUM when real inventory,Unverified
+property_embeddings,Unknown,LOW,pgvector semantic search embeddings,Semantic search,NO,MEDIUM,HIGH - AI search capability,Unverified
+learning_events,Unknown,LOW,System learning/event bus,/api/events? automation,Unknown,LOW,MEDIUM,Migration applied?
+,,,,,,,,,
+MISSING TABLES (may not exist),,,,,,,
+partners,Unknown,VERY LOW,Partner/co-agency management,partner system,Unknown,HIGH - needed for co-agency,HIGH,NOT CONFIRMED APPLIED
+campanhas_crm,Unknown,VERY LOW,CRM marketing campaigns,campaign system,Unknown,MEDIUM,MEDIUM,NOT CONFIRMED APPLIED
+sellers,Unknown,VERY LOW,Property seller profiles,mandate system,Unknown,HIGH - needed for inventory,HIGH,NOT CONFIRMED APPLIED
+buyers,Unknown,VERY LOW,Dedicated buyer profiles (separate from contacts),buyer system,Unknown,HIGH,HIGH,NOT CONFIRMED APPLIED
+investment_portfolios,Unknown,VERY LOW,Investor portfolio tracking,investor system,Unknown,MEDIUM,HIGH,NOT CONFIRMED APPLIED
+,,,,,,,,,
+DB INFRASTRUCTURE,,,,,,,
+Supabase project,isbfiofwpxqqpgxoftph,,Frankfurt eu-central-1,ALL,NO,CRITICAL,CRITICAL,Confirmed
+RLS (Row Level Security),ALL tables,,Security isolation,ALL,NO,CRITICAL,CRITICAL,Confirmed
+pgvector extension,Exists,,Semantic search capability,property-ai,NO,HIGH,HIGH,Confirmed
+Auth (Supabase),Exists,,User authentication,NextAuth,NO,CRITICAL,CRITICAL,Confirmed
+Storage buckets,Unknown,,File storage,Unknown,Unknown,MEDIUM,MEDIUM,Unverified
+Edge functions,Unknown,,Serverless functions,Unknown,Unknown,MEDIUM,MEDIUM,Unverified
+Realtime,Coded,,Real-time subscriptions,coded,Unknown,LOW,MEDIUM,Coded unverified
+,,,,,,,,,
+CRITICAL NOTES,,,,,,,
+NOTE,Local service key corrupted,,41 chars vs 256+ needed,,,,DB only accessible via Vercel production,
+NOTE,MCP returned 403,,Supabase MCP blocked,,,,Cannot query DB directly from audit,
+NOTE,All row counts from 2026-06-24 audit,,revenue-activation/02_DATABASE_REALITY_CHECK.md,,,,
+NOTE,leads and contacts are DIFFERENT tables,,Common confusion in prior audits,,,,

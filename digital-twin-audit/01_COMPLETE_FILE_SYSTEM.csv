@@ -1,0 +1,109 @@
+CATEGORY,METRIC,EXACT_VALUE,METHOD,DATE
+TOTAL FILES,All files (excl node_modules .next logs),2978,PowerShell Get-ChildItem,2026-06-25
+TOTAL SIZE,Repository size MB,69.16,PowerShell Measure-Object Length,2026-06-25
+,,,
+FILE TYPES,TypeScript (.ts),1613,PowerShell Get-ChildItem -Filter *.ts,2026-06-25
+FILE TYPES,TypeScript React (.tsx),390,PowerShell Get-ChildItem -Filter *.tsx,2026-06-25
+FILE TYPES,TS+TSX total,2003,Sum,2026-06-25
+FILE TYPES,JavaScript (.js),13,PowerShell Get-ChildItem -Filter *.js,2026-06-25
+FILE TYPES,JavaScript React (.jsx),0,PowerShell Get-ChildItem -Filter *.jsx,2026-06-25
+FILE TYPES,SQL migrations (.sql),293,PowerShell Get-ChildItem -Filter *.sql,2026-06-25
+FILE TYPES,JSON files (.json),104,PowerShell Get-ChildItem -Filter *.json,2026-06-25
+FILE TYPES,Markdown (.md),419,PowerShell Get-ChildItem -Filter *.md,2026-06-25
+FILE TYPES,MDX (.mdx),0,PowerShell Get-ChildItem -Filter *.mdx,2026-06-25
+FILE TYPES,CSV files (.csv),9,PowerShell Get-ChildItem -Filter *.csv,2026-06-25
+FILE TYPES,Excel (.xlsx),18,PowerShell Get-ChildItem -Filter *.xlsx,2026-06-25
+FILE TYPES,CSS (.css),2,PowerShell Get-ChildItem -Filter *.css,2026-06-25
+FILE TYPES,Shell scripts (.sh),3,PowerShell Get-ChildItem -Filter *.sh,2026-06-25
+FILE TYPES,TOML config (.toml),2,PowerShell Get-ChildItem -Filter *.toml,2026-06-25
+FILE TYPES,YAML (.yaml),6,PowerShell Get-ChildItem -Filter *.yaml,2026-06-25
+FILE TYPES,YML (.yml),5,PowerShell Get-ChildItem -Filter *.yml,2026-06-25
+FILE TYPES,Images (.jpg),19,PowerShell Get-ChildItem -Filter *.jpg,2026-06-25
+FILE TYPES,SVG (.svg),8,PowerShell Get-ChildItem -Filter *.svg,2026-06-25
+FILE TYPES,Env files (.env),1,PowerShell Get-ChildItem -Filter .env,2026-06-25
+,,,
+LINES OF CODE,app/ directory,190351,PowerShell wc-equivalent TS/TSX,2026-06-25
+LINES OF CODE,lib/ directory,227160,PowerShell wc-equivalent TS/TSX,2026-06-25
+LINES OF CODE,components/ root,443,PowerShell wc-equivalent,2026-06-25
+LINES OF CODE,__tests__/,15939,PowerShell wc-equivalent,2026-06-25
+LINES OF CODE,tests/,3860,PowerShell wc-equivalent,2026-06-25
+LINES OF CODE,TOTAL TS/TSX LOC,~437753,Sum of above,2026-06-25
+,,,
+STRUCTURAL COUNTS,API route files (route.ts in /api/),542,PowerShell Get-ChildItem route.ts,2026-06-25
+STRUCTURAL COUNTS,Frontend pages (page.tsx),155,PowerShell Get-ChildItem page.tsx,2026-06-25
+STRUCTURAL COUNTS,Layout files (layout.tsx),11,PowerShell Get-ChildItem layout.tsx,2026-06-25
+STRUCTURAL COUNTS,Database migrations,278,Supabase migrations/ count,2026-06-25
+STRUCTURAL COUNTS,SQL files total,293,Includes manual + migrations,2026-06-25
+STRUCTURAL COUNTS,n8n workflow JSON files,21,n8n-workflows/ count,2026-06-25
+STRUCTURAL COUNTS,Blog articles (page.tsx in /blog/),55,app/blog/ subdirectories,2026-06-25
+STRUCTURAL COUNTS,Control-tower pages,30,app/control-tower/ pages,2026-06-25
+STRUCTURAL COUNTS,Dashboard pages,10,app/dashboard/ pages,2026-06-25
+STRUCTURAL COUNTS,Portal pages,10,app/portal/ pages,2026-06-25
+STRUCTURAL COUNTS,Test files (.spec.ts),30,PowerShell Get-ChildItem,2026-06-25
+STRUCTURAL COUNTS,Test files (.test.ts),73,PowerShell Get-ChildItem,2026-06-25
+STRUCTURAL COUNTS,Test files total,103,Sum,2026-06-25
+STRUCTURAL COUNTS,Components root tsx files,~5,components/ only,2026-06-25
+STRUCTURAL COUNTS,Lib subdirectories,~100,lib/ directory list,2026-06-25
+,,,
+DEPENDENCIES,Runtime dependencies,29,package.json dependencies,2026-06-25
+DEPENDENCIES,Dev dependencies,23,package.json devDependencies,2026-06-25
+DEPENDENCIES,Total,52,,2026-06-25
+,,,
+API ROUTE BREAKDOWN,cron,37,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,analytics,36,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,sre,16,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,auth,16,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,automation,15,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,system,14,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,control-tower,13,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,ops,12,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,investors,12,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,security,12,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,offmarket-leads,11,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,compliance,10,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,market,10,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,validation,10,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,ml,9,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,incidents,9,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,reality,8,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,properties,7,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,simulation,6,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,crm,6,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,property-ai,6,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,dashboard,6,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,resilience,6,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,buyers,5,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,sofia,5,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,financial,5,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,remediation,5,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,heygen,5,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,observability,4,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,portal,4,Exact from PowerShell,2026-06-25
+API ROUTE BREAKDOWN,other categories,~156,Remaining to reach 542,2026-06-25
+,,,
+LIB SUBDIRECTORY BREAKDOWN,runtime,75,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,security,46,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,property-ai,44,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,compliance,32,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,observability,31,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,events,30,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,ml,27,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,sre,26,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,ingestion,22,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,intelligence,20,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,product,20,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,agents,20,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,economics,18,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,workers,17,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,investors,16,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,market,14,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,ops,14,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,validation,14,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,go-to-market,13,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,ai,13,lib/ dir scan,2026-06-25
+LIB SUBDIRECTORY BREAKDOWN,Other 80+ subdirs,~100+,lib/ dir scan,2026-06-25
+,,,
+NOTES,blog articles are tsx page files not mdx,,Confirmed by file scan,2026-06-25
+NOTES,xlsx package NOT installed,,Test-Path node_modules/xlsx,2026-06-25
+NOTES,many lib/ subdirs appear aspirational/generated,,Review lib/ dir names,2026-06-25
+NOTES,418 .md files include audit reports (390+),,Most are not production docs,2026-06-25

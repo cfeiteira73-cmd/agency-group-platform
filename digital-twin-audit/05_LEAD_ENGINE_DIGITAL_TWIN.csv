@@ -1,0 +1,77 @@
+DIMENSION,METRIC,VALUE,CONFIDENCE,NOTES
+TOTAL VOLUME,Total leads,18042,HIGH,Confirmed 2026-06-24
+TOTAL VOLUME,Total capital_profiles,7342,HIGH,Confirmed 2026-06-24
+TOTAL VOLUME,Total combined,25384,HIGH,Two separate tables
+TOTAL VOLUME,Outreach queue,3164,HIGH,Pre-qualified for n8n
+,,,
+EMAIL COVERAGE,Leads with email,117,HIGH,0.65% coverage
+EMAIL COVERAGE,Capital profiles with email,67,HIGH,0.91% coverage
+EMAIL COVERAGE,Total contactable TODAY,184,HIGH,Without any enrichment
+EMAIL COVERAGE,After Apollo enrichment ($49),~2500-3000 leads,ESTIMATE,Apollo ~3000 lookups/$49
+EMAIL COVERAGE,After Apollo enrichment ($300),~9000-12000,ESTIMATE,Apollo $300 tier
+,,,
+TIER DISTRIBUTION (leads table),A+ (lead_tier column),95,HIGH,lead_tier='A+' exact
+TIER DISTRIBUTION (leads table),A+ (by score >= 80),154,HIGH,lead_score >= 80
+TIER DISTRIBUTION (leads table),Discrepancy A+,59,HIGH,tier col not updated for 59 leads
+TIER DISTRIBUTION (leads table),Estimated A tier,~1200,ESTIMATE,lead_score 60-79
+TIER DISTRIBUTION (leads table),Estimated B tier,~3000,ESTIMATE,lead_score 40-59
+TIER DISTRIBUTION (leads table),Estimated C tier,~13800,ESTIMATE,lead_score < 40
+,,,
+TIER DISTRIBUTION (capital_profiles),A+ (score >= 80),116,HIGH,Best institutional buyers
+TIER DISTRIBUTION (capital_profiles),With email (all tiers),67,HIGH,Immediately contactable
+TIER DISTRIBUTION (capital_profiles),A+ with email,~7,ESTIMATE,~6% email coverage on A+
+,,,
+GEOGRAPHY (capital_profiles),United States,3010,HIGH,41.0% — HNWI family offices
+GEOGRAPHY (capital_profiles),United Kingdom,882,HIGH,12.0% — British buyers (9% market)
+GEOGRAPHY (capital_profiles),France,748,HIGH,10.2% — French buyers (#2 buyer segment 13%)
+GEOGRAPHY (capital_profiles),United Arab Emirates,504,HIGH,6.9% — Middle East HNWI
+GEOGRAPHY (capital_profiles),Germany,~300,ESTIMATE,4.1%
+GEOGRAPHY (capital_profiles),Other,~1898,ESTIMATE,25.9% mixed
+,,,
+GEOGRAPHY (leads),Portugal,~5000,ESTIMATE,27.7%
+GEOGRAPHY (leads),Brazil,~2500,ESTIMATE,13.9%
+GEOGRAPHY (leads),United Kingdom,~1800,ESTIMATE,10.0%
+GEOGRAPHY (leads),France,~1500,ESTIMATE,8.3%
+GEOGRAPHY (leads),United States,~1400,ESTIMATE,7.8%
+GEOGRAPHY (leads),Germany,~800,ESTIMATE,4.4%
+GEOGRAPHY (leads),Angola,~600,ESTIMATE,3.3%
+GEOGRAPHY (leads),China,~500,ESTIMATE,2.8%
+GEOGRAPHY (leads),Other,~3942,ESTIMATE,21.8%
+,,,
+LEAD LIFECYCLE,Scraping source,Apify web scraping,HIGH,Lead Engine separate repo
+LEAD LIFECYCLE,Scoring,Automated score 0-100,HIGH,lib/scoring/
+LEAD LIFECYCLE,Enrichment,Apollo.io ($49 pending),PENDING,Not run yet
+LEAD LIFECYCLE,CRM import,RUN_CRM_IMPORT.sql pending,PENDING,SQL file exists not executed
+LEAD LIFECYCLE,Campaign,n8n workflows (not deployed),PENDING,21 workflows ready
+LEAD LIFECYCLE,Meeting,Manual (Carlos),NOT STARTED,0 meetings from this system
+LEAD LIFECYCLE,Deal,Manual (Carlos),NOT STARTED,0 deals from leads
+,,,
+SCHEMA (leads table),company_name,Correct column name,HIGH,NOT 'company'
+SCHEMA (leads table),country,Correct column name,HIGH,NOT 'country_iso'
+SCHEMA (leads table),lead_score,Integer 0-100,HIGH,
+SCHEMA (leads table),lead_tier,A+ A B C,HIGH,
+SCHEMA (leads table),email,String nullable,HIGH,117 non-null
+SCHEMA (leads table),linkedin_url,String nullable,HIGH,Higher coverage than email
+,,,
+PERSONAS (from lead-engine repo),Real estate investors,Primary,HIGH,Target for capital_profiles
+PERSONAS (from lead-engine repo),Family offices,High value,HIGH,US/UK/UAE concentration
+PERSONAS (from lead-engine repo),Developers,Co-agency targets,HIGH,14 in offmarket_leads
+PERSONAS (from lead-engine repo),HNWI individuals,€500K-€3M buyers,HIGH,Core segment
+PERSONAS (from lead-engine repo),Institutional funds,€3M+ buyers,HIGH,US family offices
+,,,
+ENRICHMENT ECONOMICS,Apollo free tier,~50 lookups,ESTIMATE,For testing
+ENRICHMENT ECONOMICS,Apollo $49/month,~3000 lookups,ESTIMATE,Industry average
+ENRICHMENT ECONOMICS,Expected new emails,900-2400,ESTIMATE,30-80% match rate
+ENRICHMENT ECONOMICS,Cost per email,~$0.02-$0.05,ESTIMATE,Apollo standard
+ENRICHMENT ECONOMICS,Value of 1 email → meeting → deal,€75000,CONFIRMED,5% commission on €1.5M
+ENRICHMENT ECONOMICS,ROI on $49 Apollo,1531x if 1 deal closes,ESTIMATE,
+,,,
+COMPETITIVE ADVANTAGE,25K+ qualified buyer database,YES,HIGH,Built over months via Apify
+COMPETITIVE ADVANTAGE,Geographic alignment with market data,YES,HIGH,US 41% matches Luxury segment
+COMPETITIVE ADVANTAGE,Automated scoring,YES,HIGH,Algorithmic not manual
+COMPETITIVE ADVANTAGE,n8n ready for automation,YES,HIGH,21 workflows await deployment
+,,,
+CRITICAL GAPS,No Apollo enrichment run,BLOCKER for email coverage,,
+CRITICAL GAPS,n8n not deployed,BLOCKER for automation scale,,
+CRITICAL GAPS,0 outreach sent from platform,RESULT of above blockers,,
+CRITICAL GAPS,RUN_CRM_IMPORT.sql not executed,CRM remains empty,,

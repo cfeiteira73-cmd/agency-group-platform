@@ -1,0 +1,58 @@
+SYSTEM,NAME,TRIGGER,ACTION,DESTINATION,TESTED,OPERATIONAL,REAL_OUTPUT
+VERCEL CRON,kpi-snapshot,Daily 23:55 UTC,Captures all KPIs,kpi_snapshots table,YES,YES - 62+ rows,CONFIRMED DATA
+VERCEL CRON,gdpr-purge,Daily 03:00 UTC,GDPR data purge,Multiple tables,YES,YES,Unknown data
+VERCEL CRON,recompute-agent-performance,Monday 02:00,Agent perf calcs,profiles table,YES,YES - empty (0 agents),Empty
+VERCEL CRON,revenue-loop (3x),08:00 12:00 18:00 UTC,Revenue detection,All revenue tables,YES,YES - runs,0 revenue found
+VERCEL CRON,alerts-push,Daily 09:00,Hot buyer alerts,leads + capital_profiles,YES,YES FIXED 472a95e,Minimal (no replies)
+VERCEL CRON,lead-score-refresh,Daily 04:00,Rescore leads,leads table,YES,YES,Active - minimal change
+VERCEL CRON,capital-score-refresh,Monday 04:00,Rescore capital,capital_profiles,YES,YES,Active - minimal change
+VERCEL CRON,property-match,Daily 10:00,Match buyers/properties,leads + properties,YES,YES,0 matches (no real props)
+VERCEL CRON,sofia-followup,Daily 09:00,Follow up conversations,sofia_conversations,YES,YES,0 (0 conversations)
+VERCEL CRON,deal-progress,Daily 11:00,Move deals forward,deals table,YES,YES,Demo only
+VERCEL CRON,outreach-dispatch (2x),08:00 14:00,Send outreach,outreach_queue → n8n,YES,YES - but n8n not deployed,0 sent
+VERCEL CRON,market-intel,Monday 06:00,Market intel update,market tables,YES,Partial,Unknown
+VERCEL CRON,avm-compute,Sunday 03:00,AVM batch,properties,YES,YES,Demo properties
+VERCEL CRON,blog-refresh,Daily 01:00,Blog cache,Next.js cache,YES,YES,Active
+VERCEL CRON,seo-sitemap,Sunday 05:00,Sitemap generation,sitemap.xml,YES,YES,Active
+VERCEL CRON,embedding-refresh,Sunday 02:00,pgvector refresh,property_embeddings,YES,YES,Demo properties
+VERCEL CRON,system-health,Every 30 min,Health checks,system tables,YES,YES,Active
+VERCEL CRON,cleanup,Sunday 00:00,Data cleanup,Various,YES,YES,Active
+VERCEL CRON,(other 23 crons),Various,Various,Various,Partial,YES runs,Minimal
+VERCEL CRON,TOTAL,41 crons,All have route.ts,Confirmed,YES all,YES all,Only kpi-snapshot confirmed data
+,,,
+N8N WORKFLOW,a-lead-enrichment,New lead,Apollo enrichment,leads table,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,a-lead-inbound,Webhook,Lead capture,leads table,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,b-daily-report,Daily schedule,Report generation,Carlos email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,b-lead-scoring,Lead update,Score calculation,leads table,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,c-dormant-lead,Schedule,Dormant reactivation,outreach_queue,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,d-investor-alert,Capital profile score,Alert Carlos,Carlos email/push,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,e-vendor-report,Schedule,Vendor reporting,Vendor email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,g-fixed,Schedule,Capital outreach sequences,capital_profiles email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,wf_g_current,Schedule,Capital outreach (current),capital_profiles email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,g-offmarket-new,Webhook,Off-market notification,Carlos,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,h-score-high-alert,Score threshold,High score alert,Carlos push,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,i-followup-auto,Reply detection,Automated follow-up,Leads email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,j-partner-onboarding,Partner form,Partner welcome,Partner email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,k-meeting-notify,Meeting booked,Notifications,Carlos + Lead,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,l-lead-reactivation,30-day no contact,Reactivation email,leads,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,m-advisor-assignment,Lead score,Advisor assign,CRM,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,n-daily-digest,Daily schedule,Daily summary,Carlos email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,o-weekly-performance,Weekly schedule,Weekly report,Carlos email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,p-saved-search-created,User saves search,Alert new matches,User email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,q-property-alert-match,New property added,Buyer match alert,Matched buyers,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,r-lead-nurture,Lead created,Nurture sequence,Lead email,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,post-close-automation,Deal closed,Post-close workflow,Various,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,property-ai-live-notification,Property updated,AI notification,Carlos,BUILT,NOT DEPLOYED,0
+N8N WORKFLOW,TOTAL,21 workflows,All configured,Railway pending,YES built,NOT DEPLOYED,0 output
+,,,
+DEPLOYMENT INFO,Railway,All configured,railway.toml Dockerfile.n8n,4 hours to deploy,€15/month,NOT DEPLOYED,
+DEPLOYMENT INFO,n8n credentials needed,SUPABASE + RESEND + ANTHROPIC + APOLLO,,In n8n-workflows/.env,,
+,,,
+OUTREACH QUEUE,3164 contacts in outreach_queue,READY,Waiting for n8n deployment,,,,
+,,,
+AUTOMATION IMPACT IF DEPLOYED,,,,,
+IMPACT,Capital outreach automation,3164 sequences,15% open rate → 475 opens,3% reply → 95 replies,10% meeting → 9 meetings
+IMPACT,Lead nurture sequences,18042 leads available,n8n + email needed,Multi-touch automated,,
+IMPACT,Investor alerts,Carlos notified instantly,High score triggers,No manual monitoring needed,,
+IMPACT,Daily digest,Carlos gets daily briefing,Email every morning,Full operational awareness,,
+IMPACT,Dormant lead revival,Automates follow-ups,30-day triggers,No CRM manual work needed,,

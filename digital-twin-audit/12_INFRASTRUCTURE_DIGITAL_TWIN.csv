@@ -1,0 +1,76 @@
+SERVICE,COMPONENT,STATUS,TIER,MONTHLY_COST,CRITICALITY,NOTES
+,,,,,
+HOSTING,Vercel,LIVE,Production,Unknown (Pro?),CRITICAL,cdg1 Paris - closest to Portugal
+HOSTING,Vercel regions,cdg1 Paris,Production,,CRITICAL,Auto-selected closest
+HOSTING,Vercel crons,41 configured,Production,Included,CRITICAL,All 41 live
+HOSTING,Vercel build,Auto on push,Production,,CRITICAL,No CI/CD - direct push to deploy
+HOSTING,Vercel env vars,64 set,Production,,CRITICAL,All secrets in Vercel
+HOSTING,Vercel domains,agencygroup.pt + others,Production,,HIGH,Custom domain configured
+,,,,,
+DATABASE,Supabase,LIVE,Production,Free tier or Pro?,CRITICAL,Frankfurt eu-central-1
+DATABASE,Supabase project ID,isbfiofwpxqqpgxoftph,Production,,CRITICAL,EU region GDPR compliant
+DATABASE,Supabase PostgreSQL,v15+,Production,,CRITICAL,With pgvector extension
+DATABASE,Supabase RLS,ALL tables,Production,,CRITICAL,Security layer
+DATABASE,Supabase Auth,LIVE,Production,,CRITICAL,Magic link + OAuth
+DATABASE,Supabase Storage,Exists (unknown usage),Production,Unknown,MEDIUM,Storage buckets
+DATABASE,Supabase local key,.env.local = 41 chars CORRUPT,Local dev,N/A,LOW,Only local dev affected
+,,,,,
+CACHE / RATE LIMIT,Upstash Redis,LIVE,Production,Free tier (10K/day)?,$5-20/mo,HIGH,Rate limiting on auth+avm
+CACHE / RATE LIMIT,Rate limit on auth/send,200 per 15min per IP,Production,,HIGH,Prevents brute force
+CACHE / RATE LIMIT,Rate limit on auth/verify,50 per 15min per IP,Production,,HIGH,Prevents token stuffing
+CACHE / RATE LIMIT,Rate limit on avm,20 per hour per user,Production,,MEDIUM,Anthropic cost control
+,,,,,
+AI / ML,Anthropic Claude,LIVE,Production,~$50-500/month?,CRITICAL,claude-sonnet-4-6 model
+AI / ML,Anthropic model,claude-sonnet-4-6,Production,,CRITICAL,All Sofia + AVM + Juridico
+AI / ML,Anthropic rate limits,Standard tier,Production,,CRITICAL,No custom limits set
+AI / ML,Anthropic lazy proxy,FIXED,Production,Commit 8aa4f63,,Prevents test env errors
+,,,,,
+EMAIL,Resend,LIVE,Production,Free tier (100/day) or paid?,HIGH,All transactional email
+EMAIL,Resend API key,Rotated 2026-04-13,Production,,HIGH,re_TtQZcoYi...
+EMAIL,Magic link emails,SENDING,Production,,CRITICAL,38 login emails sent
+EMAIL,Deal pack emails,READY - 0 sent,Production,,HIGH,Coded not used
+EMAIL,Outreach emails,BLOCKED,Production,,HIGH,n8n not deployed
+,,,,,
+AUTOMATION,Railway,NOT DEPLOYED,Target,€15/month,HIGH,For n8n hosting
+AUTOMATION,n8n (on Railway),NOT DEPLOYED,Target,Included in Railway,HIGH,21 workflows waiting
+AUTOMATION,n8n local,Unknown,Development,€0,LOW,Not confirmed running
+,,,,,
+ENRICHMENT,Apollo.io,CONFIGURED - NOT RUN,Target,$49/month minimum,HIGH,Key present in Vercel
+ENRICHMENT,Apify,USED in Lead Engine,Lead Engine only,Varies,MEDIUM,Web scraping
+,,,,,
+OUTREACH,Smartlead.ai,CONFIGURED,Target,Varies,HIGH,Email sequence automation
+OUTREACH,Resend (direct),LIVE,Production,See above,HIGH,For individual emails
+,,,,,
+VIDEO / MEDIA,HeyGen,CONFIGURED,Development?,Varies,LOW,AI avatar video - not used
+,,,,,
+NOTIFICATIONS,VAPID Push,CODED,Production,Free,MEDIUM,Browser push notifications
+NOTIFICATIONS,Sentry,CONFIGURED,Production,$0-$26/month,MEDIUM,Error tracking DSN set
+,,,,,
+EXTERNAL DATA,Casafari,CONFIGURED,Unverified,Varies,MEDIUM,Property data API
+EXTERNAL DATA,Idealista,CONFIGURED,Unverified,Varies,MEDIUM,Listing API
+EXTERNAL DATA,Notion,CONFIGURED,Production,€0?,LOW,Knowledge base
+,,,,,
+PAYMENTS,Stripe,CONFIGURED - NOT ACTIVE,Future,€0 today,LOW,Not needed for commission model
+,,,,,
+DNS / DOMAINS,agencygroup.pt,LIVE,Production,~€15/year,HIGH,Primary domain
+DNS / DOMAINS,Other domains,Unknown,Unknown,Unknown,MEDIUM,May have redirects
+,,,,,
+INFRASTRUCTURE SCORE,,,,,
+SCORE DIMENSION,SCORE,NOTES,,
+Reliability,92/100,62 days no crashes,,
+Security,87/100,OWASP score,,
+Performance,85/100,Paris edge deployment,,
+Scalability,75/100,Vercel auto-scales,,
+Cost efficiency,90/100,Very low costs vs capability,,
+Observability,60/100,Sentry + analytics - usage unverified,,
+Backup/DR,50/100,Supabase auto-backup + no formal DR plan,,
+AGGREGATE,77/100,,,
+,,,,,
+MONTHLY COST ESTIMATE,,,,,
+Vercel Pro,€20-50/month,Estimate,,
+Supabase,€0-25/month,Free or Pro,,
+Upstash Redis,€0-10/month,Free tier likely,,
+Anthropic API,€50-500/month,Depends on usage,,
+Resend,€0-20/month,100/day free,,
+Domain,€1/month,€15/year,,
+Total estimate,€70-600/month,Mostly Anthropic variable,,

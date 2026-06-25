@@ -1,0 +1,95 @@
+CATEGORY,ROUTE,FILE,PURPOSE,AUTH_METHOD,DB_TABLES,EXTERNAL_SERVICES,STATUS,TESTED,REAL_OUTPUT
+AUTH,/api/auth/send,app/api/auth/send/route.ts,Magic link send,Public + Upstash RL,used_magic_tokens,Resend,LIVE,YES,YES - emails send
+AUTH,/api/auth/verify,app/api/auth/verify/route.ts,Magic link verify,Token hash,used_magic_tokens,None,LIVE,YES,YES - creates sessions
+AUTH,/api/auth/[...nextauth],app/api/auth/[...nextauth]/route.ts,NextAuth OAuth,NextAuth,users (Supabase),Google,LIVE,YES,YES - Google login works
+AUTH,/api/auth/portal,app/api/auth/portal/route.ts,Portal auth check,NextAuth,profiles,None,LIVE,YES,YES
+AUTH,/api/auth/(other 12),app/api/auth/*,Auth utilities,NextAuth/Token,Various,None,LIVE,Partial,YES
+,,,,,,,,,
+SOFIA AI,/api/sofia/chat,app/api/sofia/chat/route.ts,Main AI chat,NextAuth,sofia_conversations,Anthropic,LIVE,YES,0 real conversations
+SOFIA AI,/api/sofia/[role],app/api/sofia/[role]/route.ts,Role-specific,NextAuth,sofia_conversations,Anthropic,LIVE,YES,0 real usage
+SOFIA AI,/api/sofia/(other 3),app/api/sofia/*,Sofia utilities,NextAuth,Various,Anthropic,LIVE,YES,0 real usage
+,,,,,,,,,
+PROPERTIES,/api/properties/public,app/api/properties/public/route.ts,Public listing,Public,properties,None,LIVE FIXED 1760efe,YES,YES - 55 demo
+PROPERTIES,/api/properties,app/api/properties/route.ts,Portal CRUD,Bearer,properties,None,LIVE FIXED 1760efe,YES,YES - 55 demo
+PROPERTIES,/api/properties/[id],app/api/properties/[id]/route.ts,Property detail,Public+Bearer,properties,None,LIVE,YES,YES
+PROPERTIES,/api/properties/new,app/api/properties/new/route.ts,Add property,Bearer,properties,None,LIVE,YES,0 uses
+PROPERTIES,/api/properties/(other 3),app/api/properties/*,Property ops,Bearer,properties,None,LIVE,Partial,Minimal
+,,,,,,,,,
+AVM,/api/avm,app/api/avm/route.ts,Property valuation,NextAuth + Upstash RL,properties,Anthropic,LIVE,YES,Carlos only
+,,,,,,,,,
+DEALS,/api/deals,app/api/deals/route.ts,Deal CRUD,NextAuth,deals,None,LIVE,YES,8 demo deals
+DEALS,/api/deals/[id],app/api/deals/[id]/route.ts,Deal detail,NextAuth,deals + contacts,None,LIVE,YES,8 demo
+DEALS,/api/deals/[id]/commission,app/api/deals/[id]/commission/route.ts,Commission calc,NextAuth,deals,None,LIVE,YES,Demo only
+DEALS,/api/deals/(other 8),app/api/deals/*,Deal utilities,NextAuth,deals,None,LIVE,Partial,Demo only
+,,,,,,,,,
+CONTACTS,/api/contacts,app/api/contacts/route.ts,CRM contacts,NextAuth,contacts,None,LIVE,YES,28 rows
+CONTACTS,/api/contacts/[id],app/api/contacts/[id]/route.ts,Contact detail,NextAuth,contacts,None,LIVE,YES,28 rows
+CONTACTS,/api/contacts/(other 8),app/api/contacts/*,Contact ops,NextAuth,contacts,None,LIVE,Partial,28 rows
+,,,,,,,,,
+LEADS,/api/leads,app/api/leads/route.ts,Lead management,Bearer,leads,None,LIVE,YES,18042 rows
+LEADS,/api/leads/[id],app/api/leads/[id]/route.ts,Lead detail,Bearer,leads,None,LIVE,YES,18042 rows
+LEADS,/api/leads/export,app/api/leads/export/route.ts,Lead export,Bearer,leads,None,LIVE,YES,CSVs work
+LEADS,/api/leads/(other 6),app/api/leads/*,Lead ops,Bearer,leads,Apollo,LIVE,Partial,Minimal
+,,,,,,,,,
+OFFMARKET LEADS,/api/offmarket-leads,app/api/offmarket-leads/route.ts,Off-market CRUD,Bearer,offmarket_leads,None,LIVE,YES,14 rows
+OFFMARKET LEADS,/api/offmarket-leads/score,app/api/offmarket-leads/score/route.ts,Lead scoring,Bearer,offmarket_leads,Anthropic,LIVE,YES,14 rows
+OFFMARKET LEADS,/api/offmarket-leads/(other 9),app/api/offmarket-leads/*,Off-market ops,Bearer,offmarket_leads,Various,LIVE,Partial,14 rows
+,,,,,,,,,
+INVESTORS,/api/investidores,app/api/investidores/route.ts,Investor management,NextAuth + field allowlist,capital_profiles,None,LIVE,YES,7342 rows
+INVESTORS,/api/investidores/[id],app/api/investidores/[id]/route.ts,Investor detail,NextAuth,capital_profiles,None,LIVE,YES,7342 rows
+INVESTORS,/api/investidores/(other 10),app/api/investidores/*,Investor ops,NextAuth,capital_profiles,None,LIVE,Partial,7342 rows
+,,,,,,,,,
+ALERTS,/api/alerts/push,app/api/alerts/push/route.ts,Push alerts,CRON_SECRET,leads + capital_profiles,None,LIVE FIXED 472a95e,YES,Minimal output
+ALERTS,/api/alerts/(other 7),app/api/alerts/*,Alert system,CRON_SECRET,Various,VAPID,LIVE,Partial,Minimal
+,,,,,,,,,
+ANALYTICS,/api/analytics (36 routes),app/api/analytics/*,Analytics collection + reporting,NextAuth + Bearer,analytics_events,None,LIVE,YES,Real visitor data
+,,,,,,,,,
+CRON (37 total),/api/cron/kpi-snapshot,app/api/cron/kpi-snapshot/route.ts,Daily KPI snapshot,CRON_SECRET,kpi_snapshots,None,YES,62+ rows in DB
+CRON,/api/cron/gdpr-purge,app/api/cron/gdpr-purge/route.ts,GDPR data purge,CRON_SECRET,Multiple tables,None,LIVE,YES,Active
+CRON,/api/cron/lead-score-refresh,app/api/cron/lead-score-refresh/route.ts,Rescore leads,CRON_SECRET,leads,None,LIVE,YES,Active - minimal
+CRON,/api/cron/property-match,app/api/cron/property-match/route.ts,Match buyers to properties,CRON_SECRET,leads + properties,None,LIVE,YES,Empty (0 real props)
+CRON,/api/cron/sofia-followup,app/api/cron/sofia-followup/route.ts,Sofia follow-up,CRON_SECRET,sofia_conversations,Resend,LIVE,YES,0 (no conversations)
+CRON,/api/cron/outreach-dispatch,app/api/cron/outreach-dispatch/route.ts,Send outreach emails,CRON_SECRET,outreach_queue,Resend/n8n,LIVE,YES,0 (n8n not deployed)
+CRON,/api/cron/(other 31),app/api/cron/*,Various cron jobs,CRON_SECRET,Various,Various,LIVE,Partial,Mostly empty
+,,,,,,,,,
+AUTOMATION,/api/automation/revenue-loop,app/api/automation/revenue-loop/route.ts,Revenue detection 3x/day,CRON_SECRET,All revenue tables,None,LIVE,YES,Minimal (no revenue)
+AUTOMATION,/api/automation/(other 14),app/api/automation/*,Automation ops,Bearer+CRON,Various,Various,LIVE,Partial,Minimal
+,,,,,,,,,
+SRE (16 routes),/api/sre/*,app/api/sre/*,System reliability,Bearer,sre_incidents? ,None,LIVE,Partial,Unknown
+SECURITY (12 routes),/api/security/*,app/api/security/*,Security monitoring,Bearer,security_events?,None,LIVE,Partial,Unknown
+COMPLIANCE (10 routes),/api/compliance/*,app/api/compliance/*,Compliance ops,Bearer,Various,None,LIVE,Partial,Unknown
+VALIDATION (10 routes),/api/validation/*,app/api/validation/*,Data validation,Bearer,Various,None,LIVE,Partial,Unknown
+ML (9 routes),/api/ml/*,app/api/ml/*,ML predictions,Bearer,Various,None,LIVE,Partial,Minimal
+MARKET (10 routes),/api/market/*,app/api/market/*,Market intelligence,Bearer,Various,None,LIVE,Partial,Minimal
+INCIDENTS (9 routes),/api/incidents/*,app/api/incidents/*,Incident management,Bearer,incidents?,None,LIVE,Partial,Unknown
+REALITY (8 routes),/api/reality/*,app/api/reality/*,Reality reconciliation,Bearer,Various,None,LIVE,Partial,Unknown
+RESILIENCE (6 routes),/api/resilience/*,app/api/resilience/*,System resilience,Bearer,Various,None,LIVE,Partial,Unknown
+REMEDIATION (5 routes),/api/remediation/*,app/api/remediation/*,Remediation ops,Bearer,Various,None,LIVE,Partial,Unknown
+OBS (4 routes),/api/observability/*,app/api/observability/*,Observability,Bearer,Various,None,LIVE,Partial,Unknown
+,,,,,,,,,
+WHATSAPP,/api/whatsapp/webhook,app/api/whatsapp/webhook/route.ts,WA message handler,WHATSAPP_VERIFY_TOKEN,sofia_conversations,WhatsApp API,CODED NOT ACTIVE,YES,0 (token = PREENCHER)
+WHATSAPP,/api/whatsapp/(other 4),app/api/whatsapp/*,WA utilities,Token,Various,WhatsApp API,CODED NOT ACTIVE,Partial,0
+,,,,,,,,,
+HEYGEN (5 routes),/api/heygen/*,app/api/heygen/*,AI video generation,Bearer,Various,HeyGen API,CODED,Partial,Unknown
+BUYERS (5 routes),/api/buyers/*,app/api/buyers/*,Buyer management,Bearer,contacts+capital_profiles,None,LIVE,Partial,Minimal
+FINANCIAL (5 routes),/api/financial/*,app/api/financial/*,Financial calcs,Bearer,deals,None,LIVE,Partial,Minimal
+SIMULATION (6 routes),/api/simulation/*,app/api/simulation/*,Deal simulations,Bearer,deals,None,LIVE,YES,Carlos only
+PROPERTY-AI (6 routes),/api/property-ai/*,app/api/property-ai/*,AI property features,Bearer,properties,Anthropic,LIVE,Partial,Carlos only
+DEAL (6 routes),/api/deal/*,app/api/deal/*,Deal pack generation,NextAuth,deals+contacts,Anthropic,LIVE,YES,0 real (demo only)
+CRM (6 routes),/api/crm/*,app/api/crm/*,CRM operations,NextAuth,contacts+deals,None,LIVE,YES,28 contacts / 8 deals
+MORTGAGE,/api/mortgage,app/api/mortgage/route.ts,Mortgage calculator,NextAuth,None,None,LIVE,YES,Carlos only
+JURIDICO,/api/juridico,app/api/juridico/route.ts,Legal AI consultant,NextAuth + Upstash RL,None,Anthropic,LIVE,YES,Carlos only
+REPORTING (6),/api/reporting/*,app/api/reporting/*,Daily/weekly reports,Bearer,kpi_snapshots,None,LIVE,YES,62+ snapshots
+SYSTEM (14),/api/system/*,app/api/system/*,System health,Bearer,Various,None,LIVE,Partial,Active
+DASHBOARD (6),/api/dashboard/*,app/api/dashboard/*,Dashboard data,NextAuth,Various,None,LIVE,YES,Real data
+PORTAL (4),/api/portal/*,app/api/portal/*,Portal operations,Bearer,Various,None,LIVE,YES,Active
+CAMPAIGNS,/api/campanhas/*,app/api/campanhas/*,Campaign management,NextAuth,campaigns?,None,LIVE,Partial,Unknown
+INVESTORS INTEL,/api/investors-intel/*,app/api/investors/*,Investor intelligence,Bearer,capital_profiles,None,LIVE,Partial,Active
+OPS (12),/api/ops/*,app/api/ops/*,Operations,Bearer,Various,None,LIVE,Partial,Unknown
+CONTROL TOWER (13),/api/control-tower/*,app/api/control-tower/*,Admin ops,Bearer,All,None,LIVE,Partial,Active
+,,,,,,,,,
+SUMMARY,Total API routes (route.ts files in /api/),542,Exact count PowerShell,2026-06-25
+SUMMARY,Routes with confirmed real output,~50,,2026-06-25
+SUMMARY,Routes active but minimal/empty output,~350,,2026-06-25
+SUMMARY,Routes coded but inactive (WhatsApp),~5,,2026-06-25
+SUMMARY,Routes for aspirational systems (ml/sre/compliance),~137,,2026-06-25

@@ -1,0 +1,72 @@
+DIMENSION,ASSET,STATUS,QUALITY,REACH,NOTES
+,,,,,
+WEBSITE,agencygroup.pt,LIVE 62 days,HIGH,Unknown organic traffic,Next.js App Router modern
+WEBSITE,Homepage,LIVE,HIGH,,Complete with Sofia widget
+WEBSITE,Mobile responsive,LIVE,HIGH,,PWA capable
+WEBSITE,PWA support,CODED,MEDIUM,,Service worker + manifest
+WEBSITE,Page speed,FAST,HIGH,,HomeLoader 400ms LazySection
+WEBSITE,Core Web Vitals,GOOD,HIGH,,next/image lazy load optimized
+,,,,,
+SEO TECHNICAL,Canonical tags,ALL pages,HIGH,Foundation,Per-page canonical
+SEO TECHNICAL,Hreflang (6 languages),ALL pages,HIGH,International reach,en pt fr de ar zh
+SEO TECHNICAL,x-default hreflang,Root level,HIGH,,Correct implementation
+SEO TECHNICAL,robots.txt,LIVE,HIGH,,Correct crawl rules
+SEO TECHNICAL,sitemap.xml,DYNAMIC,HIGH,,Auto-generated cron
+SEO TECHNICAL,Schema.org LocalBusiness,LIVE,HIGH,,Homepage
+SEO TECHNICAL,Schema.org Article,ALL blog,HIGH,,55 blog articles
+SEO TECHNICAL,OpenGraph tags,ALL pages,HIGH,Social sharing,,
+SEO TECHNICAL,Twitter Card,ALL pages,MEDIUM,Twitter sharing,,
+SEO TECHNICAL,next/font (Inter),LIVE,HIGH,,Display swap
+SEO TECHNICAL,JSON-LD FAQ,LIVE,HIGH,/faq page,Question markup
+,,,,,
+CONTENT - BLOG,Total articles,55 pages,HIGH,6 languages,Confirmed by file scan
+CONTENT - BLOG,English articles,~23+,HIGH,PRIMARY market EN,Highest quality
+CONTENT - BLOG,Portuguese articles,~15+,HIGH,LOCAL market PT,Strong
+CONTENT - BLOG,French articles,7,HIGH,FR market 13%,Good coverage
+CONTENT - BLOG,Italian article,1,MEDIUM,IT market,Limited
+CONTENT - BLOG,Mixed/bi-lingual,~9,MEDIUM,,Various
+CONTENT - BLOG,Content quality,REAL market data,HIGH,Based on INE Banco Portugal stats,No fake stats (removed)
+CONTENT - BLOG,Blog coverage topics,NHR IFICI Golden Visa Property markets Luxury Zones Buyer guides,HIGH,,All key buyer journey topics
+CONTENT - BLOG,SEO content gap,No Madeira-specific Açores-specific German-language Chinese-language,MEDIUM,Improvement area,
+,,,,,
+AUTHORITY SIGNALS,AMI 22506,REGISTERED,HIGH,Legal trust signal,Real estate license
+AUTHORITY SIGNALS,Luxury Portugal Top 5 claim,REMOVED (was false),N/A,Was fake,Correctly removed
+AUTHORITY SIGNALS,Transaction history,"0 completed sales",LOW,Truth,Not disguised
+AUTHORITY SIGNALS,Agent photos/team,PLACEHOLDER,LOW,0 real agents,Reduces trust
+AUTHORITY SIGNALS,Real case studies,0,LOW,Reduces trust,No real deals to show
+AUTHORITY SIGNALS,Google Reviews,UNKNOWN,LOW,Not verified,Probably 0
+AUTHORITY SIGNALS,TrustPilot,UNKNOWN,LOW,Not verified,
+,,,,,
+SOCIAL MEDIA READINESS,Instagram,NOT BUILT,N/A,,No social media built
+SOCIAL MEDIA READINESS,LinkedIn,NOT BUILT,N/A,,No company page
+SOCIAL MEDIA READINESS,Facebook,NOT BUILT,N/A,,
+SOCIAL MEDIA READINESS,YouTube,NOT BUILT,N/A,,
+SOCIAL MEDIA READINESS,Reels (n8n workflow),BUILT,READY,workflow-o-weekly?,,
+,,,,,
+LANGUAGES,English,FULL coverage,HIGH,US 16% BR 6% global,Primary SEO language
+LANGUAGES,Portuguese,FULL coverage,HIGH,PT + BR market,
+LANGUAGES,French,PARTIAL coverage,HIGH,FR 13% buyers,Blog + hreflang
+LANGUAGES,German,PARTIAL coverage,MEDIUM,DE 5% buyers,hreflang exists
+LANGUAGES,Arabic,PARTIAL coverage,MEDIUM,ME buyers,hreflang + page
+LANGUAGES,Chinese,PARTIAL coverage,MEDIUM,CN 8% buyers,hreflang + page
+LANGUAGES,Italian,MINIMAL,LOW,IT buyers,1 blog article only
+LANGUAGES,Spanish,MINIMAL,LOW,ES market,Limited (PT vs ES content)
+,,,,,
+BRAND IDENTITY,Agency Group name,CLEAR,HIGH,,Professional
+BRAND IDENTITY,Design system,CUSTOM,HIGH,,Custom CSS variables AG design
+BRAND IDENTITY,Color palette,Gold + Dark,HIGH,,Premium positioning
+BRAND IDENTITY,Typography,Inter,HIGH,,Clean modern
+BRAND IDENTITY,Logo,EXISTS,MEDIUM,,Not verified quality
+BRAND IDENTITY,Tone of voice,Premium professional,HIGH,,Consistent across blog
+,,,,,
+COMPETITIVE BRAND POSITION,,,,,
+VS COMPASS,Tech-first AI approach,SIMILAR,HIGH,Compass has AI,Different market
+VS IDEALISTA,Content quality,BETTER,HIGH,Idealista has scale,Quality over quantity
+VS LOCAL AGENTS,Technology,FAR AHEAD,HIGH,Most use basic CMS,Clear differentiation
+VS SOTHEBYS,Inventory,FAR BEHIND,HIGH,0 vs thousands,Inventory is the gap
+,,,,,
+BRAND GAPS,0 real sold properties,HIGH GAP,,Real transactions build authority,
+BRAND GAPS,0 real agent team visible,MEDIUM GAP,,Team page has placeholders,
+BRAND GAPS,0 press coverage,MEDIUM GAP,,/imprensa exists but empty,
+BRAND GAPS,No social media presence,MEDIUM GAP,,n8n Reels workflow exists,
+BRAND GAPS,0 Google Reviews,HIGH GAP,,After first deal ask for review,
