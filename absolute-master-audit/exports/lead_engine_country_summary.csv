@@ -1,0 +1,16 @@
+table,country,count,percentage,buyer_segment_match
+capital_profiles,United States,3010,41.0%,HNWI family offices - matches €3M+ segment
+capital_profiles,United Kingdom,882,12.0%,British buyers 9% - matches €500K-€3M segment
+capital_profiles,France,748,10.2%,French buyers 13% - #2 buyer segment
+capital_profiles,United Arab Emirates,504,6.9%,Middle East - matches €3M+ HNWI
+capital_profiles,Germany,~300,4.1%,German buyers 5%
+capital_profiles,Other,~1898,25.9%,Mixed international
+leads,Portugal,~5000,27.7%,Domestic market
+leads,Brazil,~2500,13.9%,Brazilians #1 in €100K-€500K
+leads,United Kingdom,~1800,10.0%,British buyers
+leads,France,~1500,8.3%,French buyers
+leads,United States,~1400,7.8%,US buyers
+leads,Germany,~800,4.4%,German buyers
+leads,Angola,~600,3.3%,Angolan buyers
+leads,China,~500,2.8%,Chinese buyers 8%
+leads,Other,~3942,21.8%,Mixed

@@ -1,0 +1,17 @@
+format,filename_pattern,approximate_count,date_range,likely_applied,notes
+A,20260406_001 to 20260522_XXX,~155,2026-04-06 to 2026-05-22,HIGH CONFIDENCE,Standard timestamped migrations - match known table structure
+B,000036 to 000155,~120,Unknown,LIKELY NOT APPLIED,Sequential format - Kafka/ML/financial infra - aspirational features
+C,RUN_CRM_IMPORT.sql,1,Manual,NOT APPLIED,Pending - would import 18042 leads to CRM contacts
+C,RUN_WAVE52_SUPABASE.sql,1,Manual,NOT APPLIED,Untracked pending SQL
+C,RUN_WAVE56_SUPABASE.sql,1,Manual,NOT APPLIED,Untracked pending SQL
+TOTAL,All formats,278,Various,~155 applied,~120 sequential likely unapplied
+KEY_MIGRATIONS,20260408_001_magic_link,1,2026-04-08,APPLIED,Magic link tokens table
+KEY_MIGRATIONS,20260424_002_kpi_snapshots,1,2026-04-24,APPLIED,KPI snapshots table (62+ rows confirm)
+KEY_MIGRATIONS,20260426_001_priority_items,1,2026-04-26,APPLIED,Priority items
+KEY_MIGRATIONS,20260412_002_institutional_partners,1,2026-04-12,UNKNOWN,institutional_partners table
+KEY_MIGRATIONS,20260417_001_stripe_subscriptions,1,2026-04-17,UNKNOWN,Stripe subscription tables
+POSSIBLY_MISSING,partners,1,Unknown,UNKNOWN,Table may not exist
+POSSIBLY_MISSING,campanhas_crm,1,Unknown,UNKNOWN,Table may not exist (separate from campaigns API)
+POSSIBLY_MISSING,sellers,1,Unknown,UNKNOWN,Table may not exist
+POSSIBLY_MISSING,buyers,1,Unknown,UNKNOWN,Table may not exist
+POSSIBLY_MISSING,investment_portfolios,1,Unknown,UNKNOWN,Table may not exist

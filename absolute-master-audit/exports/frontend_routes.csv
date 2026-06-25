@@ -1,0 +1,32 @@
+route,type,auth_required,language,status,notes
+/,homepage,public,all,ACTIVE,Main landing page
+/imoveis,property listings,public,pt,ACTIVE,Shows 55 demo properties (API fixed 1760efe)
+/imoveis/[id],property detail,public,pt,ACTIVE,Individual property page
+/imoveis/premium/[id],premium listing,public,pt,ACTIVE,Premium property detail
+/off-market,off-market,public,pt,ACTIVE,Off-market pipeline
+/vender,sell property,public,pt,ACTIVE,Vendor intake
+/vender-imovel-portugal,sell guide,public,pt,ACTIVE,SEO page
+/avm,valuation tool,public,pt,ACTIVE,AVM calculator
+/blog/[slug],blog article,public,all,ACTIVE,56 articles
+/[lang]/blog/[slug],blog article i18n,public,en/fr/de/ar/zh,ACTIVE,Multilingual
+/zona/[zona],neighborhood intel,public,pt,ACTIVE,6 zones
+/faq,FAQ,public,all,ACTIVE,FAQ with JSON-LD
+/privacy,privacy policy,public,all,ACTIVE,GDPR compliant
+/login,login,public,all,ACTIVE,Magic link + Google OAuth
+/dashboard,portal home,REQUIRED,pt,ACTIVE,Carlos's main dashboard
+/dashboard/executive,executive KPIs,REQUIRED,pt,ACTIVE,KPI dashboard
+/dashboard/properties,property management,REQUIRED,pt,ACTIVE,CRUD properties
+/dashboard/properties/new,add property,REQUIRED,pt,ACTIVE,Add new property
+/dashboard/simulations,commission calculator,REQUIRED,pt,ACTIVE,Deal simulation
+/portal/crm/contacts,CRM contacts,REQUIRED,pt,ACTIVE,28 contacts
+/portal/crm/deals,CRM deals,REQUIRED,pt,ACTIVE,8 demo deals
+/portal/analytics,analytics dashboard,REQUIRED,pt,ACTIVE,Visitor analytics
+/portal/lead-engine,lead management,REQUIRED,pt,ACTIVE,18042 leads
+/portal/capital-network,investor management,REQUIRED,pt,ACTIVE,7342 capital profiles
+/investor-intelligence,investor intel,REQUIRED,pt,ACTIVE,Institutional buyer intel
+/control-tower,admin control tower,REQUIRED,pt,ACTIVE,25+ admin pages
+/agente/[slug],agent profile,public,pt,ACTIVE code - 0 agents,Dynamic agent pages (0 real agents)
+/equipa,team,public,pt,ACTIVE,Placeholder team
+/parceiros,partners,public,pt,ACTIVE,Partner page
+/white-label,white label,public,pt,ACTIVE,Franchise offering
+TOTAL,154 pages,Mixed,6 languages,ACTIVE,154 confirmed

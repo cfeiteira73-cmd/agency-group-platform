@@ -1,0 +1,10 @@
+table,tier,count,has_email_count,notes
+leads,A+,95,~57,lead_tier column = 'A+'
+leads,A+ (by score),154,~92,lead_score >= 80 (tier column not updated for 59)
+leads,A,~1200,~72,estimated
+leads,B,~3000,~180,estimated
+leads,C,~13800,~828,estimated
+leads,total,18042,117,confirmed 2026-06-24
+capital_profiles,A+,116,~7,score >= 80
+capital_profiles,total,7342,67,confirmed 2026-06-24
+outreach_queue,all,3164,3164,ready for n8n dispatch

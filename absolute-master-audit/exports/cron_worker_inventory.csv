@@ -1,0 +1,22 @@
+cron_id,schedule,route,category,confirmed_data_produced,status
+kpi-snapshot,55 23 * * *,/api/cron/kpi-snapshot,analytics,YES (62+ rows),ACTIVE
+gdpr-purge,0 3 * * *,/api/cron/gdpr-purge,compliance,Unknown,ACTIVE
+recompute-agent-performance,0 2 * * 1,/api/cron/recompute-agent-performance,analytics,Unknown,ACTIVE
+revenue-loop,0 8 * * *,/api/automation/revenue-loop,revenue,Minimal,ACTIVE
+revenue-loop-midday,0 12 * * *,/api/automation/revenue-loop,revenue,Minimal,ACTIVE
+revenue-loop-evening,0 18 * * *,/api/automation/revenue-loop,revenue,Minimal,ACTIVE
+alerts-push,0 9 * * *,/api/alerts/push,alerts,Minimal (fixed 472a95e),ACTIVE
+lead-score-refresh,0 4 * * *,/api/cron/lead-score-refresh,leads,Unknown,ACTIVE
+capital-score-refresh,0 4 * * 1,/api/cron/capital-score-refresh,leads,Unknown,ACTIVE
+property-match,0 10 * * *,/api/cron/property-match,matching,Unknown (0 real properties),ACTIVE
+sofia-followup,0 9 * * *,/api/cron/sofia-followup,crm,0 (no conversations),ACTIVE
+deal-progress,0 11 * * *,/api/cron/deal-progress,crm,Minimal,ACTIVE
+outreach-dispatch,0 8 * * *,/api/cron/outreach-dispatch,outreach,0 (n8n not deployed),ACTIVE
+outreach-dispatch-2,0 14 * * *,/api/cron/outreach-dispatch,outreach,0,ACTIVE
+market-intel,0 6 * * 1,/api/cron/market-intel,intel,Unknown,ACTIVE
+avm-compute,0 3 * * 0,/api/cron/avm-compute,properties,Unknown,ACTIVE
+blog-refresh,0 1 * * *,/api/cron/blog-refresh,content,Unknown,ACTIVE
+seo-sitemap,0 5 * * 0,/api/cron/seo-sitemap,seo,Unknown,ACTIVE
+embedding-refresh,0 2 * * 0,/api/cron/embedding-refresh,ai,Unknown,ACTIVE
+system-health,*/30 * * * *,/api/cron/system-health,system,Unknown,ACTIVE
+cleanup,0 0 * * 0,/api/cron/cleanup,maintenance,Unknown,ACTIVE

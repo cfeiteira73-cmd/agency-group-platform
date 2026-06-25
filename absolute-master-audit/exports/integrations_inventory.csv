@@ -1,0 +1,20 @@
+service,purpose,env_var_count,tier,status,revenue_impact
+Supabase,Primary DB + Auth,3,1 - Live Production,ACTIVE,CRITICAL
+Anthropic,Sofia AI + AVM + Juridico,1,1 - Live Production,ACTIVE,CRITICAL
+Resend,Email delivery,1,1 - Live Production,ACTIVE HIGH
+Upstash Redis,Rate limiting,2,1 - Live Production,ACTIVE,MEDIUM
+Vercel,Hosting + Crons,0 (platform),1 - Live Production,ACTIVE,CRITICAL
+NextAuth,Session management,2,1 - Live Production,ACTIVE,CRITICAL
+Google OAuth,Login,2,1 - Live Production,ACTIVE,HIGH
+VAPID,Push notifications,2,1 - Live Production,CODED - not activated,MEDIUM
+WhatsApp Business,Sofia on WhatsApp,3,2 - Coded Not Activated,PREENCHER token,HIGH
+HeyGen,AI video avatars,1,2 - Coded Not Activated,Key present no usage,LOW
+Sentry,Error tracking,2,2 - Coded Not Activated,Unverified,LOW
+Apollo.io,Email enrichment,1,3 - Revenue Critical Pending,Key present not run,CRITICAL
+Smartlead.ai,Email sequences,1,3 - Revenue Critical Pending,Key present no sequences,HIGH
+Notion,CRM + knowledge base,1,3 - Revenue Critical Pending,Limited real usage,MEDIUM
+Stripe,Subscription billing,2,4 - Configured Unknown,Not needed current model,LOW
+Apify,Web scraping,1,4 - Configured Unknown,Used in Lead Engine,MEDIUM
+Casafari,Property data,1,4 - Configured Unknown,Usage unverified,MEDIUM
+Idealista,Property listings,1,4 - Configured Unknown,Usage unverified,MEDIUM
+Railway,n8n hosting,0 (platform),4 - Configured Unknown,NOT DEPLOYED,HIGH

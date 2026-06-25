@@ -1,0 +1,77 @@
+{
+  "audit_date": "2026-06-25",
+  "data_source": "revenue-activation/02_DATABASE_REALITY_CHECK.md (2026-06-24)",
+  "note": "Live DB access blocked (local .env.local service key corrupted, Supabase MCP 403). These counts are from the most recent verified audit.",
+  "tables": {
+    "leads": {
+      "rows": 18042,
+      "confidence": "HIGH",
+      "notes": "Lead Engine database. company_name column (not company), country column (not country_iso)"
+    },
+    "capital_profiles": {
+      "rows": 7342,
+      "confidence": "HIGH",
+      "notes": "Capital Network. US(3010) GB(882) FR(748) UAE(504)"
+    },
+    "outreach_queue": {
+      "rows": 3164,
+      "confidence": "HIGH",
+      "notes": "Ready for n8n dispatch"
+    },
+    "contacts": {
+      "rows": 28,
+      "confidence": "HIGH",
+      "notes": "27 seeded/demo + 1 real external (ISABELGRILO@GMAIL.COM)"
+    },
+    "deals": {
+      "rows": 8,
+      "confidence": "HIGH",
+      "notes": "All demo deals. Pipeline value ~€9.44M (demo)"
+    },
+    "properties": {
+      "rows": 55,
+      "confidence": "MEDIUM",
+      "notes": "~55 seeded demo properties. 0 real mandates."
+    },
+    "offmarket_leads": {
+      "rows": 14,
+      "confidence": "HIGH",
+      "notes": "Developer/vendor contacts for co-agency"
+    },
+    "profiles": {
+      "rows": 0,
+      "confidence": "HIGH",
+      "notes": "Agent profiles. Empty - no agents."
+    },
+    "sofia_conversations": {
+      "rows": 0,
+      "confidence": "HIGH",
+      "notes": "No real buyer conversations ever"
+    },
+    "sofia_conversation_turns": {
+      "rows": 0,
+      "confidence": "HIGH",
+      "notes": "No real buyer conversations ever"
+    },
+    "kpi_snapshots": {
+      "rows": "62+",
+      "confidence": "HIGH",
+      "notes": "Daily cron since 2026-04-24. 47+ confirmed 2026-06-11, ~62+ by 2026-06-25"
+    },
+    "used_magic_tokens": {
+      "rows": 38,
+      "confidence": "HIGH",
+      "notes": "All Carlos login sessions"
+    },
+    "learning_events": {
+      "rows": "Unknown",
+      "confidence": "LOW",
+      "notes": "Event bus table - usage unverified"
+    },
+    "analytics_events": {
+      "rows": "Unknown",
+      "confidence": "LOW",
+      "notes": "Real visitor tracking data - count unverified"
+    }
+  }
+}

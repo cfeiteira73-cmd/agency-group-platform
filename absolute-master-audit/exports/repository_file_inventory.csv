@@ -1,0 +1,22 @@
+category,path_pattern,file_count,loc_estimate,notes
+TypeScript source (app),app/**/*.ts app/**/*.tsx,~800,205174,API routes + pages + layouts
+TypeScript source (lib),lib/**/*.ts lib/**/*.tsx,~600,227160,Business logic + utils
+TypeScript source (components),components/**/*.tsx,~400,~80000,UI components
+TypeScript tests,__tests__/**/*.ts tests/**/*.ts,~200,19799,vitest tests
+SQL migrations,supabase/migrations/**/*.sql,278,~15000,278 migration files
+SQL manual,*.sql (root),3,Unknown,RUN_CRM_IMPORT RUN_WAVE52 RUN_WAVE56
+Markdown docs,**/*.md,~390,~50000,Audit reports + docs
+JSON configs,**/*.json,~104,~10000,n8n workflows + package.json etc
+XLSX exports,**/*.xlsx,~18,N/A,Audit exports committed to repo
+n8n workflows,n8n-workflows/**/*.json,21,~120000 chars,21 workflow files
+Content,content/**/*.mdx,56,~80000,Blog articles
+CSS,**/*.css,~5,~3000,Global styles
+TOTAL,ALL,2935,~452460 TS/TSX LOC,Full repository
+MISSION_CRITICAL,app/api/auth/send/route.ts,1,~100,Magic link send
+MISSION_CRITICAL,app/api/auth/verify/route.ts,1,~80,Magic link verify
+MISSION_CRITICAL,lib/supabase.ts,1,~80,Supabase client (RLS)
+MISSION_CRITICAL,lib/ai/gateway.ts,1,~100,Anthropic lazy proxy
+MISSION_CRITICAL,lib/constants/pipeline.ts,1,~50,Stage probabilities (fixed 8aa4f63)
+MISSION_CRITICAL,app/api/properties/public/route.ts,1,~120,Properties API (fixed 1760efe)
+MISSION_CRITICAL,vercel.json,1,~200,41 cron configs
+MISSION_CRITICAL,n8n-workflows/,31,N/A,21 workflows + 10 support files

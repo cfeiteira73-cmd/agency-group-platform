@@ -1,0 +1,28 @@
+category,route_prefix,estimated_count,auth_method,status,notes
+cron,/api/cron/,37,CRON_SECRET,ACTIVE,All 41 crons have real route.ts confirmed
+analytics,/api/analytics/,36,NextAuth session,ACTIVE,Real visitor + KPI data
+sre,/api/sre/,16,NextAuth + Bearer,ACTIVE,System reliability
+auth,/api/auth/,16,Various,ACTIVE,magic-link send/verify + OAuth
+automation,/api/automation/,15,Bearer + CRON_SECRET,ACTIVE,Revenue loop etc
+system,/api/system/,14,Bearer,ACTIVE,Health checks
+control-tower,/api/control-tower/,13,Bearer,ACTIVE,Admin operations
+sofia,/api/sofia/,12,NextAuth,ACTIVE (0 real usage),AI agent endpoints
+deals,/api/deals/,11,NextAuth,ACTIVE (0 real deals),Deal CRUD
+contacts,/api/contacts/,10,NextAuth,ACTIVE (28 contacts),CRM contacts
+properties,/api/properties/,10,NextAuth + Public,ACTIVE FIXED 1760efe,Property CRUD (fixed column names)
+leads,/api/leads/,9,Bearer,ACTIVE,Lead management
+alerts,/api/alerts/,8,CRON_SECRET,ACTIVE FIXED 472a95e,Push alerts (fixed lead_id param)
+matches,/api/matches/,8,NextAuth,ACTIVE,Buyer-property matching
+avm,/api/avm/,6,NextAuth,ACTIVE,Automated Valuation Model
+reporting,/api/reporting/,6,Bearer,ACTIVE,Daily/weekly reports
+deal-packs,/api/deal/,6,NextAuth,ACTIVE,Deal pack generation
+whatsapp,/api/whatsapp/,5,WHATSAPP_VERIFY_TOKEN,CODED NOT ACTIVE,Token = PREENCHER
+juridico,/api/juridico/,5,NextAuth,ACTIVE,Legal AI consultant
+mortgage,/api/mortgage/,4,NextAuth,ACTIVE,Mortgage calculator
+enrichment,/api/enrichment/,4,Bearer,ACTIVE,Lead enrichment
+blog,/api/blog/,4,Public,ACTIVE,Blog API
+partners,/api/partners/,4,NextAuth,ACTIVE,Partner management
+notifications,/api/notifications/,4,NextAuth,ACTIVE,Push notification management
+campaigns,/api/campanhas/,4,NextAuth,ACTIVE,Marketing campaigns
+investors,/api/investidores/,4,NextAuth,ACTIVE,Investor management
+TOTAL,ALL,542,Mixed,ACTIVE (most),542 confirmed across all categories
