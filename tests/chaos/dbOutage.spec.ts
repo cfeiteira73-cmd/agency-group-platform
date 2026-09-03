@@ -5,29 +5,30 @@
 // =============================================================================
 
 import { randomUUID } from 'crypto'
+import { vi } from 'vitest'
 import type { RuntimeEvent } from '../../lib/runtime/types'
 
 // ─── Mock supabaseAdmin ───────────────────────────────────────────────────────
 
-jest.mock('../../lib/supabase', () => ({
+vi.mock('../../lib/supabase', () => ({
   supabaseAdmin: {
-    from: jest.fn().mockReturnValue({
-      insert: jest.fn().mockResolvedValue({ data: null, error: null }),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      or: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn().mockReturnValue({
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      or: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     }),
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   },
 }))
 
@@ -67,28 +68,28 @@ function dbError(code: string, message: string) {
 // ─── Test suite ───────────────────────────────────────────────────────────────
 
 describe('Chaos: DB Outage', () => {
-  const mockFrom = supabaseAdmin.from as jest.Mock
+  const mockFrom = supabaseAdmin.from as ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     hotMemory.clear('org-chaos-db-001')
 
     // Default: healthy DB
     mockFrom.mockReturnValue({
-      insert: jest.fn().mockResolvedValue({ data: null, error: null }),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      or: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      or: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
   })
 
@@ -99,22 +100,22 @@ describe('Chaos: DB Outage', () => {
 
     // Simulate DB connection refused (500 level error)
     mockFrom.mockReturnValue({
-      insert: jest.fn().mockResolvedValue(
+      insert: vi.fn().mockResolvedValue(
         dbError('08006', 'connection to server lost')
       ),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      or: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      or: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
 
     await expect(orchestrator.dispatch(event)).rejects.toThrow(RuntimePersistError)
@@ -126,22 +127,22 @@ describe('Chaos: DB Outage', () => {
     const event = makeEvent()
 
     mockFrom.mockReturnValue({
-      insert: jest.fn().mockResolvedValue(
+      insert: vi.fn().mockResolvedValue(
         dbError('57014', 'query_canceled due to timeout')
       ),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      or: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      or: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
 
     let error: Error | null = null
@@ -192,20 +193,20 @@ describe('Chaos: DB Outage', () => {
 
     // Simulate DB total outage
     mockFrom.mockReturnValue({
-      insert: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      select: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      update: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      eq: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      single: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
-      or: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      insert: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      select: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      update: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      eq: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      single: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+      or: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
     })
 
     // HOT memory should be queryable without touching DB
@@ -225,25 +226,25 @@ describe('Chaos: DB Outage', () => {
     const event = makeEvent()
 
     // First call: simulate successful insert
-    const insertMock = jest.fn()
+    const insertMock = vi.fn()
       .mockResolvedValueOnce({ data: null, error: null }) // first insert: success
       .mockResolvedValueOnce(dbError('23505', 'duplicate key value violates unique constraint')) // second insert: duplicate
 
     const chainMock = {
       insert: insertMock,
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      or: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      or: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     }
     chainMock.select.mockReturnValue(chainMock)
     chainMock.update.mockReturnValue(chainMock)
@@ -272,48 +273,53 @@ describe('Chaos: DB Outage', () => {
     const org_id = 'org-chaos-db-001'
     const stuckAt = new Date(Date.now() - 10 * 60 * 1000).toISOString() // 10 min ago
 
-    const chainMock = {
-      insert: jest.fn().mockResolvedValue({ data: null, error: null }),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({
-        data: [
-          {
-            event_id: 'evt-orphan-001',
-            org_id,
-            type: 'LEAD_CREATED',
-            status: 'processing',
-            updated_at: stuckAt,
-            correlation_id: randomUUID(),
-            retry_count: 0,
-          },
-          {
-            event_id: 'evt-orphan-002',
-            org_id,
-            type: 'PIPELINE_STALLED',
-            status: 'processing',
-            updated_at: stuckAt,
-            correlation_id: randomUUID(),
-            retry_count: 1,
-          },
-        ],
-        error: null,
-      }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      or: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+    const orphanRows = [
+      {
+        event_id: 'evt-orphan-001',
+        org_id,
+        type: 'LEAD_CREATED',
+        status: 'processing',
+        updated_at: stuckAt,
+        correlation_id: randomUUID(),
+        retry_count: 0,
+      },
+      {
+        event_id: 'evt-orphan-002',
+        org_id,
+        type: 'PIPELINE_STALLED',
+        status: 'processing',
+        updated_at: stuckAt,
+        correlation_id: randomUUID(),
+        retry_count: 1,
+      },
+    ]
+
+    // orphanRecovery.detect() awaits the builder directly (no .limit() call).
+    // chainMock must be thenable so `await chainMock` resolves to {data, error}.
+    const resolvedPayload = { data: orphanRows, error: null }
+    const chainMock: Record<string, unknown> = {
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue(resolvedPayload),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      or: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      // Make the builder itself awaitable (Supabase query builder is a thenable)
+      then: (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
+        Promise.resolve(resolvedPayload).then(resolve, reject),
     }
-    chainMock.select.mockReturnValue(chainMock)
-    chainMock.update.mockReturnValue(chainMock)
-    chainMock.eq.mockReturnValue(chainMock)
-    chainMock.lt.mockReturnValue(chainMock)
+    ;(chainMock.select as ReturnType<typeof vi.fn>).mockReturnValue(chainMock)
+    ;(chainMock.update as ReturnType<typeof vi.fn>).mockReturnValue(chainMock)
+    ;(chainMock.eq as ReturnType<typeof vi.fn>).mockReturnValue(chainMock)
+    ;(chainMock.lt as ReturnType<typeof vi.fn>).mockReturnValue(chainMock)
 
     mockFrom.mockReturnValue(chainMock)
 
@@ -335,21 +341,21 @@ describe('Chaos: DB Outage', () => {
     const stuckAt = new Date(Date.now() - 7 * 60 * 1000).toISOString()
 
     const chainMock = {
-      insert: jest.fn().mockResolvedValue({ data: null, error: null }),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      is: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      or: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      or: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     }
 
     // _detectInvalidStatuses: returns no invalid statuses
@@ -377,8 +383,8 @@ describe('Chaos: DB Outage', () => {
     })
 
     chainMock.update.mockReturnValue({
-      eq: jest.fn().mockReturnValue({
-        select: jest.fn().mockResolvedValue({ data: null, error: null }),
+      eq: vi.fn().mockReturnValue({
+        select: vi.fn().mockResolvedValue({ data: null, error: null }),
       }),
     })
 
