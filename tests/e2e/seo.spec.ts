@@ -28,10 +28,9 @@ test.describe('SEO Requirements', () => {
     test(`${name} — canonical should use www`, async ({ page }) => {
       await page.goto(path)
       const canonical = await page.locator('link[rel="canonical"]').getAttribute('href')
-      if (canonical) {
-        expect(canonical).toContain('www.agencygroup.pt')
-        expect(canonical).not.toMatch(/^https:\/\/agencygroup\.pt\//) // No bare domain
-      }
+      expect(canonical, `${name} (${path}) must have a canonical link tag`).not.toBeNull()
+      expect(canonical).toContain('www.agencygroup.pt')
+      expect(canonical).not.toMatch(/^https:\/\/agencygroup\.pt\//) // No bare domain
     })
 
     test(`${name} — Open Graph tags should be present`, async ({ page }) => {

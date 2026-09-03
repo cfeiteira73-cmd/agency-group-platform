@@ -39,9 +39,8 @@ test.describe('Blog', () => {
       await page.goto(slug)
       const canonical = page.locator('link[rel="canonical"]')
       const href = await canonical.getAttribute('href')
-      if (href) {
-        expect(href).toContain('www.agencygroup.pt')
-      }
+      expect(href, `${slug} must have a canonical link tag`).not.toBeNull()
+      expect(href).toContain('www.agencygroup.pt')
     })
   }
 
@@ -54,9 +53,8 @@ test.describe('Blog', () => {
 
     // Parse and validate the first schema
     const firstScript = await jsonLd.first().textContent()
-    if (firstScript) {
-      const data = JSON.parse(firstScript)
-      expect(data['@context']).toBe('https://schema.org')
-    }
+    expect(firstScript, 'JSON-LD script must have text content').not.toBeNull()
+    const data = JSON.parse(firstScript!)
+    expect(data['@context']).toBe('https://schema.org')
   })
 })
