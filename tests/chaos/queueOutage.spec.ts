@@ -5,29 +5,30 @@
 // =============================================================================
 
 import { randomUUID } from 'crypto'
+import { vi } from 'vitest'
 import type { RuntimeEvent } from '../../lib/runtime/types'
 
 // ─── Mock supabaseAdmin ───────────────────────────────────────────────────────
 
-jest.mock('../../lib/supabase', () => ({
+vi.mock('../../lib/supabase', () => ({
   supabaseAdmin: {
-    from: jest.fn().mockReturnValue({
-      insert: jest.fn().mockResolvedValue({ data: null, error: null }),
-      select: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      or: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn().mockReturnValue({
+      insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      single: vi.fn().mockResolvedValue({ data: null, error: null }),
+      or: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     }),
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
   },
 }))
 
@@ -58,20 +59,20 @@ function makeEvent(org_id = 'org-queue-chaos-001'): RuntimeEvent {
 
 function buildChainMock(overrides: Record<string, unknown> = {}) {
   const chain: Record<string, unknown> = {
-    insert: jest.fn().mockResolvedValue({ data: null, error: null }),
-    select: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    neq: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    lt: jest.fn().mockReturnThis(),
-    in: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockResolvedValue({ data: [], error: null }),
-    single: jest.fn().mockResolvedValue({ data: null, error: null }),
-    or: jest.fn().mockReturnThis(),
-    not: jest.fn().mockReturnThis(),
-    maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+    insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    select: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lt: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    single: vi.fn().mockResolvedValue({ data: null, error: null }),
+    or: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     ...overrides,
   }
   return chain
@@ -127,10 +128,10 @@ class FailingQueueProvider implements IQueueProvider {
 // ─── Test suite ───────────────────────────────────────────────────────────────
 
 describe('Chaos: Queue Outage', () => {
-  const mockFrom = supabaseAdmin.from as jest.Mock
+  const mockFrom = supabaseAdmin.from as ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     mockFrom.mockReturnValue(buildChainMock())
   })
 
@@ -145,7 +146,7 @@ describe('Chaos: Queue Outage', () => {
     await expect(primaryQueue.enqueue(event)).rejects.toThrow('Redis: ECONNREFUSED')
 
     // Fallback succeeds
-    const insertMock = jest.fn().mockResolvedValue({ data: null, error: null })
+    const insertMock = vi.fn().mockResolvedValue({ data: null, error: null })
     mockFrom.mockReturnValue({ ...buildChainMock(), insert: insertMock })
 
     const msgId = await fallbackQueue.enqueue(event)
@@ -160,7 +161,7 @@ describe('Chaos: Queue Outage', () => {
     const events = Array.from({ length: 10 }, () => makeEvent())
     const enqueuedIds: string[] = []
 
-    const insertMock = jest.fn().mockResolvedValue({ data: null, error: null })
+    const insertMock = vi.fn().mockResolvedValue({ data: null, error: null })
     mockFrom.mockReturnValue({ ...buildChainMock(), insert: insertMock })
 
     for (const evt of events) {
@@ -192,11 +193,11 @@ describe('Chaos: Queue Outage', () => {
 
   it('QueueHealthMonitor fires onDegraded callback when provider becomes unavailable', async () => {
     const mockProvider: IQueueProvider = {
-      enqueue: jest.fn(),
-      dequeue: jest.fn(),
-      ack: jest.fn(),
-      nack: jest.fn(),
-      getHealth: jest.fn().mockResolvedValue({
+      enqueue: vi.fn(),
+      dequeue: vi.fn(),
+      ack: vi.fn(),
+      nack: vi.fn(),
+      getHealth: vi.fn().mockResolvedValue({
         provider: 'db-fallback',
         status: 'unavailable',
         lag: 5000,
@@ -205,16 +206,16 @@ describe('Chaos: Queue Outage', () => {
         latency_p95: 9000,
         latency_p99: 12000,
       } satisfies QueueHealth),
-      getMetrics: jest.fn(),
-      replay: jest.fn(),
-      close: jest.fn(),
+      getMetrics: vi.fn(),
+      replay: vi.fn(),
+      close: vi.fn(),
     }
 
     // Mock supabase insert for system_alerts
     mockFrom.mockReturnValue(buildChainMock())
 
     const monitor = new QueueHealthMonitor(mockProvider)
-    const degradedCallback = jest.fn()
+    const degradedCallback = vi.fn()
     monitor.onDegraded(degradedCallback)
 
     // Trigger a health check manually
@@ -263,13 +264,13 @@ describe('Chaos: Queue Outage', () => {
     const reason = 'Queue provider unavailable after 3 retries'
 
     // DLQ uses supabase.from('runtime_events').upsert — mock it
-    const upsertMock = jest.fn().mockResolvedValue({ data: null, error: null })
+    const upsertMock = vi.fn().mockResolvedValue({ data: null, error: null })
     const listChain = {
       ...buildChainMock(),
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({
         data: [{
           event_id: event.event_id,
           org_id: event.org_id,
@@ -308,15 +309,15 @@ describe('Chaos: Queue Outage', () => {
 
     // Mock getMetrics response: 5 pending, 3 completed, 2 dlq
     const countChain = { ...buildChainMock() }
-    countChain.select = jest.fn().mockReturnValue({
+    countChain.select = vi.fn().mockReturnValue({
       ...countChain,
-      eq: jest.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
         ...countChain,
-        eq: jest.fn().mockResolvedValue({ count: 5, error: null }),
+        eq: vi.fn().mockResolvedValue({ count: 5, error: null }),
       }),
-      gte: jest.fn().mockReturnValue({
+      gte: vi.fn().mockReturnValue({
         ...countChain,
-        gte: jest.fn().mockResolvedValue({ count: 2, error: null }),
+        gte: vi.fn().mockResolvedValue({ count: 2, error: null }),
       }),
     })
 
