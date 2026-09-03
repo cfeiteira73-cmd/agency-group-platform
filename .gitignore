@@ -43,3 +43,7 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# One-time outreach scripts (may contain API keys)
+send_outreach*.mjs
+send_outreach*.js

@@ -316,7 +316,7 @@ It never means:
 Before any release, answer all 9 questions:
 
 1. Is Agency Group better after this than before? (YES / NO)
-2. Does this advance the €100M path? (YES / NO / NEUTRAL)
+2. Does this advance the €1B path? (YES / NO / NEUTRAL)
 3. Does this protect existing excellence? (YES / NEED TO CHECK)
 4. Does this improve a metric that matters commercially? (WHICH ONE)
 5. Is this the highest-value thing I could do right now? (YES / NO)
