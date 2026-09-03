@@ -1,7 +1,6 @@
 // Agency Group — ML Model Detail API
 // app/api/ml/models/[model_id]/route.ts
 // Auth: INTERNAL_API_SECRET Bearer
-// TypeScript strict — 0 errors
 //
 // GET /api/ml/models/:model_id — full model details
 
@@ -20,7 +19,7 @@ function isAuthorized(req: NextRequest): boolean {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { model_id: string } },
+  { params }: { params: Promise<{ model_id: string }> },
 ): Promise<NextResponse> {
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -32,7 +31,7 @@ export async function GET(
     '00000000-0000-0000-0000-000000000001'
   )
 
-  const { model_id } = params
+  const { model_id } = await params
 
   if (!model_id) {
     return NextResponse.json({ error: 'model_id is required' }, { status: 400 })

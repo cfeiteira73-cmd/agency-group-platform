@@ -1,7 +1,6 @@
 // Agency Group — ML Model Retire API
 // app/api/ml/models/[model_id]/retire/route.ts
 // Auth: INTERNAL_API_SECRET Bearer
-// TypeScript strict — 0 errors
 //
 // POST /api/ml/models/:model_id/retire — retire a model
 
@@ -20,13 +19,13 @@ function isAuthorized(req: NextRequest): boolean {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { model_id: string } },
+  { params }: { params: Promise<{ model_id: string }> },
 ): Promise<NextResponse> {
   if (!isAuthorized(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { model_id } = params
+  const { model_id } = await params
 
   if (!model_id) {
     return NextResponse.json({ error: 'model_id is required' }, { status: 400 })
