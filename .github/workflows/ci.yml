@@ -46,12 +46,12 @@ jobs:
     name: Build (Next.js)
     runs-on: ubuntu-latest
     env:
-      NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-      NOTION_CRM_DB: ${{ secrets.NOTION_CRM_DB }}
-      NOTION_PROPERTIES_DB: ${{ secrets.NOTION_PROPERTIES_DB }}
-      NOTION_PIPELINE_DB: ${{ secrets.NOTION_PIPELINE_DB }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      NOTION_TOKEN: ${{ secrets.NOTION_TOKEN || 'placeholder' }}
+      NOTION_CRM_DB: ${{ secrets.NOTION_CRM_DB || 'placeholder' }}
+      NOTION_PROPERTIES_DB: ${{ secrets.NOTION_PROPERTIES_DB || 'placeholder' }}
+      NOTION_PIPELINE_DB: ${{ secrets.NOTION_PIPELINE_DB || 'placeholder' }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'placeholder' }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || 'placeholder' }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder' }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'placeholder' }}
