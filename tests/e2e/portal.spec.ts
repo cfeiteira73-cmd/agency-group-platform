@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Public Pages', () => {
   test('homepage loads', async ({ page }) => {
     await page.goto('http://localhost:3000')
-    await expect(page).toHaveTitle(/AgencyGroup/)
+    await expect(page).toHaveTitle(/Agency Group/)
   })
 
   test('portal redirects to login when not authenticated', async ({ page }) => {

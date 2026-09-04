@@ -88,22 +88,140 @@ jobs:
           path: .next/
           retention-days: 1
 
-  # ── E2E Tests ───────────────────────────────────────────────────────────────
-  e2e:
-    name: E2E Tests (Playwright)
+  # ── Gate A: Security + Availability (BLOCKING) ───────────────────────────────
+  # Runs security contract tests and critical availability checks.
+  # continue-on-error: false — a failure here BLOCKS merge.
+  # retries: 0 — no retries; flakiness here means something is broken.
+  # Uses placeholder Supabase — no real credentials required.
+  gate-a-e2e:
+    name: Gate A — Security & Availability (blocking)
     runs-on: ubuntu-latest
     needs: build
-    continue-on-error: true   # E2E needs real secrets — doesn't block merge
+    continue-on-error: false
     env:
       BASE_URL: http://localhost:3000
       PLAYWRIGHT_BASE_URL: http://localhost:3000
-      NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder'
+      SUPABASE_SERVICE_ROLE_KEY: 'placeholder'
+      NEXTAUTH_SECRET: 'ci-placeholder-secret-32chars-min'
+      NEXTAUTH_URL: 'http://localhost:3000'
+      AUTH_SECRET: 'ci-placeholder-secret-32chars-min'
+      AUTH_TRUST_HOST: 'true'
+      CRON_SECRET: 'placeholder'
+      OPENAI_API_KEY: 'placeholder'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: .next/
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Gate A tests
+        run: pnpm exec playwright test --project=gate-a --reporter=github
+
+      - name: Upload Gate A results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: gate-a-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ── Gate B: Product Contracts (BLOCKING) ─────────────────────────────────────
+  # Runs deterministic product contract tests (AVM valuation, mortgage validation).
+  # continue-on-error: false — a failure here BLOCKS merge.
+  # retries: 1 — one retry permitted for timing edge cases only.
+  # Uses placeholder Supabase and CRON_SECRET — no real credentials required.
+  gate-b-e2e:
+    name: Gate B — Product Contracts (blocking)
+    runs-on: ubuntu-latest
+    needs: build
+    continue-on-error: false
+    env:
+      BASE_URL: http://localhost:3000
+      PLAYWRIGHT_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder'
+      SUPABASE_SERVICE_ROLE_KEY: 'placeholder'
+      NEXTAUTH_SECRET: 'ci-placeholder-secret-32chars-min'
+      NEXTAUTH_URL: 'http://localhost:3000'
+      AUTH_SECRET: 'ci-placeholder-secret-32chars-min'
+      AUTH_TRUST_HOST: 'true'
+      CRON_SECRET: 'placeholder'
+      OPENAI_API_KEY: 'placeholder'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: .next/
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run Gate B tests
+        run: pnpm exec playwright test --project=gate-b --reporter=github
+
+      - name: Upload Gate B results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: gate-b-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ── Gate C: Integration Suite (non-blocking) ─────────────────────────────────
+  # Full integration suite — best-effort. Failures flag tech debt, not blockers.
+  # continue-on-error: true — does not block merge.
+  gate-c-e2e:
+    name: Gate C — Integration Suite (non-blocking)
+    runs-on: ubuntu-latest
+    needs: build
+    continue-on-error: true
+    env:
+      BASE_URL: http://localhost:3000
+      PLAYWRIGHT_BASE_URL: http://localhost:3000
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder' }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'placeholder' }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-placeholder-secret-32chars-min' }}
       NEXTAUTH_URL: 'http://localhost:3000'
+      AUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'ci-placeholder-secret-32chars-min' }}
+      AUTH_TRUST_HOST: 'true'
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'placeholder' }}
       CRON_SECRET: ${{ secrets.CRON_SECRET || 'placeholder' }}
     steps:
@@ -131,14 +249,14 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run E2E tests
-        run: pnpm exec playwright test --project=chromium --reporter=github --pass-with-no-tests
+      - name: Run Gate C tests
+        run: pnpm exec playwright test --project=gate-c --reporter=github --pass-with-no-tests
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: gate-c-report
           path: playwright-report/
           retention-days: 7
 

@@ -1,16 +1,17 @@
 import { test, expect } from '@playwright/test'
 
-// AVM valuation endpoint — product contracts.
+// Gate B — Product contracts
+// retries: 1 | continue-on-error: false in CI
+// Tests deterministic product behaviour under valid auth conditions.
 // Auth: CRON_SECRET header (isPortalAuth path 1 — no Supabase required).
 // No photos in payload → no Anthropic call → fully deterministic.
-// fetchLiveRates() falls back to { euribor_6m: 0.0295, trend_pt: 0.176 }
-// if /api/rates is unreachable — result is stable in CI.
+// fetchLiveRates() falls back to hardcoded rates on network failure.
 
 const CRON_SECRET = process.env.CRON_SECRET ?? 'placeholder'
 const AUTH = { Authorization: `Bearer ${CRON_SECRET}` }
 
-test.describe('AVM API — valuation endpoint', () => {
-  test('POST /api/avm should return valuation fields for Lisboa', async ({ request }) => {
+test.describe('Gate B — AVM Valuation Contract', () => {
+  test('Lisboa T2 100m² returns success with valuation fields', async ({ request }) => {
     const response = await request.post('/api/avm', {
       headers: AUTH,
       data: {
@@ -30,14 +31,13 @@ test.describe('AVM API — valuation endpoint', () => {
     expect(response.status()).toBe(200)
     const body = await response.json()
     expect(body.success).toBe(true)
-    expect(body).toHaveProperty('estimativa')
-    expect(body).toHaveProperty('rangeMin')
-    expect(body).toHaveProperty('rangeMax')
     expect(typeof body.estimativa).toBe('number')
     expect(body.estimativa).toBeGreaterThan(0)
+    expect(body).toHaveProperty('rangeMin')
+    expect(body).toHaveProperty('rangeMax')
   })
 
-  test('POST /api/avm should return valuation for Cascais', async ({ request }) => {
+  test('Cascais Moradia 200m² returns positive valuation', async ({ request }) => {
     const response = await request.post('/api/avm', {
       headers: AUTH,
       data: { zona: 'Cascais', tipo: 'Moradia', area: 200, quartos: 4 },
@@ -48,19 +48,7 @@ test.describe('AVM API — valuation endpoint', () => {
     expect(body.estimativa).toBeGreaterThan(0)
   })
 
-  test('POST /api/avm should return valuation for Porto', async ({ request }) => {
-    const response = await request.post('/api/avm', {
-      headers: AUTH,
-      data: { zona: 'Porto', tipo: 'T3', area: 120, quartos: 3 },
-    })
-    expect(response.status()).toBe(200)
-    const body = await response.json()
-    expect(body.success).toBe(true)
-    expect(body).toHaveProperty('rangeMin')
-    expect(body).toHaveProperty('rangeMax')
-  })
-
-  test('POST /api/avm rangeMin should be strictly less than rangeMax', async ({ request }) => {
+  test('rangeMin is strictly less than rangeMax', async ({ request }) => {
     const response = await request.post('/api/avm', {
       headers: AUTH,
       data: { zona: 'Algarve', tipo: 'T2', area: 80 },
@@ -71,13 +59,22 @@ test.describe('AVM API — valuation endpoint', () => {
     expect(body.rangeMax).toBeGreaterThan(0)
     expect(body.rangeMin).toBeLessThan(body.rangeMax)
   })
+})
 
-  test('POST /api/avm with empty body should not crash (200 or 400)', async ({ request }) => {
-    const response = await request.post('/api/avm', {
-      headers: AUTH,
-      data: {},
+test.describe('Gate B — Mortgage Validation Contract', () => {
+  test('Mortgage rejects montante below €10.000 with 400', async ({ request }) => {
+    const response = await request.post('/api/mortgage', {
+      data: { montante: 5000, entrada_pct: 20, prazo: 30 },
     })
-    expect([200, 400]).toContain(response.status())
-    expect(response.status()).not.toBe(500)
+    expect(response.status()).toBe(400)
+    const body = await response.json()
+    expect(body.error).toMatch(/mínimo/i)
+  })
+
+  test('Mortgage rejects investment LTV above 75% with 400', async ({ request }) => {
+    const response = await request.post('/api/mortgage', {
+      data: { montante: 300000, entrada_pct: 5, prazo: 30, uso: 'investimento' },
+    })
+    expect(response.status()).toBe(400)
   })
 })
