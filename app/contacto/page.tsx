@@ -88,11 +88,21 @@ function IconWhatsApp() {
 export default async function ContactoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ obrigado?: string; erro?: string }>
+  searchParams: Promise<{
+    obrigado?: string; erro?: string
+    utm_source?: string; utm_medium?: string; utm_campaign?: string
+    utm_term?: string; utm_content?: string; utm_landing?: string
+    page_url?: string
+  }>
 }) {
   const params = await searchParams
   const showSuccess = params.obrigado === '1'
   const showError   = typeof params.erro === 'string'
+  const errorMsg =
+    params.erro === 'contacto' ? 'Indique email ou telefone para podermos contactar.' :
+    params.erro === 'sistema'  ? 'Erro interno. Tente via WhatsApp ou email directamente.' :
+    params.erro === 'limite'   ? 'Demasiadas tentativas. Tente novamente em 1 minuto.' :
+    'Erro ao enviar. Tente via WhatsApp ou email directamente.'
 
   return (
     <>
@@ -111,7 +121,7 @@ export default async function ContactoPage({
       )}
       {showError && (
         <div role="alert" style={{ position: 'fixed', top: '72px', left: '50%', transform: 'translateX(-50%)', zIndex: 200, background: '#2a0a0a', border: '1px solid rgba(255,80,80,.3)', padding: '12px 28px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 8px 32px rgba(0,0,0,.4)' }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', color: 'rgba(255,180,180,.7)', textTransform: 'uppercase' }}>Erro ao enviar. Tente via WhatsApp ou email directamente.</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', color: 'rgba(255,180,180,.7)', textTransform: 'uppercase' }}>{errorMsg}</span>
         </div>
       )}
 
@@ -286,13 +296,24 @@ export default async function ContactoPage({
                 action="/api/contacto"
                 style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
               >
+                {/* Hidden attribution fields — UTM + page context */}
+                {params.utm_source   && <input type="hidden" name="utm_source"   value={params.utm_source} />}
+                {params.utm_medium   && <input type="hidden" name="utm_medium"   value={params.utm_medium} />}
+                {params.utm_campaign && <input type="hidden" name="utm_campaign" value={params.utm_campaign} />}
+                {params.utm_term     && <input type="hidden" name="utm_term"     value={params.utm_term} />}
+                {params.utm_content  && <input type="hidden" name="utm_content"  value={params.utm_content} />}
+                <input type="hidden" name="page_url" value="https://www.agencygroup.pt/contacto" />
+
                 {[
                   { id: 'nome', label: 'Nome', placeholder: 'O seu nome', type: 'text' },
+                  { id: 'email', label: 'Email', placeholder: 'o.seu@email.com', type: 'email' },
                   { id: 'tel', label: 'Telefone / WhatsApp', placeholder: '+351 ou +1 XXX XXX XXXX', type: 'tel' },
                   { id: 'zona', label: 'Zona de interesse', placeholder: 'Ex: Lisboa, Cascais, Comporta...', type: 'text' },
                 ].map(f => (
                   <div key={f.id}>
-                    <label htmlFor={f.id} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.5)', display: 'block', marginBottom: '6px' }}>{f.label}</label>
+                    <label htmlFor={f.id} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.5)', display: 'block', marginBottom: '6px' }}>
+                      {f.label}{f.id === 'email' || f.id === 'tel' ? <span style={{ color: '#c9a96e' }}> *</span> : ''}
+                    </label>
                     <input
                       id={f.id}
                       name={f.id}
@@ -326,12 +347,12 @@ export default async function ContactoPage({
                     style={{ width: '100%', padding: '12px 0', border: 'none', borderBottom: '1px solid rgba(14,14,13,.18)', fontFamily: "'Jost',sans-serif", fontSize: '.88rem', color: '#0e0e0d', outline: 'none', background: 'transparent', cursor: 'pointer', appearance: 'none' }}
                   >
                     <option value="" disabled>Seleccionar...</option>
-                    <option>Até €500K</option>
-                    <option>€500K – €1M</option>
-                    <option>€1M – €2M</option>
-                    <option>€2M – €5M</option>
-                    <option>€5M+</option>
-                    <option>Prefiro não indicar</option>
+                    <option value="ate-500k">Até €500K</option>
+                    <option value="500k-1m">€500K – €1M</option>
+                    <option value="1m-2m">€1M – €2M</option>
+                    <option value="2m-5m">€2M – €5M</option>
+                    <option value="5m+">€5M+</option>
+                    <option value="">Prefiro não indicar</option>
                   </select>
                 </div>
 
@@ -342,7 +363,7 @@ export default async function ContactoPage({
                   Enviar Briefing →
                 </button>
                 <p style={{ fontFamily: "'DM Mono',monospace", fontSize: '.44rem', letterSpacing: '.06em', color: 'rgba(14,14,13,.3)', textAlign: 'center', marginTop: '4px' }}>
-                  Confidencial · Nunca partilhado · Sem spam
+                  Pedido de serviço · Resposta de consultor · Sem spam marketing
                 </p>
               </form>
             </div>

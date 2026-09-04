@@ -359,7 +359,7 @@ export default function PortalCRM() {
   const [quickEmailId, setQuickEmailId] = useState<number | null>(null)
   // Live data
   const [isLoading, setIsLoading] = useState(true)
-  const [dataSource, setDataSource] = useState<'live' | 'demo'>('demo')
+  const [dataSource, setDataSource] = useState<'live' | 'empty' | 'unavailable' | 'demo'>('demo')
   // Bulk email campaign modal
   const [showCampaignModal, setShowCampaignModal] = useState(false)
   const [campaignName, setCampaignName] = useState('')
@@ -386,15 +386,29 @@ export default function PortalCRM() {
     async function loadContacts() {
       try {
         const res = await fetch('/api/crm?limit=50', { signal: controller.signal })
+        if (res.status === 503) {
+          if (!cancelled) setDataSource('unavailable')
+          return
+        }
         if (res.ok) {
-          const { data } = await res.json()
-          if (!cancelled && data && data.length > 0) {
-            setCrmContacts(data)
-            setDataSource('live')
+          const json = await res.json()
+          const data: unknown[] = Array.isArray(json.data) ? json.data : []
+          if (!cancelled) {
+            if (data.length > 0) {
+              setCrmContacts(data as Parameters<typeof setCrmContacts>[0])
+              setDataSource('live')
+            } else {
+              // Supabase responded — genuinely no contacts yet
+              setDataSource('empty')
+            }
           }
         }
-      } catch { /* use mock data */ }
-      finally { if (!cancelled) setIsLoading(false) }
+      } catch {
+        // Network error — treat as unavailable
+        if (!cancelled) setDataSource('unavailable')
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
     }
     loadContacts()
     return () => { cancelled = true; controller.abort() }
@@ -537,6 +551,26 @@ export default function PortalCRM() {
           <button type="button" className="p-btn p-btn-gold" style={{ padding: '8px 16px', fontSize: '.52rem' }} onClick={() => setShowNewContact(true)}>+ Novo</button>
         </div>
       </div>
+
+      {/* CRM Data Integrity Banners */}
+      {dataSource === 'unavailable' && (
+        <div style={{ background: 'rgba(220,53,69,.07)', border: '1px solid rgba(220,53,69,.25)', borderRadius: '8px', padding: '12px 16px', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '1rem' }}>⚠</span>
+          <div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.6rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#dc3545', marginBottom: '2px' }}>CRM Temporariamente Indisponível</div>
+            <div style={{ fontSize: '.75rem', color: 'rgba(14,14,13,.6)' }}>Não foi possível carregar os dados. Tente novamente ou verifique a ligação à base de dados.</div>
+          </div>
+        </div>
+      )}
+      {dataSource === 'empty' && (
+        <div style={{ background: 'rgba(28,74,53,.05)', border: '1px solid rgba(28,74,53,.15)', borderRadius: '8px', padding: '12px 16px', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '1rem' }}>📋</span>
+          <div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.6rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#1c4a35', marginBottom: '2px' }}>Sem Contactos</div>
+            <div style={{ fontSize: '.75rem', color: 'rgba(14,14,13,.6)' }}>Nenhum contacto registado ainda. Adicione o primeiro clicando em &ldquo;+ Novo&rdquo;.</div>
+          </div>
+        </div>
+      )}
 
       {/* Advanced Filters */}
       {crmShowFilters && (

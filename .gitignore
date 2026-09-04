@@ -47,3 +47,23 @@ next-env.d.ts
 # One-time outreach scripts (may contain API keys)
 send_outreach*.mjs
 send_outreach*.js
+
+# Runtime logs and audit artefacts (not source)
+/logs/
+server.log
+*.log
+
+# Test artefacts
+/playwright-report/
+/test-results/
+
+# One-time SQL execution scripts (scratch — not migrations)
+RUN_*.sql
+
+# Audit/report directories
+/master-audit/
+/revenue-activation/
+/absolute-master-audit/
+
+# Temp files
+ts-check-new.txt

@@ -104,7 +104,7 @@ export default async function RecoveryPage() {
           )}
 
           {/* Reconciliation issues */}
-          {data.reconciliation_issues.length > 0 && (
+          {(data.reconciliation_issues?.length ?? 0) > 0 && (
             <div className="bg-[#111118] border border-amber-900/40 rounded-lg overflow-hidden">
               <div className="px-4 py-3 border-b border-amber-900/30">
                 <p className="text-xs text-amber-400 font-medium">Status Discrepancies — Reconciliation Queue</p>
@@ -143,7 +143,7 @@ export default async function RecoveryPage() {
           )}
 
           {/* Recent recoveries */}
-          {data.recent_recoveries.length > 0 && (
+          {(data.recent_recoveries?.length ?? 0) > 0 && (
             <div className="bg-[#111118] border border-slate-800 rounded-lg overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-800">
                 <p className="text-xs text-slate-400 font-medium">Recent Recovery Actions</p>
@@ -173,7 +173,7 @@ export default async function RecoveryPage() {
             </div>
           )}
 
-          {data.orphans_recovered_24h === 0 && data.reconciliation_issues.length === 0 && (
+          {data.orphans_recovered_24h === 0 && (data.reconciliation_issues?.length ?? 0) === 0 && (
             <div className="bg-[#111118] border border-green-900/30 rounded-lg p-4 flex items-center gap-3">
               <span className="text-green-400 text-lg">✓</span>
               <div>

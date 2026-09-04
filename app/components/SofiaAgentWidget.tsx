@@ -771,7 +771,13 @@ export default function SofiaAgentWidget() {
                                 source: 'sofia_widget',
                                 zona: locationPref || undefined,
                                 use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
-                                message: leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : undefined,
+                                message: (() => {
+                                  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user')?.content
+                                  const scoreTag = leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : ''
+                                  return [lastUserMsg, scoreTag].filter(Boolean).join(' | ') || undefined
+                                })(),
+                                page_url: typeof window !== 'undefined' ? window.location.href : undefined,
+                                submission_id: crypto.randomUUID(),
                                 ...getUTMs(),
                               }),
                             }).catch(err => console.error('[Sofia] lead POST failed:', err?.message ?? err))
@@ -792,7 +798,13 @@ export default function SofiaAgentWidget() {
                                 source: 'sofia_widget',
                                 zona: locationPref || undefined,
                                 use_type: branch === 'buy' ? 'habitacao' : branch === 'invest' ? 'investimento' : branch === 'sell' ? 'venda' : undefined,
-                                message: leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : undefined,
+                                message: (() => {
+                                  const lastUserMsg = [...messages].reverse().find(m => m.role === 'user')?.content
+                                  const scoreTag = leadScore >= 50 ? `[Sofia score: ${leadScore}${leadScore >= 70 ? ' — ALTA PRIORIDADE' : ''}]` : ''
+                                  return [lastUserMsg, scoreTag].filter(Boolean).join(' | ') || undefined
+                                })(),
+                                page_url: typeof window !== 'undefined' ? window.location.href : undefined,
+                                submission_id: crypto.randomUUID(),
                                 ...getUTMs(),
                               }),
                             }).catch(err => console.error('[Sofia] lead POST failed:', err?.message ?? err))

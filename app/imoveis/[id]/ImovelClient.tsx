@@ -88,6 +88,7 @@ export default function ImovelClient({ id }: { id: string }) {
   const [formName, setFormName] = useState('')
   const [formPhone, setFormPhone] = useState('')
   const [formMsg, setFormMsg] = useState('')
+  const [enquiryError, setEnquiryError] = useState(false)
   const [navHov, setNavHov] = useState('')
   const [galleryIdx, setGalleryIdx] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -1252,18 +1253,79 @@ export default function ImovelClient({ id }: { id: string }) {
                 rows={3}
                 style={{ ...inputStyle, resize: 'vertical', marginBottom: '12px' }}
               />
-              <a
-                href={`https://wa.me/351919948986?text=${encodeURIComponent(waFormMsg)}`}
-                target="_blank" rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={async () => {
+                  setEnquiryError(false)
+                  const waUrl = `https://wa.me/351919948986?text=${encodeURIComponent(waFormMsg)}`
+                  // Open blank window synchronously (beats popup blockers — must be before first await)
+                  const waWindow = typeof window !== 'undefined' ? window.open('', '_blank') : null
+
+                  // CRM persistence — awaited before navigating (Condition 4)
+                  let crmOk = true
+                  if (formName || formPhone) {
+                    const submissionId = crypto.randomUUID()
+                    try {
+                      const res = await fetch('/api/leads', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          name:          formName  || undefined,
+                          phone:         formPhone || undefined,
+                          message:       formMsg   || undefined,
+                          source:        'property_enquiry',
+                          property_ref:  property.ref,
+                          property_name: property.nome,
+                          zona:          property.zona,
+                          intent:        'buyer',
+                          submission_id: submissionId,
+                          page_url:      typeof window !== 'undefined' ? window.location.href : undefined,
+                        }),
+                      })
+                      if (!res.ok) {
+                        crmOk = false
+                        console.error('[ImovelClient] lead POST status:', res.status)
+                      }
+                    } catch (err) {
+                      crmOk = false
+                      console.error('[ImovelClient] lead POST failed:', (err as Error)?.message ?? err)
+                    }
+                  }
+
+                  if (crmOk) {
+                    // CRM confirmed — navigate the pre-opened window
+                    if (waWindow) waWindow.location.href = waUrl
+                  } else {
+                    // CRM failed — close blank window, surface error, offer deliberate fallback
+                    if (waWindow) waWindow.close()
+                    setEnquiryError(true)
+                  }
+                }}
                 style={{
                   display: 'block', width: '100%', textAlign: 'center',
-                  background: '#c9a96e', color: '#0c1f15',
-                  padding: '13px',
+                  background: '#c9a96e', color: '#0c1f15', cursor: 'pointer',
+                  padding: '13px', border: 'none',
                   fontFamily: "'Jost', sans-serif", fontSize: '.62rem',
                   fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase',
-                  textDecoration: 'none', marginBottom: '14px', boxSizing: 'border-box',
+                  marginBottom: '14px', boxSizing: 'border-box',
                 }}
-              >Enviar via WhatsApp →</a>
+              >Enviar via WhatsApp →</button>
+
+              {/* CRM failure fallback — explicit user action required */}
+              {enquiryError && (
+                <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(180,60,60,.15)', border: '1px solid rgba(180,60,60,.4)', borderRadius: '2px' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: '.62rem', color: '#f4a', fontFamily: "'DM Mono', monospace", letterSpacing: '.06em' }}>
+                    Falha ao registar enquiry. Tenta novamente ou contacta-nos directamente.
+                  </p>
+                  <a
+                    href={`https://wa.me/351919948986?text=${encodeURIComponent(waFormMsg)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: '.58rem', color: 'rgba(201,169,110,.7)', fontFamily: "'DM Mono', monospace", letterSpacing: '.08em', textDecoration: 'underline' }}
+                  >
+                    Continuar para WhatsApp mesmo assim →
+                  </a>
+                </div>
+              )}
 
               {/* Make offer — text link only */}
               <a

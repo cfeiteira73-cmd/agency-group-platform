@@ -3,7 +3,7 @@
 // GET  /api/crm  — list contacts (with filters + pagination)
 // POST /api/crm  — create contact
 // PATCH /api/crm — update contact (send ?id= in query or body)
-// AMI: 22506 | Supabase-first, mock fallback
+// AMI: 22506 | Supabase-first, production data only — no mock fallback in any environment
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -35,7 +35,7 @@ interface PaginatedResponse<T> {
   page: number
   limit: number
   pages: number
-  source: 'supabase' | 'mock'
+  source: 'supabase' | 'unavailable'
 }
 
 // ---------------------------------------------------------------------------
@@ -49,7 +49,9 @@ function rateLimitHeaders(): HeadersInit {
 }
 
 // ---------------------------------------------------------------------------
-// Mock contacts — 10 realistic Portuguese real estate buyers
+// Mock contacts — DEVELOPMENT / TEST USE ONLY
+// These fixtures must NEVER be returned by production route handlers.
+// They exist solely for use in test files (*.test.ts / *.spec.ts).
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -330,104 +332,65 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       const { data, error, count } = await query
 
-      if (!error && data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mapped = (data as any[]).map((row) => ({
-          id: typeof row.id === 'number' ? row.id : parseInt(String(row.id), 10) || 0,
-          name: row.full_name || row.name || '',
-          email: row.email || '',
-          phone: row.phone || '',
-          nationality: row.nationality || '',
-          budgetMin: row.budget_min || 0,
-          budgetMax: row.budget_max || 0,
-          tipos: Array.isArray(row.typologies_wanted) ? row.typologies_wanted : (Array.isArray(row.tipos) ? row.tipos : []),
-          zonas: Array.isArray(row.preferred_locations) ? row.preferred_locations : (Array.isArray(row.zonas) ? row.zonas : []),
-          // Map Supabase enum 'client' → portal Portuguese 'cliente'
-          status: row.status === 'client' ? 'cliente' : (row.status || 'lead'),
-          notes: row.notes || '',
-          lastContact: row.last_contact_at || row.last_contact || '',
-          nextFollowUp: row.next_followup_at || '',
-          dealRef: '',
-          origin: row.source || row.origin || '',
-          createdAt: row.created_at || '',
-          language: row.language ? (row.language as string).toUpperCase() as CRMContact['language'] : undefined,
-          source: row.source || '',
-          leadScore: row.lead_score || 0,
-          leadTier: row.lead_tier || null,
-          company: row.company || '',
-          jobTitle: row.job_title || '',
-          aiSummary: row.ai_summary || '',
-          aiSuggestedAction: row.ai_suggested_action || '',
-          tags: Array.isArray(row.tags) ? row.tags : [],
-          agentId: row.agent_id || row.assigned_to || null,
-        }))
+      if (error) {
+        console.error('[CRM GET] Supabase query error:', error.message, { corrId })
+        return NextResponse.json(
+          { error: 'CRM temporarily unavailable', data: [], count: 0, source: 'unavailable' as const },
+          { status: 503, headers: rateLimitHeaders() }
+        )
+      }
 
-        const response = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mapped = ((data ?? []) as any[]).map((row) => ({
+        id: typeof row.id === 'number' ? row.id : parseInt(String(row.id), 10) || 0,
+        name: row.full_name || row.name || '',
+        email: row.email || '',
+        phone: row.phone || '',
+        nationality: row.nationality || '',
+        budgetMin: row.budget_min || 0,
+        budgetMax: row.budget_max || 0,
+        tipos: Array.isArray(row.typologies_wanted) ? row.typologies_wanted : (Array.isArray(row.tipos) ? row.tipos : []),
+        zonas: Array.isArray(row.preferred_locations) ? row.preferred_locations : (Array.isArray(row.zonas) ? row.zonas : []),
+        // Map Supabase enum 'client' → portal Portuguese 'cliente'
+        status: row.status === 'client' ? 'cliente' : (row.status || 'lead'),
+        notes: row.notes || '',
+        lastContact: row.last_contact_at || row.last_contact || '',
+        nextFollowUp: row.next_followup_at || '',
+        dealRef: '',
+        origin: row.source || row.origin || '',
+        createdAt: row.created_at || '',
+        language: row.language ? (row.language as string).toUpperCase() as CRMContact['language'] : undefined,
+        source: row.source || '',
+        leadScore: row.lead_score || 0,
+        leadTier: row.lead_tier || null,
+        company: row.company || '',
+        jobTitle: row.job_title || '',
+        aiSummary: row.ai_summary || '',
+        aiSuggestedAction: row.ai_suggested_action || '',
+        tags: Array.isArray(row.tags) ? row.tags : [],
+        agentId: row.agent_id || row.assigned_to || null,
+      }))
+
+      return NextResponse.json(
+        {
           data:   mapped,
           count:  count ?? mapped.length,
           page,
           limit,
           pages: Math.ceil((count ?? mapped.length) / limit),
           source: 'supabase' as const,
-        }
-        return NextResponse.json(response, { headers: rateLimitHeaders() })
-      }
-    } catch {
-      // Supabase unavailable — fall through to mock
-    }
-
-    // --- Mock fallback ---
-    let filtered = [...MOCK_CONTACTS]
-
-    if (status) filtered = filtered.filter(c => c.status === status)
-    if (tier)   filtered = filtered.filter(c => c.lead_tier === tier)
-    if (zone)   filtered = filtered.filter(c => c.preferred_locations?.includes(zone))
-    if (search) {
-      filtered = filtered.filter(c =>
-        c.full_name.toLowerCase().includes(search) ||
-        c.email?.toLowerCase().includes(search) ||
-        c.phone?.toLowerCase().includes(search)
+        },
+        { headers: rateLimitHeaders() }
+      )
+    } catch (supabaseErr) {
+      // Supabase unreachable — explicit 503, no mock fallback
+      const reason = supabaseErr instanceof Error ? supabaseErr.message : 'connection error'
+      console.error('[CRM GET] Supabase unavailable:', reason, { corrId })
+      return NextResponse.json(
+        { error: 'CRM temporarily unavailable', data: [], count: 0, source: 'unavailable' as const },
+        { status: 503, headers: rateLimitHeaders() }
       )
     }
-
-    const total  = filtered.length
-    const sliced = filtered.slice((page - 1) * limit, page * limit)
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mappedMock = sliced.map((row: any) => ({
-      id: typeof row.id === 'number' ? row.id : parseInt(String(row.id), 10) || 0,
-      name: row.full_name || row.name || '',
-      email: row.email || '',
-      phone: row.phone || '',
-      nationality: row.nationality || '',
-      budgetMin: row.budget_min || 0,
-      budgetMax: row.budget_max || 0,
-      tipos: Array.isArray(row.typologies_wanted) ? row.typologies_wanted : [],
-      zonas: Array.isArray(row.preferred_locations) ? row.preferred_locations : [],
-      status: row.status || 'lead',
-      notes: row.notes || '',
-      lastContact: row.last_contact_at || '',
-      nextFollowUp: row.next_followup_at || '',
-      dealRef: '',
-      origin: row.source || '',
-      createdAt: row.created_at || '',
-      language: row.language ? (row.language as string).toUpperCase() as CRMContact['language'] : undefined,
-      leadScore: row.lead_score || 0,
-      leadTier: row.lead_tier || null,
-      company: row.company || '',
-      jobTitle: row.job_title || '',
-      aiSummary: row.ai_summary || '',
-      tags: Array.isArray(row.tags) ? row.tags : [],
-    }))
-
-    return NextResponse.json({
-      data:   mappedMock,
-      count:  total,
-      page,
-      limit,
-      pages:  Math.ceil(total / limit),
-      source: 'mock',
-    }, { headers: rateLimitHeaders() })
   } catch (error) {
     console.error('[CRM GET]', error, { corrId })
     return NextResponse.json(
@@ -535,55 +498,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       if (error) {
-        console.warn('[CRM POST] Supabase error:', error.message)
+        console.error('[CRM POST] Supabase insert error:', error.message, { corrId })
+        return NextResponse.json(
+          { error: 'CRM temporarily unavailable — contact not saved. Retry or record manually.' },
+          { status: 503, headers: rateLimitHeaders() }
+        )
       }
-    } catch {
-      // Supabase unavailable
+
+      // data and error both falsy — unexpected Supabase state
+      return NextResponse.json(
+        { error: 'CRM temporarily unavailable — contact not saved. Retry or record manually.' },
+        { status: 503, headers: rateLimitHeaders() }
+      )
+    } catch (supabaseErr) {
+      // Supabase unreachable — fail loudly, never pretend the lead was saved
+      const reason = supabaseErr instanceof Error ? supabaseErr.message : 'connection error'
+      console.error('[CRM POST] Supabase persistence failure — contact not saved', { corrId, reason })
+      return NextResponse.json(
+        { error: 'CRM temporarily unavailable — contact not saved. Retry or record manually.' },
+        { status: 503, headers: rateLimitHeaders() }
+      )
     }
-
-    // Return mock success with generated id
-    const mockResult: ContactRow = {
-      ...contact,
-      id:                     crypto.randomUUID(),
-      whatsapp:               contact.whatsapp ?? null,
-      language:               contact.language ?? null,
-      lead_score:             null,
-      lead_score_breakdown:   null,
-      source_detail:          null,
-      referrer_id:            null,
-      assigned_to:            null,
-      bedrooms_min:           null,
-      bedrooms_max:           null,
-      features_required:      null,
-      use_type:               null,
-      property_to_sell_id:    null,
-      asking_price:           null,
-      motivation_score:       null,
-      last_contact_at:        null,
-      next_followup_at:       null,
-      total_interactions:     0,
-      opt_out_marketing:      false,
-      opt_out_whatsapp:       false,
-      gdpr_consent_at:        contact.gdpr_consent ? new Date().toISOString() : null,
-      enriched_at:            null,
-      clearbit_data:          null,
-      apollo_data:            null,
-      linkedin_url:           null,
-      company:                null,
-      job_title:              null,
-      qualified_at:           null,
-      qualification_notes:    null,
-      ai_summary:             null,
-      ai_suggested_action:    null,
-      detected_intent:        null,
-      created_at:             new Date().toISOString(),
-      updated_at:             new Date().toISOString(),
-    } as ContactRow
-
-    return NextResponse.json(
-      { data: mockResult, source: 'mock', warning: 'Supabase unavailable — contact not persisted' },
-      { status: 201, headers: rateLimitHeaders() }
-    )
   } catch (error) {
     console.error('[CRM POST]', error, { corrId })
     return NextResponse.json(
@@ -722,18 +657,18 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
         console.warn('[CRM PATCH] Supabase error:', error.message)
         return NextResponse.json({ error: error.message }, { status: 404, headers: rateLimitHeaders() })
       }
-    } catch {
-      // Supabase unavailable
+
+      // data and error both falsy — record not found
+      return NextResponse.json({ error: 'Contacto não encontrado' }, { status: 404, headers: rateLimitHeaders() })
+    } catch (supabaseErr) {
+      // Supabase unreachable — fail loudly, never pretend the update was persisted
+      const reason = supabaseErr instanceof Error ? supabaseErr.message : 'connection error'
+      console.error('[CRM PATCH] Supabase unavailable — update not saved', { corrId, reason })
+      return NextResponse.json(
+        { error: 'CRM temporarily unavailable — update not saved.' },
+        { status: 503, headers: rateLimitHeaders() }
+      )
     }
-
-    // Mock fallback — return the merged mock contact or generic confirmation
-    const mockContact = MOCK_CONTACTS.find(c => c.id === contactId)
-    const merged = mockContact ? { ...mockContact, ...updates, id: contactId } : { id: contactId, ...updates }
-
-    return NextResponse.json(
-      { data: merged, source: 'mock', warning: 'Supabase unavailable — update not persisted' },
-      { headers: rateLimitHeaders() }
-    )
   } catch (error) {
     console.error('[CRM PATCH]', error, { corrId })
     return NextResponse.json(

@@ -33,7 +33,6 @@ interface ScoreBreakdown {
   source: number
   contact_info: number
   message_quality: number
-  nationality: number
   timeline: number
 }
 
@@ -50,8 +49,6 @@ interface LeadScoreResponse {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-
-const HIGH_VALUE_NATIONALITIES = ['US', 'FR', 'GB', 'DE', 'AE', 'CN', 'BR', 'SA', 'QA', 'KW']
 
 const LOCATION_KEYWORDS = [
   'lisboa', 'cascais', 'sintra', 'estoril', 'algarve', 'comporta', 'ericeira',
@@ -171,7 +168,6 @@ function scoreLeadRequest(data: LeadScoreRequest): LeadScoreResponse {
     source: 0,
     contact_info: 0,
     message_quality: 0,
-    nationality: 0,
     timeline: 0,
   }
 
@@ -197,13 +193,7 @@ function scoreLeadRequest(data: LeadScoreRequest): LeadScoreResponse {
   }
   if (hasLocation) breakdown.message_quality += 5
 
-  // 5. Nationality (max 10)
-  const nationalityUpper = data.nationality?.toUpperCase() ?? ''
-  if (HIGH_VALUE_NATIONALITIES.includes(nationalityUpper)) {
-    breakdown.nationality = 10
-  }
-
-  // 6. Timeline (max 15)
+  // 5. Timeline (max 15)
   const timeline = data.timeline?.toLowerCase() ?? ''
   if (timeline === 'immediate' || timeline === 'imediato' || timeline === 'now') {
     breakdown.timeline = 15
@@ -225,7 +215,6 @@ function scoreLeadRequest(data: LeadScoreRequest): LeadScoreResponse {
     breakdown.source +
     breakdown.contact_info +
     breakdown.message_quality +
-    breakdown.nationality +
     breakdown.timeline
   )
 
@@ -437,7 +426,7 @@ export async function GET(): Promise<NextResponse> {
     endpoint: 'POST /api/automation/lead-score',
     description: 'Score inbound leads 0-100 and classify as A (hot), B (warm), or C (cold)',
     algorithm: {
-      max_score: 100,
+      max_score: 95,
       factors: {
         budget: {
           max: 30,
@@ -474,10 +463,6 @@ export async function GET(): Promise<NextResponse> {
             message_length_50_100: 3,
             specific_location_mentioned: 5,
           },
-        },
-        nationality: {
-          max: 10,
-          high_value: ['US', 'FR', 'GB', 'DE', 'AE', 'CN', 'BR', 'SA', 'QA', 'KW'],
         },
         timeline: {
           max: 15,

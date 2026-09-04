@@ -42,6 +42,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
   const [telefone, setTelefone] = useState('')
   const [email, setEmail] = useState('')
   const [success, setSuccess] = useState(false)
+  const [crmError, setCrmError] = useState(false)
 
   const days = getNext14Days()
   const selectedDayObj = selectedDay !== null ? days[selectedDay] : null
@@ -53,12 +54,56 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
     outline: 'none', boxSizing: 'border-box',
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
+    setCrmError(false)
     const dayLabel = selectedDayObj ? `${selectedDayObj.dayName} ${selectedDayObj.dayNum} ${selectedDayObj.month}` : ''
     const msg = `Olá, quero agendar uma visita ao imóvel ${propertyRef} — ${propertyName} (${propertyPreco}).\n\nData: ${dayLabel}\nHora: ${selectedTime}\nTipo: ${visitType === 'presencial' ? 'Visita Presencial' : 'Tour Virtual'}\nNome: ${nome}\nContacto: ${telefone}`
-    // Open WhatsApp
-    window.open(`https://wa.me/351919948986?text=${encodeURIComponent(msg)}`, '_blank')
-    // Fire email confirmation (fire-and-forget)
+    const waUrl = `https://wa.me/351919948986?text=${encodeURIComponent(msg)}`
+
+    // Open blank window synchronously — before first await (beats popup blockers)
+    const waWindow = typeof window !== 'undefined' ? window.open('', '_blank') : null
+
+    // CRM-first: awaited before navigation (Condition 4 — no race)
+    let crmOk = true
+    if (telefone || email) {
+      const submissionId = crypto.randomUUID()
+      try {
+        const res = await fetch('/api/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name:          nome          || undefined,
+            phone:         telefone      || undefined,
+            email:         email         || undefined,
+            source:        'scheduling',
+            property_ref:  propertyRef,
+            property_name: propertyName,
+            message:       `Visita ${visitType} — ${dayLabel} ${selectedTime}`,
+            intent:        'buyer',
+            submission_id: submissionId,
+            page_url:      typeof window !== 'undefined' ? window.location.href : undefined,
+          }),
+        })
+        if (!res.ok) {
+          crmOk = false
+          console.error('[SchedulingModal] lead POST status:', res.status)
+        }
+      } catch (err) {
+        crmOk = false
+        console.error('[SchedulingModal] lead POST failed:', (err as Error)?.message ?? err)
+      }
+    }
+
+    if (!crmOk) {
+      // CRM failed — close blank window; surface explicit error; do not claim booking recorded
+      if (waWindow) waWindow.close()
+      setCrmError(true)
+      return
+    }
+
+    // CRM confirmed — navigate and fire booking alert
+    if (waWindow) waWindow.location.href = waUrl
+
     fetch('/api/booking', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -67,7 +112,7 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
         propertyRef, propertyName, propertyPreco,
         date: dayLabel, time: selectedTime, visitType,
       }),
-    }).catch(err => console.error('[SchedulingModal] booking POST failed:', err?.message ?? err))
+    }).catch(err => console.error('[SchedulingModal] booking POST failed:', (err as Error)?.message ?? err))
     setSuccess(true)
   }
 
@@ -113,6 +158,20 @@ export default function SchedulingModal({ propertyRef, propertyName, propertyPre
               <h3 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.8rem', color: '#f4f0e6', margin: '0 0 8px' }}>Pedido Enviado!</h3>
               <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.82rem', color: 'rgba(244,240,230,.45)', margin: '0 0 24px' }}>A nossa equipa confirma o agendamento via WhatsApp em menos de 2 horas.</p>
               <button onClick={onClose} style={{ background: '#c9a96e', color: '#060d08', border: 'none', padding: '12px 32px', fontFamily: "'Jost', sans-serif", fontSize: '.65rem', fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer' }}>Fechar</button>
+            </div>
+          ) : crmError ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '12px' }}>⚠</div>
+              <h3 style={{ fontFamily: "'Cormorant', serif", fontWeight: 300, fontSize: '1.6rem', color: '#f4f0e6', margin: '0 0 8px' }}>Falha ao registar pedido</h3>
+              <p style={{ fontFamily: "'Jost', sans-serif", fontSize: '.78rem', color: 'rgba(244,240,230,.45)', margin: '0 0 20px' }}>Não foi possível guardar o teu pedido. Por favor tenta novamente.</p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button onClick={() => setCrmError(false)} style={{ background: '#c9a96e', color: '#060d08', border: 'none', padding: '12px 24px', fontFamily: "'Jost', sans-serif", fontSize: '.62rem', fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer' }}>Tentar novamente</button>
+                <a
+                  href={`https://wa.me/351919948986?text=${encodeURIComponent(`Olá, quero agendar uma visita ao imóvel ${propertyRef} — ${propertyName}.`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ background: 'transparent', color: 'rgba(201,169,110,.6)', border: '1px solid rgba(201,169,110,.3)', padding: '12px 24px', fontFamily: "'Jost', sans-serif", fontSize: '.62rem', fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' }}
+                >Contactar directamente →</a>
+              </div>
             </div>
           ) : step === 1 ? (
             <>
