@@ -118,23 +118,23 @@ export async function ingestCommercialLead(input: IngestLeadInput): Promise<Inge
   // ── Atomic RPC call (migration 056): contact upsert + activity in one tx ──
   try {
     const { data, error } = await supabaseAdmin.rpc('ingest_commercial_lead_v1', {
-      p_email:               email               ?? null,
-      p_phone:               phone               ?? null,
-      p_name:                input.name          ?? null,
+      p_email:               email               ?? '',
+      p_phone:               phone               ?? '',
+      p_name:                input.name          ?? '',
       p_source:              input.source,
-      p_notes:               noteParts.length ? noteParts.join(' | ') : null,
-      p_preferred_locations: input.zona ? [input.zona] : null,
-      p_timeline:            input.timeline      ?? null,
-      p_page_url:            input.page_url      ?? null,
+      p_notes:               noteParts.length ? noteParts.join(' | ') : '',
+      p_preferred_locations: input.zona ? [input.zona] : [],
+      p_timeline:            input.timeline      ?? '',
+      p_page_url:            input.page_url      ?? '',
       p_intent:              intentLabel,
       p_next_followup_at:    nextFollowup.toISOString(),
       p_activity_type:       activityType,
       p_activity_subject:    activitySubject,
-      p_activity_body:       input.message       ?? null,
+      p_activity_body:       input.message       ?? '',
       p_activity_metadata:   Object.keys(activityMetadata).length
                                ? activityMetadata
                                : null,
-      p_activity_source_url: input.page_url      ?? null,
+      p_activity_source_url: input.page_url      ?? '',
       p_submission_id:       input.submissionId  ?? null,
     })
 
