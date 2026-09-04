@@ -116,10 +116,8 @@ export async function ingestCommercialLead(input: IngestLeadInput): Promise<Inge
   if (input.intent)        activityMetadata.intent        = input.intent
 
   // ── Atomic RPC call (migration 056): contact upsert + activity in one tx ──
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = supabaseAdmin as any  // RPC not yet in generated types; regenerate post-migration 056
   try {
-    const { data, error } = await supabase.rpc('ingest_commercial_lead_v1', {
+    const { data, error } = await supabaseAdmin.rpc('ingest_commercial_lead_v1', {
       p_email:               email               ?? null,
       p_phone:               phone               ?? null,
       p_name:                input.name          ?? null,
