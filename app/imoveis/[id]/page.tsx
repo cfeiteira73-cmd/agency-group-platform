@@ -23,6 +23,11 @@ export function generateStaticParams() {
   return PROPERTY_IDS.map(id => ({ id }))
 }
 
+// Unknown params → 404 at routing level (no component render, correct HTTP status).
+// Without this, Next.js uses dynamic rendering and notFound() commits after the 200
+// header is already sent, causing HTTP 200 with noindex meta instead of HTTP 404.
+export const dynamicParams = false
+
 // ─── Mock data generator for IDs not in the portfolio ─────────────────────────
 function generateMockProperty(id: string): Property {
   const num = Math.abs(
@@ -98,6 +103,7 @@ export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Metadata> {
   const { id } = await params
+  if (!PROPERTY_IDS.includes(id)) notFound()
   const p = PROPERTIES.find(x => x.id === id) ?? generateMockProperty(id)
   const price = formatPriceFull(p.preco)
   const title = `${p.nome} · ${p.zona} · ${price} | Agency Group`

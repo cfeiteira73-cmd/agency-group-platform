@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Vendre son Bien au Portugal en 2026 : Guide Complet pour Propriétaires',
-    description: 'Agency Group · Portugal Property',
+    description: '169.812 transactions, 210 jours, plus-value 28%, CPCV 20–30%. Guide complet pour vendre au Portugal. AMI 22506.',
     images: ['https://www.agencygroup.pt/api/og?title=Vendre%20son%20Bien%20au%20Portugal%20en%202026%20%3A%20Guide%20Complet%20pour%20Pro&subtitle=Agency%20Group%20%C2%B7%20Portugal%20Property'],
   },
 }

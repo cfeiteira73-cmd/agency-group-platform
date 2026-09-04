@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Visto D7 Portugal 2026: Rendimento Passivo e Residência',
-    description: 'Requisitos, rendimento mínimo €820/mês, documentos e processo passo a passo. Compatível com NHR/IFIC',
+    description: 'Requisitos, rendimento mínimo €820/mês, documentos e processo passo a passo. Compatível com NHR/IFICI.',
     images: ['https://www.agencygroup.pt/api/og?title=Visto%20D7%20Portugal%202026%3A%20Rendimento%20Passivo%20e%20Resid%C3%AAncia&subtitle=Requisitos%2C%20rendimento%20m%C3%ADnimo%20%E2%82%AC820%2Fm%C3%AAs%2C%20documentos%20e%20pr'],
   },
 }

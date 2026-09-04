@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Lisbon vs Porto: Where to Invest in Portuguese Property in 2026?',
-    description: 'Porto yields 5.1% vs Lisbon 4.4%. Lisbon leads appreciation. Full comparison of prices, zones, and b',
+    description: 'Porto yields 5.1% vs Lisbon 4.4%. Lisbon leads appreciation. Full comparison of prices, zones, and buyer profiles.',
     images: ['https://www.agencygroup.pt/api/og?title=Lisbon%20vs%20Porto%3A%20Where%20to%20Invest%20in%20Portuguese%20Property%20in%202&subtitle=Porto%20yields%205.1%25%20vs%20Lisbon%204.4%25.%20Lisbon%20leads%20apprecia'],
   },
 }
