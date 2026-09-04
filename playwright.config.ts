@@ -1,4 +1,10 @@
 import { defineConfig, devices } from '@playwright/test'
+import { loadEnvConfig } from '@next/env'
+
+// Sync .env.local into the Playwright test runner process so test workers see
+// the same CRON_SECRET (and other vars) that the dev/start server sees.
+// In CI, .env.local does not exist — this is a no-op and CI-injected vars prevail.
+loadEnvConfig(process.cwd())
 
 export default defineConfig({
   testDir: './tests/e2e',

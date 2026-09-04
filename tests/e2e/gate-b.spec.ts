@@ -18,14 +18,12 @@ test.describe('Gate B — AVM Valuation Contract', () => {
         zona: 'Lisboa',
         tipo: 'T2',
         area: 100,
-        quartos: 2,
         casasBanho: 1,
         andar: 3,
-        garagem: false,
-        piscina: false,
-        condominio: true,
+        garagem: 'sem',
+        piscina: 'nao',
         vista: 'cidade',
-        energia: 'A',
+        epc: 'A',
       },
     })
     expect(response.status()).toBe(200)
