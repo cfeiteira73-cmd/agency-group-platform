@@ -291,7 +291,7 @@ CREATE TABLE IF NOT EXISTS demand_mandates (
   -- Organisation-held mandates: NOT supported in Phase 2B.1.
   -- Future path: when canonical client-org model exists, add holder_org_id column
   -- via additive migration and relax this NOT NULL with a CHECK constraint.
-  holder_contact_id  UUID    NOT NULL REFERENCES public.contacts(id) ON DELETE SET NULL,
+  holder_contact_id  UUID    NOT NULL REFERENCES public.contacts(id) ON DELETE RESTRICT,
 
   -- ── Commercial ownership ──────────────────────────────────────────────────
   owner_id           UUID    NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
@@ -921,7 +921,9 @@ COMMENT ON TABLE public.investor_mandate_details IS
 
 COMMENT ON COLUMN public.demand_mandates.holder_contact_id IS
   'Primary person holding this mandate. NOT NULL in Phase 2B.1 (person-only). '
-  'SET NULL on contact delete — mandate preserved for audit. '
+  'ON DELETE RESTRICT: deleting a contact with active mandates is blocked at DB level. '
+  'Operator must reassign, archive, or remove mandates before deleting the contact. '
+  'This preserves referential integrity and prevents accidental commercial-history loss. '
   'Future: when client-org model exists, add holder_org_id via additive migration.';
 
 COMMENT ON COLUMN public.demand_mandates.currency_code IS
