@@ -2,7 +2,17 @@ import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
 import Credentials from 'next-auth/providers/credentials'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import * as OTPAuth from 'otpauth'
+
+// Service-role client for auth lookups — bypasses RLS so we can verify credentials.
+// Never exposed to the browser; only used in server-side authorize() and signIn() callbacks.
+function getAdminClient() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+}
 
 declare module 'next-auth' {
   interface User {
@@ -37,7 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null
 
         try {
-          const supabase = await createClient()
+          const supabase = getAdminClient()
           const { data: user } = await supabase
             .from('users')
             .select('*')
@@ -102,7 +112,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // For Google OAuth, auto-create/sync user in our DB
       if (account?.provider === 'google' && user.email) {
         try {
-          const supabase = await createClient()
+          const supabase = getAdminClient()
           const { data: existing } = await supabase
             .from('users')
             .select('id, is_active')
@@ -116,7 +126,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return false
           }
 
-          // Sync avatar if it changed
           if (user.image) {
             await supabase.from('users').update({ avatar_url: user.image }).eq('email', user.email)
           }
