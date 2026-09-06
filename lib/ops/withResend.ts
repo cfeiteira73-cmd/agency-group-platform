@@ -47,6 +47,11 @@ export async function withResend<T>(
     try {
       const result = await fn(controller.signal)
       clearTimeout(timer)
+      // Resend SDK uses result pattern { data, error } instead of throwing
+      const r = result as { data?: unknown; error?: { message?: string; name?: string } | null }
+      if (r && typeof r === 'object' && 'error' in r && r.error) {
+        throw new Error(r.error.message || r.error.name || JSON.stringify(r.error))
+      }
       return { data: result, error: null }
     } catch (err) {
       clearTimeout(timer)
