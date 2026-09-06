@@ -39,7 +39,8 @@ async function checkRequestRateLimit(ip: string): Promise<{ allowed: boolean; re
       const count = results[2]?.result ?? 0
       return { allowed: count <= limit, remaining: Math.max(0, limit - count) }
     } catch {
-      return { allowed: false, remaining: 0 }
+      // Fail open: if Redis is unreachable, don't block the user
+      return { allowed: true, remaining: 5 }
     }
   }
   return { allowed: true, remaining: 5 }

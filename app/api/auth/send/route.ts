@@ -35,9 +35,10 @@ async function checkAuthRateLimit(ip: string): Promise<{ allowed: boolean; remai
       })
       const results = await response.json() as Array<{ result: number }>
       const count = results[2]?.result ?? 0
-      return { allowed: count <= limit, remaining: Math.max(0, limit - count) }
+      return { allowed: count < limit, remaining: Math.max(0, limit - count) }
     } catch {
-      return { allowed: false, remaining: 0 }
+      // Fail open: if Redis is unreachable, don't block the user
+      return { allowed: true, remaining: 3 }
     }
   }
   return { allowed: true, remaining: 3 }
