@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { auth } from '@/auth'
+import { getAnySession } from '@/lib/auth/getSession'
 import {
   createMandate,
   getMandatesByContactId,
@@ -14,7 +14,7 @@ export const runtime = 'nodejs'
 // ── GET /api/mandates?contact_id=N[&lifecycle=STATE] ─────────────────────────
 
 export async function GET(req: NextRequest) {
-  const session = await auth()
+  const session = await getAnySession()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
@@ -96,7 +96,7 @@ const CreateMandateSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const session = await auth()
+  const session = await getAnySession()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: unknown
