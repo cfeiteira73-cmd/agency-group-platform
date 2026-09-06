@@ -5,7 +5,7 @@ interface CRMState {
   crmContacts: CRMContact[]
   crmSearch: string
   activeCrmId: number | null
-  crmProfileTab: 'overview' | 'timeline' | 'tasks' | 'notes' | 'matching' | 'postclosing'
+  crmProfileTab: 'overview' | 'timeline' | 'tasks' | 'notes' | 'matching' | 'mandates' | 'postclosing'
   crmBulkMode: boolean
   crmSelectedIds: Set<number>
   crmView: 'list' | 'kanban'

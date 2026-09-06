@@ -6,6 +6,7 @@ import { useDealStore } from '../stores/dealStore'
 import { useUIStore } from '../stores/uiStore'
 import type { CRMContact, Activity, Task } from './types'
 import { PORTAL_PROPERTIES } from './constants'
+import MandatePanel from './MandatePanel'
 
 const WA_TEMPLATES: Record<string, Record<string, { label: string; msg: string }>> = {
   PT: {
@@ -1442,7 +1443,7 @@ export default function PortalCRM() {
 
               {/* Tabs */}
               <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.08)', padding: '0 24px', overflowX: 'auto' }}>
-                {[['overview', 'Perfil'], ['timeline', 'Timeline'], ['tasks', 'Tarefas'], ['notes', 'Notas'], ['matching', 'Matching']].map(([t, l]) => (
+                {[['overview', 'Perfil'], ['timeline', 'Timeline'], ['tasks', 'Tarefas'], ['notes', 'Notas'], ['matching', 'Matching'], ['mandates', 'Mandatos']].map(([t, l]) => (
                   <button type="button" key={t} className={`crm-profile-tab${crmProfileTab === t ? ' active' : ''}`} onClick={() => setCrmProfileTab(t as typeof crmProfileTab)}>{l}</button>
                 ))}
                 {activeContact.status === 'cliente' && <button type="button" className={`crm-profile-tab${crmProfileTab === 'postclosing' ? ' active' : ''}`} onClick={() => setCrmProfileTab('postclosing')}>Post-Sale</button>}
@@ -2061,6 +2062,11 @@ export default function PortalCRM() {
                       </div>
                     ))}
                   </div>
+                )}
+
+                {/* MANDATES */}
+                {crmProfileTab === 'mandates' && (
+                  <MandatePanel contactId={activeContact.id} />
                 )}
 
                 {/* POST-SALE */}

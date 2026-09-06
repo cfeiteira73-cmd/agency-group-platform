@@ -38,10 +38,12 @@ import {
 
 const VALID_UUID = '00000000-0000-4000-8000-000000000001'
 const VALID_UUID2 = '00000000-0000-4000-8000-000000000002'
+// Phase 2B.2: contacts.id is BIGINT — holder_contact_id is a positive integer
+const VALID_CONTACT_ID = 42
 
 function validMandateInput() {
   return {
-    holder_contact_id: VALID_UUID,
+    holder_contact_id: VALID_CONTACT_ID,
     owner_id:          VALID_UUID2,
     transaction_mode:  'BUY',
     purpose:           'PRIMARY_RESIDENCE',
@@ -302,8 +304,15 @@ describe('validateLifecycleTransition', () => {
 // =============================================================================
 
 describe('validateHolderId', () => {
-  it('accepts valid UUID', () => {
-    expect(validateHolderId(VALID_UUID).ok).toBe(true)
+  // Phase 2B.2: contacts.id is BIGINT — holder_contact_id must be a positive integer
+  it('accepts positive integer (contacts.id is BIGINT)', () => {
+    expect(validateHolderId(VALID_CONTACT_ID).ok).toBe(true)
+    expect(validateHolderId(1).ok).toBe(true)
+    expect(validateHolderId(999000001).ok).toBe(true)
+  })
+
+  it('rejects UUID string (regression: contacts.id is BIGINT not UUID)', () => {
+    expect(validateHolderId(VALID_UUID as unknown as number).ok).toBe(false)
   })
 
   it('rejects null (not nullable — Amendment 1)', () => {
@@ -316,12 +325,12 @@ describe('validateHolderId', () => {
     expect(validateHolderId(undefined).ok).toBe(false)
   })
 
-  it('rejects empty string', () => {
-    expect(validateHolderId('').ok).toBe(false)
+  it('rejects zero', () => {
+    expect(validateHolderId(0).ok).toBe(false)
   })
 
-  it('rejects non-UUID string', () => {
-    expect(validateHolderId('not-a-uuid').ok).toBe(false)
+  it('rejects negative', () => {
+    expect(validateHolderId(-1).ok).toBe(false)
   })
 })
 
@@ -369,7 +378,8 @@ describe('validateDemandMandate', () => {
   })
 
   it('rejects missing holder_contact_id', () => {
-    const r = validateDemandMandate({ ...validMandateInput(), holder_contact_id: '' })
+    // Phase 2B.2: contacts.id is BIGINT — 0 and negative are rejected
+    const r = validateDemandMandate({ ...validMandateInput(), holder_contact_id: 0 })
     expect(r.ok).toBe(false)
   })
 
@@ -676,7 +686,7 @@ describe('validateOrigin', () => {
 
 describe('multiple active mandates per contact', () => {
   it('same holder can have BUY+INVESTMENT mandate (distinct purpose)', () => {
-    const holderId = VALID_UUID
+    const holderId = VALID_CONTACT_ID
     const m1 = validateDemandMandate({
       holder_contact_id: holderId,
       owner_id:          VALID_UUID2,
@@ -694,7 +704,7 @@ describe('multiple active mandates per contact', () => {
   })
 
   it('same holder can have BUY+RENT mandates simultaneously', () => {
-    const holderId = VALID_UUID
+    const holderId = VALID_CONTACT_ID
     const m1 = validateDemandMandate({
       holder_contact_id: holderId,
       owner_id:          VALID_UUID2,

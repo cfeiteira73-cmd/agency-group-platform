@@ -90,8 +90,8 @@ export type RiskTolerance = typeof RISK_TOLERANCES[number]
 // ── Types matching the schema ─────────────────────────────────────────────────
 
 export interface DemandMandateInput {
-  holder_contact_id: string
-  owner_id:          string
+  holder_contact_id: number          // BIGINT — contacts.id is numeric in production
+  owner_id:          string          // UUID — session.user.id = profiles.id
   transaction_mode:  string
   purpose:           string
   lifecycle_state?:  string
@@ -214,10 +214,10 @@ export function validateOrigin(value: string | undefined | null): ValidationResu
   return ok()
 }
 
-export function validateHolderId(value: string | undefined | null): ValidationResult {
-  if (!value) return fail('holder_contact_id is required (Amendment 1: person-only mandates)')
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
-    return fail(`holder_contact_id must be a valid UUID, got "${value}"`)
+export function validateHolderId(value: number | undefined | null): ValidationResult {
+  if (value === undefined || value === null) return fail('holder_contact_id is required (Amendment 1: person-only mandates)')
+  if (!Number.isInteger(value) || value <= 0) {
+    return fail(`holder_contact_id must be a positive integer (contacts.id is BIGINT), got: ${value}`)
   }
   return ok()
 }
@@ -226,7 +226,8 @@ export function validateHolderId(value: string | undefined | null): ValidationRe
 export function validateDemandMandate(input: DemandMandateInput): ValidationResult {
   return merge([
     validateHolderId(input.holder_contact_id),
-    input.owner_id ? ok() : fail('owner_id is required'),
+    (input.owner_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.owner_id))
+      ? ok() : fail('owner_id must be a valid UUID'),
     validateTransactionMode(input.transaction_mode),
     validatePurpose(input.purpose),
     validateLifecycleState(input.lifecycle_state ?? 'DRAFT'),

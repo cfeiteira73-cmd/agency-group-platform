@@ -291,7 +291,7 @@ CREATE TABLE IF NOT EXISTS demand_mandates (
   -- Organisation-held mandates: NOT supported in Phase 2B.1.
   -- Future path: when canonical client-org model exists, add holder_org_id column
   -- via additive migration and relax this NOT NULL with a CHECK constraint.
-  holder_contact_id  UUID    NOT NULL REFERENCES public.contacts(id) ON DELETE RESTRICT,
+  holder_contact_id  BIGINT  NOT NULL REFERENCES public.contacts(id) ON DELETE RESTRICT,
 
   -- ── Commercial ownership ──────────────────────────────────────────────────
   owner_id           UUID    NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
@@ -401,7 +401,7 @@ CREATE INDEX IF NOT EXISTS idx_dm_purpose_mode
 CREATE TABLE IF NOT EXISTS demand_mandate_participants (
   id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
   mandate_id  UUID    NOT NULL REFERENCES public.demand_mandates(id) ON DELETE CASCADE,
-  contact_id  UUID    NOT NULL REFERENCES public.contacts(id) ON DELETE CASCADE,
+  contact_id  BIGINT  NOT NULL REFERENCES public.contacts(id) ON DELETE CASCADE,
   role        TEXT    NOT NULL DEFAULT 'DECISION_MAKER'
               CHECK (role IN (
                 'HOLDER','DECISION_MAKER','ADVISER','REPRESENTATIVE','OTHER'

@@ -123,6 +123,150 @@ export type SellerUrgency = 'low' | 'medium' | 'high' | 'urgent'
 export type MandateType = 'exclusive' | 'shared' | 'open'
 
 // ---------------------------------------------------------------------------
+// PHASE 2B.1 — Demand Mandate Types (migration 059)
+// Manually maintained to match verified production schema.
+// Do NOT regenerate from Supabase CLI — it overwrites curated manual types.
+// ---------------------------------------------------------------------------
+
+export type GeographyLevel = 'COUNTRY' | 'DISTRICT' | 'MUNICIPALITY' | 'PARISH' | 'ZONE' | 'AUTONOMOUS_REGION'
+export type MandateLifecycleState = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'EXPIRED' | 'CANCELLED'
+export type MandateTransactionMode = 'BUY' | 'RENT'
+export type MandatePurpose = 'PRIMARY_RESIDENCE' | 'SECONDARY_RESIDENCE' | 'HOLIDAY' | 'INVESTMENT' | 'DEVELOPMENT' | 'OTHER'
+export type MandateBudgetProvenance = 'USER_STATED' | 'AGENT_VERIFIED' | 'AI_EXTRACTED' | 'INFERRED' | 'IMPORT'
+export type MandateOrigin = 'CONTACT_FORM' | 'SOFIA_DRAFT' | 'AGENT_ENTRY' | 'IMPORT' | 'SAVED_SEARCH'
+export type MandateConstraintType = 'HARD' | 'PREFERENCE' | 'EXCLUSION'
+export type MandateLocationMode = 'INCLUDE' | 'EXCLUDE'
+export type MandateParticipantRole = 'HOLDER' | 'DECISION_MAKER' | 'ADVISER' | 'REPRESENTATIVE' | 'OTHER'
+export type MandateHistoryChangeType = 'CREATED' | 'LIFECYCLE_CHANGE' | 'BUDGET_CHANGE' | 'BUDGET_VERIFIED' | 'GEOGRAPHY_CHANGE' | 'CRITERIA_CHANGE' | 'OWNERSHIP_CHANGE' | 'VERIFICATION' | 'EXTENSION_CHANGE' | 'NOTE_CHANGE'
+export type MandateFinancingType = 'CASH' | 'MORTGAGE' | 'MIXED' | 'UNKNOWN'
+export type MandateProofOfFunds = 'NONE' | 'STATED' | 'DOCUMENT_SEEN' | 'VERIFIED'
+export type MandateRiskTolerance = 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY_HIGH'
+
+export interface GeographyNode {
+  id: string                   // UUID
+  parent_id: string | null     // UUID → geography_nodes(id)
+  level: GeographyLevel
+  country_code: string         // CHAR(2) ISO 3166-1
+  code: string | null          // district/municipality code
+  name_pt: string
+  name_en: string | null
+  name_fr: string | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface DemandMandate {
+  id: string                           // UUID
+  holder_contact_id: number            // BIGINT → contacts(id)
+  owner_id: string                     // UUID → profiles(id)
+  transaction_mode: MandateTransactionMode
+  purpose: MandatePurpose
+  lifecycle_state: MandateLifecycleState
+  budget_min: number | null
+  budget_max: number | null
+  budget_stated: boolean               // GENERATED ALWAYS AS (budget_min IS NOT NULL OR budget_max IS NOT NULL)
+  budget_verified: boolean             // GENERATED ALWAYS AS (budget_provenance = 'AGENT_VERIFIED')
+  currency_code: string
+  budget_provenance: MandateBudgetProvenance
+  origin: MandateOrigin
+  notes: string | null
+  expires_at: string | null
+  cancelled_at: string | null
+  cancelled_reason: string | null
+  completed_at: string | null
+  paused_at: string | null
+  paused_reason: string | null
+  last_verified_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DemandMandateParticipant {
+  id: string                // UUID
+  mandate_id: string        // UUID → demand_mandates(id)
+  contact_id: number        // BIGINT → contacts(id)
+  role: MandateParticipantRole
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DemandMandateLocation {
+  id: string                    // UUID
+  mandate_id: string            // UUID → demand_mandates(id)
+  geography_node_id: string     // UUID → geography_nodes(id)
+  mode: MandateLocationMode
+  preference_weight: number     // SMALLINT 0–100
+  provenance: string
+  created_at: string
+}
+
+export interface DemandMandateCriterion {
+  id: string                    // UUID
+  mandate_id: string            // UUID → demand_mandates(id)
+  criterion_key: string
+  criterion_val: string
+  constraint_type: MandateConstraintType
+  provenance: string | null
+  created_at: string
+}
+
+export interface DemandMandateHistory {
+  id: string                    // UUID
+  mandate_id: string            // UUID → demand_mandates(id)
+  change_type: MandateHistoryChangeType
+  changed_by: string | null     // UUID → profiles(id)
+  previous_values: Record<string, unknown> | null
+  new_values: Record<string, unknown> | null
+  changed_at: string
+}
+
+export interface BuyerMandateDetails {
+  mandate_id: string            // UUID PK FK → demand_mandates(id)
+  typologies: string[] | null
+  bedrooms_min: number | null
+  bedrooms_max: number | null
+  bathrooms_min: number | null
+  area_min_m2: number | null
+  area_max_m2: number | null
+  required_features: string[] | null
+  preferred_features: string[] | null
+  financing_type: MandateFinancingType | null
+  timeline: string | null
+  proof_of_funds: MandateProofOfFunds
+  golden_visa_required: boolean
+  mortgage_preapproved: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface InvestorMandateDetails {
+  mandate_id: string            // UUID PK FK → demand_mandates(id)
+  investment_strategy: string[] | null
+  target_yield_min_pct: number | null
+  target_yield_max_pct: number | null
+  ticket_min: number | null
+  ticket_max: number | null
+  ticket_currency_code: string
+  risk_tolerance: MandateRiskTolerance | null
+  asset_types: string[] | null
+  requires_management: boolean
+  open_to_off_market: boolean
+  typical_decision_days: number | null
+  created_at: string
+  updated_at: string
+}
+
+// Composite type for full mandate with related data
+export interface FullMandate extends DemandMandate {
+  buyer_details?: BuyerMandateDetails | null
+  investor_details?: InvestorMandateDetails | null
+  locations?: (DemandMandateLocation & { geography_node?: GeographyNode })[]
+  criteria?: DemandMandateCriterion[]
+  participants?: DemandMandateParticipant[]
+}
+
+// ---------------------------------------------------------------------------
 // DATABASE GENERIC TYPE
 // ---------------------------------------------------------------------------
 
@@ -4243,6 +4387,182 @@ export type Database = {
         }
         Relationships: []
       }
+
+      // -----------------------------------------------------------------------
+      // PHASE 2B.1 — DEMAND MANDATE TABLES (manual extension, correction #8)
+      // -----------------------------------------------------------------------
+      geography_nodes: {
+        Row: {
+          id: string
+          level: string
+          code: string | null
+          name_pt: string
+          name_en: string | null
+          name_fr: string | null
+          parent_id: string | null
+          country_code: string | null
+          centroid_lat: number | null
+          centroid_lng: number | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          level: string
+          code?: string | null
+          name_pt: string
+          name_en?: string | null
+          name_fr?: string | null
+          parent_id?: string | null
+          country_code?: string | null
+          centroid_lat?: number | null
+          centroid_lng?: number | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: Partial<{
+          level: string; code: string | null; name_pt: string; name_en: string | null
+          name_fr: string | null; parent_id: string | null; country_code: string | null
+          centroid_lat: number | null; centroid_lng: number | null; is_active: boolean
+        }>
+        Relationships: []
+      }
+      demand_mandates: {
+        Row: {
+          id: string; holder_contact_id: number; owner_id: string
+          transaction_mode: string; purpose: string; lifecycle_state: string
+          activated_at: string | null; paused_at: string | null; paused_reason: string | null
+          completed_at: string | null; expired_at: string | null
+          cancelled_at: string | null; cancelled_reason: string | null; expires_at: string | null
+          budget_min: number | null; budget_max: number | null; currency_code: string
+          budget_provenance: string; budget_verified_by: string | null; budget_verified_at: string | null
+          budget_stated: boolean; budget_verified: boolean
+          human_reviewed: boolean; last_verified_at: string | null; last_verified_by: string | null
+          origin: string; notes: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; holder_contact_id: number; owner_id: string
+          transaction_mode: string; purpose: string; lifecycle_state?: string
+          activated_at?: string | null; paused_at?: string | null; paused_reason?: string | null
+          completed_at?: string | null; expired_at?: string | null
+          cancelled_at?: string | null; cancelled_reason?: string | null; expires_at?: string | null
+          budget_min?: number | null; budget_max?: number | null; currency_code?: string
+          budget_provenance?: string; budget_verified_by?: string | null; budget_verified_at?: string | null
+          human_reviewed?: boolean; last_verified_at?: string | null; last_verified_by?: string | null
+          origin?: string; notes?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: Partial<{
+          lifecycle_state: string; paused_at: string | null; paused_reason: string | null
+          completed_at: string | null; expired_at: string | null
+          cancelled_at: string | null; cancelled_reason: string | null; expires_at: string | null
+          budget_min: number | null; budget_max: number | null; currency_code: string
+          budget_provenance: string; budget_verified_by: string | null; budget_verified_at: string | null
+          human_reviewed: boolean; last_verified_at: string | null; last_verified_by: string | null
+          origin: string; notes: string | null; updated_at: string
+        }>
+        Relationships: []
+      }
+      demand_mandate_participants: {
+        Row: {
+          id: string; mandate_id: string; contact_id: number; role: string
+          is_primary: boolean; notes: string | null; created_at: string
+        }
+        Insert: {
+          id?: string; mandate_id: string; contact_id: number; role?: string
+          is_primary?: boolean; notes?: string | null; created_at?: string
+        }
+        Update: Partial<{ role: string; is_primary: boolean; notes: string | null }>
+        Relationships: []
+      }
+      demand_mandate_locations: {
+        Row: {
+          id: string; mandate_id: string; geography_node_id: string
+          mode: string; preference_weight: number; provenance: string; created_at: string
+        }
+        Insert: {
+          id?: string; mandate_id: string; geography_node_id: string; mode?: string
+          preference_weight?: number; provenance?: string; created_at?: string
+        }
+        Update: Partial<{ mode: string; preference_weight: number; provenance: string }>
+        Relationships: []
+      }
+      demand_mandate_criteria: {
+        Row: {
+          id: string; mandate_id: string; criterion_key: string; criterion_val: string
+          constraint_type: string; provenance: string; recorded_at: string; recorded_by: string | null
+        }
+        Insert: {
+          id?: string; mandate_id: string; criterion_key: string; criterion_val: string
+          constraint_type?: string; provenance?: string; recorded_at?: string; recorded_by?: string | null
+        }
+        Update: Partial<{ criterion_key: string; criterion_val: string; constraint_type: string; provenance: string }>
+        Relationships: []
+      }
+      demand_mandate_history: {
+        Row: {
+          id: string; mandate_id: string; changed_at: string; changed_by: string | null
+          change_type: string; previous_values: Record<string, unknown> | null; new_values: Record<string, unknown> | null
+        }
+        Insert: {
+          id?: string; mandate_id: string; changed_at?: string; changed_by?: string | null
+          change_type: string; previous_values?: Record<string, unknown> | null; new_values?: Record<string, unknown> | null
+        }
+        Update: Partial<Record<string, never>>
+        Relationships: []
+      }
+      buyer_mandate_details: {
+        Row: {
+          mandate_id: string; typologies: string[] | null
+          bedrooms_min: number | null; bedrooms_max: number | null; bathrooms_min: number | null
+          area_min_m2: number | null; area_max_m2: number | null
+          required_features: string[] | null; preferred_features: string[] | null
+          financing_type: string | null; timeline: string | null
+          proof_of_funds: string; golden_visa_required: boolean; mortgage_preapproved: boolean
+          created_at: string; updated_at: string
+        }
+        Insert: {
+          mandate_id: string; typologies?: string[] | null
+          bedrooms_min?: number | null; bedrooms_max?: number | null; bathrooms_min?: number | null
+          area_min_m2?: number | null; area_max_m2?: number | null
+          required_features?: string[] | null; preferred_features?: string[] | null
+          financing_type?: string | null; timeline?: string | null
+          proof_of_funds?: string; golden_visa_required?: boolean; mortgage_preapproved?: boolean
+          created_at?: string; updated_at?: string
+        }
+        Update: Partial<{
+          typologies: string[] | null; bedrooms_min: number | null; bedrooms_max: number | null
+          bathrooms_min: number | null; area_min_m2: number | null; area_max_m2: number | null
+          required_features: string[] | null; preferred_features: string[] | null
+          financing_type: string | null; timeline: string | null; proof_of_funds: string
+          golden_visa_required: boolean; mortgage_preapproved: boolean
+        }>
+        Relationships: []
+      }
+      investor_mandate_details: {
+        Row: {
+          mandate_id: string; investment_strategy: string[] | null
+          target_yield_min_pct: number | null; target_yield_max_pct: number | null
+          ticket_min: number | null; ticket_max: number | null; ticket_currency_code: string
+          risk_tolerance: string | null; asset_types: string[] | null
+          requires_management: boolean; open_to_off_market: boolean
+          typical_decision_days: number | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          mandate_id: string; investment_strategy?: string[] | null
+          target_yield_min_pct?: number | null; target_yield_max_pct?: number | null
+          ticket_min?: number | null; ticket_max?: number | null; ticket_currency_code?: string
+          risk_tolerance?: string | null; asset_types?: string[] | null
+          requires_management?: boolean; open_to_off_market?: boolean
+          typical_decision_days?: number | null; created_at?: string; updated_at?: string
+        }
+        Update: Partial<{
+          investment_strategy: string[] | null; target_yield_min_pct: number | null
+          target_yield_max_pct: number | null; ticket_min: number | null; ticket_max: number | null
+          ticket_currency_code: string; risk_tolerance: string | null; asset_types: string[] | null
+          requires_management: boolean; open_to_off_market: boolean; typical_decision_days: number | null
+        }>
+        Relationships: []
+      }
     }
 
     // -----------------------------------------------------------------------
@@ -4649,6 +4969,10 @@ export type Database = {
           area_m2: number | null
           similarity: number
         }>
+      }
+      create_demand_mandate_v1: {
+        Args: { p_payload: Record<string, unknown> }
+        Returns: Record<string, unknown>
       }
       ingest_commercial_lead_v1: {
         Args: {
