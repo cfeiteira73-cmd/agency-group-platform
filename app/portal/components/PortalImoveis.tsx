@@ -31,6 +31,7 @@ interface ImovelFull {
   imagens?: string[]
   videoUrls?: string[]
   isFrontpage?: boolean
+  descricao?: string
 }
 
 interface Filters {
@@ -261,10 +262,12 @@ const IconClose = () => (
 interface PropertyCardProps {
   p: ImovelFull
   onSelect: (p: ImovelFull) => void
+  onEdit?: (p: ImovelFull) => void
+  onSelectAI?: (p: ImovelFull) => void
   onToggleFrontpage?: (id: string) => void
 }
 
-function PropertyCard({ p, onSelect, onToggleFrontpage }: PropertyCardProps) {
+function PropertyCard({ p, onSelect, onEdit, onSelectAI, onToggleFrontpage }: PropertyCardProps) {
   const [hovered, setHovered] = useState(false)
   const bs = badgeSt(p.badge)
   const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
@@ -307,7 +310,9 @@ function PropertyCard({ p, onSelect, onToggleFrontpage }: PropertyCardProps) {
 
         {/* AI hover overlay */}
         {hovered && (
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,74,53,.6)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity .2s' }}>
+          <div
+            onClick={e => { if (onSelectAI) { e.stopPropagation(); onSelectAI(p) } }}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(28,74,53,.6)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity .2s', cursor: 'pointer' }}>
             <div style={{ textAlign: 'center', color: '#fff' }}>
               <IconAI />
               <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', marginTop: '.3rem', fontWeight: 600 }}>Analisar com IA</div>
@@ -350,10 +355,28 @@ function PropertyCard({ p, onSelect, onToggleFrontpage }: PropertyCardProps) {
           <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: days > 90 ? '#c9a96e' : 'rgba(14,14,13,.35)' }}>
             {days} dias no mercado
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
             <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>
               {p.viewsCount ?? 0} vistas
             </span>
+            {onEdit && (
+              <button
+                type="button"
+                title="Editar imóvel"
+                onClick={e => { e.stopPropagation(); onEdit(p) }}
+                style={{
+                  background: 'rgba(28,74,53,.08)',
+                  border: '1.5px solid rgba(28,74,53,.3)',
+                  borderRadius: 6, cursor: 'pointer', padding: '2px 8px',
+                  display: 'flex', alignItems: 'center', gap: '.25rem',
+                  transition: 'all .15s',
+                  color: '#1c4a35',
+                  fontFamily: 'var(--font-jost)',
+                  fontSize: '.65rem', fontWeight: 600,
+                }}>
+                <IconEdit /> Editar
+              </button>
+            )}
             {onToggleFrontpage && (
               <button
                 type="button"
@@ -379,7 +402,7 @@ function PropertyCard({ p, onSelect, onToggleFrontpage }: PropertyCardProps) {
 
 // ─── PropertyRow (List) ───────────────────────────────────────────────────────
 
-function PropertyRow({ p, onSelect }: PropertyCardProps) {
+function PropertyRow({ p, onSelect, onEdit }: PropertyCardProps) {
   const [hovered, setHovered] = useState(false)
   const bs = badgeSt(p.badge)
   const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
@@ -426,7 +449,7 @@ function PropertyRow({ p, onSelect }: PropertyCardProps) {
       </div>
 
       {/* Badge + status */}
-      <div style={{ flex: 1, display: 'flex', gap: '.35rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+      <div style={{ flex: 1, display: 'flex', gap: '.35rem', justifyContent: 'flex-end', flexWrap: 'wrap', alignItems: 'center' }}>
         {p.badge && (
           <span style={{ background: bs.bg, color: bs.color, border: `1px solid ${bs.border}`, borderRadius: 20, padding: '2px 8px', fontSize: '.65rem', fontFamily: 'var(--font-dm-mono)' }}>
             {p.badge}
@@ -435,6 +458,12 @@ function PropertyRow({ p, onSelect }: PropertyCardProps) {
         <span style={{ background: 'rgba(14,14,13,.06)', color: statusSt(p.status), borderRadius: 20, padding: '2px 8px', fontSize: '.65rem', fontFamily: 'var(--font-dm-mono)' }}>
           {p.status}
         </span>
+        {onEdit && (
+          <button type="button" onClick={e => { e.stopPropagation(); onEdit(p) }}
+            style={{ background: 'rgba(28,74,53,.08)', border: '1.5px solid rgba(28,74,53,.3)', borderRadius: 6, cursor: 'pointer', padding: '3px 9px', display: 'flex', alignItems: 'center', gap: '.25rem', color: '#1c4a35', fontFamily: 'var(--font-jost)', fontSize: '.68rem', fontWeight: 600, transition: 'all .15s', flexShrink: 0 }}>
+            <IconEdit /> Editar
+          </button>
+        )}
       </div>
     </div>
   )
@@ -528,10 +557,20 @@ function FiltersBar({ filters, setFilters, sort, setSort, open }: FiltersBarProp
 
 type DrawerTab = 'info' | 'ia' | 'avm' | 'matching' | 'editar'
 
-function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () => void; onUpdate?: (updated: ImovelFull) => void }) {
-  const [dtab, setDtab] = useState<DrawerTab>('info')
+function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; onClose: () => void; onUpdate?: (updated: ImovelFull) => void; initialTab?: DrawerTab }) {
+  const [dtab, setDtab] = useState<DrawerTab>(initialTab ?? 'info')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiDone, setAiDone] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
+  const [actionToast, setActionToast] = useState('')
+  const drawerScrollRef = useRef<HTMLDivElement>(null)
+
+  function switchTab(tab: DrawerTab) {
+    setDtab(tab)
+    setTimeout(() => {
+      drawerScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    }, 30)
+  }
 
   // Edit state — mirrors all ImovelFull fields
   const [editNome, setEditNome]     = useState(p.nome)
@@ -550,6 +589,7 @@ function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () =
   const [editJardim, setEditJardim]     = useState(p.jardim)
   const [editTerraco, setEditTerraco]   = useState(p.terraco)
   const [editPhotos, setEditPhotos]     = useState<string[]>(p.imagens ?? [])
+  const [editDescricao, setEditDescricao] = useState(p.descricao ?? '')
   const [editDragIdx, setEditDragIdx]   = useState<number | null>(null)
   const [editDropIdx, setEditDropIdx]   = useState<number | null>(null)
   const [editSaved, setEditSaved]       = useState(false)
@@ -589,6 +629,7 @@ function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () =
       piscina: editPiscina, garagem: editGaragem,
       jardim: editJardim, terraco: editTerraco,
       imagens: editPhotos,
+      descricao: editDescricao.trim() || undefined,
       isCustom: true,
     }
     onUpdate?.(updated)
@@ -636,7 +677,7 @@ function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () =
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
       <div onClick={onClose} style={{ flex: 1, background: 'rgba(14,14,13,.45)', backdropFilter: 'blur(3px)' }} />
-      <div style={{ width: 480, background: '#f4f0e6', overflowY: 'auto', display: 'flex', flexDirection: 'column', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
+      <div style={{ width: 480, background: '#f4f0e6', display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
         {/* Photo area */}
         <div style={{ height: 200, background: grad, backgroundImage: editPhotos[0] ? `url(${editPhotos[0]})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', flexShrink: 0 }}>
           <button type="button" onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(4px)' }}>
@@ -657,7 +698,7 @@ function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () =
         </div>
 
         {/* Price + key stats */}
-        <div style={{ padding: '1.25rem', background: '#fff', borderBottom: '1px solid rgba(14,14,13,.08)' }}>
+        <div style={{ padding: '1.25rem', background: '#fff', borderBottom: '1px solid rgba(14,14,13,.08)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2rem', color: '#c9a96e', fontWeight: 600, lineHeight: 1 }}>{fmtPreco(p.preco)}</div>
@@ -686,7 +727,7 @@ function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () =
         </div>
 
         {/* Drawer Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', background: '#fff', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', background: '#fff', overflowX: 'auto', flexShrink: 0 }}>
           {DTABS.map(t => (
             <button type="button" key={t.id} onClick={() => setDtab(t.id)}
               style={{
@@ -701,8 +742,8 @@ function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () =
           ))}
         </div>
 
-        {/* Drawer Content */}
-        <div style={{ padding: '1.25rem', flex: 1 }}>
+        {/* Drawer Content — scrollable area only */}
+        <div ref={drawerScrollRef} style={{ padding: '1.25rem', flex: 1, overflowY: 'auto' }}>
           {/* INFO */}
           {dtab === 'info' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -858,49 +899,209 @@ function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () =
 
           {/* EDITAR */}
           {dtab === 'editar' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Basic fields */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem' }}>
-                {[
-                  { label: 'Nome', value: p.nome },
-                  { label: 'Referência', value: p.ref },
-                  { label: 'Zona', value: p.zona },
-                  { label: 'Bairro', value: p.bairro },
-                  { label: 'Preço (€)', value: p.preco.toString() },
-                  { label: 'Área (m²)', value: p.area.toString() },
-                  { label: 'Quartos', value: p.quartos.toString() },
-                  { label: 'WCs', value: p.casasBanho.toString() },
-                ].map(f => (
-                  <div key={f.label}>
-                    <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>{f.label}</label>
-                    <input className="p-inp" defaultValue={f.value} />
-                  </div>
-                ))}
+                <div style={{ gridColumn: '1/-1' }}>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Nome</label>
+                  <input className="p-inp" value={editNome} onChange={e => setEditNome(e.target.value)} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Referência</label>
+                  <input className="p-inp" value={editRef} onChange={e => setEditRef(e.target.value)} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Tipo</label>
+                  <select className="p-sel" value={editTipo} onChange={e => setEditTipo(e.target.value)}>
+                    {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Zona</label>
+                  <select className="p-sel" value={editZona} onChange={e => setEditZona(e.target.value)}>
+                    {ZONAS.map(z => <option key={z} value={z}>{z}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Bairro</label>
+                  <input className="p-inp" value={editBairro} onChange={e => setEditBairro(e.target.value)} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Preço (€)</label>
+                  <input className="p-inp" value={editPreco} onChange={e => setEditPreco(e.target.value.replace(/\D/g, ''))} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Área (m²)</label>
+                  <input className="p-inp" type="number" value={editArea} onChange={e => setEditArea(e.target.value)} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Quartos</label>
+                  <select className="p-sel" value={editQuartos} onChange={e => setEditQuartos(Number(e.target.value))}>
+                    {[0,1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>T{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Casas de Banho</label>
+                  <select className="p-sel" value={editWcs} onChange={e => setEditWcs(Number(e.target.value))}>
+                    {[0,1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Badge</label>
+                  <select className="p-sel" value={editBadge} onChange={e => setEditBadge(e.target.value)}>
+                    {['', 'Novo', 'Destaque', 'Exclusivo', 'Off-Market', 'Redução', 'Urgente'].map(b => <option key={b} value={b}>{b || '— Nenhum —'}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Status</label>
+                  <select className="p-sel" value={editStatus} onChange={e => setEditStatus(e.target.value)}>
+                    {['Ativo', 'Sob Proposta', 'Reservado', 'Vendido'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
               </div>
+
+              {/* Feature toggles */}
               <div>
-                <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Status</label>
-                <select className="p-sel" defaultValue={p.status}>
-                  {['Ativo', 'Sob Proposta', 'Reservado', 'Vendido'].map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.4)', marginBottom: '.4rem', letterSpacing: '.06em' }}>CARACTERÍSTICAS</div>
+                <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                  {([
+                    ['Piscina', editPiscina, setEditPiscina],
+                    ['Garagem', editGaragem, setEditGaragem],
+                    ['Jardim', editJardim, setEditJardim],
+                    ['Terraço', editTerraco, setEditTerraco],
+                  ] as [string, boolean, (v: boolean) => void][]).map(([label, val, setter]) => (
+                    <button key={label} type="button" onClick={() => setter(!val)}
+                      style={{
+                        fontFamily: 'var(--font-jost)', fontSize: '.76rem', padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
+                        border: `1.5px solid ${val ? '#1c4a35' : 'rgba(14,14,13,.15)'}`,
+                        background: val ? '#1c4a35' : 'transparent',
+                        color: val ? '#fff' : 'rgba(14,14,13,.55)', transition: 'all .15s',
+                      }}>{label}</button>
+                  ))}
+                </div>
               </div>
-              <button type="button" className="p-btn-gold" style={{ marginTop: '.5rem', fontSize: '.82rem' }}>Guardar Alterações</button>
+
+              {/* Description */}
+              <div>
+                <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Descrição do Imóvel</label>
+                <textarea
+                  value={editDescricao}
+                  onChange={e => setEditDescricao(e.target.value)}
+                  placeholder="Descrição completa para partilha com clientes (aparece no link de partilha)…"
+                  rows={5}
+                  style={{
+                    width: '100%', fontFamily: 'var(--font-jost)', fontSize: '.82rem',
+                    border: '1px solid rgba(14,14,13,.15)', borderRadius: 8, padding: '.55rem .7rem',
+                    background: '#fafafa', color: '#0e0e0d', resize: 'vertical', lineHeight: 1.5,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Photos management */}
+              <div>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.4)', marginBottom: '.4rem', letterSpacing: '.06em' }}>FOTOS (arrasta para reordenar)</div>
+                <input ref={editPhotoRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => uploadEditPhoto(e.target.files)} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '.4rem' }}>
+                  {editPhotos.map((url, i) => (
+                    <div key={url} draggable
+                      onDragStart={() => { setEditDragIdx(i); setEditDropIdx(null) }}
+                      onDragOver={e => { e.preventDefault(); if (editDropIdx !== i) setEditDropIdx(i) }}
+                      onDragLeave={() => setEditDropIdx(null)}
+                      onDrop={e => {
+                        e.preventDefault()
+                        if (editDragIdx === null || editDragIdx === i) { setEditDragIdx(null); setEditDropIdx(null); return }
+                        setEditPhotos(prev => { const n=[...prev]; const [m]=n.splice(editDragIdx,1); n.splice(i,0,m); return n })
+                        setEditDragIdx(null); setEditDropIdx(null)
+                      }}
+                      onDragEnd={() => { setEditDragIdx(null); setEditDropIdx(null) }}
+                      style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 6, overflow: 'hidden', cursor: 'grab', opacity: editDragIdx === i ? 0.5 : 1, outline: editDropIdx === i ? '2px solid #c9a96e' : 'none' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                      {i === 0 && <div style={{ position: 'absolute', top: 3, left: 3, background: '#c9a96e', borderRadius: 3, padding: '1px 5px', fontFamily: 'var(--font-jost)', fontSize: '.58rem', fontWeight: 700, color: '#fff' }}>CAPA</div>}
+                      <button type="button" onClick={() => setEditPhotos(prev => prev.filter((_,j) => j !== i))}
+                        style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(14,14,13,.75)', border: 'none', borderRadius: '50%', width: 18, height: 18, cursor: 'pointer', color: '#fff', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                    </div>
+                  ))}
+                  <div onClick={() => editPhotoRef.current?.click()}
+                    style={{ aspectRatio: '4/3', borderRadius: 6, border: '2px dashed rgba(14,14,13,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: editUploading ? 'wait' : 'pointer', background: 'rgba(14,14,13,.02)' }}>
+                    <span style={{ fontSize: editUploading ? '.65rem' : '1.1rem', color: 'rgba(14,14,13,.3)' }}>{editUploading ? 'A carregar…' : '＋'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save */}
+              <button type="button" onClick={handleSave}
+                className="p-btn-gold"
+                style={{ marginTop: '.25rem', fontSize: '.85rem', fontWeight: 600, background: editSaved ? '#1c4a35' : undefined, borderColor: editSaved ? '#1c4a35' : undefined }}>
+                {editSaved ? '✓ Guardado' : 'Guardar Alterações'}
+              </button>
             </div>
           )}
         </div>
 
         {/* Action buttons */}
-        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid rgba(14,14,13,.08)', background: '#fff', display: 'flex', gap: '.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
-          <button type="button" className="p-btn-gold" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-            <IconPipeline /> Pipeline
-          </button>
-          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-            <IconShare /> Partilhar
-          </button>
-          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-            <IconEye /> Ver no Portal
-          </button>
-          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-            <IconCollection /> Collection
-          </button>
+        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid rgba(14,14,13,.08)', background: '#fff', flexShrink: 0 }}>
+          {actionToast && (
+            <div style={{ marginBottom: '.65rem', padding: '.45rem .75rem', background: '#1c4a35', borderRadius: 8, fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: '#fff', textAlign: 'center' }}>
+              {actionToast}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+            <button type="button" className="p-btn-gold"
+              onClick={() => { switchTab('matching'); setActionToast('A abrir Pipeline…'); setTimeout(() => setActionToast(''), 1800) }}
+              style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+              <IconPipeline /> Pipeline
+            </button>
+            <button type="button" className="p-btn"
+              onClick={() => {
+                const shareData = {
+                  ref: p.ref, nome: p.nome, zona: p.zona, bairro: p.bairro,
+                  tipo: p.tipo, preco: p.preco, area: p.area,
+                  quartos: p.quartos, casasBanho: p.casasBanho,
+                  badge: p.badge, status: p.status,
+                  piscina: p.piscina, garagem: p.garagem,
+                  jardim: p.jardim, terraco: p.terraco,
+                  listingDate: p.listingDate,
+                  imagens: p.imagens,
+                  descricao: p.descricao,
+                }
+                const encoded = encodeURIComponent(JSON.stringify(shareData))
+                const shareUrl = `${window.location.origin}/partilhar?d=${encoded}`
+                try { navigator.clipboard.writeText(shareUrl) } catch { /* ignore */ }
+                setCopiedLink(true)
+                setActionToast(`✓ Link copiado: ${p.ref}`)
+                setTimeout(() => { setCopiedLink(false); setActionToast('') }, 2500)
+              }}
+              style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem', background: copiedLink ? '#eaf4ee' : undefined, borderColor: copiedLink ? '#1c4a35' : undefined, color: copiedLink ? '#1c4a35' : undefined }}>
+              <IconShare /> {copiedLink ? '✓ Copiado' : 'Partilhar'}
+            </button>
+            <button type="button" className="p-btn"
+              onClick={() => {
+                const shareData = {
+                  ref: p.ref, nome: p.nome, zona: p.zona, bairro: p.bairro,
+                  tipo: p.tipo, preco: p.preco, area: p.area,
+                  quartos: p.quartos, casasBanho: p.casasBanho,
+                  badge: p.badge, status: p.status,
+                  piscina: p.piscina, garagem: p.garagem,
+                  jardim: p.jardim, terraco: p.terraco,
+                  imagens: p.imagens,
+                  descricao: p.descricao,
+                }
+                const encoded = encodeURIComponent(JSON.stringify(shareData))
+                window.open(`${window.location.origin}/partilhar?d=${encoded}`, '_blank')
+                setActionToast('A abrir página pública…')
+                setTimeout(() => setActionToast(''), 1800)
+              }}
+              style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+              <IconEye /> Ver no Site
+            </button>
+            <button type="button" className="p-btn"
+              onClick={() => { switchTab('editar'); setActionToast('A abrir editor…'); setTimeout(() => setActionToast(''), 1800) }}
+              style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+              <IconEdit /> Editar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1802,6 +2003,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
   })
   const [sort, setSort] = useState<SortMode>('recente')
   const [selectedProperty, setSelectedProperty] = useState<ImovelFull | null>(null)
+  const [drawerInitialTab, setDrawerInitialTab] = useState<DrawerTab>('info')
   const [showAddModal, setShowAddModal] = useState(false)
   const [customProperties, setCustomProperties] = useState<ImovelFull[]>(() => {
     if (typeof window === 'undefined') return []
@@ -1867,7 +2069,8 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
   }, [])
 
   const baseProperties = liveProperties.length > 0 ? liveProperties : ALL_PROPERTIES
-  const allProps = [...baseProperties, ...customProperties]
+  const customIds = new Set(customProperties.map(p => p.id))
+  const allProps = [...customProperties, ...baseProperties.filter(p => !customIds.has(p.id))]
 
   const filtered = allProps
     .filter(p => {
@@ -1898,6 +2101,16 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
 
   function handleAddProperty(p: ImovelFull) {
     setCustomProperties(prev => [p, ...prev])
+  }
+
+  function handleUpdateProperty(updated: ImovelFull) {
+    setCustomProperties(prev => {
+      const exists = prev.some(p => p.id === updated.id)
+      return exists
+        ? prev.map(p => p.id === updated.id ? updated : p)
+        : [updated, ...prev]
+    })
+    if (selectedProperty?.id === updated.id) setSelectedProperty(updated)
   }
 
   function handleToggleFrontpage(id: string) {
@@ -2034,7 +2247,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
       {viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {filtered.map(p => (
-            <PropertyCard key={p.id} p={{ ...p, isFrontpage: frontpageIds.has(p.id) }} onSelect={setSelectedProperty} onToggleFrontpage={handleToggleFrontpage} />
+            <PropertyCard key={p.id} p={{ ...p, isFrontpage: frontpageIds.has(p.id) }} onSelect={p => { setDrawerInitialTab('info'); setSelectedProperty(p) }} onEdit={p => { setDrawerInitialTab('editar'); setSelectedProperty(p) }} onSelectAI={p => { setDrawerInitialTab('ia'); setSelectedProperty(p) }} onToggleFrontpage={handleToggleFrontpage} />
           ))}
           {filtered.length === 0 && (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', color: 'rgba(14,14,13,.35)' }}>
@@ -2058,7 +2271,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
             <div style={{ flex: 1, fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em', textAlign: 'right' }}>BADGE</div>
           </div>
           {filtered.map(p => (
-            <PropertyRow key={p.id} p={p} onSelect={setSelectedProperty} />
+            <PropertyRow key={p.id} p={p} onSelect={p => { setDrawerInitialTab('info'); setSelectedProperty(p) }} onEdit={p => { setDrawerInitialTab('editar'); setSelectedProperty(p) }} />
           ))}
           {filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(14,14,13,.35)' }}>
@@ -2074,7 +2287,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
 
       {/* Drawer */}
       {selectedProperty && (
-        <PropertyDrawer p={selectedProperty} onClose={() => setSelectedProperty(null)} />
+        <PropertyDrawer key={selectedProperty.id} p={selectedProperty} onClose={() => setSelectedProperty(null)} onUpdate={handleUpdateProperty} initialTab={drawerInitialTab} />
       )}
 
       {/* Add Modal */}
