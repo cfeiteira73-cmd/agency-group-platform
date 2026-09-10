@@ -261,10 +261,11 @@ const IconClose = () => (
 interface PropertyCardProps {
   p: ImovelFull
   onSelect: (p: ImovelFull) => void
+  onEdit?: (p: ImovelFull) => void
   onToggleFrontpage?: (id: string) => void
 }
 
-function PropertyCard({ p, onSelect, onToggleFrontpage }: PropertyCardProps) {
+function PropertyCard({ p, onSelect, onEdit, onToggleFrontpage }: PropertyCardProps) {
   const [hovered, setHovered] = useState(false)
   const bs = badgeSt(p.badge)
   const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
@@ -350,10 +351,26 @@ function PropertyCard({ p, onSelect, onToggleFrontpage }: PropertyCardProps) {
           <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: days > 90 ? '#c9a96e' : 'rgba(14,14,13,.35)' }}>
             {days} dias no mercado
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
             <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>
               {p.viewsCount ?? 0} vistas
             </span>
+            {onEdit && (
+              <button
+                type="button"
+                title="Editar imóvel"
+                onClick={e => { e.stopPropagation(); onEdit(p) }}
+                style={{
+                  background: 'transparent',
+                  border: '1.5px solid rgba(14,14,13,.18)',
+                  borderRadius: 6, width: 22, height: 22, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all .15s', padding: 0,
+                  color: 'rgba(14,14,13,.4)',
+                }}>
+                <IconEdit />
+              </button>
+            )}
             {onToggleFrontpage && (
               <button
                 type="button"
@@ -528,8 +545,8 @@ function FiltersBar({ filters, setFilters, sort, setSort, open }: FiltersBarProp
 
 type DrawerTab = 'info' | 'ia' | 'avm' | 'matching' | 'editar'
 
-function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () => void; onUpdate?: (updated: ImovelFull) => void }) {
-  const [dtab, setDtab] = useState<DrawerTab>('info')
+function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; onClose: () => void; onUpdate?: (updated: ImovelFull) => void; initialTab?: DrawerTab }) {
+  const [dtab, setDtab] = useState<DrawerTab>(initialTab ?? 'info')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiDone, setAiDone] = useState(false)
 
@@ -984,16 +1001,29 @@ function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () =
 
         {/* Action buttons */}
         <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid rgba(14,14,13,.08)', background: '#fff', display: 'flex', gap: '.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
-          <button type="button" className="p-btn-gold" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <button type="button" className="p-btn-gold"
+            onClick={() => setDtab('matching')}
+            style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
             <IconPipeline /> Pipeline
           </button>
-          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <button type="button" className="p-btn"
+            onClick={() => {
+              const shareUrl = `${window.location.origin}/portal?ref=${p.ref}`
+              navigator.clipboard.writeText(shareUrl).catch(() => {})
+              const btn = document.activeElement as HTMLButtonElement
+              if (btn) { const orig = btn.textContent; btn.textContent = '✓ Link copiado!'; setTimeout(() => { btn.textContent = orig }, 2000) }
+            }}
+            style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
             <IconShare /> Partilhar
           </button>
-          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <button type="button" className="p-btn"
+            onClick={() => window.open(`/portal?ref=${p.ref}`, '_blank')}
+            style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
             <IconEye /> Ver no Portal
           </button>
-          <button type="button" className="p-btn" style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+          <button type="button" className="p-btn"
+            onClick={() => setDtab('editar')}
+            style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
             <IconCollection /> Collection
           </button>
         </div>
@@ -1897,6 +1927,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
   })
   const [sort, setSort] = useState<SortMode>('recente')
   const [selectedProperty, setSelectedProperty] = useState<ImovelFull | null>(null)
+  const [drawerInitialTab, setDrawerInitialTab] = useState<DrawerTab>('info')
   const [showAddModal, setShowAddModal] = useState(false)
   const [customProperties, setCustomProperties] = useState<ImovelFull[]>(() => {
     if (typeof window === 'undefined') return []
@@ -2140,7 +2171,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
       {viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {filtered.map(p => (
-            <PropertyCard key={p.id} p={{ ...p, isFrontpage: frontpageIds.has(p.id) }} onSelect={setSelectedProperty} onToggleFrontpage={handleToggleFrontpage} />
+            <PropertyCard key={p.id} p={{ ...p, isFrontpage: frontpageIds.has(p.id) }} onSelect={p => { setDrawerInitialTab('info'); setSelectedProperty(p) }} onEdit={p => { setDrawerInitialTab('editar'); setSelectedProperty(p) }} onToggleFrontpage={handleToggleFrontpage} />
           ))}
           {filtered.length === 0 && (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', color: 'rgba(14,14,13,.35)' }}>
@@ -2180,7 +2211,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
 
       {/* Drawer */}
       {selectedProperty && (
-        <PropertyDrawer p={selectedProperty} onClose={() => setSelectedProperty(null)} onUpdate={handleUpdateProperty} />
+        <PropertyDrawer p={selectedProperty} onClose={() => setSelectedProperty(null)} onUpdate={handleUpdateProperty} initialTab={drawerInitialTab} />
       )}
 
       {/* Add Modal */}
