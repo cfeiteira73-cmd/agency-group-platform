@@ -1035,7 +1035,17 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
             </button>
             <button type="button" className="p-btn"
               onClick={() => {
-                const shareUrl = `${window.location.origin}/imoveis?ref=${encodeURIComponent(p.ref)}`
+                const shareData = {
+                  ref: p.ref, nome: p.nome, zona: p.zona, bairro: p.bairro,
+                  tipo: p.tipo, preco: p.preco, area: p.area,
+                  quartos: p.quartos, casasBanho: p.casasBanho,
+                  badge: p.badge, status: p.status,
+                  piscina: p.piscina, garagem: p.garagem,
+                  jardim: p.jardim, terraco: p.terraco,
+                  listingDate: p.listingDate,
+                }
+                const encoded = encodeURIComponent(JSON.stringify(shareData))
+                const shareUrl = `${window.location.origin}/partilhar?d=${encoded}`
                 try { navigator.clipboard.writeText(shareUrl) } catch { /* ignore */ }
                 setCopiedLink(true)
                 setActionToast(`✓ Link copiado: ${p.ref}`)
@@ -1045,7 +1055,20 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
               <IconShare /> {copiedLink ? '✓ Copiado' : 'Partilhar'}
             </button>
             <button type="button" className="p-btn"
-              onClick={() => { window.open(`${window.location.origin}/imoveis?ref=${encodeURIComponent(p.ref)}`, '_blank'); setActionToast('A abrir página pública…'); setTimeout(() => setActionToast(''), 1800) }}
+              onClick={() => {
+                const shareData = {
+                  ref: p.ref, nome: p.nome, zona: p.zona, bairro: p.bairro,
+                  tipo: p.tipo, preco: p.preco, area: p.area,
+                  quartos: p.quartos, casasBanho: p.casasBanho,
+                  badge: p.badge, status: p.status,
+                  piscina: p.piscina, garagem: p.garagem,
+                  jardim: p.jardim, terraco: p.terraco,
+                }
+                const encoded = encodeURIComponent(JSON.stringify(shareData))
+                window.open(`${window.location.origin}/partilhar?d=${encoded}`, '_blank')
+                setActionToast('A abrir página pública…')
+                setTimeout(() => setActionToast(''), 1800)
+              }}
               style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
               <IconEye /> Ver no Site
             </button>
