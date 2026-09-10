@@ -528,12 +528,73 @@ function FiltersBar({ filters, setFilters, sort, setSort, open }: FiltersBarProp
 
 type DrawerTab = 'info' | 'ia' | 'avm' | 'matching' | 'editar'
 
-function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) {
+function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () => void; onUpdate?: (updated: ImovelFull) => void }) {
   const [dtab, setDtab] = useState<DrawerTab>('info')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiDone, setAiDone] = useState(false)
-  const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
+
+  // Edit state — mirrors all ImovelFull fields
+  const [editNome, setEditNome]     = useState(p.nome)
+  const [editRef, setEditRef]       = useState(p.ref)
+  const [editZona, setEditZona]     = useState(p.zona)
+  const [editBairro, setEditBairro] = useState(p.bairro)
+  const [editTipo, setEditTipo]     = useState(p.tipo)
+  const [editPreco, setEditPreco]   = useState(p.preco.toString())
+  const [editArea, setEditArea]     = useState(p.area.toString())
+  const [editQuartos, setEditQuartos]   = useState(p.quartos)
+  const [editWcs, setEditWcs]           = useState(p.casasBanho)
+  const [editBadge, setEditBadge]       = useState(p.badge)
+  const [editStatus, setEditStatus]     = useState(p.status)
+  const [editPiscina, setEditPiscina]   = useState(p.piscina)
+  const [editGaragem, setEditGaragem]   = useState(p.garagem)
+  const [editJardim, setEditJardim]     = useState(p.jardim)
+  const [editTerraco, setEditTerraco]   = useState(p.terraco)
+  const [editPhotos, setEditPhotos]     = useState<string[]>(p.imagens ?? [])
+  const [editDragIdx, setEditDragIdx]   = useState<number | null>(null)
+  const [editDropIdx, setEditDropIdx]   = useState<number | null>(null)
+  const [editSaved, setEditSaved]       = useState(false)
+  const editPhotoRef = useRef<HTMLInputElement>(null)
+  const [editUploading, setEditUploading] = useState(false)
+
+  const grad = ZONE_GRADIENTS[editZona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
   const days = dom(p.listingDate)
+
+  async function uploadEditPhoto(files: FileList | null) {
+    if (!files || !files.length) return
+    setEditUploading(true)
+    const urls: string[] = []
+    for (const file of Array.from(files)) {
+      try {
+        const fd = new FormData(); fd.append('file', file)
+        const res = await fetch('/api/properties/upload', { method: 'POST', body: fd })
+        const json = await res.json()
+        if (res.ok && json.type !== 'video') urls.push(json.url)
+      } catch { /* ignore */ }
+    }
+    setEditPhotos(prev => [...prev, ...urls])
+    setEditUploading(false)
+  }
+
+  function handleSave() {
+    const updated: ImovelFull = {
+      ...p,
+      nome: editNome.trim() || p.nome,
+      ref: editRef.trim() || p.ref,
+      zona: editZona, bairro: editBairro.trim() || editZona,
+      tipo: editTipo,
+      preco: Number(editPreco.replace(/\D/g, '')) || p.preco,
+      area: Number(editArea) || p.area,
+      quartos: editQuartos, casasBanho: editWcs,
+      badge: editBadge, status: editStatus,
+      piscina: editPiscina, garagem: editGaragem,
+      jardim: editJardim, terraco: editTerraco,
+      imagens: editPhotos,
+      isCustom: true,
+    }
+    onUpdate?.(updated)
+    setEditSaved(true)
+    setTimeout(() => setEditSaved(false), 2500)
+  }
 
   function runAI() {
     if (aiDone) return
@@ -577,7 +638,7 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
       <div onClick={onClose} style={{ flex: 1, background: 'rgba(14,14,13,.45)', backdropFilter: 'blur(3px)' }} />
       <div style={{ width: 480, background: '#f4f0e6', overflowY: 'auto', display: 'flex', flexDirection: 'column', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
         {/* Photo area */}
-        <div style={{ height: 200, background: grad, position: 'relative', flexShrink: 0 }}>
+        <div style={{ height: 200, background: grad, backgroundImage: editPhotos[0] ? `url(${editPhotos[0]})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', flexShrink: 0 }}>
           <button type="button" onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(4px)' }}>
             <IconClose />
           </button>
