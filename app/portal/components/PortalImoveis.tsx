@@ -549,6 +549,16 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
   const [dtab, setDtab] = useState<DrawerTab>(initialTab ?? 'info')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiDone, setAiDone] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
+  const [actionToast, setActionToast] = useState('')
+  const drawerScrollRef = useRef<HTMLDivElement>(null)
+
+  function switchTab(tab: DrawerTab) {
+    setDtab(tab)
+    setTimeout(() => {
+      drawerScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    }, 30)
+  }
 
   // Edit state — mirrors all ImovelFull fields
   const [editNome, setEditNome]     = useState(p.nome)
@@ -653,7 +663,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
       <div onClick={onClose} style={{ flex: 1, background: 'rgba(14,14,13,.45)', backdropFilter: 'blur(3px)' }} />
-      <div style={{ width: 480, background: '#f4f0e6', overflowY: 'auto', display: 'flex', flexDirection: 'column', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
+      <div ref={drawerScrollRef} style={{ width: 480, background: '#f4f0e6', overflowY: 'auto', display: 'flex', flexDirection: 'column', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
         {/* Photo area */}
         <div style={{ height: 200, background: grad, backgroundImage: editPhotos[0] ? `url(${editPhotos[0]})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', flexShrink: 0 }}>
           <button type="button" onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(4px)' }}>
@@ -1000,32 +1010,40 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
         </div>
 
         {/* Action buttons */}
-        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid rgba(14,14,13,.08)', background: '#fff', display: 'flex', gap: '.5rem', flexWrap: 'wrap', flexShrink: 0 }}>
-          <button type="button" className="p-btn-gold"
-            onClick={() => setDtab('matching')}
-            style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-            <IconPipeline /> Pipeline
-          </button>
-          <button type="button" className="p-btn"
-            onClick={() => {
-              const shareUrl = `${window.location.origin}/portal?ref=${p.ref}`
-              navigator.clipboard.writeText(shareUrl).catch(() => {})
-              const btn = document.activeElement as HTMLButtonElement
-              if (btn) { const orig = btn.textContent; btn.textContent = '✓ Link copiado!'; setTimeout(() => { btn.textContent = orig }, 2000) }
-            }}
-            style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-            <IconShare /> Partilhar
-          </button>
-          <button type="button" className="p-btn"
-            onClick={() => window.open(`/portal?ref=${p.ref}`, '_blank')}
-            style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-            <IconEye /> Ver no Portal
-          </button>
-          <button type="button" className="p-btn"
-            onClick={() => setDtab('editar')}
-            style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-            <IconCollection /> Collection
-          </button>
+        <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid rgba(14,14,13,.08)', background: '#fff', flexShrink: 0 }}>
+          {actionToast && (
+            <div style={{ marginBottom: '.65rem', padding: '.45rem .75rem', background: '#1c4a35', borderRadius: 8, fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: '#fff', textAlign: 'center' }}>
+              {actionToast}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+            <button type="button" className="p-btn-gold"
+              onClick={() => { switchTab('matching'); setActionToast('A abrir Pipeline…'); setTimeout(() => setActionToast(''), 1800) }}
+              style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+              <IconPipeline /> Pipeline
+            </button>
+            <button type="button" className="p-btn"
+              onClick={() => {
+                const shareUrl = `${window.location.origin}/portal?ref=${encodeURIComponent(p.ref)}`
+                try { navigator.clipboard.writeText(shareUrl) } catch { /* ignore */ }
+                setCopiedLink(true)
+                setActionToast(`✓ Link copiado: ${p.ref}`)
+                setTimeout(() => { setCopiedLink(false); setActionToast('') }, 2500)
+              }}
+              style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem', background: copiedLink ? '#eaf4ee' : undefined, borderColor: copiedLink ? '#1c4a35' : undefined, color: copiedLink ? '#1c4a35' : undefined }}>
+              <IconShare /> {copiedLink ? '✓ Copiado' : 'Partilhar'}
+            </button>
+            <button type="button" className="p-btn"
+              onClick={() => { window.open(`${window.location.origin}/portal?ref=${encodeURIComponent(p.ref)}`, '_blank'); setActionToast('A abrir portal…'); setTimeout(() => setActionToast(''), 1800) }}
+              style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+              <IconEye /> Ver no Portal
+            </button>
+            <button type="button" className="p-btn"
+              onClick={() => { switchTab('editar'); setActionToast('A abrir editor…'); setTimeout(() => setActionToast(''), 1800) }}
+              style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
+              <IconEdit /> Editar
+            </button>
+          </div>
         </div>
       </div>
     </div>
