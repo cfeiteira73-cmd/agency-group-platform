@@ -262,10 +262,11 @@ interface PropertyCardProps {
   p: ImovelFull
   onSelect: (p: ImovelFull) => void
   onEdit?: (p: ImovelFull) => void
+  onSelectAI?: (p: ImovelFull) => void
   onToggleFrontpage?: (id: string) => void
 }
 
-function PropertyCard({ p, onSelect, onEdit, onToggleFrontpage }: PropertyCardProps) {
+function PropertyCard({ p, onSelect, onEdit, onSelectAI, onToggleFrontpage }: PropertyCardProps) {
   const [hovered, setHovered] = useState(false)
   const bs = badgeSt(p.badge)
   const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
@@ -308,7 +309,9 @@ function PropertyCard({ p, onSelect, onEdit, onToggleFrontpage }: PropertyCardPr
 
         {/* AI hover overlay */}
         {hovered && (
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,74,53,.6)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity .2s' }}>
+          <div
+            onClick={e => { if (onSelectAI) { e.stopPropagation(); onSelectAI(p) } }}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(28,74,53,.6)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'opacity .2s', cursor: 'pointer' }}>
             <div style={{ textAlign: 'center', color: '#fff' }}>
               <IconAI />
               <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', marginTop: '.3rem', fontWeight: 600 }}>Analisar com IA</div>
@@ -361,14 +364,16 @@ function PropertyCard({ p, onSelect, onEdit, onToggleFrontpage }: PropertyCardPr
                 title="Editar imóvel"
                 onClick={e => { e.stopPropagation(); onEdit(p) }}
                 style={{
-                  background: 'transparent',
-                  border: '1.5px solid rgba(14,14,13,.18)',
-                  borderRadius: 6, width: 22, height: 22, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all .15s', padding: 0,
-                  color: 'rgba(14,14,13,.4)',
+                  background: 'rgba(28,74,53,.08)',
+                  border: '1.5px solid rgba(28,74,53,.3)',
+                  borderRadius: 6, cursor: 'pointer', padding: '2px 8px',
+                  display: 'flex', alignItems: 'center', gap: '.25rem',
+                  transition: 'all .15s',
+                  color: '#1c4a35',
+                  fontFamily: 'var(--font-jost)',
+                  fontSize: '.65rem', fontWeight: 600,
                 }}>
-                <IconEdit />
+                <IconEdit /> Editar
               </button>
             )}
             {onToggleFrontpage && (
@@ -396,7 +401,7 @@ function PropertyCard({ p, onSelect, onEdit, onToggleFrontpage }: PropertyCardPr
 
 // ─── PropertyRow (List) ───────────────────────────────────────────────────────
 
-function PropertyRow({ p, onSelect }: PropertyCardProps) {
+function PropertyRow({ p, onSelect, onEdit }: PropertyCardProps) {
   const [hovered, setHovered] = useState(false)
   const bs = badgeSt(p.badge)
   const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
@@ -443,7 +448,7 @@ function PropertyRow({ p, onSelect }: PropertyCardProps) {
       </div>
 
       {/* Badge + status */}
-      <div style={{ flex: 1, display: 'flex', gap: '.35rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+      <div style={{ flex: 1, display: 'flex', gap: '.35rem', justifyContent: 'flex-end', flexWrap: 'wrap', alignItems: 'center' }}>
         {p.badge && (
           <span style={{ background: bs.bg, color: bs.color, border: `1px solid ${bs.border}`, borderRadius: 20, padding: '2px 8px', fontSize: '.65rem', fontFamily: 'var(--font-dm-mono)' }}>
             {p.badge}
@@ -452,6 +457,12 @@ function PropertyRow({ p, onSelect }: PropertyCardProps) {
         <span style={{ background: 'rgba(14,14,13,.06)', color: statusSt(p.status), borderRadius: 20, padding: '2px 8px', fontSize: '.65rem', fontFamily: 'var(--font-dm-mono)' }}>
           {p.status}
         </span>
+        {onEdit && (
+          <button type="button" onClick={e => { e.stopPropagation(); onEdit(p) }}
+            style={{ background: 'rgba(28,74,53,.08)', border: '1.5px solid rgba(28,74,53,.3)', borderRadius: 6, cursor: 'pointer', padding: '3px 9px', display: 'flex', alignItems: 'center', gap: '.25rem', color: '#1c4a35', fontFamily: 'var(--font-jost)', fontSize: '.68rem', fontWeight: 600, transition: 'all .15s', flexShrink: 0 }}>
+            <IconEdit /> Editar
+          </button>
+        )}
       </div>
     </div>
   )
@@ -663,7 +674,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
       <div onClick={onClose} style={{ flex: 1, background: 'rgba(14,14,13,.45)', backdropFilter: 'blur(3px)' }} />
-      <div ref={drawerScrollRef} style={{ width: 480, background: '#f4f0e6', overflowY: 'auto', display: 'flex', flexDirection: 'column', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
+      <div style={{ width: 480, background: '#f4f0e6', display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
         {/* Photo area */}
         <div style={{ height: 200, background: grad, backgroundImage: editPhotos[0] ? `url(${editPhotos[0]})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', flexShrink: 0 }}>
           <button type="button" onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(4px)' }}>
@@ -684,7 +695,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
         </div>
 
         {/* Price + key stats */}
-        <div style={{ padding: '1.25rem', background: '#fff', borderBottom: '1px solid rgba(14,14,13,.08)' }}>
+        <div style={{ padding: '1.25rem', background: '#fff', borderBottom: '1px solid rgba(14,14,13,.08)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontFamily: 'var(--font-cormorant)', fontSize: '2rem', color: '#c9a96e', fontWeight: 600, lineHeight: 1 }}>{fmtPreco(p.preco)}</div>
@@ -713,7 +724,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
         </div>
 
         {/* Drawer Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', background: '#fff', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(14,14,13,.1)', background: '#fff', overflowX: 'auto', flexShrink: 0 }}>
           {DTABS.map(t => (
             <button type="button" key={t.id} onClick={() => setDtab(t.id)}
               style={{
@@ -728,8 +739,8 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
           ))}
         </div>
 
-        {/* Drawer Content */}
-        <div style={{ padding: '1.25rem', flex: 1 }}>
+        {/* Drawer Content — scrollable area only */}
+        <div ref={drawerScrollRef} style={{ padding: '1.25rem', flex: 1, overflowY: 'auto' }}>
           {/* INFO */}
           {dtab === 'info' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -935,7 +946,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
                 <div>
                   <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Badge</label>
                   <select className="p-sel" value={editBadge} onChange={e => setEditBadge(e.target.value)}>
-                    {['', 'Novo', 'Exclusivo', 'Off-Market', 'Redução', 'Urgente'].map(b => <option key={b} value={b}>{b || '— Nenhum —'}</option>)}
+                    {['', 'Novo', 'Destaque', 'Exclusivo', 'Off-Market', 'Redução', 'Urgente'].map(b => <option key={b} value={b}>{b || '— Nenhum —'}</option>)}
                   </select>
                 </div>
                 <div>
@@ -2189,7 +2200,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
       {viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {filtered.map(p => (
-            <PropertyCard key={p.id} p={{ ...p, isFrontpage: frontpageIds.has(p.id) }} onSelect={p => { setDrawerInitialTab('info'); setSelectedProperty(p) }} onEdit={p => { setDrawerInitialTab('editar'); setSelectedProperty(p) }} onToggleFrontpage={handleToggleFrontpage} />
+            <PropertyCard key={p.id} p={{ ...p, isFrontpage: frontpageIds.has(p.id) }} onSelect={p => { setDrawerInitialTab('info'); setSelectedProperty(p) }} onEdit={p => { setDrawerInitialTab('editar'); setSelectedProperty(p) }} onSelectAI={p => { setDrawerInitialTab('ia'); setSelectedProperty(p) }} onToggleFrontpage={handleToggleFrontpage} />
           ))}
           {filtered.length === 0 && (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', color: 'rgba(14,14,13,.35)' }}>
@@ -2213,7 +2224,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
             <div style={{ flex: 1, fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.4)', letterSpacing: '.06em', textAlign: 'right' }}>BADGE</div>
           </div>
           {filtered.map(p => (
-            <PropertyRow key={p.id} p={p} onSelect={setSelectedProperty} />
+            <PropertyRow key={p.id} p={p} onSelect={p => { setDrawerInitialTab('info'); setSelectedProperty(p) }} onEdit={p => { setDrawerInitialTab('editar'); setSelectedProperty(p) }} />
           ))}
           {filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '3rem', color: 'rgba(14,14,13,.35)' }}>
@@ -2229,7 +2240,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
 
       {/* Drawer */}
       {selectedProperty && (
-        <PropertyDrawer p={selectedProperty} onClose={() => setSelectedProperty(null)} onUpdate={handleUpdateProperty} initialTab={drawerInitialTab} />
+        <PropertyDrawer key={selectedProperty.id} p={selectedProperty} onClose={() => setSelectedProperty(null)} onUpdate={handleUpdateProperty} initialTab={drawerInitialTab} />
       )}
 
       {/* Add Modal */}
