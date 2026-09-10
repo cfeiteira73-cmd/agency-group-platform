@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { auth } from '@/auth'
+import { getAnySession, mandateAuthRole } from '@/lib/auth/getSession'
 import { getMandateById, patchMandate, verifyMandateAccess } from '@/lib/crm/mandateService'
 
 export const runtime = 'nodejs'
@@ -8,12 +8,13 @@ export const runtime = 'nodejs'
 // ── GET /api/mandates/[id] ────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth()
+  const session = await getAnySession()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+  const authRole = mandateAuthRole(session)
 
-  const access = await verifyMandateAccess(id, session.user.id, session.user.role)
+  const access = await verifyMandateAccess(id, session.user.id, authRole)
   if (!access.ok) {
     return NextResponse.json({ error: access.error }, { status: access.status ?? 403 })
   }
@@ -36,19 +37,20 @@ const PatchMandateSchema = z.object({
 }).strict() // reject unknown fields — prevent mass assignment
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth()
+  const session = await getAnySession()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
+  const authRole = mandateAuthRole(session)
 
   // Mandate access + ownership check
-  const access = await verifyMandateAccess(id, session.user.id, session.user.role)
+  const access = await verifyMandateAccess(id, session.user.id, authRole)
   if (!access.ok) {
     return NextResponse.json({ error: access.error }, { status: access.status ?? 403 })
   }
 
-  // Only owner (or admin) can update mandate core fields
-  if (session.user.role !== 'admin' && access.mandate?.owner_id !== session.user.id) {
+  // Only owner (or NextAuth admin) can update mandate core fields
+  if (authRole !== 'admin' && access.mandate?.owner_id !== session.user.id) {
     return NextResponse.json({ error: 'Only the mandate owner can update it' }, { status: 403 })
   }
 
@@ -62,8 +64,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Validation failed', issues: parsed.error.issues }, { status: 422 })
   }
 
-  const ownerId = session.user.role === 'admin'
-    ? access.mandate!.owner_id  // admin can patch any mandate
+  const ownerId = authRole === 'admin'
+    ? access.mandate!.owner_id  // NextAuth admin can patch any mandate
     : session.user.id
 
   const result = await patchMandate(id, ownerId, parsed.data)

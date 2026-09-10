@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAnySession } from '@/lib/auth/getSession'
+import { getAnySession, mandateAuthRole } from '@/lib/auth/getSession'
 import {
   createMandate,
   getMandatesByContactId,
@@ -25,9 +25,10 @@ export async function GET(req: NextRequest) {
   const contactId = Number(contactIdParam)
 
   const lifecycleParam = searchParams.get('lifecycle') as MandateLifecycleState | null
+  const authRole = mandateAuthRole(session)
 
-  // Verify CRM access to contact
-  const access = await verifyContactAccess(contactId, session.user.id, session.user.role)
+  // Verify CRM access to contact (authRole applies Model B cap for magic-link admin)
+  const access = await verifyContactAccess(contactId, session.user.id, authRole)
   if (!access.ok) {
     return NextResponse.json({ error: access.error }, { status: access.status ?? 403 })
   }
@@ -99,6 +100,8 @@ export async function POST(req: NextRequest) {
   const session = await getAnySession()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const authRole = mandateAuthRole(session)
+
   let body: unknown
   try { body = await req.json() } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
@@ -112,7 +115,8 @@ export async function POST(req: NextRequest) {
   const input = parsed.data
 
   // IDOR prevention: verify session user has CRM access to holder contact
-  const access = await verifyContactAccess(input.holder_contact_id, session.user.id, session.user.role)
+  // authRole applies Model B cap — magic-link admin treated as agent
+  const access = await verifyContactAccess(input.holder_contact_id, session.user.id, authRole)
   if (!access.ok) {
     return NextResponse.json({ error: access.error }, { status: access.status ?? 403 })
   }

@@ -25,6 +25,12 @@ interface BucketSpec {
 
 const REQUIRED_BUCKETS: BucketSpec[] = [
   {
+    id:               'property-media',
+    public:           true,
+    fileSizeLimit:    52_428_800,         // 50 MB
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'video/mp4', 'video/quicktime', 'video/webm'],
+  },
+  {
     id:               'ml-training-data',
     public:           false,
     fileSizeLimit:    104_857_600,        // 100 MB
