@@ -1035,7 +1035,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
             </button>
             <button type="button" className="p-btn"
               onClick={() => {
-                const shareUrl = `${window.location.origin}/portal?ref=${encodeURIComponent(p.ref)}`
+                const shareUrl = `${window.location.origin}/imoveis?ref=${encodeURIComponent(p.ref)}`
                 try { navigator.clipboard.writeText(shareUrl) } catch { /* ignore */ }
                 setCopiedLink(true)
                 setActionToast(`✓ Link copiado: ${p.ref}`)
@@ -1045,9 +1045,9 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
               <IconShare /> {copiedLink ? '✓ Copiado' : 'Partilhar'}
             </button>
             <button type="button" className="p-btn"
-              onClick={() => { window.open(`${window.location.origin}/portal?ref=${encodeURIComponent(p.ref)}`, '_blank'); setActionToast('A abrir portal…'); setTimeout(() => setActionToast(''), 1800) }}
+              onClick={() => { window.open(`${window.location.origin}/imoveis?ref=${encodeURIComponent(p.ref)}`, '_blank'); setActionToast('A abrir página pública…'); setTimeout(() => setActionToast(''), 1800) }}
               style={{ fontSize: '.78rem', display: 'flex', alignItems: 'center', gap: '.35rem' }}>
-              <IconEye /> Ver no Portal
+              <IconEye /> Ver no Site
             </button>
             <button type="button" className="p-btn"
               onClick={() => { switchTab('editar'); setActionToast('A abrir editor…'); setTimeout(() => setActionToast(''), 1800) }}
