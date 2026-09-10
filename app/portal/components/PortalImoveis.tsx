@@ -1082,7 +1082,15 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem', position: 'relative' }}>
+
+          {/* Hidden file inputs — always mounted so refs stay stable */}
+          <input ref={photoInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
+            style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
+            onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'photos'); e.target.value = '' } }} />
+          <input ref={videoInputRef} type="file" multiple accept="video/mp4,video/quicktime,video/webm"
+            style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
+            onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'videos'); e.target.value = '' } }} />
 
           {/* ── STEP 1 ── */}
           {step === 1 && (
@@ -1288,23 +1296,16 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
                 ))}
               </div>
 
-              {/* Hidden inputs */}
-              <input ref={photoInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
-                style={{ display: 'none' }}
-                onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'photos'); e.target.value = '' } }} />
-              <input ref={videoInputRef} type="file" multiple accept="video/mp4,video/quicktime,video/webm"
-                style={{ display: 'none' }}
-                onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'videos'); e.target.value = '' } }} />
-
               {/* ─ Photos tab ─ */}
               {mediaTab === 'fotos' && (
                 <div>
                   {/* Drop zone */}
                   <div
-                    onClick={() => !uploading && photoInputRef.current?.click()}
-                    onDragOver={e => { e.preventDefault(); setDraggingPhotos(true) }}
-                    onDragLeave={() => setDraggingPhotos(false)}
-                    onDrop={e => { e.preventDefault(); setDraggingPhotos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'photos') }}
+                    onClick={e => { e.stopPropagation(); if (!uploading) photoInputRef.current?.click() }}
+                    onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setDraggingPhotos(true) }}
+                    onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDraggingPhotos(true) }}
+                    onDragLeave={e => { e.stopPropagation(); setDraggingPhotos(false) }}
+                    onDrop={e => { e.preventDefault(); e.stopPropagation(); setDraggingPhotos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'photos') }}
                     style={{
                       borderRadius: 12, border: `2px dashed ${draggingPhotos ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
                       background: draggingPhotos ? 'rgba(201,169,110,.05)' : 'rgba(14,14,13,.02)',
@@ -1372,7 +1373,7 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
                           </div>
                         ))}
                         {/* Add more */}
-                        <div onClick={() => photoInputRef.current?.click()}
+                        <div onClick={e => { e.stopPropagation(); photoInputRef.current?.click() }}
                           style={{
                             borderRadius: 8, border: '2px dashed rgba(14,14,13,.12)', aspectRatio: '4/3',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
@@ -1392,10 +1393,11 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
               {mediaTab === 'videos' && (
                 <div>
                   <div
-                    onClick={() => !uploading && videoInputRef.current?.click()}
-                    onDragOver={e => { e.preventDefault(); setDraggingVideos(true) }}
-                    onDragLeave={() => setDraggingVideos(false)}
-                    onDrop={e => { e.preventDefault(); setDraggingVideos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'videos') }}
+                    onClick={e => { e.stopPropagation(); if (!uploading) videoInputRef.current?.click() }}
+                    onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setDraggingVideos(true) }}
+                    onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDraggingVideos(true) }}
+                    onDragLeave={e => { e.stopPropagation(); setDraggingVideos(false) }}
+                    onDrop={e => { e.preventDefault(); e.stopPropagation(); setDraggingVideos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'videos') }}
                     style={{
                       borderRadius: 12, border: `2px dashed ${draggingVideos ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
                       background: draggingVideos ? 'rgba(201,169,110,.05)' : 'rgba(14,14,13,.02)',
