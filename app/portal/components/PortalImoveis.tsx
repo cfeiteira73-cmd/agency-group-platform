@@ -28,6 +28,8 @@ interface ImovelFull {
   listingDate: string
   viewsCount?: number
   isCustom?: boolean
+  imagens?: string[]
+  videoUrls?: string[]
 }
 
 interface Filters {
@@ -824,167 +826,725 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
   )
 }
 
-// ─── AddImovelModal ───────────────────────────────────────────────────────────
+// ─── AddImovelModal ─────────────────────────────────────────────────────────
+
+// ── Step progress bar ──────────────────────────────────────────────────────────
+function StepBar({ step, total }: { step: number; total: number }) {
+  const labels = ['Identificação', 'Detalhes', 'Média']
+  return (
+    <div style={{ marginBottom: '1.75rem' }}>
+      {/* Labels */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.6rem' }}>
+        {labels.map((l, i) => (
+          <span key={l} style={{
+            fontFamily: 'var(--font-jost)', fontSize: '.7rem', letterSpacing: '.06em', textTransform: 'uppercase',
+            color: i + 1 === step ? '#1c4a35' : i + 1 < step ? '#c9a96e' : 'rgba(14,14,13,.3)',
+            fontWeight: i + 1 === step ? 600 : 400, transition: 'color .25s',
+          }}>{i + 1}. {l}</span>
+        ))}
+      </div>
+      {/* Track */}
+      <div style={{ height: 3, background: 'rgba(14,14,13,.08)', borderRadius: 2, position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0,
+          width: `${((step - 1) / (total - 1)) * 100}%`,
+          background: 'linear-gradient(90deg,#1c4a35,#c9a96e)',
+          borderRadius: 2, transition: 'width .4s cubic-bezier(.4,0,.2,1)',
+        }} />
+      </div>
+      {/* Dots */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '.4rem' }}>
+        {Array.from({ length: total }, (_, i) => (
+          <div key={i} style={{
+            width: 8, height: 8, borderRadius: '50%', transition: 'all .25s',
+            background: i + 1 <= step ? (i + 1 < step ? '#c9a96e' : '#1c4a35') : 'rgba(14,14,13,.12)',
+            boxShadow: i + 1 === step ? '0 0 0 3px rgba(28,74,53,.15)' : 'none',
+          }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Visual selector (quartos / wcs) ───────────────────────────────────────────
+function NumSelector({ value, onChange, min = 0, max = 6, prefix = '' }: {
+  value: number; onChange: (n: number) => void; min?: number; max?: number; prefix?: string
+}) {
+  return (
+    <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
+      {Array.from({ length: max - min + 1 }, (_, i) => i + min).map(n => (
+        <button key={n} type="button" onClick={() => onChange(n)}
+          style={{
+            fontFamily: 'var(--font-jost)', fontSize: '.8rem', fontWeight: 500,
+            width: 40, height: 36, borderRadius: 8, cursor: 'pointer', transition: 'all .15s',
+            border: `1.5px solid ${value === n ? '#1c4a35' : 'rgba(14,14,13,.12)'}`,
+            background: value === n ? '#1c4a35' : 'transparent',
+            color: value === n ? '#fff' : 'rgba(14,14,13,.6)',
+          }}>{prefix}{n}</button>
+      ))}
+    </div>
+  )
+}
+
+// ── Energia badge ─────────────────────────────────────────────────────────────
+const ENERGIA_COLORS: Record<string, string> = {
+  'A+': '#006400', 'A': '#00a000', 'B': '#50c000',
+  'B-': '#c0e000', 'C': '#e0c000', 'D': '#e08000',
+  'E': '#e04000', 'F': '#c00000', 'Isento': '#888',
+}
 
 function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: ImovelFull) => void }) {
-  const [nome, setNome] = useState('')
-  const [zona, setZona] = useState('Lisboa')
-  const [bairro, setBairro] = useState('')
-  const [tipo, setTipo] = useState('Apartamento')
-  const [preco, setPreco] = useState('')
-  const [area, setArea] = useState('')
-  const [quartos, setQuartos] = useState('2')
-  const [wcs, setWcs] = useState('2')
-  const [piscina, setPiscina] = useState(false)
-  const [garagem, setGaragem] = useState(false)
-  const [jardim, setJardim] = useState(false)
-  const [terraco, setTerraco] = useState(false)
-  const [badge, setBadge] = useState('Novo')
-  const [descr, setDescr] = useState('')
-  const [generating, setGenerating] = useState(false)
-  const [dragging, setDragging] = useState(false)
+  const TOTAL_STEPS = 3
+  const [step, setStep] = useState(1)
 
+  // ── Step 1: Identificação ──────────────────────────────────────────────────
+  const [nome, setNome]   = useState('')
+  const [zona, setZona]   = useState('Lisboa')
+  const [bairro, setBairro] = useState('')
+  const [tipo, setTipo]   = useState('Apartamento')
+  const [badge, setBadge] = useState('Novo')
+
+  // ── Step 2: Detalhes ───────────────────────────────────────────────────────
+  const [preco, setPreco]   = useState('')
+  const [area, setArea]     = useState('')
+  const [quartos, setQuartos] = useState(2)
+  const [wcs, setWcs]         = useState(2)
+  const [andar, setAndar]     = useState('')
+  const [anoConstrucao, setAnoConstrucao] = useState('')
+  const [energia, setEnergia] = useState('B')
+  const [vista, setVista]     = useState('')
+  const [piscina, setPiscina] = useState(false)
+  const [piscinaAquecida, setPiscinaAquecida] = useState(false)
+  const [garagem, setGaragem] = useState(false)
+  const [jardim, setJardim]   = useState(false)
+  const [terraco, setTerraco] = useState(false)
+  const [vistaMar, setVistaMar] = useState(false)
+  const [spa, setSpa]           = useState(false)
+  const [ginasio, setGinasio]   = useState(false)
+  const [lareira, setLareira]   = useState(false)
+  const [domotica, setDomotica] = useState(false)
+  const [elevador, setElevador] = useState(false)
+  const [arCondicionado, setArCondicionado] = useState(false)
+  const [descr, setDescr]         = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [refExterna, setRefExterna] = useState('')
+
+  // ── Step 3: Média ──────────────────────────────────────────────────────────
+  const [photos, setPhotos]     = useState<string[]>([])
+  const [videoUrls, setVideoUrls] = useState<string[]>([])
+  const [tourUrl, setTourUrl]   = useState('')
+  const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [uploading, setUploading]   = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadError, setUploadError] = useState('')
+  const [draggingPhotos, setDraggingPhotos] = useState(false)
+  const [draggingVideos, setDraggingVideos] = useState(false)
+  const [mediaTab, setMediaTab] = useState<'fotos' | 'videos' | 'tour'>('fotos')
+  const photoInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
+
+  // ── Validation ─────────────────────────────────────────────────────────────
+  const step1Valid = nome.trim().length > 0
+  const step2Valid = preco.replace(/\D/g, '').length > 0 && area.length > 0
+  const canSubmit  = step1Valid && step2Valid
+
+  // ── Format price ───────────────────────────────────────────────────────────
+  function formatPrice(raw: string) {
+    const n = raw.replace(/\D/g, '')
+    return n.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  }
+
+  // ── Generate description ───────────────────────────────────────────────────
   function generateDesc() {
     if (!nome) return
     setGenerating(true)
+    const feats = [
+      piscina && 'piscina privada', piscinaAquecida && 'piscina aquecida', jardim && 'jardim',
+      terraco && 'terraço panorâmico', vistaMar && 'vista mar', spa && 'spa', garagem && 'garagem',
+    ].filter(Boolean).join(', ')
     setTimeout(() => {
-      setDescr(`${nome} — imóvel ${tipo.toLowerCase()} de referência em ${bairro || zona}. Com ${area}m² distribuídos por ${quartos} quartos${piscina ? ', piscina privada' : ''}${jardim ? ' e jardim' : ''}${terraco ? ' com terraço panorâmico' : ''}. Acabamentos premium, arquitectura contemporânea. Localização privilegiada em ${zona}. Referência única para investidores e compradores de lifestyle.`)
+      setDescr(`${nome} — imóvel ${tipo.toLowerCase()} de referência em ${bairro || zona}. ${area}m² distribuídos por T${quartos}, ${wcs} casas de banho.${feats ? ` Equipado com ${feats}.` : ''} Acabamentos premium, arquitectura contemporânea. Certificado energético ${energia}. Localização privilegiada em ${zona}. Referência única para investidores e compradores de lifestyle exigente.`)
       setGenerating(false)
     }, 1400)
   }
 
+  // ── Upload files ───────────────────────────────────────────────────────────
+  async function uploadFiles(files: FileList | File[], kind: 'photos' | 'videos') {
+    const arr = Array.from(files)
+    if (!arr.length) return
+    setUploading(true)
+    setUploadError('')
+    setUploadProgress(0)
+    const newPhotos: string[] = []
+    const newVideos: string[] = []
+    for (let i = 0; i < arr.length; i++) {
+      const file = arr[i]
+      try {
+        const fd = new FormData()
+        fd.append('file', file)
+        const res = await fetch('/api/properties/upload', { method: 'POST', body: fd })
+        const json = await res.json()
+        if (!res.ok) { setUploadError(json.error ?? 'Erro no upload'); continue }
+        if (json.type === 'video') newVideos.push(json.url)
+        else newPhotos.push(json.url)
+        setUploadProgress(Math.round(((i + 1) / arr.length) * 100))
+      } catch {
+        setUploadError('Erro de ligação. Tente novamente.')
+      }
+    }
+    if (kind === 'photos') setPhotos(prev => [...prev, ...newPhotos])
+    else setVideoUrls(prev => [...prev, ...newVideos])
+    setUploading(false)
+    setUploadProgress(0)
+  }
+
+  // ── Handle submit ──────────────────────────────────────────────────────────
   function handleAdd() {
-    if (!nome.trim() || !preco || !area) return
+    if (!canSubmit) return
+    const features: string[] = [
+      piscina && 'Piscina', piscinaAquecida && 'Piscina Aquecida', garagem && 'Garagem',
+      jardim && 'Jardim', terraco && 'Terraço', vistaMar && 'Vista Mar', spa && 'Spa',
+      ginasio && 'Ginásio', lareira && 'Lareira', domotica && 'Domótica',
+      elevador && 'Elevador', arCondicionado && 'Ar Condicionado',
+    ].filter(Boolean) as string[]
+
     const p: ImovelFull = {
       id: `custom-${Date.now()}`,
-      ref: `AG-CUSTOM-${Date.now().toString().slice(-4)}`,
+      ref: refExterna || `AG-CUSTOM-${Date.now().toString().slice(-4)}`,
       nome: nome.trim(),
       zona, bairro: bairro.trim() || zona,
       tipo, preco: Number(preco.replace(/\D/g, '')),
-      area: Number(area), quartos: Number(quartos),
-      casasBanho: Number(wcs), badge,
+      area: Number(area), quartos, casasBanho: wcs, badge,
       status: 'Ativo', piscina, garagem, jardim, terraco,
       listingDate: new Date().toISOString().split('T')[0],
       viewsCount: 0, isCustom: true,
+      imagens: photos, videoUrls,
     }
     onAdd(p)
     onClose()
   }
 
-  const canAdd = nome.trim() && preco && area
+  // ── Shared input style ─────────────────────────────────────────────────────
+  const inp: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box', fontFamily: 'var(--font-jost)', fontSize: '.85rem',
+    background: 'rgba(14,14,13,.03)', border: '1.5px solid rgba(14,14,13,.12)', borderRadius: 10,
+    padding: '9px 13px', color: '#0e0e0d', outline: 'none', transition: 'border-color .15s',
+  }
+  const lbl: React.CSSProperties = {
+    display: 'block', fontFamily: 'var(--font-jost)', fontSize: '.72rem', fontWeight: 600,
+    letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(14,14,13,.45)', marginBottom: '.35rem',
+  }
+  const feat = (active: boolean): React.CSSProperties => ({
+    fontFamily: 'var(--font-jost)', fontSize: '.78rem', padding: '6px 13px', borderRadius: 20,
+    cursor: 'pointer', border: `1.5px solid ${active ? '#1c4a35' : 'rgba(14,14,13,.12)'}`,
+    background: active ? '#1c4a35' : 'transparent', color: active ? '#fff' : 'rgba(14,14,13,.55)',
+    transition: 'all .15s', whiteSpace: 'nowrap' as const,
+  })
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(14,14,13,.6)', backdropFilter: 'blur(4px)' }} />
-      <div className="p-card" style={{ position: 'relative', width: '100%', maxWidth: 640, maxHeight: '90vh', zIndex: 1, padding: '2rem', overflowY: 'auto', border: '1px solid rgba(201,169,110,.25)', borderRadius: '16px', boxShadow: '0 4px 16px rgba(14,14,13,.08),0 2px 6px rgba(14,14,13,.04)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.6rem', color: '#0e0e0d', fontWeight: 600, margin: 0 }}>Adicionar Imóvel</h3>
-          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)' }}><IconClose /></button>
-        </div>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(14,14,13,.65)', backdropFilter: 'blur(6px)' }} />
 
-        {/* Photo drop zone */}
-        <div
-          onDragOver={e => { e.preventDefault(); setDragging(true) }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={e => { e.preventDefault(); setDragging(false) }}
-          style={{
-            height: 100, borderRadius: 10, border: `2px dashed ${dragging ? '#c9a96e' : 'rgba(14,14,13,.2)'}`,
-            background: dragging ? 'rgba(201,169,110,.06)' : 'rgba(14,14,13,.03)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            gap: '.4rem', cursor: 'pointer', marginBottom: '1.25rem', transition: 'all .2s',
-          }}>
-          <IconUpload />
-          <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.82rem', color: 'rgba(14,14,13,.45)' }}>
-            {dragging ? 'Soltar para carregar…' : 'Arraste fotos ou clique para seleccionar'}
-          </span>
-        </div>
+      {/* Modal card */}
+      <div style={{
+        position: 'relative', width: '100%', maxWidth: 680, maxHeight: '92vh', zIndex: 1,
+        background: '#fafaf8', borderRadius: 20, overflow: 'hidden',
+        border: '1px solid rgba(201,169,110,.2)',
+        boxShadow: '0 24px 64px rgba(14,14,13,.18), 0 8px 24px rgba(14,14,13,.1)',
+        display: 'flex', flexDirection: 'column',
+      }}>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
-          <div style={{ gridColumn: '1/-1' }}>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Nome do Imóvel</label>
-            <input className="p-inp" value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex: Penthouse Príncipe Real" />
-          </div>
-          <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Zona</label>
-            <select className="p-sel" value={zona} onChange={e => setZona(e.target.value)}>
-              {ZONAS.map(z => <option key={z} value={z}>{z}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Bairro / Localidade</label>
-            <input className="p-inp" value={bairro} onChange={e => setBairro(e.target.value)} placeholder="Ex: Chiado" />
-          </div>
-          <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Tipo</label>
-            <select className="p-sel" value={tipo} onChange={e => setTipo(e.target.value)}>
-              {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Badge</label>
-            <select className="p-sel" value={badge} onChange={e => setBadge(e.target.value)}>
-              {['Novo', 'Destaque', 'Exclusivo', 'Off-Market'].map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Preço (€)</label>
-            <input className="p-inp" value={preco} onChange={e => setPreco(e.target.value)} placeholder="1.500.000" />
-          </div>
-          <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Área (m²)</label>
-            <input className="p-inp" value={area} onChange={e => setArea(e.target.value)} placeholder="180" />
-          </div>
-          <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Quartos</label>
-            <select className="p-sel" value={quartos} onChange={e => setQuartos(e.target.value)}>
-              {['0','1','2','3','4','5','6'].map(n => <option key={n} value={n}>T{n}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>WCs</label>
-            <select className="p-sel" value={wcs} onChange={e => setWcs(e.target.value)}>
-              {['1','2','3','4','5'].map(n => <option key={n} value={n}>{n}</option>)}
-            </select>
-          </div>
-
-          {/* Features toggles */}
-          <div style={{ gridColumn: '1/-1', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-            {([
-              { label: 'Piscina', value: piscina, set: setPiscina },
-              { label: 'Garagem', value: garagem, set: setGaragem },
-              { label: 'Jardim', value: jardim, set: setJardim },
-              { label: 'Terraço', value: terraco, set: setTerraco },
-            ] as const).map(f => (
-              <button type="button" key={f.label} onClick={() => (f.set as (v: boolean) => void)(!f.value)}
-                style={{
-                  fontFamily: 'var(--font-jost)', fontSize: '.78rem', padding: '6px 14px', borderRadius: 20, cursor: 'pointer',
-                  border: `1px solid ${f.value ? '#1c4a35' : 'rgba(14,14,13,.15)'}`,
-                  background: f.value ? '#1c4a35' : 'transparent',
-                  color: f.value ? '#fff' : 'rgba(14,14,13,.6)', transition: 'all .15s',
-                }}>
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Description */}
-          <div style={{ gridColumn: '1/-1' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.3rem' }}>
-              <label className="p-label">Descrição</label>
-              <button type="button" onClick={generateDesc} disabled={!nome.trim() || generating}
-                style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.7rem', background: 'none', border: '1px solid rgba(201,169,110,.4)', borderRadius: 20, padding: '3px 10px', cursor: nome.trim() ? 'pointer' : 'not-allowed', color: '#c9a96e', display: 'flex', alignItems: 'center', gap: '.3rem', opacity: nome.trim() ? 1 : .45 }}>
-                <IconSparkle /> {generating ? 'A gerar…' : 'Gerar com IA'}
-              </button>
+        {/* Header */}
+        <div style={{
+          padding: '1.5rem 1.75rem 0', background: '#fff',
+          borderBottom: '1px solid rgba(14,14,13,.07)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+            <div>
+              <h3 style={{ fontFamily: 'var(--font-cormorant)', fontSize: '1.75rem', color: '#0e0e0d', fontWeight: 600, margin: 0, lineHeight: 1.2 }}>
+                Novo Imóvel
+              </h3>
+              <p style={{ fontFamily: 'var(--font-jost)', fontSize: '.78rem', color: 'rgba(14,14,13,.4)', margin: '4px 0 0' }}>
+                Passo {step} de {TOTAL_STEPS} —&nbsp;
+                {step === 1 ? 'Identificação & Localização' : step === 2 ? 'Detalhes & Características' : 'Média & Publicação'}
+              </p>
             </div>
-            <textarea className="p-inp" value={descr} onChange={e => setDescr(e.target.value)} rows={3} placeholder="Descrição do imóvel…" style={{ resize: 'vertical' }} />
+            <button type="button" onClick={onClose} style={{
+              background: 'rgba(14,14,13,.06)', border: 'none', borderRadius: 8, width: 32, height: 32,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(14,14,13,.5)', marginTop: 2,
+            }}>
+              <IconClose />
+            </button>
           </div>
+          <StepBar step={step} total={TOTAL_STEPS} />
         </div>
 
-        <div style={{ display: 'flex', gap: '.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-          <button type="button" onClick={onClose} className="p-btn" style={{ fontSize: '.82rem' }}>Cancelar</button>
-          <button type="button" onClick={handleAdd} className="p-btn-gold" disabled={!canAdd} style={{ fontSize: '.82rem', opacity: canAdd ? 1 : .45 }}>
-            Adicionar Imóvel
+        {/* Body */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem' }}>
+
+          {/* ── STEP 1 ── */}
+          {step === 1 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {/* Nome */}
+              <div>
+                <label style={lbl}>Nome do Imóvel *</label>
+                <input
+                  style={{ ...inp, ...(nome ? { borderColor: '#1c4a35' } : {}) }}
+                  value={nome} onChange={e => setNome(e.target.value)}
+                  placeholder="Ex: Penthouse Príncipe Real com Vista Rio"
+                  autoFocus
+                />
+              </div>
+
+              {/* Zona grid */}
+              <div>
+                <label style={lbl}>Zona</label>
+                <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                  {ZONAS.map(z => (
+                    <button key={z} type="button" onClick={() => setZona(z)} style={feat(zona === z)}>{z}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bairro */}
+              <div>
+                <label style={lbl}>Bairro / Localidade</label>
+                <input style={inp} value={bairro} onChange={e => setBairro(e.target.value)} placeholder="Ex: Chiado, Quinta da Marinha, Vilamoura…" />
+              </div>
+
+              {/* Tipo */}
+              <div>
+                <label style={lbl}>Tipo de Imóvel</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '.5rem' }}>
+                  {[
+                    { label: 'Apartamento', icon: '🏢' }, { label: 'Moradia', icon: '🏠' },
+                    { label: 'Villa', icon: '🏛️' }, { label: 'Penthouse', icon: '✨' },
+                    { label: 'Comercial', icon: '🏬' }, { label: 'Terreno', icon: '🌿' },
+                    { label: 'Herdade', icon: '🌾' }, { label: 'Quinta', icon: '🍷' },
+                  ].map(t => (
+                    <button key={t.label} type="button" onClick={() => setTipo(t.label)}
+                      style={{
+                        fontFamily: 'var(--font-jost)', fontSize: '.75rem', padding: '8px 6px', borderRadius: 10,
+                        cursor: 'pointer', transition: 'all .15s', textAlign: 'center',
+                        border: `1.5px solid ${tipo === t.label ? '#1c4a35' : 'rgba(14,14,13,.1)'}`,
+                        background: tipo === t.label ? '#1c4a35' : '#fff',
+                        color: tipo === t.label ? '#fff' : 'rgba(14,14,13,.6)',
+                        boxShadow: tipo === t.label ? '0 2px 8px rgba(28,74,53,.2)' : 'none',
+                      }}>
+                      <div style={{ fontSize: '1.1rem', marginBottom: 3 }}>{t.icon}</div>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Badge + Referência */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+                <div>
+                  <label style={lbl}>Badge de Destaque</label>
+                  <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                    {['Novo', 'Destaque', 'Exclusivo', 'Off-Market'].map(b => (
+                      <button key={b} type="button" onClick={() => setBadge(b)} style={feat(badge === b)}>{b}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={lbl}>Referência Interna</label>
+                  <input style={inp} value={refExterna} onChange={e => setRefExterna(e.target.value)} placeholder="Ex: AG-2026-001" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── STEP 2 ── */}
+          {step === 2 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {/* Preço + Área */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+                <div>
+                  <label style={lbl}>Preço (€) *</label>
+                  <input style={{ ...inp, ...(preco ? { borderColor: '#c9a96e' } : {}) }}
+                    value={preco} onChange={e => setPreco(formatPrice(e.target.value))} placeholder="1.500.000" />
+                </div>
+                <div>
+                  <label style={lbl}>Área Total (m²) *</label>
+                  <input style={inp} value={area} onChange={e => setArea(e.target.value.replace(/\D/g, ''))} placeholder="180" />
+                </div>
+              </div>
+
+              {/* Quartos */}
+              <div>
+                <label style={lbl}>Tipologia</label>
+                <NumSelector value={quartos} onChange={setQuartos} min={0} max={6} prefix="T" />
+              </div>
+
+              {/* WCs */}
+              <div>
+                <label style={lbl}>Casas de Banho</label>
+                <NumSelector value={wcs} onChange={setWcs} min={1} max={6} />
+              </div>
+
+              {/* Andar + Ano + Energia + Vista */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
+                <div>
+                  <label style={lbl}>Andar</label>
+                  <input style={inp} value={andar} onChange={e => setAndar(e.target.value)} placeholder="Ex: 4º, Rés-do-chão…" />
+                </div>
+                <div>
+                  <label style={lbl}>Ano de Construção</label>
+                  <input style={inp} value={anoConstrucao} onChange={e => setAnoConstrucao(e.target.value.replace(/\D/g, '').slice(0,4))} placeholder="Ex: 2022" />
+                </div>
+                <div>
+                  <label style={lbl}>Certificado Energético</label>
+                  <div style={{ display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
+                    {Object.keys(ENERGIA_COLORS).map(e => (
+                      <button key={e} type="button" onClick={() => setEnergia(e)}
+                        style={{
+                          fontFamily: 'var(--font-dm-mono)', fontSize: '.72rem', fontWeight: 700,
+                          padding: '5px 9px', borderRadius: 7, cursor: 'pointer', transition: 'all .15s',
+                          background: energia === e ? ENERGIA_COLORS[e] : 'transparent',
+                          border: `1.5px solid ${energia === e ? ENERGIA_COLORS[e] : 'rgba(14,14,13,.12)'}`,
+                          color: energia === e ? '#fff' : 'rgba(14,14,13,.55)',
+                        }}>{e}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={lbl}>Vista</label>
+                  <input style={inp} value={vista} onChange={e => setVista(e.target.value)} placeholder="Ex: Vista Rio, Vista Mar…" />
+                </div>
+              </div>
+
+              {/* Features grid */}
+              <div>
+                <label style={lbl}>Características & Equipamentos</label>
+                <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Piscina', val: piscina, set: setPiscina },
+                    { label: 'Piscina Aquecida', val: piscinaAquecida, set: setPiscinaAquecida },
+                    { label: 'Garagem', val: garagem, set: setGaragem },
+                    { label: 'Jardim', val: jardim, set: setJardim },
+                    { label: 'Terraço', val: terraco, set: setTerraco },
+                    { label: 'Vista Mar', val: vistaMar, set: setVistaMar },
+                    { label: 'Spa', val: spa, set: setSpa },
+                    { label: 'Ginásio', val: ginasio, set: setGinasio },
+                    { label: 'Lareira', val: lareira, set: setLareira },
+                    { label: 'Domótica', val: domotica, set: setDomotica },
+                    { label: 'Elevador', val: elevador, set: setElevador },
+                    { label: 'Ar Condicionado', val: arCondicionado, set: setArCondicionado },
+                  ].map(f => (
+                    <button key={f.label} type="button" onClick={() => f.set(!f.val)} style={feat(f.val)}>{f.label}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Descrição */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.4rem' }}>
+                  <label style={{ ...lbl, margin: 0 }}>Descrição</label>
+                  <button type="button" onClick={generateDesc} disabled={!nome.trim() || generating}
+                    style={{
+                      fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', background: 'none',
+                      border: '1px solid rgba(201,169,110,.5)', borderRadius: 20, padding: '4px 12px',
+                      cursor: nome.trim() ? 'pointer' : 'not-allowed', color: '#c9a96e',
+                      display: 'flex', alignItems: 'center', gap: '.3rem', opacity: nome.trim() ? 1 : .4,
+                    }}>
+                    <IconSparkle /> {generating ? 'A gerar…' : 'Gerar com IA'}
+                  </button>
+                </div>
+                <textarea style={{ ...inp, resize: 'vertical' }} value={descr} onChange={e => setDescr(e.target.value)}
+                  rows={4} placeholder="Descrição premium do imóvel para apresentar a clientes e portais…" />
+                {descr && (
+                  <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.7rem', color: 'rgba(14,14,13,.35)', marginTop: '.25rem', textAlign: 'right' }}>
+                    {descr.length} caracteres
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── STEP 3 ── */}
+          {step === 3 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+              {/* Media tabs */}
+              <div style={{ display: 'flex', gap: '.5rem', borderBottom: '1px solid rgba(14,14,13,.08)', paddingBottom: '.75rem' }}>
+                {([
+                  { id: 'fotos' as const, label: `📷 Fotos${photos.length ? ` (${photos.length})` : ''}` },
+                  { id: 'videos' as const, label: `🎬 Vídeos${videoUrls.length ? ` (${videoUrls.length})` : ''}` },
+                  { id: 'tour' as const, label: '🔗 Links Externos' },
+                ]).map(t => (
+                  <button key={t.id} type="button" onClick={() => setMediaTab(t.id)}
+                    style={{
+                      fontFamily: 'var(--font-jost)', fontSize: '.8rem', fontWeight: mediaTab === t.id ? 600 : 400,
+                      padding: '6px 14px', borderRadius: 20, cursor: 'pointer',
+                      background: mediaTab === t.id ? '#1c4a35' : 'transparent',
+                      color: mediaTab === t.id ? '#fff' : 'rgba(14,14,13,.5)',
+                      border: `1.5px solid ${mediaTab === t.id ? '#1c4a35' : 'rgba(14,14,13,.12)'}`,
+                      transition: 'all .15s',
+                    }}>{t.label}</button>
+                ))}
+              </div>
+
+              {/* Hidden inputs */}
+              <input ref={photoInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
+                style={{ display: 'none' }}
+                onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'photos'); e.target.value = '' } }} />
+              <input ref={videoInputRef} type="file" multiple accept="video/mp4,video/quicktime,video/webm"
+                style={{ display: 'none' }}
+                onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'videos'); e.target.value = '' } }} />
+
+              {/* ─ Photos tab ─ */}
+              {mediaTab === 'fotos' && (
+                <div>
+                  {/* Drop zone */}
+                  <div
+                    onClick={() => !uploading && photoInputRef.current?.click()}
+                    onDragOver={e => { e.preventDefault(); setDraggingPhotos(true) }}
+                    onDragLeave={() => setDraggingPhotos(false)}
+                    onDrop={e => { e.preventDefault(); setDraggingPhotos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'photos') }}
+                    style={{
+                      borderRadius: 12, border: `2px dashed ${draggingPhotos ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
+                      background: draggingPhotos ? 'rgba(201,169,110,.05)' : 'rgba(14,14,13,.02)',
+                      minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      justifyContent: 'center', gap: '.5rem', cursor: uploading ? 'wait' : 'pointer',
+                      transition: 'all .2s', padding: '1.5rem',
+                    }}>
+                    {uploading ? (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: '#c9a96e', marginBottom: '.5rem' }}>A carregar fotos… {uploadProgress}%</div>
+                        <div style={{ height: 4, background: 'rgba(14,14,13,.08)', borderRadius: 2, width: 200, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${uploadProgress}%`, background: 'linear-gradient(90deg,#1c4a35,#c9a96e)', borderRadius: 2, transition: 'width .3s' }} />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: '2rem' }}>📷</div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: 'rgba(14,14,13,.6)', fontWeight: 500 }}>
+                            {draggingPhotos ? 'Soltar para carregar…' : 'Clique ou arraste as fotos aqui'}
+                          </div>
+                          <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: 'rgba(14,14,13,.35)', marginTop: '.25rem' }}>
+                            JPG · PNG · WEBP · HEIC · AVIF · máx. 50 MB/ficheiro
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {uploadError && mediaTab === 'fotos' && (
+                    <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.75rem', color: '#e53e3e', marginTop: '.5rem', padding: '8px 12px', background: 'rgba(229,62,62,.06)', borderRadius: 8 }}>{uploadError}</div>
+                  )}
+                  {/* Photo grid */}
+                  {photos.length > 0 && (
+                    <div>
+                      <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: 'rgba(14,14,13,.4)', margin: '.75rem 0 .4rem', letterSpacing: '.04em' }}>
+                        {photos.length} foto{photos.length > 1 ? 's' : ''} · primeira = capa principal
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '.5rem' }}>
+                        {photos.map((url, i) => (
+                          <div key={url} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3' }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={url} alt={`foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            {i === 0 && (
+                              <div style={{ position: 'absolute', top: 4, left: 4, background: '#c9a96e', borderRadius: 4, padding: '2px 6px', fontFamily: 'var(--font-jost)', fontSize: '.62rem', fontWeight: 700, color: '#fff', letterSpacing: '.04em' }}>CAPA</div>
+                            )}
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(14,14,13,0)', transition: 'background .15s' }}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(14,14,13,.25)')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(14,14,13,0)')}>
+                              <button type="button"
+                                onClick={() => setPhotos(p => p.filter((_, j) => j !== i))}
+                                style={{
+                                  position: 'absolute', top: 4, right: 4, background: 'rgba(14,14,13,.75)', border: 'none',
+                                  borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', color: '#fff', fontSize: 12,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                }}>×</button>
+                              {i > 0 && (
+                                <button type="button"
+                                  onClick={() => setPhotos(p => { const n = [...p]; [n[i-1], n[i]] = [n[i], n[i-1]]; return n })}
+                                  style={{
+                                    position: 'absolute', bottom: 4, left: 4, background: 'rgba(14,14,13,.75)', border: 'none',
+                                    borderRadius: 4, padding: '2px 5px', cursor: 'pointer', color: '#fff', fontSize: 10,
+                                  }}>←</button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {/* Add more */}
+                        <div onClick={() => photoInputRef.current?.click()}
+                          style={{
+                            borderRadius: 8, border: '2px dashed rgba(14,14,13,.12)', aspectRatio: '4/3',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                            background: 'rgba(14,14,13,.02)', transition: 'border-color .15s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.borderColor = '#c9a96e')}
+                          onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(14,14,13,.12)')}>
+                          <span style={{ fontSize: '1.2rem', color: 'rgba(14,14,13,.3)' }}>＋</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ─ Videos tab ─ */}
+              {mediaTab === 'videos' && (
+                <div>
+                  <div
+                    onClick={() => !uploading && videoInputRef.current?.click()}
+                    onDragOver={e => { e.preventDefault(); setDraggingVideos(true) }}
+                    onDragLeave={() => setDraggingVideos(false)}
+                    onDrop={e => { e.preventDefault(); setDraggingVideos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'videos') }}
+                    style={{
+                      borderRadius: 12, border: `2px dashed ${draggingVideos ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
+                      background: draggingVideos ? 'rgba(201,169,110,.05)' : 'rgba(14,14,13,.02)',
+                      minHeight: 120, display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      justifyContent: 'center', gap: '.5rem', cursor: uploading ? 'wait' : 'pointer',
+                      transition: 'all .2s', padding: '1.5rem',
+                    }}>
+                    {uploading ? (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: '#c9a96e', marginBottom: '.5rem' }}>A carregar vídeo… {uploadProgress}%</div>
+                        <div style={{ height: 4, background: 'rgba(14,14,13,.08)', borderRadius: 2, width: 200, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${uploadProgress}%`, background: 'linear-gradient(90deg,#1c4a35,#c9a96e)', borderRadius: 2, transition: 'width .3s' }} />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: '2rem' }}>🎬</div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.85rem', color: 'rgba(14,14,13,.6)', fontWeight: 500 }}>
+                            {draggingVideos ? 'Soltar para carregar…' : 'Clique ou arraste vídeos aqui'}
+                          </div>
+                          <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: 'rgba(14,14,13,.35)', marginTop: '.25rem' }}>
+                            MP4 · MOV · WEBM · máx. 50 MB/ficheiro
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {uploadError && mediaTab === 'videos' && (
+                    <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.75rem', color: '#e53e3e', marginTop: '.5rem', padding: '8px 12px', background: 'rgba(229,62,62,.06)', borderRadius: 8 }}>{uploadError}</div>
+                  )}
+                  {videoUrls.length > 0 && (
+                    <div style={{ marginTop: '.75rem', display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                      {videoUrls.map((url, i) => (
+                        <div key={url} style={{
+                          display: 'flex', alignItems: 'center', gap: '.75rem', padding: '10px 14px',
+                          background: 'rgba(14,14,13,.03)', borderRadius: 10, border: '1px solid rgba(14,14,13,.08)',
+                        }}>
+                          <span style={{ fontSize: '1.1rem' }}>🎬</span>
+                          <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.8rem', color: 'rgba(14,14,13,.7)', flex: 1 }}>Vídeo {i + 1}</span>
+                          <a href={url} target="_blank" rel="noopener noreferrer"
+                            style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: '#c9a96e', textDecoration: 'none' }}>ver</a>
+                          <button type="button" onClick={() => setVideoUrls(p => p.filter((_, j) => j !== i))}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(14,14,13,.4)', fontSize: 16 }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ─ External links tab ─ */}
+              {mediaTab === 'tour' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label style={lbl}>Tour Virtual (Matterport / 360°)</label>
+                    <input style={inp} value={tourUrl} onChange={e => setTourUrl(e.target.value)}
+                      placeholder="https://my.matterport.com/show/?m=…" />
+                    <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.7rem', color: 'rgba(14,14,13,.35)', marginTop: '.3rem' }}>Matterport, Kuula, 360Cities, etc.</div>
+                  </div>
+                  <div>
+                    <label style={lbl}>Vídeo YouTube</label>
+                    <input style={inp} value={youtubeUrl} onChange={e => setYoutubeUrl(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=…" />
+                  </div>
+                  {(tourUrl || youtubeUrl) && (
+                    <div style={{ padding: '12px 16px', background: 'rgba(28,74,53,.05)', borderRadius: 10, border: '1px solid rgba(28,74,53,.15)' }}>
+                      <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.75rem', color: '#1c4a35', fontWeight: 600 }}>✓ Links configurados</div>
+                      {tourUrl && <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: 'rgba(14,14,13,.5)', marginTop: '.2rem' }}>Tour: {tourUrl.slice(0, 50)}…</div>}
+                      {youtubeUrl && <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: 'rgba(14,14,13,.5)', marginTop: '.2rem' }}>YouTube: {youtubeUrl.slice(0, 50)}…</div>}
+                    </div>
+                  )}
+                  {/* Media summary */}
+                  <div style={{ padding: '14px 16px', background: 'rgba(14,14,13,.02)', borderRadius: 10, border: '1px solid rgba(14,14,13,.08)' }}>
+                    <div style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', fontWeight: 600, color: 'rgba(14,14,13,.4)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: '.5rem' }}>Resumo de Média</div>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      {[
+                        { icon: '📷', count: photos.length, label: 'fotos' },
+                        { icon: '🎬', count: videoUrls.length, label: 'vídeos' },
+                        { icon: '🔗', count: (tourUrl ? 1 : 0) + (youtubeUrl ? 1 : 0), label: 'links' },
+                      ].map(m => (
+                        <div key={m.label} style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                          <span style={{ fontSize: '.9rem' }}>{m.icon}</span>
+                          <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.85rem', fontWeight: 700, color: m.count > 0 ? '#1c4a35' : 'rgba(14,14,13,.25)' }}>{m.count}</span>
+                          <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.75rem', color: 'rgba(14,14,13,.4)' }}>{m.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer navigation */}
+        <div style={{
+          padding: '1.1rem 1.75rem', borderTop: '1px solid rgba(14,14,13,.08)',
+          background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <button type="button" onClick={step === 1 ? onClose : () => setStep(s => s - 1)}
+            style={{
+              fontFamily: 'var(--font-jost)', fontSize: '.82rem', padding: '9px 20px', borderRadius: 10,
+              border: '1.5px solid rgba(14,14,13,.12)', background: 'transparent', cursor: 'pointer',
+              color: 'rgba(14,14,13,.6)', transition: 'all .15s',
+            }}>
+            {step === 1 ? 'Cancelar' : '← Anterior'}
           </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+            {/* Step validation hint */}
+            {step === 1 && !step1Valid && (
+              <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: 'rgba(14,14,13,.35)' }}>Nome obrigatório</span>
+            )}
+            {step === 2 && !step2Valid && (
+              <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: 'rgba(14,14,13,.35)' }}>Preço e área obrigatórios</span>
+            )}
+            {step === 3 && photos.length === 0 && (
+              <span style={{ fontFamily: 'var(--font-jost)', fontSize: '.72rem', color: 'rgba(14,14,13,.35)' }}>Fotos recomendadas</span>
+            )}
+
+            {step < TOTAL_STEPS ? (
+              <button type="button"
+                onClick={() => { if (step === 1 && !step1Valid) return; if (step === 2 && !step2Valid) return; setStep(s => s + 1) }}
+                disabled={step === 1 ? !step1Valid : step === 2 ? !step2Valid : false}
+                style={{
+                  fontFamily: 'var(--font-jost)', fontSize: '.82rem', fontWeight: 600,
+                  padding: '9px 24px', borderRadius: 10, cursor: (step === 1 ? step1Valid : step2Valid) ? 'pointer' : 'not-allowed',
+                  background: 'linear-gradient(135deg,#1c4a35,#2d6b50)',
+                  border: 'none', color: '#fff', transition: 'all .2s',
+                  opacity: (step === 1 ? step1Valid : step2Valid) ? 1 : .4,
+                  boxShadow: (step === 1 ? step1Valid : step2Valid) ? '0 2px 8px rgba(28,74,53,.3)' : 'none',
+                }}>
+                Seguinte →
+              </button>
+            ) : (
+              <button type="button" onClick={handleAdd} disabled={!canSubmit || uploading}
+                style={{
+                  fontFamily: 'var(--font-jost)', fontSize: '.82rem', fontWeight: 600,
+                  padding: '9px 24px', borderRadius: 10, cursor: canSubmit && !uploading ? 'pointer' : 'not-allowed',
+                  background: 'linear-gradient(135deg,#b8852a,#c9a96e)',
+                  border: 'none', color: '#fff', transition: 'all .2s',
+                  opacity: canSubmit && !uploading ? 1 : .45,
+                  boxShadow: canSubmit ? '0 2px 8px rgba(201,169,110,.35)' : 'none',
+                }}>
+                ✓ Adicionar Imóvel
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
