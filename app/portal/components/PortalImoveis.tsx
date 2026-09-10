@@ -30,6 +30,7 @@ interface ImovelFull {
   isCustom?: boolean
   imagens?: string[]
   videoUrls?: string[]
+  isFrontpage?: boolean
 }
 
 interface Filters {
@@ -260,9 +261,10 @@ const IconClose = () => (
 interface PropertyCardProps {
   p: ImovelFull
   onSelect: (p: ImovelFull) => void
+  onToggleFrontpage?: (id: string) => void
 }
 
-function PropertyCard({ p, onSelect }: PropertyCardProps) {
+function PropertyCard({ p, onSelect, onToggleFrontpage }: PropertyCardProps) {
   const [hovered, setHovered] = useState(false)
   const bs = badgeSt(p.badge)
   const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
@@ -280,7 +282,7 @@ function PropertyCard({ p, onSelect }: PropertyCardProps) {
       onClick={() => onSelect(p)}
     >
       {/* Photo */}
-      <div style={{ height: 160, background: grad, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ height: 160, background: grad, backgroundImage: p.imagens?.[0] ? `url(${p.imagens[0]})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, rgba(0,0,0,.4), transparent)' }} />
         <div style={{ position: 'absolute', top: '.6rem', left: '.65rem', display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
           {p.badge && (
@@ -343,14 +345,32 @@ function PropertyCard({ p, onSelect }: PropertyCardProps) {
           {p.terraco && <span style={{ display: 'flex', alignItems: 'center', gap: '.2rem', fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.5)' }}><IconTerrace />Terraço</span>}
         </div>
 
-        {/* DOM */}
+        {/* DOM + Frontpage */}
         <div style={{ marginTop: '.5rem', paddingTop: '.5rem', borderTop: '1px solid rgba(14,14,13,.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: days > 90 ? '#c9a96e' : 'rgba(14,14,13,.35)' }}>
             {days} dias no mercado
           </span>
-          <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>
-            {p.viewsCount ?? 0} vistas
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+            <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>
+              {p.viewsCount ?? 0} vistas
+            </span>
+            {onToggleFrontpage && (
+              <button
+                type="button"
+                title={p.isFrontpage ? 'Remover da frontpage' : 'Colocar na frontpage'}
+                onClick={e => { e.stopPropagation(); onToggleFrontpage(p.id) }}
+                style={{
+                  background: p.isFrontpage ? '#1c4a35' : 'transparent',
+                  border: `1.5px solid ${p.isFrontpage ? '#1c4a35' : 'rgba(14,14,13,.18)'}`,
+                  borderRadius: 6, width: 22, height: 22, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.7rem', transition: 'all .15s', padding: 0,
+                  color: p.isFrontpage ? '#fff' : 'rgba(14,14,13,.4)',
+                }}>
+                🌐
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -508,12 +528,73 @@ function FiltersBar({ filters, setFilters, sort, setSort, open }: FiltersBarProp
 
 type DrawerTab = 'info' | 'ia' | 'avm' | 'matching' | 'editar'
 
-function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) {
+function PropertyDrawer({ p, onClose, onUpdate }: { p: ImovelFull; onClose: () => void; onUpdate?: (updated: ImovelFull) => void }) {
   const [dtab, setDtab] = useState<DrawerTab>('info')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiDone, setAiDone] = useState(false)
-  const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
+
+  // Edit state — mirrors all ImovelFull fields
+  const [editNome, setEditNome]     = useState(p.nome)
+  const [editRef, setEditRef]       = useState(p.ref)
+  const [editZona, setEditZona]     = useState(p.zona)
+  const [editBairro, setEditBairro] = useState(p.bairro)
+  const [editTipo, setEditTipo]     = useState(p.tipo)
+  const [editPreco, setEditPreco]   = useState(p.preco.toString())
+  const [editArea, setEditArea]     = useState(p.area.toString())
+  const [editQuartos, setEditQuartos]   = useState(p.quartos)
+  const [editWcs, setEditWcs]           = useState(p.casasBanho)
+  const [editBadge, setEditBadge]       = useState(p.badge)
+  const [editStatus, setEditStatus]     = useState(p.status)
+  const [editPiscina, setEditPiscina]   = useState(p.piscina)
+  const [editGaragem, setEditGaragem]   = useState(p.garagem)
+  const [editJardim, setEditJardim]     = useState(p.jardim)
+  const [editTerraco, setEditTerraco]   = useState(p.terraco)
+  const [editPhotos, setEditPhotos]     = useState<string[]>(p.imagens ?? [])
+  const [editDragIdx, setEditDragIdx]   = useState<number | null>(null)
+  const [editDropIdx, setEditDropIdx]   = useState<number | null>(null)
+  const [editSaved, setEditSaved]       = useState(false)
+  const editPhotoRef = useRef<HTMLInputElement>(null)
+  const [editUploading, setEditUploading] = useState(false)
+
+  const grad = ZONE_GRADIENTS[editZona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
   const days = dom(p.listingDate)
+
+  async function uploadEditPhoto(files: FileList | null) {
+    if (!files || !files.length) return
+    setEditUploading(true)
+    const urls: string[] = []
+    for (const file of Array.from(files)) {
+      try {
+        const fd = new FormData(); fd.append('file', file)
+        const res = await fetch('/api/properties/upload', { method: 'POST', body: fd })
+        const json = await res.json()
+        if (res.ok && json.type !== 'video') urls.push(json.url)
+      } catch { /* ignore */ }
+    }
+    setEditPhotos(prev => [...prev, ...urls])
+    setEditUploading(false)
+  }
+
+  function handleSave() {
+    const updated: ImovelFull = {
+      ...p,
+      nome: editNome.trim() || p.nome,
+      ref: editRef.trim() || p.ref,
+      zona: editZona, bairro: editBairro.trim() || editZona,
+      tipo: editTipo,
+      preco: Number(editPreco.replace(/\D/g, '')) || p.preco,
+      area: Number(editArea) || p.area,
+      quartos: editQuartos, casasBanho: editWcs,
+      badge: editBadge, status: editStatus,
+      piscina: editPiscina, garagem: editGaragem,
+      jardim: editJardim, terraco: editTerraco,
+      imagens: editPhotos,
+      isCustom: true,
+    }
+    onUpdate?.(updated)
+    setEditSaved(true)
+    setTimeout(() => setEditSaved(false), 2500)
+  }
 
   function runAI() {
     if (aiDone) return
@@ -557,7 +638,7 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
       <div onClick={onClose} style={{ flex: 1, background: 'rgba(14,14,13,.45)', backdropFilter: 'blur(3px)' }} />
       <div style={{ width: 480, background: '#f4f0e6', overflowY: 'auto', display: 'flex', flexDirection: 'column', boxShadow: '-16px 0 48px rgba(14,14,13,.2)' }}>
         {/* Photo area */}
-        <div style={{ height: 200, background: grad, position: 'relative', flexShrink: 0 }}>
+        <div style={{ height: 200, background: grad, backgroundImage: editPhotos[0] ? `url(${editPhotos[0]})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', flexShrink: 0 }}>
           <button type="button" onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,.35)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', backdropFilter: 'blur(4px)' }}>
             <IconClose />
           </button>
@@ -777,31 +858,126 @@ function PropertyDrawer({ p, onClose }: { p: ImovelFull; onClose: () => void }) 
 
           {/* EDITAR */}
           {dtab === 'editar' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Basic fields */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem' }}>
-                {[
-                  { label: 'Nome', value: p.nome },
-                  { label: 'Referência', value: p.ref },
-                  { label: 'Zona', value: p.zona },
-                  { label: 'Bairro', value: p.bairro },
-                  { label: 'Preço (€)', value: p.preco.toString() },
-                  { label: 'Área (m²)', value: p.area.toString() },
-                  { label: 'Quartos', value: p.quartos.toString() },
-                  { label: 'WCs', value: p.casasBanho.toString() },
-                ].map(f => (
-                  <div key={f.label}>
-                    <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>{f.label}</label>
-                    <input className="p-inp" defaultValue={f.value} />
-                  </div>
-                ))}
+                <div style={{ gridColumn: '1/-1' }}>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Nome</label>
+                  <input className="p-inp" value={editNome} onChange={e => setEditNome(e.target.value)} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Referência</label>
+                  <input className="p-inp" value={editRef} onChange={e => setEditRef(e.target.value)} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Tipo</label>
+                  <select className="p-sel" value={editTipo} onChange={e => setEditTipo(e.target.value)}>
+                    {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Zona</label>
+                  <select className="p-sel" value={editZona} onChange={e => setEditZona(e.target.value)}>
+                    {ZONAS.map(z => <option key={z} value={z}>{z}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Bairro</label>
+                  <input className="p-inp" value={editBairro} onChange={e => setEditBairro(e.target.value)} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Preço (€)</label>
+                  <input className="p-inp" value={editPreco} onChange={e => setEditPreco(e.target.value.replace(/\D/g, ''))} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Área (m²)</label>
+                  <input className="p-inp" type="number" value={editArea} onChange={e => setEditArea(e.target.value)} />
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Quartos</label>
+                  <select className="p-sel" value={editQuartos} onChange={e => setEditQuartos(Number(e.target.value))}>
+                    {[0,1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>T{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Casas de Banho</label>
+                  <select className="p-sel" value={editWcs} onChange={e => setEditWcs(Number(e.target.value))}>
+                    {[0,1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Badge</label>
+                  <select className="p-sel" value={editBadge} onChange={e => setEditBadge(e.target.value)}>
+                    {['', 'Novo', 'Exclusivo', 'Off-Market', 'Redução', 'Urgente'].map(b => <option key={b} value={b}>{b || '— Nenhum —'}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Status</label>
+                  <select className="p-sel" value={editStatus} onChange={e => setEditStatus(e.target.value)}>
+                    {['Ativo', 'Sob Proposta', 'Reservado', 'Vendido'].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
               </div>
+
+              {/* Feature toggles */}
               <div>
-                <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Status</label>
-                <select className="p-sel" defaultValue={p.status}>
-                  {['Ativo', 'Sob Proposta', 'Reservado', 'Vendido'].map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.4)', marginBottom: '.4rem', letterSpacing: '.06em' }}>CARACTERÍSTICAS</div>
+                <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                  {([
+                    ['Piscina', editPiscina, setEditPiscina],
+                    ['Garagem', editGaragem, setEditGaragem],
+                    ['Jardim', editJardim, setEditJardim],
+                    ['Terraço', editTerraco, setEditTerraco],
+                  ] as [string, boolean, (v: boolean) => void][]).map(([label, val, setter]) => (
+                    <button key={label} type="button" onClick={() => setter(!val)}
+                      style={{
+                        fontFamily: 'var(--font-jost)', fontSize: '.76rem', padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
+                        border: `1.5px solid ${val ? '#1c4a35' : 'rgba(14,14,13,.15)'}`,
+                        background: val ? '#1c4a35' : 'transparent',
+                        color: val ? '#fff' : 'rgba(14,14,13,.55)', transition: 'all .15s',
+                      }}>{label}</button>
+                  ))}
+                </div>
               </div>
-              <button type="button" className="p-btn-gold" style={{ marginTop: '.5rem', fontSize: '.82rem' }}>Guardar Alterações</button>
+
+              {/* Photos management */}
+              <div>
+                <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.4)', marginBottom: '.4rem', letterSpacing: '.06em' }}>FOTOS (arrasta para reordenar)</div>
+                <input ref={editPhotoRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => uploadEditPhoto(e.target.files)} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '.4rem' }}>
+                  {editPhotos.map((url, i) => (
+                    <div key={url} draggable
+                      onDragStart={() => { setEditDragIdx(i); setEditDropIdx(null) }}
+                      onDragOver={e => { e.preventDefault(); if (editDropIdx !== i) setEditDropIdx(i) }}
+                      onDragLeave={() => setEditDropIdx(null)}
+                      onDrop={e => {
+                        e.preventDefault()
+                        if (editDragIdx === null || editDragIdx === i) { setEditDragIdx(null); setEditDropIdx(null); return }
+                        setEditPhotos(prev => { const n=[...prev]; const [m]=n.splice(editDragIdx,1); n.splice(i,0,m); return n })
+                        setEditDragIdx(null); setEditDropIdx(null)
+                      }}
+                      onDragEnd={() => { setEditDragIdx(null); setEditDropIdx(null) }}
+                      style={{ position: 'relative', aspectRatio: '4/3', borderRadius: 6, overflow: 'hidden', cursor: 'grab', opacity: editDragIdx === i ? 0.5 : 1, outline: editDropIdx === i ? '2px solid #c9a96e' : 'none' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                      {i === 0 && <div style={{ position: 'absolute', top: 3, left: 3, background: '#c9a96e', borderRadius: 3, padding: '1px 5px', fontFamily: 'var(--font-jost)', fontSize: '.58rem', fontWeight: 700, color: '#fff' }}>CAPA</div>}
+                      <button type="button" onClick={() => setEditPhotos(prev => prev.filter((_,j) => j !== i))}
+                        style={{ position: 'absolute', top: 3, right: 3, background: 'rgba(14,14,13,.75)', border: 'none', borderRadius: '50%', width: 18, height: 18, cursor: 'pointer', color: '#fff', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                    </div>
+                  ))}
+                  <div onClick={() => editPhotoRef.current?.click()}
+                    style={{ aspectRatio: '4/3', borderRadius: 6, border: '2px dashed rgba(14,14,13,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: editUploading ? 'wait' : 'pointer', background: 'rgba(14,14,13,.02)' }}>
+                    <span style={{ fontSize: editUploading ? '.65rem' : '1.1rem', color: 'rgba(14,14,13,.3)' }}>{editUploading ? 'A carregar…' : '＋'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save */}
+              <button type="button" onClick={handleSave}
+                className="p-btn-gold"
+                style={{ marginTop: '.25rem', fontSize: '.85rem', fontWeight: 600, background: editSaved ? '#1c4a35' : undefined, borderColor: editSaved ? '#1c4a35' : undefined }}>
+                {editSaved ? '✓ Guardado' : 'Guardar Alterações'}
+              </button>
             </div>
           )}
         </div>
@@ -939,6 +1115,8 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
   const [uploadError, setUploadError] = useState('')
   const [draggingPhotos, setDraggingPhotos] = useState(false)
   const [draggingVideos, setDraggingVideos] = useState(false)
+  const [dragPhotoIdx, setDragPhotoIdx] = useState<number | null>(null)
+  const [dropPhotoIdx, setDropPhotoIdx] = useState<number | null>(null)
   const [mediaTab, setMediaTab] = useState<'fotos' | 'videos' | 'tour'>('fotos')
   const photoInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -1016,7 +1194,7 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
       tipo, preco: Number(preco.replace(/\D/g, '')),
       area: Number(area), quartos, casasBanho: wcs, badge,
       status: 'Ativo', piscina, garagem, jardim, terraco,
-      listingDate: new Date().toISOString().split('T')[0],
+      listingDate: new Date().toISOString(),
       viewsCount: 0, isCustom: true,
       imagens: photos, videoUrls,
     }
@@ -1345,9 +1523,31 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '.5rem' }}>
                         {photos.map((url, i) => (
-                          <div key={url} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3' }}>
+                          <div
+                            key={url}
+                            draggable
+                            onDragStart={() => { setDragPhotoIdx(i); setDropPhotoIdx(null) }}
+                            onDragOver={e => { e.preventDefault(); if (dropPhotoIdx !== i) setDropPhotoIdx(i) }}
+                            onDragLeave={() => setDropPhotoIdx(null)}
+                            onDrop={e => {
+                              e.preventDefault()
+                              if (dragPhotoIdx === null || dragPhotoIdx === i) { setDragPhotoIdx(null); setDropPhotoIdx(null); return }
+                              setPhotos(prev => {
+                                const n = [...prev]
+                                const [moved] = n.splice(dragPhotoIdx, 1)
+                                n.splice(i, 0, moved)
+                                return n
+                              })
+                              setDragPhotoIdx(null); setDropPhotoIdx(null)
+                            }}
+                            onDragEnd={() => { setDragPhotoIdx(null); setDropPhotoIdx(null) }}
+                            style={{
+                              position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3',
+                              cursor: 'grab', outline: dropPhotoIdx === i ? '2px solid #c9a96e' : 'none',
+                              opacity: dragPhotoIdx === i ? 0.5 : 1, transition: 'opacity .15s, outline .1s',
+                            }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={url} alt={`foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            <img src={url} alt={`foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }} />
                             {i === 0 && (
                               <div style={{ position: 'absolute', top: 4, left: 4, background: '#c9a96e', borderRadius: 4, padding: '2px 6px', fontFamily: 'var(--font-jost)', fontSize: '.62rem', fontWeight: 700, color: '#fff', letterSpacing: '.04em' }}>CAPA</div>
                             )}
@@ -1361,14 +1561,6 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
                                   borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', color: '#fff', fontSize: 12,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}>×</button>
-                              {i > 0 && (
-                                <button type="button"
-                                  onClick={() => setPhotos(p => { const n = [...p]; [n[i-1], n[i]] = [n[i], n[i-1]]; return n })}
-                                  style={{
-                                    position: 'absolute', bottom: 4, left: 4, background: 'rgba(14,14,13,.75)', border: 'none',
-                                    borderRadius: 4, padding: '2px 5px', cursor: 'pointer', color: '#fff', fontSize: 10,
-                                  }}>←</button>
-                              )}
                             </div>
                           </div>
                         ))}
@@ -1714,6 +1906,13 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
     } catch { return [] }
   })
   const [liveProperties, setLiveProperties] = useState<ImovelFull[]>([])
+  const [frontpageIds, setFrontpageIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      const s = localStorage.getItem('ag_frontpage')
+      return s ? new Set(JSON.parse(s) as string[]) : new Set()
+    } catch { return new Set() }
+  })
 
   useEffect(() => {
     try { localStorage.setItem('ag_imoveis', JSON.stringify(customProperties)) } catch { /* ignore */ }
@@ -1763,7 +1962,8 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
   }, [])
 
   const baseProperties = liveProperties.length > 0 ? liveProperties : ALL_PROPERTIES
-  const allProps = [...baseProperties, ...customProperties]
+  const customIds = new Set(customProperties.map(p => p.id))
+  const allProps = [...customProperties, ...baseProperties.filter(p => !customIds.has(p.id))]
 
   const filtered = allProps
     .filter(p => {
@@ -1794,6 +1994,25 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
 
   function handleAddProperty(p: ImovelFull) {
     setCustomProperties(prev => [p, ...prev])
+  }
+
+  function handleUpdateProperty(updated: ImovelFull) {
+    setCustomProperties(prev => {
+      const exists = prev.some(p => p.id === updated.id)
+      return exists
+        ? prev.map(p => p.id === updated.id ? updated : p)
+        : [updated, ...prev]
+    })
+    if (selectedProperty?.id === updated.id) setSelectedProperty(updated)
+  }
+
+  function handleToggleFrontpage(id: string) {
+    setFrontpageIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      try { localStorage.setItem('ag_frontpage', JSON.stringify([...next])) } catch { /* ignore */ }
+      return next
+    })
   }
 
   function clearFilters() {
@@ -1921,7 +2140,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
       {viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {filtered.map(p => (
-            <PropertyCard key={p.id} p={p} onSelect={setSelectedProperty} />
+            <PropertyCard key={p.id} p={{ ...p, isFrontpage: frontpageIds.has(p.id) }} onSelect={setSelectedProperty} onToggleFrontpage={handleToggleFrontpage} />
           ))}
           {filtered.length === 0 && (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', color: 'rgba(14,14,13,.35)' }}>
@@ -1961,7 +2180,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
 
       {/* Drawer */}
       {selectedProperty && (
-        <PropertyDrawer p={selectedProperty} onClose={() => setSelectedProperty(null)} />
+        <PropertyDrawer p={selectedProperty} onClose={() => setSelectedProperty(null)} onUpdate={handleUpdateProperty} />
       )}
 
       {/* Add Modal */}
