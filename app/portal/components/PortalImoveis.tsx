@@ -30,6 +30,7 @@ interface ImovelFull {
   isCustom?: boolean
   imagens?: string[]
   videoUrls?: string[]
+  isFrontpage?: boolean
 }
 
 interface Filters {
@@ -260,9 +261,10 @@ const IconClose = () => (
 interface PropertyCardProps {
   p: ImovelFull
   onSelect: (p: ImovelFull) => void
+  onToggleFrontpage?: (id: string) => void
 }
 
-function PropertyCard({ p, onSelect }: PropertyCardProps) {
+function PropertyCard({ p, onSelect, onToggleFrontpage }: PropertyCardProps) {
   const [hovered, setHovered] = useState(false)
   const bs = badgeSt(p.badge)
   const grad = ZONE_GRADIENTS[p.zona] ?? 'linear-gradient(135deg,#334155 0%,#475569 100%)'
@@ -280,7 +282,7 @@ function PropertyCard({ p, onSelect }: PropertyCardProps) {
       onClick={() => onSelect(p)}
     >
       {/* Photo */}
-      <div style={{ height: 160, background: grad, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ height: 160, background: grad, backgroundImage: p.imagens?.[0] ? `url(${p.imagens[0]})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 60, background: 'linear-gradient(to top, rgba(0,0,0,.4), transparent)' }} />
         <div style={{ position: 'absolute', top: '.6rem', left: '.65rem', display: 'flex', gap: '.35rem', flexWrap: 'wrap' }}>
           {p.badge && (
@@ -343,14 +345,32 @@ function PropertyCard({ p, onSelect }: PropertyCardProps) {
           {p.terraco && <span style={{ display: 'flex', alignItems: 'center', gap: '.2rem', fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.5)' }}><IconTerrace />Terraço</span>}
         </div>
 
-        {/* DOM */}
+        {/* DOM + Frontpage */}
         <div style={{ marginTop: '.5rem', paddingTop: '.5rem', borderTop: '1px solid rgba(14,14,13,.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: days > 90 ? '#c9a96e' : 'rgba(14,14,13,.35)' }}>
             {days} dias no mercado
           </span>
-          <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>
-            {p.viewsCount ?? 0} vistas
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+            <span style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.68rem', color: 'rgba(14,14,13,.35)' }}>
+              {p.viewsCount ?? 0} vistas
+            </span>
+            {onToggleFrontpage && (
+              <button
+                type="button"
+                title={p.isFrontpage ? 'Remover da frontpage' : 'Colocar na frontpage'}
+                onClick={e => { e.stopPropagation(); onToggleFrontpage(p.id) }}
+                style={{
+                  background: p.isFrontpage ? '#1c4a35' : 'transparent',
+                  border: `1.5px solid ${p.isFrontpage ? '#1c4a35' : 'rgba(14,14,13,.18)'}`,
+                  borderRadius: 6, width: 22, height: 22, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.7rem', transition: 'all .15s', padding: 0,
+                  color: p.isFrontpage ? '#fff' : 'rgba(14,14,13,.4)',
+                }}>
+                🌐
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -939,6 +959,8 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
   const [uploadError, setUploadError] = useState('')
   const [draggingPhotos, setDraggingPhotos] = useState(false)
   const [draggingVideos, setDraggingVideos] = useState(false)
+  const [dragPhotoIdx, setDragPhotoIdx] = useState<number | null>(null)
+  const [dropPhotoIdx, setDropPhotoIdx] = useState<number | null>(null)
   const [mediaTab, setMediaTab] = useState<'fotos' | 'videos' | 'tour'>('fotos')
   const photoInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
@@ -1016,7 +1038,7 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
       tipo, preco: Number(preco.replace(/\D/g, '')),
       area: Number(area), quartos, casasBanho: wcs, badge,
       status: 'Ativo', piscina, garagem, jardim, terraco,
-      listingDate: new Date().toISOString().split('T')[0],
+      listingDate: new Date().toISOString(),
       viewsCount: 0, isCustom: true,
       imagens: photos, videoUrls,
     }
@@ -1082,7 +1104,15 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem 1.75rem', position: 'relative' }}>
+
+          {/* Hidden file inputs — always mounted so refs stay stable */}
+          <input ref={photoInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
+            style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
+            onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'photos'); e.target.value = '' } }} />
+          <input ref={videoInputRef} type="file" multiple accept="video/mp4,video/quicktime,video/webm"
+            style={{ position: 'absolute', top: 0, left: 0, width: 0, height: 0, opacity: 0, overflow: 'hidden', pointerEvents: 'none' }}
+            onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'videos'); e.target.value = '' } }} />
 
           {/* ── STEP 1 ── */}
           {step === 1 && (
@@ -1288,23 +1318,16 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
                 ))}
               </div>
 
-              {/* Hidden inputs */}
-              <input ref={photoInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/avif"
-                style={{ display: 'none' }}
-                onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'photos'); e.target.value = '' } }} />
-              <input ref={videoInputRef} type="file" multiple accept="video/mp4,video/quicktime,video/webm"
-                style={{ display: 'none' }}
-                onChange={e => { if (e.target.files) { uploadFiles(e.target.files, 'videos'); e.target.value = '' } }} />
-
               {/* ─ Photos tab ─ */}
               {mediaTab === 'fotos' && (
                 <div>
                   {/* Drop zone */}
                   <div
-                    onClick={() => !uploading && photoInputRef.current?.click()}
-                    onDragOver={e => { e.preventDefault(); setDraggingPhotos(true) }}
-                    onDragLeave={() => setDraggingPhotos(false)}
-                    onDrop={e => { e.preventDefault(); setDraggingPhotos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'photos') }}
+                    onClick={e => { e.stopPropagation(); if (!uploading) photoInputRef.current?.click() }}
+                    onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setDraggingPhotos(true) }}
+                    onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDraggingPhotos(true) }}
+                    onDragLeave={e => { e.stopPropagation(); setDraggingPhotos(false) }}
+                    onDrop={e => { e.preventDefault(); e.stopPropagation(); setDraggingPhotos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'photos') }}
                     style={{
                       borderRadius: 12, border: `2px dashed ${draggingPhotos ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
                       background: draggingPhotos ? 'rgba(201,169,110,.05)' : 'rgba(14,14,13,.02)',
@@ -1344,9 +1367,31 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '.5rem' }}>
                         {photos.map((url, i) => (
-                          <div key={url} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3' }}>
+                          <div
+                            key={url}
+                            draggable
+                            onDragStart={() => { setDragPhotoIdx(i); setDropPhotoIdx(null) }}
+                            onDragOver={e => { e.preventDefault(); if (dropPhotoIdx !== i) setDropPhotoIdx(i) }}
+                            onDragLeave={() => setDropPhotoIdx(null)}
+                            onDrop={e => {
+                              e.preventDefault()
+                              if (dragPhotoIdx === null || dragPhotoIdx === i) { setDragPhotoIdx(null); setDropPhotoIdx(null); return }
+                              setPhotos(prev => {
+                                const n = [...prev]
+                                const [moved] = n.splice(dragPhotoIdx, 1)
+                                n.splice(i, 0, moved)
+                                return n
+                              })
+                              setDragPhotoIdx(null); setDropPhotoIdx(null)
+                            }}
+                            onDragEnd={() => { setDragPhotoIdx(null); setDropPhotoIdx(null) }}
+                            style={{
+                              position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '4/3',
+                              cursor: 'grab', outline: dropPhotoIdx === i ? '2px solid #c9a96e' : 'none',
+                              opacity: dragPhotoIdx === i ? 0.5 : 1, transition: 'opacity .15s, outline .1s',
+                            }}>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={url} alt={`foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            <img src={url} alt={`foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }} />
                             {i === 0 && (
                               <div style={{ position: 'absolute', top: 4, left: 4, background: '#c9a96e', borderRadius: 4, padding: '2px 6px', fontFamily: 'var(--font-jost)', fontSize: '.62rem', fontWeight: 700, color: '#fff', letterSpacing: '.04em' }}>CAPA</div>
                             )}
@@ -1360,19 +1405,11 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
                                   borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', color: '#fff', fontSize: 12,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}>×</button>
-                              {i > 0 && (
-                                <button type="button"
-                                  onClick={() => setPhotos(p => { const n = [...p]; [n[i-1], n[i]] = [n[i], n[i-1]]; return n })}
-                                  style={{
-                                    position: 'absolute', bottom: 4, left: 4, background: 'rgba(14,14,13,.75)', border: 'none',
-                                    borderRadius: 4, padding: '2px 5px', cursor: 'pointer', color: '#fff', fontSize: 10,
-                                  }}>←</button>
-                              )}
                             </div>
                           </div>
                         ))}
                         {/* Add more */}
-                        <div onClick={() => photoInputRef.current?.click()}
+                        <div onClick={e => { e.stopPropagation(); photoInputRef.current?.click() }}
                           style={{
                             borderRadius: 8, border: '2px dashed rgba(14,14,13,.12)', aspectRatio: '4/3',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
@@ -1392,10 +1429,11 @@ function AddImovelModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Im
               {mediaTab === 'videos' && (
                 <div>
                   <div
-                    onClick={() => !uploading && videoInputRef.current?.click()}
-                    onDragOver={e => { e.preventDefault(); setDraggingVideos(true) }}
-                    onDragLeave={() => setDraggingVideos(false)}
-                    onDrop={e => { e.preventDefault(); setDraggingVideos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'videos') }}
+                    onClick={e => { e.stopPropagation(); if (!uploading) videoInputRef.current?.click() }}
+                    onDragEnter={e => { e.preventDefault(); e.stopPropagation(); setDraggingVideos(true) }}
+                    onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDraggingVideos(true) }}
+                    onDragLeave={e => { e.stopPropagation(); setDraggingVideos(false) }}
+                    onDrop={e => { e.preventDefault(); e.stopPropagation(); setDraggingVideos(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files, 'videos') }}
                     style={{
                       borderRadius: 12, border: `2px dashed ${draggingVideos ? '#c9a96e' : 'rgba(14,14,13,.15)'}`,
                       background: draggingVideos ? 'rgba(201,169,110,.05)' : 'rgba(14,14,13,.02)',
@@ -1712,6 +1750,13 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
     } catch { return [] }
   })
   const [liveProperties, setLiveProperties] = useState<ImovelFull[]>([])
+  const [frontpageIds, setFrontpageIds] = useState<Set<string>>(() => {
+    if (typeof window === 'undefined') return new Set()
+    try {
+      const s = localStorage.getItem('ag_frontpage')
+      return s ? new Set(JSON.parse(s) as string[]) : new Set()
+    } catch { return new Set() }
+  })
 
   useEffect(() => {
     try { localStorage.setItem('ag_imoveis', JSON.stringify(customProperties)) } catch { /* ignore */ }
@@ -1792,6 +1837,15 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
 
   function handleAddProperty(p: ImovelFull) {
     setCustomProperties(prev => [p, ...prev])
+  }
+
+  function handleToggleFrontpage(id: string) {
+    setFrontpageIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      try { localStorage.setItem('ag_frontpage', JSON.stringify([...next])) } catch { /* ignore */ }
+      return next
+    })
   }
 
   function clearFilters() {
@@ -1919,7 +1973,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
       {viewMode === 'grid' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {filtered.map(p => (
-            <PropertyCard key={p.id} p={p} onSelect={setSelectedProperty} />
+            <PropertyCard key={p.id} p={{ ...p, isFrontpage: frontpageIds.has(p.id) }} onSelect={setSelectedProperty} onToggleFrontpage={handleToggleFrontpage} />
           ))}
           {filtered.length === 0 && (
             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '4rem', color: 'rgba(14,14,13,.35)' }}>
