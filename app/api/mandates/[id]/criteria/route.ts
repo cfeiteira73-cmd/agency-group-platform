@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .from('demand_mandate_criteria')
     .select('*')
     .eq('mandate_id', id)
-    .order('created_at')
+    .order('recorded_at')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true, criteria: data })
