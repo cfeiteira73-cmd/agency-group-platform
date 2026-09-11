@@ -4,7 +4,7 @@
 // Accessible to anyone who receives a share link from the portal.
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -26,6 +26,7 @@ interface SharedProperty {
   terraco?: boolean
   listingDate?: string
   descricao?: string
+  imagens?: string[]
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -44,6 +45,110 @@ const BADGE_COLORS: Record<string, { bg: string; color: string }> = {
   'Off-Market': { bg: 'rgba(28,74,53,.85)', color: '#c9a96e' },
   'Novo':       { bg: '#1c4a35',            color: '#c9a96e' },
   'Exclusivo':  { bg: 'rgba(201,169,110,.15)', color: '#c9a96e' },
+}
+
+// ─── Photo Gallery Component ───────────────────────────────────────────────────
+function PhotoGallery({ imagens }: { imagens: string[] }) {
+  const [current, setCurrent] = useState(0)
+  const [imgError, setImgError] = useState<Record<number, boolean>>({})
+
+  const validImagens = imagens.filter((_, i) => !imgError[i])
+
+  if (!validImagens.length) return <PlaceholderHero />
+
+  const realIdx = imagens.indexOf(validImagens[current] ?? imagens[0])
+
+  return (
+    <div style={{ position: 'relative', height: 420, background: '#0c1f15', overflow: 'hidden' }}>
+      {/* Main photo */}
+      <img
+        src={imagens[realIdx] ?? imagens[0]}
+        alt=""
+        onError={() => setImgError(prev => ({ ...prev, [realIdx]: true }))}
+        style={{
+          width: '100%', height: '100%', objectFit: 'cover',
+          transition: 'opacity .3s',
+        }}
+      />
+      {/* Dark overlay */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to bottom, rgba(12,31,21,.2) 0%, transparent 40%, rgba(12,31,21,.5) 100%)',
+      }} />
+
+      {/* Navigation arrows */}
+      {validImagens.length > 1 && (
+        <>
+          <button onClick={() => setCurrent(c => (c - 1 + validImagens.length) % validImagens.length)}
+            style={{
+              position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(12,31,21,.6)', border: '1px solid rgba(201,169,110,.3)',
+              color: '#c9a96e', width: 38, height: 38, borderRadius: '50%',
+              fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>‹</button>
+          <button onClick={() => setCurrent(c => (c + 1) % validImagens.length)}
+            style={{
+              position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(12,31,21,.6)', border: '1px solid rgba(201,169,110,.3)',
+              color: '#c9a96e', width: 38, height: 38, borderRadius: '50%',
+              fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>›</button>
+        </>
+      )}
+
+      {/* Counter */}
+      {validImagens.length > 1 && (
+        <div style={{
+          position: 'absolute', bottom: '1rem', right: '1rem',
+          background: 'rgba(12,31,21,.7)', color: '#c9a96e',
+          padding: '.25rem .65rem', borderRadius: 20,
+          fontFamily: "'Jost', sans-serif", fontSize: '.72rem', letterSpacing: '.06em',
+        }}>
+          {current + 1} / {validImagens.length}
+        </div>
+      )}
+
+      {/* Thumbnail strip */}
+      {validImagens.length > 1 && (
+        <div style={{
+          position: 'absolute', bottom: '1rem', left: '50%', transform: 'translateX(-50%)',
+          display: 'flex', gap: '.35rem',
+        }}>
+          {validImagens.slice(0, 8).map((_, i) => (
+            <button key={i} onClick={() => setCurrent(i)}
+              style={{
+                width: i === current ? 24 : 8, height: 8, borderRadius: 4, border: 'none',
+                background: i === current ? '#c9a96e' : 'rgba(201,169,110,.4)',
+                cursor: 'pointer', padding: 0, transition: 'all .2s',
+              }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Placeholder when no photos ────────────────────────────────────────────────
+function PlaceholderHero() {
+  return (
+    <div style={{
+      height: 340,
+      background: 'linear-gradient(135deg, rgba(28,74,53,.8) 0%, rgba(12,31,21,.95) 100%)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at 50% 120%, rgba(201,169,110,.08) 0%, transparent 70%)',
+      }} />
+      <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
+        <div style={{ color: 'rgba(201,169,110,.3)', fontSize: '5rem', lineHeight: 1 }}>◈</div>
+        <div style={{ color: 'rgba(201,169,110,.4)', fontSize: '.7rem', letterSpacing: '.2em', marginTop: '.5rem' }}>
+          AGENCY GROUP · PORTFOLIO EXCLUSIVO
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ─── Inner component (needs useSearchParams — must be inside Suspense) ─────────
@@ -96,6 +201,7 @@ function PartilharContent() {
     { label: 'Terraço', show: !!p.terraco },
   ]
   const hasFeatures = features.some(f => f.show)
+  const hasImagens = Array.isArray(p.imagens) && p.imagens.length > 0
 
   return (
     <div style={{ minHeight: '100vh', background: '#0c1f15', fontFamily: "'Jost', sans-serif" }}>
@@ -121,24 +227,13 @@ function PartilharContent() {
         </span>
       </header>
 
-      {/* ── Hero image placeholder ── */}
-      <div style={{
-        height: 340,
-        background: 'linear-gradient(135deg, rgba(28,74,53,.8) 0%, rgba(12,31,21,.95) 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        {/* Decorative */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'radial-gradient(ellipse at 50% 120%, rgba(201,169,110,.08) 0%, transparent 70%)',
-        }} />
-        <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <div style={{ color: 'rgba(201,169,110,.3)', fontSize: '5rem', lineHeight: 1 }}>◈</div>
-          <div style={{ color: 'rgba(201,169,110,.4)', fontSize: '.7rem', letterSpacing: '.2em', marginTop: '.5rem' }}>
-            AGENCY GROUP · PORTFOLIO EXCLUSIVO
-          </div>
-        </div>
+      {/* ── Hero: gallery or placeholder ── */}
+      <div style={{ position: 'relative' }}>
+        {hasImagens ? (
+          <PhotoGallery imagens={p.imagens!} />
+        ) : (
+          <PlaceholderHero />
+        )}
 
         {/* Badge overlay */}
         {badge && (
@@ -148,6 +243,7 @@ function PartilharContent() {
             color: BADGE_COLORS[badge].color,
             padding: '.25rem .75rem', borderRadius: 3,
             fontSize: '.7rem', fontWeight: 700, letterSpacing: '.1em',
+            zIndex: 10,
           }}>
             {badge.toUpperCase()}
           </div>
@@ -156,8 +252,10 @@ function PartilharContent() {
         {/* Ref tag */}
         <div style={{
           position: 'absolute', top: '1rem', right: '1rem',
-          color: 'rgba(201,169,110,.5)', fontSize: '.7rem', letterSpacing: '.12em',
+          color: 'rgba(201,169,110,.8)', fontSize: '.7rem', letterSpacing: '.12em',
           fontFamily: "'Jost', monospace",
+          background: 'rgba(12,31,21,.6)', padding: '.2rem .5rem', borderRadius: 3,
+          zIndex: 10,
         }}>
           {p.ref}
         </div>
@@ -232,8 +330,11 @@ function PartilharContent() {
         {/* Description */}
         {p.descricao && (
           <div style={{
-            color: 'rgba(244,240,230,.6)', fontSize: '.88rem', lineHeight: 1.7,
+            color: 'rgba(244,240,230,.7)', fontSize: '.92rem', lineHeight: 1.8,
             marginBottom: '2rem',
+            borderLeft: '2px solid rgba(201,169,110,.25)',
+            paddingLeft: '1rem',
+            fontStyle: 'normal',
           }}>
             {p.descricao}
           </div>
