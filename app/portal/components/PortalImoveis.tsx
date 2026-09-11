@@ -31,6 +31,7 @@ interface ImovelFull {
   imagens?: string[]
   videoUrls?: string[]
   isFrontpage?: boolean
+  descricao?: string
 }
 
 interface Filters {
@@ -588,6 +589,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
   const [editJardim, setEditJardim]     = useState(p.jardim)
   const [editTerraco, setEditTerraco]   = useState(p.terraco)
   const [editPhotos, setEditPhotos]     = useState<string[]>(p.imagens ?? [])
+  const [editDescricao, setEditDescricao] = useState(p.descricao ?? '')
   const [editDragIdx, setEditDragIdx]   = useState<number | null>(null)
   const [editDropIdx, setEditDropIdx]   = useState<number | null>(null)
   const [editSaved, setEditSaved]       = useState(false)
@@ -627,6 +629,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
       piscina: editPiscina, garagem: editGaragem,
       jardim: editJardim, terraco: editTerraco,
       imagens: editPhotos,
+      descricao: editDescricao.trim() || undefined,
       isCustom: true,
     }
     onUpdate?.(updated)
@@ -978,6 +981,23 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
                 </div>
               </div>
 
+              {/* Description */}
+              <div>
+                <label className="p-label" style={{ display: 'block', marginBottom: '.3rem' }}>Descrição do Imóvel</label>
+                <textarea
+                  value={editDescricao}
+                  onChange={e => setEditDescricao(e.target.value)}
+                  placeholder="Descrição completa para partilha com clientes (aparece no link de partilha)…"
+                  rows={5}
+                  style={{
+                    width: '100%', fontFamily: 'var(--font-jost)', fontSize: '.82rem',
+                    border: '1px solid rgba(14,14,13,.15)', borderRadius: 8, padding: '.55rem .7rem',
+                    background: '#fafafa', color: '#0e0e0d', resize: 'vertical', lineHeight: 1.5,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
               {/* Photos management */}
               <div>
                 <div style={{ fontFamily: 'var(--font-dm-mono)', fontSize: '.65rem', color: 'rgba(14,14,13,.4)', marginBottom: '.4rem', letterSpacing: '.06em' }}>FOTOS (arrasta para reordenar)</div>
@@ -1043,6 +1063,8 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
                   piscina: p.piscina, garagem: p.garagem,
                   jardim: p.jardim, terraco: p.terraco,
                   listingDate: p.listingDate,
+                  imagens: p.imagens,
+                  descricao: p.descricao,
                 }
                 const encoded = encodeURIComponent(JSON.stringify(shareData))
                 const shareUrl = `${window.location.origin}/partilhar?d=${encoded}`
@@ -1063,6 +1085,8 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
                   badge: p.badge, status: p.status,
                   piscina: p.piscina, garagem: p.garagem,
                   jardim: p.jardim, terraco: p.terraco,
+                  imagens: p.imagens,
+                  descricao: p.descricao,
                 }
                 const encoded = encodeURIComponent(JSON.stringify(shareData))
                 window.open(`${window.location.origin}/partilhar?d=${encoded}`, '_blank')
