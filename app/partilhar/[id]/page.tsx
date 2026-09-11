@@ -23,7 +23,7 @@ async function getShare(id: string): Promise<SharedProperty | null> {
     .from('imovel_shares')
     .select('data')
     .eq('id', id)
-    .gt('expires_at', new Date().toISOString())
+    
     .single()
   return data?.data ?? null
 }
