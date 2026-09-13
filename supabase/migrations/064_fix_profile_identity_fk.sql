@@ -1,4 +1,40 @@
 -- =============================================================================
+-- ██████╗ ███████╗ █████╗ ██████╗     ██████╗  ██████╗     ███╗   ██╗ ██████╗ ████████╗
+-- ██╔══██╗██╔════╝██╔══██╗██╔══██╗    ██╔══██╗██╔═══██╗    ████╗  ██║██╔═══██╗╚══██╔══╝
+-- ██║  ██║█████╗  ███████║██║  ██║    ██║  ██║██║   ██║    ██╔██╗ ██║██║   ██║   ██║
+-- ██║  ██║██╔══╝  ██╔══██║██║  ██║    ██║  ██║██║   ██║    ██║╚██╗██║██║   ██║   ██║
+-- ██████╔╝███████╗██║  ██║██████╔╝    ██████╔╝╚██████╔╝    ██║ ╚████║╚██████╔╝   ██║
+-- ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═════╝     ╚═════╝  ╚═════╝     ╚═╝  ╚═══╝ ╚═════╝    ╚═╝
+--  █████╗ ██████╗ ██████╗ ██╗  ██╗   ██╗
+-- ██╔══██╗██╔══██╗██╔══██╗██║  ╚██╗ ██╔╝
+-- ███████║██████╔╝██████╔╝██║   ╚████╔╝
+-- ██╔══██║██╔═══╝ ██╔═══╝ ██║    ╚██╔╝
+-- ██║  ██║██║     ██║     ███████╗██║
+-- ╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═╝
+-- =============================================================================
+-- MIGRATION 064 IS DEAD — DO NOT APPLY — DO NOT REPLAY — DO NOT EXECUTE
+-- =============================================================================
+--
+-- Status:    DEAD / FAILED / ROLLED BACK / SUPERSEDED
+-- Applied:   Attempted in production on 2026-09-05
+-- Outcome:   Transaction rolled back. Zero intended mutations persisted.
+-- Superseded by: Migration 065 — which IS applied and IS the canonical
+--                production identity correction.
+--
+-- ABSOLUTE RULE: 064 MUST NEVER BE EXECUTED AGAIN.
+--
+-- Reason: Migration 064 was attempted in production but the transaction
+-- rolled back. Migration 065 was subsequently written and applied as the
+-- correct canonical correction. The production database already reflects
+-- the intended state (profiles.id → public.users) via migration 065.
+-- Replaying 064 would attempt to redo work that is already complete and
+-- risks constraint violations or data corruption.
+--
+-- The content below is preserved as a historical record only.
+-- It documents what was attempted and why 065 was necessary.
+-- =============================================================================
+
+-- =============================================================================
 -- Migration 064: Fix Profile Identity FK
 -- Replace profiles.id → auth.users(id) with profiles.id → public.users(id)
 -- =============================================================================
