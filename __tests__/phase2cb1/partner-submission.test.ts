@@ -160,14 +160,23 @@ describe('Phase 2C.B1 — partner submission', () => {
     expect(insertedProperty.verification_date ?? null).toBeNull()
     expect(insertedProperty.verified_by ?? null).toBeNull()
 
-    // Core fields must be mapped from the submission
-    expect(insertedProperty.title).toBe(VALID_BODY.nome)
-    expect(insertedProperty.zone).toBe(VALID_BODY.zona)
-    expect(insertedProperty.price).toBe(VALID_BODY.preco)
-    expect(insertedProperty.area_m2).toBe(VALID_BODY.area)
+    // Core fields must use Portuguese production column names
+    expect(insertedProperty.nome).toBe(VALID_BODY.nome)       // nome (not title)
+    expect(insertedProperty.zona).toBe(VALID_BODY.zona)       // zona (not zone)
+    expect(insertedProperty.preco).toBe(VALID_BODY.preco)     // preco (not price)
+    expect(insertedProperty.area).toBe(VALID_BODY.area)       // area (not area_m2)
 
-    // Type mapping: 'Apartamento' → 'apartment'
-    expect(insertedProperty.type).toBe('apartment')
+    // Type mapping: 'Apartamento' → stored as canonical Portuguese 'Apartamento'
+    expect(insertedProperty.tipo).toBe('Apartamento')         // tipo (not type), Portuguese value
+
+    // English column names must NOT be used in the INSERT
+    expect(insertedProperty.title).toBeUndefined()
+    expect(insertedProperty.zone).toBeUndefined()
+    expect(insertedProperty.type).toBeUndefined()
+    expect(insertedProperty.price).toBeUndefined()
+    expect(insertedProperty.area_m2).toBeUndefined()
+    expect(insertedProperty.bedrooms).toBeUndefined()
+    expect(insertedProperty.bathrooms).toBeUndefined()
 
     // notes column must NOT be included (column does not exist in schema)
     expect(insertedProperty.notes).toBeUndefined()
@@ -283,17 +292,17 @@ describe('Phase 2C.B1 — partner submission', () => {
     expect(insertedProperty.submission_source).toBe('partner')
   })
 
-  // ── Test 7: Type mapping — Portuguese tipo → English enum ──────────────────
-  it('maps Portuguese property types to English enum values', async () => {
+  // ── Test 7: Type mapping — Portuguese tipo → canonical Portuguese storage ──
+  it('maps Portuguese property types to canonical Portuguese production storage values', async () => {
     const typeTests: Array<[string, string]> = [
-      ['Apartamento',      'apartment'],
-      ['Moradia',          'villa'],
-      ['Moradia em Banda', 'townhouse'],
-      ['Penthouse',        'penthouse'],
-      ['Villa',            'villa'],      // B1 correction: Villa must map to villa
-      ['Terreno',          'land'],
-      ['Comercial',        'commercial'],
-      ['Escritório',       'office'],
+      ['Apartamento',      'Apartamento'],
+      ['Moradia',          'Moradia'],
+      ['Moradia em Banda', 'Moradia em Banda'],
+      ['Penthouse',        'Penthouse'],
+      ['Villa',            'Villa'],
+      ['Terreno',          'Terreno'],
+      ['Comercial',        'Comercial'],
+      ['Escritório',       'Escritório'],
     ]
 
     for (const [tipo, expectedType] of typeTests) {
@@ -305,18 +314,19 @@ describe('Phase 2C.B1 — partner submission', () => {
       await POST(makeRequest({ ...VALID_BODY, tipo }))
 
       const inserted = mockPropertiesInsert.mock.calls[0][0]
-      expect(inserted.type).toBe(expectedType)
+      expect(inserted.tipo).toBe(expectedType)
     }
   })
 
-  // ── Test 8: Villa → villa (explicit proof) ─────────────────────────────────
-  it('Villa maps to villa — not apartment', async () => {
+  // ── Test 8: Villa → Villa (explicit proof — not Moradia, not Apartamento) ──
+  it('Villa maps to canonical Villa — not Moradia, not Apartamento', async () => {
     const res = await POST(makeRequest({ ...VALID_BODY, tipo: 'Villa' }))
 
     expect(res.status).toBe(200)
     const inserted = mockPropertiesInsert.mock.calls[0][0]
-    expect(inserted.type).toBe('villa')
-    expect(inserted.type).not.toBe('apartment')
+    expect(inserted.tipo).toBe('Villa')
+    expect(inserted.tipo).not.toBe('Moradia')
+    expect(inserted.tipo).not.toBe('Apartamento')
   })
 
   // ── Test 9: Quinta → HTTP 400, never reaches property INSERT ───────────────
@@ -371,10 +381,11 @@ describe('Phase 2C.B1 — partner submission', () => {
       // Property INSERT must not have been attempted
       expect(mockPropertiesInsert).not.toHaveBeenCalled()
 
-      // Explicit proof: if somehow INSERT was called, it must not be 'apartment'
+      // Explicit proof: if somehow INSERT was called, it must not use any English column or fallback tipo
       if (mockPropertiesInsert.mock.calls.length > 0) {
         const inserted = mockPropertiesInsert.mock.calls[0][0]
-        expect(inserted.type).not.toBe('apartment')
+        expect(inserted.tipo).not.toBe('Apartamento')
+        expect(inserted.type).toBeUndefined()
       }
     }
   })

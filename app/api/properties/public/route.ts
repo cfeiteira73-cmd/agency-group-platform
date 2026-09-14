@@ -56,7 +56,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           lat:         row.lat         || undefined,
           lng:         row.lng         || undefined,
           ambientes:   row.ambientes   || undefined,
-          imagens:     Array.isArray(row.imagens) ? row.imagens : [],
+          imagens:     Array.isArray(row.images) ? row.images : [],
         }))
 
         return NextResponse.json(

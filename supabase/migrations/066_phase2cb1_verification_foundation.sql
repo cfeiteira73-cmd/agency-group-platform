@@ -1,4 +1,17 @@
 -- =============================================================================
+-- ⛔ SUPERSEDED — DO NOT APPLY TO PRODUCTION
+-- =============================================================================
+-- Migration 066 was written against a false English-schema assumption.
+-- It tries to ALTER TYPE property_status which DOES NOT EXIST in production.
+-- It uses English column names (title, zone, type, …) which do NOT exist.
+--
+-- USE MIGRATION 067 INSTEAD:
+--   supabase/migrations/067_phase2cb1_production_schema_reconciliation.sql
+--
+-- This file is retained for forensic history only.
+-- =============================================================================
+
+-- =============================================================================
 -- Migration 066: Phase 2C.B1 — Property Submission Status + Verification Foundation
 -- =============================================================================
 --

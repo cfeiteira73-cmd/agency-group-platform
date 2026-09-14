@@ -1,15 +1,20 @@
 /**
- * Phase 2C.B1-OR — Operational Reviewability Tests
+ * Phase 2C.B1-SR — Operational Reviewability Tests (Schema Reconciliation)
  *
  * Tests for GET /api/properties (internal portal route, supabaseAdmin):
  *
- *   OR-1 — SELECT uses English column names (title, zone, type, price, area_m2…)
- *   OR-2 — Response DTO maps to Portuguese field names (nome, zona, tipo, preco…)
+ *   OR-1 — SELECT uses Portuguese DB column names (nome, zona, tipo, preco, area…)
+ *   OR-2 — Response DTO maps to camelCase DTO fields (casasBanho, imagens, matterportUrl…)
  *   OR-3 — pending_review rows appear when status=all
- *   OR-4 — eq('status', …) filter is applied for non-all status values
+ *   OR-4 — eq('status', …) filter applied for non-all status values
  *   OR-5 — active rows returned; status=active filter applied by default
- *   OR-6 — Filter predicates use English DB column names (zone, type, price)
+ *   OR-6 — Filter predicates use Portuguese DB column names (zona, tipo, preco)
  *   OR-7 — Empty DB result returns { data: [], source: 'empty' }
+ *   SR-12 — Regression: no English schema column names in SELECT or filter predicates
+ *
+ * PRODUCTION TRUTH: properties table has Portuguese column names.
+ * English names (title, zone, type, price, area_m2, bedrooms, bathrooms) DO NOT EXIST.
+ * Mocks model actual production schema — not English staging assumptions.
  *
  * Mock strategy:
  *   @/lib/supabase      → chainable query builder capturing SELECT/filter calls
@@ -89,28 +94,27 @@ vi.mock('@/lib/sre/sloTracker', () => ({
 // ── Import handler AFTER all mocks ────────────────────────────────────────────
 import { GET } from '@/app/api/properties/route'
 
-// ── Fixtures ──────────────────────────────────────────────────────────────────
+// ── Fixtures — model actual production schema (Portuguese column names) ────────
 
-/** Synthetic DB row using English schema column names (as canonical DB returns) */
+/** Synthetic DB row using PRODUCTION Portuguese column names */
 const MOCK_ACTIVE_ROW = {
   id:                   'prop-or-test-001',
-  title:                'Apartamento OR Test',
-  zone:                 'Lisboa',
-  city:                 'Lisboa',
-  type:                 'apartment',
-  price:                500000,
-  area_m2:              80,
-  bedrooms:             2,
-  bathrooms:            1,
-  energy_certificate:   'B',
+  nome:                 'Apartamento OR Test',       // production: nome (not title)
+  zona:                 'Lisboa',                    // production: zona (not zone)
+  bairro:               'Chiado',                   // production: bairro (not city)
+  tipo:                 'Apartamento',               // production: tipo (not type)
+  preco:                500000,                      // production: preco (not price)
+  area:                 80,                          // production: area (not area_m2)
+  quartos:              2,                           // production: quartos (not bedrooms)
+  casas_banho:          1,                           // production: casas_banho (not bathrooms)
+  energia:              'B',                         // production: energia (not energy_certificate)
   status:               'active',
-  description:          'Descrição teste OR',
+  descricao:            'Descrição teste OR',        // production: descricao (not description)
   features:             ['Piscina'],
-  photos:               ['https://example.invalid/photo.jpg'],
-  virtual_tour_url:     null,
-  is_verified:          false,
-  submission_source:    null,
-  views_total:          5,
+  images:               ['https://example.invalid/photo.jpg'], // production: images (not photos)
+  matterport_url:       null,                        // production: matterport_url (not virtual_tour_url)
+  is_verified:          false,                       // B1 column (added by migration 067)
+  submission_source:    null,                        // B1 column (added by migration 067)
   created_at:           '2026-09-14T10:00:00Z',
 }
 
@@ -118,7 +122,7 @@ const MOCK_ACTIVE_ROW = {
 const MOCK_PENDING_ROW = {
   ...MOCK_ACTIVE_ROW,
   id:                'prop-or-test-002',
-  title:             'Imóvel Pendente OR Test',
+  nome:              'Imóvel Pendente OR Test',
   status:            'pending_review',
   is_verified:       false,
   submission_source: 'partner',
@@ -139,41 +143,59 @@ beforeEach(() => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('Phase 2C.B1-OR — operational reviewability (GET /api/properties)', () => {
+describe('Phase 2C.B1-SR — operational reviewability (GET /api/properties)', () => {
 
-  // ── OR-1: SELECT uses English column names ──────────────────────────────────
-  it('OR-1: SELECT uses English DB column names, not Portuguese legacy names', async () => {
+  // ── OR-1: SELECT uses Portuguese DB column names ────────────────────────────
+  it('OR-1: SELECT uses Portuguese production column names, not English legacy names', async () => {
     mockState.queryResult = { data: [MOCK_ACTIVE_ROW], error: null }
     await GET(makeGETRequest())
 
-    // English column names must be present in SELECT
-    expect(mockState.capturedSelect).toContain('title')
-    expect(mockState.capturedSelect).toContain('zone')
-    expect(mockState.capturedSelect).toContain('type')
-    expect(mockState.capturedSelect).toContain('price')
-    expect(mockState.capturedSelect).toContain('area_m2')
-    expect(mockState.capturedSelect).toContain('bedrooms')
-    expect(mockState.capturedSelect).toContain('bathrooms')
-    expect(mockState.capturedSelect).toContain('energy_certificate')
-    expect(mockState.capturedSelect).toContain('description')
-    expect(mockState.capturedSelect).toContain('photos')
+    // Portuguese column names must be present in SELECT
+    expect(mockState.capturedSelect).toContain('nome')
+    expect(mockState.capturedSelect).toContain('zona')
+    expect(mockState.capturedSelect).toContain('tipo')
+    expect(mockState.capturedSelect).toContain('preco')
+    expect(mockState.capturedSelect).toContain('area')
+    expect(mockState.capturedSelect).toContain('quartos')
+    expect(mockState.capturedSelect).toContain('casas_banho')
+    expect(mockState.capturedSelect).toContain('energia')
+    expect(mockState.capturedSelect).toContain('descricao')
+    expect(mockState.capturedSelect).toContain('images')
 
-    // Portuguese column names that DO NOT exist in production must NOT appear in SELECT
-    expect(mockState.capturedSelect).not.toMatch(/\bnome\b/)
-    expect(mockState.capturedSelect).not.toMatch(/\bzona\b/)
-    expect(mockState.capturedSelect).not.toMatch(/\btipo\b/)
-    expect(mockState.capturedSelect).not.toMatch(/\bpreco\b/)
-    expect(mockState.capturedSelect).not.toContain('casas_banho')
-    expect(mockState.capturedSelect).not.toContain('gradient')
-    expect(mockState.capturedSelect).not.toContain('badge')
-    expect(mockState.capturedSelect).not.toContain('lifestyle_tags')
-
-    // .not() anchor must use English title column
-    expect(mockState.capturedNot).toBe('title')
+    // .not() anchor must use Portuguese nome column
+    expect(mockState.capturedNot).toBe('nome')
   })
 
-  // ── OR-2: Response DTO maps English DB columns → Portuguese field names ──────
-  it('OR-2: response DTO maps English DB values to Portuguese field names (ImovelFull contract)', async () => {
+  // ── SR-12 (embedded in OR-1): English column names must NOT appear in SELECT ─
+  it('SR-12: English column names must NOT appear in SELECT or filter calls', async () => {
+    mockState.queryResult = { data: [MOCK_ACTIVE_ROW], error: null }
+    await GET(makeGETRequest({ zona: 'Lisboa', tipo: 'Apartamento', max_preco: '1000000', status: 'all' }))
+
+    // English column names that do NOT exist in production must never appear in DB queries
+    expect(mockState.capturedSelect).not.toMatch(/\btitle\b/)
+    expect(mockState.capturedSelect).not.toMatch(/\bzone\b/)
+    expect(mockState.capturedSelect).not.toMatch(/\btype\b/)
+    expect(mockState.capturedSelect).not.toMatch(/\bprice\b/)
+    expect(mockState.capturedSelect).not.toContain('area_m2')
+    expect(mockState.capturedSelect).not.toContain('bedrooms')
+    expect(mockState.capturedSelect).not.toContain('bathrooms')
+    expect(mockState.capturedSelect).not.toContain('description')
+    expect(mockState.capturedSelect).not.toContain('photos')
+    expect(mockState.capturedSelect).not.toContain('virtual_tour_url')
+    expect(mockState.capturedSelect).not.toContain('views_total')
+    expect(mockState.capturedSelect).not.toContain('energy_certificate')
+
+    // English column names must also not appear in filter predicates
+    const eqCols  = mockState.capturedEqs.map(([col]) => col)
+    const lteCols = mockState.capturedLtes.map(([col]) => col)
+    expect(eqCols).not.toContain('zone')
+    expect(eqCols).not.toContain('type')
+    expect(lteCols).not.toContain('price')
+    expect(mockState.capturedNot).not.toBe('title')
+  })
+
+  // ── OR-2: Response DTO maps Portuguese DB columns to camelCase DTO ───────────
+  it('OR-2: response DTO maps Portuguese DB columns to camelCase DTO fields', async () => {
     mockState.queryResult = { data: [MOCK_ACTIVE_ROW], error: null }
     const res = await GET(makeGETRequest({ status: 'all' }))
     const body = await res.json()
@@ -184,23 +206,35 @@ describe('Phase 2C.B1-OR — operational reviewability (GET /api/properties)', (
 
     const dto = body.data[0]
 
-    // DTO must expose Portuguese field names with values from English DB columns
-    expect(dto.nome).toBe(MOCK_ACTIVE_ROW.title)
-    expect(dto.zona).toBe(MOCK_ACTIVE_ROW.zone)
-    expect(dto.bairro).toBe(MOCK_ACTIVE_ROW.city)
-    expect(dto.tipo).toBe(MOCK_ACTIVE_ROW.type)
-    expect(dto.preco).toBe(MOCK_ACTIVE_ROW.price)
-    expect(dto.area).toBe(MOCK_ACTIVE_ROW.area_m2)
-    expect(dto.quartos).toBe(MOCK_ACTIVE_ROW.bedrooms)
-    expect(dto.casasBanho).toBe(MOCK_ACTIVE_ROW.bathrooms)
-    expect(dto.energia).toBe(MOCK_ACTIVE_ROW.energy_certificate)
-    expect(dto.descricao).toBe(MOCK_ACTIVE_ROW.description)
+    // Portuguese base fields preserved as-is
+    expect(dto.nome).toBe(MOCK_ACTIVE_ROW.nome)
+    expect(dto.zona).toBe(MOCK_ACTIVE_ROW.zona)
+    expect(dto.bairro).toBe(MOCK_ACTIVE_ROW.bairro)
+    expect(dto.tipo).toBe(MOCK_ACTIVE_ROW.tipo)
+    expect(dto.preco).toBe(MOCK_ACTIVE_ROW.preco)
+    expect(dto.area).toBe(MOCK_ACTIVE_ROW.area)
+    expect(dto.quartos).toBe(MOCK_ACTIVE_ROW.quartos)
+    expect(dto.energia).toBe(MOCK_ACTIVE_ROW.energia)
     expect(dto.status).toBe(MOCK_ACTIVE_ROW.status)
-    expect(Array.isArray(dto.imagens)).toBe(true)
+    expect(dto.descricao).toBe(MOCK_ACTIVE_ROW.descricao)
 
-    // DTO must NOT expose raw English column names as top-level keys
+    // camelCase conversions
+    expect(dto.casasBanho).toBe(MOCK_ACTIVE_ROW.casas_banho)
+    expect(Array.isArray(dto.imagens)).toBe(true)     // images → imagens
+    expect(dto.isVerified).toBe(false)                // is_verified → isVerified
+    expect(dto.submissionSource).toBe(null)           // submission_source → submissionSource
+
+    // DTO must NOT expose raw snake_case DB field names
+    expect(dto.casas_banho).toBeUndefined()
+    expect(dto.matterport_url).toBeUndefined()
+    expect(dto.is_verified).toBeUndefined()
+    expect(dto.submission_source).toBeUndefined()
+
+    // DTO must NOT expose English column names
     expect(dto.title).toBeUndefined()
     expect(dto.zone).toBeUndefined()
+    expect(dto.type).toBeUndefined()
+    expect(dto.price).toBeUndefined()
     expect(dto.area_m2).toBeUndefined()
     expect(dto.bedrooms).toBeUndefined()
     expect(dto.bathrooms).toBeUndefined()
@@ -218,15 +252,15 @@ describe('Phase 2C.B1-OR — operational reviewability (GET /api/properties)', (
     expect(body.source).toBe('supabase')
     expect(body.data).toHaveLength(1)
     expect(body.data[0].status).toBe('pending_review')
-    expect(body.data[0].nome).toBe(MOCK_PENDING_ROW.title)
+    expect(body.data[0].nome).toBe(MOCK_PENDING_ROW.nome)
 
-    // status=all must NOT add a status eq() filter — the query returns all statuses
+    // status=all must NOT add a status eq() filter
     const statusFilter = mockState.capturedEqs.find(([col]) => col === 'status')
     expect(statusFilter).toBeUndefined()
   })
 
   // ── OR-4: status eq filter applied for explicit status values ───────────────
-  it('OR-4: eq("status", …) filter is applied when status param is not "all"', async () => {
+  it('OR-4: eq("status", …) filter applied when status param is not "all"', async () => {
     mockState.queryResult = { data: [MOCK_ACTIVE_ROW], error: null }
     await GET(makeGETRequest({ status: 'active' }))
 
@@ -235,43 +269,42 @@ describe('Phase 2C.B1-OR — operational reviewability (GET /api/properties)', (
     expect(statusFilter![1]).toBe('active')
   })
 
-  // ── OR-5: active rows returned by default; status=active filter applied ─────
-  it('OR-5: active rows returned and status=active filter applied by default (no status param)', async () => {
+  // ── OR-5: active rows returned by default ───────────────────────────────────
+  it('OR-5: status=active filter applied by default (no status param)', async () => {
     mockState.queryResult = { data: [MOCK_ACTIVE_ROW], error: null }
-    const res = await GET(makeGETRequest()) // no status param → defaults to 'active'
+    const res = await GET(makeGETRequest())
     const body = await res.json()
 
     expect(res.status).toBe(200)
     expect(body.data).toHaveLength(1)
     expect(body.data[0].status).toBe('active')
 
-    // Default must apply status=active filter
     const statusFilter = mockState.capturedEqs.find(([col]) => col === 'status')
     expect(statusFilter).toBeDefined()
     expect(statusFilter![1]).toBe('active')
   })
 
-  // ── OR-6: Filter predicates use English DB column names ────────────────────
-  it('OR-6: filter predicates use English column names (zone, type, price) not Portuguese (zona, tipo, preco)', async () => {
+  // ── OR-6: Filter predicates use Portuguese column names ────────────────────
+  it('OR-6: filter predicates use Portuguese column names (zona, tipo, preco) not English (zone, type, price)', async () => {
     mockState.queryResult = { data: [MOCK_ACTIVE_ROW], error: null }
-    await GET(makeGETRequest({ zona: 'Lisboa', tipo: 'apartment', max_preco: '1000000', status: 'all' }))
+    await GET(makeGETRequest({ zona: 'Lisboa', tipo: 'Apartamento', max_preco: '1000000', status: 'all' }))
 
     const eqCols  = mockState.capturedEqs.map(([col]) => col)
     const lteCols = mockState.capturedLtes.map(([col]) => col)
 
-    // English column names must be used in filter predicates
-    expect(eqCols).toContain('zone')
-    expect(eqCols).toContain('type')
-    expect(lteCols).toContain('price')
+    // Portuguese column names must be used in filter predicates
+    expect(eqCols).toContain('zona')
+    expect(eqCols).toContain('tipo')
+    expect(lteCols).toContain('preco')
 
-    // Portuguese column names must NOT appear as filter predicates
-    expect(eqCols).not.toContain('zona')
-    expect(eqCols).not.toContain('tipo')
-    expect(lteCols).not.toContain('preco')
+    // English column names must NOT appear as filter predicates
+    expect(eqCols).not.toContain('zone')
+    expect(eqCols).not.toContain('type')
+    expect(lteCols).not.toContain('price')
   })
 
   // ── OR-7: Empty DB result → { data: [], source: 'empty' } ─────────────────
-  it('OR-7: empty DB result returns { data: [], source: "empty" } not source: "supabase"', async () => {
+  it('OR-7: empty DB result returns { data: [], source: "empty" }', async () => {
     mockState.queryResult = { data: [], error: null }
     const res = await GET(makeGETRequest({ status: 'all' }))
     const body = await res.json()

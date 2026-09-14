@@ -37,13 +37,13 @@ export async function GET(req: NextRequest) {
       query = query.eq('status', status)
     }
 
-    if (zona)    query = query.ilike('zone', `%${zona}%`)
-    if (tipo)    query = query.eq('type', tipo)
-    if (precoMin) query = query.gte('price', parseFloat(precoMin))
-    if (precoMax) query = query.lte('price', parseFloat(precoMax))
+    if (zona)    query = query.ilike('zona', `%${zona}%`)
+    if (tipo)    query = query.eq('tipo', tipo)
+    if (precoMin) query = query.gte('preco', parseFloat(precoMin))
+    if (precoMax) query = query.lte('preco', parseFloat(precoMax))
     if (search) {
       const safeSearch = (search as string).replace(/[%(),']/g, '').slice(0, 100)
-      query = query.or(`title.ilike.%${safeSearch}%,city.ilike.%${safeSearch}%,zone.ilike.%${safeSearch}%`)
+      query = query.or(`nome.ilike.%${safeSearch}%,bairro.ilike.%${safeSearch}%,zona.ilike.%${safeSearch}%`)
     }
 
     const { data, error, count } = await query

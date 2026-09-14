@@ -1,7 +1,13 @@
-﻿// =============================================================================
+// =============================================================================
 // Agency Group — Properties API
-// GET  /api/properties  — portal-authenticated listing query
+// GET  /api/properties  — portal-authenticated listing query (internal staff)
 // POST /api/properties  — public partner submission (parceiros form)
+// =============================================================================
+// SCHEMA NOTE: production.properties uses Portuguese column names.
+// (nome, zona, tipo, preco, area, quartos, casas_banho, energia, images, …)
+// English-named columns (title, zone, type, price, area_m2, …) do NOT exist.
+// B1 columns (is_verified, verification_date, verified_by, submission_source,
+// is_off_market) are added by migration 067 — must be applied before deploy.
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -19,7 +25,7 @@ const PartnerSubmissionSchema = z.object({
   agencyAMI:   z.string().min(1).max(20),
   agencyEmail: z.string().email(),
   agencyPhone: z.string().min(6).max(30),
-  // Property details
+  // Property details — Portuguese field names matching production schema
   nome:        z.string().min(1).max(300),
   zona:        z.string().min(1).max(80),
   bairro:      z.string().max(80).optional().default(''),
@@ -38,29 +44,29 @@ const PartnerSubmissionSchema = z.object({
   features:    z.array(z.string()).optional().default([]),
 })
 
-// Maps Portuguese property type names (from partner form) to the English
-// property_type enum values defined in the database schema.
-// UNKNOWN TYPE ≠ APARTMENT — unmapped types return null and must be rejected
-// before the property INSERT is attempted.
-const TIPO_TO_TYPE: Record<string, string> = {
-  'Apartamento':        'apartment',
-  'Moradia':            'villa',
-  'Moradia em Banda':   'townhouse',
-  'Townhouse':          'townhouse',
-  'Penthouse':          'penthouse',
-  'Villa':              'villa',
-  'Terreno':            'land',
-  'Lote':               'land',
-  'Comercial':          'commercial',
-  'Escritório':         'office',
-  'Armazém':            'warehouse',
-  'Hotel':              'hotel',
-  'Loteamento':         'development_plot',
+// Canonical Portuguese tipo values stored in production.properties.tipo (TEXT).
+// Maps partner-submitted tipo names to canonical production storage value.
+// UNKNOWN TYPE ≠ APARTMENT — unmapped tipos return null and must be rejected.
+// Quinta/Herdade are not accepted via the partner submission channel.
+const TIPO_CANONICAL: Record<string, string> = {
+  'Apartamento':        'Apartamento',
+  'Moradia':            'Moradia',
+  'Moradia em Banda':   'Moradia em Banda',
+  'Townhouse':          'Moradia em Banda',  // alias → canonical
+  'Penthouse':          'Penthouse',
+  'Villa':              'Villa',
+  'Terreno':            'Terreno',
+  'Lote':               'Terreno',           // alias → canonical
+  'Comercial':          'Comercial',
+  'Escritório':         'Escritório',
+  'Armazém':            'Armazém',
+  'Hotel':              'Hotel',
+  'Loteamento':         'Loteamento',
 }
 
-function mapPropertyType(tipo: string): string | null {
+function mapPropertyTipo(tipo: string): string | null {
   const normalized = tipo.trim()
-  return TIPO_TO_TYPE[normalized] ?? null
+  return TIPO_CANONICAL[normalized] ?? null
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -82,8 +88,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
     const d = parsed.data
 
-    const mappedType = mapPropertyType(d.tipo)
-    if (mappedType === null) {
+    const canonicalTipo = mapPropertyTipo(d.tipo)
+    if (canonicalTipo === null) {
       return NextResponse.json({ error: 'Tipo de imóvel não reconhecido.' }, { status: 400 })
     }
 
@@ -91,7 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (supabaseAdmin) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await supabaseAdmin
+        await (supabaseAdmin as any)
           .from('contacts')
           .upsert({
             email:      d.agencyEmail,
@@ -108,24 +114,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         console.error('[properties POST] contacts upsert error:', e, { corrId })
       }
 
-      // 2. Save property as pending_review — CRITICAL: must succeed before success response
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- properties table uses as-any because types predate the 066 migration columns
+      // 2. Persist property as pending_review — CRITICAL: must succeed before success response.
+      // Uses canonical Portuguese column names matching production schema.
+      // B1 columns (is_verified, is_off_market, submission_source) require migration 067.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- cast for B1 columns pre-type-gen
       const { error: propertyError } = await (supabaseAdmin as any)
         .from('properties')
         .insert({
-          title:             d.nome,
-          zone:              d.zona,
-          type:              mappedType,
-          price:             d.preco,
-          area_m2:           d.area,
-          bedrooms:          d.quartos,
-          bathrooms:         d.casasBanho,
+          nome:              d.nome,
+          zona:              d.zona,
+          bairro:            d.bairro || null,
+          tipo:              canonicalTipo,
+          preco:             d.preco,
+          area:              d.area,
+          quartos:           d.quartos,
+          casas_banho:       d.casasBanho,
+          descricao:         d.desc || null,
+          features:          d.features,
           status:            'pending_review',
           is_off_market:     true,
           is_verified:       false,
           submission_source: 'partner',
-          description:       d.desc || null,
-          features:          d.features,
           created_at:        new Date().toISOString(),
           updated_at:        new Date().toISOString(),
         })
@@ -143,7 +152,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // 3. Send email alert to agent
+    // 3. Send email alert to agent — only after successful property persistence
     const alertEmail = process.env.AGENT_ALERT_EMAIL
     if (alertEmail && process.env.RESEND_API_KEY) {
       try {
@@ -161,7 +170,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             <ul>
               <li><strong>Nome:</strong> ${d.agencyName}</li>
               <li><strong>AMI:</strong> ${d.agencyAMI}</li>
-              <li><strong>Email:</strong> ${d.agencyEmail}</li>
+              <li><strong>Email:</strong> ${d.agencyPhone}</li>
               <li><strong>Telefone:</strong> ${d.agencyPhone}</li>
             </ul>
             <h3>Imóvel</h3>
@@ -214,52 +223,50 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ data: [], source: 'error', error: 'Supabase not configured' })
     }
 
-    // Tenant scope — property reads must never leak cross-tenant listings
-    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
-
-    // Query using English schema column names (actual DB column names as of migration 066)
     try {
+      // Query using canonical Portuguese production column names.
+      // B1 fields (is_verified, submission_source) available after migration 067.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabaseAdmin as any)
         .from('properties')
-        .select('id, title, zone, city, type, price, area_m2, bedrooms, bathrooms, energy_certificate, status, description, features, photos, virtual_tour_url, is_verified, submission_source, views_total, created_at')
-        .not('title', 'is', null)
+        .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, images, matterport_url, is_verified, submission_source, created_at')
+        .not('nome', 'is', null)
         .limit(limit)
 
       if (status && status !== 'all') query = query.eq('status', status as string)
-      if (zona)     query = query.eq('zone', zona)
-      if (tipo)     query = query.eq('type', tipo)
-      if (maxPreco) query = query.lte('price', maxPreco)
+      if (zona)     query = query.eq('zona', zona)
+      if (tipo)     query = query.eq('tipo', tipo)
+      if (maxPreco) query = query.lte('preco', maxPreco)
 
       const { data, error } = await query
 
       if (!error && data && data.length > 0) {
-        // Map English DB column names → Portuguese DTO (ImovelFull contract)
+        // Map Portuguese DB column names to portal DTO.
+        // Transformations: snake_case → camelCase, images → imagens (DTO contract).
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = (data as any[]).map((row) => ({
-          id:              row.id,
-          nome:            row.title                 || '',
-          zona:            row.zone                  || '',
-          bairro:          row.city                  || '',
-          tipo:            row.type                  || '',
-          preco:           row.price                 || 0,
-          area:            row.area_m2               || 0,
-          quartos:         row.bedrooms              || 0,
-          casasBanho:      row.bathrooms             || 0,
-          energia:         row.energy_certificate    || '',
-          status:          row.status                || 'active',
-          descricao:       row.description           || '',
-          features:        Array.isArray(row.features) ? row.features : [],
-          gradient:        'from-slate-800 to-gray-900',
-          badge:           undefined,
-          lifestyleTags:   [],
-          imagens:         Array.isArray(row.photos) ? row.photos : [],
-          matterportUrl:   row.virtual_tour_url      || undefined,
-          youtubeUrl:      undefined,
-          isVerified:      row.is_verified           ?? false,
-          submissionSource: row.submission_source    || null,
-          viewsCount:      row.views_total           || 0,
-          listingDate:     row.created_at            || null,
+          id:               row.id,
+          nome:             row.nome              || '',
+          zona:             row.zona              || '',
+          bairro:           row.bairro            || '',
+          tipo:             row.tipo              || '',
+          preco:            row.preco             || 0,
+          area:             row.area              || 0,
+          quartos:          row.quartos           || 0,
+          casasBanho:       row.casas_banho       || 0,
+          energia:          row.energia           || '',
+          status:           row.status            || 'active',
+          descricao:        row.descricao         || '',
+          features:         Array.isArray(row.features)  ? row.features  : [],
+          gradient:         'from-slate-800 to-gray-900',
+          badge:            undefined,
+          lifestyleTags:    [],
+          imagens:          Array.isArray(row.images)    ? row.images    : [],
+          matterportUrl:    row.matterport_url    || undefined,
+          youtubeUrl:       undefined,
+          isVerified:       row.is_verified       ?? false,
+          submissionSource: row.submission_source || null,
+          listingDate:      row.created_at        || null,
         }))
 
         void sloRecordRequest(_sloTenant, 'api', true, Date.now() - _sloStart).catch(() => {})
