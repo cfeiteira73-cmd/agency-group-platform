@@ -117,8 +117,16 @@ COMMENT ON COLUMN public.properties.is_off_market IS
 --   Portal reads use supabaseAdmin (service role) and bypass RLS.
 --   The authenticated RLS policy below is a safety net for future direct access.
 
--- Drop the overly permissive anon-readable SELECT policy
+-- Drop ALL overly permissive anon/authenticated SELECT policies
+-- LIVE PRODUCTION TRUTH (verified 2026-09-14, project isbfiofwpxqqpgxoftph):
+--   "Agents can read all properties"  USING (true)       — allows ALL rows for authenticated
+--   "properties_authenticated"         USING (auth.role() = 'authenticated') — allows ALL rows
+--   "properties_public_read"           USING (status <> ALL (ARRAY['off-market','archived']))
+--                                      — allows pending_review and other non-archived rows for anon
+-- All three must be dropped and replaced by the single scoped policy below.
 DROP POLICY IF EXISTS "Agents can read all properties" ON public.properties;
+DROP POLICY IF EXISTS "properties_authenticated" ON public.properties;
+DROP POLICY IF EXISTS "properties_public_read" ON public.properties;
 
 -- Public/anon access: only active, non-off-market inventory
 -- This prevents pending_review and is_off_market=true rows from being

@@ -25,6 +25,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         .from('properties')
         .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, lifestyle_tags, badge, gradient, lat, lng, images')
         .eq('status', 'active')
+        .eq('is_off_market', false)
         .not('nome', 'is', null)
         .limit(limit)
 

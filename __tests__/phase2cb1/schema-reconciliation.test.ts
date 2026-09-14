@@ -176,6 +176,43 @@ describe('Phase 2C.B1-SR — public route isolation (GET /api/properties/public)
     expect(pendingRows).toHaveLength(0)
   })
 
+  // ── SR-8: is_off_market=true rows never returned by public API ─────────────
+  it('SR-8: public API applies is_off_market=false filter — off-market rows never exposed', async () => {
+    publicMockState.queryResult = { data: [ACTIVE_ROW], error: null }
+
+    const res = await publicGET(makePublicRequest())
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+
+    // Public route must apply an explicit is_off_market = false filter
+    const offMarketFilter = publicMockState.capturedEqs.find(([col]) => col === 'is_off_market')
+    expect(offMarketFilter).toBeDefined()
+    expect(offMarketFilter![1]).toBe(false)
+
+    // No off-market row should appear in the response
+    const offMarketRows = body.data?.filter((p: { is_off_market?: boolean }) => p.is_off_market === true) ?? []
+    expect(offMarketRows).toHaveLength(0)
+  })
+
+  it('SR-8b: both status=active AND is_off_market=false filters are applied together', async () => {
+    publicMockState.queryResult = { data: [ACTIVE_ROW], error: null }
+
+    await publicGET(makePublicRequest())
+
+    // Both filters must be present — defense-in-depth
+    expect(publicMockState.capturedStatus).toBe('active')
+
+    const offMarketFilter = publicMockState.capturedEqs.find(([col]) => col === 'is_off_market')
+    expect(offMarketFilter).toBeDefined()
+    expect(offMarketFilter![1]).toBe(false)
+
+    // Verify both eq() calls are captured (status + is_off_market at minimum)
+    const eqCols = publicMockState.capturedEqs.map(([col]) => col)
+    expect(eqCols).toContain('status')
+    expect(eqCols).toContain('is_off_market')
+  })
+
   // ── SR-9: Active non-off-market inventory still works ───────────────────────
   it('SR-9: active non-off-market inventory is returned by public API', async () => {
     publicMockState.queryResult = { data: [ACTIVE_ROW], error: null }
