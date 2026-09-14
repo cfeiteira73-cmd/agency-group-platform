@@ -24,24 +24,20 @@
 -- WHAT THIS MIGRATION DOES NOT DO:
 --   • Does NOT rename any existing column
 --   • Does NOT create a property_status enum
---   • Does NOT backfill is_off_market for rows with badge = 'Off-Market'
---     (owner must review the badge field separately — see note below)
 --   • Does NOT modify service-role access
 --   • Does NOT implement B2 confidentiality architecture
 --
--- ⚠️  BADGE = 'Off-Market' NOTE:
---   Some production rows have badge = 'Off-Market' (a display label).
---   This migration initializes is_off_market = false for ALL existing rows.
---   Properties with badge = 'Off-Market' will retain public visibility
---   unless the owner separately runs:
---     UPDATE public.properties SET is_off_market = true WHERE badge = 'Off-Market';
---   This backfill requires an explicit separate owner decision — not included here.
+-- BADGE = 'Off-Market' BACKFILL (Step 1b):
+--   Production confirmed 3 rows with badge = 'Off-Market' (2026-09-14).
+--   These are backfilled to is_off_market = true in Step 1b.
+--   Owner decision explicit. All other badges remain is_off_market = false.
 --
 -- PRINCIPLES:
 --   SUBMITTED ≠ VERIFIED  — new submissions are always is_verified = false
 --   VERIFIED ≠ AVAILABLE  — pending_review properties are is_off_market = true
 --   AVAILABLE ≠ PUBLISHED — property stays off-market until explicit AG decision
---   NO HISTORICAL BACKFILL — existing 55 rows keep current status/verification
+--   NO VERIFICATION BACKFILL — existing 55 rows keep current status/is_verified=false
+--   BADGE BACKFILL — 3 rows with badge='Off-Market' set is_off_market=true (Step 1b)
 --   OPTION B PRESERVED    — verified_by → public.users(id), NOT auth.users
 --   MINIMUM SAFE CHANGE   — only the RLS policy needed for B1 safety is changed
 --
@@ -56,7 +52,7 @@
 -- All columns are additive. Existing 55 rows receive default values.
 -- is_verified = false:     historical rows are not verified under B1 model
 -- is_off_market = false:   initializes all existing rows as publicly visible
---                          (see badge note above — may need separate backfill)
+--                          (Step 1b immediately backfills badge='Off-Market' rows to true)
 -- submission_source = NULL: existing rows have no structured provenance record
 
 ALTER TABLE public.properties
@@ -66,6 +62,37 @@ ALTER TABLE public.properties
                            REFERENCES public.users(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS submission_source  TEXT                 DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS is_off_market      BOOLEAN     NOT NULL DEFAULT false;
+
+-- ─── STEP 1b: Historical Off-Market backfill ────────────────────────────────
+--
+-- OWNER DECISION (2026-09-14, direct production evidence):
+--   Exactly 3 production rows have badge = 'Off-Market'. These were explicitly
+--   classified as off-market BEFORE the structured boolean column existed.
+--   The backfill preserves existing commercial intent; it does NOT create new
+--   confidentiality classifications. badge='Off-Market' is the ONLY criterion.
+--
+-- No other badge value (Novo, Destaque, Exclusivo, NULL) is backfilled.
+-- No fuzzy matching. No case-insensitive matching. Exact string only.
+--
+-- SAFETY GUARD: WHERE is_off_market = false prevents double-applying
+--   if this migration is re-run (ADD COLUMN IF NOT EXISTS is idempotent but
+--   the column would already exist on re-run; DEFAULT false means no rows
+--   would satisfy is_off_market=false unless they were truly not yet set).
+--
+-- EXPECTED RESULT after this step (based on 2026-09-14 production count):
+--   is_off_market = true  → 3 rows  (badge='Off-Market')
+--   is_off_market = false → 52 rows (all others)
+--   Total: 55
+--
+-- ⚠️  RE-CHECK BEFORE EXECUTION: Run these queries immediately before applying:
+--   SELECT COUNT(*) FROM properties;
+--   SELECT badge, COUNT(*) FROM properties GROUP BY badge;
+--   If badge='Off-Market' count ≠ 3 → STOP and notify owner.
+
+UPDATE public.properties
+SET    is_off_market = true
+WHERE  badge = 'Off-Market'
+  AND  is_off_market = false;
 
 -- ─── STEP 2: Column documentation ────────────────────────────────────────────
 
@@ -89,8 +116,8 @@ COMMENT ON COLUMN public.properties.submission_source IS
 COMMENT ON COLUMN public.properties.is_off_market IS
   'Programmatic confidentiality gate. true = not publicly queryable by anon. '
   'Partner submissions always start with is_off_market = true. '
-  'Existing rows initialize as false (publicly visible). '
-  'See migration 067 badge note for rows requiring manual review.';
+  'Existing rows initialize as false; 3 rows with badge=Off-Market backfilled to true '
+  'in migration 067 Step 1b (owner decision 2026-09-14).';
 
 -- ─── STEP 3: Minimum B1 RLS security boundary ────────────────────────────────
 --
@@ -169,7 +196,9 @@ CREATE INDEX IF NOT EXISTS idx_properties_submission_source
 --    SELECT COUNT(*) FROM properties WHERE is_verified = true;
 --    → 0 (no historical auto-verification)
 --    SELECT COUNT(*) FROM properties WHERE is_off_market = true;
---    → 0 (all existing rows initialized as not-off-market)
+--    → 3 (badge='Off-Market' rows backfilled by Step 1b)
+--    SELECT COUNT(*) FROM properties WHERE is_off_market = false;
+--    → 52
 --
 -- 3. Verify RLS policy change:
 --    SELECT policyname, cmd, qual
