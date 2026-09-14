@@ -40,12 +40,15 @@ const PartnerSubmissionSchema = z.object({
 
 // Maps Portuguese property type names (from partner form) to the English
 // property_type enum values defined in the database schema.
+// UNKNOWN TYPE ≠ APARTMENT — unmapped types return null and must be rejected
+// before the property INSERT is attempted.
 const TIPO_TO_TYPE: Record<string, string> = {
   'Apartamento':        'apartment',
   'Moradia':            'villa',
   'Moradia em Banda':   'townhouse',
   'Townhouse':          'townhouse',
   'Penthouse':          'penthouse',
+  'Villa':              'villa',
   'Terreno':            'land',
   'Lote':               'land',
   'Comercial':          'commercial',
@@ -55,8 +58,9 @@ const TIPO_TO_TYPE: Record<string, string> = {
   'Loteamento':         'development_plot',
 }
 
-function mapPropertyType(tipo: string): string {
-  return TIPO_TO_TYPE[tipo] ?? TIPO_TO_TYPE[tipo.trim()] ?? 'apartment'
+function mapPropertyType(tipo: string): string | null {
+  const normalized = tipo.trim()
+  return TIPO_TO_TYPE[normalized] ?? null
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -77,6 +81,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Dados inválidos.', details: parsed.error.flatten() }, { status: 400 })
     }
     const d = parsed.data
+
+    const mappedType = mapPropertyType(d.tipo)
+    if (mappedType === null) {
+      return NextResponse.json({ error: 'Tipo de imóvel não reconhecido.' }, { status: 400 })
+    }
 
     // 1. Save agency contact to contacts table
     if (supabaseAdmin) {
@@ -106,7 +115,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .insert({
           title:             d.nome,
           zone:              d.zona,
-          type:              mapPropertyType(d.tipo),
+          type:              mappedType,
           price:             d.preco,
           area_m2:           d.area,
           bedrooms:          d.quartos,

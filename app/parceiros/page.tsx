@@ -2,7 +2,7 @@
 import { useState } from 'react'
 
 const ZONAS = ['Lisboa','Cascais','Sintra','Comporta','Algarve','Porto','Madeira','Açores','Ericeira','Alentejo','Douro','Outro']
-const TIPOS = ['Apartamento','Moradia','Penthouse','Villa','Quinta','Herdade','Terreno','Comercial']
+const TIPOS = ['Apartamento','Moradia','Penthouse','Villa','Terreno','Comercial']
 
 export default function ParceirosPage() {
   const [step, setStep] = useState<'landing'|'form'|'success'>('landing')

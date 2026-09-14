@@ -290,6 +290,7 @@ describe('Phase 2C.B1 — partner submission', () => {
       ['Moradia',          'villa'],
       ['Moradia em Banda', 'townhouse'],
       ['Penthouse',        'penthouse'],
+      ['Villa',            'villa'],      // B1 correction: Villa must map to villa
       ['Terreno',          'land'],
       ['Comercial',        'commercial'],
       ['Escritório',       'office'],
@@ -305,6 +306,76 @@ describe('Phase 2C.B1 — partner submission', () => {
 
       const inserted = mockPropertiesInsert.mock.calls[0][0]
       expect(inserted.type).toBe(expectedType)
+    }
+  })
+
+  // ── Test 8: Villa → villa (explicit proof) ─────────────────────────────────
+  it('Villa maps to villa — not apartment', async () => {
+    const res = await POST(makeRequest({ ...VALID_BODY, tipo: 'Villa' }))
+
+    expect(res.status).toBe(200)
+    const inserted = mockPropertiesInsert.mock.calls[0][0]
+    expect(inserted.type).toBe('villa')
+    expect(inserted.type).not.toBe('apartment')
+  })
+
+  // ── Test 9: Quinta → HTTP 400, never reaches property INSERT ───────────────
+  it('Quinta is rejected with 400 and never reaches property INSERT', async () => {
+    const res = await POST(makeRequest({ ...VALID_BODY, tipo: 'Quinta' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(body.error).toBeDefined()
+    expect(typeof body.error).toBe('string')
+    // Must not have reached INSERT — Quinta must not become apartment or any other type
+    expect(mockPropertiesInsert).not.toHaveBeenCalled()
+  })
+
+  // ── Test 10: Herdade → HTTP 400, never reaches property INSERT ─────────────
+  it('Herdade is rejected with 400 and never reaches property INSERT', async () => {
+    const res = await POST(makeRequest({ ...VALID_BODY, tipo: 'Herdade' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(body.error).toBeDefined()
+    expect(typeof body.error).toBe('string')
+    // Must not have reached INSERT — Herdade must not become apartment or any other type
+    expect(mockPropertiesInsert).not.toHaveBeenCalled()
+  })
+
+  // ── Test 11: Unknown type → HTTP 400, never reaches property INSERT ─────────
+  it('arbitrary unknown tipo is rejected with 400 and never reaches property INSERT', async () => {
+    const res = await POST(makeRequest({ ...VALID_BODY, tipo: 'Castelo' }))
+    const body = await res.json()
+
+    expect(res.status).toBe(400)
+    expect(body.error).toBeDefined()
+    // Must not have reached INSERT
+    expect(mockPropertiesInsert).not.toHaveBeenCalled()
+  })
+
+  // ── Test 12: No apartment fallback — unknown type never stored as apartment ──
+  it('no unknown tipo is silently stored as apartment', async () => {
+    const unknownTypes = ['Quinta', 'Herdade', 'Castelo', 'Palácio', 'Ruína', 'XYZ']
+
+    for (const tipo of unknownTypes) {
+      vi.clearAllMocks()
+      mockRateLimit.mockResolvedValue({ success: true, remaining: 2 })
+      mockContactsUpsert.mockResolvedValue({ data: [], error: null })
+      mockPropertiesInsert.mockResolvedValue({ data: [{ id: 'pid' }], error: null })
+
+      const res = await POST(makeRequest({ ...VALID_BODY, tipo }))
+
+      // Must be a controlled rejection — not a 200 with fabricated type
+      expect(res.status).toBe(400)
+      // Property INSERT must not have been attempted
+      expect(mockPropertiesInsert).not.toHaveBeenCalled()
+
+      // Explicit proof: if somehow INSERT was called, it must not be 'apartment'
+      if (mockPropertiesInsert.mock.calls.length > 0) {
+        const inserted = mockPropertiesInsert.mock.calls[0][0]
+        expect(inserted.type).not.toBe('apartment')
+      }
     }
   })
 
