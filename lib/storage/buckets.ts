@@ -27,8 +27,11 @@ const REQUIRED_BUCKETS: BucketSpec[] = [
   {
     id:               'property-media',
     public:           true,
-    fileSizeLimit:    52_428_800,         // 50 MB
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'video/mp4', 'video/quicktime', 'video/webm'],
+    fileSizeLimit:    52_428_800,         // 50 MB per file
+    allowedMimeTypes: [
+      'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/avif',
+      'video/mp4', 'video/quicktime', 'video/webm',
+    ],
   },
   {
     id:               'ml-training-data',

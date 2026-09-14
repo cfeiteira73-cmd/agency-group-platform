@@ -643,6 +643,11 @@ export type Database = {
           visits_total: number | null
           created_at: string
           updated_at: string
+          // Phase 2C.B1 — verification foundation (migration 066)
+          is_verified: boolean
+          verification_date: string | null
+          verified_by: string | null
+          submission_source: string | null
           zone_key: string | null
           // scoring & provider extensions
           opportunity_grade: string | null
@@ -722,6 +727,11 @@ export type Database = {
           visits_total?: number | null
           created_at?: string
           updated_at?: string
+          // Phase 2C.B1 — verification foundation (migration 066)
+          is_verified?: boolean
+          verification_date?: string | null
+          verified_by?: string | null
+          submission_source?: string | null
           zone_key?: string | null
           opportunity_grade?: string | null
           score_v2_confidence_adjusted?: number | null
@@ -799,6 +809,11 @@ export type Database = {
           inquiries_total?: number | null
           visits_total?: number | null
           updated_at?: string
+          // Phase 2C.B1 — verification foundation (migration 066)
+          is_verified?: boolean
+          verification_date?: string | null
+          verified_by?: string | null
+          submission_source?: string | null
           zone_key?: string | null
           opportunity_grade?: string | null
           score_v2_confidence_adjusted?: number | null

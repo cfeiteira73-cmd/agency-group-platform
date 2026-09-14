@@ -75,6 +75,31 @@ function validateToken(token: string, secret: string): { ok: true; data: { type:
   return { ok: true, data }
 }
 
+/**
+ * Maps a Supabase insert error to an HTTP error response, or null on success.
+ *
+ * Error codes:
+ *   23505 — duplicate key: token already consumed → 401
+ *   42P01 — relation does not exist: replay-protection table missing → 500 (fail-closed)
+ *   any other error → 500
+ *   null/undefined → null (proceed — no error)
+ *
+ * Security invariant (D2 hardening): if the replay-protection table is absent
+ * (42P01), we MUST fail closed rather than silently issuing a session cookie.
+ * A token that cannot be recorded as consumed must not be treated as consumable.
+ *
+ * Exported for unit testing.
+ */
+export function classifyInsertError(
+  error: { code: string; message?: string } | null | undefined,
+): { status: 401 | 500; error: string } | null {
+  if (!error) return null
+  if (error.code === '23505') {
+    return { status: 401, error: 'Link já utilizado. Pede um novo acesso em agencygroup.pt/portal/login' }
+  }
+  return { status: 500, error: 'Erro interno. Tenta novamente.' }
+}
+
 // ── Shared: consume token + issue session cookie ─────────────────────────────
 async function consumeToken(
   token: string,
@@ -97,12 +122,12 @@ async function consumeToken(
       expires_at: new Date(data.exp).toISOString(),
     })
 
-  if (insertError?.code === '23505') {
-    return { ok: false, error: 'Link já utilizado. Pede um novo acesso em agencygroup.pt/portal/login', status: 401 }
-  }
-  if (insertError && insertError.code !== '42P01') {
-    console.error('[Auth] Failed to mark token as used:', insertError)
-    return { ok: false, error: 'Erro interno. Tenta novamente.', status: 500 }
+  const insertResult = classifyInsertError(insertError)
+  if (insertResult) {
+    if (insertError?.code !== '23505') {
+      console.error('[Auth] Failed to mark token as used:', insertError)
+    }
+    return { ok: false, error: insertResult.error, status: insertResult.status }
   }
 
   const sessionPayload = Buffer.from(JSON.stringify({

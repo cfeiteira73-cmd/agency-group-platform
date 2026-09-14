@@ -39,7 +39,6 @@ export async function GET(req: NextRequest) {
 
     if (zona)    query = query.ilike('zona', `%${zona}%`)
     if (tipo)    query = query.eq('tipo', tipo)
-    if (badge)   query = query.eq('badge', badge)
     if (precoMin) query = query.gte('preco', parseFloat(precoMin))
     if (precoMax) query = query.lte('preco', parseFloat(precoMax))
     if (search) {

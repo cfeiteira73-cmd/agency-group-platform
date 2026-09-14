@@ -122,11 +122,13 @@ function badgeSt(badge: string): { bg: string; color: string; border: string } {
 
 function statusSt(status: string): string {
   switch (status) {
-    case 'Ativo':        return '#1c4a35'
-    case 'Sob Proposta': return '#c9a96e'
-    case 'Reservado':    return '#3a7bd5'
-    case 'Vendido':      return '#888'
-    default:             return '#888'
+    case 'Ativo':          return '#1c4a35'
+    case 'active':         return '#1c4a35'
+    case 'Sob Proposta':   return '#c9a96e'
+    case 'Reservado':      return '#3a7bd5'
+    case 'Vendido':        return '#888'
+    case 'pending_review': return '#b45309'
+    default:               return '#888'
   }
 }
 
@@ -1054,7 +1056,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
               <IconPipeline /> Pipeline
             </button>
             <button type="button" className="p-btn"
-              onClick={() => {
+              onClick={async () => {
                 const shareData = {
                   ref: p.ref, nome: p.nome, zona: p.zona, bairro: p.bairro,
                   tipo: p.tipo, preco: p.preco, area: p.area,
@@ -1066,9 +1068,21 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
                   imagens: p.imagens,
                   descricao: p.descricao,
                 }
-                const encoded = encodeURIComponent(JSON.stringify(shareData))
-                const shareUrl = `${window.location.origin}/partilhar?d=${encoded}`
-                try { navigator.clipboard.writeText(shareUrl) } catch { /* ignore */ }
+                try {
+                  const res = await fetch('/api/partilhar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(shareData),
+                  })
+                  const json = await res.json()
+                  const shareUrl = json.id
+                    ? `${window.location.origin}/partilhar/${json.id}`
+                    : `${window.location.origin}/partilhar?d=${encodeURIComponent(JSON.stringify(shareData))}`
+                  navigator.clipboard.writeText(shareUrl).catch(() => {})
+                } catch {
+                  const encoded = encodeURIComponent(JSON.stringify(shareData))
+                  navigator.clipboard.writeText(`${window.location.origin}/partilhar?d=${encoded}`).catch(() => {})
+                }
                 setCopiedLink(true)
                 setActionToast(`✓ Link copiado: ${p.ref}`)
                 setTimeout(() => { setCopiedLink(false); setActionToast('') }, 2500)
@@ -1077,7 +1091,7 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
               <IconShare /> {copiedLink ? '✓ Copiado' : 'Partilhar'}
             </button>
             <button type="button" className="p-btn"
-              onClick={() => {
+              onClick={async () => {
                 const shareData = {
                   ref: p.ref, nome: p.nome, zona: p.zona, bairro: p.bairro,
                   tipo: p.tipo, preco: p.preco, area: p.area,
@@ -1088,8 +1102,21 @@ function PropertyDrawer({ p, onClose, onUpdate, initialTab }: { p: ImovelFull; o
                   imagens: p.imagens,
                   descricao: p.descricao,
                 }
-                const encoded = encodeURIComponent(JSON.stringify(shareData))
-                window.open(`${window.location.origin}/partilhar?d=${encoded}`, '_blank')
+                try {
+                  const res = await fetch('/api/partilhar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(shareData),
+                  })
+                  const json = await res.json()
+                  const shareUrl = json.id
+                    ? `${window.location.origin}/partilhar/${json.id}`
+                    : `${window.location.origin}/partilhar?d=${encodeURIComponent(JSON.stringify(shareData))}`
+                  window.open(shareUrl, '_blank')
+                } catch {
+                  const encoded = encodeURIComponent(JSON.stringify(shareData))
+                  window.open(`${window.location.origin}/partilhar?d=${encoded}`, '_blank')
+                }
                 setActionToast('A abrir página pública…')
                 setTimeout(() => setActionToast(''), 1800)
               }}
@@ -2031,7 +2058,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
     const controller = new AbortController()
     async function loadProperties() {
       try {
-        const res = await fetch('/api/properties', { signal: controller.signal })
+        const res = await fetch('/api/properties?status=all&limit=100', { signal: controller.signal })
         if (res.ok) {
           const { data } = await res.json()
           if (!cancelled && data && data.length > 0) {

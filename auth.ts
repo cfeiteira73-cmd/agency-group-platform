@@ -14,6 +14,24 @@ function getAdminClient() {
   )
 }
 
+/**
+ * Returns true if a Google-authenticated user should be granted access.
+ *
+ * Canonical semantics (consistent with Credentials and magic-link paths):
+ *   - User not in DB (null)    → denied  (no auto-provisioning)
+ *   - is_active === false       → denied
+ *   - is_active === null        → allowed (NULL treated as active)
+ *   - is_active === true        → allowed
+ *
+ * Exported for unit testing — do not change semantics without updating
+ * getAnySession() and auth.ts Credentials authorize() to match.
+ */
+export function authorizeGoogleUser(
+  existing: { is_active: boolean | null } | null,
+): boolean {
+  return !!existing && existing.is_active !== false
+}
+
 declare module 'next-auth' {
   interface User {
     role?: string
@@ -119,9 +137,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             .eq('email', user.email)
             .single()
 
-          // Only allow users pre-approved in the DB (is_active = true)
-          // No auto-provisioning — prevents any Google account from accessing the CRM
-          if (!existing || existing.is_active === false) {
+          // Deny unknown users and explicitly deactivated accounts.
+          // NULL is_active is treated as active — canonical semantics shared
+          // with magic-link (getAnySession) and Credentials (authorize) paths.
+          // No auto-provisioning: Google accounts NOT in the DB are denied.
+          if (!authorizeGoogleUser(existing)) {
             console.warn('[auth] Google sign-in blocked for:', user.email)
             return false
           }

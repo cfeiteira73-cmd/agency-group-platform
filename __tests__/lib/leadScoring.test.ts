@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { CRMContact } from '../../app/portal/components/types'
 import {
   scoreLeadContact,
@@ -302,6 +302,8 @@ describe('Profile completeness', () => {
 // ─── 7. Urgency Bonus ─────────────────────────────────────────────────────────
 
 describe('Urgency bonus (follow-up)', () => {
+  afterEach(() => { vi.useRealTimers() })
+
   it('gives 5pts urgency for overdue follow-up', () => {
     const contact = makeContact({ nextFollowUp: daysAgo(2) })
     const result = scoreLeadContact(contact)
@@ -309,6 +311,11 @@ describe('Urgency bonus (follow-up)', () => {
   })
 
   it('gives 4pts urgency for follow-up today', () => {
+    // Freeze Date.now() so daysFromNow(0) and daysUntil() see the same instant.
+    // Without this, the milliseconds elapsed between the two Date.now() calls
+    // cause Math.floor(-tiny/86400000) = -1, triggering overdue branch instead.
+    vi.useFakeTimers()
+    vi.setSystemTime(Date.now())
     const contact = makeContact({ nextFollowUp: daysFromNow(0) })
     const result = scoreLeadContact(contact)
     expect(result.reasons.some(r => r.includes('+4pts urgência'))).toBe(true)

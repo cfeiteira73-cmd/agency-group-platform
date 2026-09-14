@@ -1,22 +1,17 @@
+// app/partilhar/[id]/page.tsx
+// Página pública com Open Graph tags — WhatsApp/iMessage/LinkedIn mostram foto + título
 import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import PartilharClient from '../PartilharClient'
 
-interface Props { params: Promise<{ id: string }> }
+interface Props {
+  params: Promise<{ id: string }>
+}
 
 interface SharedProperty {
-  ref: string
-  nome: string
-  zona: string
-  bairro?: string
-  tipo: string
-  preco: number
-  area: number
-  quartos: number
-  casasBanho: number
-  badge?: string
-  descricao?: string
-  imagens?: string[]
+  ref: string; nome: string; zona: string; bairro?: string; tipo: string
+  preco: number; area: number; quartos: number; casasBanho: number
+  badge?: string; descricao?: string; imagens?: string[]
 }
 
 async function getShare(id: string): Promise<SharedProperty | null> {
@@ -28,6 +23,7 @@ async function getShare(id: string): Promise<SharedProperty | null> {
     .from('imovel_shares')
     .select('data')
     .eq('id', id)
+    
     .single()
   return data?.data ?? null
 }
@@ -35,13 +31,17 @@ async function getShare(id: string): Promise<SharedProperty | null> {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const p = await getShare(id)
+
   if (!p) return { title: 'Imóvel | Agency Group' }
 
-  const ogImage = p.imagens?.[0]
+  const precoFmt = p.preco ? `€${p.preco.toLocaleString('pt-PT')}` : ''
+  const localFmt = [p.zona, p.bairro].filter(Boolean).join(', ')
   const title = `${p.nome || p.ref} | Agency Group`
   const description = p.descricao
     ? p.descricao.slice(0, 160)
-    : `${p.tipo} em ${[p.zona, p.bairro].filter(Boolean).join(', ')} · ${p.area}m² · ${p.quartos} quartos · €${p.preco?.toLocaleString('pt-PT')}`
+    : `${p.tipo} em ${localFmt} · ${p.area}m² · ${p.quartos} quartos · ${precoFmt}`
+
+  const ogImage = p.imagens?.[0]
 
   return {
     title,
@@ -53,21 +53,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: 'Agency Group',
       locale: 'pt_PT',
       ...(ogImage && {
-        images: [{ url: ogImage, width: 1200, height: 800, alt: p.nome || p.ref }]
-      })
+        images: [{ url: ogImage, width: 1200, height: 800, alt: p.nome || p.ref }],
+      }),
     },
     twitter: {
       card: ogImage ? 'summary_large_image' : 'summary',
       title,
       description,
-      ...(ogImage && { images: [ogImage] })
-    }
+      ...(ogImage && { images: [ogImage] }),
+    },
   }
 }
 
 export default async function PartilharIdPage({ params }: Props) {
   const { id } = await params
   const p = await getShare(id)
+  // Encode para passar ao client component (compatível com a galeria existente)
   const d = p ? encodeURIComponent(JSON.stringify(p)) : undefined
   return <PartilharClient d={d} />
 }
