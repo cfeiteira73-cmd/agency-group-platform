@@ -122,11 +122,13 @@ function badgeSt(badge: string): { bg: string; color: string; border: string } {
 
 function statusSt(status: string): string {
   switch (status) {
-    case 'Ativo':        return '#1c4a35'
-    case 'Sob Proposta': return '#c9a96e'
-    case 'Reservado':    return '#3a7bd5'
-    case 'Vendido':      return '#888'
-    default:             return '#888'
+    case 'Ativo':          return '#1c4a35'
+    case 'active':         return '#1c4a35'
+    case 'Sob Proposta':   return '#c9a96e'
+    case 'Reservado':      return '#3a7bd5'
+    case 'Vendido':        return '#888'
+    case 'pending_review': return '#b45309'
+    default:               return '#888'
   }
 }
 
@@ -2056,7 +2058,7 @@ export default function PortalImoveis({ onSave }: { onSave?: (list: any[]) => vo
     const controller = new AbortController()
     async function loadProperties() {
       try {
-        const res = await fetch('/api/properties', { signal: controller.signal })
+        const res = await fetch('/api/properties?status=all&limit=100', { signal: controller.signal })
         if (res.ok) {
           const { data } = await res.json()
           if (!cancelled && data && data.length > 0) {

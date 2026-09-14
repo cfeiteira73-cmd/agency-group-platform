@@ -217,44 +217,49 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Tenant scope — property reads must never leak cross-tenant listings
     const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
 
-    // Query using actual schema: Portuguese column names (nome, zona, preco, etc.)
+    // Query using English schema column names (actual DB column names as of migration 066)
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabaseAdmin as any)
         .from('properties')
-        .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, gradient, badge, lifestyle_tags, images, matterport_url, youtube_url')
-        .not('nome', 'is', null)
+        .select('id, title, zone, city, type, price, area_m2, bedrooms, bathrooms, energy_certificate, status, description, features, photos, virtual_tour_url, is_verified, submission_source, views_total, created_at')
+        .not('title', 'is', null)
         .limit(limit)
 
       if (status && status !== 'all') query = query.eq('status', status as string)
-      if (zona)     query = query.eq('zona', zona)
-      if (tipo)     query = query.eq('tipo', tipo)
-      if (maxPreco) query = query.lte('preco', maxPreco)
+      if (zona)     query = query.eq('zone', zona)
+      if (tipo)     query = query.eq('type', tipo)
+      if (maxPreco) query = query.lte('price', maxPreco)
 
       const { data, error } = await query
 
       if (!error && data && data.length > 0) {
+        // Map English DB column names → Portuguese DTO (ImovelFull contract)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped = (data as any[]).map((row) => ({
-          id:         row.id,
-          nome:       row.nome       || '',
-          zona:       row.zona       || '',
-          bairro:     row.bairro     || '',
-          tipo:       row.tipo       || '',
-          preco:      row.preco      || 0,
-          area:       row.area       || 0,
-          quartos:    row.quartos    || 0,
-          casasBanho: row.casas_banho || 0,
-          energia:    row.energia    || '',
-          status:     row.status     || 'active',
-          descricao:  row.descricao  || '',
-          features:   Array.isArray(row.features) ? row.features : [],
-          gradient:   row.gradient   || 'from-slate-800 to-gray-900',
-          badge:      row.badge      || undefined,
-          lifestyleTags: Array.isArray(row.lifestyle_tags) ? row.lifestyle_tags : [],
-          imagens:    Array.isArray(row.images) ? row.images : [],
-          matterportUrl: row.matterport_url || undefined,
-          youtubeUrl: row.youtube_url || undefined,
+          id:              row.id,
+          nome:            row.title                 || '',
+          zona:            row.zone                  || '',
+          bairro:          row.city                  || '',
+          tipo:            row.type                  || '',
+          preco:           row.price                 || 0,
+          area:            row.area_m2               || 0,
+          quartos:         row.bedrooms              || 0,
+          casasBanho:      row.bathrooms             || 0,
+          energia:         row.energy_certificate    || '',
+          status:          row.status                || 'active',
+          descricao:       row.description           || '',
+          features:        Array.isArray(row.features) ? row.features : [],
+          gradient:        'from-slate-800 to-gray-900',
+          badge:           undefined,
+          lifestyleTags:   [],
+          imagens:         Array.isArray(row.photos) ? row.photos : [],
+          matterportUrl:   row.virtual_tour_url      || undefined,
+          youtubeUrl:      undefined,
+          isVerified:      row.is_verified           ?? false,
+          submissionSource: row.submission_source    || null,
+          viewsCount:      row.views_total           || 0,
+          listingDate:     row.created_at            || null,
         }))
 
         void sloRecordRequest(_sloTenant, 'api', true, Date.now() - _sloStart).catch(() => {})
