@@ -38,6 +38,27 @@ const PartnerSubmissionSchema = z.object({
   features:    z.array(z.string()).optional().default([]),
 })
 
+// Maps Portuguese property type names (from partner form) to the English
+// property_type enum values defined in the database schema.
+const TIPO_TO_TYPE: Record<string, string> = {
+  'Apartamento':        'apartment',
+  'Moradia':            'villa',
+  'Moradia em Banda':   'townhouse',
+  'Townhouse':          'townhouse',
+  'Penthouse':          'penthouse',
+  'Terreno':            'land',
+  'Lote':               'land',
+  'Comercial':          'commercial',
+  'Escritório':         'office',
+  'Armazém':            'warehouse',
+  'Hotel':              'hotel',
+  'Loteamento':         'development_plot',
+}
+
+function mapPropertyType(tipo: string): string {
+  return TIPO_TO_TYPE[tipo] ?? TIPO_TO_TYPE[tipo.trim()] ?? 'apartment'
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const corrId = getRequestCorrelationId(request)
   // Rate limit: 3 submissions per IP per hour
@@ -78,29 +99,38 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         console.error('[properties POST] contacts upsert error:', e, { corrId })
       }
 
-      // 2. Save property as pending_review in properties table
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- partner submission uses Portuguese field names mapped to DB English columns
-        await (supabaseAdmin as any)
-          .from('properties')
-          .insert({
-            title:        d.nome,
-            zone:         d.zona,
-            type:         d.tipo,
-            price:        d.preco,
-            area_m2:      d.area,
-            bedrooms:     d.quartos,
-            bathrooms:    d.casasBanho,
-            status:       'pending_review',
-            description:  d.desc,
-            features:     d.features,
-            notes:        `Parceiro: ${d.agencyName} (AMI ${d.agencyAMI}) — ${d.agencyEmail} — ${d.agencyPhone}${d.tourUrl ? ` | Tour: ${d.tourUrl}` : ''}`,
-            created_at:   new Date().toISOString(),
-            updated_at:   new Date().toISOString(),
-          })
-      } catch (e) {
-        // properties table may have schema differences — non-critical
-        console.warn('[properties POST] property insert error (non-critical):', e)
+      // 2. Save property as pending_review — CRITICAL: must succeed before success response
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- properties table uses as-any because types predate the 066 migration columns
+      const { error: propertyError } = await (supabaseAdmin as any)
+        .from('properties')
+        .insert({
+          title:             d.nome,
+          zone:              d.zona,
+          type:              mapPropertyType(d.tipo),
+          price:             d.preco,
+          area_m2:           d.area,
+          bedrooms:          d.quartos,
+          bathrooms:         d.casasBanho,
+          status:            'pending_review',
+          is_off_market:     true,
+          is_verified:       false,
+          submission_source: 'partner',
+          description:       d.desc || null,
+          features:          d.features,
+          created_at:        new Date().toISOString(),
+          updated_at:        new Date().toISOString(),
+        })
+
+      if (propertyError) {
+        console.error('[properties POST] property insert failed:', {
+          corrId,
+          code:    propertyError.code,
+          message: propertyError.message,
+        })
+        return NextResponse.json(
+          { error: 'Falha ao registar imóvel. Tente novamente.' },
+          { status: 500 }
+        )
       }
     }
 
