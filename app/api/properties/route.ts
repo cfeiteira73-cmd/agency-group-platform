@@ -121,6 +121,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const { error: propertyError } = await (supabaseAdmin as any)
         .from('properties')
         .insert({
+          id:                crypto.randomUUID(),
           nome:              d.nome,
           zona:              d.zona,
           bairro:            d.bairro || null,
