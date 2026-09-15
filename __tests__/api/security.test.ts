@@ -141,6 +141,19 @@ describe('Security — /api/avm (public route)', () => {
 // ─── Mortgage route — unauthenticated calls succeed ──────────────────────────
 
 describe('Security — /api/mortgage (public route)', () => {
+  // fetchLiveEuribor() inside the route hits an external site without a timeout
+  // guard.  Stub global fetch so the test env never makes a real network call.
+  beforeEach(() => {
+    vi.stubGlobal('fetch', async (url: string | URL | Request) => {
+      const href = typeof url === 'string' ? url : url instanceof URL ? url.href : (url as Request).url
+      if (href.includes('/api/rates')) {
+        return { ok: true, json: async () => ({ euribor_6m: 0.0295, euribor_12m: 0.0278, sources: ['mock'] }) } as Response
+      }
+      return { ok: false, status: 503, json: async () => ({}) } as Response
+    })
+  })
+  afterEach(() => { vi.unstubAllGlobals() })
+
   it('returns 400 for montante below minimum', async () => {
     const { POST } = await import('@/app/api/mortgage/route')
 
