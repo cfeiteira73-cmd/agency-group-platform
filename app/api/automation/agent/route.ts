@@ -306,8 +306,7 @@ Do NOT add subject line for WhatsApp/SMS. Add subject line for email.`,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabase as any)
         .from('properties')
-        .select('id, nome, zona, preco, quartos, area, tipo, fotos')
-        .eq('tenant_id', tenantId)   // TENANT FIX
+        .select('id, nome, zona, preco, quartos, area, tipo, images')
         .eq('status', 'active')
         .limit((input.limit as number) || 5)
 

@@ -30,9 +30,9 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1)
 
-    // Non-authenticated users only see active properties
+    // Non-authenticated users only see active, publicly listed properties
     if (!isAuthenticated) {
-      query = query.eq('status', 'active')
+      query = query.eq('status', 'active').eq('is_off_market', false)
     } else if (status && status !== 'all') {
       query = query.eq('status', status)
     }
@@ -217,10 +217,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     const supabase = await createClient()
-    // Soft delete: mark as off-market
+    // Soft archive: status='archived', is_off_market=true — ARCHIVED ≠ SOLD ≠ OFF-MARKET
     const { data, error } = await supabase
       .from('properties')
-      .update({ status: 'off-market', updated_at: new Date().toISOString() })
+      .update({ status: 'archived', is_off_market: true, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single()
@@ -228,7 +228,7 @@ export async function DELETE(req: NextRequest) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     if (!data) return NextResponse.json({ error: 'Property not found' }, { status: 404 })
 
-    return NextResponse.json({ success: true, message: 'Property marked as off-market' })
+    return NextResponse.json({ success: true, message: 'Property archived' })
   } catch (error) {
     console.error('DELETE /api/properties/db error:', error, { corrId })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -33,13 +33,13 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 // SERVER ONLY — import only in API routes or server actions
 // Never expose to the browser
 // ---------------------------------------------------------------------------
-if (!supabaseServiceRoleKey && process.env.NODE_ENV === 'production') {
-  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required in production. Set it in environment variables.')
+if (!supabaseServiceRoleKey) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required. Set it in environment variables.')
 }
 
 export const supabaseAdmin = createClient<Database>(
   supabaseUrl,
-  supabaseServiceRoleKey ?? supabaseAnonKey, // fallback only in development
+  supabaseServiceRoleKey,
   {
     auth: {
       autoRefreshToken: false,

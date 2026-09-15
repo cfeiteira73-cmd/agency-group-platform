@@ -131,6 +131,7 @@ async function getAvailableProperties(limit = 20): Promise<LiveProperty[]> {
       .from('properties')
       .select('id, nome, tipo, zona, preco, area, quartos, descricao, features, yield_bruto')
       .eq('status', 'active')
+      .eq('is_off_market', false)
       .not('nome', 'is', null)
       .order('created_at', { ascending: false })
       .limit(limit)

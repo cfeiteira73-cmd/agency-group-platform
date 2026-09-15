@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit } from '@/lib/rateLimit'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
@@ -40,11 +41,7 @@ async function keywordSearch(supabase: any, query: string, limit: number, filter
     .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, gradient')
     .or(`nome.ilike.%${safeQuery}%,zona.ilike.%${safeQuery}%,descricao.ilike.%${safeQuery}%`)
 
-  if (filters?.status) {
-    q = q.eq('status', filters.status)
-  } else {
-    q = q.eq('status', 'active')
-  }
+  q = q.eq('status', 'active').eq('is_off_market', false)
   if (filters?.zona) q = q.eq('zona', filters.zona)
   if (filters?.tipo) q = q.eq('tipo', filters.tipo)
   if (filters?.maxPreco) q = q.lte('preco', filters.maxPreco)
@@ -58,6 +55,17 @@ async function keywordSearch(supabase: any, query: string, limit: number, filter
 
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    ?? req.headers.get('x-real-ip') ?? '127.0.0.1'
+  const rl = await rateLimit(`search-natural:${ip}`, { maxAttempts: 15, windowMs: 3_600_000 })
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: { 'Retry-After': '3600', 'X-RateLimit-Limit': '15' } },
+    )
+  }
+
   try {
     const body = await req.json() as {
       query?: unknown
@@ -130,6 +138,7 @@ export async function POST(req: NextRequest) {
       .from('properties')
       .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, status, descricao, features, gradient')
       .eq('status', 'active')
+      .eq('is_off_market', false)
 
     if (matchedZone) broadQuery = broadQuery.eq('zona', matchedZone)
     broadQuery = broadQuery.limit(safeLimit)

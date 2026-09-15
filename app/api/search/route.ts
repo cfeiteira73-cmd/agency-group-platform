@@ -33,7 +33,7 @@ interface SemanticProperty {
   area: number
   tipo: string
   descricao: string
-  fotos: string[]
+  images: unknown
   similarity: number
 }
 
@@ -80,7 +80,7 @@ async function semanticSearch(query: string, filters: SemanticFilters): Promise<
       area: Number(p.area) || 0,
       tipo: String(p.tipo ?? ''),
       descricao: String(p.descricao ?? ''),
-      fotos: Array.isArray(p.fotos) ? (p.fotos as string[]) : [],
+      images: p.images ?? null,
       similarity: Number(p.similarity) || 0,
     }))
   } catch {
@@ -249,8 +249,7 @@ async function fetchPropertiesFromDB(criteria: ExtractedCriteria): Promise<Searc
       .order('created_at', { ascending: false })
       .limit(20)
 
-    // Filter by status — accept both 'active' (enum) and fallback
-    query = query.eq('status', 'active')
+    query = query.eq('status', 'active').eq('is_off_market', false)
 
     const zones = criteria.zones
     if (Array.isArray(zones) && zones.length > 0 && zones[0] !== null) {
