@@ -124,12 +124,13 @@ async function fetchUnscoredProperties(limit = 100) {
   }
 
   // Fallback: direct query if RPC not yet deployed
+  // NOTE: production schema uses Portuguese column names — map to PropertyInput below.
   const { data, error } = await supabaseAdmin
     .from('properties')
     .select([
-      'id', 'title', 'price', 'price_previous', 'price_per_sqm',
-      'avm_estimate', 'area_m2', 'bedrooms', 'type', 'condition', 'features',
-      'zone', 'city', 'concelho', 'address',
+      'id', 'nome', 'preco', 'price_previous', 'price_per_sqm',
+      'avm_estimate', 'area', 'quartos', 'tipo', 'condition', 'features',
+      'zona', 'city', 'concelho', 'address',
       'days_on_market', 'is_exclusive', 'is_off_market',
       'opportunity_score', 'investor_suitable', 'status', 'created_at',
     ].join(','))
@@ -139,7 +140,15 @@ async function fetchUnscoredProperties(limit = 100) {
     .limit(limit)
 
   if (error) throw new Error(`fetchUnscoredProperties: ${error.message}`)
-  return ((data ?? []) as unknown) as PropertyInput[]
+  // Map Portuguese production column names → PropertyInput (English) field names
+  return ((data ?? []) as unknown as Array<Record<string, unknown>>).map((row) => ({
+    ...row,
+    price:    row.preco,
+    area_m2:  row.area,
+    bedrooms: row.quartos,
+    type:     row.tipo,
+    zone:     row.zona,
+  })) as unknown as PropertyInput[]
 }
 
 // ---------------------------------------------------------------------------

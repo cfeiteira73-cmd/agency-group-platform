@@ -38,14 +38,14 @@ async function isAuthorized(req: NextRequest): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 interface PropertyRow {
-  id:          string
-  title:       string | null
-  type:        string | null
-  zone:        string | null
-  description: string | null
-  bedrooms:    number | null
-  area_m2:     number | null
-  price:       number | null
+  id:       string
+  nome:     string | null
+  tipo:     string | null
+  zona:     string | null
+  descricao: string | null
+  quartos:  number | null
+  area:     number | null
+  preco:    number | null
 }
 
 // ---------------------------------------------------------------------------
@@ -54,13 +54,13 @@ interface PropertyRow {
 
 function buildPropertyText(p: PropertyRow): string {
   return [
-    p.title,
-    p.type,
-    p.zone,
-    p.description,
-    p.bedrooms != null ? `${p.bedrooms} quartos` : null,
-    p.area_m2  != null ? `${p.area_m2}m²`        : null,
-    p.price    != null ? `€${p.price.toLocaleString('pt-PT')}` : null,
+    p.nome,
+    p.tipo,
+    p.zona,
+    p.descricao,
+    p.quartos != null ? `${p.quartos} quartos` : null,
+    p.area    != null ? `${p.area}m²`          : null,
+    p.preco   != null ? `€${p.preco.toLocaleString('pt-PT')}` : null,
   ].filter(Boolean).join('. ')
 }
 
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Build query
   let query = supabase
     .from('properties')
-    .select('id, title, type, zone, description, bedrooms, area_m2, price')
+    .select('id, nome, tipo, zona, descricao, quartos, area, preco')
     .eq('status', 'active')
     .is('embedding', null)
     .limit(50)

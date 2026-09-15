@@ -47,19 +47,19 @@ function authCheck(req: NextRequest): boolean {
 
 interface AlertProperty {
   id:               string
-  title:            string
-  price:            number
-  zone:             string | null
+  nome:             string
+  preco:            number
+  zona:             string | null
   zone_key:         string | null
-  type:             string | null
-  area_m2:          number | null
-  bedrooms:         number | null
+  tipo:             string | null
+  area:             number | null
+  quartos:          number | null
   opportunity_score: number
   score_reason:     string | null
   estimated_rental_yield: number | null
   is_exclusive:     boolean | null
   is_off_market:    boolean | null
-  photos:           string[] | null
+  images:           string[] | null
 }
 
 interface MatchedInvestor {
@@ -96,9 +96,9 @@ async function fetchFreshHighScoreProperties(
   const { data, error } = await (supabaseAdmin as any)
     .from('properties')
     .select([
-      'id', 'title', 'price', 'zone', 'zone_key', 'type',
-      'area_m2', 'bedrooms', 'opportunity_score', 'score_reason',
-      'estimated_rental_yield', 'is_exclusive', 'is_off_market', 'photos',
+      'id', 'nome', 'preco', 'zona', 'zone_key', 'tipo',
+      'area', 'quartos', 'opportunity_score', 'score_reason',
+      'estimated_rental_yield', 'is_exclusive', 'is_off_market', 'images',
     ].join(','))
     .eq('tenant_id', tenantId)   // TENANT FIX: scope to current org
     .eq('status', 'active')
@@ -120,11 +120,11 @@ async function findMatchingInvestors(
   property: AlertProperty,
   tenantId: string,
 ): Promise<MatchedInvestor[]> {
-  const priceFloor = property.price * 0.85  // 15% below asking (negotiation room)
-  const priceCeil  = property.price * 1.10  // 10% above (investor flexibility)
+  const priceFloor = property.preco * 0.85  // 15% below asking (negotiation room)
+  const priceCeil  = property.preco * 1.10  // 10% above (investor flexibility)
 
-  // Location token: prefer zone_key (normalised), fall back to zone display name
-  const locationToken = (property.zone_key ?? property.zone ?? '').trim()
+  // Location token: prefer zone_key (normalised), fall back to zona display name
+  const locationToken = (property.zone_key ?? property.zona ?? '').trim()
 
   // Base query — budget range match
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -168,11 +168,11 @@ async function generateAlertMessage(property: AlertProperty): Promise<string> {
     const { default: Anthropic } = await import('@anthropic-ai/sdk')
     const client = new Anthropic()
 
-    const preco = property.price.toLocaleString('pt-PT')
-    const area  = property.area_m2 ? `${property.area_m2}m²` : ''
-    const quartos = property.bedrooms ? `T${property.bedrooms}` : ''
-    const tipo  = property.type ?? ''
-    const zona  = property.zone ?? property.zone_key ?? 'Portugal'
+    const preco = property.preco.toLocaleString('pt-PT')
+    const area  = property.area ? `${property.area}m²` : ''
+    const quartos = property.quartos ? `T${property.quartos}` : ''
+    const tipo  = property.tipo ?? ''
+    const zona  = property.zona ?? property.zone_key ?? 'Portugal'
     const yield_ = property.estimated_rental_yield
       ? `, yield ${property.estimated_rental_yield}%`
       : ''
@@ -212,11 +212,11 @@ Menciona zona + preço + exclusividade. Cria urgência real. Convida contacto im
 }
 
 function buildFallbackMessage(property: AlertProperty): string {
-  const zona  = property.zone ?? property.zone_key ?? 'Portugal'
-  const preco = property.price.toLocaleString('pt-PT')
+  const zona  = property.zona ?? property.zone_key ?? 'Portugal'
+  const preco = property.preco.toLocaleString('pt-PT')
   const score = property.opportunity_score
   const excl  = property.is_exclusive || property.is_off_market ? ' (exclusivo)' : ''
-  return `Oportunidade Agency Group${excl}: ${property.title} em ${zona} a €${preco} — score de investimento ${score}/100. Contacte-nos para visita privada.`
+  return `Oportunidade Agency Group${excl}: ${property.nome} em ${zona} a €${preco} — score de investimento ${score}/100. Contacte-nos para visita privada.`
 }
 
 // ---------------------------------------------------------------------------
@@ -243,7 +243,7 @@ async function createDealPack(
       tenant_id:    tenantId,   // TENANT FIX: scope deal pack to current org
       created_by:   lead.agent_email ?? 'system@agency-group.pt',
       status:       'ready',
-      title:        property.title,       // required by schema
+      title:        property.nome,         // required by schema
       ai_summary:   message,
       metadata: {
         trigger:            'investor_alerts_cron',
@@ -331,7 +331,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     for (const property of properties) {
       const result: AlertResult = {
         property_id:      property.id,
-        property_title:   property.title,
+        property_title:   property.nome,
         investors_matched: 0,
         deal_pack_id:     null,
         alert_message:    '',

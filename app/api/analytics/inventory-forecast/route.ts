@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       supabaseAdmin
         .from('properties')
-        .select('id, zone, typology, price, created_at')
+        .select('id, zona, tipo, preco, created_at')
         .eq('status', 'active')
         .then((r: { data: unknown[] | null }) => r.data ?? []),
 
@@ -95,10 +95,10 @@ export async function GET(req: NextRequest) {
       return zoneMap[z]
     }
 
-    for (const p of activeProps as Array<{ zone: string }>) {
-      if (!p.zone) continue
-      if (zoneKey && p.zone !== zoneKey) continue
-      getZone(p.zone).active_listings++
+    for (const p of activeProps as Array<{ zona: string }>) {
+      if (!p.zona) continue
+      if (zoneKey && p.zona !== zoneKey) continue
+      getZone(p.zona).active_listings++
     }
 
     for (const d of closedDeals as Array<{ property_id: string }>) {

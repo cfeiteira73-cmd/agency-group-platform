@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     const supabase = await createClient()
     let query = supabase
       .from('properties')
-      .select('*', { count: 'exact' })
+      .select('id, nome, zona, bairro, tipo, preco, area, quartos, casas_banho, energia, descricao, features, views, amenities, badge, status, lat, lng, images, matterport_url, youtube_url, lifestyle_tags, gradient, is_off_market, agent_id, created_at, updated_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1)
 
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
         views:          body.views || null,
         amenities:      body.amenities || {},
         badge:          body.badge || null,
-        status:         body.status || 'active',
+        status:         session.user.role === 'admin' ? (body.status || 'pending_review') : 'pending_review',
         lat:            body.lat || null,
         lng:            body.lng || null,
         images:         body.images || [],
@@ -175,10 +175,18 @@ export async function PUT(req: NextRequest) {
 
     const supabase = await createClient()
 
-    const allowed = ['nome','zona','bairro','tipo','preco','area','quartos','casas_banho','energia','descricao','features','views','amenities','badge','status','lat','lng','images','matterport_url','youtube_url','lifestyle_tags','gradient']
+    // 'status' excluded — lifecycle transitions require admin role (see block below)
+    const allowed = ['nome','zona','bairro','tipo','preco','area','quartos','casas_banho','energia','descricao','features','views','amenities','badge','lat','lng','images','matterport_url','youtube_url','lifestyle_tags','gradient']
     const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
     for (const key of allowed) {
       if (key in updates) updateData[key] = updates[key]
+    }
+
+    if ('status' in updates) {
+      if (session.user.role !== 'admin') {
+        return NextResponse.json({ error: 'Only admins can update property status' }, { status: 403 })
+      }
+      updateData['status'] = updates.status
     }
 
     let query = supabase

@@ -216,7 +216,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       const { data, error } = await query
 
-      if (!error && data && data.length > 0) {
+      if (error) throw error  // DB error → propagates to outer catch → 500
+
+      if (data && data.length > 0) {
         // Map Portuguese DB column names to portal DTO.
         // Transformations: snake_case → camelCase, images → imagens (DTO contract).
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -248,8 +250,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         void sloRecordRequest(_sloTenant, 'api', true, Date.now() - _sloStart).catch(() => {})
         return NextResponse.json({ data: mapped, total: mapped.length, source: 'supabase' })
       }
-    } catch {
-      // Supabase unavailable — return empty, component uses PORTAL_PROPERTIES fallback
+    } catch (e) {
+      // DB error (connection failure or query error) → propagate to outer catch → 500
+      throw e
     }
 
     // Return empty — component will use PORTAL_PROPERTIES fallback
