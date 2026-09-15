@@ -366,16 +366,23 @@ export default function PortalCRM() {
   const [campaignName, setCampaignName] = useState('')
   const [campaignTemplate, setCampaignTemplate] = useState('followup')
   const [campaignSent, setCampaignSent] = useState(false)
-  // Matching state (per-contact pgvector results)
+  // Matching state — Phase 2C.C1b V1 CRM matching
   const [matchLoading, setMatchLoading] = useState(false)
   const [matchResults, setMatchResults] = useState<Array<{
-    match_score: number
+    property: { id: string; nome: string | null; zona: string | null; tipo: string | null; preco: number | null; quartos: number | null; area: number | null; is_off_market: boolean }
+    score: number
+    score_detail: { zona_pts: number; tipo_pts: number; budget_pts: number | null; quartos_pts: number | null; semantic_bonus: number; available_weight: number; commercial_priority: number | null }
     match_reasons: string[]
     explanation: string
     estimated_yield: number | null
-    property: { id: string; title?: string; nome?: string; price?: number; preco?: number; zone?: string; zona?: string; type?: string; tipo?: string; bedrooms?: number; quartos?: number; area_m2?: number; area?: number }
+    decision: { next_best_action: string; priority_level: 'high' | 'medium' | 'low'; match_weaknesses: string[] }
+    commercial_priority: number | null
   }>>([])
   const [matchContactId, setMatchContactId] = useState<number | null>(null)
+  const [matchError, setMatchError] = useState<string | null>(null)
+  const [matchDataReadiness, setMatchDataReadiness] = useState<{ known_criteria: string[]; unknown_criteria: string[]; completeness: 'high' | 'medium' | 'limited' } | null>(null)
+  const [historicMatches, setHistoricMatches] = useState<Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string }>>([])
+  const [historicMatchesLoaded, setHistoricMatchesLoaded] = useState<number | null>(null)
   // Enriquecer
   const [enrichLoading, setEnrichLoading] = useState<number | null>(null)
   const [enrichToast, setEnrichToast] = useState<string | null>(null)
@@ -459,6 +466,22 @@ export default function PortalCRM() {
       }
     } catch { /* ignore */ }
   }, [setCrmContacts, dataSource])
+
+  useEffect(() => {
+    if (crmProfileTab !== 'matching' || !activeCrmId) return
+    if (historicMatchesLoaded === activeCrmId) return
+    const controller = new AbortController()
+    fetch(`/api/matches?lead_id=${activeCrmId}&limit=5`, { signal: controller.signal })
+      .then(r => r.ok ? r.json() : null)
+      .then((json: { matches?: Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string }> } | null) => {
+        if (json && Array.isArray(json.matches)) {
+          setHistoricMatches(json.matches)
+          setHistoricMatchesLoaded(activeCrmId)
+        }
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [crmProfileTab, activeCrmId, historicMatchesLoaded])
 
   function saveCrmContacts(updated: CRMContact[]) {
     setCrmContacts(updated)
@@ -1937,130 +1960,185 @@ export default function PortalCRM() {
                   </div>
                 )}
 
-                {/* MATCHING — pgvector real-time matching */}
+                {/* MATCHING — V1 Motor Interno de Correspondência */}
                 {crmProfileTab === 'matching' && (
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    {/* Header */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', gap: '12px' }}>
                       <div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>AI Smart Matching — pgvector + Score</div>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '2px' }}>Correspondência semântica em tempo real com a carteira activa</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(14,14,13,.35)' }}>Correspondência V1 — Carteira Activa</div>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)', marginTop: '2px' }}>Motor interno · Divulgação requer decisão do agente</div>
                       </div>
-                      <button type="button" className="p-btn p-btn-gold" style={{ padding: '7px 16px', fontSize: '.52rem', flexShrink: 0 }}
+                      <button
+                        type="button"
+                        className="p-btn p-btn-gold"
+                        style={{ padding: '7px 16px', fontSize: '.52rem', flexShrink: 0 }}
                         disabled={matchLoading}
                         onClick={async () => {
                           setMatchLoading(true)
                           setMatchContactId(activeContact.id)
                           setMatchResults([])
+                          setMatchError(null)
+                          setMatchDataReadiness(null)
                           try {
-                            const res = await fetch('/api/portal/match', {
+                            const res = await fetch('/api/matching/properties', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                budget_min:        Number(activeContact.budgetMin) || 100000,
-                                budget_max:        Number(activeContact.budgetMax) || 5000000,
-                                locations:         activeContact.zonas?.length ? activeContact.zonas : ['Lisboa'],
-                                typology:          activeContact.tipos?.[0] ?? undefined,
-                                features_required: [],
-                                use_type:          activeContact.tipos?.some(t => /invest/i.test(t)) ? 'investment' : 'primary_residence',
-                                lead_id:           typeof activeContact.id === 'string' ? activeContact.id : undefined,
-                              }),
+                              body: JSON.stringify({ contact_id: activeContact.id }),
                             })
+                            const json = await res.json() as { matches?: unknown[]; data_readiness?: { known_criteria: string[]; unknown_criteria: string[]; completeness: 'high' | 'medium' | 'limited' }; error?: string }
                             if (res.ok) {
-                              const { matches } = await res.json()
-                              if (Array.isArray(matches)) setMatchResults(matches)
+                              setMatchResults(Array.isArray(json.matches) ? json.matches as typeof matchResults : [])
+                              if (json.data_readiness) setMatchDataReadiness(json.data_readiness)
+                              setHistoricMatchesLoaded(null)
+                            } else {
+                              setMatchError(json.error ?? 'Correspondência não pôde ser completada')
                             }
-                          } catch { /* silent */ }
-                          finally { setMatchLoading(false) }
+                          } catch {
+                            setMatchError('Serviço de correspondência indisponível')
+                          } finally {
+                            setMatchLoading(false)
+                          }
                         }}>
-                        {matchLoading ? '⟳ A processar...' : '🔍 Run Matching AI'}
+                        {matchLoading ? '⟳ A processar...' : 'Encontrar Correspondências'}
                       </button>
                     </div>
 
-                    {/* Results */}
+                    {/* Data readiness */}
+                    {matchContactId === activeContact.id && matchDataReadiness && (
+                      <div style={{ background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', padding: '10px 12px', marginBottom: '12px', borderRadius: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', textTransform: 'uppercase', color: 'rgba(14,14,13,.4)' }}>Completude do perfil</span>
+                          <span style={{
+                            fontFamily: "'DM Mono',monospace", fontSize: '.52rem', padding: '2px 8px', borderRadius: '10px',
+                            background: matchDataReadiness.completeness === 'high' ? 'rgba(74,156,122,.1)' : matchDataReadiness.completeness === 'medium' ? 'rgba(201,169,110,.1)' : 'rgba(136,136,136,.08)',
+                            color: matchDataReadiness.completeness === 'high' ? '#4a9c7a' : matchDataReadiness.completeness === 'medium' ? '#c9a96e' : '#888',
+                          }}>
+                            {matchDataReadiness.completeness === 'high' ? 'ELEVADA' : matchDataReadiness.completeness === 'medium' ? 'MÉDIA' : 'LIMITADA'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '7px' }}>
+                          {matchDataReadiness.known_criteria.map(c => (
+                            <span key={c} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', background: 'rgba(74,156,122,.08)', color: '#4a9c7a', padding: '2px 7px', borderRadius: '10px' }}>✓ {c}</span>
+                          ))}
+                          {matchDataReadiness.unknown_criteria.map(c => (
+                            <span key={c} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', background: 'rgba(136,136,136,.06)', color: '#888', padding: '2px 7px', borderRadius: '10px' }}>? {c}</span>
+                          ))}
+                        </div>
+                        {matchDataReadiness.completeness === 'limited' && (
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: '#c9a96e', marginTop: '6px' }}>
+                            Critérios em falta reduzem a precisão — completar perfil do comprador melhora a correspondência
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Loading */}
                     {matchLoading && (
-                      <div style={{ padding: '24px', textAlign: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em' }}>
-                        ⟳ A pesquisar carteira com IA semântica...
+                      <div style={{ padding: '32px', textAlign: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.35)', letterSpacing: '.1em' }}>
+                        ⟳ A encontrar as melhores correspondências…
                       </div>
                     )}
 
-                    {!matchLoading && matchContactId === activeContact.id && matchResults.length === 0 && (
+                    {/* Error */}
+                    {!matchLoading && matchContactId === activeContact.id && matchError && (
+                      <div style={{ padding: '14px', background: 'rgba(200,60,60,.04)', border: '1px solid rgba(200,60,60,.15)', marginBottom: '10px', borderRadius: '2px' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.06em', color: '#c83c3c', textTransform: 'uppercase' }}>CORRESPONDÊNCIA NÃO COMPLETADA</div>
+                        <div style={{ fontSize: '.78rem', color: 'rgba(14,14,13,.55)', marginTop: '5px' }}>{matchError}</div>
+                      </div>
+                    )}
+
+                    {/* Empty */}
+                    {!matchLoading && matchContactId === activeContact.id && !matchError && matchResults.length === 0 && (
                       <div style={{ padding: '24px', textAlign: 'center', border: '1px dashed rgba(14,14,13,.1)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.3)' }}>
-                        Nenhum imóvel compatível encontrado. Clique em &ldquo;Run Matching AI&rdquo; para pesquisar.
+                        Nenhuma correspondência encontrada com os critérios actuais
                       </div>
                     )}
 
+                    {/* Pre-run */}
+                    {!matchLoading && matchContactId !== activeContact.id && (
+                      <div style={{ padding: '24px', textAlign: 'center', border: '1px dashed rgba(14,14,13,.07)', fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: 'rgba(14,14,13,.22)' }}>
+                        Clique em «Encontrar Correspondências» para correr o motor V1 na carteira activa
+                      </div>
+                    )}
+
+                    {/* Match result cards */}
                     {!matchLoading && matchResults.map((r, idx) => {
                       const p = r.property
-                      const propTitle  = p.title || p.nome || `Imóvel ${idx + 1}`
-                      const propPrice  = p.price || p.preco || 0
-                      const propZone   = p.zone  || p.zona  || ''
-                      const propType   = p.type  || p.tipo  || ''
-                      const propBeds   = p.bedrooms || p.quartos || 0
-                      const propArea   = p.area_m2  || p.area    || 0
-                      const scoreColor = r.match_score >= 75 ? '#4a9c7a' : r.match_score >= 50 ? '#c9a96e' : '#888'
+                      const scoreColor = r.score >= 80 ? '#4a9c7a' : r.score >= 70 ? '#c9a96e' : '#888'
+                      const priceK = p.preco != null ? Math.round(p.preco / 1000) : null
+                      const priceLabel = priceK != null ? (priceK >= 1000 ? `€${(priceK / 1000).toFixed(2)}M` : `€${priceK}K`) : '—'
+                      const weaknesses = r.decision.match_weaknesses.filter(w => !w.includes('Sem fraquezas'))
                       return (
-                        <div key={p.id ?? idx} style={{ padding: '14px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', marginBottom: '10px', borderLeft: `4px solid ${scoreColor}`, borderRadius: '2px' }}>
+                        <div key={p.id ?? idx} style={{ padding: '14px', background: '#fff', border: '1px solid rgba(14,14,13,.08)', borderLeft: `4px solid ${scoreColor}`, marginBottom: '10px', borderRadius: '2px' }}>
+                          {p.is_off_market && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', padding: '6px 10px', background: 'rgba(201,169,110,.07)', border: '1px solid rgba(201,169,110,.18)' }}>
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', color: '#c9a96e', fontWeight: 700, flexShrink: 0 }}>OFF-MARKET</span>
+                              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: 'rgba(14,14,13,.45)' }}>Oportunidade interna — confirmar autorização antes de partilhar</span>
+                            </div>
+                          )}
                           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: '.85rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '3px' }}>{propTitle}</div>
+                              <div style={{ fontSize: '.85rem', fontWeight: 500, color: '#0e0e0d', marginBottom: '3px' }}>{p.nome ?? `Imóvel ${idx + 1}`}</div>
                               <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e' }}>
-                                {propPrice > 0 ? `€${(propPrice / 1e6).toFixed(2)}M` : '—'}
-                                {propZone ? ` · ${propZone}` : ''}
-                                {propType ? ` · ${propType}` : ''}
-                                {propBeds > 0 ? ` · T${propBeds}` : ''}
-                                {propArea > 0 ? ` · ${propArea}m²` : ''}
+                                {priceLabel}
+                                {p.zona ? ` · ${p.zona}` : ''}
+                                {p.tipo ? ` · ${p.tipo}` : ''}
+                                {p.quartos ? ` · T${p.quartos}` : ''}
+                                {p.area ? ` · ${p.area}m²` : ''}
                               </div>
-                              {r.estimated_yield && (
-                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a', marginTop: '2px' }}>Yield: {r.estimated_yield}%</div>
-                              )}
                               <div style={{ fontSize: '.78rem', color: 'rgba(14,14,13,.55)', lineHeight: 1.5, marginTop: '6px' }}>{r.explanation}</div>
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
-                                {r.match_reasons.slice(0, 3).map((reason, ri) => (
-                                  <span key={ri} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', background: 'rgba(28,74,53,.06)', color: '#1c4a35', padding: '2px 7px', borderRadius: '10px' }}>{reason}</span>
+                                {r.match_reasons.slice(0, 4).map((reason, ri) => (
+                                  <span key={ri} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', background: 'rgba(28,74,53,.06)', color: '#1c4a35', padding: '2px 7px', borderRadius: '10px' }}>{reason}</span>
                                 ))}
                               </div>
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.45rem', color: 'rgba(14,14,13,.3)', marginTop: '7px' }}>
+                                Zona {r.score_detail.zona_pts}/25 · Tipo {r.score_detail.tipo_pts}/20
+                                {r.score_detail.budget_pts !== null ? ` · Orç. ${r.score_detail.budget_pts}/30` : ' · Orç. N/A'}
+                                {r.score_detail.quartos_pts !== null ? ` · Qts. ${r.score_detail.quartos_pts}/10` : ' · Qts. N/A'}
+                                {r.score_detail.semantic_bonus > 0 ? ` · +${r.score_detail.semantic_bonus} sem.` : ''}
+                              </div>
+                              {weaknesses.length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '5px' }}>
+                                  {weaknesses.map((w, wi) => (
+                                    <span key={wi} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.45rem', background: 'rgba(200,100,0,.05)', color: 'rgba(180,80,0,.75)', padding: '2px 7px', borderRadius: '10px' }}>⚠ {w}</span>
+                                  ))}
+                                </div>
+                              )}
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: 'rgba(14,14,13,.4)', marginTop: '6px' }}>▶ {r.decision.next_best_action}</div>
+                              {r.commercial_priority != null && (
+                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.45rem', color: 'rgba(14,14,13,.28)', marginTop: '3px' }}>Prioridade comercial: {r.commercial_priority}/100</div>
+                              )}
+                              {r.estimated_yield != null && (
+                                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#4a9c7a', marginTop: '4px' }}>Yield estimado: {r.estimated_yield}%</div>
+                              )}
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                              <div style={{ width: '44px', height: '44px', borderRadius: '50%', border: `3px solid ${scoreColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.7rem', fontWeight: 700, color: scoreColor }}>{r.match_score}</div>
-                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.45rem', color: 'rgba(14,14,13,.3)', textAlign: 'center' }}>score</div>
-                              <button type="button" className="p-btn p-btn-gold" style={{ padding: '4px 10px', fontSize: '.52rem', marginTop: '2px' }}
-                                onClick={async () => {
-                                  try {
-                                    await fetch('/api/deal-packs/generate', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({
-                                        property_id: p.id ?? undefined,
-                                        lead_id: typeof activeContact.id === 'string' ? activeContact.id : undefined,
-                                        property_data: { title: propTitle, price: propPrice, zone: propZone, type: propType, bedrooms: propBeds, area_m2: propArea },
-                                        buyer_profile: { name: activeContact.name },
-                                      }),
-                                    })
-                                    setEnrichToast('Deal Pack gerado! Acede em Deals → Deal Packs')
-                                    enrichToastRef.current = setTimeout(() => setEnrichToast(null), 4000)
-                                  } catch { /* silent */ }
-                                }}>
-                                📄 Deal Pack
-                              </button>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                              <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: `3px solid ${scoreColor}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'DM Mono',monospace", fontSize: '.72rem', fontWeight: 700, color: scoreColor }}>{r.score}</div>
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.25)' }}>V1</div>
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', letterSpacing: '.05em', textTransform: 'uppercase', color: r.decision.priority_level === 'high' ? '#4a9c7a' : r.decision.priority_level === 'medium' ? '#c9a96e' : '#888' }}>{r.decision.priority_level}</div>
                             </div>
                           </div>
                         </div>
                       )
                     })}
 
-                    {/* Fallback: pipeline deals still shown for context */}
-                    {(!matchResults.length || matchContactId !== activeContact.id) && deals.filter(d => {
-                      const b = parsePTValue(d.valor); const bMin = Number(activeContact.budgetMin) || 0; const bMax = Number(activeContact.budgetMax) || 0
-                      return (!bMin && !bMax) || (b >= bMin * 0.8 && b <= bMax * 1.2)
-                    }).slice(0, 3).map(d => (
-                      <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.07)', marginBottom: '6px', borderLeft: '3px solid #c9a96e' }}>
-                        <div>
-                          <div style={{ fontSize: '.83rem', fontWeight: 500, color: '#0e0e0d' }}>{d.imovel}</div>
-                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', color: '#c9a96e', marginTop: '2px' }}>{d.valor} · {d.fase} · Pipeline</div>
-                        </div>
-                        <button type="button" className="p-btn" style={{ padding: '5px 10px', fontSize: '.52rem' }} onClick={() => saveCrmContacts(crmContacts.map(c => c.id === activeContact.id ? { ...c, dealRef: d.ref } : c))}>Associar</button>
+                    {/* Persisted match history */}
+                    {historicMatches.length > 0 && (
+                      <div style={{ marginTop: '18px' }}>
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.28)', marginBottom: '8px' }}>Correspondências persistidas</div>
+                        {historicMatches.slice(0, 5).map(hm => (
+                          <div key={hm.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', marginBottom: '4px' }}>
+                            <div>
+                              <div style={{ fontSize: '.8rem', color: '#0e0e0d' }}>{hm.property_title ?? hm.property_id}</div>
+                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.45rem', color: 'rgba(14,14,13,.32)', marginTop: '2px' }}>{new Date(hm.created_at).toLocaleDateString('pt-PT')} · {hm.status}</div>
+                            </div>
+                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.62rem', fontWeight: 700, color: hm.match_score >= 80 ? '#4a9c7a' : hm.match_score >= 70 ? '#c9a96e' : '#888' }}>{hm.match_score}</div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
 
