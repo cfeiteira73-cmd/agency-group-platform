@@ -42,8 +42,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const rawId    = parsed.contact_id
   const contactId =
-    typeof rawId === 'number' ? rawId
-    : typeof rawId === 'string' ? parseInt(rawId, 10)
+    typeof rawId === 'number' && Number.isInteger(rawId) ? rawId
+    : typeof rawId === 'string' && /^\d+$/.test(rawId) ? parseInt(rawId, 10)
     : NaN
 
   if (!contactId || isNaN(contactId) || contactId <= 0) {

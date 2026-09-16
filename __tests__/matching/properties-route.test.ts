@@ -261,8 +261,8 @@ describe('Phase 2C.C1b — V1 score thresholds for UI display', () => {
 describe('Phase 2C.C1b — contact_id validation', () => {
   function parseContactId(raw: unknown): number | null {
     const id =
-      typeof raw === 'number' ? raw
-      : typeof raw === 'string' ? parseInt(raw, 10)
+      typeof raw === 'number' && Number.isInteger(raw) ? raw
+      : typeof raw === 'string' && /^\d+$/.test(raw) ? parseInt(raw, 10)
       : NaN
     return (!id || isNaN(id) || id <= 0) ? null : id
   }
@@ -274,6 +274,11 @@ describe('Phase 2C.C1b — contact_id validation', () => {
   it('zero contact_id fails',     ()   => expect(parseContactId(0)).toBeNull())
   it('negative contact_id fails', ()   => expect(parseContactId(-1)).toBeNull())
   it('string "abc" fails',        ()   => expect(parseContactId('abc')).toBeNull())
+  it('UUID string fails — no partial parse',  () => expect(parseContactId('334b707e-abc1-4def-b5cd-123456789abc')).toBeNull())
+  it('partial numeric string fails',          () => expect(parseContactId('15abc')).toBeNull())
+  it('decimal string fails',                  () => expect(parseContactId('12.5')).toBeNull())
+  it('empty string fails',                    () => expect(parseContactId('')).toBeNull())
+  it('float number fails — not integer',      () => expect(parseContactId(12.5)).toBeNull())
 })
 
 // ---------------------------------------------------------------------------

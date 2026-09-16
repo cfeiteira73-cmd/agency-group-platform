@@ -1980,11 +1980,21 @@ export default function PortalCRM() {
                           setMatchResults([])
                           setMatchError(null)
                           setMatchDataReadiness(null)
+                          const rawId = activeContact.id
+                          const numericId =
+                            typeof rawId === 'number' && Number.isInteger(rawId) ? rawId
+                            : typeof rawId === 'string' && /^\d+$/.test(rawId) ? parseInt(rawId, 10)
+                            : NaN
+                          if (!numericId || isNaN(numericId) || numericId <= 0) {
+                            setMatchError('ID do contacto inválido — sincronize o CRM para carregar contactos reais')
+                            setMatchLoading(false)
+                            return
+                          }
                           try {
                             const res = await fetch('/api/matching/properties', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ contact_id: activeContact.id }),
+                              body: JSON.stringify({ contact_id: numericId }),
                             })
                             const json = await res.json() as { matches?: unknown[]; data_readiness?: { known_criteria: string[]; unknown_criteria: string[]; completeness: 'high' | 'medium' | 'limited' }; error?: string }
                             if (res.ok) {
