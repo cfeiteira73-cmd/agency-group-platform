@@ -31,7 +31,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const page      = Math.max(Number(searchParams.get('page') ?? '1'), 1)
   const offset    = (page - 1) * limit
 
-  const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+  // FIX-2: tenant_id not in production schema (matches.tenant_id never applied)
   let query = supabase
     .from('matches')
     .select(`
@@ -39,7 +39,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       explanation, similarity, estimated_yield, status, matched_by,
       created_at, updated_at
     `, { count: 'exact' })
-    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
 
