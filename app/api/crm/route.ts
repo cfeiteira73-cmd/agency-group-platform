@@ -309,15 +309,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const search = searchParams.get('search')?.toLowerCase()
     const zone   = searchParams.get('zone')
 
-    // Tenant scope — CRM contacts must never leak cross-tenant data
-    const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? '00000000-0000-0000-0000-000000000001'
+    // FIX-2: tenant_id not in production schema (contacts.tenant_id never applied — /api/crm path)
 
     // --- Try Supabase ---
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query: any = contactsTable()
         .select('*', { count: 'exact' })
-        .eq('tenant_id', tenantId)   // TENANT FIX: scope contacts to current org
         .order('updated_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1)
 
