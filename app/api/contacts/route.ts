@@ -1,5 +1,7 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
+import { requirePortalAuth } from '@/lib/requirePortalAuth'
 import { createClient } from '@/lib/supabase/server'
 import track from '@/lib/trackLearningEvent'
 import { emit } from '@/lib/events/producers'
@@ -7,12 +9,70 @@ import { getRequestCorrelationId } from '@/lib/observability/correlation'
 
 export const runtime = 'nodejs'
 
+// ---------------------------------------------------------------------------
+// resolvePortalUser — Phase 2C.C1b-AR contacts auth reconciliation
+//
+// Accepts NextAuth sessions AND magic-link portal sessions, using the same
+// hardened boundary (requirePortalAuth) that protects all other portal routes.
+// Magic-link users are resolved against the canonical users table with the
+// same is_active semantics as auth.ts (null=active, false=denied).
+// Service tokens are intentionally rejected — contacts are user-context resources.
+// ---------------------------------------------------------------------------
+type ResolvedUser =
+  | { ok: false; response: NextResponse }
+  | { ok: true; userId: string; userRole: string; userEmail: string }
+
+export async function resolvePortalUser(req: NextRequest): Promise<ResolvedUser> {
+  const check = await requirePortalAuth(req)
+  if (!check.ok) return { ok: false, response: check.response }
+
+  // Service tokens (crons/n8n) are not portal user sessions — contacts route is user-context
+  if (check.via === 'service_token') {
+    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  }
+
+  if (check.via === 'nextauth') {
+    // requirePortalAuth already verified the session; call auth() to get id + role
+    const session = await auth()
+    if (!session?.user?.id) {
+      return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+    }
+    return {
+      ok:        true,
+      userId:    session.user.id,
+      userRole:  session.user.role ?? 'agent',
+      userEmail: session.user.email ?? check.email,
+    }
+  }
+
+  // magic_link: resolve canonical user record by email using service-role client
+  // Same is_active semantics as auth.ts: null=active, false=denied (never touch this logic)
+  const adminClient = createSupabaseAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+  const { data: user } = await adminClient
+    .from('users')
+    .select('id, role, is_active')
+    .eq('email', check.email)
+    .single()
+
+  if (!user || user.is_active === false) {
+    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  }
+
+  return {
+    ok:        true,
+    userId:    user.id as string,
+    userRole:  (user.role ?? 'agent') as string,
+    userEmail: check.email,
+  }
+}
+
 export async function GET(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const u = await resolvePortalUser(req)
+  if (!u.ok) return u.response
 
   try {
     const { searchParams } = new URL(req.url)
@@ -31,8 +91,8 @@ export async function GET(req: NextRequest) {
       .range((page - 1) * limit, page * limit - 1)
 
     // Admins see all contacts; agents see only their own
-    if (session.user.role !== 'admin') {
-      query = query.eq('assigned_to', session.user.id)
+    if (u.userRole !== 'admin') {
+      query = query.eq('assigned_to', u.userId)
     }
 
     if (status && status !== 'all') query = query.eq('status', status)
@@ -60,10 +120,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const u = await resolvePortalUser(req)
+  if (!u.ok) return u.response
 
   try {
     const body = await req.json()
@@ -93,7 +151,7 @@ export async function POST(req: NextRequest) {
         source:             body.source || body.origin || null,
         last_contact_at:    body.last_contact_at || body.last_contact || null,
         lead_score:         body.lead_score || 0,
-        assigned_to:        session.user.id,
+        assigned_to:        u.userId,
         tenant_id:          tenantId,
       })
       .select()
@@ -101,7 +159,7 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    const agentEmail = session.user.email ?? null
+    const agentEmail = u.userEmail
     const corrId2    = getRequestCorrelationId(req)
     // Non-blocking learning event (direct Supabase path — proven analytics)
     track.contactCreated({
@@ -133,10 +191,8 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const u = await resolvePortalUser(req)
+  if (!u.ok) return u.response
 
   try {
     const body = await req.json()
@@ -179,8 +235,8 @@ export async function PUT(req: NextRequest) {
       .eq('tenant_id', tenantId)
 
     // Agents can only update their own contacts
-    if (session.user.role !== 'admin') {
-      query = query.eq('assigned_to', session.user.id)
+    if (u.userRole !== 'admin') {
+      query = query.eq('assigned_to', u.userId)
     }
 
     const { data, error } = await query.select().single()
@@ -196,10 +252,8 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const corrId = getRequestCorrelationId(req)
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const u = await resolvePortalUser(req)
+  if (!u.ok) return u.response
 
   try {
     const { searchParams } = new URL(req.url)
@@ -219,8 +273,8 @@ export async function DELETE(req: NextRequest) {
       .eq('id', id)
       .eq('tenant_id', tenantId)
 
-    if (session.user.role !== 'admin') {
-      query = query.eq('assigned_to', session.user.id)
+    if (u.userRole !== 'admin') {
+      query = query.eq('assigned_to', u.userId)
     }
 
     const { data, error } = await query.select().single()
