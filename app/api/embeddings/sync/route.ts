@@ -34,34 +34,44 @@ async function isAuthorized(req: NextRequest): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Property row shape — matches current properties table schema
+// Property row shape — canonical production properties table schema
 // ---------------------------------------------------------------------------
 
 interface PropertyRow {
-  id:       string
-  nome:     string | null
-  tipo:     string | null
-  zona:     string | null
-  descricao: string | null
-  quartos:  number | null
-  area:     number | null
-  preco:    number | null
+  id:            string
+  nome:          string | null
+  tipo:          string | null
+  zona:          string | null
+  bairro:        string | null
+  descricao:     string | null
+  features:      unknown       // Json (string[], object, or null in production)
+  amenities:     unknown       // Json
+  lifestyle_tags: unknown      // Json
+  quartos:       number | null
+  area:          number | null
+  // preco excluded: budget is structural in V1, not semantic (SEM-IMPL Section 5/6)
 }
 
 // ---------------------------------------------------------------------------
-// Build rich text for embedding from property data
+// Build canonical semantic text for embedding (SEM-IMPL D.1 repair)
+// Delegates to shared document builder for deterministic canonical output.
 // ---------------------------------------------------------------------------
 
+import { buildPropertySemanticDocument } from '@/lib/matching/sem-document-builder'
+
 function buildPropertyText(p: PropertyRow): string {
-  return [
-    p.nome,
-    p.tipo,
-    p.zona,
-    p.descricao,
-    p.quartos != null ? `${p.quartos} quartos` : null,
-    p.area    != null ? `${p.area}m²`          : null,
-    p.preco   != null ? `€${p.preco.toLocaleString('pt-PT')}` : null,
-  ].filter(Boolean).join('. ')
+  return buildPropertySemanticDocument({
+    nome:          p.nome,
+    tipo:          p.tipo,
+    zona:          p.zona,
+    bairro:        p.bairro,
+    descricao:     p.descricao,
+    features:      p.features,
+    amenities:     p.amenities,
+    lifestyle_tags: p.lifestyle_tags,
+    quartos:       p.quartos,
+    area:          p.area,
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -114,10 +124,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   } catch { /* no body = sync all */ }
 
-  // Build query
+  // Build query — select canonical semantic fields (preco excluded: structural, not semantic)
   let query = supabase
     .from('properties')
-    .select('id, nome, tipo, zona, descricao, quartos, area, preco')
+    .select('id, nome, tipo, zona, bairro, descricao, features, amenities, lifestyle_tags, quartos, area')
     .eq('status', 'active')
     .is('embedding', null)
     .limit(50)

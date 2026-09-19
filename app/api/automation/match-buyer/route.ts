@@ -16,6 +16,17 @@
 //   FIX-7: supabaseAdmin (service role) used for ALL match read/write.
 //   V1:    Persistence via upsert_match_v1() RPC (race-safe, non-destructive).
 //          Scoring via v1-scoring-engine (normalized, UNKNOWN ≠ BAD FIT).
+//
+// Phase 2C.C0-SEM-IMPL (shadow mode):
+//   D.1 repaired: property semantic document now includes features (in sync route).
+//   D.2 repaired: query embedding is now used for shadow similarity (not discarded).
+//   D.3 repaired: fetchContact fetches semantic intent fields from contacts.
+//
+//   SHADOW MODE INVARIANT:
+//     official semantic_bonus = 0 ALWAYS (shadow phase)
+//     official match_score    = structural V1 only
+//     shadow_observations     = logged in response for empirical measurement
+//     persistence: p_similarity = null (shadow — official matches uncontaminated)
 // =============================================================================
 
 import { NextRequest, NextResponse }   from 'next/server'
@@ -34,6 +45,12 @@ import {
   type V1MatchResult,
   type UpsertResult,
 } from '@/lib/matching/v1-scoring-engine'
+import {
+  buildBuyerSemanticDocument,
+  parseEmbeddingString,
+  cosineSimilarity,
+  type BuyerSemanticFields,
+} from '@/lib/matching/sem-document-builder'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 30
@@ -94,17 +111,42 @@ interface ContactRow {
   preferred_locations: string[] | null   // canonical zona preference (contacts schema)
   budget_min:          number | null
   budget_max:          number | null
+  // D.3 — semantic intent fields (SEM-IMPL repair)
+  buyer_features:      string[] | null
+  buyer_notes:         string | null
+  buyer_purpose:       string | null
+  typologies_wanted:   string[] | null
+  notes:               string | null
 }
 
 async function fetchContact(leadId: number): Promise<ContactRow | null> {
   const { data, error } = await supabaseAdmin
     .from('contacts')
-    .select('id, preferred_locations, budget_min, budget_max')
+    .select('id, preferred_locations, budget_min, budget_max, buyer_features, buyer_notes, buyer_purpose, typologies_wanted, notes')
     .eq('id', leadId)
     .single()
 
   if (error || !data) return null
   return data as ContactRow
+}
+
+// ---------------------------------------------------------------------------
+// Shadow observation — SEM-IMPL observational record
+// SHADOW INVARIANT: never mutates official score or persistence
+// ---------------------------------------------------------------------------
+
+interface ShadowObservation {
+  property_id:              string
+  structural_score:         number
+  structural_rank:          number
+  raw_similarity:           number | null
+  proposed_semantic_bonus:  number
+  shadow_combined_score:    number
+  shadow_rank:              number
+  rank_delta:               number
+  off_market:               boolean
+  known_criteria:           string[]
+  unknown_criteria:         string[]
 }
 
 // ---------------------------------------------------------------------------
@@ -146,36 +188,49 @@ function buildContactProfile(
 // INVARIANT: MATCH FOUND ≠ PROPERTY DISCLOSED
 // ---------------------------------------------------------------------------
 
-async function fetchActiveProperties(): Promise<V1PropertyCandidate[]> {
+interface FetchPropertiesResult {
+  candidates:   V1PropertyCandidate[]
+  embeddingMap: Map<string, number[] | null>  // shadow use only — never fed to V1 scorer
+}
+
+async function fetchActiveProperties(): Promise<FetchPropertiesResult> {
   const { data, error } = await supabaseAdmin
     .from('properties')
-    .select('id, nome, zona, tipo, preco, quartos, area, is_off_market')
+    .select('id, nome, zona, tipo, preco, quartos, area, is_off_market, embedding')
     .eq('status', 'active')
     .limit(200)
 
   if (error) throw new Error(`Property fetch failed: ${error.message}`)
-  if (!data || data.length === 0) return []
+  if (!data || data.length === 0) return { candidates: [], embeddingMap: new Map() }
 
-  return (data as Array<{
-    id:           string
-    nome:         string | null
-    zona:         string | null
-    tipo:         string | null
-    preco:        number | null
-    quartos:      number | null
-    area:         number | null
+  const embeddingMap = new Map<string, number[] | null>()
+  const candidates = (data as Array<{
+    id:            string
+    nome:          string | null
+    zona:          string | null
+    tipo:          string | null
+    preco:         number | null
+    quartos:       number | null
+    area:          number | null
     is_off_market: boolean | null
-  }>).map(p => ({
-    id:           p.id,
-    nome:         p.nome,
-    zona:         p.zona,
-    tipo:         p.tipo,
-    preco:        p.preco,
-    quartos:      p.quartos,
-    area:         p.area,
-    is_off_market: p.is_off_market ?? false,
-    similarity:   null,  // no embeddings in Phase 2C.C1 — semantic_bonus = 0
-  }))
+    embedding:     string | null
+  }>).map(p => {
+    // Parse embedding for shadow observation — kept in parallel map, not in candidate
+    embeddingMap.set(p.id, parseEmbeddingString(p.embedding))
+    return {
+      id:            p.id,
+      nome:          p.nome,
+      zona:          p.zona,
+      tipo:          p.tipo,
+      preco:         p.preco,
+      quartos:       p.quartos,
+      area:          p.area,
+      is_off_market: p.is_off_market ?? false,
+      similarity:    null,  // SHADOW INVARIANT: official similarity always null → semanticBonus = 0
+    }
+  })
+
+  return { candidates, embeddingMap }
 }
 
 // ---------------------------------------------------------------------------
@@ -318,8 +373,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ── Step 2: Fetch active properties (canonical V1 retrieval) ─────────────
     // Includes off-market properties — internal match eligibility ≠ public search
     let properties: V1PropertyCandidate[]
+    let embeddingMap: Map<string, number[] | null>
     try {
-      properties = await fetchActiveProperties()
+      const fetched = await fetchActiveProperties()
+      properties  = fetched.candidates
+      embeddingMap = fetched.embeddingMap
     } catch (err) {
       console.error('[match-buyer] fetchActiveProperties failed:', { corrId, err })
       return NextResponse.json(
@@ -338,27 +396,81 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }, { headers: { 'x-correlation-id': corrId } })
     }
 
-    // ── Step 3: Best-effort embedding (semantic bonus when available) ─────────
-    // Phase 2C.C1: 0/55 properties have embeddings → similarity = null → bonus = 0
-    // Keeping this hook so Phase 2C.C0 embedding backfill activates it automatically.
-    const queryText = [
-      profile.zonas.join(' '),
-      profile.tipos.join(' '),
-      req.typology ?? '',
-    ].filter(Boolean).join('. ')
+    // ── Step 3: Shadow query embedding (D.2 + D.3 repair — SEM-IMPL shadow mode) ─
+    // Build canonical buyer semantic document from contact intent fields (D.3).
+    // Generate query embedding; compare against property embeddings after V1 ranking.
+    // SHADOW INVARIANT: official scoring unaffected — similarity = null on all candidates.
+    let queryEmbedding: number[] | null = null
 
-    if (queryText.trim()) {
-      const embedding = await generateEmbedding(queryText)
-      if (embedding) {
-        // Similarity scoring against property embeddings is a no-op until
-        // Phase 2C.C0 backfill runs — similarity remains null for all properties
-        void embedding
+    if (contact) {
+      const buyerDoc = buildBuyerSemanticDocument({
+        preferred_locations: contact.preferred_locations,
+        typologies_wanted:   contact.typologies_wanted   ?? null,
+        buyer_purpose:       contact.buyer_purpose       ?? null,
+        buyer_features:      contact.buyer_features      ?? null,
+        buyer_notes:         contact.buyer_notes         ?? null,
+        notes:               contact.notes               ?? null,
+      })
+      if (buyerDoc.trim()) {
+        queryEmbedding = await generateEmbedding(buyerDoc)
       }
     }
 
     // ── Step 4: Score and rank via V1 engine ──────────────────────────────────
     const ranked = matchV1(profile, properties)  // already filtered ≥ 40 and sorted
     const top5   = ranked.slice(0, 5)
+
+    // ── Step 4b: Shadow observations (SEM-IMPL observational layer) ─────────
+    // SHADOW INVARIANT: observational only — does not affect official scores,
+    //   ranking, persistence, or any outbound communication.
+    // official semantic_bonus = 0 ALWAYS (similarity = null on all candidates).
+    const SHADOW_MAX_BONUS = 5
+
+    const knownCriteria: string[]   = []
+    const unknownCriteria: string[] = []
+    if (profile.zonas.length > 0)        knownCriteria.push('zona')    ; else unknownCriteria.push('zona')
+    if (profile.tipos.length > 0)        knownCriteria.push('tipo')    ; else unknownCriteria.push('tipo')
+    if (profile.budget_max != null)      knownCriteria.push('budget')  ; else unknownCriteria.push('budget')
+    if (profile.quartos_min != null)     knownCriteria.push('quartos') ; else unknownCriteria.push('quartos')
+
+    const top5WithShadow = top5.map((result, idx) => {
+      const propEmbedding = embeddingMap.get(result.property.id) ?? null
+      const rawSim: number | null = (queryEmbedding && propEmbedding)
+        ? cosineSimilarity(queryEmbedding, propEmbedding)
+        : null
+      const proposedBonus = rawSim != null
+        ? Math.min(SHADOW_MAX_BONUS, Math.round(rawSim * SHADOW_MAX_BONUS))
+        : 0
+      return {
+        result,
+        structuralRank: idx + 1,
+        rawSim,
+        proposedBonus,
+        shadowCombined: Math.min(100, result.score + proposedBonus),
+      }
+    })
+
+    const shadowRankMap = new Map<string, number>()
+    ;[...top5WithShadow]
+      .sort((a, b) => b.shadowCombined - a.shadowCombined)
+      .forEach((item, idx) => shadowRankMap.set(item.result.property.id, idx + 1))
+
+    const shadowObservations: ShadowObservation[] = top5WithShadow.map(item => {
+      const shadowRank = shadowRankMap.get(item.result.property.id) ?? item.structuralRank
+      return {
+        property_id:              item.result.property.id,
+        structural_score:         item.result.score,
+        structural_rank:          item.structuralRank,
+        raw_similarity:           item.rawSim,
+        proposed_semantic_bonus:  item.proposedBonus,
+        shadow_combined_score:    item.shadowCombined,
+        shadow_rank:              shadowRank,
+        rank_delta:               item.structuralRank - shadowRank,
+        off_market:               item.result.property.is_off_market,
+        known_criteria:           knownCriteria,
+        unknown_criteria:         unknownCriteria,
+      }
+    })
 
     // ── Step 5: Persist via upsert_match_v1 (race-safe, non-destructive) ─────
     const persistResults: Array<UpsertResult & { property_id: string }> = []
@@ -457,7 +569,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         budget_min:  profile.budget_min,
         budget_max:  profile.budget_max,
         quartos_min: profile.quartos_min,
-        // buyer_score deliberately omitted from response (internal tiebreaker)
+        // buyer_score deliberately omitted (internal tiebreaker)
+      },
+      shadow_observations: shadowObservations,
+      shadow_mode: {
+        active:                    true,
+        official_semantic_bonus:   0,
+        query_embedding_generated: queryEmbedding != null,
+        properties_with_embeddings: [...embeddingMap.values()].filter(v => v != null).length,
       },
       generated_at:   new Date().toISOString(),
       correlation_id: corrId,

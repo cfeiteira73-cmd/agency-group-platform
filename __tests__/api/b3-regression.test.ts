@@ -319,12 +319,14 @@ describe('B3-003 — embeddings/sync: select uses Portuguese column names', () =
     const src = fs.readFileSync(routePath, 'utf-8')
 
     // Portuguese names must be present in the select and interface
-    expect(src).toContain("'id, nome, tipo, zona, descricao, quartos, area, preco'")
-    expect(src).toContain('nome:     string | null')
+    // (SEM-IMPL D.1 repair: select extended with bairro/features/amenities/lifestyle_tags;
+    //  preco removed from semantic document — price is structural, not semantic)
+    expect(src).toContain("'id, nome, tipo, zona, bairro, descricao, features, amenities, lifestyle_tags, quartos, area'")
+    expect(src).toContain('nome:          string | null')
     expect(src).toContain('p.nome')
     expect(src).toContain('p.tipo')
     expect(src).toContain('p.zona')
-    expect(src).toContain('p.preco')
+    expect(src).toContain('p.bairro')
 
     // English drift names must NOT be present in the select or interface
     expect(src).not.toContain("'id, title, type, zone, description, bedrooms, area_m2, price'")
