@@ -40,6 +40,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       explanation, similarity, estimated_yield, status, matched_by,
       notes, reviewed_at, reviewed_by,
       breakdown, match_weaknesses, priority_level,
+      disclosure_status, disclosure_authorized_at,
       created_at, updated_at
     `, { count: 'exact' })
     .order('created_at', { ascending: false })

@@ -1,8 +1,8 @@
 // =============================================================================
 // Agency Group — PATCH /api/matches/[id]
-// Phase 2C.D1-REVIEW — Human Match Review & Commercial Decision Layer
+// Phase 2C.D1-REVIEW / D2-A — Human Match Review + Disclosure Authorization
 //
-// Mutable fields: status, notes
+// Mutable fields: status, notes (review) | disclosure_status, reason (disclosure)
 // Machine-managed (immutable via this endpoint): match_score, breakdown,
 //   match_reasons, explanation, similarity, priority_level, next_best_action,
 //   match_weaknesses, lead_id, property_id, mandate_id, matched_by
@@ -74,10 +74,17 @@ export async function PATCH(
   const newNotes = rawBody.notes !== undefined
     ? (typeof rawBody.notes === 'string' || rawBody.notes === null ? rawBody.notes as string | null : undefined)
     : undefined
+  // D2-A: Disclosure authorization fields
+  const disclosureStatus = rawBody.disclosure_status !== undefined
+    ? (typeof rawBody.disclosure_status === 'string' ? rawBody.disclosure_status : null)
+    : undefined
+  const reason = rawBody.reason !== undefined
+    ? (typeof rawBody.reason === 'string' ? rawBody.reason.trim() || null : null)
+    : undefined
 
-  if (newStatus === undefined && newNotes === undefined) {
+  if (newStatus === undefined && newNotes === undefined && disclosureStatus === undefined) {
     return NextResponse.json(
-      { error: 'No mutable fields provided — allowed: status (string), notes (string|null)' },
+      { error: 'No mutable fields provided — allowed: status, notes, disclosure_status' },
       { status: 400 }
     )
   }
@@ -88,6 +95,79 @@ export async function PATCH(
       { error: `Unknown status value: '${newStatus}'` },
       { status: 422 }
     )
+  }
+
+  // D2-A: Disclosure authorization branch — self-contained, returns early
+  // Section 13: service token already rejected above; human identity required
+  if (disclosureStatus !== undefined) {
+    if (disclosureStatus !== 'authorized' && disclosureStatus !== 'revoked') {
+      return NextResponse.json({ error: 'disclosure_status must be authorized or revoked' }, { status: 422 })
+    }
+
+    const { data: discMatch, error: discFetchErr } = await supabase
+      .from('matches')
+      .select('id, status, lead_id, property_id, disclosure_status')
+      .eq('id', matchId)
+      .single()
+    if (discFetchErr || !discMatch) return NextResponse.json({ error: 'Match not found' }, { status: 404 })
+
+    // Authorization requires reviewed_accepted (Section 19)
+    if (disclosureStatus === 'authorized' && discMatch.status !== 'reviewed_accepted') {
+      return NextResponse.json({ error: 'Disclosure authorization requires match status reviewed_accepted' }, { status: 422 })
+    }
+    // Revocation requires currently authorized
+    if (disclosureStatus === 'revoked' && discMatch.disclosure_status !== 'authorized') {
+      return NextResponse.json({ error: 'Cannot revoke: match disclosure not currently authorized' }, { status: 422 })
+    }
+    // Idempotency
+    if (discMatch.disclosure_status === disclosureStatus) {
+      return NextResponse.json({ match: discMatch, activity: null, idempotent: true })
+    }
+
+    // Off-market gate: reason required (Section 17)
+    if (disclosureStatus === 'authorized') {
+      const { data: prop } = await supabase
+        .from('properties').select('is_off_market').eq('id', discMatch.property_id).maybeSingle()
+      if (prop?.is_off_market && !reason) {
+        return NextResponse.json({ error: 'Motivo obrigatório para imóveis off-market' }, { status: 422 })
+      }
+    }
+
+    // Section 13/29: server-derive authorizer from session — never client-supplied
+    const { data: discUser } = await supabase.from('users').select('id').eq('email', gate.email).single()
+    const authorizedBy = discUser?.id ?? null
+    const now = new Date().toISOString()
+
+    const discUpdate: Record<string, unknown> = { disclosure_status: disclosureStatus, updated_at: now }
+    if (disclosureStatus === 'authorized') {
+      discUpdate.disclosure_authorized_at = now
+      discUpdate.disclosure_authorized_by = authorizedBy
+    }
+
+    const { data: discUpdated, error: discUpdateErr } = await supabase
+      .from('matches').update(discUpdate).eq('id', matchId)
+      .select('id, status, disclosure_status, disclosure_authorized_at, disclosure_authorized_by')
+      .single()
+    if (discUpdateErr || !discUpdated) {
+      return NextResponse.json({ error: discUpdateErr?.message ?? 'Disclosure update failed' }, { status: 500 })
+    }
+
+    // Section 15: is_automated=false; no outbound comms; activity is append-only audit
+    const actType = disclosureStatus === 'authorized' ? 'match_disclosure_authorized' : 'match_disclosure_revoked'
+    const { data: discAct } = await supabase.from('activities').insert({
+      contact_id:   discMatch.lead_id,
+      agent_id:     authorizedBy,
+      type:         actType,
+      match_id:     matchId,
+      subject:      disclosureStatus === 'authorized' ? 'Divulgação autorizada' : 'Autorização revogada',
+      body:         reason ?? null,
+      is_automated: false,
+      occurred_at:  now,
+      created_at:   now,
+    }).select('id, type, created_at').single()
+
+    // Section 4 / Section 48: DISCLOSURE AUTHORIZED ≠ BUYER INTERESTED ≠ DEAL ≠ ACTUALLY DISCLOSED
+    return NextResponse.json({ match: discUpdated, activity: discAct ?? null })
   }
 
   // Fetch current match — get lead_id (Section 28) and current status for transition check

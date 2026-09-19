@@ -381,13 +381,18 @@ export default function PortalCRM() {
   const [matchContactId, setMatchContactId] = useState<number | null>(null)
   const [matchError, setMatchError] = useState<string | null>(null)
   const [matchDataReadiness, setMatchDataReadiness] = useState<{ known_criteria: string[]; unknown_criteria: string[]; completeness: 'high' | 'medium' | 'limited' } | null>(null)
-  const [historicMatches, setHistoricMatches] = useState<Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string; notes: string | null; reviewed_at: string | null; reviewed_by: string | null }>>([])
+  const [historicMatches, setHistoricMatches] = useState<Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string; notes: string | null; reviewed_at: string | null; reviewed_by: string | null; disclosure_status: string | null; disclosure_authorized_at: string | null }>>([])
   const [historicMatchesLoaded, setHistoricMatchesLoaded] = useState<number | null>(null)
   // D1-REVIEW: review action state
   const [reviewingMatchId, setReviewingMatchId] = useState<string | null>(null)
   const [reviewActionError, setReviewActionError] = useState<string | null>(null)
   const [historicStatusFilter, setHistoricStatusFilter] = useState<'all' | 'pending' | 'reviewed_accepted' | 'reviewed_rejected'>('all')
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({})
+  // D2-A: Disclosure authorization state
+  const [disclosingMatchId, setDisclosingMatchId] = useState<string | null>(null)
+  const [disclosureActionError, setDisclosureActionError] = useState<string | null>(null)
+  const [disclosureReason, setDisclosureReason] = useState<Record<string, string>>({})
+  const [showDisclosureModal, setShowDisclosureModal] = useState<string | null>(null)
   // Enriquecer
   const [enrichLoading, setEnrichLoading] = useState<number | null>(null)
   const [enrichToast, setEnrichToast] = useState<string | null>(null)
@@ -478,7 +483,7 @@ export default function PortalCRM() {
     const controller = new AbortController()
     fetch(`/api/matches?lead_id=${activeCrmId}&limit=20`, { signal: controller.signal })
       .then(r => r.ok ? r.json() : null)
-      .then((json: { matches?: Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string; notes: string | null; reviewed_at: string | null; reviewed_by: string | null }> } | null) => {
+      .then((json: { matches?: Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string; notes: string | null; reviewed_at: string | null; reviewed_by: string | null; disclosure_status: string | null; disclosure_authorized_at: string | null }> } | null) => {
         if (json && Array.isArray(json.matches)) {
           setHistoricMatches(json.matches)
           setHistoricMatchesLoaded(activeCrmId)
@@ -2162,6 +2167,11 @@ export default function PortalCRM() {
                             {reviewActionError}
                           </div>
                         )}
+                        {disclosureActionError && (
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: '#c83c3c', background: 'rgba(200,60,60,.04)', border: '1px solid rgba(200,60,60,.12)', padding: '6px 10px', marginBottom: '8px' }}>
+                            {disclosureActionError}
+                          </div>
+                        )}
                         {historicMatches
                           .filter(hm => historicStatusFilter === 'all' || hm.status === historicStatusFilter)
                           .map(hm => {
@@ -2179,6 +2189,9 @@ export default function PortalCRM() {
                                     <div style={{ fontSize: '.82rem', color: '#0e0e0d', fontWeight: 500 }}>{hm.property_title ?? hm.property_id}</div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
                                       <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '1px 7px', background: statusBadge.bg, color: statusBadge.color, borderRadius: '10px', fontWeight: 700 }}>{statusBadge.label}</span>
+                                      {hm.disclosure_status === 'authorized' && (
+                                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '1px 7px', background: 'rgba(28,74,53,.1)', color: '#1c4a35', borderRadius: '10px', fontWeight: 700 }}>DIVULGAÇÃO AUTORIZADA</span>
+                                      )}
                                       <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.32)' }}>{new Date(hm.created_at).toLocaleDateString('pt-PT')}</span>
                                       {hm.reviewed_at && (
                                         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.28)' }}>Revisto {new Date(hm.reviewed_at).toLocaleDateString('pt-PT')}</span>
@@ -2299,6 +2312,106 @@ export default function PortalCRM() {
                                       style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '3px 10px', background: 'transparent', color: 'rgba(14,14,13,.35)', border: '1px solid rgba(14,14,13,.12)', cursor: isReviewing ? 'not-allowed' : 'pointer', opacity: isReviewing ? .5 : 1 }}>
                                       {isReviewing ? '⟳' : hm.status === 'reviewed_accepted' ? 'Reverter → Rejeitar' : 'Reverter → Aceitar'}
                                     </button>
+                                  </div>
+                                )}
+                                {/* D2-A: Disclosure Authorization (Section 19) — reviewed_accepted only */}
+                                {hm.status === 'reviewed_accepted' && (
+                                  <div style={{ marginTop: '8px', borderTop: '1px solid rgba(14,14,13,.06)', paddingTop: '8px' }}>
+                                    {hm.disclosure_status === 'authorized' ? (
+                                      <button
+                                        type="button"
+                                        disabled={disclosingMatchId === hm.id}
+                                        aria-label="Revogar autorização de divulgação"
+                                        onClick={async () => {
+                                          setDisclosingMatchId(hm.id)
+                                          setDisclosureActionError(null)
+                                          try {
+                                            const res = await fetch(`/api/matches/${hm.id}`, {
+                                              method: 'PATCH',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ disclosure_status: 'revoked' }),
+                                            })
+                                            const json = await res.json() as { match?: { disclosure_status: string | null; disclosure_authorized_at: string | null }; error?: string }
+                                            if (res.ok && json.match) {
+                                              setHistoricMatches(prev => prev.map(m =>
+                                                m.id === hm.id ? { ...m, disclosure_status: json.match!.disclosure_status ?? null, disclosure_authorized_at: json.match!.disclosure_authorized_at ?? null } : m
+                                              ))
+                                            } else {
+                                              setDisclosureActionError(json.error ?? 'Revogação falhou')
+                                            }
+                                          } catch { setDisclosureActionError('Erro de rede — tente novamente') }
+                                          finally { setDisclosingMatchId(null) }
+                                        }}
+                                        style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '3px 10px', background: 'transparent', color: 'rgba(14,14,13,.35)', border: '1px solid rgba(14,14,13,.12)', cursor: disclosingMatchId === hm.id ? 'not-allowed' : 'pointer', opacity: disclosingMatchId === hm.id ? .5 : 1 }}>
+                                        {disclosingMatchId === hm.id ? '⟳' : 'Revogar Autorização'}
+                                      </button>
+                                    ) : showDisclosureModal === hm.id ? (
+                                      <div style={{ background: 'rgba(14,14,13,.03)', border: '1px solid rgba(14,14,13,.1)', padding: '8px 10px' }}>
+                                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.5)', marginBottom: '5px' }}>Motivo de autorização (obrigatório para imóveis off-market)</div>
+                                        <textarea
+                                          value={disclosureReason[hm.id] ?? ''}
+                                          onChange={e => setDisclosureReason(prev => ({ ...prev, [hm.id]: e.target.value }))}
+                                          placeholder="Motivo da autorização de divulgação..."
+                                          maxLength={500}
+                                          disabled={disclosingMatchId === hm.id}
+                                          rows={2}
+                                          style={{ width: '100%', fontFamily: "'DM Mono',monospace", fontSize: '.48rem', padding: '5px 8px', border: '1px solid rgba(14,14,13,.1)', background: 'rgba(14,14,13,.02)', color: '#0e0e0d', resize: 'vertical', marginBottom: '6px', boxSizing: 'border-box', opacity: disclosingMatchId === hm.id ? .5 : 1 }}
+                                        />
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                          <button
+                                            type="button"
+                                            disabled={disclosingMatchId === hm.id}
+                                            aria-label="Confirmar autorização de divulgação"
+                                            onClick={async () => {
+                                              setDisclosingMatchId(hm.id)
+                                              setDisclosureActionError(null)
+                                              const r = disclosureReason[hm.id]?.trim() || undefined
+                                              try {
+                                                const patchBody: Record<string, string> = { disclosure_status: 'authorized' }
+                                                if (r) patchBody.reason = r
+                                                const res = await fetch(`/api/matches/${hm.id}`, {
+                                                  method: 'PATCH',
+                                                  headers: { 'Content-Type': 'application/json' },
+                                                  body: JSON.stringify(patchBody),
+                                                })
+                                                const json = await res.json() as { match?: { disclosure_status: string | null; disclosure_authorized_at: string | null }; error?: string }
+                                                if (res.ok && json.match) {
+                                                  setHistoricMatches(prev => prev.map(m =>
+                                                    m.id === hm.id ? { ...m, disclosure_status: json.match!.disclosure_status ?? null, disclosure_authorized_at: json.match!.disclosure_authorized_at ?? null } : m
+                                                  ))
+                                                  setDisclosureReason(prev => { const n = { ...prev }; delete n[hm.id]; return n })
+                                                  setShowDisclosureModal(null)
+                                                } else {
+                                                  setDisclosureActionError(json.error ?? 'Autorização falhou')
+                                                }
+                                              } catch { setDisclosureActionError('Erro de rede — tente novamente') }
+                                              finally { setDisclosingMatchId(null) }
+                                            }}
+                                            style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', padding: '5px 14px', background: 'rgba(28,74,53,.08)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.2)', cursor: disclosingMatchId === hm.id ? 'not-allowed' : 'pointer', opacity: disclosingMatchId === hm.id ? .5 : 1 }}>
+                                            {disclosingMatchId === hm.id ? '⟳' : '✓ CONFIRMAR AUTORIZAÇÃO'}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={disclosingMatchId === hm.id}
+                                            onClick={() => {
+                                              setShowDisclosureModal(null)
+                                              setDisclosureReason(prev => { const n = { ...prev }; delete n[hm.id]; return n })
+                                            }}
+                                            style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '3px 10px', background: 'transparent', color: 'rgba(14,14,13,.35)', border: '1px solid rgba(14,14,13,.12)', cursor: 'pointer' }}>
+                                            Cancelar
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        disabled={disclosingMatchId === hm.id}
+                                        aria-label="Autorizar divulgação do imóvel ao comprador"
+                                        onClick={() => setShowDisclosureModal(hm.id)}
+                                        style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '3px 10px', background: 'rgba(28,74,53,.06)', color: '#1c4a35', border: '1px solid rgba(28,74,53,.15)', cursor: 'pointer' }}>
+                                        AUTORIZAR DIVULGAÇÃO
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </div>
