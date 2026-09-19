@@ -80,7 +80,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabaseAdmin.from('deals') as any)
         .select('*', { count: 'exact' })
-        .eq('tenant_id', tenantId)          // TENANT SCOPE: all deal reads scoped to caller's org
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1)
 
@@ -89,7 +88,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       }
 
       if (fase && fase !== 'all') query = query.eq('fase', fase)
-      if (minValue !== null)      query = query.gte('valor', minValue)
+      if (minValue !== null)      query = query.gte('deal_value', minValue)
       if (search) {
         // SECURITY: sanitise search before embedding in PostgREST .or() filter string
         // (contacts/route.ts has this — deals was missing it)
@@ -183,16 +182,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const ref = String(body.ref || `AG-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`)
 
-    const STAGE_PROBABILITY: Record<string, number> = {
-      'Contacto': 0.05, 'Qualificado': 0.12, 'Visita': 0.18,
-      'Proposta': 0.35, 'Proposta Enviada': 0.40, 'Proposta Aceite': 0.55,
-      'Negociação': 0.65, 'CPCV': 0.85, 'CPCV Assinado': 0.90,
-      'Escritura': 1.0, 'Escritura Concluída': 1.0, 'Escritura Marcada': 0.95,
-      'post_sale': 1.0, 'escritura': 1.0, 'escritura_sell': 1.0,
-    }
-
-    const CLOSED_FASE_VALUES = WON_STAGES as readonly string[]
-
     // Try Supabase (uses portal-compat columns from migration 003)
     try {
       const valorNum = typeof body.valor === 'number' ? body.valor : parseFloat(String(body.valor)) || 0
@@ -200,23 +189,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabaseAdmin.from('deals') as any)
         .insert({
-          // Portal-friendly columns (added by migration 003_portal_compat.sql)
+          // Portal-compat columns (migration 003_portal_compat.sql)
           ref,
           imovel:      String(body.imovel),
-          valor:       `€ ${valorNum.toLocaleString('pt-PT')}`,
+          valor:       String(valorNum),
           fase:        faseStr,
           comprador:   typeof body.comprador === 'string'   ? body.comprador    : null,
           notas:       typeof body.notas === 'string'       ? body.notas        : null,
-          // Standard columns (migration 001)
-          title:       String(body.imovel),  // mirror imovel as title for schema compliance
+          // Standard columns with FK linkage
           deal_value:  valorNum,
-          property_id: typeof body.property_id === 'string' ? body.property_id : null,
+          match_id:    typeof body.match_id === 'string'    ? body.match_id     : null,
+          contact_id:  body.contact_id != null              ? (Number(body.contact_id) || null) : null,
+          property_id: typeof body.property_id === 'string' ? body.property_id  : null,
           agent_id:    typeof body.agent_id === 'string'    ? body.agent_id     : null,
-          // Economics-critical columns
-          tenant_id:            _sloTenantPost,
-          assigned_consultant:  (session?.user as { email?: string })?.email ?? null,
-          probability:          STAGE_PROBABILITY[faseStr] ?? 0.05,
-          actual_close_date:    CLOSED_FASE_VALUES.includes(faseStr) ? new Date().toISOString() : null,
         })
         .select()
         .single()
@@ -302,7 +287,8 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
 
     try {
       const allowed = ['ref', 'imovel', 'valor', 'fase', 'comprador', 'contact_id',
-                       'cpcv_date', 'escritura_date', 'notas', 'agent_id', 'property_id']
+                       'cpcv_date', 'escritura_date', 'notas', 'agent_id', 'property_id',
+                       'deal_value', 'match_id']
       const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
       for (const key of allowed) {
         if (key in updates) updateData[key] = updates[key]
@@ -312,18 +298,17 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: currentDeal } = await (supabaseAdmin.from('deals') as any)
         .select('fase')
-        .eq(id && typeof id === 'string' ? 'id' : 'ref', id && typeof id === 'string' ? id : ref)
-        .eq('tenant_id', tenantId)
+        .eq(id != null ? 'id' : 'ref', id != null ? id : ref)
         .single()
       const previousFase = (currentDeal as { fase?: string } | null)?.fase ?? null
 
-      // Support both UUID id and ref-based lookups
+      // Support both numeric id and ref-based lookups (deals.id is INTEGER)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query = (supabaseAdmin.from('deals') as any).update(updateData)
-      if (id && typeof id === 'string') {
-        query = query.eq('id', id).eq('tenant_id', tenantId)
+      if (id != null) {
+        query = query.eq('id', id)
       } else if (ref && typeof ref === 'string') {
-        query = query.eq('ref', ref).eq('tenant_id', tenantId)
+        query = query.eq('ref', ref)
       }
       const { data, error } = await query.select().single()
       if (!error && data) {
