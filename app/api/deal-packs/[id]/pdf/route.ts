@@ -9,38 +9,27 @@
 // The HTML output is fully self-contained (inline CSS, no external deps)
 // suitable for print-to-PDF in any browser or Puppeteer.
 //
-// AUTH: portal auth (agent) OR CRON_SECRET (internal automation)
+// AUTH: portal auth (human agent only) — D2-B-DEALPACK-AUTH §24–§25:
+//   CRON_SECRET bypass removed — PDF includes PII and requires object-level auth.
+//   service_token → 403
+//   is_active NULL → 403 (fail-closed)
+//   ownership: admin OR creator OR contact owner
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient }              from '@supabase/supabase-js'
 import { supabaseAdmin }             from '@/lib/supabase'
 import { portalAuthGate }            from '@/lib/requirePortalAuth'
-import { safeCompare }               from '@/lib/safeCompare'
+import { resolveActor, checkDealPackOwnership } from '@/lib/auth/commercialAuth'
 import { getZone }                   from '@/lib/market/zones'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60
 
-// ---------------------------------------------------------------------------
-// Auth: accepts portal auth OR cron secret (for automated generation)
-// ---------------------------------------------------------------------------
-
-async function authGate(req: NextRequest): Promise<{ ok: boolean; email: string | null }> {
-  // Cron/automation path
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const token =
-      req.headers.get('x-cron-secret') ??
-      req.headers.get('authorization')?.replace('Bearer ', '').trim()
-    if (token && safeCompare(token, cronSecret)) return { ok: true, email: null }
-  }
-
-  // Portal auth path
-  const portalAuth = await portalAuthGate(req)
-  if (portalAuth.authed) return { ok: true, email: portalAuth.email ?? null }
-
-  return { ok: false, email: null }
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 // ---------------------------------------------------------------------------
 // Fetch deal pack + related data
@@ -639,15 +628,33 @@ export async function GET(
   req:     NextRequest,
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const auth = await authGate(req)
-  if (!auth.ok) {
+  // §24–§25: CRON_SECRET bypass removed — PDF includes PII, requires object-level auth
+  const gate = await portalAuthGate(req)
+  if (!gate.authed) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (gate.via === 'service_token') {
+    return NextResponse.json(
+      { error: 'Service tokens cannot access deal pack PDFs — human actor required' },
+      { status: 403 }
+    )
+  }
+
+  const actorResult = await resolveActor(gate.email, supabase, { failClosed: true })
+  if (!actorResult.ok) {
+    return NextResponse.json({ error: actorResult.error }, { status: actorResult.status })
   }
 
   const { id } = await context.params
 
   if (!id || typeof id !== 'string') {
     return NextResponse.json({ error: 'Invalid deal pack ID' }, { status: 400 })
+  }
+
+  const ownershipResult = await checkDealPackOwnership(actorResult.actor, id, supabase)
+  if (!ownershipResult.ok) {
+    return NextResponse.json({ error: ownershipResult.error }, { status: ownershipResult.status })
   }
 
   // Fetch deal pack

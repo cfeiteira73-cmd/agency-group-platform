@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
+import { resolveActor, checkMatchOwnership } from '@/lib/auth/commercialAuth'
 import track from '@/lib/trackLearningEvent'
 import { withAI } from '@/lib/ops/withAI'
 import { getRequestCorrelationId } from '@/lib/observability/correlation'
@@ -63,6 +64,7 @@ interface GenerateRequest {
   deal_id?: string       // existing deal UUID
   property_id?: string   // property UUID
   lead_id?: string       // target buyer UUID
+  match_id?: string      // if set: match must be disclosure_status='authorized' + actor owns match
   // Inline data (if IDs not available)
   property_data?: {
     title?: string
@@ -160,13 +162,62 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const gate = await portalAuthGate(req)
   if (!gate.authed) return gate.response
 
-  const agentEmail = gate.email
+  // §19: service tokens must not generate deal packs — created_by must be a real agent
+  if (gate.via === 'service_token') {
+    return NextResponse.json(
+      { error: 'Service tokens cannot generate deal packs — human actor required' },
+      { status: 403 }
+    )
+  }
+
+  // §4: fail-closed is_active check
+  const actorResult = await resolveActor(gate.email, supabase, { failClosed: true })
+  if (!actorResult.ok) {
+    return NextResponse.json({ error: actorResult.error }, { status: actorResult.status })
+  }
+  const actor = actorResult.actor
+  const agentEmail = actor.email
 
   let body: GenerateRequest
   try {
     body = await req.json() as GenerateRequest
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+
+  // §16–§18: if match_id provided, verify authorization chain
+  // match must exist, disclosure_status='authorized', and actor must own the match
+  if (body.match_id) {
+    const { data: match } = await supabase
+      .from('matches')
+      .select('id, lead_id, disclosure_status')
+      .eq('id', body.match_id)
+      .single()
+    if (!match) {
+      return NextResponse.json({ error: 'Match not found' }, { status: 404 })
+    }
+    if (match.disclosure_status !== 'authorized') {
+      return NextResponse.json(
+        { error: 'Match disclosure must be authorized before generating a deal pack' },
+        { status: 422 }
+      )
+    }
+    const matchOwnership = await checkMatchOwnership(actor, match.lead_id, supabase)
+    if (!matchOwnership.ok) {
+      return NextResponse.json({ error: matchOwnership.error }, { status: matchOwnership.status })
+    }
+    // Derive lead_id from match if not explicitly provided
+    if (!body.lead_id) {
+      body = { ...body, lead_id: match.lead_id }
+    }
+  }
+
+  // §15: if lead_id provided without match_id, verify contact ownership
+  if (body.lead_id && !body.match_id) {
+    const contactOwnership = await checkMatchOwnership(actor, body.lead_id, supabase)
+    if (!contactOwnership.ok) {
+      return NextResponse.json({ error: contactOwnership.error }, { status: contactOwnership.status })
+    }
   }
 
   // ── Load property data ─────────────────────────────────────────────────────
@@ -332,6 +383,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     property_id: propDbId,
     // deal_packs.lead_id is UUID (migration 20260424_001) — pass directly, never coerce to Number
     lead_id:    body.lead_id ?? null,
+    // match_id: traceability to the authorized match that triggered this pack
+    match_id:   body.match_id ?? null,
     title:      (claudeJson.title as string) ?? propTitle,
     status:     'ready',
     created_by: agentEmail,

@@ -1,14 +1,20 @@
 // =============================================================================
 // Agency Group — Deal Pack CRUD
 // GET /api/deal-packs/[id]   — fetch a deal pack
-// PATCH /api/deal-packs/[id] — update status (e.g. mark sent / viewed)
+// PATCH /api/deal-packs/[id] — update status (e.g. mark ready / archived)
 // DELETE /api/deal-packs/[id] — delete (portal auth required)
+//
+// D2-B-DEALPACK-AUTH:
+//   service_token → 403 on all verbs
+//   is_active NULL → 403 (fail-closed per §4)
+//   ownership: admin OR creator OR contact owner
+//   PATCH status='sent' → 422 (requires actual transport, not a client flag)
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
-import track from '@/lib/trackLearningEvent'
+import { resolveActor, checkDealPackOwnership } from '@/lib/auth/commercialAuth'
 
 export const runtime = 'nodejs'
 
@@ -28,8 +34,25 @@ export async function GET(
   const gate = await portalAuthGate(req)
   if (!gate.authed) return gate.response
 
+  if (gate.via === 'service_token') {
+    return NextResponse.json(
+      { error: 'Service tokens cannot access deal packs — human actor required' },
+      { status: 403 }
+    )
+  }
+
+  const actorResult = await resolveActor(gate.email, supabase, { failClosed: true })
+  if (!actorResult.ok) {
+    return NextResponse.json({ error: actorResult.error }, { status: actorResult.status })
+  }
+
   const { id } = await params
   const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
+  const ownershipResult = await checkDealPackOwnership(actorResult.actor, id, supabase)
+  if (!ownershipResult.ok) {
+    return NextResponse.json({ error: ownershipResult.error }, { status: ownershipResult.status })
+  }
 
   // Base columns always in schema
   const { data: baseData, error } = await supabase
@@ -103,14 +126,39 @@ export async function PATCH(
   const gate = await portalAuthGate(req)
   if (!gate.authed) return gate.response
 
+  if (gate.via === 'service_token') {
+    return NextResponse.json(
+      { error: 'Service tokens cannot mutate deal packs — human actor required' },
+      { status: 403 }
+    )
+  }
+
+  const actorResult = await resolveActor(gate.email, supabase, { failClosed: true })
+  if (!actorResult.ok) {
+    return NextResponse.json({ error: actorResult.error }, { status: actorResult.status })
+  }
+
   const { id } = await params
   const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
+  const ownershipResult = await checkDealPackOwnership(actorResult.actor, id, supabase)
+  if (!ownershipResult.ok) {
+    return NextResponse.json({ error: ownershipResult.error }, { status: ownershipResult.status })
+  }
 
   let body: Record<string, unknown>
   try {
     body = await req.json() as Record<string, unknown>
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+  }
+
+  // §34: status='sent' requires actual transport — client cannot set this flag manually
+  if (body.status === 'sent') {
+    return NextResponse.json(
+      { error: "Status 'sent' requires actual transport — use the disclosure endpoint" },
+      { status: 422 }
+    )
   }
 
   // Allowlist of updatable fields (only columns confirmed in base schema)
@@ -122,10 +170,7 @@ export async function PATCH(
     if (key in body) updates[key] = body[key]
   }
 
-  // Auto-set sent_at when status changes to 'sent'
-  if (updates.status === 'sent' && !updates.sent_at) {
-    updates.sent_at = new Date().toISOString()
-  }
+  // Auto-set sent_at removed — 'sent' is blocked above
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
@@ -143,15 +188,6 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // ── Learning event: deal_pack_sent ─────────────────────────────────────────
-  if (updates.status === 'sent') {
-    track.dealPackSent({
-      deal_pack_id: id,
-      agent_email:  gate.email,
-      metadata: { sent_at: updates.sent_at ?? new Date().toISOString() },
-    })
-  }
-
   return NextResponse.json({ success: true, deal_pack: data })
 }
 
@@ -166,8 +202,25 @@ export async function DELETE(
   const gate = await portalAuthGate(req)
   if (!gate.authed) return gate.response
 
+  if (gate.via === 'service_token') {
+    return NextResponse.json(
+      { error: 'Service tokens cannot delete deal packs — human actor required' },
+      { status: 403 }
+    )
+  }
+
+  const actorResult = await resolveActor(gate.email, supabase, { failClosed: true })
+  if (!actorResult.ok) {
+    return NextResponse.json({ error: actorResult.error }, { status: actorResult.status })
+  }
+
   const { id } = await params
   const tenantId = process.env.DEFAULT_TENANT_ID ?? process.env.SYSTEM_ORG_ID ?? 'agency-group'
+
+  const ownershipResult = await checkDealPackOwnership(actorResult.actor, id, supabase)
+  if (!ownershipResult.ok) {
+    return NextResponse.json({ error: ownershipResult.error }, { status: ownershipResult.status })
+  }
 
   const { error } = await supabase
     .from('deal_packs')
