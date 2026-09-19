@@ -1,13 +1,16 @@
 // =============================================================================
 // Phase 2C.C1 — V1 Matching Scoring Engine
+// Phase 2C.C0-SF1 — Structural Matching Repair
 //
 // Normalized scoring contract:
 //   score = round((earned_pts / available_weight) × 100) + semantic_bonus
 //   available_weight = sum of weights for criteria WHERE contact data EXISTS
-//   Minimum available_weight = 45 (zona + tipo always present)
+//   Minimum available_weight = 0 when all criteria unknown (score = 0)
 //   Semantic bonus: +0 to +5 — never in denominator
 //
 // INVARIANT: UNKNOWN ≠ BAD FIT
+//   Empty zonas    → excluded from denominator (NOT penalized)
+//   Empty tipos    → excluded from denominator (NOT penalized)
 //   Missing budget  → excluded from denominator (NOT penalized)
 //   Missing quartos → excluded from denominator (NOT penalized)
 //   buyer_score     → commercial priority tiebreaker only (NOT in score)
@@ -18,8 +21,8 @@
 // =============================================================================
 
 export interface V1ContactProfile {
-  zonas:       string[]       // always populated (matches contacts.zonas)
-  tipos:       string[]       // always populated (matches contacts.tipos)
+  zonas:       string[]       // [] means UNKNOWN — excluded from denominator
+  tipos:       string[]       // [] means UNKNOWN — excluded from denominator
   budget_min:  number | null  // nullable (67% of contacts have NULL)
   budget_max:  number | null  // nullable
   quartos_min: number | null  // nullable (contacts has no quartos field — from request)
@@ -123,8 +126,8 @@ function scoreBudget(
   if (preco === null || preco <= 0) return 0
   const min = budgetMin ?? 0
   const max = budgetMax ?? Infinity
-  if (preco >= min && preco <= max) return W_BUDGET              // in range: 30
-  if (isFinite(max) && preco <= max * 1.1) return Math.round(W_BUDGET * 0.5)  // +10% soft: 15
+  if (preco >= min && preco <= max) return W_BUDGET                                           // in range: 30
+  if (isFinite(max) && preco > max && preco <= max * 1.1) return Math.round(W_BUDGET * 0.5)  // above max by ≤10%: 15
   return 0
 }
 
@@ -163,13 +166,17 @@ export function scoreV1(
 
   const bonus = semanticBonus(property.similarity)
 
-  // Denominator: only criteria where contact data exists
-  let available_weight = W_ZONA + W_TIPO
+  // Denominator: only criteria where contact data exists (UNKNOWN ≠ BAD FIT)
+  let available_weight = 0
+  if (contact.zonas.length > 0)  available_weight += W_ZONA
+  if (contact.tipos.length > 0)  available_weight += W_TIPO
   if (budget_pts  !== null) available_weight += W_BUDGET
   if (quartos_pts !== null) available_weight += W_QUARTOS
 
   const earned_pts = zona_pts + tipo_pts + (budget_pts ?? 0) + (quartos_pts ?? 0)
-  const base_score = Math.round((earned_pts / available_weight) * 100)
+  const base_score = available_weight > 0
+    ? Math.round((earned_pts / available_weight) * 100)
+    : 0
   const score      = Math.min(100, base_score + bonus)
 
   return {

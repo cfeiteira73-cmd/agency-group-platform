@@ -584,3 +584,69 @@ describe('mandate identity', () => {
     expect(noMandate.result).toBe('created')  // V1 always sends mandate_id=null
   })
 })
+
+// ---------------------------------------------------------------------------
+// 14. C0-SF1 structural repair — UNKNOWN ≠ BAD FIT for zonas/tipos + budget fix
+// ---------------------------------------------------------------------------
+
+describe('C0-SF1 structural repair', () => {
+  it('excludes W_TIPO from denominator when tipos is empty (UNKNOWN ≠ BAD FIT)', () => {
+    const contact: V1ContactProfile = { ...CONTACT_FULL, tipos: [] }
+    const r = scoreV1(contact, PROP_EXACT_MATCH)
+    // tipos=[] → W_TIPO(20) excluded; available = 25+30+10 = 65
+    expect(r.available_weight).toBe(65)
+    expect(r.tipo_pts).toBe(0)
+  })
+
+  it('excludes W_ZONA from denominator when zonas is empty (UNKNOWN ≠ BAD FIT)', () => {
+    const contact: V1ContactProfile = { ...CONTACT_FULL, zonas: [] }
+    const r = scoreV1(contact, PROP_EXACT_MATCH)
+    // zonas=[] → W_ZONA(25) excluded; available = 20+30+10 = 60
+    expect(r.available_weight).toBe(60)
+    expect(r.zona_pts).toBe(0)
+  })
+
+  it('returns score=0 when all criteria unknown (available_weight=0 guard)', () => {
+    const contact: V1ContactProfile = {
+      zonas: [], tipos: [],
+      budget_min: null, budget_max: null,
+      quartos_min: null, buyer_score: null,
+    }
+    const r = scoreV1(contact, PROP_EXACT_MATCH)
+    expect(r.available_weight).toBe(0)
+    expect(r.score).toBe(0)
+  })
+
+  it('does NOT give soft score when price is below budget_min (budget bug fix)', () => {
+    // preco=400K is below min=500K but within 110% of max=1M
+    // old code gave 15pts; correct code gives 0pts
+    const prop: V1PropertyCandidate = { ...PROP_EXACT_MATCH, preco: 400_000 }
+    const r = scoreV1(CONTACT_FULL, prop)
+    expect(r.budget_pts).toBe(0)
+  })
+
+  it('still gives soft score when price is above budget_max by ≤10%', () => {
+    // preco=1.05M is above max=1M by 5% — this is the legitimate soft-score case
+    const r = scoreV1(CONTACT_FULL, PROP_SOFT_BUDGET)
+    expect(r.budget_pts).toBe(15)
+  })
+
+  it('tipos=[] scores like budget-only match — not like tipo mismatch', () => {
+    // tipos=[] → UNKNOWN, not penalized. Contact with only budget data should score
+    // higher than contact with explicit wrong tipo, because unknown ≠ bad fit.
+    const contactUnknownTipo: V1ContactProfile = {
+      ...CONTACT_NO_BUDGET, zonas: ['Lisboa'], tipos: [],
+      budget_min: 500_000, budget_max: 1_000_000,
+    }
+    const contactWrongTipo: V1ContactProfile = {
+      ...CONTACT_NO_BUDGET, zonas: ['Lisboa'], tipos: ['moradia'],
+      budget_min: 500_000, budget_max: 1_000_000,
+    }
+    const rUnknown = scoreV1(contactUnknownTipo, PROP_EXACT_MATCH)  // tipo=apartamento
+    const rWrong   = scoreV1(contactWrongTipo,   PROP_EXACT_MATCH)
+
+    // unknown: available=25+30=55, earned=25+30=55, score=100
+    // wrong:   available=25+20+30=75, earned=25+0+30=55, score=73
+    expect(rUnknown.score).toBeGreaterThan(rWrong.score)
+  })
+})

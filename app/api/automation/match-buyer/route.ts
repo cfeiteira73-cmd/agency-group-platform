@@ -90,18 +90,16 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
 // ---------------------------------------------------------------------------
 
 interface ContactRow {
-  id:          number
-  zonas:       string[] | null
-  tipos:       string[] | null
-  budget_min:  number | null
-  budget_max:  number | null
-  buyer_score: number | null
+  id:                  string | number   // UUID in production contacts table
+  preferred_locations: string[] | null   // canonical zona preference (contacts schema)
+  budget_min:          number | null
+  budget_max:          number | null
 }
 
 async function fetchContact(leadId: number): Promise<ContactRow | null> {
   const { data, error } = await supabaseAdmin
     .from('contacts')
-    .select('id, zonas, tipos, budget_min, budget_max, buyer_score')
+    .select('id, preferred_locations, budget_min, budget_max')
     .eq('id', leadId)
     .single()
 
@@ -119,12 +117,12 @@ function buildContactProfile(
 ): V1ContactProfile {
   if (contact) {
     return {
-      zonas:       contact.zonas  ?? (req.locations ?? []),
-      tipos:       contact.tipos  ?? (req.typology ? [req.typology] : []),
+      zonas:       contact.preferred_locations ?? (req.locations ?? []),
+      tipos:       req.typology ? [req.typology] : [],
       budget_min:  contact.budget_min,   // may be null — correct (UNKNOWN ≠ BAD FIT)
       budget_max:  contact.budget_max,   // may be null — correct
       quartos_min: typeof req.bedrooms_min === 'number' ? req.bedrooms_min : null,
-      buyer_score: contact.buyer_score ?? null,
+      buyer_score: null,
     }
   }
   return {
