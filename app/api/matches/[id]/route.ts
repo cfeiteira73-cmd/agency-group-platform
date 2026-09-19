@@ -136,38 +136,40 @@ export async function PATCH(
     // Section 13/29: server-derive authorizer from session — never client-supplied
     const { data: discUser } = await supabase.from('users').select('id').eq('email', gate.email).single()
     const authorizedBy = discUser?.id ?? null
-    const now = new Date().toISOString()
 
-    const discUpdate: Record<string, unknown> = { disclosure_status: disclosureStatus, updated_at: now }
-    if (disclosureStatus === 'authorized') {
-      discUpdate.disclosure_authorized_at = now
-      discUpdate.disclosure_authorized_by = authorizedBy
+    // §7: Application must establish authenticated human identity before DB mutation
+    if (!authorizedBy) {
+      return NextResponse.json(
+        { error: 'Authenticated user not found in public.users — human actor required' },
+        { status: 403 }
+      )
     }
 
-    const { data: discUpdated, error: discUpdateErr } = await supabase
-      .from('matches').update(discUpdate).eq('id', matchId)
-      .select('id, status, disclosure_status, disclosure_authorized_at, disclosure_authorized_by')
-      .single()
-    if (discUpdateErr || !discUpdated) {
-      return NextResponse.json({ error: discUpdateErr?.message ?? 'Disclosure update failed' }, { status: 500 })
-    }
+    // Atomic: UPDATE matches + INSERT activity in one PostgreSQL transaction
+    // (§5: two sequential Supabase calls are NOT transaction-safe)
+    const { data: rpcResult, error: rpcErr } = await supabase.rpc('disclose_match', {
+      p_match_id:      matchId,
+      p_action:        disclosureStatus,
+      p_authorized_by: authorizedBy,
+      p_reason:        reason ?? null,
+    })
 
-    // Section 15: is_automated=false; no outbound comms; activity is append-only audit
-    const actType = disclosureStatus === 'authorized' ? 'match_disclosure_authorized' : 'match_disclosure_revoked'
-    const { data: discAct } = await supabase.from('activities').insert({
-      contact_id:   discMatch.lead_id,
-      agent_id:     authorizedBy,
-      type:         actType,
-      match_id:     matchId,
-      subject:      disclosureStatus === 'authorized' ? 'Divulgação autorizada' : 'Autorização revogada',
-      body:         reason ?? null,
-      is_automated: false,
-      occurred_at:  now,
-      created_at:   now,
-    }).select('id, type, created_at').single()
+    if (rpcErr) {
+      const msg = rpcErr.message ?? ''
+      if (msg.includes('MATCH_NOT_FOUND'))  return NextResponse.json({ error: 'Match not found' }, { status: 404 })
+      if (msg.includes('INVALID_STATUS'))   return NextResponse.json({ error: 'Disclosure authorization requires match status reviewed_accepted' }, { status: 422 })
+      if (msg.includes('INVALID_REVOKE'))   return NextResponse.json({ error: 'Cannot revoke: match disclosure not currently authorized' }, { status: 422 })
+      if (msg.includes('INVALID_ACTION'))   return NextResponse.json({ error: 'disclosure_status must be authorized or revoked' }, { status: 422 })
+      return NextResponse.json({ error: msg || 'Disclosure failed' }, { status: 500 })
+    }
 
     // Section 4 / Section 48: DISCLOSURE AUTHORIZED ≠ BUYER INTERESTED ≠ DEAL ≠ ACTUALLY DISCLOSED
-    return NextResponse.json({ match: discUpdated, activity: discAct ?? null })
+    const r = rpcResult as { idempotent?: boolean; match: Record<string, unknown>; activity: Record<string, unknown> | null }
+    return NextResponse.json({
+      match:    r.match,
+      activity: r.activity,
+      ...(r.idempotent ? { idempotent: true } : {}),
+    })
   }
 
   // Fetch current match — get lead_id (Section 28) and current status for transition check
