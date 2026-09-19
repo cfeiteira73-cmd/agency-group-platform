@@ -439,7 +439,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         ? cosineSimilarity(queryEmbedding, propEmbedding)
         : null
       const proposedBonus = rawSim != null
-        ? Math.min(SHADOW_MAX_BONUS, Math.round(rawSim * SHADOW_MAX_BONUS))
+        ? Math.max(0, Math.min(SHADOW_MAX_BONUS, Math.round(rawSim * SHADOW_MAX_BONUS)))
         : 0
       return {
         result,

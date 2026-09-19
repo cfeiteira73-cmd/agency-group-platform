@@ -273,30 +273,43 @@ describe('Shadow mode invariants', () => {
     expect(sim).toBeLessThanOrEqual(1)
   })
 
-  it('proposed_semantic_bonus formula: min(5, round(similarity * 5))', () => {
+  it('proposed_semantic_bonus formula: max(0, min(5, round(similarity * 5)))', () => {
+    // SEM-IMPL-RV fix: Math.max(0,...) guards against negative cosine producing
+    // a negative proposed bonus. Shadow observations are discovery signals only;
+    // negative cosine is "not helpful" (0 bonus), never a penalty.
     const SHADOW_MAX = 5
     const cases: Array<{ sim: number; expectedBonus: number }> = [
-      { sim: 1.0, expectedBonus: 5 },
-      { sim: 0.8, expectedBonus: 4 },
-      { sim: 0.6, expectedBonus: 3 },
-      { sim: 0.4, expectedBonus: 2 },
-      { sim: 0.2, expectedBonus: 1 },
-      { sim: 0.0, expectedBonus: 0 },
+      { sim:  1.0, expectedBonus: 5 },
+      { sim:  0.8, expectedBonus: 4 },
+      { sim:  0.6, expectedBonus: 3 },
+      { sim:  0.4, expectedBonus: 2 },
+      { sim:  0.2, expectedBonus: 1 },
+      { sim:  0.0, expectedBonus: 0 },
+      { sim: -0.3, expectedBonus: 0 },  // negative cosine → 0, not negative
+      { sim: -1.0, expectedBonus: 0 },  // worst case: opposite direction → 0
     ]
     for (const { sim, expectedBonus } of cases) {
-      const bonus = Math.min(SHADOW_MAX, Math.round(sim * SHADOW_MAX))
+      const bonus = Math.max(0, Math.min(SHADOW_MAX, Math.round(sim * SHADOW_MAX)))
       expect(bonus).toBe(expectedBonus)
     }
   })
 
-  it('shadow_combined_score never exceeds 100', () => {
-    // structural_score = 95, proposed_bonus = 5 → shadow = min(100, 100) = 100
+  it('shadow_combined_score never exceeds 100 and never goes below structural score', () => {
+    // shadow_combined = min(100, structural + proposedBonus)
+    // proposedBonus ≥ 0 always → shadow_combined ≥ structural always
     const SHADOW_MAX = 5
-    const structuralScore = 95
-    const rawSim = 1.0
-    const bonus = Math.min(SHADOW_MAX, Math.round(rawSim * SHADOW_MAX))
-    const shadowCombined = Math.min(100, structuralScore + bonus)
-    expect(shadowCombined).toBe(100)
+    const cases = [
+      { structural: 95, sim: 1.0, expectedCombined: 100 },
+      { structural: 55, sim: 0.6, expectedCombined: 58 },
+      { structural: 73, sim: 0.0, expectedCombined: 73 },
+      { structural: 73, sim: -0.5, expectedCombined: 73 },  // negative → no penalty
+    ]
+    for (const { structural, sim, expectedCombined } of cases) {
+      const bonus = Math.max(0, Math.min(SHADOW_MAX, Math.round(sim * SHADOW_MAX)))
+      const combined = Math.min(100, structural + bonus)
+      expect(combined).toBe(expectedCombined)
+      expect(combined).toBeGreaterThanOrEqual(structural)
+    }
   })
 
   it('public search_properties_semantic must retain is_off_market=false filter', async () => {
@@ -317,5 +330,107 @@ describe('Shadow mode invariants', () => {
       }
     }
     expect(found).toBe(true)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 6. Lifecycle — embedding invalidation contract (SEM-IMPL-RV Section 6–10)
+// ---------------------------------------------------------------------------
+
+describe('Embedding lifecycle invalidation contract', () => {
+  // These tests verify the migration 000073 SQL contract by inspecting
+  // the trigger function source in the migration file.
+  // They do NOT require a live DB connection.
+
+  it('migration 000073 exists and covers all 10 canonical semantic fields', async () => {
+    const fs   = await import('fs')
+    const path = await import('path')
+    const migPath = path.resolve(__dirname, '../../supabase/migrations/000073_sem_embedding_lifecycle_repair.sql')
+    const sql = fs.readFileSync(migPath, 'utf-8')
+
+    // All 10 canonical fields must be in IS DISTINCT FROM checks
+    const canonicalFields = [
+      'nome', 'tipo', 'zona', 'bairro', 'descricao',
+      'features', 'amenities', 'lifestyle_tags', 'quartos', 'area',
+    ]
+    for (const field of canonicalFields) {
+      expect(sql).toContain(`OLD.${field}`)
+      expect(sql).toContain(`NEW.${field}`)
+      expect(sql).toContain('IS DISTINCT FROM')
+    }
+    expect(sql).toContain('NEW.embedding := NULL')
+  })
+
+  it('migration 000073 does NOT invalidate structural-only fields', async () => {
+    const fs   = await import('fs')
+    const path = await import('path')
+    const migPath = path.resolve(__dirname, '../../supabase/migrations/000073_sem_embedding_lifecycle_repair.sql')
+    const sql = fs.readFileSync(migPath, 'utf-8')
+
+    // Fields intentionally excluded from semantic doc must NOT appear in trigger body
+    const excludedFromDoc = ['preco', 'status', 'is_off_market', 'agent_id', 'images']
+    for (const field of excludedFromDoc) {
+      // The trigger function body should not reference these as invalidation conditions
+      // (they may appear in comments — check for OLD.<field> specifically)
+      expect(sql).not.toContain(`OLD.${field}`)
+    }
+  })
+
+  it('migration 000073 uses IS DISTINCT FROM (null-safe) throughout', async () => {
+    const fs   = await import('fs')
+    const path = await import('path')
+    const migPath = path.resolve(__dirname, '../../supabase/migrations/000073_sem_embedding_lifecycle_repair.sql')
+    const sql = fs.readFileSync(migPath, 'utf-8')
+
+    // Count occurrences: should have 10 field comparisons
+    const matches = sql.match(/IS DISTINCT FROM/g) ?? []
+    expect(matches.length).toBeGreaterThanOrEqual(10)
+
+    // Must NOT use plain = comparison for NULL-sensitive checks
+    expect(sql).not.toContain('OLD.descricao = NEW.descricao')
+    expect(sql).not.toContain('OLD.nome = NEW.nome')
+  })
+
+  it('invalidation logic: semantic document fields SHOULD trigger null', () => {
+    // Simulate the trigger logic in TypeScript to verify correctness
+    function shouldInvalidate(old: Record<string, unknown>, nw: Record<string, unknown>): boolean {
+      const semanticFields = [
+        'nome', 'tipo', 'zona', 'bairro', 'descricao',
+        'features', 'amenities', 'lifestyle_tags', 'quartos', 'area',
+      ]
+      return semanticFields.some(f => old[f] !== nw[f] && !(old[f] == null && nw[f] == null))
+    }
+
+    // descricao change → invalidate
+    expect(shouldInvalidate({ descricao: 'old' }, { descricao: 'new' })).toBe(true)
+    // nome change → invalidate
+    expect(shouldInvalidate({ nome: 'A' }, { nome: 'B' })).toBe(true)
+    // features change → invalidate
+    expect(shouldInvalidate({ features: ['pool'] }, { features: ['pool', 'gym'] })).toBe(true)
+    // NULL → value → invalidate
+    expect(shouldInvalidate({ bairro: null }, { bairro: 'Estoril' })).toBe(true)
+    // value → NULL → invalidate
+    expect(shouldInvalidate({ bairro: 'Estoril' }, { bairro: null })).toBe(true)
+    // same value → no invalidation
+    expect(shouldInvalidate({ nome: 'Same' }, { nome: 'Same' })).toBe(false)
+    // both null → no invalidation
+    expect(shouldInvalidate({ bairro: null }, { bairro: null })).toBe(false)
+  })
+
+  it('invalidation logic: structural-only fields must NOT trigger null', () => {
+    function shouldInvalidate(old: Record<string, unknown>, nw: Record<string, unknown>): boolean {
+      const semanticFields = [
+        'nome', 'tipo', 'zona', 'bairro', 'descricao',
+        'features', 'amenities', 'lifestyle_tags', 'quartos', 'area',
+      ]
+      return semanticFields.some(f => old[f] !== nw[f] && !(old[f] == null && nw[f] == null))
+    }
+
+    // preco change only → no invalidation
+    expect(shouldInvalidate({ preco: 500000 }, { preco: 550000 })).toBe(false)
+    // status change only → no invalidation
+    expect(shouldInvalidate({ status: 'active' }, { status: 'reserved' })).toBe(false)
+    // is_off_market change only → no invalidation
+    expect(shouldInvalidate({ is_off_market: false }, { is_off_market: true })).toBe(false)
   })
 })
