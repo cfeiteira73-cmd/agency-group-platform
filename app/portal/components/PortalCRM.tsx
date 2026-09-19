@@ -387,6 +387,7 @@ export default function PortalCRM() {
   const [reviewingMatchId, setReviewingMatchId] = useState<string | null>(null)
   const [reviewActionError, setReviewActionError] = useState<string | null>(null)
   const [historicStatusFilter, setHistoricStatusFilter] = useState<'all' | 'pending' | 'reviewed_accepted' | 'reviewed_rejected'>('all')
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({})
   // Enriquecer
   const [enrichLoading, setEnrichLoading] = useState<number | null>(null)
   const [enrichToast, setEnrichToast] = useState<string | null>(null)
@@ -2151,7 +2152,7 @@ export default function PortalCRM() {
                                 background: historicStatusFilter === f ? 'rgba(201,169,110,.08)' : 'transparent',
                                 color: historicStatusFilter === f ? '#c9a96e' : 'rgba(14,14,13,.4)', cursor: 'pointer', borderRadius: '2px',
                               }}>
-                                {f === 'all' ? 'Todos' : f === 'pending' ? 'Pendente' : f === 'reviewed_accepted' ? 'Aceite' : 'Rejeitado'}
+                                {f === 'all' ? 'Todos' : f === 'pending' ? 'Por Rever' : f === 'reviewed_accepted' ? 'Aceites' : 'Rejeitados'}
                               </button>
                             ))}
                           </div>
@@ -2166,10 +2167,10 @@ export default function PortalCRM() {
                           .map(hm => {
                             const scoreColor = hm.match_score >= 80 ? '#4a9c7a' : hm.match_score >= 70 ? '#c9a96e' : '#888'
                             const statusBadge = hm.status === 'reviewed_accepted'
-                              ? { label: 'ACEITE', bg: 'rgba(74,156,122,.1)', color: '#4a9c7a' }
+                              ? { label: 'ACEITE PELO AGENTE', bg: 'rgba(74,156,122,.1)', color: '#4a9c7a' }
                               : hm.status === 'reviewed_rejected'
-                              ? { label: 'REJEITADO', bg: 'rgba(200,60,60,.06)', color: '#c83c3c' }
-                              : { label: 'PENDENTE', bg: 'rgba(136,136,136,.08)', color: '#888' }
+                              ? { label: 'REJEITADO PELO AGENTE', bg: 'rgba(200,60,60,.06)', color: '#c83c3c' }
+                              : { label: 'POR REVER', bg: 'rgba(136,136,136,.08)', color: '#888' }
                             const isReviewing = reviewingMatchId === hm.id
                             return (
                               <div key={hm.id} style={{ padding: '10px 12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', marginBottom: '6px', borderLeft: `3px solid ${scoreColor}` }}>
@@ -2192,26 +2193,40 @@ export default function PortalCRM() {
                                 {hm.status === 'pending' && (
                                   <div style={{ marginTop: '8px' }}>
                                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#c9a96e', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.15)', padding: '4px 8px', marginBottom: '7px' }}>
-                                      Off-market — a aceitação não autoriza divulgação ao comprador.
+                                      Aceitar este match não autoriza a divulgação do imóvel.
                                     </div>
-                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                    <textarea
+                                      value={reviewNotes[hm.id] ?? ''}
+                                      onChange={e => setReviewNotes(prev => ({ ...prev, [hm.id]: e.target.value }))}
+                                      placeholder="Nota de revisão (opcional)..."
+                                      maxLength={500}
+                                      disabled={isReviewing}
+                                      rows={2}
+                                      style={{ width: '100%', fontFamily: "'DM Mono',monospace", fontSize: '.48rem', padding: '5px 8px', border: '1px solid rgba(14,14,13,.1)', background: 'rgba(14,14,13,.02)', color: '#0e0e0d', resize: 'vertical', marginBottom: '7px', boxSizing: 'border-box', opacity: isReviewing ? .5 : 1 }}
+                                    />
+                                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                                       <button
                                         type="button"
                                         disabled={isReviewing}
+                                        aria-label="Aceitar match"
                                         onClick={async () => {
                                           setReviewingMatchId(hm.id)
                                           setReviewActionError(null)
                                           try {
+                                            const body: Record<string, string> = { status: 'reviewed_accepted' }
+                                            const note = reviewNotes[hm.id]?.trim()
+                                            if (note) body.notes = note
                                             const res = await fetch(`/api/matches/${hm.id}`, {
                                               method: 'PATCH',
                                               headers: { 'Content-Type': 'application/json' },
-                                              body: JSON.stringify({ status: 'reviewed_accepted' }),
+                                              body: JSON.stringify(body),
                                             })
-                                            const json = await res.json() as { match?: { status: string; reviewed_at: string | null }; error?: string }
+                                            const json = await res.json() as { match?: { status: string; reviewed_at: string | null; notes: string | null }; error?: string }
                                             if (res.ok && json.match) {
                                               setHistoricMatches(prev => prev.map(m =>
-                                                m.id === hm.id ? { ...m, status: 'reviewed_accepted', reviewed_at: json.match!.reviewed_at ?? null } : m
+                                                m.id === hm.id ? { ...m, status: 'reviewed_accepted', reviewed_at: json.match!.reviewed_at ?? null, notes: json.match!.notes ?? null } : m
                                               ))
+                                              setReviewNotes(prev => { const n = { ...prev }; delete n[hm.id]; return n })
                                             } else {
                                               setReviewActionError(json.error ?? 'Acção de revisão falhou')
                                             }
@@ -2219,25 +2234,30 @@ export default function PortalCRM() {
                                           finally { setReviewingMatchId(null) }
                                         }}
                                         style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', padding: '5px 14px', background: 'rgba(74,156,122,.1)', color: '#4a9c7a', border: '1px solid rgba(74,156,122,.25)', cursor: isReviewing ? 'not-allowed' : 'pointer', opacity: isReviewing ? .5 : 1 }}>
-                                        {isReviewing ? '⟳' : '✓ Aceitar'}
+                                        {isReviewing ? '⟳' : '✓ ACEITAR'}
                                       </button>
                                       <button
                                         type="button"
                                         disabled={isReviewing}
+                                        aria-label="Rejeitar match"
                                         onClick={async () => {
                                           setReviewingMatchId(hm.id)
                                           setReviewActionError(null)
                                           try {
+                                            const body: Record<string, string> = { status: 'reviewed_rejected' }
+                                            const note = reviewNotes[hm.id]?.trim()
+                                            if (note) body.notes = note
                                             const res = await fetch(`/api/matches/${hm.id}`, {
                                               method: 'PATCH',
                                               headers: { 'Content-Type': 'application/json' },
-                                              body: JSON.stringify({ status: 'reviewed_rejected' }),
+                                              body: JSON.stringify(body),
                                             })
-                                            const json = await res.json() as { match?: { status: string; reviewed_at: string | null }; error?: string }
+                                            const json = await res.json() as { match?: { status: string; reviewed_at: string | null; notes: string | null }; error?: string }
                                             if (res.ok && json.match) {
                                               setHistoricMatches(prev => prev.map(m =>
-                                                m.id === hm.id ? { ...m, status: 'reviewed_rejected', reviewed_at: json.match!.reviewed_at ?? null } : m
+                                                m.id === hm.id ? { ...m, status: 'reviewed_rejected', reviewed_at: json.match!.reviewed_at ?? null, notes: json.match!.notes ?? null } : m
                                               ))
+                                              setReviewNotes(prev => { const n = { ...prev }; delete n[hm.id]; return n })
                                             } else {
                                               setReviewActionError(json.error ?? 'Acção de revisão falhou')
                                             }
@@ -2245,7 +2265,7 @@ export default function PortalCRM() {
                                           finally { setReviewingMatchId(null) }
                                         }}
                                         style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', padding: '5px 14px', background: 'rgba(200,60,60,.06)', color: '#c83c3c', border: '1px solid rgba(200,60,60,.18)', cursor: isReviewing ? 'not-allowed' : 'pointer', opacity: isReviewing ? .5 : 1 }}>
-                                        {isReviewing ? '⟳' : '✗ Rejeitar'}
+                                        {isReviewing ? '⟳' : '✗ REJEITAR'}
                                       </button>
                                     </div>
                                   </div>
