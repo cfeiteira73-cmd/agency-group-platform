@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { portalAuthGate } from '@/lib/requirePortalAuth'
+import { resolveActor, checkMatchOwnership } from '@/lib/auth/commercialAuth'
 
 export const runtime = 'nodejs'
 
@@ -133,17 +134,12 @@ export async function PATCH(
       }
     }
 
-    // Section 13/29: server-derive authorizer from session — never client-supplied
-    const { data: discUser } = await supabase.from('users').select('id').eq('email', gate.email).single()
-    const authorizedBy = discUser?.id ?? null
-
-    // §7: Application must establish authenticated human identity before DB mutation
-    if (!authorizedBy) {
-      return NextResponse.json(
-        { error: 'Authenticated user not found in public.users — human actor required' },
-        { status: 403 }
-      )
-    }
+    // Section 29: resolve actor — is_active gate + ownership gate (Model B)
+    const actorResult = await resolveActor(gate.email, supabase)
+    if (!actorResult.ok) return NextResponse.json({ error: actorResult.error }, { status: actorResult.status })
+    const ownershipResult = await checkMatchOwnership(actorResult.actor, discMatch.lead_id, supabase)
+    if (!ownershipResult.ok) return NextResponse.json({ error: ownershipResult.error }, { status: ownershipResult.status })
+    const authorizedBy = actorResult.actor.id
 
     // Atomic: UPDATE matches + INSERT activity in one PostgreSQL transaction
     // (§5: two sequential Supabase calls are NOT transaction-safe)
@@ -201,14 +197,12 @@ export async function PATCH(
     }
   }
 
-  // Section 29: resolve reviewed_by UUID from authenticated email (never trust client)
-  let reviewedBy: string | null = null
-  const { data: userRow } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', gate.email)
-    .single()
-  reviewedBy = userRow?.id ?? null
+  // Section 29: resolve actor — is_active gate + ownership gate (Model B)
+  const actorResult = await resolveActor(gate.email, supabase)
+  if (!actorResult.ok) return NextResponse.json({ error: actorResult.error }, { status: actorResult.status })
+  const ownershipResult = await checkMatchOwnership(actorResult.actor, current.lead_id, supabase)
+  if (!ownershipResult.ok) return NextResponse.json({ error: ownershipResult.error }, { status: ownershipResult.status })
+  const reviewedBy = actorResult.actor.id
 
   // Build update payload
   const now = new Date().toISOString()
