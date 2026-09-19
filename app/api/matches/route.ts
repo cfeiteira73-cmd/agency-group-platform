@@ -32,11 +32,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const offset    = (page - 1) * limit
 
   // FIX-2: tenant_id not in production schema (matches.tenant_id never applied)
+  // D1-REVIEW: added notes, reviewed_at, reviewed_by, breakdown, match_weaknesses, priority_level
   let query = supabase
     .from('matches')
     .select(`
       id, lead_id, property_id, property_title, match_score, match_reasons,
       explanation, similarity, estimated_yield, status, matched_by,
+      notes, reviewed_at, reviewed_by,
+      breakdown, match_weaknesses, priority_level,
       created_at, updated_at
     `, { count: 'exact' })
     .order('created_at', { ascending: false })

@@ -381,8 +381,12 @@ export default function PortalCRM() {
   const [matchContactId, setMatchContactId] = useState<number | null>(null)
   const [matchError, setMatchError] = useState<string | null>(null)
   const [matchDataReadiness, setMatchDataReadiness] = useState<{ known_criteria: string[]; unknown_criteria: string[]; completeness: 'high' | 'medium' | 'limited' } | null>(null)
-  const [historicMatches, setHistoricMatches] = useState<Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string }>>([])
+  const [historicMatches, setHistoricMatches] = useState<Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string; notes: string | null; reviewed_at: string | null; reviewed_by: string | null }>>([])
   const [historicMatchesLoaded, setHistoricMatchesLoaded] = useState<number | null>(null)
+  // D1-REVIEW: review action state
+  const [reviewingMatchId, setReviewingMatchId] = useState<string | null>(null)
+  const [reviewActionError, setReviewActionError] = useState<string | null>(null)
+  const [historicStatusFilter, setHistoricStatusFilter] = useState<'all' | 'pending' | 'reviewed_accepted' | 'reviewed_rejected'>('all')
   // Enriquecer
   const [enrichLoading, setEnrichLoading] = useState<number | null>(null)
   const [enrichToast, setEnrichToast] = useState<string | null>(null)
@@ -471,9 +475,9 @@ export default function PortalCRM() {
     if (crmProfileTab !== 'matching' || !activeCrmId) return
     if (historicMatchesLoaded === activeCrmId) return
     const controller = new AbortController()
-    fetch(`/api/matches?lead_id=${activeCrmId}&limit=5`, { signal: controller.signal })
+    fetch(`/api/matches?lead_id=${activeCrmId}&limit=20`, { signal: controller.signal })
       .then(r => r.ok ? r.json() : null)
-      .then((json: { matches?: Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string }> } | null) => {
+      .then((json: { matches?: Array<{ id: string; property_id: string; property_title: string | null; match_score: number; status: string; created_at: string; notes: string | null; reviewed_at: string | null; reviewed_by: string | null }> } | null) => {
         if (json && Array.isArray(json.matches)) {
           setHistoricMatches(json.matches)
           setHistoricMatchesLoaded(activeCrmId)
@@ -2134,19 +2138,152 @@ export default function PortalCRM() {
                       )
                     })}
 
-                    {/* Persisted match history */}
+                    {/* Persisted match history — D1-REVIEW: Human Review Layer */}
                     {historicMatches.length > 0 && (
                       <div style={{ marginTop: '18px' }}>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.28)', marginBottom: '8px' }}>Correspondências persistidas</div>
-                        {historicMatches.slice(0, 5).map(hm => (
-                          <div key={hm.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', marginBottom: '4px' }}>
-                            <div>
-                              <div style={{ fontSize: '.8rem', color: '#0e0e0d' }}>{hm.property_title ?? hm.property_id}</div>
-                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.45rem', color: 'rgba(14,14,13,.32)', marginTop: '2px' }}>{new Date(hm.created_at).toLocaleDateString('pt-PT')} · {hm.status}</div>
-                            </div>
-                            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.62rem', fontWeight: 700, color: hm.match_score >= 80 ? '#4a9c7a' : hm.match_score >= 70 ? '#c9a96e' : '#888' }}>{hm.match_score}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.52rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(14,14,13,.28)' }}>Correspondências persistidas · Revisão do agente</div>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            {(['all', 'pending', 'reviewed_accepted', 'reviewed_rejected'] as const).map(f => (
+                              <button key={f} type="button" onClick={() => setHistoricStatusFilter(f)} style={{
+                                fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '2px 8px', border: '1px solid',
+                                borderColor: historicStatusFilter === f ? '#c9a96e' : 'rgba(14,14,13,.12)',
+                                background: historicStatusFilter === f ? 'rgba(201,169,110,.08)' : 'transparent',
+                                color: historicStatusFilter === f ? '#c9a96e' : 'rgba(14,14,13,.4)', cursor: 'pointer', borderRadius: '2px',
+                              }}>
+                                {f === 'all' ? 'Todos' : f === 'pending' ? 'Pendente' : f === 'reviewed_accepted' ? 'Aceite' : 'Rejeitado'}
+                              </button>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                        {reviewActionError && (
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: '#c83c3c', background: 'rgba(200,60,60,.04)', border: '1px solid rgba(200,60,60,.12)', padding: '6px 10px', marginBottom: '8px' }}>
+                            {reviewActionError}
+                          </div>
+                        )}
+                        {historicMatches
+                          .filter(hm => historicStatusFilter === 'all' || hm.status === historicStatusFilter)
+                          .map(hm => {
+                            const scoreColor = hm.match_score >= 80 ? '#4a9c7a' : hm.match_score >= 70 ? '#c9a96e' : '#888'
+                            const statusBadge = hm.status === 'reviewed_accepted'
+                              ? { label: 'ACEITE', bg: 'rgba(74,156,122,.1)', color: '#4a9c7a' }
+                              : hm.status === 'reviewed_rejected'
+                              ? { label: 'REJEITADO', bg: 'rgba(200,60,60,.06)', color: '#c83c3c' }
+                              : { label: 'PENDENTE', bg: 'rgba(136,136,136,.08)', color: '#888' }
+                            const isReviewing = reviewingMatchId === hm.id
+                            return (
+                              <div key={hm.id} style={{ padding: '10px 12px', background: 'rgba(14,14,13,.02)', border: '1px solid rgba(14,14,13,.06)', marginBottom: '6px', borderLeft: `3px solid ${scoreColor}` }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: '.82rem', color: '#0e0e0d', fontWeight: 500 }}>{hm.property_title ?? hm.property_id}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '1px 7px', background: statusBadge.bg, color: statusBadge.color, borderRadius: '10px', fontWeight: 700 }}>{statusBadge.label}</span>
+                                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.32)' }}>{new Date(hm.created_at).toLocaleDateString('pt-PT')}</span>
+                                      {hm.reviewed_at && (
+                                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: 'rgba(14,14,13,.28)' }}>Revisto {new Date(hm.reviewed_at).toLocaleDateString('pt-PT')}</span>
+                                      )}
+                                    </div>
+                                    {hm.notes && (
+                                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', color: 'rgba(14,14,13,.5)', marginTop: '5px', fontStyle: 'italic' }}>"{hm.notes}"</div>
+                                    )}
+                                  </div>
+                                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.62rem', fontWeight: 700, color: scoreColor, flexShrink: 0 }}>{hm.match_score}</div>
+                                </div>
+                                {hm.status === 'pending' && (
+                                  <div style={{ marginTop: '8px' }}>
+                                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', color: '#c9a96e', background: 'rgba(201,169,110,.06)', border: '1px solid rgba(201,169,110,.15)', padding: '4px 8px', marginBottom: '7px' }}>
+                                      Off-market — a aceitação não autoriza divulgação ao comprador.
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                      <button
+                                        type="button"
+                                        disabled={isReviewing}
+                                        onClick={async () => {
+                                          setReviewingMatchId(hm.id)
+                                          setReviewActionError(null)
+                                          try {
+                                            const res = await fetch(`/api/matches/${hm.id}`, {
+                                              method: 'PATCH',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ status: 'reviewed_accepted' }),
+                                            })
+                                            const json = await res.json() as { match?: { status: string; reviewed_at: string | null }; error?: string }
+                                            if (res.ok && json.match) {
+                                              setHistoricMatches(prev => prev.map(m =>
+                                                m.id === hm.id ? { ...m, status: 'reviewed_accepted', reviewed_at: json.match!.reviewed_at ?? null } : m
+                                              ))
+                                            } else {
+                                              setReviewActionError(json.error ?? 'Acção de revisão falhou')
+                                            }
+                                          } catch { setReviewActionError('Erro de rede — tente novamente') }
+                                          finally { setReviewingMatchId(null) }
+                                        }}
+                                        style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', padding: '5px 14px', background: 'rgba(74,156,122,.1)', color: '#4a9c7a', border: '1px solid rgba(74,156,122,.25)', cursor: isReviewing ? 'not-allowed' : 'pointer', opacity: isReviewing ? .5 : 1 }}>
+                                        {isReviewing ? '⟳' : '✓ Aceitar'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={isReviewing}
+                                        onClick={async () => {
+                                          setReviewingMatchId(hm.id)
+                                          setReviewActionError(null)
+                                          try {
+                                            const res = await fetch(`/api/matches/${hm.id}`, {
+                                              method: 'PATCH',
+                                              headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ status: 'reviewed_rejected' }),
+                                            })
+                                            const json = await res.json() as { match?: { status: string; reviewed_at: string | null }; error?: string }
+                                            if (res.ok && json.match) {
+                                              setHistoricMatches(prev => prev.map(m =>
+                                                m.id === hm.id ? { ...m, status: 'reviewed_rejected', reviewed_at: json.match!.reviewed_at ?? null } : m
+                                              ))
+                                            } else {
+                                              setReviewActionError(json.error ?? 'Acção de revisão falhou')
+                                            }
+                                          } catch { setReviewActionError('Erro de rede — tente novamente') }
+                                          finally { setReviewingMatchId(null) }
+                                        }}
+                                        style={{ fontFamily: "'DM Mono',monospace", fontSize: '.48rem', padding: '5px 14px', background: 'rgba(200,60,60,.06)', color: '#c83c3c', border: '1px solid rgba(200,60,60,.18)', cursor: isReviewing ? 'not-allowed' : 'pointer', opacity: isReviewing ? .5 : 1 }}>
+                                        {isReviewing ? '⟳' : '✗ Rejeitar'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                                {(hm.status === 'reviewed_accepted' || hm.status === 'reviewed_rejected') && (
+                                  <div style={{ marginTop: '6px' }}>
+                                    <button
+                                      type="button"
+                                      disabled={isReviewing}
+                                      onClick={async () => {
+                                        const reverseStatus = hm.status === 'reviewed_accepted' ? 'reviewed_rejected' : 'reviewed_accepted'
+                                        setReviewingMatchId(hm.id)
+                                        setReviewActionError(null)
+                                        try {
+                                          const res = await fetch(`/api/matches/${hm.id}`, {
+                                            method: 'PATCH',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ status: reverseStatus }),
+                                          })
+                                          const json = await res.json() as { match?: { status: string; reviewed_at: string | null }; error?: string }
+                                          if (res.ok && json.match) {
+                                            setHistoricMatches(prev => prev.map(m =>
+                                              m.id === hm.id ? { ...m, status: reverseStatus, reviewed_at: json.match!.reviewed_at ?? null } : m
+                                            ))
+                                          } else {
+                                            setReviewActionError(json.error ?? 'Acção de revisão falhou')
+                                          }
+                                        } catch { setReviewActionError('Erro de rede — tente novamente') }
+                                        finally { setReviewingMatchId(null) }
+                                      }}
+                                      style={{ fontFamily: "'DM Mono',monospace", fontSize: '.42rem', padding: '3px 10px', background: 'transparent', color: 'rgba(14,14,13,.35)', border: '1px solid rgba(14,14,13,.12)', cursor: isReviewing ? 'not-allowed' : 'pointer', opacity: isReviewing ? .5 : 1 }}>
+                                      {isReviewing ? '⟳' : hm.status === 'reviewed_accepted' ? 'Reverter → Rejeitar' : 'Reverter → Aceitar'}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
                       </div>
                     )}
                   </div>
