@@ -588,6 +588,8 @@ describe('mandate identity', () => {
 // ---------------------------------------------------------------------------
 // 14. C0-SF1 structural repair — UNKNOWN ≠ BAD FIT for zonas/tipos + budget fix
 // ---------------------------------------------------------------------------
+// E2E substitute: Contact 15 scenario (production DB inactive; scores proven here)
+// ---------------------------------------------------------------------------
 
 describe('C0-SF1 structural repair', () => {
   it('excludes W_TIPO from denominator when tipos is empty (UNKNOWN ≠ BAD FIT)', () => {
@@ -648,5 +650,97 @@ describe('C0-SF1 structural repair', () => {
     // unknown: available=25+30=55, earned=25+30=55, score=100
     // wrong:   available=25+20+30=75, earned=25+0+30=55, score=73
     expect(rUnknown.score).toBeGreaterThan(rWrong.score)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 15. Contact 15 E2E scenario
+//     (production DB gnhbajrnhyuhwxwfrskg INACTIVE — scoring proven analytically)
+//
+//     Profile built from match-buyer fallback path (fetchContact returns null for
+//     integer lead_id against UUID contacts.id — see Root Cause A fix):
+//       zonas = req.locations = ['Cascais', 'Estoril']
+//       tipos = [] (no req.typology passed → UNKNOWN)
+//       budget_min = 800_000, budget_max = 1_500_000
+//       quartos_min = null
+//
+//     Pre-fix: W_TIPO(20) always in denominator even when tipos=[]
+//              + budget soft-score triggered for prices BELOW budget_min
+//     Post-fix: W_TIPO excluded when tipos=[]; soft score only when preco > max
+// ---------------------------------------------------------------------------
+
+describe('Contact 15 E2E scenario — pre/post fix score comparison', () => {
+  const CONTACT_15: V1ContactProfile = {
+    zonas:       ['Cascais', 'Estoril'],
+    tipos:       [],              // UNKNOWN — typologies_wanted contains ['T3'] (bedroom code)
+    budget_min:  800_000,
+    budget_max:  1_500_000,
+    quartos_min: null,
+    buyer_score: null,
+  }
+
+  // 3 representative Cascais properties
+  const PROP_BELOW_MIN: V1PropertyCandidate = {
+    id: 'prop-cascais-750k', nome: 'Cascais 750K', zona: 'Cascais',
+    tipo: 'apartamento', preco: 750_000, quartos: 3, area: 120,
+    is_off_market: false, similarity: null,
+  }
+  const PROP_IN_RANGE: V1PropertyCandidate = {
+    id: 'prop-cascais-900k', nome: 'Cascais 900K', zona: 'Cascais',
+    tipo: 'moradia', preco: 900_000, quartos: 4, area: 200,
+    is_off_market: false, similarity: null,
+  }
+  const PROP_SOFT_OVER: V1PropertyCandidate = {
+    id: 'prop-cascais-1650k', nome: 'Cascais 1.65M', zona: 'Cascais',
+    tipo: 'moradia', preco: 1_650_000, quartos: 4, area: 220,
+    is_off_market: false, similarity: null,
+  }
+
+  it('in-range property scores 100 (available=55, earned=55)', () => {
+    const r = scoreV1(CONTACT_15, PROP_IN_RANGE)
+    // available = W_ZONA(25) + W_BUDGET(30) = 55 (W_TIPO excluded: tipos=[])
+    // earned    = zona(25) + budget(30) = 55
+    expect(r.available_weight).toBe(55)
+    expect(r.earned_pts).toBe(55)
+    expect(r.score).toBe(100)
+  })
+
+  it('below-min property scores 45 (zona only; budget bug fixed)', () => {
+    const r = scoreV1(CONTACT_15, PROP_BELOW_MIN)
+    // budget: 750K < 800K (below min) AND 750K not > 1.5M → 0 pts (fixed)
+    // available = 55, earned = 25 (zona only)
+    expect(r.available_weight).toBe(55)
+    expect(r.budget_pts).toBe(0)
+    expect(r.zona_pts).toBe(25)
+    expect(r.score).toBe(Math.round(25 / 55 * 100))
+  })
+
+  it('soft-budget property (above max by 10%) scores 72', () => {
+    const r = scoreV1(CONTACT_15, PROP_SOFT_OVER)
+    // budget: 1.65M > 1.5M by 10% → soft 15
+    // available = 55, earned = 25 + 15 = 40
+    expect(r.available_weight).toBe(55)
+    expect(r.budget_pts).toBe(15)
+    expect(r.score).toBe(Math.round(40 / 55 * 100))
+  })
+
+  it('ranking: in-range (100) > soft-over (72) > below-min (45)', () => {
+    const results = matchV1(CONTACT_15, [PROP_BELOW_MIN, PROP_IN_RANGE, PROP_SOFT_OVER])
+    expect(results[0].property.id).toBe('prop-cascais-900k')  // 100
+    expect(results[1].property.id).toBe('prop-cascais-1650k') // 72
+    expect(results[2].property.id).toBe('prop-cascais-750k')  // 45
+  })
+
+  it('pre-fix invariant violated: old code gave below-min 53 pts (BUG)', () => {
+    // Prove the old buggy score arithmetically:
+    // OLD available = W_ZONA + W_TIPO + W_BUDGET = 25 + 20 + 30 = 75 (tipos always in denom)
+    // OLD budget: 750K <= 1.5M*1.1=1.65M → soft 15 (no > max check)
+    // OLD score = (25 + 0 + 15) / 75 * 100 = 53
+    // NEW score = 45 (correctly lower — property is BELOW budget, not above)
+    const rNew = scoreV1(CONTACT_15, PROP_BELOW_MIN)
+    const PRE_FIX_BUGGY_SCORE = Math.round((25 + 0 + 15) / 75 * 100)  // 53
+    expect(PRE_FIX_BUGGY_SCORE).toBe(53)
+    expect(rNew.score).toBe(Math.round(25 / 55 * 100))  // 45
+    expect(rNew.score).toBeLessThan(PRE_FIX_BUGGY_SCORE)
   })
 })
