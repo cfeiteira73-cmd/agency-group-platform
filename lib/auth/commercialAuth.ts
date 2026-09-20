@@ -173,10 +173,21 @@ export async function checkMatchOwnership(
 
 /**
  * Checks whether an actor is authorized to access or mutate a specific deal
- * pack. Authorization flows through:
+ * pack. Authorization flows through CURRENT contact ownership only:
  *   1. Admin → always authorized
- *   2. Pack creator (created_by == actor.email) → authorized
- *   3. Contact owner (pack.lead_id → contacts.agent_email == actor.email) → authorized
+ *   2. Current contact owner (pack.lead_id → contacts.agent_email == actor.email) → authorized
+ *
+ * DELIBERATE OMISSION: created_by is NOT checked.
+ * created_by is audit provenance — it records who generated the pack. It is NOT
+ * a permanent commercial authority grant. When a contact is reassigned, the new
+ * agent owns the pack; the old creator loses access. This implements §8–§10:
+ * CURRENT COMMERCIAL AUTHORITY > HISTORICAL CREATOR.
+ *
+ * Fail-closed cases:
+ *   pack.lead_id = NULL (orphaned)        → 403 (admin only)
+ *   contact not found                      → 403 (fail closed)
+ *   contact.agent_email = NULL (unassigned)→ 403 (admin only, per §10)
+ *   cross-agent access                     → 403
  *
  * Returns 404 if the pack does not exist (prevents enumeration via 403 vs 404).
  * Returns 403 if pack exists but actor is not authorized.
@@ -192,7 +203,7 @@ export async function checkDealPackOwnership(
 
   const { data: pack } = await supabase
     .from('deal_packs')
-    .select('id, created_by, lead_id')
+    .select('id, lead_id')
     .eq('id', packId)
     .single()
 
@@ -202,17 +213,30 @@ export async function checkDealPackOwnership(
 
   if (actor.isAdmin) return { ok: true }
 
-  const creatorEmail = pack.created_by?.trim().toLowerCase() ?? null
-  if (creatorEmail && creatorEmail === actor.email) return { ok: true }
-
-  if (pack.lead_id) {
-    const { data: contact } = await supabase
-      .from('contacts')
-      .select('agent_email')
-      .eq('id', pack.lead_id)
-      .single()
-    if (contact?.agent_email?.trim().toLowerCase() === actor.email) return { ok: true }
+  // Orphaned pack — no contact linkage → admin only
+  if (!pack.lead_id) {
+    return { ok: false, status: 403, error: 'Not authorized — deal pack has no contact linkage, admin required' }
   }
+
+  const { data: contact } = await supabase
+    .from('contacts')
+    .select('agent_email')
+    .eq('id', pack.lead_id)
+    .single()
+
+  // Contact not found → fail closed
+  if (!contact) {
+    return { ok: false, status: 403, error: 'Not authorized — contact not found for deal pack' }
+  }
+
+  const ownerEmail = contact.agent_email?.trim().toLowerCase() ?? null
+
+  // Unassigned contact → admin only (§10)
+  if (ownerEmail === null) {
+    return { ok: false, status: 403, error: 'Not authorized — contact is unassigned, admin required' }
+  }
+
+  if (ownerEmail === actor.email) return { ok: true }
 
   return { ok: false, status: 403, error: 'Not authorized — this deal pack belongs to another agent' }
 }

@@ -2,11 +2,12 @@
 // GET /api/deal-packs — List deal packs (portal auth required)
 // Query: ?status=ready&limit=50&offset=0
 //
-// D2-B-DEALPACK-AUTH:
+// D2-B-DEALPACK-AUTH + D2-B-DEALPACK-AUTH-PV (§15):
 //   service_token → 403 (not a human actor)
 //   is_active NULL → 403 (fail-closed per §4)
 //   admin → sees all packs in tenant
-//   agent → sees own packs only (created_by = actor.email)
+//   agent → sees packs linked to contacts they currently own (agent_email match)
+//           NOT filtered by created_by — see §8–§10 for rationale
 // =============================================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -59,9 +60,18 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    // §20: admin sees all packs; agents see only their own
+    // §15+§20: admin sees all packs; agents see packs for contacts they currently own.
+    // created_by is NOT used — it is audit provenance, not a commercial authority grant.
     if (!actor.isAdmin) {
-      query = query.eq('created_by', actor.email)
+      const { data: contactRows } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('agent_email', actor.email)
+      const contactIds = (contactRows ?? []).map((c: { id: unknown }) => c.id)
+      if (contactIds.length === 0) {
+        return NextResponse.json({ deal_packs: [], total: 0, limit, offset })
+      }
+      query = query.in('lead_id', contactIds)
     }
 
     const validStatuses: DealPackStatus[] = ['draft', 'ready', 'sent', 'viewed', 'archived']

@@ -371,16 +371,42 @@ describe('checkDealPackOwnership unit', () => {
     expect(res.ok).toBe(true)
   })
 
-  it('§40 creator == actor → ok', async () => {
+  it('§10 orphaned pack (no lead_id) + non-admin → 403', async () => {
     const { checkDealPackOwnership } = await vi.importActual<typeof import('@/lib/auth/commercialAuth')>('@/lib/auth/commercialAuth')
-    const sb = makePackSupabase({ id: PACK_ID, created_by: 'alice@test.com', lead_id: null })
+    // created_by present but irrelevant — authorization does not use it
+    const sb = makePackSupabase({ id: PACK_ID, lead_id: null })
     const res = await checkDealPackOwnership(agentActor, PACK_ID, sb)
-    expect(res.ok).toBe(true)
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.status).toBe(403)
   })
 
-  it('§39 cross-agent (created_by = other, no lead) → 403', async () => {
+  it('§8 creator is former owner, contact reassigned → creator 403 (current owner wins)', async () => {
+    // §8 HARD TEST: created_by = alice (former owner), contact now owned by carol
+    // alice requests → 403. Current commercial authority > historical creator.
     const { checkDealPackOwnership } = await vi.importActual<typeof import('@/lib/auth/commercialAuth')>('@/lib/auth/commercialAuth')
-    const sb = makePackSupabase({ id: PACK_ID, created_by: 'bob@test.com', lead_id: null })
+    const sb = makePackSupabase(
+      { id: PACK_ID, lead_id: 'lead-uuid' }, // created_by intentionally omitted — not used
+      { agent_email: 'carol@test.com' },       // contact is now carol's
+    )
+    const res = await checkDealPackOwnership(agentActor, PACK_ID, sb) // agentActor = alice
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.status).toBe(403)
+  })
+
+  it('§10 unassigned contact (agent_email=null) + non-admin → 403', async () => {
+    const { checkDealPackOwnership } = await vi.importActual<typeof import('@/lib/auth/commercialAuth')>('@/lib/auth/commercialAuth')
+    const sb = makePackSupabase(
+      { id: PACK_ID, lead_id: 'lead-uuid' },
+      { agent_email: null },
+    )
+    const res = await checkDealPackOwnership(agentActor, PACK_ID, sb)
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.status).toBe(403)
+  })
+
+  it('§39 cross-agent (no lead_id) → 403', async () => {
+    const { checkDealPackOwnership } = await vi.importActual<typeof import('@/lib/auth/commercialAuth')>('@/lib/auth/commercialAuth')
+    const sb = makePackSupabase({ id: PACK_ID, lead_id: null })
     const res = await checkDealPackOwnership(agentActor, PACK_ID, sb)
     expect(res.ok).toBe(false)
     if (!res.ok) expect(res.status).toBe(403)
