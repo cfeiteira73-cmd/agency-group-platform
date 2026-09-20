@@ -128,7 +128,7 @@ const goodMatch = {
 }
 const goodContact = {
   id: CONTACT_ID, full_name: 'James Mitchell', email: 'james@example.com',
-  opt_out_marketing: false, gdpr_consent: false,
+  opt_out_marketing: false, gdpr_consent: null,
 }
 
 // ── §52 Transport adapter mock ─────────────────────────────────────────────────
@@ -976,6 +976,99 @@ describe('PV §75 Manual disclosure uses record_manual_disclosure RPC (§22+§25
 
     const body = await res.json()
     expect(body.activity_id).toBe('act-rpc-manual-01')
+  })
+})
+
+// ── SR §B2 Resend idempotency: second arg, no email header leakage ───────────
+
+describe('SR §B2 Resend idempotency key — second arg only, no email header', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.clearAllMocks()
+    process.env.DEALPACK_EMAIL_SEND_ACTIVE = 'true'
+  })
+  afterAll(() => { delete process.env.DEALPACK_EMAIL_SEND_ACTIVE })
+
+  it('emails.send receives idempotencyKey as second argument options', async () => {
+    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
+    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
+    vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
+
+    const sendMock = vi.fn().mockResolvedValue({ data: { id: 'resend-idem-001' }, error: null })
+    const { Resend } = await import('resend')
+    vi.mocked(Resend).mockImplementation(() => ({
+      emails: { send: sendMock },
+    }) as unknown as InstanceType<typeof Resend>)
+
+    const mockSb = makeSupabaseMock({
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) },
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      contacts:   { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
+      properties: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) },
+      disclosure_deliveries: {
+        select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+        order:  vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        insert: vi.fn().mockReturnThis(), update: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: 'del-idem-sr' }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      },
+    })
+    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
+
+    const { POST } = await import('@/app/api/deal-packs/[id]/send/route')
+    const ACTION_ID = 'a1b2c3d4-0000-0000-0000-111111111111'
+    await POST(
+      makeReq('POST', `/api/deal-packs/${PACK_ID}/send`, { action_id: ACTION_ID }),
+      { params: Promise.resolve({ id: PACK_ID }) },
+    )
+
+    expect(sendMock).toHaveBeenCalled()
+    const [payload, options] = sendMock.mock.calls[0] as [Record<string, unknown>, Record<string, unknown>]
+
+    // Second arg must carry idempotencyKey (SDK sets Idempotency-Key HTTP header)
+    expect(options).toHaveProperty('idempotencyKey')
+    expect(typeof options.idempotencyKey).toBe('string')
+    expect((options.idempotencyKey as string).length).toBeGreaterThan(0)
+
+    // First arg (email payload) must NOT contain X-Idempotency-Key header
+    // (that would leak the key to the recipient's email client)
+    const headers = payload.headers as Record<string, unknown> | undefined
+    expect(headers?.['X-Idempotency-Key']).toBeUndefined()
+  })
+
+  it('gdpr_consent=null does NOT block send — unknown ≠ false', async () => {
+    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
+    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
+    vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
+
+    const { Resend } = await import('resend')
+    vi.mocked(Resend).mockImplementation(() => ({
+      emails: { send: vi.fn().mockResolvedValue({ data: { id: 'resend-null-consent' }, error: null }) },
+    }) as unknown as InstanceType<typeof Resend>)
+
+    const contactNullConsent = { ...goodContact, gdpr_consent: null }
+    const mockSb = makeSupabaseMock({
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) },
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      contacts:   { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: contactNullConsent, error: null }) },
+      properties: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) },
+      disclosure_deliveries: {
+        select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+        order:  vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        insert: vi.fn().mockReturnThis(), update: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { id: 'del-null-consent' }, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      },
+    })
+    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
+
+    const { POST } = await import('@/app/api/deal-packs/[id]/send/route')
+    const res = await POST(
+      makeReq('POST', `/api/deal-packs/${PACK_ID}/send`, { action_id: 'a1b2c3d4-0000-0000-0000-222222222222' }),
+      { params: Promise.resolve({ id: PACK_ID }) },
+    )
+    // null consent must not return 400/422 — it proceeds under V1 controlled authorization
+    expect([200, 207]).toContain(res.status)
   })
 })
 

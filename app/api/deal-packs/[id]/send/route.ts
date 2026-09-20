@@ -219,9 +219,11 @@ export async function POST(
       { status: 422 },
     )
   }
-  // gdpr_consent: log warning only (see §32 — default=false for all contacts; semantics unclear)
-  if (!contact.gdpr_consent) {
-    console.warn('[deal-pack send] contact gdpr_consent=false — disclosure proceeding (consent gate TBD in CONSENT-PV)', {
+  // gdpr_consent: NULL = unknown / no recorded consent (historical import)
+  // UNKNOWN ≠ REFUSAL — proceed under V1 controlled authorization.
+  // TRUE = explicit recorded consent.
+  if (contact.gdpr_consent === null || contact.gdpr_consent === undefined) {
+    console.warn('[deal-pack send] contact gdpr_consent=null — consent state unknown; proceeding under V1 controlled authorization (reviewed match + explicit disclosure_status=authorized)', {
       contactId: contact.id, corrId,
     })
   }
@@ -396,14 +398,18 @@ export async function POST(
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY!)
-    const { data: resendData, error: resendErr } = await resend.emails.send({
-      from:    'Agency Group <noreply@agencygroup.pt>',
-      to:      recipientEmail,
-      subject: `${emailData.packTitle} — Agency Group`,
-      html:    htmlBody,
-      text:    textBody,
-      headers: { 'X-Idempotency-Key': idempotencyKey },
-    })
+    // idempotencyKey passed as second arg → Resend API receives Idempotency-Key HTTP header.
+    // NOT in email headers (which would leak internal key to recipient).
+    const { data: resendData, error: resendErr } = await resend.emails.send(
+      {
+        from:    'Agency Group <noreply@agencygroup.pt>',
+        to:      recipientEmail,
+        subject: `${emailData.packTitle} — Agency Group`,
+        html:    htmlBody,
+        text:    textBody,
+      },
+      { idempotencyKey },
+    )
 
     if (resendErr || !resendData?.id) {
       sendError = resendErr ? JSON.stringify(resendErr) : 'Resend returned no message ID'
