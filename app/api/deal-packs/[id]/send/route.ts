@@ -59,6 +59,7 @@ const supabase = createClient(
 )
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const UUID_REGEX  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function isEmailActive(): boolean {
   return process.env.DEALPACK_EMAIL_SEND_ACTIVE === 'true'
@@ -92,6 +93,21 @@ export async function POST(
     return NextResponse.json({ error: actorResult.error }, { status: actorResult.status })
   }
   const actor = actorResult.actor
+
+  // ── Parse action_id from body (§10 — deterministic idempotency key) ────────
+  // Client generates action_id before first attempt and reuses it on retry.
+  // Same action_id → same delivery row → same-action retry resumes, not duplicates.
+  // If not provided (legacy/no-body requests), server generates a fresh UUID.
+  let actionId: string
+  try {
+    const body: Record<string, unknown> = await req.json()
+    const candidate = body?.action_id
+    actionId = (typeof candidate === 'string' && UUID_REGEX.test(candidate))
+      ? candidate
+      : crypto.randomUUID()
+  } catch {
+    actionId = crypto.randomUUID()
+  }
 
   // ── 4. Pack ownership check ────────────────────────────────────────────────
   const { id: packId } = await params
@@ -210,95 +226,118 @@ export async function POST(
     })
   }
 
+  // ── Server-computed idempotency key (§10 repair) ──────────────────────────
+  // Key = 'dpd:{packId}:{actionId}' — deterministic from client-provided action_id.
+  // Same action_id on retry → same key → same delivery row → resume, not duplicate.
+  const idempotencyKey = `dpd:${packId}:${actionId}`
+
   // ── 16. Idempotency guard ──────────────────────────────────────────────────
-  const { data: existingDeliveries } = await supabase
+  // 16a. Belt-and-suspenders: any 'sent' delivery for this pack+match blocks V1 re-disclosure.
+  const { data: sentCheck } = await supabase
     .from('disclosure_deliveries')
-    .select('id, delivery_status, idempotency_key, sent_at')
+    .select('id, sent_at')
     .eq('pack_id', packId)
     .eq('match_id', match.id)
     .eq('channel', 'email')
-    .order('created_at', { ascending: false })
-    .limit(10)
+    .eq('delivery_status', 'sent')
+    .maybeSingle()
 
-  const activeDelivery = (existingDeliveries ?? []).find(
-    (d: { delivery_status: string }) => ['pending', 'sending', 'sent'].includes(d.delivery_status),
-  )
-
-  if (activeDelivery) {
-    if (activeDelivery.delivery_status === 'sent') {
-      return NextResponse.json(
-        {
-          error: 'Deal pack has already been disclosed via email — re-disclosure not permitted in V1',
-          delivery_id: activeDelivery.id,
-          sent_at: (activeDelivery as { sent_at?: string }).sent_at,
-        },
-        { status: 409 },
-      )
-    }
-    // pending/sending = in progress or ambiguous
+  if (sentCheck) {
     return NextResponse.json(
       {
-        error: `Disclosure is currently in progress (status: ${activeDelivery.delivery_status}) — please wait or contact support if stuck`,
-        delivery_id: activeDelivery.id,
+        error: 'Deal pack has already been disclosed via email — re-disclosure not permitted in V1',
+        delivery_id: sentCheck.id,
+        sent_at: (sentCheck as { id: string; sent_at?: string }).sent_at,
       },
       { status: 409 },
     )
   }
 
-  // ── 16a. Check unknown deliveries separately ───────────────────────────────
-  const unknownDelivery = (existingDeliveries ?? []).find(
-    (d: { delivery_status: string }) => d.delivery_status === 'unknown',
-  )
-  if (unknownDelivery) {
-    console.warn('[deal-pack send] unknown delivery exists — blocking until operator resolves', {
-      deliveryId: unknownDelivery.id, corrId,
+  // 16b. Same-action retry: look up delivery by idempotency_key.
+  //   sent     → idempotent 200 (defensive; 16a should catch first)
+  //   sending  → 409 (in-flight concurrent request)
+  //   unknown  → 409 (operator must reconcile before retry)
+  //   pending  → resume same row (same-action retry — crash before Resend)
+  //   failed   → resume same row (same-action retry — Resend rejected)
+  //   not found → create new delivery
+  const { data: existingDelivery } = await supabase
+    .from('disclosure_deliveries')
+    .select('id, delivery_status, sent_at')
+    .eq('idempotency_key', idempotencyKey)
+    .maybeSingle()
+
+  let delivery: { id: string }
+
+  if (existingDelivery) {
+    const existStatus = (existingDelivery as { delivery_status: string }).delivery_status
+    if (existStatus === 'sent') {
+      return NextResponse.json({
+        ok: true, sent: true, idempotent: true,
+        delivery_id: existingDelivery.id,
+        action_id: actionId,
+      })
+    }
+    if (existStatus === 'sending') {
+      return NextResponse.json(
+        { error: 'Disclosure in-flight — please wait before retrying', delivery_id: existingDelivery.id },
+        { status: 409 },
+      )
+    }
+    if (existStatus === 'unknown') {
+      console.warn('[deal-pack send] unknown delivery — operator must reconcile before retry', {
+        deliveryId: existingDelivery.id, corrId,
+      })
+      return NextResponse.json(
+        {
+          error: 'A previous disclosure attempt resulted in an unknown outcome. Contact support before retrying.',
+          delivery_id: existingDelivery.id,
+        },
+        { status: 409 },
+      )
+    }
+    // pending or failed: resume same delivery row (§10 — same-action retry semantics)
+    delivery = { id: existingDelivery.id }
+    console.info('[deal-pack send] resuming delivery', {
+      deliveryId: delivery.id, priorStatus: existStatus, actionId, corrId,
     })
-    return NextResponse.json(
-      {
-        error: 'A previous disclosure attempt resulted in an unknown outcome. Please contact support before retrying.',
-        delivery_id: unknownDelivery.id,
-      },
-      { status: 409 },
-    )
+  } else {
+    const { data: created, error: deliveryCreateErr } = await supabase
+      .from('disclosure_deliveries')
+      .insert({
+        pack_id:          packId,
+        match_id:         match.id,
+        contact_id:       contact.id,
+        channel:          'email',
+        recipient_email:  recipientEmail,
+        idempotency_key:  idempotencyKey,
+        delivery_status:  'pending',
+        provider_name:    'resend',
+        initiated_by:     actor.id,
+      })
+      .select('id')
+      .single()
+
+    if (deliveryCreateErr || !created) {
+      console.error('[deal-pack send] failed to create delivery record', { deliveryCreateErr, corrId })
+      return NextResponse.json({ error: 'Failed to create delivery record' }, { status: 500 })
+    }
+    delivery = { id: created.id }
   }
 
   // ── Feature flag check (§21) ──────────────────────────────────────────────
   const sendActive = isEmailActive()
 
-  // ── Create delivery record (status=pending) ────────────────────────────────
-  const idempotencyKey = `dpd:${packId}:${match.id}:${Date.now()}`
-  const { data: delivery, error: deliveryCreateErr } = await supabase
-    .from('disclosure_deliveries')
-    .insert({
-      pack_id:          packId,
-      match_id:         match.id,
-      contact_id:       contact.id,
-      channel:          'email',
-      recipient_email:  recipientEmail,
-      idempotency_key:  idempotencyKey,
-      delivery_status:  'pending',
-      provider_name:    'resend',
-      initiated_by:     actor.id,
-    })
-    .select('id')
-    .single()
-
-  if (deliveryCreateErr || !delivery) {
-    console.error('[deal-pack send] failed to create delivery record', { deliveryCreateErr, corrId })
-    return NextResponse.json({ error: 'Failed to create delivery record' }, { status: 500 })
-  }
-
   // ── Feature flag: return without sending ──────────────────────────────────
   if (!sendActive) {
     console.info('[deal-pack send] DEALPACK_EMAIL_SEND_ACTIVE=false — disclosure logged but email NOT sent', {
-      deliveryId: delivery.id, packId, corrId,
+      deliveryId: delivery.id, packId, actionId, corrId,
     })
-    // Mark delivery as pending (it was already created as pending — leave it for operator visibility)
     return NextResponse.json({
       ok: true,
       sent: false,
       reason: 'feature_flag_disabled',
       delivery_id: delivery.id,
+      action_id: actionId,
       message: 'DEALPACK_EMAIL_SEND_ACTIVE is not enabled. Authorization checks passed and delivery record created. No email was sent.',
     })
   }
@@ -310,12 +349,8 @@ export async function POST(
     .eq('id', delivery.id)
 
   // ── Build email content (buyer-safe) ──────────────────────────────────────
-  // Load property data if pack has property_id
-  const { data: propertyData } = await supabase
-    .from('properties')
-    .select('title, city, price, type, area_m2, bedrooms')
-    .eq('id', pack.lead_id) // Note: use pack's property link via deal/match context
-    .maybeSingle()
+  // §AE: deal_packs.property_id lookup deferred — use pack-derived fallbacks.
+  // Property data enrichment requires confirming the correct FK column name.
 
   // Derive yield from financial_projections (buyer-safe only)
   let estimatedYield: number | null = null
@@ -338,12 +373,12 @@ export async function POST(
   const emailData: DisclosureEmailData = {
     buyerFirstName,
     packTitle:         pack.title ?? 'Oportunidade de Investimento',
-    propertyTitle:     propertyData?.title ?? pack.title ?? 'Imóvel Selecionado',
-    propertyLocation:  propertyData?.city ?? 'Portugal',
-    propertyPrice:     propertyData?.price ?? 0,
-    propertyType:      propertyData?.type ?? 'imóvel',
-    areaM2:            propertyData?.area_m2 ?? null,
-    bedrooms:          propertyData?.bedrooms ?? null,
+    propertyTitle:     pack.title ?? 'Imóvel Selecionado',
+    propertyLocation:  'Portugal',
+    propertyPrice:     0,
+    propertyType:      'imóvel',
+    areaM2:            null,
+    bedrooms:          null,
     investmentThesis:  pack.investment_thesis ?? null,
     marketSummary:     pack.market_summary ?? null,
     highlights,
@@ -435,6 +470,7 @@ export async function POST(
     ok: true,
     sent: true,
     delivery_id: delivery.id,
+    action_id: actionId,
     provider_message_id: providerMessageId,
     activity_id: (finalizeResult as { activity_id?: string })?.activity_id ?? null,
   })

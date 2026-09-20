@@ -13,8 +13,9 @@
 //   ✗ Infer buyer interest or create a deal
 //
 // Manual disclosure DOES:
-//   ✓ Insert an audit activity (deal_pack_disclosed_email NOT used — type='note')
-//   ✓ Set matches.first_disclosed_at (COALESCE — once-set)
+//   ✓ Record atomic audit via record_manual_disclosure() RPC (match + activity in one TX)
+//   ✓ Insert activity with type='match_disclosed_manual' (explicit semantic event — §22)
+//   ✓ Set matches.first_disclosed_at via COALESCE (once-set)
 //   ✓ Require the same authorization chain as email disclosure
 //   ✓ Require explicit confirmation from the actor (confirmation_text field)
 //
@@ -180,55 +181,37 @@ export async function POST(
     )
   }
 
-  // ── Set first_disclosed_* on matches (COALESCE guard — once-set) ──────────
+  // ── Atomic record via RPC (§25 — matches + activity in one transaction) ─────
+  // record_manual_disclosure() atomically:
+  //   1. COALESCE-updates matches.first_disclosed_at/by/channel (once-set)
+  //   2. Inserts activity with type='match_disclosed_manual' (§22 — explicit semantic)
   const now = new Date().toISOString()
 
-  // Only update if first_disclosed_at is not yet set (COALESCE semantics via .is filter)
-  const { error: matchUpdateErr } = await supabase
-    .from('matches')
-    .update({
-      first_disclosed_at:      now,
-      first_disclosed_by:      actor.id,
-      first_disclosed_channel: 'manual',
-      updated_at:              now,
+  const { data: rpcResult, error: rpcErr } = await supabase
+    .rpc('record_manual_disclosure', {
+      p_match_id:   matchId,
+      p_pack_id:    pack_id,
+      p_contact_id: match.lead_id,
+      p_actor_id:   actor.id,
+      p_method:     method,
+      p_notes:      notes.trim(),
+      p_now:        now,
     })
-    .eq('id', matchId)
-    .is('first_disclosed_at', null)
 
-  if (matchUpdateErr) {
-    console.error('[manual disclose] match update error', { matchUpdateErr, corrId })
-    // Non-fatal: activity insert is the primary record
+  if (rpcErr || !rpcResult) {
+    console.error('[manual disclose] record_manual_disclosure RPC failed', { rpcErr, corrId })
+    return NextResponse.json({ error: 'Failed to record manual disclosure' }, { status: 500 })
   }
 
-  // Insert activity (type='note' for manual offline disclosure)
-  const { data: activity, error: activityErr } = await supabase
-    .from('activities')
-    .insert({
-      contact_id:   match.lead_id,
-      agent_id:     actor.id,
-      type:         'note',
-      match_id:     matchId,
-      subject:      `Divulgação manual — ${method}`,
-      body:         `Pack ${pack_id} divulgado offline via ${method}. Notas: ${notes.trim()}`,
-      is_automated: false,
-      occurred_at:  now,
-      created_at:   now,
-    })
-    .select('id')
-    .single()
+  const { activity_id } = rpcResult as { activity_id: string; recorded_at: string }
 
-  if (activityErr || !activity) {
-    console.error('[manual disclose] activity insert error', { activityErr, corrId })
-    return NextResponse.json({ error: 'Failed to record manual disclosure activity' }, { status: 500 })
-  }
-
-  console.info('[manual disclose] recorded', {
-    matchId, packId: pack_id, method, activityId: activity.id, actorId: actor.id, corrId,
+  console.info('[manual disclose] recorded via RPC', {
+    matchId, packId: pack_id, method, activityId: activity_id, actorId: actor.id, corrId,
   })
 
   return NextResponse.json({
     ok: true,
-    activity_id: activity.id,
+    activity_id,
     match_id: matchId,
     pack_id,
     method,

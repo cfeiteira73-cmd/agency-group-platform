@@ -4,7 +4,7 @@
 //
 // §52  Transport adapter mock — Resend never called when flag disabled
 // §53  Happy path (flag enabled) → 200 with delivery_id
-// §54  Double-click idempotency → 409
+// §54  Idempotency guard: sent→409, in-flight-same-key→409
 // §55  Provider failure → 502
 // §56  Provider timeout → 502 (unknown status)
 // §57  DB finalization failure → 207
@@ -23,11 +23,15 @@
 // §70  D1/D2-A regression — disclose_match RPC scope unchanged
 // §71  Deal Pack auth regression — checkDealPackOwnership still correct
 // MANUAL §72: manual disclosure endpoint
+// PV §73  Same-action retry: pending/failed delivery resumes (§10 repair)
+// PV §74  Same-action retry: same key already sent → 200 idempotent
+// PV §75  Manual disclosure uses record_manual_disclosure RPC (§22+§25 repair)
+// PV §76  Unsubscribe wording — no fake automated unsubscribe copy (§30 repair)
 // =============================================================================
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { buildDisclosureEmailHtml } from '@/lib/disclosure/emailTemplate'
+import { buildDisclosureEmailHtml, buildDisclosureEmailText } from '@/lib/disclosure/emailTemplate'
 
 // ── Global mocks ──────────────────────────────────────────────────────────────
 
@@ -345,48 +349,34 @@ describe('§60 Match disclosure not authorized → 422', () => {
   })
 })
 
-// ── §54 Double-click idempotency → 409 ───────────────────────────────────────
+// ── §54 Idempotency guard ─────────────────────────────────────────────────────
+// New semantics (§10 repair): guard uses action_id-based key + belt-and-suspenders sent check.
+// pending   → resume (§73 tests)
+// failed    → resume (§73 tests)
+// sending   → 409 (in-flight, same action_id)
+// sent (16a) → 409 (V1 one-disclosure rule)
+// sent (16b) → 200 idempotent (§74 test)
 
-describe('§54 Double-click idempotency', () => {
+describe('§54 Idempotency guard (§10 repair)', () => {
   beforeEach(() => { vi.resetModules(); vi.clearAllMocks() })
 
-  it('existing pending delivery → 409', async () => {
+  it('already disclosed (belt-and-suspenders sent check 16a) → 409', async () => {
     vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
     vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
     vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
 
-    const pendingDelivery = [{ id: 'del-pending', delivery_status: 'pending', idempotency_key: 'k1', sent_at: null }]
     const mockSb = makeSupabaseMock({
-      deal_packs:            { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }) },
-      matches:               { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
-      contacts:              { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }) },
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      contacts:   { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
+      // 16a: first maybeSingle call (sent check by pack+match+channel) → finds sent delivery → 409
       disclosure_deliveries: {
-        select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
-        order:  vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue({ data: pendingDelivery, error: null }),
-      },
-    })
-    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
-
-    const { POST } = await import('@/app/api/deal-packs/[id]/send/route')
-    const res = await POST(makeReq('POST', `/api/deal-packs/${PACK_ID}/send`), { params: Promise.resolve({ id: PACK_ID }) })
-    expect(res.status).toBe(409)
-    const body = await res.json()
-    expect(body.error.toLowerCase()).toContain('in progress')
-  })
-
-  it('existing sent delivery → 409 (already disclosed)', async () => {
-    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
-    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
-    vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
-
-    const sentDelivery = [{ id: 'del-sent', delivery_status: 'sent', idempotency_key: 'k2', sent_at: '2026-09-20T09:00:00Z' }]
-    const mockSb = makeSupabaseMock({
-      deal_packs:            { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }) },
-      matches:               { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
-      contacts:              { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
-      disclosure_deliveries: {
-        select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
-        order:  vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue({ data: sentDelivery, error: null }),
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValueOnce({
+          data: { id: 'del-already-sent', sent_at: '2026-09-20T09:00:00Z' },
+          error: null,
+        }),
       },
     })
     vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
@@ -396,6 +386,67 @@ describe('§54 Double-click idempotency', () => {
     expect(res.status).toBe(409)
     const body = await res.json()
     expect(body.error.toLowerCase()).toContain('already been disclosed')
+  })
+
+  it('same action_id + delivery is sending → 409 (in-flight concurrent call)', async () => {
+    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
+    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
+    vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
+
+    const ACTION_ID = 'a1b2c3d4-0000-0000-0000-000000000001'
+    const mockSb = makeSupabaseMock({
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }) },
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      contacts:   { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
+      disclosure_deliveries: {
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        // 16a: no sent delivery; 16b: same action_id delivery is 'sending'
+        maybeSingle: vi.fn()
+          .mockResolvedValueOnce({ data: null, error: null })
+          .mockResolvedValueOnce({ data: { id: 'del-in-flight', delivery_status: 'sending', sent_at: null }, error: null }),
+      },
+    })
+    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
+
+    const { POST } = await import('@/app/api/deal-packs/[id]/send/route')
+    const res = await POST(
+      makeReq('POST', `/api/deal-packs/${PACK_ID}/send`, { action_id: ACTION_ID }),
+      { params: Promise.resolve({ id: PACK_ID }) },
+    )
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.error.toLowerCase()).toContain('in-flight')
+  })
+
+  it('same action_id + delivery is unknown → 409 (requires operator)', async () => {
+    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
+    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
+    vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
+
+    const ACTION_ID = 'a1b2c3d4-0000-0000-0000-000000000002'
+    const mockSb = makeSupabaseMock({
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }) },
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      contacts:   { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
+      disclosure_deliveries: {
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn()
+          .mockResolvedValueOnce({ data: null, error: null })
+          .mockResolvedValueOnce({ data: { id: 'del-unknown', delivery_status: 'unknown', sent_at: null }, error: null }),
+      },
+    })
+    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
+
+    const { POST } = await import('@/app/api/deal-packs/[id]/send/route')
+    const res = await POST(
+      makeReq('POST', `/api/deal-packs/${PACK_ID}/send`, { action_id: ACTION_ID }),
+      { params: Promise.resolve({ id: PACK_ID }) },
+    )
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.error.toLowerCase()).toContain('unknown outcome')
   })
 })
 
@@ -759,5 +810,201 @@ describe('§71 D2-B-DEALPACK-AUTH regression — checkDealPackOwnership still en
     const { GET } = await import('@/app/api/deal-packs/[id]/route')
     const res = await GET(makeReq('GET', `/api/deal-packs/${PACK_ID}`), { params: Promise.resolve({ id: PACK_ID }) })
     expect(res.status).toBe(403)
+  })
+})
+
+// ── PV §73 Same-action retry: pending/failed delivery resumes (§10 repair) ───
+
+describe('PV §73 Same-action retry: pending/failed delivery resumes (§10 repair)', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.clearAllMocks()
+    delete process.env.DEALPACK_EMAIL_SEND_ACTIVE
+  })
+
+  it('pending delivery for same action_id resumes (flag off → sent:false, reuses delivery.id)', async () => {
+    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
+    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
+    vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
+
+    const ACTION_ID = 'a1b2c3d4-0000-0000-0000-000000000010'
+    const mockSb = makeSupabaseMock({
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }) },
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      contacts:   { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
+      disclosure_deliveries: {
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        // 16a: no sent delivery; 16b: pending for this action_id → resume
+        maybeSingle: vi.fn()
+          .mockResolvedValueOnce({ data: null, error: null })
+          .mockResolvedValueOnce({ data: { id: 'del-pending-resume', delivery_status: 'pending', sent_at: null }, error: null }),
+      },
+    })
+    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
+
+    const { POST } = await import('@/app/api/deal-packs/[id]/send/route')
+    const res = await POST(
+      makeReq('POST', `/api/deal-packs/${PACK_ID}/send`, { action_id: ACTION_ID }),
+      { params: Promise.resolve({ id: PACK_ID }) },
+    )
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.sent).toBe(false)
+    expect(body.delivery_id).toBe('del-pending-resume') // reuses existing delivery row — not a new one
+    expect(body.action_id).toBe(ACTION_ID)
+  })
+
+  it('failed delivery for same action_id resumes (flag off → sent:false, reuses delivery.id)', async () => {
+    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
+    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
+    vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
+
+    const ACTION_ID = 'a1b2c3d4-0000-0000-0000-000000000011'
+    const mockSb = makeSupabaseMock({
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }) },
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      contacts:   { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
+      disclosure_deliveries: {
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn()
+          .mockResolvedValueOnce({ data: null, error: null })
+          .mockResolvedValueOnce({ data: { id: 'del-failed-resume', delivery_status: 'failed', sent_at: null }, error: null }),
+      },
+    })
+    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
+
+    const { POST } = await import('@/app/api/deal-packs/[id]/send/route')
+    const res = await POST(
+      makeReq('POST', `/api/deal-packs/${PACK_ID}/send`, { action_id: ACTION_ID }),
+      { params: Promise.resolve({ id: PACK_ID }) },
+    )
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.delivery_id).toBe('del-failed-resume') // reuses failed delivery row
+    expect(body.action_id).toBe(ACTION_ID)
+  })
+})
+
+// ── PV §74 Same-action retry: same key already sent → 200 idempotent ────────
+
+describe('PV §74 Same-action retry: same action_id already sent → 200 idempotent', () => {
+  beforeEach(() => { vi.resetModules(); vi.clearAllMocks() })
+
+  it('same action_id + key is sent → 200 {idempotent:true} (no Resend call)', async () => {
+    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
+    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
+    vi.mocked(checkDealPackOwnership).mockResolvedValue({ ok: true })
+
+    const ACTION_ID = 'a1b2c3d4-0000-0000-0000-000000000020'
+    const mockSb = makeSupabaseMock({
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodPack, error: null }) },
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      contacts:   { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodContact, error: null }) },
+      disclosure_deliveries: {
+        select:      vi.fn().mockReturnThis(),
+        eq:          vi.fn().mockReturnThis(),
+        // 16a: no global sent; 16b: same action_id is already 'sent' → idempotent 200
+        maybeSingle: vi.fn()
+          .mockResolvedValueOnce({ data: null, error: null })
+          .mockResolvedValueOnce({ data: { id: 'del-idem-sent', delivery_status: 'sent', sent_at: '2026-09-20T10:00:00Z' }, error: null }),
+      },
+    })
+    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
+
+    const { Resend } = await import('resend')
+    const { POST } = await import('@/app/api/deal-packs/[id]/send/route')
+    const res = await POST(
+      makeReq('POST', `/api/deal-packs/${PACK_ID}/send`, { action_id: ACTION_ID }),
+      { params: Promise.resolve({ id: PACK_ID }) },
+    )
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.sent).toBe(true)
+    expect(body.idempotent).toBe(true)
+    expect(body.delivery_id).toBe('del-idem-sent')
+    expect(body.action_id).toBe(ACTION_ID)
+    expect(vi.mocked(Resend)).not.toHaveBeenCalled() // no second email
+  })
+})
+
+// ── PV §75 Manual disclosure uses record_manual_disclosure RPC (§22+§25) ─────
+
+describe('PV §75 Manual disclosure uses record_manual_disclosure RPC (§22+§25 repair)', () => {
+  beforeEach(() => { vi.resetModules(); vi.clearAllMocks() })
+
+  const goodBody = {
+    pack_id:           PACK_ID,
+    method:            'in_person',
+    notes:             'Presented pack in Chiado meeting room on 20/09/2026.',
+    confirmation_text: 'I confirm this pack was disclosed offline',
+  }
+
+  it('calls record_manual_disclosure RPC (not separate matches.update + activities.insert)', async () => {
+    vi.mocked(portalAuthGate).mockResolvedValue(makeGate('nextauth'))
+    vi.mocked(resolveActor).mockResolvedValue({ ok: true, actor: agentActor })
+    vi.mocked(checkMatchOwnership).mockResolvedValue({ ok: true })
+
+    const mockSb = makeSupabaseMock({
+      matches:    { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: goodMatch, error: null }) },
+      deal_packs: { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: PACK_ID, match_id: MATCH_ID, lead_id: CONTACT_ID, status: 'ready' }, error: null }) },
+    })
+    const rpcMock = vi.fn().mockResolvedValue({ data: { activity_id: 'act-rpc-manual-01', recorded_at: '2026-09-20T10:00:00Z' }, error: null })
+    mockSb.rpc = rpcMock
+    vi.mocked(createClient).mockReturnValue(mockSb as ReturnType<typeof createClient>)
+
+    const { POST } = await import('@/app/api/matches/[id]/disclose/manual/route')
+    const res = await POST(
+      makeReq('POST', `/api/matches/${MATCH_ID}/disclose/manual`, goodBody),
+      { params: Promise.resolve({ id: MATCH_ID }) },
+    )
+    expect(res.status).toBe(200)
+
+    // RPC must have been called with 'record_manual_disclosure' (atomic — §25)
+    expect(rpcMock).toHaveBeenCalledWith('record_manual_disclosure', expect.objectContaining({
+      p_match_id:   MATCH_ID,
+      p_pack_id:    PACK_ID,
+      p_actor_id:   ACTOR_ID,
+      p_method:     'in_person',
+    }))
+
+    // activities table must NOT have been accessed directly (atomicity via RPC — §25)
+    const fromCalls = (mockSb.from as ReturnType<typeof vi.fn>).mock.calls as string[][]
+    const activitiesAccessed = fromCalls.some((args) => args[0] === 'activities')
+    expect(activitiesAccessed).toBe(false)
+
+    const body = await res.json()
+    expect(body.activity_id).toBe('act-rpc-manual-01')
+  })
+})
+
+// ── PV §76 Unsubscribe wording — no fake automated unsubscribe copy (§30) ───
+
+describe('PV §76 Email unsubscribe wording is truthful (§30 repair)', () => {
+  it('HTML template does not contain misleading automated unsubscribe promise', () => {
+    const html = buildDisclosureEmailHtml({
+      buyerFirstName: 'Test', packTitle: 'Pack', propertyTitle: 'Property',
+      propertyLocation: 'Lisboa', propertyPrice: 1_000_000, propertyType: 'apartment',
+      areaM2: null, bedrooms: null, investmentThesis: null, marketSummary: null,
+      highlights: [], estimatedYield: null, agentName: 'Agent', agencyPhone: '+351 000',
+    })
+    // Old misleading copy must be absent
+    expect(html).not.toContain('cancelar subscrição')
+    expect(html).not.toContain('responda com')
+    // Truthful copy must be present
+    expect(html).toContain('contacte o seu consultor')
+  })
+
+  it('plain text template does not contain misleading automated unsubscribe promise', () => {
+    const text = buildDisclosureEmailText({
+      buyerFirstName: 'Test', packTitle: 'Pack', propertyTitle: 'Property',
+      propertyLocation: 'Lisboa', propertyPrice: 1_000_000, propertyType: 'apartment',
+      areaM2: null, bedrooms: null, investmentThesis: null, marketSummary: null,
+      highlights: [], estimatedYield: null, agentName: 'Agent', agencyPhone: '+351 000',
+    })
+    expect(text).not.toContain('cancelar subscrição')
+    expect(text).not.toContain('responda com')
+    expect(text).toContain('contacte o seu consultor')
   })
 })

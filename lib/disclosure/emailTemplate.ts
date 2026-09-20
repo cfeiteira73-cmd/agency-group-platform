@@ -160,9 +160,9 @@ export function buildDisclosureEmailHtml(data: DisclosureEmailData): string {
 
       <!-- Footer -->
       <p style="margin:0;font-size:12px;color:#9CA3AF;line-height:1.6;">
-        Esta comunicação é confidencial e dirigida exclusivamente ao destinatário indicado.
-        Foi preparada com base no seu perfil de investimento registado na Agency Group.
-        Para remover-se da nossa lista, responda com "cancelar subscrição".
+        Esta comunicação foi preparada especificamente para si com base no seu perfil de investimento.
+        É confidencial e dirigida exclusivamente ao destinatário indicado.
+        Para não receber comunicações futuras da Agency Group, contacte o seu consultor.
       </p>
     </div>
 
@@ -193,6 +193,6 @@ export function buildDisclosureEmailText(data: DisclosureEmailData): string {
     `Contacto: ${agencyPhone}`,
     '',
     'Agency Group · Imobiliário de Luxo',
-    'Esta comunicação é confidencial. Para cancelar a subscrição, responda com "cancelar subscrição".',
+    'Esta comunicação foi preparada especificamente para si. Para não receber comunicações futuras, contacte o seu consultor.',
   ].filter(Boolean).join('\n')
 }
